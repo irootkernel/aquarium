@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Document"
+  short_description: "Update task documentation and review status"
+  default_prompt: "Use $root-kernel:task-document to update documentation for one roadmap task."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Handler"
+  short_description: "Orchestrate one roadmap task through phase skills"
+  default_prompt: "Use $root-kernel:task-handler with a roadmap path and one task ID to orchestrate every delivery phase."
+policy:
+  allow_implicit_invocation: false

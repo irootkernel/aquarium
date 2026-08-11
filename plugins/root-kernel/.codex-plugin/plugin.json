@@ -1,0 +1,49 @@
+{
+  "name": "root-kernel",
+  "version": "0.1.0",
+  "description": "Evidence-gated task delivery and development-tool setup workflows for Codex.",
+  "author": {
+    "name": "Root Kernel",
+    "email": "cs@rootkernel.xyz",
+    "url": "https://home.rootkernel.xyz"
+  },
+  "homepage": "https://home.rootkernel.xyz",
+  "repository": "https://github.com/irootkernel/root-kernel-dev-skills",
+  "license": "MIT",
+  "keywords": [
+    "roadmap",
+    "task",
+    "orchestration",
+    "setup",
+    "testing",
+    "review",
+    "deslop",
+    "lora",
+    "lore",
+    "sanho",
+    "mulgae",
+    "gaori"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Root Kernel",
+    "shortDescription": "Task delivery and development-tool setup.",
+    "longDescription": "Root Kernel provides framework-agnostic development-tool setup and an orchestrated set of focused phase skills that carry one named roadmap task from planning through implementation, verification, refinement, documentation, review, and closeout.",
+    "developerName": "Root Kernel",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://home.rootkernel.xyz",
+    "privacyPolicyURL": "https://github.com/irootkernel/root-kernel-dev-skills/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/irootkernel/root-kernel-dev-skills/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Use $root-kernel:task-handler to handle one named roadmap task through its required evidence gates.",
+      "Use $root-kernel:dev-setup to diagnose and configure development tools for this repository."
+    ],
+    "brandColor": "#10C4BE",
+    "composerIcon": "./assets/logo-small.png",
+    "logo": "./assets/logo-white.png"
+  }
+}
