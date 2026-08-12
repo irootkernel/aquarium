@@ -1,6 +1,6 @@
 {
   "name": "root-kernel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Evidence-gated epic and task delivery, completed-epic validation, and development-tool setup workflows for Codex.",
   "author": {
     "name": "Root Kernel",
