@@ -48,6 +48,9 @@ skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.n
 expected_skill_names = %w[
   deslop
   dev-setup
+  epic-handler
+  epic-validator
+  independent-review
   task-close
   task-document
   task-handler
@@ -58,7 +61,7 @@ expected_skill_names = %w[
   task-verify
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
-       "plugin skill set does not match the orchestrated task workflow")
+       "plugin skill set does not match the expected skills")
 
 skill_paths.each do |path|
   body = path.read
@@ -110,7 +113,10 @@ dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
 tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
+epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
+epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
+independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
 task_verify = PLUGIN.join("skills/task-verify/SKILL.md").read
@@ -129,7 +135,17 @@ apply_index = dev_setup.index("Apply exactly this diff")
 assert(proposal_index && diff_index && apply_index && proposal_index < diff_index && diff_index < apply_index,
        "AGENTS proposal and apply approvals are not ordered")
 assert(dev_setup.include?("If it changed, discard the approval"), "stale AGENTS approval guard is missing")
+lookup_approval_index = dev_setup.index("obtain explicit ask/answer approval for that network operation")
+version_resolution_index = dev_setup.index("resolve the exact stable version and source provenance")
+action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
+assert(lookup_approval_index && version_resolution_index && action_approval_index &&
+       lookup_approval_index < version_resolution_index && version_resolution_index < action_approval_index &&
+       dev_setup.include?("A lookup approval authorizes no installation or other mutation"),
+       "dev-setup must approve release metadata lookup before resolution and approve setup separately")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
+assert(agents_reference.include?("$root-kernel:epic-handler") &&
+       agents_reference.include?("$root-kernel:epic-validator"),
+       "AGENTS reference guidance must distinguish epic delivery and validation")
 
 assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is missing")
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
@@ -139,7 +155,113 @@ assert(tool_catalog.include?("Status: planned"), "Podway must remain planned")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
 assert(tool_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
 
+epic_handler_ui = YAML.safe_load(PLUGIN.join("skills/epic-handler/agents/openai.yaml").read, aliases: false)
+assert(epic_handler_ui.dig("policy", "allow_implicit_invocation") == false,
+       "epic-handler must disable implicit invocation")
+assert(epic_handler.include?("one canonical roadmap path inside that repository") &&
+       epic_handler.include?("exactly one epic ID"),
+       "epic-handler must require one repository roadmap and epic")
+approval_index = epic_handler.index("Ask once for explicit approval")
+task_goal_index = epic_handler.index("For each non-terminal task in order")
+epic_goal_index = epic_handler.index("one final epic closeout goal")
+assert(approval_index && task_goal_index && epic_goal_index && approval_index < task_goal_index && task_goal_index < epic_goal_index,
+       "epic-handler must approve once, serialize task goals, then create the closeout goal")
+assert(epic_handler.include?("Do not invoke `$root-kernel:task-handler` or its phase skills") &&
+       epic_handler.include?("sequence of goal-centered task executions") &&
+       epic_handler.include?("do not manufacture phase artifacts"),
+       "epic-handler must remain independent and goal-centered")
+assert(epic_handler.include?("Run Mulgae at least once on the latest complete task target") &&
+       epic_handler.include?("audit again from scratch"),
+       "epic-handler must require task and convergent epic Mulgae review")
+assert(epic_handler.include?("It does not authorize amend, push, PR or release changes"),
+       "epic-handler must preserve publication boundaries")
+assert(epic_handler.include?("reference `$lore-commits` and follow it when available") &&
+       epic_handler.include?("git log -5 --format=fuller") &&
+       epic_handler.include?("subject, body, and trailer structure") &&
+       epic_handler.include?("If fewer than five commits exist"),
+       "epic-handler must prefer Lore without making it a hard dependency")
+assert(epic_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
+       "epic-handler must not create shadow orchestration state")
+assert(epic_handler.include?("dependency DAG") && epic_handler.include?("exact revision") &&
+       epic_handler.include?("explicit external prerequisite") && epic_handler.include?("report its nodes, owners, and missing authority"),
+       "epic-handler must gate roadmap-explicit external dependencies")
+internal_order_index = epic_handler.index("An incomplete member-task predecessor determines execution order and does not block initial approval")
+dependent_gate_index = epic_handler.index("member-task predecessor is successfully terminal with its required commit and evidence", task_goal_index)
+assert(internal_order_index && dependent_gate_index &&
+       internal_order_index < task_goal_index && task_goal_index < dependent_gate_index &&
+       epic_handler.include?("recheck any pre-epic or external prerequisite at its exact revision"),
+       "epic-handler must order internal dependencies and gate them immediately before dependent task goals")
+assert(epic_handler.include?("violation owned by one task") && epic_handler.include?("epic seam invariant") &&
+       epic_handler.include?("Work requiring another repository is external") && epic_handler.include?("canonical requirement owner") &&
+       epic_handler.include?("external blocker is resolved"),
+       "epic-handler must route remediation by ownership")
+assert(epic_handler.include?("coverage_status=complete") && epic_handler.include?("publication_status=committed") &&
+       epic_handler.include?("findings query succeeds") && epic_handler.include?("untracked, generated, and derived files"),
+       "epic-handler must require complete Mulgae evidence")
+assert(epic_handler.include?("Commit and upstream publication are separate states") &&
+       epic_handler.include?("status-only roadmap transition is the sole exception"),
+       "epic-handler must separate lifecycle evidence and invalidate stale review")
+assert(epic_handler.lines.length < 120, "epic-handler must remain orchestration-focused")
+
+epic_validator_ui = YAML.safe_load(PLUGIN.join("skills/epic-validator/agents/openai.yaml").read, aliases: false)
+assert(epic_validator_ui.dig("policy", "allow_implicit_invocation") == false,
+       "epic-validator must disable implicit invocation")
+assert(epic_validator.include?("one canonical roadmap path inside it") &&
+       epic_validator.include?("exactly one epic ID"),
+       "epic-validator must require one repository roadmap and epic")
+validator_approval_index = epic_validator.index("Ask once for explicit approval")
+validator_audit_index = epic_validator.index("## Audit the Epic Directly")
+validator_goal_index = epic_validator.index("## Group and Complete Remediation Goals")
+validator_reaudit_index = epic_validator.index("## Re-audit to Convergence")
+assert(validator_approval_index && validator_audit_index && validator_goal_index && validator_reaudit_index &&
+       validator_approval_index < validator_audit_index && validator_audit_index < validator_goal_index &&
+       validator_goal_index < validator_reaudit_index,
+       "epic-validator must approve once, audit, remediate, then re-audit")
+assert(epic_validator.include?("every member task is in a roadmap-defined successful state") &&
+       epic_validator.include?("committed evidence-backed baseline") &&
+       epic_validator.include?("Stop when the epic baseline is uncommitted"),
+       "epic-validator must start from completed committed delivery")
+assert(epic_validator.include?("Do not invoke `$root-kernel:task-handler`, `$root-kernel:epic-handler`") &&
+       epic_validator.include?("Do not add new roadmap tasks or invent task IDs"),
+       "epic-validator must remediate directly without handler delegation or new tasks")
+assert(epic_validator.include?("gap owned by one existing task") &&
+       epic_validator.include?("cross-task seam or omitted epic-level design requirement") &&
+       epic_validator.include?("For work owned by another repository") &&
+       epic_validator.include?("Never run two remediation goals concurrently"),
+       "epic-validator must route and serialize remediation by canonical owner")
+assert(epic_validator.include?("If the roadmap defines a reopen state") &&
+       epic_validator.include?("otherwise preserve the successful state") &&
+       epic_validator.include?("do not create a new task entry") &&
+       epic_validator.include?("Record resulting remediation commit IDs in the final validation record"),
+       "epic-validator must preserve lifecycle vocabulary and remediation notes")
+assert(epic_validator.include?("run Mulgae on the latest complete remediation target") &&
+       epic_validator.include?("whole-epic Mulgae review") &&
+       epic_validator.include?("coverage_status=complete") &&
+       epic_validator.include?("publication_status=committed") &&
+       epic_validator.include?("findings query succeeds"),
+       "epic-validator must require complete per-goal and final Mulgae evidence")
+assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
+       epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
+       "epic-validator must invalidate stale evidence and avoid empty closeout commits")
+assert(epic_validator.include?("reference `$lore-commits` and follow it when available") &&
+       epic_validator.include?("git log -5 --format=fuller") &&
+       epic_validator.include?("If fewer than five commits exist"),
+       "epic-validator must prefer Lore with a repository-history fallback")
+assert(epic_validator.include?("Commit is not upstream publication") &&
+       epic_validator.include?("Do not create or read `.root-kernel-dev-skills`") &&
+       epic_validator.include?("compare the commit with that snapshot byte-for-byte"),
+       "epic-validator must preserve publication and shadow-state boundaries")
+assert(epic_validator.lines.length < 120, "epic-validator must remain orchestration-focused")
+
 assert(task_handler.include?("$root-kernel:dev-setup"), "task-handler must route missing setup")
+assert(!task_handler.include?("$root-kernel:epic-handler"),
+       "task-handler must remain independent from epic-handler")
+assert(task_handler.include?("Strengthen execution of one roadmap task goal"),
+       "task-handler must be goal-centered and procedure-strengthening")
+assert(epic_handler.include?("requests without one canonical roadmap epic identity") &&
+       task_handler.include?("requests without one canonical roadmap task identity") &&
+       !epic_handler.include?("free-form") && !task_handler.include?("free-form"),
+       "handlers must express applicability through canonical roadmap identities")
 phase_names = %w[task-plan task-implement task-verify task-refine task-document task-review task-close]
 phase_section_index = task_handler.index("Resolve every phase skill")
 phase_indexes = phase_names.map { |name| task_handler.index("$root-kernel:#{name}", phase_section_index) }
@@ -152,6 +274,23 @@ assert(task_handler.include?("Resume at the earliest phase whose postcondition i
 assert(task_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
        "task-handler must not create shadow orchestration state")
 assert(task_handler.lines.length < 100, "task-handler must remain orchestration-focused")
+
+independent_review_ui = YAML.safe_load(PLUGIN.join("skills/independent-review/agents/openai.yaml").read, aliases: false)
+assert(independent_review_ui.dig("policy", "allow_implicit_invocation") == false,
+       "independent-review must disable implicit invocation")
+assert(independent_review.include?("skills get orca-cli") && independent_review.include?("skills get orchestration"),
+       "independent-review must load version-matched Orca guides")
+assert(independent_review.include?("--worktree current --agent codex"),
+       "independent-review must use a fresh Codex in the current worktree")
+assert(independent_review.include?("Never substitute a generic subagent"),
+       "independent-review must fail closed when Orca is unavailable")
+assert(independent_review.include?("Do not rerun tests") && independent_review.include?("Do not implement a proposed response"),
+       "independent-review must remain review-only")
+assert(independent_review.include?("Keep technical review evidence and Orca lifecycle settlement as separate statuses"),
+       "independent-review must separate findings from lifecycle settlement")
+assert(independent_review.include?("Valid") && independent_review.include?("Invalid") &&
+       independent_review.include?("Needs confirmation"),
+       "independent-review must adjudicate reviewer findings")
 
 phase_names.each do |name|
   ui = YAML.safe_load(PLUGIN.join("skills/#{name}/agents/openai.yaml").read, aliases: false)
@@ -199,20 +338,29 @@ assert(task_review.include?("Select exactly one target that contains the complet
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),
        "task-review must verify Mulgae findings")
 
-commit_status_index = task_close.index("When the user asks to commit")
-ask_index = task_close.index("request_user_input", commit_status_index)
-tests_confirmation_index = task_close.index("Tests passed", ask_index)
+approval_start_index = task_close.index("Re-read the roadmap vocabulary")
+ask_index = task_close.index("request_user_input", approval_start_index)
+tests_confirmation_index = task_close.index("Evidence accepted", ask_index)
 docs_confirmation_index = task_close.index("Docs approved", ask_index)
 implementation_confirmation_index = task_close.index("Approve and commit", ask_index)
+non_commit_confirmation_index = task_close.index("Approve and close without commit", ask_index)
 terminal_status_index = task_close.index("Treat `Completed`, `Blocked`, and `Deferred` as terminal")
-staged_status_index = task_close.index("Re-read the staged roadmap entry", terminal_status_index)
+staged_status_index = task_close.index("re-read the staged roadmap entry", terminal_status_index)
+non_commit_transition_index = task_close.index("do not stage or commit anything", terminal_status_index)
 commit_authority_index = task_close.index("authorizes one commit", staged_status_index)
-assert(commit_status_index && ask_index && tests_confirmation_index && docs_confirmation_index &&
-       implementation_confirmation_index && terminal_status_index && staged_status_index && commit_authority_index &&
-       commit_status_index < ask_index && ask_index < tests_confirmation_index &&
+assert(approval_start_index && ask_index && tests_confirmation_index && docs_confirmation_index &&
+       implementation_confirmation_index && non_commit_confirmation_index && terminal_status_index &&
+       staged_status_index && non_commit_transition_index && commit_authority_index &&
+       approval_start_index < ask_index && ask_index < tests_confirmation_index &&
        tests_confirmation_index < docs_confirmation_index && docs_confirmation_index < implementation_confirmation_index &&
        implementation_confirmation_index < terminal_status_index && terminal_status_index < staged_status_index &&
-       staged_status_index < commit_authority_index, "task-close terminal-state commit gate is missing or misordered")
+       terminal_status_index < non_commit_transition_index && staged_status_index < commit_authority_index,
+       "task-close terminal-state commit and non-commit gates are missing or misordered")
+assert(task_close.include?("do not stage or commit anything") &&
+       task_close.include?("This path is unavailable when repository authority requires a commit for completion"),
+       "task-close must support a safe non-commit closeout path")
+assert(task_close.include?("including who ran each check") && !task_close.include?("personally run"),
+       "task-close must accept evidence with explicit agent or user provenance")
 assert(task_close.include?("Any other task-owned code, test, documentation, or roadmap change after the answers invalidates all three confirmations"),
        "task-close must invalidate stale confirmations")
 assert(task_close.include?("The exact proposed status-only edit is part of approval and does not invalidate it"),
@@ -252,6 +400,12 @@ assert(readme.include?("codex plugin add root-kernel@root-kernel-dev-skills"),
 phase_names.each do |name|
   assert(readme.include?("`#{name}`"), "README phase skill is missing: #{name}")
 end
+assert(readme.include?("`epic-handler`") && readme.include?("$root-kernel:epic-handler"),
+       "README epic-handler entry is missing")
+assert(readme.include?("`epic-validator`") && readme.include?("$root-kernel:epic-validator"),
+       "README epic-validator entry is missing")
+assert(readme.include?("`independent-review`") && readme.include?("$root-kernel:independent-review"),
+       "README independent-review entry is missing")
 %w[
   https://github.com/irootkernel/sanho
   https://github.com/irootkernel/mulgae

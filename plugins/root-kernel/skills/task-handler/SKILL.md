@@ -1,15 +1,15 @@
 ---
 name: task-handler
-description: "Orchestrate exactly one named roadmap task through planning, implementation, verification, refinement, documentation, Mulgae review, and user-approved closeout. Use when the user explicitly invokes $root-kernel:task-handler with a repository, roadmap path, and exactly one task ID; do not use for implicit or free-form work."
+description: "Strengthen the procedure around exactly one named roadmap task goal through planning, implementation, verification, refinement, documentation, Mulgae review, and user-approved closeout. Use when the user explicitly invokes $root-kernel:task-handler with a repository, canonical roadmap path, and exactly one task ID; require explicit invocation and one canonical roadmap task identity."
 ---
 
 # Task Handler
 
-Orchestrate one roadmap task by loading focused phase skills in order. Own task identity, authority, goal lifetime, phase transitions, resumption, and final evidence; leave phase-specific work to the corresponding leaf skill.
+Strengthen execution of one roadmap task goal by loading focused phase skills in order. Own task identity, authority, goal lifetime, phase transitions, resumption, and final evidence; leave phase-specific work to the corresponding leaf skill.
 
 ## Establish the Task Contract
 
-Require one repository or working directory, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic IDs, multiple tasks, free-form work, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
+Require one repository or working directory, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic-level requests, multiple tasks, requests without one canonical roadmap task identity, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
 
 Before planning:
 

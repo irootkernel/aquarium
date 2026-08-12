@@ -10,6 +10,8 @@ Adapt names only when the installed skill namespace differs:
 ## Development skill references
 
 - Use `$root-kernel:task-handler` for one named roadmap task.
+- Use `$root-kernel:epic-handler` to implement one roadmap epic as sequential task goals.
+- Use `$root-kernel:epic-validator` to cold-validate and remediate one completed roadmap epic.
 - Use `$root-kernel:dev-setup` to diagnose or configure development tooling.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Repository-specific rules below override defaults from the referenced skills.

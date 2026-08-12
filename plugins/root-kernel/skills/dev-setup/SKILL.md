@@ -36,11 +36,12 @@ A selection expresses intent only. It does not authorize a command that writes f
 
 For each selected tool:
 
-1. Resolve the version and source provenance described in the tool catalog.
-2. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, and expected side effects.
-3. Identify existing state that will be preserved and any command that might stage files or install hooks.
-4. Obtain explicit ask/answer approval for the displayed action.
-5. Execute only the approved action, stop on unexpected prompts or side effects, and verify with read-only commands.
+1. Disclose the official release-metadata endpoint and bounded lookup needed to resolve the version and source provenance described in the tool catalog, then obtain explicit ask/answer approval for that network operation.
+2. Only after lookup approval, resolve the exact stable version and source provenance. A lookup approval authorizes no installation or other mutation.
+3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, and expected side effects.
+4. Identify existing state that will be preserved and any command that might stage files or install hooks.
+5. Obtain separate explicit ask/answer approval for the displayed action.
+6. Execute only the approved action, stop on unexpected prompts or side effects, and verify with read-only commands.
 
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 

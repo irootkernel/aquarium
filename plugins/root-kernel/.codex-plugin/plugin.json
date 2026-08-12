@@ -1,7 +1,7 @@
 {
   "name": "root-kernel",
   "version": "0.1.0",
-  "description": "Evidence-gated task delivery and development-tool setup workflows for Codex.",
+  "description": "Evidence-gated epic and task delivery, completed-epic validation, and development-tool setup workflows for Codex.",
   "author": {
     "name": "Root Kernel",
     "email": "cs@rootkernel.xyz",
@@ -12,6 +12,7 @@
   "license": "MIT",
   "keywords": [
     "roadmap",
+    "epic",
     "task",
     "orchestration",
     "setup",
@@ -27,8 +28,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Root Kernel",
-    "shortDescription": "Task delivery and development-tool setup.",
-    "longDescription": "Root Kernel provides framework-agnostic development-tool setup and an orchestrated set of focused phase skills that carry one named roadmap task from planning through implementation, verification, refinement, documentation, review, and closeout.",
+    "shortDescription": "Epic delivery, validation, and task workflows.",
+    "longDescription": "Root Kernel provides framework-agnostic development-tool setup, procedure-strengthened single-task delivery, sequential epic orchestration, and cold validation that remediates confirmed gaps in a completed epic.",
     "developerName": "Root Kernel",
     "category": "Developer Tools",
     "capabilities": [
@@ -39,7 +40,7 @@
     "privacyPolicyURL": "https://github.com/irootkernel/root-kernel-dev-skills/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/irootkernel/root-kernel-dev-skills/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Use $root-kernel:task-handler to handle one named roadmap task through its required evidence gates.",
+      "Use $root-kernel:epic-handler to deliver one roadmap epic, $root-kernel:epic-validator to validate a completed epic, or $root-kernel:task-handler for one named task.",
       "Use $root-kernel:dev-setup to diagnose and configure development tools for this repository."
     ],
     "brandColor": "#10C4BE",

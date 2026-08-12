@@ -17,31 +17,31 @@ Confirm that approved requirements, applicable verification, deslop, optimizatio
 
 ## Ask for Final Approval
 
-When the user asks to commit, re-read the roadmap vocabulary, present or identify the exact final task diff, and show the exact proposed status-only edit. Use structured `request_user_input` when available and ask all three questions together:
+Re-read the roadmap vocabulary, present or identify the exact final task diff, and show the exact proposed status-only edit. Determine whether the repository requires a commit and whether the user requested one. Use structured `request_user_input` when available and ask all three questions together:
 
-1. Tests: "Have you personally run and accepted the applicable tests against this final implementation?" Offer `Tests passed`, `Not yet or failed`, and `Not applicable`.
+1. Tests: "Have you reviewed the current applicable test evidence, including who ran each check, and accepted it for this final implementation?" Offer `Evidence accepted`, `Not yet or failed`, and `Not applicable`.
 2. Documentation: "Have you reviewed and accepted the documentation and roadmap changes in this final diff?" Offer `Docs approved`, `Needs revision`, and `Not applicable`.
-3. Implementation: "Do you fully approve this implementation and want it marked complete and committed?" Offer `Approve and commit`, `Request changes`, and `Do not commit`.
+3. Implementation: When a commit is requested or required, ask "Do you fully approve this implementation and want it marked complete and committed?" and offer `Approve and commit`, `Request changes`, and `Do not commit`. Otherwise ask "Do you fully approve this implementation and want it marked complete without a commit?" and offer `Approve and close without commit`, `Request changes`, and `Keep in review`.
 
 If structured ask/answer is unavailable, ask the same three concise questions one at a time. Count `Not applicable` as affirmative only when explicitly selected and consistent with repository requirements. Never infer approval from silence, an earlier commit request, or general satisfaction.
 
 If any answer is negative, pending, ambiguous, or inconsistent with a required gate, keep the review or other non-terminal state, do not commit, and return the feedback or exact gap.
 
-## Transition and Commit
+## Transition and Optional Commit
 
 Only after all three answers are affirmative:
 
 1. Re-read the exact task entry and allowed lifecycle vocabulary.
 2. Classify terminal states from that roadmap. Treat `Completed`, `Blocked`, and `Deferred` as terminal only when defined with those meanings.
-3. Preserve an existing terminal state. For a non-terminal state, move to the existing successful terminal state, normally `Completed`, based on the recorded approvals and assembled evidence.
+3. Preserve an existing terminal state. For a non-terminal state, select the existing successful terminal state, normally `Completed`, based on the recorded approvals and assembled evidence.
 4. Never select `Blocked` or `Deferred` merely to enable a commit, and never convert either to `Completed` without fresh evidence that work resumed and received approval.
 5. Run only mandatory status-specific documentation synchronization and validation not covered by current evidence.
-6. Stage the complete task-owned final diff, including the exact approved status edit, while preserving unrelated staged content. Stop if exact task-owned paths or hunks cannot be isolated safely.
-7. Re-read the staged roadmap entry and complete staged task diff immediately before committing.
+6. If `Approve and commit` was selected, apply the exact approved status edit and stage the complete task-owned final diff while preserving unrelated staged content. Stop if exact task-owned paths or hunks cannot be isolated safely, then re-read the staged roadmap entry and complete staged task diff immediately before committing.
+7. If `Approve and close without commit` was selected, apply only the exact approved status edit, do not stage or commit anything, and verify the task is terminal while the task-owned final diff remains uncommitted. This path is unavailable when repository authority requires a commit for completion.
 
 The exact proposed status-only edit is part of approval and does not invalidate it. Any other task-owned code, test, documentation, or roadmap change after the answers invalidates all three confirmations; show the updated final diff and ask again.
 
-The `Approve and commit` answer authorizes one commit of the displayed task-owned diff. It does not authorize amend, push, PR changes, or unrelated staging. Use repository commit conventions and safe lease checks for any separately authorized publication action.
+The `Approve and commit` answer authorizes one commit of the displayed task-owned diff. The `Approve and close without commit` answer authorizes only the displayed status edit and no Git staging or commit. Neither answer authorizes amend, push, PR changes, or unrelated staging. Use repository commit conventions and safe lease checks for any separately authorized publication action.
 
 When repository guidance selects Lore for a non-trivial commit, load `$lore-commits`. Repository title prefixes and task-ID rules override Lore's summary line. Lore never grants Git authority. If Lore is required but unavailable, stop and return an exact `$root-kernel:dev-setup` continuation request.
 
