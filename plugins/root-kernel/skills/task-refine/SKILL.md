@@ -7,6 +7,8 @@ description: "Deslop and optimize the verified diff for one roadmap task. Use wh
 
 Refine only the verified task-owned diff established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, verified baseline, and explicit authority for the staging steps below.
 
+Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `refine`. Return bounded cleanup, staged-baseline, optimization, and refreshed-check evidence to the handler; never mutate or advance Podway here.
+
 ## Deslop
 
 Load and follow the bundled `$root-kernel:deslop` skill against the task diff from its verified baseline. Report a broken plugin installation if it is unavailable. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.
@@ -15,7 +17,11 @@ Remove only task-introduced abnormal comments, unjustified defensive paths, type
 
 ## Establish the Staged Baseline
 
-After deslop, stage the current task-owned changes as the optimization baseline. Stage only exact task-owned paths or hunks, preserve all pre-existing staged content, and stop if task-owned work cannot be isolated safely. Orchestration through `$root-kernel:task-handler` authorizes these task-owned baseline and final-refresh staging steps; direct invocation requires separate staging approval. Neither path authorizes commit, amend, push, or unrelated staging.
+After deslop, stage the current task-owned changes as the optimization baseline:
+
+- Stage only exact task-owned paths or hunks, preserve all pre-existing staged content, and stop if task-owned work cannot be isolated safely.
+- Orchestration through `$root-kernel:task-handler` authorizes these task-owned baseline and final-refresh staging steps; direct invocation requires separate staging approval.
+- Neither path authorizes commit, amend, push, or unrelated staging.
 
 Inspect `git diff --cached` restricted to task-owned paths and use that staged snapshot as the sole optimization source of truth. Keep optimization edits unstaged during the pass so the corresponding unstaged diff shows only the proposed optimization delta. Do not reset, unstage, rewrite, or optimize unrelated staged content.
 
@@ -32,6 +38,6 @@ Explicitly verify whether each task-introduced abstraction is necessary by traci
 
 Do not manufacture an edit when no safe, useful optimization exists. Record a no-change result with a concise reason. Quantitative benchmarks are unnecessary unless the roadmap or repository requires them; qualitative reasoning is sufficient, but never report an unmeasured performance gain as measured fact.
 
-Do not broaden refinement into a general refactor. Re-run focused checks after every behavior-bearing cleanup and broader gates after an optimization that changes code. After verification, stage only the confirmed task-owned optimization delta. For a no-op pass, keep the staged baseline unchanged and do not rerun gates solely because the pass made no change.
+Do not broaden refinement into a general refactor. Re-run focused checks after every cleanup that touches executed code and broader gates after an optimization that changes code. After verification, stage only the confirmed task-owned optimization delta. For a no-op pass, keep the staged baseline unchanged and do not rerun gates solely because the pass made no change.
 
 Return deslop actions, optimization reasoning, staged baseline scope, optimization delta, commands and exit codes, and the final staged task-owned implementation and test paths to the orchestrator.

@@ -7,6 +7,10 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 Verify the implemented task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff.
 
+Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `verify`. Return exact command, actor provenance, exit status, source identity, digest or stable evidence reference, and gaps; the handler alone records evidence and selects the verification decision.
+
+## Build the Requirement-to-Test Matrix
+
 Build a requirement-to-test matrix from the roadmap rather than assuming fixed test folders. Consider only applicable layers:
 
 - formatting, linting, static analysis, type checking, architecture rules, and builds;
@@ -17,8 +21,19 @@ Build a requirement-to-test matrix from the roadmap rather than assuming fixed t
 
 Inspect existing coverage before adding tests. Add coverage for observable requirements, failure behavior, lifecycle races, persistence boundaries, and runtime wiring that are not already proven. Do not create a test layer the project does not use merely to satisfy a label; record it as not applicable with evidence.
 
-Before running a check, account for current user-run evidence. When the user explicitly confirms that an exact command or equivalent applicable test passed against the current task diff, record it as user-run evidence and do not rerun the same check merely to duplicate it. Ask whether the evidence covers the current diff when its revision or scope is unclear. Any affected task-owned change after that run makes the evidence stale. Repository-mandated agent checks, uncovered requirements, and checks needed to diagnose task-caused failures still run normally.
+## Account for Existing Evidence
 
-Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when an evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists.
+Before running a check, account for current user-run evidence:
 
-Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase. Return the matrix, agent-run and user-run commands, exit codes, skipped layers, task-caused failures, pre-existing failures, and unresolved evidence gaps to the orchestrator.
+- When the user explicitly confirms that an exact command or equivalent applicable test passed against the current task diff, record it as user-run evidence and do not rerun the same check merely to duplicate it.
+- Ask whether the evidence covers the current diff when its revision or scope is unclear.
+- Any affected task-owned change after that run makes the evidence stale.
+- Repository-mandated agent checks, uncovered requirements, and checks needed to diagnose task-caused failures still run normally.
+
+## Run Checks in Order
+
+Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when Gaori or another evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists. Stop and escalate to the orchestrator when a required gate is permanently blocked by repository policy, environment, or authority; never substitute a narrower check for it.
+
+Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase.
+
+Return the matrix, agent-run and user-run commands, exit codes, skipped layers, task-caused failures, pre-existing failures, and unresolved evidence gaps to the orchestrator.

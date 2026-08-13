@@ -1,11 +1,13 @@
 ---
 name: deslop
-description: "Remove AI-generated code slop introduced by the current task while preserving behavior and unrelated work. Use when cleaning a task-owned code diff before final verification, especially for abnormal comments, unjustified defensive paths, type-system bypasses, needless nesting, or style inconsistent with surrounding code."
+description: "Remove AI-generated code slop introduced by the current task while preserving behavior and unrelated work. Use when cleaning a verified task-owned code diff before review and closeout, when the user says 'clean this up', 'remove the slop', 'deslop this', or 'tidy up this diff', and especially for abnormal comments, unjustified defensive paths, type-system bypasses, needless nesting, or style inconsistent with surrounding code."
 ---
 
 # Deslop
 
 Inspect the task-owned diff from its verified baseline and remove only slop introduced by that task.
+
+Read [podway-integration.md](../../references/podway-integration.md). When an opted-in owning workflow delegates this pass, inspect the matching session read-only and return bounded cleanup evidence to the delegating workflow. Standalone deslop never creates, mutates, advances, completes, or resets Podway.
 
 ## Focus
 
@@ -22,6 +24,6 @@ Inspect the task-owned diff from its verified baseline and remove only slop intr
 - Preserve pre-existing staged, unstaged, and untracked work.
 - Do not broaden cleanup into a repository-wide refactor.
 - Record the pass as not applicable when there is no task-owned code change.
-- Re-run the narrowest affected verification after behavior-bearing cleanup.
+- Re-run the narrowest affected verification after any cleanup that touches executed code, including cleanup intended to preserve behavior.
 
-Report only the material cleanup and the verification performed.
+Return the material cleanup performed, the exact paths changed, every edit that touched executed code with the narrowest verification re-run and its exit status, and slop deliberately left in place, to the delegating workflow or the user.

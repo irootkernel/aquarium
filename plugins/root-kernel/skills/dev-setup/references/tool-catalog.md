@@ -4,7 +4,7 @@ Use only the section for a selected tool. Repository instructions override this 
 
 ## Shared version and safety policy
 
-- Resolve the latest non-draft, non-prerelease stable release at execution time from the official repository. Display the exact tag and source before installation; never substitute `@latest` after approval.
+- Resolve the latest non-draft, non-prerelease stable release at execution time from the official repository, limited to a tool's supported release line when its section defines one. Display the exact tag and source before installation; never substitute `@latest` after approval.
 - Preserve an already compatible installation unless the user approves an upgrade.
 - Diagnose credentials by whether the owning CLI reports readiness. Never print, copy, or persist credential material.
 - Keep configuration in each tool's native files. Never create `.root-kernel-dev-skills`, a selection manifest, or a shadow version registry.
@@ -92,6 +92,23 @@ Verify that `lore-commits/SKILL.md` and `lore-query/SKILL.md` exist, have valid 
 
 Official source: `https://github.com/irootkernel/podway`
 
-Status: planned.
+Supported release line: stable `v0.2.x`, native Apple Silicon macOS only.
 
-Show Podway in the inventory as unavailable for setup. Do not download release binaries, install a LaunchAgent, initialize state, start `podwayd`, or add task-handler integration.
+Resolve the exact release from GitHub Releases and download the Apple Silicon archive plus its published `.sha256` file. Disclose that release binaries are unsigned and not notarized. Verify with `shasum -a 256 -c` before installing both `podway` and `podwayd` at the approved user-local paths. Do not accept a prerelease, `v0.3+`, an unverified archive, mixed CLI and daemon versions, or unsupported platform.
+
+Install or refresh the per-user service only after separate approval:
+
+```bash
+podway daemon install --daemon-path <absolute-podwayd-path>
+podway daemon status --json
+```
+
+The LaunchAgent runs after GUI login under the same OS user and is not a multi-user security boundary. Verify `podway version --json`, daemon reachability and exact version match, and `podway doctor --json` when the worktree is initialized.
+
+Repository initialization and Root Kernel integration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`; the opt-in gate itself checks Git tracking for the three procedures. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
+
+```bash
+podway procedure check --warnings-as-errors <procedure-file>
+```
+
+The three required IDs are `root-kernel-task-v2`, `root-kernel-goal-v2`, and `root-kernel-validation-v2`. All absent means legacy mode. All present, tracked in Git, byte-identical, valid, and healthy means opted in. Partial, drifted, invalid, unsupported, or unhealthy state is degraded and must not silently fall back. The inspection script reports these as `integration_status` values `legacy`, `opted_in`, or `degraded`. Updating a tracked copy requires showing and approving its exact diff; an active session retains its immutable snapshot.

@@ -13,6 +13,7 @@ Adapt names only when the installed skill namespace differs:
 - Use `$root-kernel:epic-handler` to implement one roadmap epic as sequential task goals.
 - Use `$root-kernel:epic-validator` to cold-validate and remediate one completed roadmap epic.
 - Use `$root-kernel:dev-setup` to diagnose or configure development tooling.
+- In repositories opted into Root Kernel Podway procedures, treat the roadmap as lifecycle authority, Podway as active execution and evidence state, and the Codex goal as a temporary projection of actionable work.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Repository-specific rules below override defaults from the referenced skills.
 
@@ -31,6 +32,7 @@ Move or retain as an override only information that materially differs from the 
 - exact test commands, permission limits, and Gaori command IDs or version pins;
 - Sanho documentation ownership, check timing, project identity, conflict policy, or repository-specific exceptions;
 - Mulgae role sets, provider routing, target selection, timeouts, artist inputs, or stricter authorization;
+- Podway enablement, procedure overrides, lifecycle ownership, version constraints, or stricter session-reset policy;
 - commit subject prefixes and task-ID formats that override Lore's generic summary line;
 - project-specific sensitive paths, generated sources, fallback behavior, and unavailable gates.
 

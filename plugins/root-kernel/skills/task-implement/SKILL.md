@@ -7,7 +7,13 @@ description: "Implement the approved plan for one named roadmap task. Use when $
 
 Implement only the approved plan for the task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, and explicit plan approval; stop if the plan or current task-owned boundary cannot be reconstructed safely.
 
+Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `implement`. Return bounded implementation and revision evidence to the handler; never mutate, advance, or reset Podway here.
+
+## Re-establish the Baseline
+
 Before editing, re-read applicable instructions, the task entry, approved plan, current Git state, and affected architecture. Report material drift that invalidates the plan instead of silently redesigning it.
+
+## Implement the Approved Scope
 
 Implement the smallest maintainable change that satisfies the approved requirements:
 

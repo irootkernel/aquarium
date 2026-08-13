@@ -7,6 +7,8 @@ description: "Strengthen the procedure around exactly one named roadmap task goa
 
 Strengthen execution of one roadmap task goal by loading focused phase skills in order. Own task identity, authority, goal lifetime, phase transitions, resumption, and final evidence; leave phase-specific work to the corresponding leaf skill.
 
+Read [podway-integration.md](../../references/podway-integration.md) and apply it when the repository has opted in. After plan approval, own one `root-kernel-task-v2` session for the canonical task, include Podway mutations in the approved execution boundary, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. Do not let either goal mechanism replace roadmap authority.
+
 ## Establish the Task Contract
 
 Require one repository or working directory, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic-level requests, multiple tasks, requests without one canonical roadmap task identity, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
@@ -19,8 +21,11 @@ Before planning:
 4. Discover repository-native build, verification, documentation synchronization, Gaori, Mulgae, Sanho, and Lore guidance.
 5. Record authority already granted for mutation, staging, review, commit, amend, push, PR changes, provider use, and destructive actions.
 6. Route a missing or unhealthy prerequisite to an exact `$root-kernel:dev-setup` continuation request. Do not install or initialize tools here.
+7. Inspect Root Kernel Podway opt-in and active-session state read-only. Stop on degraded integration or a session not owned by this exact task.
 
-Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review and the task-owned staging steps defined by `$root-kernel:task-refine`; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging.
+Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$root-kernel:task-refine`, and the approved final task-owned staging in `$root-kernel:task-close`; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging.
+
+Do not start or mutate Podway before plan approval. The approved plan must disclose session start or resume, bounded evidence recording, decisions, rework, goal assessment, and terminal completion. It does not authorize reset of a mismatched, cancelled, or non-terminal session.
 
 ## Load Phase Skills in Order
 
@@ -44,23 +49,39 @@ After each phase, re-read the roadmap entry, Git state, affected files, and phas
 |---|---|
 | Plan | A decision-complete plan is explicitly approved; when Plan mode requires a handoff, it ends with an exact continuation prompt for that approved plan. |
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
-| Verify | Every applicable roadmap requirement maps to current agent-run or explicit user-run evidence, with gaps reported. |
+| Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
 | Document | Durable documentation is current, the roadmap uses its defined review state, and applicable documentation checks have evidence. |
 | Review | One exact complete task target received Mulgae review and every valid finding is resolved or explicitly dispositioned. |
 | Close | The user approved tests, documentation, and the exact final implementation; the intended terminal status and any authorized commit are verified. |
 
-If a postcondition fails, keep the goal active, preserve the latest safe repository state, report the exact gap, and do not load the next phase.
+If a postcondition fails, keep the goal active, preserve the latest safe repository state, report the exact gap, and do not load the next phase. Then re-enter the earliest phase that owns the requested change and re-run every later phase whose evidence that change invalidates:
+
+- `$root-kernel:task-implement` for a behavior change, including a rejected final approval whose correction changes behavior;
+- `$root-kernel:task-verify` for missing evidence;
+- `$root-kernel:task-document` for a documentation-only objection;
+- `$root-kernel:task-refine` for a cleanup-only correction.
+
+When Podway is active:
+
+- Independently verify the postcondition, record the bounded result with current fences, and advance only through `podway --json next` allowed actions.
+- Verification failure selects the procedure's failed route. Review findings, review-pass file changes, or a rejected final approval select the matching rework route even when the final re-review is clean; after recording it, match the rework depth to the correction — explicit manual rework to `implement` for a behavior change, to `verify` for evidence or test corrections, and the automatic `refine` route for cleanup-only work; for a documentation-only correction, complete `refine` with no-op evidence and advance to `document` normally.
+- Record `changes-requested` only for an explicit correction request or a specifically unmet gate. For `Keep in review`, silence, or an ambiguous answer, record no decision and leave the session at its current node.
+- Record the assessed outcome at `record-outcome` from the goal assessment plus the verification gaps, finding dispositions, and documentation gaps carried by the leaf reports, before requesting final approval.
+- Request a successful terminal transition only after an `achieved` goal assessment. After `not-achieved`, re-enter the owning phase through manual rework or report the exact blocker; after `superseded`, use a goal revision with a declared rework target or stop and report the supersession. Neither outcome may select a successful roadmap state or complete the Codex goal as achieved.
+- Any desired-outcome change uses a goal revision and declared rework target.
 
 ## Own Goal Lifetime
 
 Do not create a goal before plan approval. After approval, inspect the current goal, resume it when it represents the same task, create one containing the task ID and evidence boundary when none exists, and stop rather than replace a different unfinished goal. Omit a token budget unless the user explicitly supplied one.
 
-Keep the goal active through every phase. Mark it complete only after `$root-kernel:task-close` succeeds and no required task work or authorized lifecycle action remains. Mark it blocked only under the goal tool's repeated-blocker rule.
+Keep the goal active through every phase. Mark it complete only after `$root-kernel:task-close` succeeds and no required task work or authorized lifecycle action remains. Mark the goal blocked only when the host's goal tool defines a blocked state and its own repeated-blocker rule is met by the same unresolved external blocker persisting across consecutive goal turns with no authorized action remaining; otherwise keep it active and report the exact gap.
 
 ## Resume Without Shadow State
 
 Do not create or read `.root-kernel-dev-skills` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence.
+
+When Podway is active, its status and next envelopes are also required reconstruction evidence. Resume at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree; otherwise stop rather than repairing history by inference.
 
 Resume at the earliest phase whose postcondition is not currently proven. Do not repeat a proven phase merely to recreate a report, but invalidate affected evidence when task-owned code, tests, documentation, roadmap state, review target, or repository authority changed after that evidence was recorded.
 

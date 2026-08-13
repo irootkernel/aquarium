@@ -7,9 +7,15 @@ description: "Update durable documentation and review status for one refined roa
 
 Document only the refined task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
+Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `document`. Return bounded documentation, synchronization, validation, and roadmap-state evidence to the handler; never mutate or advance Podway here.
+
+## Update Durable Documentation
+
 Determine documentation impact from final behavior. Update only affected durable specifications, architecture decisions, contracts, operational guidance, generated-document sources, and roadmap entries.
 
 Read the roadmap's allowed status vocabulary. Move the task to its existing review state, preferring `In Review` only when that value is defined. Do not invent lifecycle states.
+
+## Synchronize and Validate
 
 Follow repository-owned documentation synchronization rules. Run required status checks before editing, committing, or pushing documentation. If synchronization can create a commit and commit authority was not granted, stop before that action and request authority. Never bypass synchronization hooks or edit their internal metadata.
 

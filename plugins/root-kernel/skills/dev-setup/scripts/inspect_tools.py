@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -15,6 +17,14 @@ from typing import Any
 
 SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v1"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
+PODWAY_PROCEDURES = (
+    "root-kernel-task-v2.yaml",
+    "root-kernel-goal-v2.yaml",
+    "root-kernel-validation-v2.yaml",
+)
+PODWAY_SOURCE_DIRECTORY = (
+    Path(__file__).resolve().parents[3] / "assets" / "podway" / "procedures"
+)
 
 
 class InspectionError(Exception):
@@ -91,6 +101,7 @@ def parse_json_probe(raw_probe: dict[str, Any]) -> dict[str, Any]:
     }
     if raw_probe.get("error_code"):
         probe["error_code"] = raw_probe["error_code"]
+        return probe
     if not raw_probe["attempted"] or raw_probe["timed_out"]:
         return probe
     try:
@@ -112,6 +123,23 @@ def version_from_probe(probe: dict[str, Any]) -> str | None:
     if isinstance(result, dict) and isinstance(result.get("version"), str):
         return result["version"]
     return None
+
+
+def normalized_version(version: str | None) -> str | None:
+    if not version:
+        return None
+    return version.removeprefix("v")
+
+
+def supported_podway_version(version: str | None) -> bool:
+    return bool(version and re.fullmatch(r"v?0\.2\.\d+", version))
+
+
+def file_sha256(path: Path) -> str | None:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
 
 
 def git_output(repository: Path, timeout_seconds: float, *arguments: str) -> str | None:
@@ -192,6 +220,17 @@ def ignored_by_git(
 ) -> bool:
     probe = run_command(
         ["git", "check-ignore", "--quiet", "--", relative_path],
+        repository,
+        timeout_seconds,
+    )
+    return probe["exit_code"] == 0
+
+
+def tracked_by_git(
+    repository: Path, relative_path: str, timeout_seconds: float
+) -> bool:
+    probe = run_command(
+        ["git", "ls-files", "--error-unmatch", "--", relative_path],
         repository,
         timeout_seconds,
     )
@@ -449,17 +488,227 @@ def inspect_lora() -> dict[str, Any]:
 
 
 def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
-    tool = base_tool("podway", catalog_status="planned", setup_supported=False)
+    tool = base_tool("podway")
+    tool["platform"] = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "supported": platform.system() == "Darwin"
+        and platform.machine() in {"arm64", "aarch64"},
+    }
+    managed: list[dict[str, Any]] = []
+    present_count = 0
+    matching_count = 0
+    tracked_count = 0
+    for name in PODWAY_PROCEDURES:
+        source = PODWAY_SOURCE_DIRECTORY / name
+        target = repository / ".podway" / "procedures" / name
+        relative_path = str(target.relative_to(repository))
+        source_digest = file_sha256(source)
+        target_digest = file_sha256(target)
+        present = target.is_file()
+        matching = (
+            present and source_digest is not None and target_digest == source_digest
+        )
+        tracked = present and tracked_by_git(repository, relative_path, timeout_seconds)
+        present_count += int(present)
+        matching_count += int(matching)
+        tracked_count += int(tracked)
+        managed.append(
+            {
+                "path": relative_path,
+                "present": present,
+                "tracked": tracked,
+                "source_sha256": source_digest,
+                "installed_sha256": target_digest,
+                "matches_source": matching,
+            }
+        )
+    tool["configuration"] = [
+        configuration_entry(repository, ".podway/config.yaml", timeout_seconds),
+        configuration_entry(repository, ".podway/.gitignore", timeout_seconds),
+        configuration_entry(repository, ".podway/runtime/", timeout_seconds),
+    ]
+    tool["managed_procedures"] = managed
+    tool["integration_status"] = "legacy" if present_count == 0 else "degraded"
+    tool["version_supported"] = False
+    tool["daemon_version"] = None
+    tool["versions_match"] = False
     if not tool["installed"]:
         tool["probes"]["version"] = skipped_probe("executable_missing")
-        tool["status"] = "planned"
+        tool["probes"]["daemon_status"] = skipped_probe("executable_missing")
+        tool["probes"]["doctor"] = skipped_probe("executable_missing")
+        tool["probes"]["session_status"] = skipped_probe("executable_missing")
+        if present_count:
+            tool["status"] = "degraded"
+            tool["integration_status"] = "degraded"
         return tool
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
-    tool["status"] = "planned"
+    tool["version_supported"] = supported_podway_version(tool["version"])
+
+    daemon_probe = json_probe(
+        [tool["executable"], "daemon", "status", "--json"],
+        repository,
+        timeout_seconds,
+    )
+    daemon_result = daemon_probe.get("result")
+    daemon_payload = (
+        daemon_result.get("result") if isinstance(daemon_result, dict) else None
+    )
+    normalized_daemon: dict[str, Any] = {
+        key: daemon_probe[key]
+        for key in ("attempted", "ok", "exit_code", "timed_out")
+    }
+    daemon_version = None
+    daemon_reachable = False
+    daemon_target = None
+    if isinstance(daemon_payload, dict):
+        daemon_version = daemon_payload.get("daemon_version")
+        daemon_reachable = daemon_payload.get("reachable") is True
+        daemon_target = daemon_payload.get("target")
+        normalized_daemon["result"] = {
+            key: daemon_payload[key]
+            for key in (
+                "installed",
+                "loaded",
+                "reachable",
+                "status",
+                "daemon_version",
+                "target",
+                "contract_manifest_schema",
+                "contract_manifest_digest",
+            )
+            if key in daemon_payload
+        }
+    if daemon_probe.get("error_code"):
+        normalized_daemon["error_code"] = daemon_probe["error_code"]
+    tool["probes"]["daemon_status"] = normalized_daemon
+    tool["daemon_version"] = daemon_version
+    tool["versions_match"] = (
+        normalized_version(tool["version"]) == normalized_version(daemon_version)
+        if tool["version"] and daemon_version
+        else False
+    )
+
+    initialized = tool["configuration"][0]["present"]
+    if initialized:
+        doctor_probe = json_probe(
+            [tool["executable"], "doctor", "--json"], repository, timeout_seconds
+        )
+        session_probe = json_probe(
+            [tool["executable"], "--json", "status"], repository, timeout_seconds
+        )
+        session_envelope = session_probe.get("result")
+        session_result = (
+            session_envelope.get("result")
+            if isinstance(session_envelope, dict)
+            else None
+        )
+        normalized_session = {
+            key: session_probe[key]
+            for key in ("attempted", "ok", "exit_code", "timed_out")
+        }
+        if isinstance(session_result, dict):
+            procedure = session_result.get("procedure")
+            session = session_result.get("session")
+            current = session_result.get("current")
+            node = current.get("node") if isinstance(current, dict) else None
+            normalized_session["result"] = {
+                "procedure": {
+                    key: procedure[key]
+                    for key in ("schema", "id", "version", "digest")
+                    if isinstance(procedure, dict) and key in procedure
+                },
+                "goal_revision": session_result.get("goal_revision"),
+                "session": {
+                    key: session[key]
+                    for key in ("id", "lifecycle", "revision")
+                    if isinstance(session, dict) and key in session
+                },
+                "current_graph_node_id": (
+                    node.get("graph_node_id")
+                    if isinstance(node, dict)
+                    else None
+                ),
+            }
+        tool["probes"]["doctor"] = doctor_probe
+        tool["probes"]["session_status"] = normalized_session
+    else:
+        tool["probes"]["doctor"] = skipped_probe("workspace_not_initialized")
+        tool["probes"]["session_status"] = skipped_probe(
+            "workspace_not_initialized"
+        )
+
+    procedure_checks_ok = True
+    if matching_count == len(PODWAY_PROCEDURES):
+        for entry in managed:
+            check = json_probe(
+                [
+                    tool["executable"],
+                    "--json",
+                    "procedure",
+                    "check",
+                    "--warnings-as-errors",
+                    entry["path"],
+                ],
+                repository,
+                timeout_seconds,
+            )
+            entry["check"] = {
+                key: check[key]
+                for key in ("attempted", "ok", "exit_code", "timed_out")
+            }
+            result = check.get("result")
+            payload = result.get("result") if isinstance(result, dict) else None
+            if isinstance(payload, dict):
+                entry["check"]["valid"] = payload.get("valid")
+                entry["check"]["digest"] = payload.get("digest")
+            procedure_checks_ok = (
+                procedure_checks_ok
+                and check["ok"]
+                and isinstance(payload, dict)
+                and payload.get("valid") is True
+            )
+
+    doctor_ok = tool["probes"]["doctor"]["ok"] if initialized else True
+    doctor_envelope = (
+        tool["probes"]["doctor"].get("result") if initialized else None
+    )
+    doctor_payload = (
+        doctor_envelope.get("result")
+        if isinstance(doctor_envelope, dict)
+        else None
+    )
+    if isinstance(doctor_payload, dict) and doctor_payload.get("healthy") is False:
+        doctor_ok = False
+    healthy = (
+        version_probe["ok"]
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+        and daemon_probe["ok"]
+        and daemon_reachable
+        and daemon_target == "aarch64-apple-darwin"
+        and tool["versions_match"]
+        and doctor_ok
+    )
+    if present_count == 0:
+        tool["status"] = "installed" if healthy else "degraded"
+    elif (
+        matching_count == len(PODWAY_PROCEDURES)
+        and tracked_count == len(PODWAY_PROCEDURES)
+        and procedure_checks_ok
+        and initialized
+        and tool["configuration"][1]["present"]
+        and healthy
+    ):
+        tool["integration_status"] = "opted_in"
+        tool["status"] = "configured"
+    else:
+        tool["integration_status"] = "degraded"
+        tool["status"] = "degraded"
     return tool
 
 

@@ -1,15 +1,17 @@
 ---
 name: independent-review
-description: "Run one supervised, read-only requirements and code review with a fresh Codex in the current Orca worktree, then adjudicate its findings and propose responses without making changes. Use when the user explicitly invokes $root-kernel:independent-review with exactly one EPIC or TASK and asks to receive the independent review result."
+description: "Run one supervised, read-only requirements and code review with a fresh Codex in the current Orca worktree, then adjudicate its findings and propose responses without making changes. Use when the user explicitly invokes $root-kernel:independent-review with exactly one epic or task and asks to receive the independent review result."
 ---
 
 # Independent Review
 
 Coordinate exactly one fresh Codex reviewer through Orca, preserve the current checkout, and independently verify the returned findings before recommending any response. This is a standalone review workflow, not the Mulgae phase owned by `$root-kernel:task-review`.
 
+Read [podway-integration.md](../../references/podway-integration.md). Inspect opted-in Podway state read-only and return bounded review evidence with the result; this review is always user-invoked and never creates, mutates, advances, completes, or resets a Podway session.
+
 ## Establish the Review Contract
 
-1. Require exactly one EPIC or TASK identifier and one current Git repository. Resolve the repository root, applicable instruction files, and the authoritative roadmap, requirements, specifications, decisions, and contracts for that identifier.
+1. Require exactly one epic or task identifier and one current Git repository. Resolve the repository root, applicable instruction files, and the authoritative roadmap, requirements, specifications, decisions, and contracts for that identifier.
 2. Inspect HEAD, branch, upstream, staged, unstaged, untracked, and conflicted state. Define the exact review snapshot and distinguish target-owned changes from unrelated work. Include committed, staged, and unstaged target code when applicable; never expose unrelated untracked content merely because it is present.
 3. Treat the user's statement that tests passed as context. Do not rerun tests, generators, formatters, linters, provider reviews, or other validation commands in either the coordinator or reviewer.
 4. If the target authority or review boundary cannot be established safely, ask one focused question and do not start a worker until the ambiguity is resolved.

@@ -2,7 +2,7 @@
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="plugins/root-kernel/assets/logo-black.png"><img alt="Root Kernel" src="plugins/root-kernel/assets/logo-white.png" width="240"></picture>
 
-Root Kernel Dev Skills is a Codex plugin marketplace for evidence-gated roadmap delivery and safe development-tool setup across Root Kernel projects.
+Root Kernel Dev Skills is a Codex plugin marketplace for evidence-gated roadmap delivery, optional Podway v2 execution memory, and safe development-tool setup across Root Kernel projects.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -14,7 +14,7 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$root-kernel:epic-validator` with a roadmap path and one epic ID |
 | `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$root-kernel:task-handler` with a roadmap path and one task ID |
 | `dev-setup` | Diagnose and configure selected development tools, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$root-kernel:dev-setup` |
-| `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$root-kernel:independent-review` with one EPIC or TASK ID |
+| `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$root-kernel:independent-review` with one epic or task ID |
 | `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$root-kernel:deslop` |
 
 ### Task-handler phases
@@ -33,6 +33,12 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 
 The three goal-centered workflows have distinct entry points. `epic-handler` connects multiple task goals into one epic outcome while leaving each task's internal procedure flexible. `task-handler` strengthens the procedure around one task goal with explicit phases and user-visible transition gates. `epic-validator` starts from a committed completed epic, independently audits it, and resolves confirmed gaps through sequential remediation goals. None invokes another. Commit, upstream publication, and live validation remain separate states.
 
+### Optional Podway integration
+
+[Podway](https://github.com/irootkernel/podway) v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. A repository opts in only when `dev-setup` installs all three tracked Root Kernel procedures under `.podway/procedures/`; a binary or ordinary Podway workspace alone does not opt in.
+
+In an opted-in repository, the roadmap remains authoritative for requirements and official lifecycle, Podway owns active attempts, rework and recorded evidence, and the Codex goal temporarily projects the currently actionable work. `task-handler`, `epic-handler`, and `epic-validator` own sessions. Leaf and utility skills only read state and return evidence. An unhealthy or drifted opt-in stops instead of silently falling back; use `dev-setup` to repair or explicitly opt out.
+
 ## Install
 
 Add the Git marketplace and install the plugin:
@@ -50,18 +56,19 @@ Restart Codex after installation or upgrade so the active session reloads the in
 - [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture.
 - [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) is planned for future setup integration and is not installed by `dev-setup` yet.
+- [Podway](https://github.com/irootkernel/podway) guards opted-in local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth.
 
 ## Validate
 
 Run the dependency-free repository validation:
 
 ```bash
+python3 -m unittest tests/test_inspect_tools.py
 ruby tests/validate.rb
 git diff --check
 ```
 
-The validation checks plugin metadata, skill frontmatter and UI metadata, setup safety invariants, third-party attribution, distribution files, and the no-hard-wrap documentation convention.
+The validation checks plugin metadata, skill frontmatter and UI metadata, setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
 
 ## Documentation style
 

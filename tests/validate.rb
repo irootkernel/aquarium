@@ -11,6 +11,14 @@ def assert(condition, message)
   raise message unless condition
 end
 
+def assert_png(path, width, height)
+  bytes = path.binread(24)
+  assert(bytes.start_with?("\x89PNG\r\n\x1a\n".b), "asset must be a PNG: #{path}")
+  actual_width, actual_height = bytes.byteslice(16, 8).unpack("NN")
+  assert([actual_width, actual_height] == [width, height],
+         "asset dimensions are incorrect: #{path} (#{actual_width}x#{actual_height})")
+end
+
 def assert_no_hard_wrap(path)
   in_fence = false
   in_frontmatter = false
@@ -62,6 +70,7 @@ expected_skill_names = %w[
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
        "plugin skill set does not match the expected skills")
+implicit_invocation_skills = %w[deslop]
 
 skill_paths.each do |path|
   body = path.read
@@ -78,11 +87,16 @@ skill_paths.each do |path|
   prompt = ui.fetch("interface").fetch("default_prompt")
   assert(prompt.include?("$root-kernel:#{metadata.fetch('name')}"), "default prompt lacks skill name: #{ui_path}")
   assert(prompt.length <= 128, "default prompt exceeds 128 characters: #{ui_path}")
+
+  expected_implicit = implicit_invocation_skills.include?(metadata.fetch("name"))
+  assert(ui.dig("policy", "allow_implicit_invocation") == expected_implicit,
+         "allow_implicit_invocation must be #{expected_implicit}: #{ui_path}")
 end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[deslop lora lore orchestration] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[deslop lora lore orchestration podway] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert(manifest.fetch("version") == "0.1.2", "plugin version must be 0.1.2")
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
@@ -101,13 +115,29 @@ expected_assets = {
 }
 expected_assets.each do |key, (relative_path, expected_width, expected_height)|
   assert(interface.fetch(key) == relative_path, "plugin #{key} path is incorrect")
-  asset_path = PLUGIN.join(relative_path.delete_prefix("./"))
-  bytes = asset_path.binread(24)
-  assert(bytes.start_with?("\x89PNG\r\n\x1a\n".b), "plugin #{key} must be a PNG")
-  width, height = bytes.byteslice(16, 8).unpack("NN")
-  assert([width, height] == [expected_width, expected_height], "plugin #{key} dimensions are incorrect")
+  assert_png(PLUGIN.join(relative_path.delete_prefix("./")), expected_width, expected_height)
 end
 assert(PLUGIN.join("assets/logo-black.png").file?, "dark-theme README logo is missing")
+assert_png(PLUGIN.join("assets/logo-black.png"), 1024, 1024)
+
+marketplace = JSON.parse(ROOT.join(".agents/plugins/marketplace.json").read)
+assert(marketplace.fetch("name") == "root-kernel-dev-skills", "marketplace name is incorrect")
+assert(!marketplace.dig("interface", "displayName").to_s.empty?, "marketplace interface displayName is missing")
+marketplace_plugins = marketplace.fetch("plugins")
+assert(marketplace_plugins.is_a?(Array) && marketplace_plugins.length == 1,
+       "marketplace must publish exactly one plugin")
+marketplace_plugin = marketplace_plugins.fetch(0)
+assert(marketplace_plugin.fetch("name") == manifest.fetch("name"),
+       "marketplace plugin name must match the plugin manifest name")
+assert(marketplace_plugin.dig("source", "source") == "local", "marketplace plugin source must be local")
+marketplace_plugin_path = marketplace_plugin.dig("source", "path")
+assert(marketplace_plugin_path == "./plugins/root-kernel", "marketplace plugin source path is incorrect")
+assert(ROOT.join(marketplace_plugin_path, ".codex-plugin/plugin.json").file?,
+       "marketplace plugin source path does not contain the plugin manifest")
+assert(marketplace_plugin.dig("policy", "installation") == "AVAILABLE",
+       "marketplace installation policy must be AVAILABLE")
+assert(marketplace_plugin.dig("policy", "authentication") == "ON_INSTALL",
+       "marketplace authentication policy must be ON_INSTALL")
 
 dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
@@ -126,7 +156,7 @@ task_review = PLUGIN.join("skills/task-review/SKILL.md").read
 task_close = PLUGIN.join("skills/task-close/SKILL.md").read
 
 assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
-assert(dev_setup.include?("planned Podway integration"), "dev-setup description must trigger for Podway availability")
+assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
 proposal_index = dev_setup.index("Ask whether to prepare")
@@ -135,6 +165,12 @@ apply_index = dev_setup.index("Apply exactly this diff")
 assert(proposal_index && diff_index && apply_index && proposal_index < diff_index && diff_index < apply_index,
        "AGENTS proposal and apply approvals are not ordered")
 assert(dev_setup.include?("If it changed, discard the approval"), "stale AGENTS approval guard is missing")
+assert(dev_setup.include?("the directory containing this `SKILL.md`"),
+       "dev-setup must resolve its bundled references relative to its own skill directory")
+assert(dev_setup.include?("treat it as scoped intake"),
+       "dev-setup must scope a narrow request instead of widening it")
+assert(dev_setup.include?("Do not create or read `.root-kernel-dev-skills`"),
+       "dev-setup must not create shadow orchestration state")
 lookup_approval_index = dev_setup.index("obtain explicit ask/answer approval for that network operation")
 version_resolution_index = dev_setup.index("resolve the exact stable version and source provenance")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
@@ -151,13 +187,15 @@ assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is miss
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
 assert(!tool_catalog.include?("--skill lore-setup"), "Lora setup skill must not be installed")
 assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex"), "Lora scope must be global Codex")
-assert(tool_catalog.include?("Status: planned"), "Podway must remain planned")
+assert(tool_catalog.include?("stable `v0.2.x`"), "Podway v0.2.x support policy is missing")
+assert(tool_catalog.include?("shasum -a 256 -c"), "Podway checksum verification is missing")
+assert(tool_catalog.include?("root-kernel-task-v2") &&
+       tool_catalog.include?("root-kernel-goal-v2") &&
+       tool_catalog.include?("root-kernel-validation-v2"),
+       "Podway managed procedures are missing")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
 assert(tool_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
 
-epic_handler_ui = YAML.safe_load(PLUGIN.join("skills/epic-handler/agents/openai.yaml").read, aliases: false)
-assert(epic_handler_ui.dig("policy", "allow_implicit_invocation") == false,
-       "epic-handler must disable implicit invocation")
 assert(epic_handler.include?("one canonical roadmap path inside that repository") &&
        epic_handler.include?("exactly one epic ID"),
        "epic-handler must require one repository roadmap and epic")
@@ -203,9 +241,6 @@ assert(epic_handler.include?("Commit and upstream publication are separate state
        "epic-handler must separate lifecycle evidence and invalidate stale review")
 assert(epic_handler.lines.length < 120, "epic-handler must remain orchestration-focused")
 
-epic_validator_ui = YAML.safe_load(PLUGIN.join("skills/epic-validator/agents/openai.yaml").read, aliases: false)
-assert(epic_validator_ui.dig("policy", "allow_implicit_invocation") == false,
-       "epic-validator must disable implicit invocation")
 assert(epic_validator.include?("one canonical roadmap path inside it") &&
        epic_validator.include?("exactly one epic ID"),
        "epic-validator must require one repository roadmap and epic")
@@ -234,7 +269,7 @@ assert(epic_validator.include?("If the roadmap defines a reopen state") &&
        epic_validator.include?("do not create a new task entry") &&
        epic_validator.include?("Record resulting remediation commit IDs in the final validation record"),
        "epic-validator must preserve lifecycle vocabulary and remediation notes")
-assert(epic_validator.include?("run Mulgae on the latest complete remediation target") &&
+assert(epic_validator.include?("Mulgae on the latest complete remediation target") &&
        epic_validator.include?("whole-epic Mulgae review") &&
        epic_validator.include?("coverage_status=complete") &&
        epic_validator.include?("publication_status=committed") &&
@@ -271,13 +306,160 @@ assert(task_handler.include?("A leaf skill's report is a handoff summary, not pr
        "task-handler must verify leaf postconditions independently")
 assert(task_handler.include?("Resume at the earliest phase whose postcondition is not currently proven"),
        "task-handler must reconstruct safe resume state")
+assert(task_handler.include?("podway --json next"),
+       "task-handler must read the next Podway node deterministically")
+assert(task_handler.include?("re-enter the earliest phase that owns the requested change"),
+       "task-handler must route rework to the owning phase")
 assert(task_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
        "task-handler must not create shadow orchestration state")
 assert(task_handler.lines.length < 100, "task-handler must remain orchestration-focused")
 
-independent_review_ui = YAML.safe_load(PLUGIN.join("skills/independent-review/agents/openai.yaml").read, aliases: false)
-assert(independent_review_ui.dig("policy", "allow_implicit_invocation") == false,
-       "independent-review must disable implicit invocation")
+podway_reference = PLUGIN.join("references/podway-integration.md")
+assert(podway_reference.file?, "shared Podway integration contract is missing")
+podway_contract = podway_reference.read
+assert(podway_contract.include?("The canonical roadmap owns") &&
+       podway_contract.include?("Podway owns") &&
+       podway_contract.include?("temporary projection"),
+       "Podway authority separation is missing")
+assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
+       podway_contract.include?("job lookup") &&
+       podway_contract.include?("idempotency key"),
+       "Podway mutation reconciliation is missing")
+assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` own"),
+       "Podway session ownership is missing")
+
+expected_procedure_graphs = {
+  "root-kernel-task-v2.yaml" => {
+    "id" => "root-kernel-task-v2",
+    "entry" => "record-plan",
+    "manual_targets" => %w[implement verify refine document review],
+    "nodes" => {
+      "record-plan" => { "next" => "implement" },
+      "implement" => { "next" => "verify" },
+      "verify" => { "next" => "decide-verification" },
+      "decide-verification" => { "routes" => { "passed" => %w[refine advance], "failed" => %w[implement rework] } },
+      "refine" => { "next" => "document" },
+      "document" => { "next" => "review" },
+      "review" => { "next" => "decide-review" },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "changes-requested" => %w[refine rework] } },
+      "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
+      "record-outcome" => { "next" => "approve-closeout" },
+      "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
+      "closeout" => { "terminal" => true }
+    }
+  },
+  "root-kernel-goal-v2.yaml" => {
+    "id" => "root-kernel-goal-v2",
+    "entry" => "complete-work",
+    "manual_targets" => %w[complete-work record-evidence],
+    "nodes" => {
+      "complete-work" => { "next" => "record-evidence" },
+      "record-evidence" => { "next" => "decide-evidence" },
+      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "rework-required" => %w[complete-work rework] } },
+      "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
+      "closeout" => { "terminal" => true }
+    }
+  },
+  "root-kernel-validation-v2.yaml" => {
+    "id" => "root-kernel-validation-v2",
+    "entry" => "capture-baseline",
+    "manual_targets" => %w[audit remediate re-audit final-review],
+    "nodes" => {
+      "capture-baseline" => { "next" => "audit" },
+      "audit" => { "next" => "decide-gaps" },
+      "decide-gaps" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate advance] } },
+      "remediate" => { "next" => "re-audit" },
+      "re-audit" => { "next" => "decide-re-audit" },
+      "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate rework] } },
+      "final-review" => { "next" => "decide-final-review" },
+      "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework] } },
+      "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
+      "closeout" => { "terminal" => true }
+    }
+  }
+}
+procedures_directory = PLUGIN.join("assets/podway/procedures")
+assert(Dir[procedures_directory.join("*")].map { |path| File.basename(path) }.sort == expected_procedure_graphs.keys.sort,
+       "managed Podway procedure directory must contain exactly the expected procedures")
+expected_procedure_graphs.each do |filename, expected|
+  path = procedures_directory.join(filename)
+  assert(path.file?, "managed Podway procedure is missing: #{filename}")
+  procedure = YAML.safe_load(path.read, aliases: false)
+  assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
+  assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
+  assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
+  assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
+  assert(procedure.fetch("manual_rework").fetch("allowed_targets") == expected.fetch("manual_targets"),
+         "managed procedure manual rework targets drifted: #{filename}")
+  actual_nodes = procedure.dig("graph", "nodes").each_with_object({}) do |node, index|
+    spec = {}
+    spec["next"] = node["next"] if node.key?("next")
+    spec["terminal"] = node["terminal"] if node.key?("terminal")
+    if node.key?("routes")
+      spec["routes"] = node["routes"].transform_values { |route| [route.fetch("to"), route.fetch("effect")] }
+    end
+    index[node.fetch("id")] = spec
+  end
+  assert(actual_nodes == expected.fetch("nodes"),
+         "managed procedure graph transitions drifted: #{filename}")
+end
+
+task_procedure_path = procedures_directory.join("root-kernel-task-v2.yaml")
+task_procedure_text = task_procedure_path.read
+task_procedure = YAML.safe_load(task_procedure_text, aliases: false)
+task_procedure_nodes = task_procedure.dig("graph", "nodes").each_with_object({}) do |node, index|
+  index[node.fetch("id")] = node
+end
+task_assess_evidence = task_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map { |entry| [entry.fetch("node"), entry.fetch("required")] }
+assert(task_assess_evidence == %w[record-plan implement verify refine document review].map { |node| [node, true] },
+       "task procedure assess-goal must draw required evidence from the full phase trail")
+assert(task_procedure_text.include?("must reach implementation through manual rework"),
+       "task procedure must document the manual-rework escape to implementation")
+
+{
+  "task-plan" => %w[record-plan],
+  "task-implement" => %w[implement],
+  "task-verify" => %w[verify],
+  "task-refine" => %w[refine],
+  "task-document" => %w[document],
+  "task-review" => %w[review],
+  "task-close" => %w[assess-goal record-outcome approve-closeout closeout]
+}.each do |name, node_ids|
+  body = PLUGIN.join("skills/#{name}/SKILL.md").read
+  node_ids.each do |node_id|
+    assert(body.include?("`#{node_id}`") && task_procedure_nodes.key?(node_id),
+           "leaf skill must reference a real root-kernel-task-v2 node: #{name} -> #{node_id}")
+  end
+end
+
+skill_paths.each do |path|
+  body = path.read
+  (body.scan(/session is at `([a-z][a-z0-9-]*)`/) + body.scan(/approved plan at `([a-z][a-z0-9-]*)`/)).flatten.each do |node_id|
+    assert(task_procedure_nodes.key?(node_id),
+           "skill references an unknown root-kernel-task-v2 node: #{path} -> #{node_id}")
+  end
+end
+
+assert(task_handler.include?("only after an `achieved` goal assessment") &&
+       task_handler.include?("record no decision"),
+       "task-handler must gate success on the goal assessment and skip decisions on holds")
+assert(task_close.include?("goal assessment is not `achieved`"),
+       "task-close must refuse a successful terminal state without an achieved assessment")
+assert(task_review.include?("only a pass with no file changes supports `approved`"),
+       "task-review must route review-phase fixes through the rework path")
+
+skill_paths.each do |path|
+  assert(path.read.include?("podway-integration.md"), "skill must reference Podway contract: #{path}")
+end
+%w[task-plan task-implement task-verify task-refine task-document task-review task-close independent-review deslop].each do |name|
+  body = PLUGIN.join("skills/#{name}/SKILL.md").read
+  assert(body.match?(/never .*?(?:Podway|session)/i) || body.include?("handler alone"),
+         "non-owner skill must prohibit Podway mutation: #{name}")
+end
+
+assert(epic_handler.include?("do not invoke `$root-kernel:independent-review`") &&
+       independent_review.include?("always user-invoked"),
+       "independent-review must remain user-invoked only")
 assert(independent_review.include?("skills get orca-cli") && independent_review.include?("skills get orchestration"),
        "independent-review must load version-matched Orca guides")
 assert(independent_review.include?("--worktree current --agent codex"),
@@ -291,20 +473,24 @@ assert(independent_review.include?("Keep technical review evidence and Orca life
 assert(independent_review.include?("Valid") && independent_review.include?("Invalid") &&
        independent_review.include?("Needs confirmation"),
        "independent-review must adjudicate reviewer findings")
-
-phase_names.each do |name|
-  ui = YAML.safe_load(PLUGIN.join("skills/#{name}/agents/openai.yaml").read, aliases: false)
-  assert(ui.dig("policy", "allow_implicit_invocation") == false,
-         "task phase skill must disable implicit invocation: #{name}")
-end
+assert(!independent_review.include?("owning Root Kernel workflow requested"),
+       "independent-review must not reintroduce the removed owning-workflow qualifier")
 
 assert(task_plan.include?("decision-complete plan"), "task-plan must own decision-complete planning")
 assert(task_plan.include?("Do not create a goal"), "task-plan must remain mutation-free")
+assert(task_plan.include?("## Produce and Approve the Plan"),
+       "task-plan must own an explicit plan approval section")
+assert(task_plan.include?("If approval is refused, withheld, or given for a different action, stop"),
+       "task-plan must stop on refused, withheld, or mismatched approval")
 assert(task_implement.include?("smallest maintainable change"), "task-implement must bound implementation")
 assert(task_implement.include?("Do not stage"), "task-implement must leave staging to later phases")
 assert(task_verify.include?("requirement-to-test matrix"), "task-verify must map requirements to evidence")
 assert(task_verify.include?("do not rerun the same check merely to duplicate it"),
        "task-verify must avoid duplicating current user-run tests")
+assert(task_verify.include?("Stop and escalate to the orchestrator when a required gate is permanently blocked"),
+       "task-verify must escalate a permanently blocked gate")
+assert(task_verify.include?("when Gaori or another evidence-compression wrapper is used"),
+       "task-verify must trust the underlying exit status behind evidence wrappers")
 
 deslop_index = task_refine.index("Load and follow the bundled `$root-kernel:deslop`")
 optimization_stage_index = task_refine.index("stage the current task-owned changes as the optimization baseline")
@@ -372,21 +558,83 @@ assert(task_close.include?("Never infer approval from silence"),
 assert(task_close.include?("If structured ask/answer is unavailable"),
        "task-close must define an ask/answer fallback")
 assert(task_close.include?("$lore-commits"), "task-close must honor Lore guidance")
+assert(task_close.include?("unless repository authority requires a commit for completion"),
+       "task-close must bound the non-commit path by repository authority")
+assert(task_close.include?("Only `Approve and commit` and `Approve and close without commit` are affirmative implementation answers"),
+       "task-close must enumerate the affirmative implementation answers")
+
+MULGAE_COMPLETENESS_SENTENCE =
+  "Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, " \
+  "`publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. " \
+  "Provider success or exit status alone is insufficient."
+{
+  "epic-handler" => epic_handler,
+  "epic-validator" => epic_validator,
+  "task-review" => task_review
+}.each do |name, body|
+  assert(body.include?(MULGAE_COMPLETENESS_SENTENCE),
+         "canonical Mulgae completeness sentence has drifted: #{name}")
+end
+
+LORE_COMMIT_PARAGRAPH =
+  "Before a non-trivial commit, reference `$lore-commits` and follow it when available. " \
+  "If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, " \
+  "and match recurring subject, body, and trailer structure without copying unrelated content. " \
+  "If fewer than five commits exist, inspect all; with none use a concise imperative subject. " \
+  "If repository guidance requires Lore, stop and return an exact `$root-kernel:dev-setup` continuation request instead of falling back. " \
+  "Repository-required IDs and prefixes override Lore, which never grants commit authority."
+{ "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
+  assert(body.lines.map(&:chomp).include?(LORE_COMMIT_PARAGRAPH),
+         "canonical Lore commit paragraph has drifted: #{name}")
+end
+
+approval_precondition = "Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval."
+{ "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
+  assert(body.include?(approval_precondition), "pre-approval mutation ban is missing: #{name}")
+end
+
+{
+  "dev-setup SKILL" => dev_setup,
+  "dev-setup tool catalog" => tool_catalog,
+  "Podway integration contract" => podway_contract
+}.each do |name, body|
+  assert(body.include?("stable `v0.2.x`"), "Podway supported release line has drifted: #{name}")
+end
+
+{ "epic-handler" => epic_handler, "epic-validator" => epic_validator, "task-close" => task_close }.each do |name, body|
+  assert(body.include?("git log -5 --format=fuller") && body.include?("$root-kernel:dev-setup"),
+         "Lore fallback must pair repository history with setup escalation: #{name}")
+end
+
+phase_names.each do |name|
+  body = PLUGIN.join("skills/#{name}/SKILL.md").read
+  assert(body.include?("to the orchestrator"), "leaf skill must return its report to the orchestrator: #{name}")
+end
 
 assert(PLUGIN.join("skills/deslop/LICENSE").read.include?("Copyright (c) 2026 Cursor"),
        "deslop MIT attribution is missing")
-deslop_ui = YAML.safe_load(PLUGIN.join("skills/deslop/agents/openai.yaml").read, aliases: false)
-assert(deslop_ui.dig("policy", "allow_implicit_invocation") == true, "deslop implicit invocation must be explicit")
+deslop = PLUGIN.join("skills/deslop/SKILL.md").read
+assert(deslop.include?("Return the material cleanup performed") &&
+       deslop.include?("to the delegating workflow or the user"),
+       "deslop must report its cleanup to either caller")
+deslop_description = YAML.safe_load(deslop.match(/\A---\n(.*?)\n---\n/m)[1], aliases: false).fetch("description")
+assert(deslop_description.include?("'clean this up'"),
+       "deslop description must trigger on the conversational cleanup phrasing")
 
 %w[LICENSE README.md PRIVACY.md TERMS.md .github/workflows/validate.yml].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
 end
+[PLUGIN.join("skills"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
+  assert(path.directory?, "distribution directory is missing: #{path}")
+end
+assert(manifest.fetch("skills") == "./skills/", "plugin manifest skills path is incorrect")
 
 workflow = ROOT.join(".github/workflows/validate.yml").read
 assert(workflow.include?("ruby/setup-ruby@v1"), "CI must configure Ruby explicitly")
 assert(workflow.include?("actions/setup-python@v5"), "CI must configure Python explicitly")
 assert(workflow.include?("python -m unittest tests/test_inspect_tools.py"), "CI must run inspection tests")
 assert(workflow.include?("ruby tests/validate.rb"), "CI must run repository validation")
+assert(workflow.include?("git diff --check"), "CI must reject whitespace damage")
 
 readme = ROOT.join("README.md").read
 assert(readme.include?("plugins/root-kernel/assets/logo-white.png"), "README light-theme logo is missing")
@@ -397,15 +645,17 @@ assert(readme.include?("codex plugin marketplace add irootkernel/root-kernel-dev
        "README marketplace install command is missing")
 assert(readme.include?("codex plugin add root-kernel@root-kernel-dev-skills"),
        "README plugin install command is missing")
-phase_names.each do |name|
-  assert(readme.include?("`#{name}`"), "README phase skill is missing: #{name}")
+expected_skill_names.each do |name|
+  assert(readme.include?("`#{name}`"), "README skill entry is missing: #{name}")
 end
-assert(readme.include?("`epic-handler`") && readme.include?("$root-kernel:epic-handler"),
-       "README epic-handler entry is missing")
-assert(readme.include?("`epic-validator`") && readme.include?("$root-kernel:epic-validator"),
-       "README epic-validator entry is missing")
-assert(readme.include?("`independent-review`") && readme.include?("$root-kernel:independent-review"),
-       "README independent-review entry is missing")
+readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
+assert(readme_table_names.sort == expected_skill_names.sort,
+       "README tables must list exactly the expected skills once each")
+%w[epic-handler epic-validator task-handler dev-setup independent-review deslop].each do |name|
+  assert(readme.include?("$root-kernel:#{name}"), "README invocation token is missing: #{name}")
+end
+assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),
+       "README deslop upstream MIT attribution is missing")
 %w[
   https://github.com/irootkernel/sanho
   https://github.com/irootkernel/mulgae
@@ -416,10 +666,43 @@ assert(readme.include?("`independent-review`") && readme.include?("$root-kernel:
   assert(readme.include?(url), "README tool URL is missing: #{url}")
 end
 
-document_paths = Dir[ROOT.join("**/*.md")].map { |path| Pathname.new(path) }
+markdown_paths = Dir[ROOT.join("**/*.md")].map { |path| Pathname.new(path) }.sort
+document_paths = markdown_paths.dup
 document_paths.concat([ROOT.join("LICENSE"), PLUGIN.join("skills/deslop/LICENSE")])
 document_paths.uniq.each { |path| assert_no_hard_wrap(path) }
 
+markdown_paths.each do |path|
+  in_fence = false
+  path.read.lines.each do |line|
+    in_fence = !in_fence if line.lstrip.start_with?("```", "~~~")
+    next if in_fence
+
+    line.scan(/\]\(([^)]+)\)/).each do |(target)|
+      target = target.strip.sub(/\s+"[^"]*"\z/, "")
+      next if target.start_with?("http://", "https://", "mailto:", "#")
+
+      relative_target = target.split("#", 2).first
+      next if relative_target.nil? || relative_target.empty?
+
+      assert(path.dirname.join(relative_target).exist?,
+             "relative Markdown link does not resolve: #{path} -> #{target}")
+    end
+  end
+end
+
+skill_paths.each do |path|
+  lines = path.read.lines.map(&:chomp)
+  frontmatter_end = lines[1..].index("---")
+  assert(frontmatter_end, "missing closing frontmatter delimiter: #{path}")
+  lines[(frontmatter_end + 2)..].each_with_index do |line, offset|
+    # The canonical Lore commit paragraph is pinned byte-for-byte above and is exempt from the ratchet.
+    next if line == LORE_COMMIT_PARAGRAPH
+
+    assert(line.length <= 560,
+           "skill body line exceeds 560 characters: #{path}:#{frontmatter_end + 3 + offset} (#{line.length})")
+  end
+end
+
 assert(Dir[ROOT.join("**/.root-kernel-dev-skills")].empty?, "central project-state file must not exist")
 
-puts "validated #{skill_paths.length} skills and plugin invariants"
+puts "validated #{skill_paths.length} skills, marketplace and plugin metadata, managed procedures, cross-file pins, and documentation invariants"
