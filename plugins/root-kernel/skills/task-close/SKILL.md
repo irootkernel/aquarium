@@ -45,6 +45,10 @@ The exact proposed status-only edit is part of approval and does not invalidate 
 
 The `Approve and commit` answer authorizes one commit of the displayed task-owned diff. The `Approve and close without commit` answer authorizes only the displayed status edit and no Git staging or commit. Neither answer authorizes amend, push, PR changes, or unrelated staging. Use repository commit conventions and safe lease checks for any separately authorized publication action.
 
+Before an authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary status workflow when available. If unavailable and repository guidance requires it, stop and return an exact `$root-kernel:dev-setup` continuation request. Otherwise run the repository's required Sanho check or the minimal `sanho status --json` fallback, derive action from current structured state, and never treat status as commit authority.
+
+After the commit and its hooks, re-run the applicable status workflow and report only the resulting evidence. For any separately authorized push, use the skill's refreshed push-boundary workflow; commit approval never grants synchronization or push authority.
+
 Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository title prefixes and task-ID rules override Lore's summary line. Lore never grants Git authority. If Lore is required but unavailable, stop and return an exact `$root-kernel:dev-setup` continuation request. When no repository rule requires Lore and it is unavailable, report that once and match the recurring subject, body, and trailer structure in `git log -5 --format=fuller` instead.
 
 Return the three answers, final roadmap state, mandatory commands and exit codes, staged paths, commit identifier when created, publication state, and remaining gaps to the orchestrator.

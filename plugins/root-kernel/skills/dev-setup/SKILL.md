@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Root Kernel development tooling for a repository. Use when the user explicitly invokes $root-kernel:dev-setup; asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, or the third-party Lora skills; or wants to replace duplicated AGENTS.md tool guidance with skill references and repository-specific overrides."
+description: "Diagnose and configure Root Kernel development tooling for a repository. Use when the user explicitly invokes $root-kernel:dev-setup; asks to install, initialize, repair, or audit the Sanho CLI or use-sanho skill, the Mulgae CLI, use-mulgae skill, Config v2, or project MCP, the Gaori CLI, use-gaori skill, or project MCP, the Podway CLI, daemon, use-podway skill, or Root Kernel procedures, or the third-party Lora skills; or wants to replace duplicated AGENTS.md tool guidance with skill references and repository-specific overrides."
 ---
 
 # Development Setup
@@ -28,7 +28,9 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 - Use direct text only for an identifier that cannot be discovered or represented by choices, such as an unknown private documentation repository URL.
 - If ask/answer is unavailable, ask one concise approval question at a time. Never infer approval from silence or from approval of a different setup action.
 
-After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch. Ask about Podway, Lora, and whether to prepare an AGENTS.md proposal in subsequent batches. For each active tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording when it is already installed.
+After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch. Ask about Podway, Lora, and whether to prepare an AGENTS.md proposal in subsequent batches. For each active tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording when it is already installed. For Sanho, Mulgae, Gaori, and Podway, make `Install or upgrade the CLI and paired skill` the recommended setup choice, but report each component independently and preserve a healthy CLI when its optional skill is absent.
+
+When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
 When another Root Kernel skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including Podway repair or opt-out; skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
 
@@ -47,9 +49,21 @@ For each selected tool:
 5. Obtain separate explicit ask/answer approval for the displayed action.
 6. Execute only the approved action, stop on unexpected prompts or side effects, and verify with read-only commands.
 
+For Sanho, support only stable `v0.2.6` through `v0.2.x`. Resolve one exact tag and use it for both the CLI and `use-sanho` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, workspace initialization, and lifecycle repair as separate approval boundaries. A paired recommendation is not approval for both components. Treat missing, incomplete, invalid, and duplicate skill installations separately from CLI or workspace health.
+
+For Mulgae, support only stable `v0.1.13` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-mulgae` source. Require Go `1.26.6` or newer for installation, without treating an older Go toolchain as a runtime failure of an already healthy binary.
+
+Keep CLI installation or upgrade, user-scoped skill installation or replacement, project Config v2 and ignore changes, local bootstrap or refresh, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI and configuration health. Never start a Mulgae review, preflight capture, provider call, or MCP server during setup.
+
+For Gaori, support only stable `v0.1.12` through `v0.1.x`. Resolve one exact tag and use it for both the CLI and `use-gaori` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, repository config and ignore changes, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI health. Never start a Gaori run or MCP test command during setup.
+
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
-For Podway, keep release lookup, binary and LaunchAgent installation, repository initialization, managed-procedure installation or update, and opt-out as distinct proposed actions. Support only stable `v0.2.x` on native Apple Silicon macOS. Verify the release checksum before installing both matching binaries, then install or refresh the per-user LaunchAgent using the approved absolute daemon path. Disclose that the release is unsigned and not notarized, runs as a same-user local service after GUI login, and stores runtime state in the worktree.
+For Podway, support only stable `v0.2.1` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Keep release lookup, binary installation, user-scoped skill installation or replacement, LaunchAgent installation, repository initialization, managed-procedure installation or update, legacy-state recovery, and opt-out as distinct proposed actions. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository health.
+
+Verify the release checksum before installing both matching binaries, then install or refresh the per-user LaunchAgent using the approved absolute daemon path. Disclose that the release is unsigned and not notarized, runs as a same-user local service after GUI login, and stores runtime state in the worktree.
+
+Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, require the user to make any desired backup, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_opted_in` as legacy Procedure state.
 
 Repository opt-in has four disclosed parts:
 
@@ -79,6 +93,10 @@ Report:
 
 - selected, skipped, and planned tools;
 - resolved versions and sources;
+- Sanho CLI, workspace, and `use-sanho` skill state separately;
+- Mulgae CLI, project and local Config v2, `use-mulgae` skill, provider readiness, installation prerequisites, and project MCP state separately;
+- Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;
+- Podway CLI, daemon, workspace, Root Kernel opt-in, legacy-state detection, and `use-podway` skill state separately;
 - commands run and their exit status;
 - native configuration and ignore paths changed;
 - verification evidence and remaining auth or environment gaps;

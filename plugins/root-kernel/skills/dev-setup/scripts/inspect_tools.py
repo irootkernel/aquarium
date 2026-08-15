@@ -15,8 +15,32 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v1"
+SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v2"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
+SANHO_SKILL_FILES = (
+    "SKILL.md",
+    "references/lifecycle.md",
+    "references/authoring.md",
+    "references/recovery.md",
+)
+GAORI_SKILL_FILES = (
+    "SKILL.md",
+    "references/lifecycle.md",
+    "references/authoring.md",
+    "references/recovery.md",
+)
+MULGAE_SKILL_FILES = (
+    "SKILL.md",
+    "references/lifecycle.md",
+    "references/authoring.md",
+    "references/recovery.md",
+)
+PODWAY_SKILL_FILES = (
+    "SKILL.md",
+    "references/lifecycle.md",
+    "references/authoring.md",
+    "references/recovery.md",
+)
 PODWAY_PROCEDURES = (
     "root-kernel-task-v2.yaml",
     "root-kernel-goal-v2.yaml",
@@ -132,7 +156,38 @@ def normalized_version(version: str | None) -> str | None:
 
 
 def supported_podway_version(version: str | None) -> bool:
-    return bool(version and re.fullmatch(r"v?0\.2\.\d+", version))
+    if not version:
+        return False
+    match = re.fullmatch(r"v?0\.2\.(\d+)", version)
+    return bool(match and int(match.group(1)) >= 1)
+
+
+def supported_sanho_version(version: str | None) -> bool:
+    if not version:
+        return False
+    match = re.fullmatch(r"v?0\.2\.(\d+)", version)
+    return bool(match and int(match.group(1)) >= 6)
+
+
+def supported_gaori_version(version: str | None) -> bool:
+    if not version:
+        return False
+    match = re.fullmatch(r"v?0\.1\.(\d+)", version)
+    return bool(match and int(match.group(1)) >= 12)
+
+
+def supported_mulgae_version(version: str | None) -> bool:
+    if not version:
+        return False
+    match = re.fullmatch(r"v?0\.1\.(\d+)", version)
+    return bool(match and int(match.group(1)) >= 13)
+
+
+def supported_mulgae_go_version(version: str | None) -> bool:
+    if not version:
+        return False
+    match = re.fullmatch(r"go(\d+)\.(\d+)\.(\d+)", version)
+    return bool(match and tuple(map(int, match.groups())) >= (1, 26, 6))
 
 
 def file_sha256(path: Path) -> str | None:
@@ -238,12 +293,17 @@ def tracked_by_git(
 
 
 def configuration_entry(
-    repository: Path, relative_path: str, timeout_seconds: float
+    repository: Path,
+    relative_path: str,
+    timeout_seconds: float,
+    ignore_probe_path: str | None = None,
 ) -> dict[str, Any]:
     return {
         "path": relative_path,
         "present": repository.joinpath(relative_path).exists(),
-        "ignored": ignored_by_git(repository, relative_path, timeout_seconds),
+        "ignored": ignored_by_git(
+            repository, ignore_probe_path or relative_path, timeout_seconds
+        ),
     }
 
 
@@ -263,8 +323,172 @@ def base_tool(
     }
 
 
+def normalized_probe(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = {
+        key: probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
+    }
+    result = probe.get("result")
+    if isinstance(result, dict):
+        error = result.get("error")
+        if isinstance(error, dict) and isinstance(error.get("code"), str):
+            normalized["error_code"] = error["code"]
+    if probe.get("error_code"):
+        normalized["error_code"] = probe["error_code"]
+    if probe.get("reason"):
+        normalized["reason"] = probe["reason"]
+    return normalized
+
+
+def selected_fields(value: Any, names: tuple[str, ...]) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return {name: value[name] for name in names if name in value}
+
+
+def normalize_sanho_status(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = normalized_probe(probe)
+    result = probe.get("result")
+    if not isinstance(result, dict) or isinstance(result.get("error"), dict):
+        return normalized
+    safe: dict[str, Any] = {}
+    for name, fields in (
+        ("relation", ("known", "behind", "ahead")),
+        ("publication", ("known", "pending")),
+        ("working_copy", ("known", "docs_clean")),
+    ):
+        selected = selected_fields(result.get(name), fields)
+        if selected:
+            safe[name] = selected
+    preview = selected_fields(result.get("sync_preview"), ("known", "clean"))
+    raw_preview = result.get("sync_preview")
+    if isinstance(raw_preview, dict) and isinstance(raw_preview.get("conflicts"), list):
+        preview["conflict_count"] = len(raw_preview["conflicts"])
+    if preview:
+        safe["sync_preview"] = preview
+    readiness = result.get("local_readiness")
+    if isinstance(readiness, dict):
+        safe_readiness = {}
+        for operation in ("sync", "pull"):
+            selected = selected_fields(readiness.get(operation), ("ready", "blocked_by"))
+            if selected:
+                safe_readiness[operation] = selected
+        if safe_readiness:
+            safe["local_readiness"] = safe_readiness
+    if isinstance(result.get("sync_in_progress"), bool):
+        safe["sync_in_progress"] = result["sync_in_progress"]
+    if safe:
+        normalized["result"] = safe
+    return normalized
+
+
+def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = normalized_probe(probe)
+    result = probe.get("result")
+    if not isinstance(result, dict) or isinstance(result.get("error"), dict):
+        return normalized
+    safe: dict[str, Any] = {}
+    if isinstance(result.get("warnings"), int):
+        safe["warnings"] = result["warnings"]
+    checks = result.get("checks")
+    if isinstance(checks, list):
+        safe["checks"] = [
+            selected_fields(check, ("name", "severity"))
+            for check in checks
+            if isinstance(check, dict)
+        ]
+    if safe:
+        normalized["result"] = safe
+    return normalized
+
+
+def inspect_agent_skill(
+    name: str, required_files: tuple[str, ...]
+) -> dict[str, Any]:
+    installations: list[dict[str, Any]] = []
+    for root in skill_roots():
+        directory = root / name
+        if not directory.exists() and not directory.is_symlink():
+            continue
+        skill_path = directory / "SKILL.md"
+        files = [
+            {
+                "path": relative_path,
+                "present": (directory / relative_path).is_file(),
+                "sha256": file_sha256(directory / relative_path),
+            }
+            for relative_path in required_files
+        ]
+        installations.append(
+            {
+                "path": str(directory),
+                "frontmatter_valid": frontmatter_name(skill_path) == name,
+                "files": files,
+            }
+        )
+    if not installations:
+        status = "missing"
+    elif len(installations) == 1 and installations[0]["frontmatter_valid"] and all(
+        entry["present"] for entry in installations[0]["files"]
+    ):
+        status = "configured"
+    else:
+        status = "degraded"
+    return {
+        "status": status,
+        "present": bool(installations),
+        "duplicate": len(installations) > 1,
+        "installations": installations,
+    }
+
+
+def inspect_sanho_skill() -> dict[str, Any]:
+    return inspect_agent_skill("use-sanho", SANHO_SKILL_FILES)
+
+
+def normalize_podway_envelope(
+    probe: dict[str, Any],
+    command: str,
+    result_schemas: tuple[str, ...] = (),
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    if not isinstance(envelope, dict):
+        return normalized, None
+    schema = envelope.get("schema")
+    if schema == "podway.error/v1":
+        code = envelope.get("code")
+        if isinstance(code, str):
+            normalized["error_code"] = code
+        normalized["output_schema"] = schema
+        return normalized, None
+    if schema != "podway.output/v3":
+        normalized["ok"] = False
+        normalized["error_code"] = "unexpected_output_schema"
+        return normalized, None
+    normalized["output_schema"] = schema
+    if envelope.get("command") != command:
+        normalized["ok"] = False
+        normalized["error_code"] = "unexpected_command"
+        return normalized, None
+    payload = envelope.get("result")
+    if not isinstance(payload, dict):
+        normalized["ok"] = False
+        normalized["error_code"] = "invalid_result"
+        return normalized, None
+    result_schema = payload.get("schema")
+    if result_schemas and result_schema not in result_schemas:
+        normalized["ok"] = False
+        normalized["error_code"] = "unexpected_result_schema"
+        return normalized, None
+    if isinstance(result_schema, str):
+        normalized["result_schema"] = result_schema
+    return normalized, payload
+
+
 def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool = base_tool("sanho")
+    tool["version_supported"] = False
+    tool["agent_skill"] = inspect_sanho_skill()
     tool["configuration"] = [
         configuration_entry(repository, ".sanho.json", timeout_seconds),
         configuration_entry(repository, ".sanho_base.json", timeout_seconds),
@@ -277,7 +501,8 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     )
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
-    if not version_probe["ok"]:
+    tool["version_supported"] = supported_sanho_version(tool["version"])
+    if not version_probe["ok"] or not tool["version_supported"]:
         tool["status"] = "degraded"
     if not tool["configuration"][0]["present"]:
         tool["probes"]["status"] = skipped_probe("configuration_missing")
@@ -289,26 +514,36 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     doctor_probe = json_probe(
         [tool["executable"], "doctor", "--json"], repository, timeout_seconds
     )
-    tool["probes"].update({"status": status_probe, "doctor": doctor_probe})
+    normalized_status = normalize_sanho_status(status_probe)
+    normalized_doctor = normalize_sanho_doctor(doctor_probe)
+    tool["probes"].update(
+        {"status": normalized_status, "doctor": normalized_doctor}
+    )
+    doctor_result = normalized_doctor.get("result")
+    no_doctor_warnings = (
+        isinstance(doctor_result, dict) and doctor_result.get("warnings") == 0
+    )
     tool["status"] = (
         "configured"
-        if version_probe["ok"] and status_probe["ok"] and doctor_probe["ok"]
+        if version_probe["ok"]
+        and tool["version_supported"]
+        and status_probe["ok"]
+        and doctor_probe["ok"]
+        and no_doctor_warnings
         else "degraded"
     )
     return tool
 
 
 def normalize_mulgae_config(probe: dict[str, Any]) -> dict[str, Any]:
-    normalized = {
-        key: probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
-    }
+    normalized = normalized_probe(probe)
     result = probe.get("result")
     if isinstance(result, dict):
         command_result = result.get("result")
         if isinstance(command_result, dict):
             normalized["result"] = {
                 key: command_result[key]
-                for key in ("kind", "config_uri", "config_sha256")
+                for key in ("kind", "mode", "config_uri", "config_sha256")
                 if isinstance(command_result.get(key), str)
             }
         reasons = result.get("reasons")
@@ -318,108 +553,534 @@ def normalize_mulgae_config(probe: dict[str, Any]) -> dict[str, Any]:
                 for reason in reasons
                 if isinstance(reason, dict) and isinstance(reason.get("code"), str)
             ]
-    if probe.get("error_code"):
-        normalized["error_code"] = probe["error_code"]
     return normalized
 
 
-def parse_mulgae_providers(raw_probe: dict[str, Any]) -> dict[str, Any]:
-    normalized = {
-        key: raw_probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
+def mulgae_reason_codes(envelope: Any) -> list[str]:
+    if not isinstance(envelope, dict) or not isinstance(envelope.get("reasons"), list):
+        return []
+    return [
+        reason["code"]
+        for reason in envelope["reasons"]
+        if isinstance(reason, dict) and isinstance(reason.get("code"), str)
+    ]
+
+
+def normalize_mulgae_providers(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    if isinstance(envelope, dict):
+        result = envelope.get("result")
+        if isinstance(result, dict):
+            normalized["result"] = selected_fields(
+                result, ("kind", "ready_provider_count")
+            )
+        reason_codes = mulgae_reason_codes(envelope)
+        if reason_codes:
+            normalized["reason_codes"] = reason_codes
+    return normalized
+
+
+def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    if not isinstance(envelope, dict):
+        return normalized
+    result = envelope.get("result")
+    doctor = result.get("doctor") if isinstance(result, dict) else None
+    if isinstance(result, dict):
+        safe: dict[str, Any] = selected_fields(result, ("kind", "readiness"))
+        if isinstance(doctor, dict):
+            safe_doctor: dict[str, Any] = {}
+            config = selected_fields(
+                doctor.get("config"),
+                (
+                    "status",
+                    "uri",
+                    "locality",
+                    "native_home_identity",
+                    "provenance_state",
+                    "reason_codes",
+                ),
+            )
+            if config:
+                safe_doctor["config"] = config
+            configured = doctor.get("configured_provider_ids")
+            if isinstance(configured, list) and all(
+                isinstance(provider, str) for provider in configured
+            ):
+                safe_doctor["configured_provider_ids"] = configured
+            inventory = doctor.get("provider_inventory")
+            if isinstance(inventory, list):
+                safe_doctor["provider_inventory"] = [
+                    selected_fields(provider, ("family", "state", "reason"))
+                    for provider in inventory
+                    if isinstance(provider, dict)
+                ]
+            for name, fields in (
+                ("assignment", ("state", "resilience")),
+                ("readiness", ("state", "exit_code", "reason_codes")),
+            ):
+                selected = selected_fields(doctor.get(name), fields)
+                if selected:
+                    safe_doctor[name] = selected
+            platform_evidence = doctor.get("platform_evidence")
+            if isinstance(platform_evidence, list):
+                safe_doctor["platform_evidence"] = [
+                    selected_fields(evidence, ("cell", "native"))
+                    for evidence in platform_evidence
+                    if isinstance(evidence, dict)
+                ]
+            safe["doctor"] = safe_doctor
+        normalized["result"] = safe
+    reason_codes = mulgae_reason_codes(envelope)
+    if reason_codes:
+        normalized["reason_codes"] = reason_codes
+    return normalized
+
+
+def inspect_mulgae_installation_prerequisites(
+    repository: Path, timeout_seconds: float
+) -> dict[str, Any]:
+    go_executable = shutil.which("go")
+    prerequisite: dict[str, Any] = {
+        "go": {
+            "installed": go_executable is not None,
+            "version": None,
+            "supported": False,
+            "minimum": "go1.26.6",
+        }
     }
-    providers: list[dict[str, str]] = []
-    diagnostic: dict[str, str] = {}
-    for line in raw_probe["stdout"].splitlines():
-        fields = dict(re.findall(r"([a-z_]+)=([^\s]+)", line))
-        if fields:
-            providers.append(fields)
-    for line in raw_probe["stderr"].splitlines():
-        key, separator, value = line.partition(":")
-        if separator and key.strip() in {"code", "stage", "hint"}:
-            diagnostic[key.strip()] = value.strip()
-    normalized["providers"] = providers
-    if diagnostic:
-        normalized["diagnostic"] = diagnostic
-    return normalized
+    if not go_executable:
+        prerequisite["go"]["probe"] = skipped_probe("executable_missing")
+        return prerequisite
+    probe = json_probe(
+        [go_executable, "env", "-json", "GOVERSION", "GOOS", "GOARCH"],
+        repository,
+        timeout_seconds,
+    )
+    normalized = normalized_probe(probe)
+    result = probe.get("result")
+    if isinstance(result, dict):
+        version = result.get("GOVERSION")
+        if isinstance(version, str):
+            prerequisite["go"]["version"] = version
+            prerequisite["go"]["supported"] = supported_mulgae_go_version(version)
+        normalized["result"] = selected_fields(
+            result, ("GOVERSION", "GOOS", "GOARCH")
+        )
+    prerequisite["go"]["probe"] = normalized
+    return prerequisite
+
+
+def mulgae_configuration_entry(
+    repository: Path, relative_path: str, timeout_seconds: float
+) -> dict[str, Any]:
+    entry = configuration_entry(repository, relative_path, timeout_seconds)
+    entry["tracked"] = tracked_by_git(repository, relative_path, timeout_seconds)
+    if relative_path == ".mulgae/local.yaml":
+        try:
+            entry["mode"] = oct(repository.joinpath(relative_path).stat().st_mode & 0o777)
+        except OSError:
+            entry["mode"] = None
+        entry["mode_0600"] = entry["mode"] == "0o600"
+    return entry
+
+
+def inspect_mulgae_mcp(
+    repository: Path, mulgae_executable: str | None, timeout_seconds: float
+) -> dict[str, Any]:
+    registration: dict[str, Any] = {
+        "status": "missing",
+        "project_config_present": repository.joinpath(".codex/config.toml").is_file(),
+        "enabled": None,
+        "stdio": None,
+        "repository_bound": None,
+        "cwd_bound": None,
+        "required": None,
+        "command_resolvable": None,
+        "binary_matches_selected": None,
+        "startup_timeout_sec": None,
+        "tool_timeout_sec": None,
+    }
+    codex_executable = shutil.which("codex")
+    if not codex_executable:
+        registration.update(
+            {"status": "unavailable", "reason": "codex_executable_missing"}
+        )
+        return registration
+    probe = json_probe(
+        [codex_executable, "mcp", "get", "mulgae", "--json"],
+        repository,
+        timeout_seconds,
+    )
+    if not probe["ok"]:
+        if probe["exit_code"] == 1 and not probe["timed_out"]:
+            return registration
+        if probe["timed_out"] or probe.get("error_code"):
+            registration.update(
+                {"status": "degraded", "reason": "registration_probe_failed"}
+            )
+        return registration
+    result = probe.get("result")
+    transport = result.get("transport") if isinstance(result, dict) else None
+    if not isinstance(result, dict) or not isinstance(transport, dict):
+        registration.update(
+            {"status": "degraded", "reason": "invalid_registration_result"}
+        )
+        return registration
+
+    command = transport.get("command")
+    resolved_command: Path | None = None
+    if isinstance(command, str) and command:
+        candidate = Path(command).expanduser()
+        if candidate.is_absolute() and candidate.is_file() and os.access(candidate, os.X_OK):
+            resolved_command = candidate.resolve()
+        elif not candidate.is_absolute():
+            discovered = shutil.which(command)
+            if discovered:
+                resolved_command = Path(discovered).resolve()
+
+    args = transport.get("args")
+    repository_bound = False
+    server_mode = False
+    if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
+        server_mode = bool(args and args[0] == "mcp")
+        try:
+            root_index = args.index("--project-root")
+            configured_root = Path(args[root_index + 1]).expanduser().resolve()
+            repository_bound = configured_root == repository
+        except (ValueError, IndexError, OSError):
+            repository_bound = False
+
+    raw_cwd = transport.get("cwd", result.get("cwd"))
+    try:
+        cwd_bound = isinstance(raw_cwd, str) and Path(raw_cwd).expanduser().resolve() == repository
+    except OSError:
+        cwd_bound = False
+    startup_timeout = result.get("startup_timeout_sec")
+    tool_timeout = result.get("tool_timeout_sec")
+    startup_supported = isinstance(startup_timeout, (int, float)) and startup_timeout >= 30
+    tool_supported = isinstance(tool_timeout, (int, float)) and tool_timeout >= 54000
+    binary_matches = bool(
+        resolved_command
+        and mulgae_executable
+        and resolved_command == Path(mulgae_executable).resolve()
+    )
+    registration.update(
+        {
+            "enabled": result.get("enabled") is True,
+            "stdio": transport.get("type") == "stdio",
+            "repository_bound": repository_bound,
+            "cwd_bound": cwd_bound,
+            "required": result.get("required") is True,
+            "command_resolvable": resolved_command is not None,
+            "binary_matches_selected": binary_matches,
+            "startup_timeout_sec": startup_timeout,
+            "tool_timeout_sec": tool_timeout,
+        }
+    )
+    if (
+        registration["project_config_present"]
+        and registration["enabled"]
+        and registration["stdio"]
+        and repository_bound
+        and cwd_bound
+        and registration["required"]
+        and server_mode
+        and binary_matches
+        and startup_supported
+        and tool_supported
+    ):
+        registration["status"] = "configured"
+    else:
+        registration.update(
+            {"status": "degraded", "reason": "registration_mismatch"}
+        )
+    return registration
 
 
 def inspect_mulgae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool = base_tool("mulgae")
+    tool["version_supported"] = False
+    tool["platform"] = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "supported": platform.system() == "Darwin"
+        and platform.machine() in {"arm64", "aarch64"},
+    }
+    tool["installation_prerequisites"] = inspect_mulgae_installation_prerequisites(
+        repository, timeout_seconds
+    )
+    tool["agent_skill"] = inspect_agent_skill("use-mulgae", MULGAE_SKILL_FILES)
     tool["configuration"] = [
-        configuration_entry(repository, ".mulgae/config.yaml", timeout_seconds),
-        configuration_entry(repository, ".mulgae/", timeout_seconds),
-        configuration_entry(repository, ".mulgaeignore", timeout_seconds),
+        mulgae_configuration_entry(repository, ".mulgae/config.yaml", timeout_seconds),
+        mulgae_configuration_entry(repository, ".mulgae/local.yaml", timeout_seconds),
+        configuration_entry(
+            repository,
+            ".mulgae/runtime/",
+            timeout_seconds,
+            ".mulgae/runtime/example",
+        ),
+        mulgae_configuration_entry(repository, ".mulgaeignore", timeout_seconds),
+        configuration_entry(repository, ".codex/config.toml", timeout_seconds),
     ]
+    tool["mcp_registration"] = inspect_mulgae_mcp(
+        repository, tool["executable"], timeout_seconds
+    )
     if not tool["installed"]:
         tool["probes"]["version"] = skipped_probe("executable_missing")
+        tool["probes"]["doctor"] = skipped_probe("executable_missing")
         tool["probes"]["providers"] = skipped_probe("executable_missing")
+        tool["probes"]["effective_config"] = skipped_probe("executable_missing")
+        tool["probes"]["provenance_config"] = skipped_probe("executable_missing")
         return tool
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
-    if not version_probe["ok"]:
-        tool["status"] = "degraded"
-    providers_probe = run_command(
-        [tool["executable"], "providers", "--include-unverified"],
+    tool["version_supported"] = supported_mulgae_version(tool["version"])
+    doctor_probe = json_probe(
+        [tool["executable"], "doctor", "--output", "json"],
         repository,
         timeout_seconds,
     )
-    tool["probes"]["providers"] = parse_mulgae_providers(providers_probe)
-    if not tool["configuration"][0]["present"]:
-        tool["probes"]["effective_config"] = skipped_probe("configuration_missing")
-        return tool
-    config_probe = json_probe(
+    providers_probe = json_probe(
+        [
+            tool["executable"],
+            "providers",
+            "--include-unverified",
+            "--output",
+            "json",
+        ],
+        repository,
+        timeout_seconds,
+    )
+    effective_probe = json_probe(
         [tool["executable"], "config", "--mode", "effective", "--output", "json"],
         repository,
         timeout_seconds,
     )
-    tool["probes"]["effective_config"] = normalize_mulgae_config(config_probe)
-    tool["status"] = (
-        "configured" if version_probe["ok"] and config_probe["ok"] else "degraded"
+    provenance_probe = json_probe(
+        [tool["executable"], "config", "--mode", "provenance", "--output", "json"],
+        repository,
+        timeout_seconds,
     )
+    normalized_doctor = normalize_mulgae_doctor(doctor_probe)
+    tool["probes"].update(
+        {
+            "doctor": normalized_doctor,
+            "providers": normalize_mulgae_providers(providers_probe),
+            "effective_config": normalize_mulgae_config(effective_probe),
+            "provenance_config": normalize_mulgae_config(provenance_probe),
+        }
+    )
+
+    project_config, local_config, runtime = tool["configuration"][:3]
+    both_missing = not project_config["present"] and not local_config["present"]
+    doctor_result = normalized_doctor.get("result")
+    doctor_payload = (
+        doctor_result.get("doctor") if isinstance(doctor_result, dict) else None
+    )
+    readiness = (
+        doctor_payload.get("readiness") if isinstance(doctor_payload, dict) else None
+    )
+    config_state = (
+        doctor_payload.get("config") if isinstance(doctor_payload, dict) else None
+    )
+    configuration_policy_ok = (
+        project_config["present"]
+        and not project_config["ignored"]
+        and local_config["present"]
+        and local_config["ignored"]
+        and not local_config["tracked"]
+        and local_config["mode_0600"]
+        and runtime["ignored"]
+    )
+    healthy = (
+        version_probe["ok"]
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+        and doctor_probe["ok"]
+        and isinstance(readiness, dict)
+        and readiness.get("state") == "ready"
+        and isinstance(config_state, dict)
+        and config_state.get("status") == "ready"
+        and providers_probe["ok"]
+        and effective_probe["ok"]
+        and provenance_probe["ok"]
+        and configuration_policy_ok
+    )
+    if healthy:
+        tool["status"] = "configured"
+    elif (
+        both_missing
+        and version_probe["ok"]
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+    ):
+        tool["status"] = "installed"
+    else:
+        tool["status"] = "degraded"
     return tool
 
 
-def text_probe(
-    arguments: list[str], repository: Path, timeout_seconds: float
+def inspect_gaori_mcp(
+    repository: Path, gaori_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
-    raw_probe = run_command(arguments, repository, timeout_seconds)
-    return {
-        "attempted": raw_probe["attempted"],
-        "ok": raw_probe["ok"],
-        "exit_code": raw_probe["exit_code"],
-        "timed_out": raw_probe["timed_out"],
-        "lines": [line for line in raw_probe["stdout"].splitlines() if line],
+    project_config = repository.joinpath(".codex/config.toml")
+    project_config_present = project_config.is_file()
+    registration: dict[str, Any] = {
+        "status": "missing",
+        "project_config_present": project_config_present,
+        "enabled": None,
+        "stdio": None,
+        "repository_bound": None,
+        "command_resolvable": None,
+        "binary_matches_selected": None,
+        "tool_timeout_sec": None,
     }
+    codex_executable = shutil.which("codex")
+    if not codex_executable:
+        registration["status"] = "unavailable"
+        registration["reason"] = "codex_executable_missing"
+        return registration
+
+    probe = json_probe(
+        [codex_executable, "mcp", "get", "gaori", "--json"],
+        repository,
+        timeout_seconds,
+    )
+    if not probe["ok"]:
+        if project_config_present:
+            registration["status"] = "degraded"
+            registration["reason"] = (
+                "registration_probe_timed_out"
+                if probe["timed_out"]
+                else "project_registration_inactive_or_invalid"
+            )
+        return registration
+
+    result = probe.get("result")
+    if not isinstance(result, dict):
+        registration.update(
+            {"status": "degraded", "reason": "invalid_registration_result"}
+        )
+        return registration
+
+    transport = result.get("transport")
+    if not isinstance(transport, dict):
+        registration.update(
+            {"status": "degraded", "reason": "missing_registration_transport"}
+        )
+        return registration
+
+    enabled = result.get("enabled") is True
+    stdio = transport.get("type") == "stdio"
+    command = transport.get("command")
+    args = transport.get("args")
+    resolved_command: Path | None = None
+    if isinstance(command, str) and command:
+        candidate = Path(command).expanduser()
+        if (
+            candidate.is_absolute()
+            and candidate.is_file()
+            and os.access(candidate, os.X_OK)
+        ):
+            resolved_command = candidate.resolve()
+        elif not candidate.is_absolute():
+            discovered = shutil.which(command)
+            if discovered:
+                resolved_command = Path(discovered).resolve()
+
+    repository_bound = False
+    server_mode = False
+    if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
+        try:
+            repo_index = args.index("--repo")
+            configured_repository = Path(args[repo_index + 1]).expanduser().resolve()
+            repository_bound = configured_repository == repository
+        except (ValueError, IndexError, OSError):
+            repository_bound = False
+        server_mode = bool(args and args[-1] == "mcp")
+
+    tool_timeout = result.get("tool_timeout_sec")
+    timeout_supported = tool_timeout in (None, 60)
+    binary_matches = bool(
+        resolved_command
+        and gaori_executable
+        and resolved_command == Path(gaori_executable).resolve()
+    )
+    registration.update(
+        {
+            "enabled": enabled,
+            "stdio": stdio,
+            "repository_bound": repository_bound,
+            "command_resolvable": resolved_command is not None,
+            "binary_matches_selected": binary_matches,
+            "tool_timeout_sec": tool_timeout,
+        }
+    )
+    if (
+        project_config_present
+        and enabled
+        and stdio
+        and repository_bound
+        and server_mode
+        and resolved_command is not None
+        and timeout_supported
+    ):
+        registration["status"] = "configured"
+    else:
+        registration["status"] = "degraded"
+        registration["reason"] = "registration_mismatch"
+    return registration
 
 
 def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool = base_tool("gaori")
+    tool["version_supported"] = False
+    tool["agent_skill"] = inspect_agent_skill("use-gaori", GAORI_SKILL_FILES)
     tool["configuration"] = [
         configuration_entry(repository, ".gaori/tester.yaml", timeout_seconds),
-        configuration_entry(repository, ".gaori/", timeout_seconds),
+        configuration_entry(
+            repository,
+            ".gaori/tester/rules/",
+            timeout_seconds,
+            ".gaori/tester/rules/example.yaml",
+        ),
+        configuration_entry(repository, ".gaori/toolchain.yaml", timeout_seconds),
+        configuration_entry(repository, ".codex/config.toml", timeout_seconds),
     ]
+    tool["mcp_registration"] = inspect_gaori_mcp(
+        repository, tool["executable"], timeout_seconds
+    )
     if not tool["installed"]:
         tool["probes"]["version"] = skipped_probe("executable_missing")
+        tool["probes"]["config_check"] = skipped_probe("executable_missing")
         return tool
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
-    if not version_probe["ok"]:
+    tool["version_supported"] = supported_gaori_version(tool["version"])
+    if not version_probe["ok"] or not tool["version_supported"]:
         tool["status"] = "degraded"
     if not tool["configuration"][0]["present"]:
-        tool["probes"]["rules"] = skipped_probe("configuration_missing")
+        tool["probes"]["config_check"] = skipped_probe("configuration_missing")
         return tool
-    rules_probe = text_probe(
-        [tool["executable"], "rules", "list"], repository, timeout_seconds
+    config_probe = json_probe(
+        [tool["executable"], "--json", "config", "check"],
+        repository,
+        timeout_seconds,
     )
-    tool["probes"]["rules"] = rules_probe
+    tool["probes"]["config_check"] = config_probe
     tool["status"] = (
-        "configured" if version_probe["ok"] and rules_probe["ok"] else "degraded"
+        "configured"
+        if version_probe["ok"] and tool["version_supported"] and config_probe["ok"]
+        else "degraded"
     )
     return tool
 
@@ -489,6 +1150,7 @@ def inspect_lora() -> dict[str, Any]:
 
 def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool = base_tool("podway")
+    tool["agent_skill"] = inspect_agent_skill("use-podway", PODWAY_SKILL_FILES)
     tool["platform"] = {
         "system": platform.system(),
         "machine": platform.machine(),
@@ -529,7 +1191,10 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         configuration_entry(repository, ".podway/runtime/", timeout_seconds),
     ]
     tool["managed_procedures"] = managed
-    tool["integration_status"] = "legacy" if present_count == 0 else "degraded"
+    tool["integration_status"] = (
+        "not_opted_in" if present_count == 0 else "degraded"
+    )
+    tool["legacy_state_detected"] = False
     tool["version_supported"] = False
     tool["daemon_version"] = None
     tool["versions_match"] = False
@@ -554,14 +1219,11 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         repository,
         timeout_seconds,
     )
-    daemon_result = daemon_probe.get("result")
-    daemon_payload = (
-        daemon_result.get("result") if isinstance(daemon_result, dict) else None
+    normalized_daemon, daemon_payload = normalize_podway_envelope(
+        daemon_probe,
+        "daemon.status",
+        ("podway.daemon-status-result/v1",),
     )
-    normalized_daemon: dict[str, Any] = {
-        key: daemon_probe[key]
-        for key in ("attempted", "ok", "exit_code", "timed_out")
-    }
     daemon_version = None
     daemon_reachable = False
     daemon_target = None
@@ -583,8 +1245,6 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             )
             if key in daemon_payload
         }
-    if daemon_probe.get("error_code"):
-        normalized_daemon["error_code"] = daemon_probe["error_code"]
     tool["probes"]["daemon_status"] = normalized_daemon
     tool["daemon_version"] = daemon_version
     tool["versions_match"] = (
@@ -594,6 +1254,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     )
 
     initialized = tool["configuration"][0]["present"]
+    session_contract_ok = True
     if initialized:
         doctor_probe = json_probe(
             [tool["executable"], "doctor", "--json"], repository, timeout_seconds
@@ -601,16 +1262,18 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         session_probe = json_probe(
             [tool["executable"], "--json", "status"], repository, timeout_seconds
         )
-        session_envelope = session_probe.get("result")
-        session_result = (
-            session_envelope.get("result")
-            if isinstance(session_envelope, dict)
-            else None
+        normalized_doctor, doctor_payload = normalize_podway_envelope(
+            doctor_probe, "workspace.doctor"
         )
-        normalized_session = {
-            key: session_probe[key]
-            for key in ("attempted", "ok", "exit_code", "timed_out")
-        }
+        normalized_session, session_result = normalize_podway_envelope(
+            session_probe,
+            "session.status",
+            ("podway.status-result/v2", "podway.compact-status-result/v2"),
+        )
+        if isinstance(doctor_payload, dict) and isinstance(
+            doctor_payload.get("healthy"), bool
+        ):
+            normalized_doctor["result"] = {"healthy": doctor_payload["healthy"]}
         if isinstance(session_result, dict):
             procedure = session_result.get("procedure")
             session = session_result.get("session")
@@ -634,8 +1297,15 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                     else None
                 ),
             }
-        tool["probes"]["doctor"] = doctor_probe
+        tool["probes"]["doctor"] = normalized_doctor
         tool["probes"]["session_status"] = normalized_session
+        session_contract_ok = normalized_session["ok"] or normalized_session.get(
+            "error_code"
+        ) == "NO_ACTIVE_SESSION"
+        tool["legacy_state_detected"] = any(
+            probe.get("error_code") == "LEGACY_PROCEDURE_STATE_UNSUPPORTED"
+            for probe in (normalized_doctor, normalized_session)
+        )
     else:
         tool["probes"]["doctor"] = skipped_probe("workspace_not_initialized")
         tool["probes"]["session_status"] = skipped_probe(
@@ -657,42 +1327,36 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 repository,
                 timeout_seconds,
             )
-            entry["check"] = {
-                key: check[key]
-                for key in ("attempted", "ok", "exit_code", "timed_out")
-            }
-            result = check.get("result")
-            payload = result.get("result") if isinstance(result, dict) else None
+            normalized_check, payload = normalize_podway_envelope(
+                check,
+                "procedure.check",
+                ("podway.procedure-diagnostics-result/v1",),
+            )
+            entry["check"] = normalized_check
             if isinstance(payload, dict):
                 entry["check"]["valid"] = payload.get("valid")
                 entry["check"]["digest"] = payload.get("digest")
             procedure_checks_ok = (
                 procedure_checks_ok
-                and check["ok"]
+                and normalized_check["ok"]
                 and isinstance(payload, dict)
                 and payload.get("valid") is True
             )
 
     doctor_ok = tool["probes"]["doctor"]["ok"] if initialized else True
-    doctor_envelope = (
-        tool["probes"]["doctor"].get("result") if initialized else None
-    )
-    doctor_payload = (
-        doctor_envelope.get("result")
-        if isinstance(doctor_envelope, dict)
-        else None
-    )
+    doctor_payload = tool["probes"]["doctor"].get("result") if initialized else None
     if isinstance(doctor_payload, dict) and doctor_payload.get("healthy") is False:
         doctor_ok = False
     healthy = (
         version_probe["ok"]
         and tool["version_supported"]
         and tool["platform"]["supported"]
-        and daemon_probe["ok"]
+        and normalized_daemon["ok"]
         and daemon_reachable
         and daemon_target == "aarch64-apple-darwin"
         and tool["versions_match"]
         and doctor_ok
+        and session_contract_ok
     )
     if present_count == 0:
         tool["status"] = "installed" if healthy else "degraded"

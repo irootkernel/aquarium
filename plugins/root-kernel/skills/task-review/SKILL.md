@@ -14,13 +14,14 @@ Fixing findings in this phase changes the diff, so all affected prior phase evid
 ## Run and Resolve the Mulgae Review
 
 1. Follow repository-specific Mulgae instructions when present.
-2. Otherwise verify that Mulgae is callable and configured; do not install or initialize it. If missing or unhealthy, keep the task in review and return an exact `$root-kernel:dev-setup` continuation request.
-3. Select exactly one target that contains the complete task diff and excludes unrelated work. A clean task-only dirty state may use `--dirty` to capture staged and unstaged changes; otherwise use another exact supported target and stop if isolation is unsafe.
-4. Run preflight and inspect captured files, exclusions, roles, provider routing, timeouts, permission modes, and artist inputs when UI work is present.
-5. Run the review with machine-readable output, then inspect run status and findings even when review returns a policy-failure exit code.
-6. Treat every finding as an advisory hypothesis. Verify it against the roadmap, current code, and tests before changing anything.
-7. Fix every valid in-scope finding, add regression coverage where useful, and run finding-specific follow-up when supported.
-8. Re-run affected checks and final repository gates after fixes. Preserve the task-owned staging and unrelated-work boundaries established by the orchestrator.
+2. Verify that a supported Mulgae CLI and both Config v2 authorities are healthy; do not install, initialize, bootstrap, refresh, or configure MCP here. If missing or unhealthy, keep the task in review and return an exact `$root-kernel:dev-setup` continuation request.
+3. Reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or MCP is unavailable and repository guidance requires it, keep the task in review and route that exact gap to `$root-kernel:dev-setup`; otherwise report the unavailable integration once and use the CLI fallback below. Do not start a second MCP server from the shell.
+4. Select exactly one target that contains the complete task diff and excludes unrelated work. A clean task-only dirty state may use `--dirty` to capture staged and unstaged changes; otherwise use another exact supported target and stop if isolation is unsafe.
+5. Run execution-free preflight through the selected interface and inspect captured files, exclusions, roles, provider routing, timeouts, permission modes, and artist inputs when UI work is present.
+6. Run the review once with machine-readable output. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure; never blindly retry an uncertain review mutation.
+7. Treat every finding as an advisory hypothesis. Verify it against the roadmap, current code, and tests before changing anything.
+8. Fix every valid in-scope finding, add regression coverage where useful, and run finding-specific follow-up when supported.
+9. Re-run affected checks and final repository gates after fixes. Preserve the task-owned staging and unrelated-work boundaries established by the orchestrator.
 
 ## Bound the Evidence
 

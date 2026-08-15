@@ -2,6 +2,8 @@
 
 Read this reference whenever a Root Kernel skill runs in a Git worktree that may use Podway. Podway records and guards procedure state; it does not run commands, validate the truth of evidence, mutate Git, or replace repository authority.
 
+Reference `$use-podway` when it is installed and valid, and follow it for current Procedure v2 command grammar, state loops, lifecycle, authoring, and recovery mechanics. This contract remains authoritative for Root Kernel roadmap authority, managed-procedure opt-in, session ownership, approval boundaries, and evidence mapping. If the optional skill is unavailable or invalid, report that once and use the bounded mechanics below; when repository guidance requires it, stop and route the exact gap to `$root-kernel:dev-setup` instead of falling back.
+
 ## Decide Whether Integration Is Active
 
 Root Kernel Podway integration is repository opt-in. It is active only when all three tracked files exist and pass `podway procedure check --warnings-as-errors`:
@@ -10,7 +12,9 @@ Root Kernel Podway integration is repository opt-in. It is active only when all 
 - `.podway/procedures/root-kernel-goal-v2.yaml`;
 - `.podway/procedures/root-kernel-validation-v2.yaml`.
 
-The mere presence of `podway`, `.podway/config.yaml`, or a non-Root-Kernel session does not opt a repository in. When none of the three managed procedures exists, use the skill's legacy workflow without Podway. When only some exist, a managed file differs from the plugin source or is untracked in Git, Podway is outside stable `v0.2.x`, the platform is not native Apple Silicon macOS, the CLI and daemon patch versions differ, the daemon is unreachable, doctor fails, a required v2 command is unavailable, or `.podway/config.yaml` or `.podway/.gitignore` is missing, stop and route repair or explicit opt-out to `$root-kernel:dev-setup`. Never silently fall back inside an opted-in repository.
+The mere presence of `podway`, `.podway/config.yaml`, or a non-Root-Kernel session does not opt a repository in. When none of the three managed procedures exists, use the skill's non-Podway workflow. When only some exist, a managed file differs from the plugin source or is untracked in Git, Podway is outside stable `v0.2.1` through `v0.2.x`, the platform is not native Apple Silicon macOS, the CLI and daemon patch versions differ, the daemon is unreachable, doctor fails, a required v2 command is unavailable, or `.podway/config.yaml` or `.podway/.gitignore` is missing, stop and route repair or explicit opt-out to `$root-kernel:dev-setup`. Never silently fall back inside an opted-in repository.
+
+`integration_status=not_opted_in` means only that Root Kernel's three managed procedures are absent. It is unrelated to `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, which means Podway found Procedure v1 runtime state. On that error, stop, preserve the exact worktree and error code, let the user make any desired backup, and route a separately approved `podway reset --all` recovery to `$root-kernel:dev-setup`; never convert, edit, or delete runtime state directly.
 
 ## Keep Authorities Separate
 
@@ -23,7 +27,7 @@ Podway evidence is a caller-recorded claim. Verify tests, reviews, approvals, re
 
 ## Read and Mutate Safely
 
-Use `podway --json status` and `podway --json next`; never parse human output. Procedure v2 routes take the global flag first (`podway --json next`), while `version`, `daemon status`, and `doctor` take a trailing `--json`. Before every mutation, re-read state and pass every applicable workspace, session, session-revision, attempt, goal-revision, and item-revision fence plus a deterministic operation-specific idempotency key. Use only IDs from machine fields such as `allowed_option_ids` and `allowed_manual_rework_targets`.
+Use `podway --json status` and `podway --json next`; never parse human output. Require successful runtime commands to use `podway.output/v3`, status and next results to identify `podway.status-result/v2` and `podway.next-result/v2`, and failures to use `podway.error/v1`. `podway version --json` retains its compact result. Before every mutation, re-read state and pass every applicable workspace, session, session-revision, attempt, goal-revision, and item-revision fence plus a deterministic operation-specific idempotency key. Use only IDs from machine fields such as `allowed_option_ids` and `allowed_manual_rework_targets`, and use `podway help <route>` rather than inventing flags.
 
 After every successful mutation, re-read status rather than calculating revisions locally. On a precondition failure, re-read and derive the next action again. On `MUTATION_OUTCOME_UNKNOWN`, use `podway --json job lookup --idempotency-key <key>` and reconcile the durable result before considering resubmission with the same canonical request and key.
 

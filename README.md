@@ -13,7 +13,7 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$root-kernel:epic-handler` with a roadmap path and one epic ID |
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$root-kernel:epic-validator` with a roadmap path and one epic ID |
 | `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$root-kernel:task-handler` with a roadmap path and one task ID |
-| `dev-setup` | Diagnose and configure selected development tools, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$root-kernel:dev-setup` |
+| `dev-setup` | Diagnose and configure selected development tools and paired agent skills, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$root-kernel:dev-setup` |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$root-kernel:independent-review` with one epic or task ID |
 | `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$root-kernel:deslop` |
 
@@ -35,7 +35,7 @@ The three goal-centered workflows have distinct entry points. `epic-handler` con
 
 ### Optional Podway integration
 
-[Podway](https://github.com/irootkernel/podway) v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. A repository opts in only when `dev-setup` installs all three tracked Root Kernel procedures under `.podway/procedures/`; a binary or ordinary Podway workspace alone does not opt in.
+[Podway](https://github.com/irootkernel/podway) v0.2.1 through v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill for current session, authoring, lifecycle, and recovery mechanics. A repository opts in only when `dev-setup` installs all three tracked Root Kernel procedures under `.podway/procedures/`; a binary, user skill, or ordinary Podway workspace alone does not opt in.
 
 In an opted-in repository, the roadmap remains authoritative for requirements and official lifecycle, Podway owns active attempts, rework and recorded evidence, and the Codex goal temporarily projects the currently actionable work. `task-handler`, `epic-handler`, and `epic-validator` own sessions. Leaf and utility skills only read state and return evidence. An unhealthy or drifted opt-in stops instead of silently falling back; use `dev-setup` to repair or explicitly opt out.
 
@@ -52,11 +52,11 @@ Restart Codex after installation or upgrade so the active session reloads the in
 
 ## Development-tool ecosystem
 
-- [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository.
-- [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture.
-- [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence.
+- [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository. Root Kernel supports stable v0.2.6 through v0.2.x and can separately install the matching optional `use-sanho` user skill for Git-boundary guidance.
+- [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Root Kernel supports stable v0.1.13 through v0.1.x, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
+- [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Root Kernel supports stable v0.1.12 through v0.1.x, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) guards opted-in local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth.
+- [Podway](https://github.com/irootkernel/podway) guards opted-in local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Root Kernel supports stable v0.2.1 through v0.2.x and can separately install the matching optional `use-podway` user skill.
 
 ## Validate
 

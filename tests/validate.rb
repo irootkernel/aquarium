@@ -187,14 +187,137 @@ assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is miss
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
 assert(!tool_catalog.include?("--skill lore-setup"), "Lora setup skill must not be installed")
 assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex"), "Lora scope must be global Codex")
-assert(tool_catalog.include?("stable `v0.2.x`"), "Podway v0.2.x support policy is missing")
+assert(tool_catalog.include?("stable `v0.2.1` through `v0.2.x`") &&
+       tool_catalog.include?("same exact tag") &&
+       tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
+       "Podway CLI, daemon, and use-podway must share the supported approved release")
 assert(tool_catalog.include?("shasum -a 256 -c"), "Podway checksum verification is missing")
+assert(tool_catalog.include?("podway.output/v3") &&
+       tool_catalog.include?("podway.status-result/v2") &&
+       tool_catalog.include?("podway.next-result/v2"),
+       "Podway v0.2.1 JSON contracts are missing")
+assert(tool_catalog.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED") &&
+       tool_catalog.include?("podway reset --all") &&
+       tool_catalog.include?("separate explicit approval"),
+       "Podway legacy-state recovery boundary is missing")
 assert(tool_catalog.include?("root-kernel-task-v2") &&
        tool_catalog.include?("root-kernel-goal-v2") &&
        tool_catalog.include?("root-kernel-validation-v2"),
        "Podway managed procedures are missing")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
+assert(ROOT.join("README.md").read.include?("v0.2.1 through v0.2.x") &&
+       ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
+       "public Podway support and optional skill guidance are missing")
+assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
+       ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
+       "privacy policy must disclose Podway skill installation")
 assert(tool_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
+assert(tool_catalog.include?("stable `v0.1.12` through `v0.1.x`") &&
+       tool_catalog.include?("same exact tag") &&
+       tool_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/"),
+       "Gaori CLI and use-gaori must share the supported approved release")
+assert(tool_catalog.include?("gaori --json config check") &&
+       tool_catalog.include?("!.gaori/tester.yaml") &&
+       tool_catalog.include?("!.gaori/tester/rules/*.yaml"),
+       "Gaori portable config and non-executing validation guidance is incomplete")
+assert(tool_catalog.include?("[mcp_servers.gaori]") &&
+       tool_catalog.include?("tool_timeout_sec = 60") &&
+       tool_catalog.include?("codex mcp get gaori --json"),
+       "Gaori project-local MCP setup and verification guidance is incomplete")
+assert(tool_catalog.include?("stable `v0.2.6` through `v0.2.x`") &&
+       tool_catalog.include?("same exact tag") &&
+       tool_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/"),
+       "Sanho CLI and use-sanho must share the supported approved release")
+assert(tool_catalog.include?("sanho check --require-clean") &&
+       tool_catalog.include?("sanho diff --refresh") &&
+       tool_catalog.include?("sanho workspace forget <workspace-id>") &&
+       tool_catalog.include?("sanho doctor --fix"),
+       "Sanho v0.2.6 diagnosis and repair guidance is incomplete")
+assert(agents_reference.include?("$use-sanho") &&
+       agents_reference.include?("only the corresponding CLI is installed"),
+       "AGENTS guidance must conditionally reference use-sanho")
+assert(dev_setup.include?("CLI installation or upgrade") &&
+       dev_setup.include?("user-scoped skill installation or replacement") &&
+       dev_setup.include?("separate approval boundaries"),
+       "dev-setup must separate Sanho CLI, skill, workspace, and repair approvals")
+assert(dev_setup.include?("use-gaori") &&
+       dev_setup.include?("project-local MCP configuration") &&
+       dev_setup.include?("Never start a Gaori run or MCP test command during setup"),
+       "dev-setup must separate Gaori CLI, skill, config, and MCP boundaries")
+assert(agents_reference.include?("$use-gaori") &&
+       agents_reference.include?("only the corresponding CLI is installed"),
+       "AGENTS guidance must conditionally reference use-gaori")
+
+assert(tool_catalog.include?("stable `v0.1.13` through `v0.1.x`") &&
+       tool_catalog.include?("Go `1.26.6` or newer") &&
+       tool_catalog.include?("same exact tag") &&
+       tool_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
+       tool_catalog.include?("~/.agents/skills/use-mulgae"),
+       "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
+assert(tool_catalog.include?(".mulgae/local.yaml") &&
+       tool_catalog.include?("mode-`0600`") &&
+       tool_catalog.include?("!/.mulgae/config.yaml") &&
+       tool_catalog.include?("mulgae init --refresh-local --output json"),
+       "Mulgae split Config v2 setup and ignore guidance is incomplete")
+assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
+       tool_catalog.include?("required = true") &&
+       tool_catalog.include?("startup_timeout_sec = 30") &&
+       tool_catalog.include?("tool_timeout_sec = 54000") &&
+       tool_catalog.include?("codex mcp get mulgae --json"),
+       "Mulgae project-local MCP setup and verification guidance is incomplete")
+assert(dev_setup.include?("use-mulgae") &&
+       dev_setup.include?("project Config v2 and ignore changes") &&
+       dev_setup.include?("Never start a Mulgae review, preflight capture, provider call, or MCP server during setup"),
+       "dev-setup must separate Mulgae CLI, skill, Config v2, and MCP boundaries")
+assert(agents_reference.include?("$use-mulgae") &&
+       agents_reference.include?("only the corresponding CLI is installed"),
+       "AGENTS guidance must conditionally reference use-mulgae")
+
+{
+  "task-handler" => task_handler,
+  "task-review" => task_review,
+  "epic-handler" => epic_handler,
+  "epic-validator" => epic_validator,
+}.each do |name, body|
+  assert(body.include?("$use-mulgae"), "#{name} must route Mulgae reviews through use-mulgae")
+end
+assert(task_review.include?("use the CLI fallback below") &&
+       task_review.include?("Do not start a second MCP server") &&
+       task_review.include?("never blindly retry an uncertain review mutation"),
+       "task-review must preserve the optional use-mulgae and MCP fallback boundaries")
+assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
+       ROOT.join("PRIVACY.md").read.include?("does not run reviews, start the MCP server"),
+       "privacy policy must disclose Mulgae skill installation and MCP boundaries")
+
+{
+  "task-handler" => task_handler,
+  "task-verify" => task_verify,
+  "epic-handler" => epic_handler,
+  "epic-validator" => epic_validator,
+}.each do |name, body|
+  assert(body.include?("$use-gaori"), "#{name} must route selected Gaori checks through use-gaori")
+end
+assert(task_verify.include?("original documented test command directly") &&
+       task_verify.include?("Gaori evidence compression was unavailable") &&
+       task_verify.include?("artifact `status`, `extractor_status`, and truncation"),
+       "task-verify must preserve Gaori fallback and evidence boundaries")
+assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&
+       ROOT.join("PRIVACY.md").read.include?("intentionally unredacted"),
+       "privacy policy must disclose Gaori skill installation and raw-log handling")
+
+{
+  "task-handler" => task_handler,
+  "task-document" => task_document,
+  "task-close" => task_close,
+  "epic-handler" => epic_handler,
+  "epic-validator" => epic_validator,
+}.each do |name, body|
+  assert(body.include?("$use-sanho"), "#{name} must route relevant Sanho boundaries through use-sanho")
+end
+assert(task_close.include?("After the commit and its hooks") &&
+       epic_handler.include?("after the commit and hooks") &&
+       epic_validator.include?("after the commit and hooks"),
+       "commit-owning skills must refresh Sanho evidence after hooks")
 
 assert(epic_handler.include?("one canonical roadmap path inside that repository") &&
        epic_handler.include?("exactly one epic ID"),
@@ -327,6 +450,19 @@ assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
        "Podway mutation reconciliation is missing")
 assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` own"),
        "Podway session ownership is missing")
+assert(podway_contract.include?("$use-podway") &&
+       podway_contract.include?("optional skill is unavailable or invalid") &&
+       podway_contract.include?("Root Kernel roadmap authority"),
+       "Podway optional-skill precedence and fallback are missing")
+assert(podway_contract.include?("integration_status=not_opted_in") &&
+       podway_contract.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED"),
+       "Podway opt-in absence and legacy runtime state are not distinguished")
+{ "task-handler" => task_handler, "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
+  assert(body.include?("$use-podway"), "#{name} must discover use-podway independently")
+end
+assert(agents_reference.include?("$use-podway") &&
+       agents_reference.include?("only the corresponding CLI is installed"),
+       "AGENTS guidance must conditionally reference use-podway")
 
 expected_procedure_graphs = {
   "root-kernel-task-v2.yaml" => {
@@ -598,7 +734,8 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.x`"), "Podway supported release line has drifted: #{name}")
+  assert(body.include?("stable `v0.2.1` through `v0.2.x`"),
+         "Podway supported release line has drifted: #{name}")
 end
 
 { "epic-handler" => epic_handler, "epic-validator" => epic_validator, "task-close" => task_close }.each do |name, body|

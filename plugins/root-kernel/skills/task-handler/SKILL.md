@@ -18,10 +18,16 @@ Before planning:
 1. Resolve the Git root and read every applicable instruction file.
 2. Read the roadmap entry and its linked specifications, decisions, contracts, and required artifacts.
 3. Inspect branch, upstream, staged, unstaged, untracked, and conflicted state. Separate task-owned work from pre-existing work.
-4. Discover repository-native build, verification, documentation synchronization, Gaori, Mulgae, Sanho, and Lore guidance.
+4. Discover repository-native build, verification, documentation synchronization, Gaori, `$use-gaori`, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, Podway, `$use-podway`, and Lore guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 5. Record authority already granted for mutation, staging, review, commit, amend, push, PR changes, provider use, and destructive actions.
 6. Route a missing or unhealthy prerequisite to an exact `$root-kernel:dev-setup` continuation request. Do not install or initialize tools here.
 7. Inspect Root Kernel Podway opt-in and active-session state read-only. Stop on degraded integration or a session not owned by this exact task.
+
+In a Sanho-managed repository, record whether `$use-sanho` is available. If repository guidance requires it and it is missing or invalid, route an exact `$root-kernel:dev-setup` continuation request. Otherwise keep it optional and let the document and close phases apply the repository's fallback Sanho guidance at their actual Git boundary.
+
+When repository guidance selects Gaori for verification, record whether `$use-gaori` and the configured CLI or project MCP are available. Route a missing or invalid skill to `$root-kernel:dev-setup` only when repository policy requires it; otherwise keep it optional and let the verify phase use the repository's original documented command when specialized Gaori guidance is unavailable.
+
+Record whether `$use-mulgae`, the supported configured CLI, and the attached project MCP are available. Route a missing or invalid skill or required MCP to `$root-kernel:dev-setup` only when repository policy requires that component; otherwise keep the optional integration independent and let the review phase use `$use-mulgae` when available or its bounded CLI fallback when specialized guidance is unavailable.
 
 Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$root-kernel:task-refine`, and the approved final task-owned staging in `$root-kernel:task-close`; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging.
 

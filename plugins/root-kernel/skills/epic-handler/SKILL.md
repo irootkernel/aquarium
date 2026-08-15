@@ -17,7 +17,7 @@ Before requesting approval:
 
 1. Read repository instructions, the epic, every member task, linked authority, required artifacts, and explicit dependencies.
 2. Inspect branch, upstream, HEAD, staged, unstaged, untracked, and conflicted state. Separate epic-owned work from existing work and record the starting revision.
-3. Discover repository-native verification, documentation synchronization, Mulgae, lifecycle, and commit guidance.
+3. Discover repository-native verification, Gaori, `$use-gaori`, documentation synchronization, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, Podway, `$use-podway`, lifecycle, and commit guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 4. Build a dependency DAG. Distinguish member-task edges from pre-epic local or explicit external prerequisites. For every prerequisite record repository, canonical ID, exact revision, lifecycle state, dirty state, evidence, and owner. An incomplete member-task predecessor determines execution order and does not block initial approval. A pre-epic or external prerequisite is satisfied only by committed work at the required revision with verified evidence; if unmet, stop before goal creation or mutation and report the owner and required sequence.
 5. Order tasks by dependencies and then roadmap order. Split a cycle only when authority defines pre-validation and finalization; otherwise stop and report its nodes, owners, and missing authority.
 6. Preserve successfully terminal tasks, start at the earliest non-terminal task, and retain every task for the final audit. Stop rather than replace a different active goal.
@@ -30,6 +30,10 @@ Ask once for explicit approval of the plan and execution envelope. Approval cove
 When Podway is active, the envelope also covers starting or resuming the matching managed sessions, recording bounded evidence and decisions, goal revision and rework required by in-scope changes, terminal completion, and reset only after a successfully terminal Root Kernel-owned session has been handed off to current roadmap, commit, and worktree evidence.
 
 Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval. Request renewed approval only when requirements, task membership or order, repository scope, product behavior, destructive impact, external actions, or safe diff isolation materially departs from the envelope.
+
+When a selected long or noisy check is routed through Gaori, reference `$use-gaori` and follow it when available. If it is missing and repository policy requires it, stop and route to `$root-kernel:dev-setup`; otherwise run the repository's original documented command directly and report that evidence compression was unavailable. Never infer an unknown original command, and keep command result, extraction quality, and acceptance authority separate.
+
+Before each authorized Mulgae review, reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or project MCP is unavailable and repository policy requires it, stop and route that exact gap to `$root-kernel:dev-setup`; otherwise use the supported configured CLI fallback, report the unavailable integration once, and preserve exact preflight, run, publication, and findings evidence. Never start a second MCP server or blindly retry an uncertain review mutation.
 
 ## Complete Task Goals
 
@@ -68,6 +72,10 @@ Only after a clean latest-snapshot audit and complete Mulgae evidence may one fi
 ## Commit Safely and Report
 
 Before a non-trivial commit, reference `$lore-commits` and follow it when available. If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, and match recurring subject, body, and trailer structure without copying unrelated content. If fewer than five commits exist, inspect all; with none use a concise imperative subject. If repository guidance requires Lore, stop and return an exact `$root-kernel:dev-setup` continuation request instead of falling back. Repository-required IDs and prefixes override Lore, which never grants commit authority.
+
+Before each authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available; after the commit and hooks, refresh the applicable Sanho evidence. If unavailable and repository guidance requires it, stop and route to `$root-kernel:dev-setup`; otherwise use the repository's required Sanho check or the minimal `sanho status --json` fallback and report the missing specialized guidance.
+
+Use the refreshed push-boundary workflow only for a separately authorized push. Sanho status never grants commit, synchronization, or push authority.
 
 Immediately before each commit, confirm the reviewed implementation equals the staged diff except for its planned status-only transition and record the staged tree and blob identities. Afterward compare the commit with that snapshot byte-for-byte and inspect staged, unstaged, and untracked state for residue or hook changes. Do not amend without separate authority.
 
