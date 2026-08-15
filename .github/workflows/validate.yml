@@ -20,4 +20,6 @@ jobs:
           python-version: "3.12"
       - run: python -m unittest tests/test_inspect_tools.py
       - run: ruby tests/validate.rb
+        env:
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
       - run: git diff --check

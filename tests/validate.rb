@@ -97,6 +97,11 @@ manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
 assert((%w[deslop lora lore orchestration podway] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.2", "plugin version must be 0.1.2")
+release_tag = ENV.fetch("RELEASE_TAG", "")
+unless release_tag.empty?
+  assert(release_tag == "v#{manifest.fetch('version')}",
+         "release tag #{release_tag} must match plugin version v#{manifest.fetch('version')}")
+end
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
