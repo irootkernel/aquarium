@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v2"
+SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v3"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 SANHO_SKILL_FILES = (
     "SKILL.md",
@@ -1191,8 +1191,8 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         configuration_entry(repository, ".podway/runtime/", timeout_seconds),
     ]
     tool["managed_procedures"] = managed
-    tool["integration_status"] = (
-        "not_opted_in" if present_count == 0 else "degraded"
+    tool["readiness_status"] = (
+        "not_configured" if present_count == 0 else "degraded"
     )
     tool["legacy_state_detected"] = False
     tool["version_supported"] = False
@@ -1205,7 +1205,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         tool["probes"]["session_status"] = skipped_probe("executable_missing")
         if present_count:
             tool["status"] = "degraded"
-            tool["integration_status"] = "degraded"
+            tool["readiness_status"] = "degraded"
         return tool
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
@@ -1368,26 +1368,30 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         and tool["configuration"][1]["present"]
         and healthy
     ):
-        tool["integration_status"] = "opted_in"
+        tool["readiness_status"] = "ready"
         tool["status"] = "configured"
     else:
-        tool["integration_status"] = "degraded"
+        tool["readiness_status"] = "degraded"
         tool["status"] = "degraded"
     return tool
 
 
-def inspect(requested_path: str, timeout_seconds: float) -> dict[str, Any]:
+def inspect(
+    requested_path: str, timeout_seconds: float, include_podway: bool = False
+) -> dict[str, Any]:
     repository = resolve_repository(requested_path, timeout_seconds)
+    tools = {
+        "sanho": inspect_sanho(repository, timeout_seconds),
+        "mulgae": inspect_mulgae(repository, timeout_seconds),
+        "gaori": inspect_gaori(repository, timeout_seconds),
+        "lora": inspect_lora(),
+    }
+    if include_podway:
+        tools["podway"] = inspect_podway(repository, timeout_seconds)
     return {
         "schema_version": SCHEMA_VERSION,
         "repository": repository_inventory(repository, timeout_seconds),
-        "tools": {
-            "sanho": inspect_sanho(repository, timeout_seconds),
-            "mulgae": inspect_mulgae(repository, timeout_seconds),
-            "gaori": inspect_gaori(repository, timeout_seconds),
-            "lora": inspect_lora(),
-            "podway": inspect_podway(repository, timeout_seconds),
-        },
+        "tools": tools,
     }
 
 
@@ -1401,6 +1405,11 @@ def parse_arguments() -> argparse.Namespace:
         type=float,
         default=10.0,
         help="Timeout for each read-only command",
+    )
+    parser.add_argument(
+        "--include-podway",
+        action="store_true",
+        help="Include explicitly requested Podway readiness diagnostics",
     )
     arguments = parser.parse_args()
     if arguments.timeout_seconds <= 0:
@@ -1418,7 +1427,13 @@ def emit(payload: dict[str, Any]) -> None:
 def main() -> int:
     try:
         arguments = parse_arguments()
-        emit(inspect(arguments.repository, arguments.timeout_seconds))
+        emit(
+            inspect(
+                arguments.repository,
+                arguments.timeout_seconds,
+                include_podway=arguments.include_podway,
+            )
+        )
         return 0
     except InspectionError as error:
         emit(

@@ -7,7 +7,9 @@ description: "Strengthen the procedure around exactly one named roadmap task goa
 
 Strengthen execution of one roadmap task goal by loading focused phase skills in order. Own task identity, authority, goal lifetime, phase transitions, resumption, and final evidence; leave phase-specific work to the corresponding leaf skill.
 
-Read [podway-integration.md](../../references/podway-integration.md) and apply it when the repository has opted in. After plan approval, own one `root-kernel-task-v2` session for the canonical task, include Podway mutations in the approved execution boundary, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. Do not let either goal mechanism replace roadmap authority.
+Use Podway by default. Exclude it only when the current user explicitly opts this task out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out task, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
+
+Otherwise read the contract, own one `root-kernel-task-v2` session for this canonical task after plan approval, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. Do not let either goal mechanism replace roadmap authority.
 
 ## Establish the Task Contract
 
@@ -18,10 +20,10 @@ Before planning:
 1. Resolve the Git root and read every applicable instruction file.
 2. Read the roadmap entry and its linked specifications, decisions, contracts, and required artifacts.
 3. Inspect branch, upstream, staged, unstaged, untracked, and conflicted state. Separate task-owned work from pre-existing work.
-4. Discover repository-native build, verification, documentation synchronization, Gaori, `$use-gaori`, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, Podway, `$use-podway`, and Lore guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
+4. Discover repository-native build, verification, documentation synchronization, Gaori, `$use-gaori`, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, and Lore guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 5. Record authority already granted for mutation, staging, review, commit, amend, push, PR changes, provider use, and destructive actions.
 6. Route a missing or unhealthy prerequisite to an exact `$root-kernel:dev-setup` continuation request. Do not install or initialize tools here.
-7. Inspect Root Kernel Podway opt-in and active-session state read-only. Stop on degraded integration or a session not owned by this exact task.
+7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. A matching recoverable session becomes part of the plan; on degraded readiness or a session not owned by this exact task, stop and ask the user to choose `$root-kernel:dev-setup` repair or an explicit opt-out for this task.
 
 In a Sanho-managed repository, record whether `$use-sanho` is available. If repository guidance requires it and it is missing or invalid, route an exact `$root-kernel:dev-setup` continuation request. Otherwise keep it optional and let the document and close phases apply the repository's fallback Sanho guidance at their actual Git boundary.
 
@@ -31,7 +33,7 @@ Record whether `$use-mulgae`, the supported configured CLI, and the attached pro
 
 Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$root-kernel:task-refine`, and the approved final task-owned staging in `$root-kernel:task-close`; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging.
 
-Do not start or mutate Podway before plan approval. The approved plan must disclose session start or resume, bounded evidence recording, decisions, rework, goal assessment, and terminal completion. It does not authorize reset of a mismatched, cancelled, or non-terminal session.
+Do not start or mutate Podway before plan approval. By default the plan discloses session start or resume, bounded evidence, decisions, rework, goal assessment, and completion. Approval explicitly omitting Podway approves the plan without those operations. Accept opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution.
 
 ## Load Phase Skills in Order
 
@@ -70,7 +72,7 @@ If a postcondition fails, keep the goal active, preserve the latest safe reposit
 
 When Podway is active:
 
-- Independently verify the postcondition, record the bounded result with current fences, and advance only through `podway --json next` allowed actions.
+- Immediately before each phase delegation, re-read status and next and verify this task's Procedure ID, canonical identity, session, attempt, goal revision, and expected node. After the leaf returns native evidence, independently verify its postcondition, record the bounded result with current fences, and advance only through `podway --json next` allowed actions.
 - Verification failure selects the procedure's failed route. Review findings, review-pass file changes, or a rejected final approval select the matching rework route even when the final re-review is clean; after recording it, match the rework depth to the correction — explicit manual rework to `implement` for a behavior change, to `verify` for evidence or test corrections, and the automatic `refine` route for cleanup-only work; for a documentation-only correction, complete `refine` with no-op evidence and advance to `document` normally.
 - Record `changes-requested` only for an explicit correction request or a specifically unmet gate. For `Keep in review`, silence, or an ambiguous answer, record no decision and leave the session at its current node.
 - Record the assessed outcome at `record-outcome` from the goal assessment plus the verification gaps, finding dispositions, and documentation gaps carried by the leaf reports, before requesting final approval.

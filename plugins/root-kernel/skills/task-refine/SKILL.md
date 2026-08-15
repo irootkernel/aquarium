@@ -7,8 +7,6 @@ description: "Deslop and optimize the verified diff for one roadmap task. Use wh
 
 Refine only the verified task-owned diff established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, verified baseline, and explicit authority for the staging steps below.
 
-Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `refine`. Return bounded cleanup, staged-baseline, optimization, and refreshed-check evidence to the handler; never mutate or advance Podway here.
-
 ## Deslop
 
 Load and follow the bundled `$root-kernel:deslop` skill against the task diff from its verified baseline. Report a broken plugin installation if it is unavailable. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.

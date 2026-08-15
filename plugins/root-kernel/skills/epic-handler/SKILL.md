@@ -7,7 +7,9 @@ description: "Deliver one named roadmap epic through sequential goal-centered ta
 
 Deliver one roadmap epic as a sequence of goal-centered task executions. Own the outcome, ordering, evidence, and commit boundaries without prescribing one implementation procedure. Do not invoke `$root-kernel:task-handler` or its phase skills; they separately strengthen the procedure around one user-guided task goal.
 
-Read [podway-integration.md](../../references/podway-integration.md). In an opted-in repository, own one `root-kernel-goal-v2` session per member-task, pre-validation remediation, or closeout goal and one `root-kernel-validation-v2` session for the final epic audit and its audit-owned remediation. Podway strengthens durable execution memory but does not prescribe a phase workflow or replace the roadmap DAG.
+Use Podway by default. Exclude it only when the current user explicitly opts this epic out before its first managed session starts or a higher-priority instruction prohibits it. For an opted-out epic, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
+
+Otherwise read the contract and own one `root-kernel-goal-v2` session per member-task, pre-validation remediation, or closeout goal and one `root-kernel-validation-v2` session for the final epic audit and its audit-owned remediation. Podway strengthens durable execution memory but does not prescribe a phase workflow or replace the roadmap DAG.
 
 ## Establish and Approve the Epic
 
@@ -17,17 +19,19 @@ Before requesting approval:
 
 1. Read repository instructions, the epic, every member task, linked authority, required artifacts, and explicit dependencies.
 2. Inspect branch, upstream, HEAD, staged, unstaged, untracked, and conflicted state. Separate epic-owned work from existing work and record the starting revision.
-3. Discover repository-native verification, Gaori, `$use-gaori`, documentation synchronization, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, Podway, `$use-podway`, lifecycle, and commit guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
+3. Discover repository-native verification, Gaori, `$use-gaori`, documentation synchronization, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, lifecycle, and commit guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 4. Build a dependency DAG. Distinguish member-task edges from pre-epic local or explicit external prerequisites. For every prerequisite record repository, canonical ID, exact revision, lifecycle state, dirty state, evidence, and owner. An incomplete member-task predecessor determines execution order and does not block initial approval. A pre-epic or external prerequisite is satisfied only by committed work at the required revision with verified evidence; if unmet, stop before goal creation or mutation and report the owner and required sequence.
 5. Order tasks by dependencies and then roadmap order. Split a cycle only when authority defines pre-validation and finalization; otherwise stop and report its nodes, owners, and missing authority.
 6. Preserve successfully terminal tasks, start at the earliest non-terminal task, and retain every task for the final audit. Stop rather than replace a different active goal.
-7. Inspect Podway opt-in and active-session state read-only. A matching recoverable Root Kernel session becomes part of the plan; degraded integration or any other active session blocks execution.
+7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. A matching recoverable Root Kernel session becomes part of the plan; on degraded readiness or any other active session, stop and ask the user to choose `$root-kernel:dev-setup` repair or an explicit opt-out for this epic.
 
 Produce one concise, decision-complete epic plan: goal and non-goals, dependency DAG, exact task order, requirement owners, expected task outcomes and commit boundaries, relevant checks, Mulgae targets, lifecycle changes, external handoffs, and known authority or environment gaps. Avoid prescribing phase order, file-by-file mechanics, or a full task implementation design unless the authority makes them necessary.
 
 Ask once for explicit approval of the plan and execution envelope. Approval covers bounded implementation decisions, repository-authorized checks, disclosed Mulgae transmission, task and epic staging, one task-ID commit per task, and necessary remediation or closeout commits. It does not authorize amend, push, PR or release changes, live rollout, destructive actions, installation, another repository, or unrelated staging. Commit and upstream publication are separate states.
 
-When Podway is active, the envelope also covers starting or resuming the matching managed sessions, recording bounded evidence and decisions, goal revision and rework required by in-scope changes, terminal completion, and reset only after a successfully terminal Root Kernel-owned session has been handed off to current roadmap, commit, and worktree evidence.
+By default the envelope must cover starting or resuming the matching managed sessions, recording bounded evidence and decisions, goal revision and rework required by in-scope changes, terminal completion, and reset only after a successfully terminal Root Kernel-owned session has been handed off to current roadmap, commit, and worktree evidence. Treat approval that explicitly omits Podway as approval of the same envelope without those operations.
+
+Accept an opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution. Never mutate a conflicting session automatically.
 
 Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval. Request renewed approval only when requirements, task membership or order, repository scope, product behavior, destructive impact, external actions, or safe diff isolation materially departs from the envelope.
 
@@ -47,7 +51,9 @@ For each non-terminal task in order:
 6. Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
 7. Move the task to its defined successful state and commit one isolated task-owned diff under the task ID. Complete the goal only after the commit exists, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
 
-With Podway active, start or resume the matching goal procedure only after approval, mirror it in the Codex goal, and record work and evidence before selecting its decisions and assessing each criterion. After step 7, complete the Podway session, verify its terminal outcome, perform the handoff checks again, then reset that session before starting the next goal. Never reset to bypass a failed or non-terminal outcome.
+With Podway active, re-read status and next before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, attempt, goal revision, and current node. Start or resume the matching goal procedure only after approval, mirror it in the Codex goal, independently verify returned native evidence before recording it, and only then select its decisions and assess each criterion.
+
+After step 7, complete the Podway session, verify its terminal outcome, perform the handoff checks again, then reset that session before starting the next goal. Never reset to bypass a failed or non-terminal outcome.
 
 Use a fresh read-only subagent for an independent perspective when task risk or uncertainty merits it; do not substitute that review for Mulgae, do not invoke `$root-kernel:independent-review`, which only the user starts, and do not let it impose the `$root-kernel:task-handler` phase workflow.
 
@@ -71,7 +77,9 @@ Only after a clean latest-snapshot audit and complete Mulgae evidence may one fi
 
 ## Commit Safely and Report
 
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, and match recurring subject, body, and trailer structure without copying unrelated content. If fewer than five commits exist, inspect all; with none use a concise imperative subject. If repository guidance requires Lore, stop and return an exact `$root-kernel:dev-setup` continuation request instead of falling back. Repository-required IDs and prefixes override Lore, which never grants commit authority.
+Before a non-trivial commit, reference `$lore-commits` and follow it when available. If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, and match recurring subject, body, and trailer structure without copying unrelated content. If fewer than five commits exist, inspect all; with none use a concise imperative subject.
+
+If repository guidance requires Lore, stop and return an exact `$root-kernel:dev-setup` continuation request instead of falling back. Repository-required IDs and prefixes override Lore, which never grants commit authority.
 
 Before each authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available; after the commit and hooks, refresh the applicable Sanho evidence. If unavailable and repository guidance requires it, stop and route to `$root-kernel:dev-setup`; otherwise use the repository's required Sanho check or the minimal `sanho status --json` fallback and report the missing specialized guidance.
 

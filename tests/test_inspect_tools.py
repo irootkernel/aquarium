@@ -72,14 +72,20 @@ class InspectToolsTest(unittest.TestCase):
         )
 
     def inspect(
-        self, repository: Path | None = None, timeout_seconds: float = 3.0
+        self,
+        repository: Path | None = None,
+        timeout_seconds: float = 3.0,
+        include_podway: bool = False,
     ) -> subprocess.CompletedProcess[str]:
-        return self.run_script(
+        arguments = [
             "--repository",
             str(repository or self.repository),
             "--timeout-seconds",
             str(timeout_seconds),
-        )
+        ]
+        if include_podway:
+            arguments.append("--include-podway")
+        return self.run_script(*arguments)
 
     def install_fake_tools(
         self,
@@ -406,7 +412,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "root-kernel-dev-setup-inspection.v2"
+            payload["schema_version"], "root-kernel-dev-setup-inspection.v3"
         )
         self.assertEqual(
             payload["repository"]["worktree"],
@@ -420,12 +426,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(payload["tools"]["gaori"]["agent_skill"]["status"], "missing")
         self.assertEqual(payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable")
         self.assertEqual(payload["tools"]["lora"]["status"], "missing")
-        self.assertEqual(payload["tools"]["podway"]["status"], "missing")
-        self.assertTrue(payload["tools"]["podway"]["setup_supported"])
-        self.assertEqual(
-            payload["tools"]["podway"]["integration_status"], "not_opted_in"
-        )
-        self.assertEqual(payload["tools"]["podway"]["agent_skill"]["status"], "missing")
+        self.assertNotIn("podway", payload["tools"])
 
     def test_configured_tools_are_normalized_without_config_contents(self) -> None:
         self.install_fake_tools()
@@ -509,16 +510,12 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(gaori_configuration[".gaori/toolchain.yaml"]["ignored"])
         self.assertEqual(tools["lora"]["status"], "configured")
         self.assertTrue(tools["lora"]["lore_setup_present"])
-        self.assertEqual(tools["podway"]["version"], "v0.2.1")
-        self.assertTrue(tools["podway"]["version_supported"])
-        self.assertEqual(tools["podway"]["integration_status"], "not_opted_in")
-
-    def test_matching_managed_procedures_enable_only_healthy_supported_opt_in(
+    def test_matching_managed_procedures_are_ready_only_on_supported_platform(
         self,
     ) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         platform_supported = platform.system() == "Darwin" and platform.machine() in {
@@ -527,8 +524,8 @@ class InspectToolsTest(unittest.TestCase):
         }
         self.assertTrue(all(item["matches_source"] for item in podway["managed_procedures"]))
         self.assertEqual(
-            podway["integration_status"],
-            "opted_in" if platform_supported else "degraded",
+            podway["readiness_status"],
+            "ready" if platform_supported else "degraded",
         )
         self.assertEqual(
             podway["status"], "configured" if platform_supported else "degraded"
@@ -537,7 +534,7 @@ class InspectToolsTest(unittest.TestCase):
     def test_managed_procedure_checks_report_validity_and_digest(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         managed = json.loads(completed.stdout)["tools"]["podway"]["managed_procedures"]
         self.assertEqual(
@@ -572,9 +569,9 @@ class InspectToolsTest(unittest.TestCase):
             "schema: drifted\n", encoding="utf-8"
         )
         managed.joinpath("root-kernel-goal-v2.yaml").unlink()
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
-        self.assertEqual(podway["integration_status"], "degraded")
+        self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
     def test_managed_procedures_without_initialized_workspace_are_degraded(self) -> None:
@@ -584,9 +581,9 @@ class InspectToolsTest(unittest.TestCase):
         target.mkdir(parents=True)
         for procedure in source.glob("*.yaml"):
             shutil.copyfile(procedure, target / procedure.name)
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
-        self.assertEqual(podway["integration_status"], "degraded")
+        self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
     def test_unsupported_or_mixed_podway_versions_are_degraded(self) -> None:
@@ -594,11 +591,11 @@ class InspectToolsTest(unittest.TestCase):
             podway_version="v0.3.0", podway_daemon_version="0.2.7"
         )
         self.install_managed_podway_procedures()
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         self.assertFalse(podway["version_supported"])
         self.assertFalse(podway["versions_match"])
-        self.assertEqual(podway["integration_status"], "degraded")
+        self.assertEqual(podway["readiness_status"], "degraded")
 
     def test_podway_v021_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
@@ -649,7 +646,7 @@ class InspectToolsTest(unittest.TestCase):
                     podway = inspect_tools.inspect_podway(
                         self.repository.resolve(), 3.0
                     )
-                self.assertEqual(podway["integration_status"], "degraded")
+                self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(podway["status"], "degraded")
 
     def test_legacy_procedure_state_is_reported_without_recovery_mutation(self) -> None:
@@ -666,9 +663,9 @@ class InspectToolsTest(unittest.TestCase):
             podway["probes"]["doctor"]["error_code"],
             "LEGACY_PROCEDURE_STATE_UNSUPPORTED",
         )
-        self.assertEqual(podway["integration_status"], "degraded")
+        self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_skill_is_independent_from_cli_and_opt_in_health(self) -> None:
+    def test_podway_skill_is_independent_from_cli_and_readiness(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         self.install_podway_skill(root=self.home / ".agents/skills")
@@ -696,9 +693,11 @@ class InspectToolsTest(unittest.TestCase):
                 else:
                     self.install_podway_skill()
                     self.install_podway_skill(root=self.home / ".agents/skills")
-                podway = json.loads(self.inspect().stdout)["tools"]["podway"]
+                podway = json.loads(
+                    self.inspect(include_podway=True).stdout
+                )["tools"]["podway"]
                 self.assertEqual(podway["agent_skill"]["status"], "degraded")
-                self.assertEqual(podway["integration_status"], "not_opted_in")
+                self.assertEqual(podway["readiness_status"], "not_configured")
                 self.assertEqual(podway["agent_skill"]["duplicate"], case == "duplicate")
 
     def test_unhealthy_daemon_doctor_or_procedure_is_degraded(self) -> None:
@@ -713,15 +712,15 @@ class InspectToolsTest(unittest.TestCase):
                     executable.unlink()
                 self.install_fake_tools(**options)
                 self.install_managed_podway_procedures()
-                completed = self.inspect()
+                completed = self.inspect(include_podway=True)
                 podway = json.loads(completed.stdout)["tools"]["podway"]
-                self.assertEqual(podway["integration_status"], "degraded")
+                self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(podway["status"], "degraded")
 
     def test_active_session_inventory_exposes_identity_without_evidence(self) -> None:
         self.install_fake_tools(podway_active_session=True)
         self.install_managed_podway_procedures()
-        completed = self.inspect()
+        completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         session = podway["probes"]["session_status"]["result"]
         self.assertEqual(session["procedure"]["id"], "root-kernel-task-v2")
@@ -1169,7 +1168,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "root-kernel-dev-setup-inspection.v2"
+            payload["schema_version"], "root-kernel-dev-setup-inspection.v3"
         )
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertIn("--repository", payload["error"]["message"])
@@ -1277,7 +1276,13 @@ class InspectToolsTest(unittest.TestCase):
             },
         )
 
-    def test_supported_platform_opt_in_is_verified_on_any_host(self) -> None:
+    def test_default_inspection_does_not_call_podway_inspector(self) -> None:
+        with mock.patch("inspect_tools.inspect_podway") as podway_inspector:
+            payload = inspect_tools.inspect(str(self.repository), 3.0)
+        podway_inspector.assert_not_called()
+        self.assertNotIn("podway", payload["tools"])
+
+    def test_supported_platform_readiness_is_verified_on_any_host(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         with (
@@ -1292,10 +1297,10 @@ class InspectToolsTest(unittest.TestCase):
         )
         self.assertTrue(podway["version_supported"])
         self.assertTrue(podway["versions_match"])
-        self.assertEqual(podway["integration_status"], "opted_in")
+        self.assertEqual(podway["readiness_status"], "ready")
         self.assertEqual(podway["status"], "configured")
 
-    def test_untracked_managed_procedures_are_degraded_not_opted_in(self) -> None:
+    def test_untracked_managed_procedures_have_degraded_readiness(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures(tracked=False)
         with (
@@ -1308,7 +1313,7 @@ class InspectToolsTest(unittest.TestCase):
             self.assertTrue(entry["present"])
             self.assertTrue(entry["matches_source"])
             self.assertFalse(entry["tracked"])
-        self.assertEqual(podway["integration_status"], "degraded")
+        self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
 

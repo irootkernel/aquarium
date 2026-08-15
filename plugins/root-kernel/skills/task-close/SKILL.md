@@ -7,8 +7,6 @@ description: "Confirm, mark complete, and optionally commit one reviewed roadmap
 
 Close only the reviewed task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final task diff, verification summary, documentation state, and complete Mulgae evidence.
 
-Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `assess-goal`, `record-outcome`, `approve-closeout`, or `closeout` as expected. When the goal assessment is not `achieved`, do not select a successful terminal state; keep a non-terminal state and return the exact gap. Return criterion evidence, the three user answers, and final lifecycle evidence; the handler alone records decisions, completes Podway, and owns any later reset.
-
 ## Assemble Existing Evidence
 
 Determine whether repository authority makes an authorized commit, publication, merge, or other lifecycle evidence part of completion. Keep the task in review when required evidence is missing or its action is unauthorized.

@@ -7,8 +7,6 @@ description: "Plan one named roadmap task without mutation. Use when $root-kerne
 
 Plan only one task. Require the repository, canonical roadmap path, and exact task ID established by `$root-kernel:task-handler`; when invoked directly, reconstruct and validate those inputs before proceeding.
 
-Read [podway-integration.md](../../references/podway-integration.md). Inspect opted-in Podway state read-only and include the matching `root-kernel-task-v2` session start or resume, evidence mapping, and rework boundary in the plan. Never start or mutate a session in this phase, including after plan approval; the handler records the approved plan at `record-plan` on execution.
-
 ## Explore Without Mutation
 
 Read applicable repository instructions, the task entry, linked authority documents, current architecture, Git state, existing tests, CI and task runners, documentation synchronization rules, and configured development-tool guidance. Do not create a goal, edit files, generate code, run rewriting formatters, stage changes, invoke providers, or alter external state.

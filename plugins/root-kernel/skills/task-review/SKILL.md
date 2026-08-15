@@ -7,8 +7,6 @@ description: "Run and resolve Mulgae review for one complete roadmap task diff. 
 
 Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, and current task-owned diff.
 
-Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `review`. Return the exact target, run identity, coverage and publication states, findings-query result, dispositions, and unresolved-valid-finding count; the handler alone records review evidence and selects its decision.
-
 Fixing findings in this phase changes the diff, so all affected prior phase evidence is stale — including implementation and verification evidence when a fix changes behavior or tests; the handler then selects `changes-requested` and reworks to the phase that owns the change, and only a pass with no file changes supports `approved`.
 
 ## Run and Resolve the Mulgae Review

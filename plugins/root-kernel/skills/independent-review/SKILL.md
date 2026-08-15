@@ -7,8 +7,6 @@ description: "Run one supervised, read-only requirements and code review with a 
 
 Coordinate exactly one fresh Codex reviewer through Orca, preserve the current checkout, and independently verify the returned findings before recommending any response. This is a standalone review workflow, not the Mulgae phase owned by `$root-kernel:task-review`.
 
-Read [podway-integration.md](../../references/podway-integration.md). Inspect opted-in Podway state read-only and return bounded review evidence with the result; this review is always user-invoked and never creates, mutates, advances, completes, or resets a Podway session.
-
 ## Establish the Review Contract
 
 1. Require exactly one epic or task identifier and one current Git repository. Resolve the repository root, applicable instruction files, and the authoritative roadmap, requirements, specifications, decisions, and contracts for that identifier.

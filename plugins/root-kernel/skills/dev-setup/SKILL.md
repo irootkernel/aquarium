@@ -7,13 +7,13 @@ description: "Diagnose and configure Root Kernel development tooling for a repos
 
 Configure selected development tools without inventing shared project state or silently rewriting agent guidance. Treat diagnosis, installation, native configuration, and AGENTS.md editing as distinct authority boundaries.
 
-Read [podway-integration.md](../../references/podway-integration.md) whenever Podway is selected or the repository contains any managed Root Kernel procedure.
+Read [podway-integration.md](../../references/podway-integration.md) only when the user explicitly selects Podway diagnosis or setup. Managed Root Kernel Procedures or other repository state never select Podway by themselves.
 
 ## Establish the Repository
 
 1. Resolve the requested working directory to one Git root.
 2. Read applicable instruction files and inspect the branch, upstream, staged, unstaged, and untracked state.
-3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. Read its JSON as local diagnostic evidence, not as installation or mutation authority.
+3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway completely. When the current request already explicitly selects Podway, add `--include-podway`; when Podway is selected later through ask/answer, rerun the script with that flag. Read its JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
 5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step.
 6. Do not create or read `.root-kernel-dev-skills` or any equivalent central selection file.
@@ -32,7 +32,7 @@ After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch
 
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
-When another Root Kernel skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including Podway repair or opt-out; skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
+When another Root Kernel skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal; skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
@@ -59,20 +59,22 @@ For Gaori, support only stable `v0.1.12` through `v0.1.x`. Resolve one exact tag
 
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
-For Podway, support only stable `v0.2.1` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Keep release lookup, binary installation, user-scoped skill installation or replacement, LaunchAgent installation, repository initialization, managed-procedure installation or update, legacy-state recovery, and opt-out as distinct proposed actions. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository health.
+For Podway, support only stable `v0.2.1` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
+
+Keep release lookup, binary installation, user-scoped skill installation or replacement, LaunchAgent installation, repository initialization, managed-procedure installation or update, legacy-state recovery, and managed-Procedure removal as distinct proposed actions. None of these actions activates Podway for a Root Kernel workflow.
 
 Verify the release checksum before installing both matching binaries, then install or refresh the per-user LaunchAgent using the approved absolute daemon path. Disclose that the release is unsigned and not notarized, runs as a same-user local service after GUI login, and stores runtime state in the worktree.
 
-Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, require the user to make any desired backup, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_opted_in` as legacy Procedure state.
+Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, require the user to make any desired backup, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_configured` as legacy Procedure state.
 
-Repository opt-in has four disclosed parts:
+Root Kernel Podway readiness configuration has four disclosed parts:
 
 - Copy all three plugin-owned procedure sources from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/` and check each with `podway procedure check --warnings-as-errors`.
 - `podway init` also creates `.podway/config.yaml`, `.podway/.gitignore`, and ignored runtime state; show the exact proposed files and diff before approval.
 - When a managed procedure differs, show the exact source-to-project diff and obtain approval before replacing it; do not alter an active procedure snapshot.
-- Treat partial installation as degraded, not legacy.
+- Treat partial installation as degraded readiness, not activation or legacy state.
 
-Opt-out is a separate destructive proposal. Show the exact managed procedure files to remove, preserve `.podway/config.yaml`, runtime state, custom procedures, and every non-Root-Kernel session, and obtain explicit approval. Do not reset, cancel, or delete any session as part of setup or opt-out.
+Managed-Procedure removal is a separate destructive proposal. Show the exact managed procedure files to remove, preserve `.podway/config.yaml`, runtime state, custom procedures, and every session, and obtain explicit approval. Do not reset, cancel, or delete any session as part of setup or removal.
 
 ## Gate AGENTS.md With Two Approvals
 
@@ -96,7 +98,7 @@ Report:
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
 - Mulgae CLI, project and local Config v2, `use-mulgae` skill, provider readiness, installation prerequisites, and project MCP state separately;
 - Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;
-- Podway CLI, daemon, workspace, Root Kernel opt-in, legacy-state detection, and `use-podway` skill state separately;
+- Podway CLI, daemon, workspace, Root Kernel readiness, legacy-state detection, and `use-podway` skill state separately;
 - commands run and their exit status;
 - native configuration and ignore paths changed;
 - verification evidence and remaining auth or environment gaps;

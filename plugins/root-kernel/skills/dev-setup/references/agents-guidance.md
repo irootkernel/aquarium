@@ -16,8 +16,8 @@ Adapt names only when the installed skill namespace differs:
 - Use `$use-sanho` at an authorized commit or push boundary in a Sanho-managed repository, or for an explicitly requested Sanho operation.
 - Use `$use-mulgae` for an authorized Mulgae review, run inspection, finding follow-up, configuration diagnosis, cleanup plan, or recovery.
 - Use `$use-gaori` when a selected long or noisy check is routed through Gaori or existing Gaori evidence must be inspected.
-- Use `$use-podway` for Podway Procedure v2 session operation, authoring, lifecycle, diagnosis, or recovery; Root Kernel workflow skills retain their stricter roadmap, ownership, and approval rules.
-- In repositories opted into Root Kernel Podway procedures, treat the roadmap as lifecycle authority, Podway as active execution and evidence state, and the Codex goal as a temporary projection of actionable work.
+- Let `$root-kernel:task-handler`, `$root-kernel:epic-handler`, and `$root-kernel:epic-validator` use Podway by default unless the current user opts out before the first managed-session mutation; Root Kernel workflow skills retain their stricter roadmap, ownership, and approval rules.
+- Use `$use-podway` directly for an explicitly requested Procedure v2 session operation, authoring, lifecycle, diagnosis, recovery, cancellation, or current-session discard flow. Keep each handler opt-out local to its current task, epic, or validation request.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Repository-specific rules below override defaults from the referenced skills.
 
@@ -28,6 +28,8 @@ Adapt names only when the installed skill namespace differs:
 
 Omit a reference to a skill that is not selected or installed. In particular, omit `$use-sanho`, `$use-mulgae`, `$use-gaori`, or `$use-podway` when only the corresponding CLI is installed. Omit the override heading when there are no overrides.
 
+Repository guidance may require stricter Podway approval or prohibit it. The handlers' default selection never overrides that guidance, and repository availability alone does not start or authorize a Podway session.
+
 ## Classify existing guidance
 
 Move or retain as an override only information that materially differs from the referenced skills, including:
@@ -36,7 +38,7 @@ Move or retain as an override only information that materially differs from the 
 - exact test commands, permission limits, and Gaori command IDs, version pins, or repository-specific MCP requirements;
 - Sanho documentation ownership, selected `sanho check` policies, project identity, conflict policy, or repository-specific exceptions;
 - Mulgae role sets, provider routing, target selection, timeouts, artist inputs, or stricter authorization;
-- Podway enablement, procedure overrides, lifecycle ownership, version constraints, or stricter session-reset policy;
+- Podway readiness, procedure overrides, lifecycle ownership, version constraints, or stricter session-reset policy;
 - commit subject prefixes and task-ID formats that override Lore's generic summary line;
 - project-specific sensitive paths, generated sources, fallback behavior, and unavailable gates.
 

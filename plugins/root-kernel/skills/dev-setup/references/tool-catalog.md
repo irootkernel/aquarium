@@ -186,12 +186,12 @@ podway daemon status --json
 
 The LaunchAgent runs after GUI login under the same OS user and is not a multi-user security boundary. Verify the compact `podway version --json` result, the `podway.output/v3` daemon envelope with `podway.daemon-status-result/v1`, daemon reachability and exact version match, and the `podway.output/v3` doctor envelope when the worktree is initialized. Runtime status and next must identify `podway.status-result/v2` and `podway.next-result/v2`; errors remain `podway.error/v1`.
 
-Repository initialization and Root Kernel integration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`; the opt-in gate itself checks Git tracking for the three procedures. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
+Repository initialization and Root Kernel readiness configuration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
 
 ```bash
 podway procedure check --warnings-as-errors <procedure-file>
 ```
 
-The three required IDs are `root-kernel-task-v2`, `root-kernel-goal-v2`, and `root-kernel-validation-v2`. All absent means Root Kernel is not opted in. All present, tracked in Git, byte-identical, valid, and healthy means opted in. Partial, drifted, invalid, unsupported, or unhealthy state is degraded and must not silently fall back. The inspection script reports these as `integration_status` values `not_opted_in`, `opted_in`, or `degraded`. Updating a tracked copy requires showing and approving its exact diff; an active session retains its immutable snapshot.
+The three required IDs are `root-kernel-task-v2`, `root-kernel-goal-v2`, and `root-kernel-validation-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v3 inspection omits Podway unless invoked with `--include-podway`. Updating a tracked copy requires showing and approving its exact diff; an active session retains its immutable snapshot.
 
 `LEGACY_PROCEDURE_STATE_UNSUPPORTED` has a different meaning: the runtime contains Procedure v1 task state. Do not convert, edit, or delete that state automatically. Report the exact worktree and error, let the user make any desired backup, then require separate explicit approval before the supported `podway reset --all` recovery.

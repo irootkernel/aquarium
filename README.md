@@ -35,9 +35,11 @@ The three goal-centered workflows have distinct entry points. `epic-handler` con
 
 ### Optional Podway integration
 
-[Podway](https://github.com/irootkernel/podway) v0.2.1 through v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill for current session, authoring, lifecycle, and recovery mechanics. A repository opts in only when `dev-setup` installs all three tracked Root Kernel procedures under `.podway/procedures/`; a binary, user skill, or ordinary Podway workspace alone does not opt in.
+[Podway](https://github.com/irootkernel/podway) v0.2.1 through v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default.
 
-In an opted-in repository, the roadmap remains authoritative for requirements and official lifecycle, Podway owns active attempts, rework and recorded evidence, and the Codex goal temporarily projects the currently actionable work. `task-handler`, `epic-handler`, and `epic-validator` own sessions. Leaf and utility skills only read state and return evidence. An unhealthy or drifted opt-in stops instead of silently falling back; use `dev-setup` to repair or explicitly opt out.
+The user may explicitly opt the current task, epic, or validation out before its first managed-session mutation; that choice never carries into later work. Otherwise the handler checks readiness, discloses Podway operations in its plan or execution envelope, and stops on degraded readiness or a conflicting session until the user chooses repair or an explicit opt-out. `task-handler`, `epic-handler`, and `epic-validator` alone own sessions; leaf and utility skills remain Podway-blind, and the roadmap remains authoritative.
+
+During an active session, a stop request requires an explicit disposition: leave the session active for later resumption, cancel the task while preserving history, or reset the session and delete its history. Cancellation is not a pause and cannot reactivate; reset requires a dry run and separate confirmation of the irreversible history loss. Continuing the remaining Root Kernel work without Podway starts a new explicitly opted-out workflow rather than changing the active workflow in place.
 
 ## Install
 
@@ -56,7 +58,7 @@ Restart Codex after installation or upgrade so the active session reloads the in
 - [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Root Kernel supports stable v0.1.13 through v0.1.x, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
 - [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Root Kernel supports stable v0.1.12 through v0.1.x, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) guards opted-in local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Root Kernel supports stable v0.2.1 through v0.2.x and can separately install the matching optional `use-podway` user skill.
+- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Root Kernel supports stable v0.2.1 through v0.2.x and can separately install the matching optional `use-podway` user skill.
 
 ## Validate
 

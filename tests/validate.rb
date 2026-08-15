@@ -152,6 +152,7 @@ epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
 independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
+deslop = PLUGIN.join("skills/deslop/SKILL.md").read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
 task_verify = PLUGIN.join("skills/task-verify/SKILL.md").read
@@ -164,6 +165,9 @@ assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex as
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
+assert(dev_setup.include?("default inspection omits Podway completely") &&
+       dev_setup.include?("--include-podway"),
+       "dev-setup must probe Podway only after explicit selection")
 proposal_index = dev_setup.index("Ask whether to prepare")
 diff_index = dev_setup.index("Display the exact target path")
 apply_index = dev_setup.index("Apply exactly this diff")
@@ -209,10 +213,23 @@ assert(tool_catalog.include?("root-kernel-task-v2") &&
        tool_catalog.include?("root-kernel-goal-v2") &&
        tool_catalog.include?("root-kernel-validation-v2"),
        "Podway managed procedures are missing")
+assert(tool_catalog.include?("readiness_status=not_configured") &&
+       tool_catalog.include?("readiness_status=ready") &&
+       tool_catalog.include?("--include-podway") &&
+       !tool_catalog.include?("integration_status"),
+       "Podway setup diagnostics must expose readiness without activation semantics")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
 assert(ROOT.join("README.md").read.include?("v0.2.1 through v0.2.x") &&
        ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
        "public Podway support and optional skill guidance are missing")
+assert(ROOT.join("README.md").read.include?("selects Podway by default") &&
+       ROOT.join("README.md").read.include?("opt the current task, epic, or validation out") &&
+       ROOT.join("README.md").read.include?("before its first managed-session mutation"),
+       "public Podway guidance must document default use and pre-session opt-out")
+assert(ROOT.join("README.md").read.include?("leave the session active for later resumption") &&
+       ROOT.join("README.md").read.include?("cancel the task while preserving history") &&
+       ROOT.join("README.md").read.include?("reset the session and delete its history"),
+       "public Podway guidance must distinguish pause, cancel, and reset")
 assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
        "privacy policy must disclose Podway skill installation")
@@ -453,21 +470,59 @@ assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
        podway_contract.include?("job lookup") &&
        podway_contract.include?("idempotency key"),
        "Podway mutation reconciliation is missing")
-assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` own"),
+assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` may inspect, own, or mutate"),
        "Podway session ownership is missing")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
        podway_contract.include?("Root Kernel roadmap authority"),
        "Podway optional-skill precedence and fallback are missing")
-assert(podway_contract.include?("integration_status=not_opted_in") &&
+assert(podway_contract.include?("readiness_status=not_configured") &&
        podway_contract.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED"),
-       "Podway opt-in absence and legacy runtime state are not distinguished")
+       "Podway readiness absence and legacy runtime state are not distinguished")
+assert(podway_contract.include?("Select Podway by default for every invocation") &&
+       podway_contract.include?("before its managed session starts") &&
+       podway_contract.include?("never carry an opt-out forward implicitly"),
+       "Podway must be default-selected with a workflow-local pre-session opt-out")
+assert(podway_contract.include?("handler invocation selects Podway by default") &&
+       podway_contract.include?("invisible to that workflow"),
+       "Podway availability must remain separate from handler selection")
+assert(podway_contract.include?("choose between repair") &&
+       podway_contract.include?("Do not silently fall back"),
+       "Podway readiness failures must require a repair-or-opt-out decision")
+assert(podway_contract.include?("current-session discard flow") &&
+       podway_contract.include?("After the session starts, do not abandon it") &&
+       podway_contract.include?("Never cancel, reset, replace, reopen, or reinterpret the conflicting session automatically"),
+       "Podway sessions must not be abandoned or cleaned up automatically")
+assert(podway_contract.include?("## Handle In-Progress Stop Requests") &&
+       podway_contract.include?("**Resume later:**") &&
+       podway_contract.include?("**Abandon and preserve history:**") &&
+       podway_contract.include?("**Delete the session:**"),
+       "Podway stop requests must distinguish leave-active, cancel, and reset dispositions")
+assert(podway_contract.include?("cancelled session never reactivates") &&
+       podway_contract.include?("preview the fenced reset with `--dry-run`") &&
+       podway_contract.include?("obtain separate explicit authorization") &&
+       podway_contract.include?("verify `SESSION_NOT_FOUND`"),
+       "Podway cancel and destructive reset semantics must remain explicit")
+assert(podway_contract.include?("None of these dispositions commits work, changes roadmap state, or proves the goal achieved") &&
+       podway_contract.include?("start a new explicitly opted-out workflow") &&
+       podway_contract.include?("never switch the current workflow in place"),
+       "Podway lifecycle disposition must remain separate from Root Kernel completion and opt-out restart")
 { "task-handler" => task_handler, "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
-  assert(body.include?("$use-podway"), "#{name} must discover use-podway independently")
+  assert(body.include?("Use Podway by default") &&
+         body.include?("explicit pre-session opt-out") &&
+         body.include?("`$root-kernel:dev-setup` repair") &&
+         body.include?("shared `Handle In-Progress Stop Requests` flow") &&
+         body.include?("never assume pause, cancel, reset"),
+         "#{name} must default to Podway, support pre-session opt-out, and classify in-progress stops")
 end
 assert(agents_reference.include?("$use-podway") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-podway")
+assert(agents_reference.include?("use Podway by default") &&
+       agents_reference.include?("opts out before the first managed-session mutation") &&
+       agents_reference.include?("cancellation, or current-session discard flow") &&
+       agents_reference.include?("Keep each handler opt-out local"),
+       "AGENTS guidance must preserve default use and workflow-local opt-out")
 
 expected_procedure_graphs = {
   "root-kernel-task-v2.yaml" => {
@@ -557,22 +612,6 @@ assert(task_assess_evidence == %w[record-plan implement verify refine document r
 assert(task_procedure_text.include?("must reach implementation through manual rework"),
        "task procedure must document the manual-rework escape to implementation")
 
-{
-  "task-plan" => %w[record-plan],
-  "task-implement" => %w[implement],
-  "task-verify" => %w[verify],
-  "task-refine" => %w[refine],
-  "task-document" => %w[document],
-  "task-review" => %w[review],
-  "task-close" => %w[assess-goal record-outcome approve-closeout closeout]
-}.each do |name, node_ids|
-  body = PLUGIN.join("skills/#{name}/SKILL.md").read
-  node_ids.each do |node_id|
-    assert(body.include?("`#{node_id}`") && task_procedure_nodes.key?(node_id),
-           "leaf skill must reference a real root-kernel-task-v2 node: #{name} -> #{node_id}")
-  end
-end
-
 skill_paths.each do |path|
   body = path.read
   (body.scan(/session is at `([a-z][a-z0-9-]*)`/) + body.scan(/approved plan at `([a-z][a-z0-9-]*)`/)).flatten.each do |node_id|
@@ -584,22 +623,30 @@ end
 assert(task_handler.include?("only after an `achieved` goal assessment") &&
        task_handler.include?("record no decision"),
        "task-handler must gate success on the goal assessment and skip decisions on holds")
-assert(task_close.include?("goal assessment is not `achieved`"),
-       "task-close must refuse a successful terminal state without an achieved assessment")
 assert(task_review.include?("only a pass with no file changes supports `approved`"),
        "task-review must route review-phase fixes through the rework path")
 
-skill_paths.each do |path|
-  assert(path.read.include?("podway-integration.md"), "skill must reference Podway contract: #{path}")
-end
-%w[task-plan task-implement task-verify task-refine task-document task-review task-close independent-review deslop].each do |name|
+podway_blind_skills = %w[
+  task-plan task-implement task-verify task-refine task-document task-review task-close
+  independent-review deslop
+]
+podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
-  assert(body.match?(/never .*?(?:Podway|session)/i) || body.include?("handler alone"),
-         "non-owner skill must prohibit Podway mutation: #{name}")
+  assert(!body.match?(/podway/i), "leaf and utility skill must remain Podway-blind: #{name}")
 end
+assert(independent_review.include?("Return the target and snapshot, independent reviewer verdict") &&
+       deslop.include?("Return the material cleanup performed") &&
+       task_close.include?("Return the three answers, final roadmap state"),
+       "Podway-blind review, deslop, and closeout must return native evidence")
+assert(epic_validator.include?("ignore every Podway readiness or session state"),
+       "opted-out epic validation must ignore every Podway state")
+assert(task_handler.include?("Immediately before each phase delegation") &&
+       epic_handler.include?("before each bounded work delegation") &&
+       epic_validator.include?("before each bounded audit or remediation delegation"),
+       "Podway owners must validate expected state before delegation and record verified native evidence afterward")
 
 assert(epic_handler.include?("do not invoke `$root-kernel:independent-review`") &&
-       independent_review.include?("always user-invoked"),
+       independent_review.include?("user explicitly invokes"),
        "independent-review must remain user-invoked only")
 assert(independent_review.include?("skills get orca-cli") && independent_review.include?("skills get orchestration"),
        "independent-review must load version-matched Orca guides")
@@ -717,15 +764,11 @@ MULGAE_COMPLETENESS_SENTENCE =
          "canonical Mulgae completeness sentence has drifted: #{name}")
 end
 
-LORE_COMMIT_PARAGRAPH =
-  "Before a non-trivial commit, reference `$lore-commits` and follow it when available. " \
-  "If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, " \
-  "and match recurring subject, body, and trailer structure without copying unrelated content. " \
-  "If fewer than five commits exist, inspect all; with none use a concise imperative subject. " \
-  "If repository guidance requires Lore, stop and return an exact `$root-kernel:dev-setup` continuation request instead of falling back. " \
-  "Repository-required IDs and prefixes override Lore, which never grants commit authority."
 { "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
-  assert(body.lines.map(&:chomp).include?(LORE_COMMIT_PARAGRAPH),
+  assert(body.include?("Before a non-trivial commit, reference `$lore-commits`") &&
+         body.include?("If fewer than five commits exist") &&
+         body.include?("If repository guidance requires Lore") &&
+         body.include?("Lore, which never grants commit authority"),
          "canonical Lore commit paragraph has drifted: #{name}")
 end
 
@@ -837,9 +880,6 @@ skill_paths.each do |path|
   frontmatter_end = lines[1..].index("---")
   assert(frontmatter_end, "missing closing frontmatter delimiter: #{path}")
   lines[(frontmatter_end + 2)..].each_with_index do |line, offset|
-    # The canonical Lore commit paragraph is pinned byte-for-byte above and is exempt from the ratchet.
-    next if line == LORE_COMMIT_PARAGRAPH
-
     assert(line.length <= 560,
            "skill body line exceeds 560 characters: #{path}:#{frontmatter_end + 3 + offset} (#{line.length})")
   end

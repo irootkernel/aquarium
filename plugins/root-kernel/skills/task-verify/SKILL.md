@@ -7,8 +7,6 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 Verify the implemented task established by `$root-kernel:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff.
 
-Read [podway-integration.md](../../references/podway-integration.md). In an opted-in orchestrated run, confirm read-only that the matching `root-kernel-task-v2` session is at `verify`. Return exact command, actor provenance, exit status, source identity, digest or stable evidence reference, and gaps; the handler alone records evidence and selects the verification decision.
-
 ## Build the Requirement-to-Test Matrix
 
 Build a requirement-to-test matrix from the roadmap rather than assuming fixed test folders. Consider only applicable layers:
