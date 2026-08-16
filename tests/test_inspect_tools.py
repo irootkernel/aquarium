@@ -428,8 +428,8 @@ class InspectToolsTest(unittest.TestCase):
                             item_values=[dict(value="sensitive evidence")],
                         ))))
                         raise SystemExit(0)
-                    print(json.dumps({{"schema": "podway.error/v1", "command": "session.status", "code": "NO_ACTIVE_SESSION"}}))
-                    raise SystemExit(4)
+                    print(json.dumps({{"schema": "podway.error/v1", "command": "session.status", "code": "SESSION_NOT_FOUND", "retryable": False, "exit_code": 1, "details": {{}}}}))
+                    raise SystemExit(1)
                 if arguments[:4] == ["--json", "procedure", "check", "--warnings-as-errors"]:
                     print(json.dumps({{"schema": {podway_output_schema!r}, "command": "procedure.check", "result": {{"schema": "podway.procedure-diagnostics-result/v1", "valid": {podway_procedure_ok!r}, "digest": "sha256:procedure"}}}}))
                     raise SystemExit(0 if {podway_procedure_ok!r} else 1)
@@ -678,6 +678,29 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(
             podway["status"], "configured" if platform_supported else "degraded"
         )
+
+    def test_session_not_found_is_ready_in_an_initialized_workspace(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+        self.assertEqual(
+            podway["probes"]["session_status"],
+            {
+                "attempted": True,
+                "ok": False,
+                "exit_code": 1,
+                "timed_out": False,
+                "error_code": "SESSION_NOT_FOUND",
+                "output_schema": "podway.error/v1",
+            },
+        )
+        self.assertEqual(podway["readiness_status"], "ready")
+        self.assertEqual(podway["status"], "configured")
 
     def test_managed_procedure_checks_report_validity_and_digest(self) -> None:
         self.install_fake_tools()

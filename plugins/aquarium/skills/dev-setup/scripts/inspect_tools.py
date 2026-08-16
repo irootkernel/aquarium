@@ -1556,7 +1556,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         tool["probes"]["session_status"] = normalized_session
         session_contract_ok = normalized_session["ok"] or normalized_session.get(
             "error_code"
-        ) == "NO_ACTIVE_SESSION"
+        ) == "SESSION_NOT_FOUND"
         tool["legacy_state_detected"] = any(
             probe.get("error_code") == "LEGACY_PROCEDURE_STATE_UNSUPPORTED"
             for probe in (normalized_doctor, normalized_session)
