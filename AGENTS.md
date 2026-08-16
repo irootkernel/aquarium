@@ -13,7 +13,7 @@ Update the plugin manifest version and its pinned validation expectation, then r
 ```bash
 python3 -m unittest tests/test_inspect_tools.py
 RELEASE_TAG=v<version> ruby tests/validate.rb
-ruff check plugins/root-kernel/skills/dev-setup/scripts/inspect_tools.py tests/test_inspect_tools.py
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py tests/test_inspect_tools.py
 git diff --check <previous-release-tag>
 ```
 
@@ -26,7 +26,7 @@ Before changing version metadata, show the exact current release-candidate HEAD 
 A light release may change only release metadata: the plugin manifest version and its pinned validation expectation. Validate only that release delta locally:
 
 ```bash
-python3 -m json.tool plugins/root-kernel/.codex-plugin/plugin.json >/dev/null
+python3 -m json.tool plugins/aquarium/.codex-plugin/plugin.json >/dev/null
 ruby -c tests/validate.rb
 RELEASE_TAG=v<version> ruby tests/validate.rb
 git diff --check <previous-release-tag>

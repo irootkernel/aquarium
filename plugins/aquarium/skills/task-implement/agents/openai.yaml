@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Implement"
+  short_description: "Implement one approved roadmap task"
+  default_prompt: "Use $aquarium:task-implement to implement the approved plan for one roadmap task."
+policy:
+  allow_implicit_invocation: false

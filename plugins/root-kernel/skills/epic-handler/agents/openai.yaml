@@ -1,6 +1,0 @@
-interface:
-  display_name: "Epic Handler"
-  short_description: "Orchestrate an epic through sequential task goals"
-  default_prompt: "Use $root-kernel:epic-handler with a roadmap path and one epic ID to orchestrate its task goals."
-policy:
-  allow_implicit_invocation: false

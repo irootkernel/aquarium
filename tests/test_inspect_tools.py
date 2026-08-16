@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "plugins/root-kernel/skills/dev-setup/scripts/inspect_tools.py"
+SCRIPT = ROOT / "plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py"
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 
 sys.path.insert(0, str(SCRIPT.parent))
@@ -420,7 +420,7 @@ class InspectToolsTest(unittest.TestCase):
                     if {podway_active_session!r}:
                         print(json.dumps(dict(schema={podway_output_schema!r}, command="session.status", result=dict(
                             schema={podway_status_result_schema!r},
-                            procedure=dict(schema="podway.procedure/v2", id="root-kernel-task-v2", version="1", digest="sha256:procedure"),
+                            procedure=dict(schema="podway.procedure/v2", id="aquarium-task-v2", version="1", digest="sha256:procedure"),
                             session=dict(id="00000000-0000-4000-8000-000000000001", lifecycle="running", revision=7),
                             current=dict(node=dict(graph_node_id="verify")),
                             goal_revision=2,
@@ -517,7 +517,7 @@ class InspectToolsTest(unittest.TestCase):
             self.git("add", "-f", ".mulgae/local.yaml")
 
     def install_managed_podway_procedures(self, tracked: bool = True) -> None:
-        source = ROOT / "plugins/root-kernel/assets/podway/procedures"
+        source = ROOT / "plugins/aquarium/assets/podway/procedures"
         target = self.repository / ".podway/procedures"
         target.mkdir(parents=True, exist_ok=True)
         self.repository.joinpath(".podway/config.yaml").write_text(
@@ -547,7 +547,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "root-kernel-dev-setup-inspection.v4"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v4"
         )
         self.assertEqual(
             payload["repository"]["worktree"],
@@ -688,9 +688,9 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(
             [entry["path"] for entry in managed],
             [
-                ".podway/procedures/root-kernel-task-v2.yaml",
-                ".podway/procedures/root-kernel-goal-v2.yaml",
-                ".podway/procedures/root-kernel-validation-v2.yaml",
+                ".podway/procedures/aquarium-task-v2.yaml",
+                ".podway/procedures/aquarium-goal-v2.yaml",
+                ".podway/procedures/aquarium-validation-v2.yaml",
             ],
         )
         for entry in managed:
@@ -713,18 +713,38 @@ class InspectToolsTest(unittest.TestCase):
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         managed = self.repository / ".podway/procedures"
-        managed.joinpath("root-kernel-task-v2.yaml").write_text(
+        managed.joinpath("aquarium-task-v2.yaml").write_text(
             "schema: drifted\n", encoding="utf-8"
         )
-        managed.joinpath("root-kernel-goal-v2.yaml").unlink()
+        managed.joinpath("aquarium-goal-v2.yaml").unlink()
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
+    def test_renamed_managed_procedures_require_explicit_migration(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        legacy = self.repository / ".podway/procedures/root-kernel-task-v2.yaml"
+        legacy.write_text("schema: podway.procedure/v2\n", encoding="utf-8")
+        completed = self.inspect(include_podway=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        podway = json.loads(completed.stdout)["tools"]["podway"]
+        self.assertTrue(podway["migration_required"])
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
+        self.assertEqual(
+            [
+                entry["path"]
+                for entry in podway["legacy_managed_procedures"]
+                if entry["present"]
+            ],
+            [".podway/procedures/root-kernel-task-v2.yaml"],
+        )
+
     def test_managed_procedures_without_initialized_workspace_are_degraded(self) -> None:
         self.install_fake_tools()
-        source = ROOT / "plugins/root-kernel/assets/podway/procedures"
+        source = ROOT / "plugins/aquarium/assets/podway/procedures"
         target = self.repository / ".podway/procedures"
         target.mkdir(parents=True)
         for procedure in source.glob("*.yaml"):
@@ -872,7 +892,7 @@ class InspectToolsTest(unittest.TestCase):
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         session = podway["probes"]["session_status"]["result"]
-        self.assertEqual(session["procedure"]["id"], "root-kernel-task-v2")
+        self.assertEqual(session["procedure"]["id"], "aquarium-task-v2")
         self.assertEqual(session["current_graph_node_id"], "verify")
         self.assertEqual(session["goal_revision"], 2)
         self.assertNotIn("sensitive goal text", completed.stdout)
@@ -1469,7 +1489,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "root-kernel-dev-setup-inspection.v4"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v4"
         )
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertIn("--repository", payload["error"]["message"])

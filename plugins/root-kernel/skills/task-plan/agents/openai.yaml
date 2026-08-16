@@ -1,6 +1,0 @@
-interface:
-  display_name: "Task Plan"
-  short_description: "Plan one roadmap task without mutation"
-  default_prompt: "Use $root-kernel:task-plan to plan one named roadmap task for task-handler."
-policy:
-  allow_implicit_invocation: false

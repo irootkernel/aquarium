@@ -1,8 +1,10 @@
-# Root Kernel Dev Skills
+# Aquarium
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="plugins/root-kernel/assets/logo-black.png"><img alt="Root Kernel" src="plugins/root-kernel/assets/logo-white.png" width="240"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="plugins/aquarium/assets/logo-black.png"><img alt="Aquarium" src="plugins/aquarium/assets/logo-white.png" width="240"></picture>
 
-Root Kernel Dev Skills is a Codex plugin marketplace for evidence-gated roadmap delivery, optional Podway v2 execution memory, and safe development-tool setup across Root Kernel projects.
+By [Root Kernel](https://home.rootkernel.xyz)
+
+Aquarium is a Codex plugin marketplace for evidence-gated roadmap delivery, optional Podway v2 execution memory, and safe development-tool setup across Aquarium projects.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -10,12 +12,12 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$root-kernel:epic-handler` with a roadmap path and one epic ID |
-| `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$root-kernel:epic-validator` with a roadmap path and one epic ID |
-| `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$root-kernel:task-handler` with a roadmap path and one task ID |
-| `dev-setup` | Diagnose and configure selected development tools and paired agent skills, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$root-kernel:dev-setup` |
-| `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$root-kernel:independent-review` with one epic or task ID |
-| `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$root-kernel:deslop` |
+| `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$aquarium:epic-handler` with a roadmap path and one epic ID |
+| `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$aquarium:epic-validator` with a roadmap path and one epic ID |
+| `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
+| `dev-setup` | Diagnose and configure selected development tools and paired agent skills, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$aquarium:dev-setup` |
+| `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
+| `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$aquarium:deslop` |
 
 ### Task-handler phases
 
@@ -35,30 +37,43 @@ The three goal-centered workflows have distinct entry points. `epic-handler` con
 
 ### Optional Podway integration
 
-[Podway](https://github.com/irootkernel/podway) v0.2.3 through v0.2.x can provide durable Procedure v2 state for Root Kernel workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default.
+[Podway](https://github.com/irootkernel/podway) v0.2.3 through v0.2.x can provide durable Procedure v2 state for Aquarium workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default.
 
 The user may explicitly opt the current task, epic, or validation out before its first managed-session mutation; that choice never carries into later work. Otherwise the handler checks readiness, discloses Podway operations in its plan or execution envelope, and stops on degraded readiness or a conflicting session until the user chooses repair or an explicit opt-out. `task-handler`, `epic-handler`, and `epic-validator` alone own sessions; leaf and utility skills remain Podway-blind, and the roadmap remains authoritative.
 
-During an active session, a stop request requires an explicit disposition: leave the session active for later resumption, cancel the task while preserving history, or reset the session and delete its history. Cancellation is not a pause and cannot reactivate; reset requires a dry run and separate confirmation of the irreversible history loss. Continuing the remaining Root Kernel work without Podway starts a new explicitly opted-out workflow rather than changing the active workflow in place.
+During an active session, a stop request requires an explicit disposition: leave the session active for later resumption, cancel the task while preserving history, or reset the session and delete its history. Cancellation is not a pause and cannot reactivate; reset requires a dry run and separate confirmation of the irreversible history loss. Continuing the remaining Aquarium work without Podway starts a new explicitly opted-out workflow rather than changing the active workflow in place.
 
 ## Install
 
 Add the Git marketplace and install the plugin:
 
 ```bash
-codex plugin marketplace add irootkernel/root-kernel-dev-skills --ref main
-codex plugin add root-kernel@root-kernel-dev-skills
+codex plugin marketplace add irootkernel/aquarium --ref main
+codex plugin add aquarium@aquarium
 ```
 
 Restart Codex after installation or upgrade so the active session reloads the installed skill snapshot.
 
+### Migrating from Root Kernel
+
+Aquarium v0.1.4 replaces the previous marketplace, plugin invocation prefix, inspection schema, and managed Podway Procedure IDs without compatibility aliases. Before upgrading, finish or explicitly dispose of any active `root-kernel-*` Podway session; Aquarium does not convert or delete its runtime history. Then remove the previous installation, add the renamed marketplace, install Aquarium, and restart Codex:
+
+```bash
+codex plugin remove root-kernel
+codex plugin marketplace remove root-kernel-dev-skills
+codex plugin marketplace add irootkernel/aquarium --ref main
+codex plugin add aquarium@aquarium
+```
+
+Repositories configured for Podway must remove the tracked `.podway/procedures/root-kernel-{task,goal,validation}-v2.yaml` files and install the corresponding `aquarium-*` Procedures through a separately approved `$aquarium:dev-setup` migration. Do not replace managed Procedures while an old session is active.
+
 ## Development-tool ecosystem
 
-- [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository. Root Kernel supports stable v0.2.6 through v0.2.x and can separately install the matching optional `use-sanho` user skill for Git-boundary guidance.
-- [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Root Kernel supports stable v0.1.15 through v0.1.x, including Config v3, Doctor v2 offline readiness, and explicit Codex provider profiles, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
-- [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Root Kernel supports stable v0.1.12 through v0.1.x, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
+- [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository. Aquarium supports stable v0.2.6 through v0.2.x and can separately install the matching optional `use-sanho` user skill for Git-boundary guidance.
+- [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Aquarium supports stable v0.1.15 through v0.1.x, including Config v3, Doctor v2 offline readiness, and explicit Codex provider profiles, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
+- [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Aquarium supports stable v0.1.12 through v0.1.x, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Root Kernel supports stable v0.2.3 through v0.2.x and can separately install the matching optional `use-podway` user skill.
+- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.3 through v0.2.x and can separately install the matching optional `use-podway` user skill.
 
 ## Validate
 

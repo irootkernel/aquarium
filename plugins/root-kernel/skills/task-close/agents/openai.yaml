@@ -1,6 +1,0 @@
-interface:
-  display_name: "Task Close"
-  short_description: "Confirm and close one reviewed roadmap task"
-  default_prompt: "Use $root-kernel:task-close to confirm and close one reviewed roadmap task."
-policy:
-  allow_implicit_invocation: false

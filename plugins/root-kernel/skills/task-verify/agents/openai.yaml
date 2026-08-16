@@ -1,6 +1,0 @@
-interface:
-  display_name: "Task Verify"
-  short_description: "Verify one roadmap task against requirements"
-  default_prompt: "Use $root-kernel:task-verify to verify one roadmap task against its approved requirements."
-policy:
-  allow_implicit_invocation: false

@@ -1,14 +1,14 @@
 {
-  "name": "root-kernel-dev-skills",
+  "name": "aquarium",
   "interface": {
-    "displayName": "Root Kernel Dev Skills"
+    "displayName": "Aquarium"
   },
   "plugins": [
     {
-      "name": "root-kernel",
+      "name": "aquarium",
       "source": {
         "source": "local",
-        "path": "./plugins/root-kernel"
+        "path": "./plugins/aquarium"
       },
       "policy": {
         "installation": "AVAILABLE",

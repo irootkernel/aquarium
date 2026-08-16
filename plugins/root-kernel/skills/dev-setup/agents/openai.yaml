@@ -1,6 +1,0 @@
-interface:
-  display_name: "Development Setup"
-  short_description: "Configure Root Kernel development tools safely"
-  default_prompt: "Use $root-kernel:dev-setup to diagnose and configure development tools for this repository."
-policy:
-  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Review"
+  short_description: "Run Mulgae review for one complete task diff"
+  default_prompt: "Use $aquarium:task-review to run Mulgae review for one complete task diff."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Close"
+  short_description: "Confirm and close one reviewed roadmap task"
+  default_prompt: "Use $aquarium:task-close to confirm and close one reviewed roadmap task."
+policy:
+  allow_implicit_invocation: false

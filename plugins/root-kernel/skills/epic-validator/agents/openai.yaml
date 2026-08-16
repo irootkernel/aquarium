@@ -1,6 +1,0 @@
-interface:
-  display_name: "Epic Validator"
-  short_description: "Validate and remediate one completed roadmap epic"
-  default_prompt: "Use $root-kernel:epic-validator with a roadmap path and one epic ID to validate and remediate its completion."
-policy:
-  allow_implicit_invocation: false

@@ -5,7 +5,7 @@ require "pathname"
 require "yaml"
 
 ROOT = Pathname.new(__dir__).parent
-PLUGIN = ROOT.join("plugins/root-kernel")
+PLUGIN = ROOT.join("plugins/aquarium")
 
 def assert(condition, message)
   raise message unless condition
@@ -85,7 +85,7 @@ skill_paths.each do |path|
   ui_path = path.dirname.join("agents/openai.yaml")
   ui = YAML.safe_load(ui_path.read, aliases: false)
   prompt = ui.fetch("interface").fetch("default_prompt")
-  assert(prompt.include?("$root-kernel:#{metadata.fetch('name')}"), "default prompt lacks skill name: #{ui_path}")
+  assert(prompt.include?("$aquarium:#{metadata.fetch('name')}"), "default prompt lacks skill name: #{ui_path}")
   assert(prompt.length <= 128, "default prompt exceeds 128 characters: #{ui_path}")
 
   expected_implicit = implicit_invocation_skills.include?(metadata.fetch("name"))
@@ -126,7 +126,7 @@ assert(PLUGIN.join("assets/logo-black.png").file?, "dark-theme README logo is mi
 assert_png(PLUGIN.join("assets/logo-black.png"), 1024, 1024)
 
 marketplace = JSON.parse(ROOT.join(".agents/plugins/marketplace.json").read)
-assert(marketplace.fetch("name") == "root-kernel-dev-skills", "marketplace name is incorrect")
+assert(marketplace.fetch("name") == "aquarium", "marketplace name is incorrect")
 assert(!marketplace.dig("interface", "displayName").to_s.empty?, "marketplace interface displayName is missing")
 marketplace_plugins = marketplace.fetch("plugins")
 assert(marketplace_plugins.is_a?(Array) && marketplace_plugins.length == 1,
@@ -136,7 +136,7 @@ assert(marketplace_plugin.fetch("name") == manifest.fetch("name"),
        "marketplace plugin name must match the plugin manifest name")
 assert(marketplace_plugin.dig("source", "source") == "local", "marketplace plugin source must be local")
 marketplace_plugin_path = marketplace_plugin.dig("source", "path")
-assert(marketplace_plugin_path == "./plugins/root-kernel", "marketplace plugin source path is incorrect")
+assert(marketplace_plugin_path == "./plugins/aquarium", "marketplace plugin source path is incorrect")
 assert(ROOT.join(marketplace_plugin_path, ".codex-plugin/plugin.json").file?,
        "marketplace plugin source path does not contain the plugin manifest")
 assert(marketplace_plugin.dig("policy", "installation") == "AVAILABLE",
@@ -178,7 +178,7 @@ assert(dev_setup.include?("the directory containing this `SKILL.md`"),
        "dev-setup must resolve its bundled references relative to its own skill directory")
 assert(dev_setup.include?("treat it as scoped intake"),
        "dev-setup must scope a narrow request instead of widening it")
-assert(dev_setup.include?("Do not create or read `.root-kernel-dev-skills`"),
+assert(dev_setup.include?("Do not create or read `.aquarium`"),
        "dev-setup must not create shadow orchestration state")
 lookup_approval_index = dev_setup.index("obtain explicit ask/answer approval for that network operation")
 version_resolution_index = dev_setup.index("resolve the exact stable version and source provenance")
@@ -188,8 +188,8 @@ assert(lookup_approval_index && version_resolution_index && action_approval_inde
        dev_setup.include?("A lookup approval authorizes no installation or other mutation"),
        "dev-setup must approve release metadata lookup before resolution and approve setup separately")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
-assert(agents_reference.include?("$root-kernel:epic-handler") &&
-       agents_reference.include?("$root-kernel:epic-validator"),
+assert(agents_reference.include?("$aquarium:epic-handler") &&
+       agents_reference.include?("$aquarium:epic-validator"),
        "AGENTS reference guidance must distinguish epic delivery and validation")
 
 assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is missing")
@@ -213,10 +213,15 @@ assert(tool_catalog.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED") &&
        tool_catalog.include?("podway reset --all") &&
        tool_catalog.include?("separate explicit approval"),
        "Podway legacy-state recovery boundary is missing")
-assert(tool_catalog.include?("root-kernel-task-v2") &&
-       tool_catalog.include?("root-kernel-goal-v2") &&
-       tool_catalog.include?("root-kernel-validation-v2"),
+assert(tool_catalog.include?("aquarium-task-v2") &&
+       tool_catalog.include?("aquarium-goal-v2") &&
+       tool_catalog.include?("aquarium-validation-v2"),
        "Podway managed procedures are missing")
+assert(tool_catalog.include?("migration_required=true") &&
+       tool_catalog.include?("root-kernel-task-v2.yaml") &&
+       tool_catalog.include?("root-kernel-goal-v2.yaml") &&
+       tool_catalog.include?("root-kernel-validation-v2.yaml"),
+       "Podway product-rename migration contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
        tool_catalog.include?("--include-podway") &&
@@ -398,7 +403,7 @@ task_goal_index = epic_handler.index("For each non-terminal task in order")
 epic_goal_index = epic_handler.index("one final epic closeout goal")
 assert(approval_index && task_goal_index && epic_goal_index && approval_index < task_goal_index && task_goal_index < epic_goal_index,
        "epic-handler must approve once, serialize task goals, then create the closeout goal")
-assert(epic_handler.include?("Do not invoke `$root-kernel:task-handler` or its phase skills") &&
+assert(epic_handler.include?("Do not invoke `$aquarium:task-handler` or its phase skills") &&
        epic_handler.include?("sequence of goal-centered task executions") &&
        epic_handler.include?("do not manufacture phase artifacts"),
        "epic-handler must remain independent and goal-centered")
@@ -412,7 +417,7 @@ assert(epic_handler.include?("reference `$lore-commits` and follow it when avail
        epic_handler.include?("subject, body, and trailer structure") &&
        epic_handler.include?("If fewer than five commits exist"),
        "epic-handler must prefer Lore without making it a hard dependency")
-assert(epic_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
+assert(epic_handler.include?("Do not create or read `.aquarium`"),
        "epic-handler must not create shadow orchestration state")
 assert(epic_handler.include?("dependency DAG") && epic_handler.include?("exact revision") &&
        epic_handler.include?("explicit external prerequisite") && epic_handler.include?("report its nodes, owners, and missing authority"),
@@ -450,7 +455,7 @@ assert(epic_validator.include?("every member task is in a roadmap-defined succes
        epic_validator.include?("committed evidence-backed baseline") &&
        epic_validator.include?("Stop when the epic baseline is uncommitted"),
        "epic-validator must start from completed committed delivery")
-assert(epic_validator.include?("Do not invoke `$root-kernel:task-handler`, `$root-kernel:epic-handler`") &&
+assert(epic_validator.include?("Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`") &&
        epic_validator.include?("Do not add new roadmap tasks or invent task IDs"),
        "epic-validator must remediate directly without handler delegation or new tasks")
 assert(epic_validator.include?("gap owned by one existing task") &&
@@ -477,13 +482,13 @@ assert(epic_validator.include?("reference `$lore-commits` and follow it when ava
        epic_validator.include?("If fewer than five commits exist"),
        "epic-validator must prefer Lore with a repository-history fallback")
 assert(epic_validator.include?("Commit is not upstream publication") &&
-       epic_validator.include?("Do not create or read `.root-kernel-dev-skills`") &&
+       epic_validator.include?("Do not create or read `.aquarium`") &&
        epic_validator.include?("compare the commit with that snapshot byte-for-byte"),
        "epic-validator must preserve publication and shadow-state boundaries")
 assert(epic_validator.lines.length < 120, "epic-validator must remain orchestration-focused")
 
-assert(task_handler.include?("$root-kernel:dev-setup"), "task-handler must route missing setup")
-assert(!task_handler.include?("$root-kernel:epic-handler"),
+assert(task_handler.include?("$aquarium:dev-setup"), "task-handler must route missing setup")
+assert(!task_handler.include?("$aquarium:epic-handler"),
        "task-handler must remain independent from epic-handler")
 assert(task_handler.include?("Strengthen execution of one roadmap task goal"),
        "task-handler must be goal-centered and procedure-strengthening")
@@ -493,7 +498,7 @@ assert(epic_handler.include?("requests without one canonical roadmap epic identi
        "handlers must express applicability through canonical roadmap identities")
 phase_names = %w[task-plan task-implement task-verify task-refine task-document task-review task-close]
 phase_section_index = task_handler.index("Resolve every phase skill")
-phase_indexes = phase_names.map { |name| task_handler.index("$root-kernel:#{name}", phase_section_index) }
+phase_indexes = phase_names.map { |name| task_handler.index("$aquarium:#{name}", phase_section_index) }
 assert(phase_indexes.all? && phase_indexes.each_cons(2).all? { |left, right| left < right },
        "task-handler phase skills are missing or misordered")
 assert(task_handler.include?("A leaf skill's report is a handoff summary, not proof by itself"),
@@ -506,7 +511,7 @@ assert(task_handler.include?("podway observe --json --wait-for-idle") &&
        "task-handler must consume the authoritative Podway observation")
 assert(task_handler.include?("re-enter the earliest phase that owns the requested change"),
        "task-handler must route rework to the owning phase")
-assert(task_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
+assert(task_handler.include?("Do not create or read `.aquarium`"),
        "task-handler must not create shadow orchestration state")
 assert(task_handler.lines.length < 100, "task-handler must remain orchestration-focused")
 
@@ -525,7 +530,7 @@ assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-
        "Podway session ownership is missing")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
-       podway_contract.include?("Root Kernel roadmap authority"),
+       podway_contract.include?("Aquarium roadmap authority"),
        "Podway optional-skill precedence and fallback are missing")
 assert(podway_contract.include?("readiness_status=not_configured") &&
        podway_contract.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED"),
@@ -557,11 +562,11 @@ assert(podway_contract.include?("cancelled session never reactivates") &&
 assert(podway_contract.include?("None of these dispositions commits work, changes roadmap state, or proves the goal achieved") &&
        podway_contract.include?("start a new explicitly opted-out workflow") &&
        podway_contract.include?("never switch the current workflow in place"),
-       "Podway lifecycle disposition must remain separate from Root Kernel completion and opt-out restart")
+       "Podway lifecycle disposition must remain separate from Aquarium completion and opt-out restart")
 { "task-handler" => task_handler, "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
   assert(body.include?("Use Podway by default") &&
          body.include?("explicit pre-session opt-out") &&
-         body.include?("`$root-kernel:dev-setup` repair") &&
+         body.include?("`$aquarium:dev-setup` repair") &&
          body.include?("shared `Handle In-Progress Stop Requests` flow") &&
          body.include?("never assume pause, cancel, reset"),
          "#{name} must default to Podway, support pre-session opt-out, and classify in-progress stops")
@@ -576,8 +581,8 @@ assert(agents_reference.include?("use Podway by default") &&
        "AGENTS guidance must preserve default use and workflow-local opt-out")
 
 expected_procedure_graphs = {
-  "root-kernel-task-v2.yaml" => {
-    "id" => "root-kernel-task-v2",
+  "aquarium-task-v2.yaml" => {
+    "id" => "aquarium-task-v2",
     "entry" => "record-plan",
     "manual_targets" => %w[implement verify refine document review],
     "nodes" => {
@@ -595,8 +600,8 @@ expected_procedure_graphs = {
       "closeout" => { "terminal" => true }
     }
   },
-  "root-kernel-goal-v2.yaml" => {
-    "id" => "root-kernel-goal-v2",
+  "aquarium-goal-v2.yaml" => {
+    "id" => "aquarium-goal-v2",
     "entry" => "complete-work",
     "manual_targets" => %w[complete-work record-evidence],
     "nodes" => {
@@ -607,8 +612,8 @@ expected_procedure_graphs = {
       "closeout" => { "terminal" => true }
     }
   },
-  "root-kernel-validation-v2.yaml" => {
-    "id" => "root-kernel-validation-v2",
+  "aquarium-validation-v2.yaml" => {
+    "id" => "aquarium-validation-v2",
     "entry" => "capture-baseline",
     "manual_targets" => %w[audit remediate re-audit final-review],
     "nodes" => {
@@ -651,7 +656,7 @@ expected_procedure_graphs.each do |filename, expected|
          "managed procedure graph transitions drifted: #{filename}")
 end
 
-task_procedure_path = procedures_directory.join("root-kernel-task-v2.yaml")
+task_procedure_path = procedures_directory.join("aquarium-task-v2.yaml")
 task_procedure_text = task_procedure_path.read
 task_procedure = YAML.safe_load(task_procedure_text, aliases: false)
 task_procedure_nodes = task_procedure.dig("graph", "nodes").each_with_object({}) do |node, index|
@@ -667,7 +672,7 @@ skill_paths.each do |path|
   body = path.read
   (body.scan(/session is at `([a-z][a-z0-9-]*)`/) + body.scan(/approved plan at `([a-z][a-z0-9-]*)`/)).flatten.each do |node_id|
     assert(task_procedure_nodes.key?(node_id),
-           "skill references an unknown root-kernel-task-v2 node: #{path} -> #{node_id}")
+           "skill references an unknown aquarium-task-v2 node: #{path} -> #{node_id}")
   end
 end
 
@@ -696,7 +701,7 @@ assert(task_handler.include?("Immediately before each phase delegation") &&
        epic_validator.include?("before each bounded audit or remediation delegation"),
        "Podway owners must validate expected state before delegation and record verified native evidence afterward")
 
-assert(epic_handler.include?("do not invoke `$root-kernel:independent-review`") &&
+assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        independent_review.include?("user explicitly invokes"),
        "independent-review must remain user-invoked only")
 assert(independent_review.include?("skills get orca-cli") && independent_review.include?("skills get orchestration"),
@@ -712,7 +717,7 @@ assert(independent_review.include?("Keep technical review evidence and Orca life
 assert(independent_review.include?("Valid") && independent_review.include?("Invalid") &&
        independent_review.include?("Needs confirmation"),
        "independent-review must adjudicate reviewer findings")
-assert(!independent_review.include?("owning Root Kernel workflow requested"),
+assert(!independent_review.include?("owning Aquarium workflow requested"),
        "independent-review must not reintroduce the removed owning-workflow qualifier")
 
 assert(task_plan.include?("decision-complete plan"), "task-plan must own decision-complete planning")
@@ -731,7 +736,7 @@ assert(task_verify.include?("Stop and escalate to the orchestrator when a requir
 assert(task_verify.include?("when Gaori or another evidence-compression wrapper is used"),
        "task-verify must trust the underlying exit status behind evidence wrappers")
 
-deslop_index = task_refine.index("Load and follow the bundled `$root-kernel:deslop`")
+deslop_index = task_refine.index("Load and follow the bundled `$aquarium:deslop`")
 optimization_stage_index = task_refine.index("stage the current task-owned changes as the optimization baseline")
 optimization_index = task_refine.index("## Optimize")
 assert(deslop_index && optimization_stage_index && optimization_index &&
@@ -838,7 +843,7 @@ end
 end
 
 { "epic-handler" => epic_handler, "epic-validator" => epic_validator, "task-close" => task_close }.each do |name, body|
-  assert(body.include?("git log -5 --format=fuller") && body.include?("$root-kernel:dev-setup"),
+  assert(body.include?("git log -5 --format=fuller") && body.include?("$aquarium:dev-setup"),
          "Lore fallback must pair repository history with setup escalation: #{name}")
 end
 
@@ -873,14 +878,20 @@ assert(workflow.include?("ruby tests/validate.rb"), "CI must run repository vali
 assert(workflow.include?("git diff --check"), "CI must reject whitespace damage")
 
 readme = ROOT.join("README.md").read
-assert(readme.include?("plugins/root-kernel/assets/logo-white.png"), "README light-theme logo is missing")
-assert(readme.include?("plugins/root-kernel/assets/logo-black.png"), "README dark-theme logo is missing")
+assert(readme.include?("plugins/aquarium/assets/logo-white.png"), "README light-theme logo is missing")
+assert(readme.include?("plugins/aquarium/assets/logo-black.png"), "README dark-theme logo is missing")
 assert(readme.include?("https://home.rootkernel.xyz"), "README homepage is missing")
 assert(readme.include?("mailto:cs@rootkernel.xyz"), "README support email is missing")
-assert(readme.include?("codex plugin marketplace add irootkernel/root-kernel-dev-skills --ref main"),
+assert(readme.include?("codex plugin marketplace add irootkernel/aquarium --ref main"),
        "README marketplace install command is missing")
-assert(readme.include?("codex plugin add root-kernel@root-kernel-dev-skills"),
+assert(readme.include?("codex plugin add aquarium@aquarium"),
        "README plugin install command is missing")
+assert(readme.include?("By [Root Kernel](https://home.rootkernel.xyz)"),
+       "README Root Kernel byline is missing")
+assert(readme.include?("codex plugin remove root-kernel") &&
+       readme.include?("codex plugin marketplace remove root-kernel-dev-skills") &&
+       readme.include?("$aquarium:dev-setup"),
+       "README product-rename migration is missing")
 expected_skill_names.each do |name|
   assert(readme.include?("`#{name}`"), "README skill entry is missing: #{name}")
 end
@@ -888,7 +899,7 @@ readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
 %w[epic-handler epic-validator task-handler dev-setup independent-review deslop].each do |name|
-  assert(readme.include?("$root-kernel:#{name}"), "README invocation token is missing: #{name}")
+  assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),
        "README deslop upstream MIT attribution is missing")
@@ -936,6 +947,6 @@ skill_paths.each do |path|
   end
 end
 
-assert(Dir[ROOT.join("**/.root-kernel-dev-skills")].empty?, "central project-state file must not exist")
+assert(Dir[ROOT.join("**/.aquarium")].empty?, "central project-state file must not exist")
 
 puts "validated #{skill_paths.length} skills, marketplace and plugin metadata, managed procedures, cross-file pins, and documentation invariants"
