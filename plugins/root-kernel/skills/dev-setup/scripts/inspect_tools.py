@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v3"
+MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v3"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 SANHO_SKILL_FILES = (
     "SKILL.md",
@@ -159,7 +160,7 @@ def supported_podway_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.2\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 1)
+    return bool(match and int(match.group(1)) >= 3)
 
 
 def supported_sanho_version(version: str | None) -> bool:
@@ -180,7 +181,7 @@ def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 13)
+    return bool(match and int(match.group(1)) >= 14)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -535,24 +536,70 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     return tool
 
 
-def normalize_mulgae_config(probe: dict[str, Any]) -> dict[str, Any]:
+def normalize_mulgae_command_envelope(
+    probe: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
     normalized = normalized_probe(probe)
-    result = probe.get("result")
-    if isinstance(result, dict):
-        command_result = result.get("result")
-        if isinstance(command_result, dict):
-            normalized["result"] = {
-                key: command_result[key]
-                for key in ("kind", "mode", "config_uri", "config_sha256")
-                if isinstance(command_result.get(key), str)
-            }
-        reasons = result.get("reasons")
-        if isinstance(reasons, list):
-            normalized["reason_codes"] = [
-                reason["code"]
-                for reason in reasons
-                if isinstance(reason, dict) and isinstance(reason.get("code"), str)
+    envelope = probe.get("result")
+    if not isinstance(envelope, dict):
+        return normalized, None
+    if envelope.get("schema_version") != MULGAE_COMMAND_RESULT_SCHEMA:
+        normalized["ok"] = False
+        normalized["error_code"] = "unexpected_output_schema"
+        return normalized, None
+    return normalized, envelope
+
+
+def normalize_mulgae_config(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized, envelope = normalize_mulgae_command_envelope(probe)
+    if not isinstance(envelope, dict):
+        return normalized
+    command_result = envelope.get("result")
+    if isinstance(command_result, dict):
+        safe_result: dict[str, Any] = {
+            key: command_result[key]
+            for key in ("kind", "mode", "config_uri", "config_sha256")
+            if isinstance(command_result.get(key), str)
+        }
+        policy = command_result.get("policy")
+        if isinstance(policy, dict):
+            safe_policy: dict[str, Any] = {}
+            configured = policy.get("configured_provider_ids")
+            if isinstance(configured, list) and all(
+                isinstance(provider, str) for provider in configured
+            ):
+                safe_policy["configured_provider_ids"] = configured
+            policy_body = policy.get("policy")
+            if isinstance(policy_body, dict):
+                selected_policy = selected_fields(
+                    policy_body, ("workspace_access", "required_roles")
+                )
+                assignments = policy_body.get("role_assignments")
+                if isinstance(assignments, list):
+                    selected_policy["role_assignments"] = [
+                        selected_fields(
+                            assignment,
+                            ("role", "primary_provider", "credential_profile"),
+                        )
+                        for assignment in assignments
+                        if isinstance(assignment, dict)
+                    ]
+                safe_policy["policy"] = selected_policy
+            if safe_policy:
+                safe_result["policy"] = safe_policy
+        provenance = command_result.get("provenance")
+        if isinstance(provenance, list):
+            safe_result["provenance"] = [
+                selected_fields(
+                    row, ("field", "source", "disposition", "value_class")
+                )
+                for row in provenance
+                if isinstance(row, dict)
             ]
+        normalized["result"] = safe_result
+    reason_codes = mulgae_reason_codes(envelope)
+    if reason_codes:
+        normalized["reason_codes"] = reason_codes
     return normalized
 
 
@@ -567,8 +614,7 @@ def mulgae_reason_codes(envelope: Any) -> list[str]:
 
 
 def normalize_mulgae_providers(probe: dict[str, Any]) -> dict[str, Any]:
-    normalized = normalized_probe(probe)
-    envelope = probe.get("result")
+    normalized, envelope = normalize_mulgae_command_envelope(probe)
     if isinstance(envelope, dict):
         result = envelope.get("result")
         if isinstance(result, dict):
@@ -582,8 +628,7 @@ def normalize_mulgae_providers(probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
-    normalized = normalized_probe(probe)
-    envelope = probe.get("result")
+    normalized, envelope = normalize_mulgae_command_envelope(probe)
     if not isinstance(envelope, dict):
         return normalized
     result = envelope.get("result")

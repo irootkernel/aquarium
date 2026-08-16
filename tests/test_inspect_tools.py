@@ -92,7 +92,8 @@ class InspectToolsTest(unittest.TestCase):
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.6",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.13",
+        mulgae_version: str = "v0.1.14",
+        mulgae_output_schema: str = "mulgae-command-result.v3",
         mulgae_mcp_mode: str | None = None,
         go_version: str = "go1.26.6",
         gaori_version: str = "0.1.12",
@@ -102,8 +103,8 @@ class InspectToolsTest(unittest.TestCase):
         gaori_mcp_mode: str | None = None,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.1",
-        podway_daemon_version: str = "0.2.1",
+        podway_version: str = "v0.2.3",
+        podway_daemon_version: str = "0.2.3",
         podway_daemon_reachable: bool = True,
         podway_doctor_ok: bool = True,
         podway_active_session: bool = False,
@@ -162,13 +163,18 @@ class InspectToolsTest(unittest.TestCase):
                     raise SystemExit(0)
                 project_config = pathlib.Path.cwd() / ".mulgae/config.yaml"
                 local_config = pathlib.Path.cwd() / ".mulgae/local.yaml"
-                config_ready = project_config.is_file() and local_config.is_file()
+                project_present = project_config.is_file()
+                local_present = local_config.is_file()
+                project_v3 = project_present and "version: 3" in project_config.read_text(encoding="utf-8")
+                local_v3 = local_present and "version: 3" in local_config.read_text(encoding="utf-8")
+                config_ready = project_v3 and local_v3
                 if arguments == ["doctor", "--output", "json"]:
                     readiness = "ready" if config_ready and not {failing_mulgae_providers!r} else "unverified"
-                    reason_codes = [] if readiness == "ready" else ["local_config_missing" if project_config.is_file() else "config_missing"]
+                    reason_codes = [] if readiness == "ready" else ["local_config_missing" if project_v3 and not local_present else "configuration_rejected" if project_present and local_present else "config_missing"]
                     if {failing_mulgae_providers!r} and config_ready:
                         reason_codes = ["readiness_unverified"]
                     print(json.dumps({{
+                        "schema_version": {mulgae_output_schema!r},
                         "request": {{"project_root": "/private/repository", "request_id": "secret-request"}},
                         "reasons": [] if readiness == "ready" else [{{"code": "readiness_unverified", "message": "secret detail /private/home"}}],
                         "result": {{
@@ -189,11 +195,14 @@ class InspectToolsTest(unittest.TestCase):
                                     {{"family": "kimi", "state": "not_configured", "reason": "not_configured"}},
                                     {{"family": "zcode", "state": "eligible" if readiness == "ready" else "unavailable", "reason": "identity_admitted" if readiness == "ready" else "readiness_unverified"}},
                                     {{"family": "agy", "state": "not_configured", "reason": "not_configured"}},
+                                    {{"family": "codex", "state": "not_configured", "reason": "not_configured", "credential_home": "/private/codex-home"}},
                                 ],
                                 "assignment": {{"state": "ready" if readiness == "ready" else "unavailable", "resilience": "ready" if readiness == "ready" else "unavailable"}},
                                 "readiness": {{"state": readiness, "exit_code": 0 if readiness == "ready" else 4, "reason_codes": reason_codes}},
                                 "platform_evidence": [{{"cell": "darwin-arm64", "native": True}}],
                                 "diagnostics": [{{"message": "secret detail /private/home"}}],
+                                "provider_stdout": "secret complete stdout",
+                                "provider_stderr": "secret complete stderr",
                             }},
                         }},
                     }}))
@@ -201,15 +210,38 @@ class InspectToolsTest(unittest.TestCase):
                 if arguments == ["providers", "--include-unverified", "--output", "json"]:
                     ready = config_ready and not {failing_mulgae_providers!r}
                     print(json.dumps({{
+                        "schema_version": {mulgae_output_schema!r},
                         "reasons": [] if ready else [{{"code": "readiness_unverified", "message": "secret provider detail"}}],
-                        "result": {{"kind": "providers_listed", "ready_provider_count": 1 if ready else 0, "provider_evidence_uri": "/private/provider-evidence"}},
+                        "result": {{"kind": "providers_listed", "ready_provider_count": 1 if ready else 0, "provider_evidence_uri": "/private/provider-evidence", "credential_homes": {{"work": "/private/codex-home"}}}},
                     }}))
                     raise SystemExit(0 if ready else 4)
                 if arguments[:3] == ["config", "--mode", "effective"] or arguments[:3] == ["config", "--mode", "provenance"]:
                     mode = arguments[2]
                     print(json.dumps({{
+                        "schema_version": {mulgae_output_schema!r},
                         "reasons": [] if config_ready else [{{"code": "configuration_rejected", "message": "secret config detail"}}],
-                        "result": {{"kind": "configuration" if config_ready else "configuration_failed", "mode": mode, "config_uri": ".mulgae/config.yaml", "config_sha256": "abc", "native_home": "/private/home"}},
+                        "result": {{
+                            "kind": "configuration" if config_ready else "configuration_failed",
+                            "mode": mode,
+                            "config_uri": ".mulgae/config.yaml",
+                            "config_sha256": "abc",
+                            "native_home": "/private/home",
+                            "credential_homes": {{"work": "/private/codex-home"}},
+                            "policy": {{
+                                "configured_provider_ids": ["codex", "zcode"],
+                                "policy": {{
+                                    "workspace_access": "none",
+                                    "required_roles": ["logic", "security"],
+                                    "role_assignments": [
+                                        {{"role": "logic", "primary_provider": "codex", "credential_profile": "personal", "credential_home": "/private/personal"}},
+                                        {{"role": "security", "primary_provider": "codex", "credential_profile": "work", "credential_home": "/private/work"}},
+                                    ],
+                                }},
+                            }} if mode == "effective" and config_ready else None,
+                            "provenance": [
+                                {{"field": "providers.codex.credential_homes", "source": "local", "disposition": "configured", "value_class": "machine", "value": "/private/codex-home"}},
+                            ] if mode == "provenance" and config_ready else None,
+                        }},
                     }}))
                     raise SystemExit(0 if config_ready else 2)
                 raise SystemExit(2)
@@ -369,10 +401,10 @@ class InspectToolsTest(unittest.TestCase):
     ) -> None:
         self.repository.joinpath(".mulgae").mkdir(exist_ok=True)
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            "version: 2\n", encoding="utf-8"
+            'version: 3\nexecution:\n  workspace_access: "none"\n', encoding="utf-8"
         )
         self.repository.joinpath(".mulgae/local.yaml").write_text(
-            "version: 2\n", encoding="utf-8"
+            "version: 3\n", encoding="utf-8"
         )
         self.repository.joinpath(".mulgae/local.yaml").chmod(local_mode)
         self.repository.joinpath(".gitignore").write_text(
@@ -438,10 +470,10 @@ class InspectToolsTest(unittest.TestCase):
         )
         self.repository.joinpath(".mulgae").mkdir()
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            "credential: hidden\n", encoding="utf-8"
+            'version: 3\nexecution:\n  workspace_access: "none"\ncredential: hidden\n', encoding="utf-8"
         )
         self.repository.joinpath(".mulgae/local.yaml").write_text(
-            "native_home: /private/home\n", encoding="utf-8"
+            "version: 3\nnative_home: /private/home\n", encoding="utf-8"
         )
         self.repository.joinpath(".mulgae/local.yaml").chmod(0o600)
         self.repository.joinpath(".gaori").mkdir()
@@ -473,11 +505,16 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn("secret-project", completed.stdout)
         self.assertNotIn("git@example.invalid", completed.stdout)
         self.assertNotIn("secret detail", completed.stdout)
+        self.assertNotIn("secret complete stdout", completed.stdout)
+        self.assertNotIn("secret complete stderr", completed.stdout)
+        self.assertNotIn("/private/codex-home", completed.stdout)
+        self.assertNotIn("/private/personal", completed.stdout)
+        self.assertNotIn("/private/work", completed.stdout)
         self.assertEqual(
             tools["sanho"]["probes"]["status"]["result"]["sync_preview"]["conflict_count"],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.13")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.14")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -496,6 +533,17 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(mulgae_configuration[".mulgae/runtime/"]["ignored"])
         self.assertEqual(tools["mulgae"]["probes"]["providers"]["result"]["ready_provider_count"], 1)
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["result"]["doctor"]["readiness"]["state"], "ready")
+        effective = tools["mulgae"]["probes"]["effective_config"]["result"]["policy"]
+        self.assertEqual(effective["policy"]["workspace_access"], "none")
+        self.assertEqual(
+            [entry["credential_profile"] for entry in effective["policy"]["role_assignments"]],
+            ["personal", "work"],
+        )
+        provenance = tools["mulgae"]["probes"]["provenance_config"]["result"]["provenance"]
+        self.assertEqual(
+            provenance,
+            [{"field": "providers.codex.credential_homes", "source": "local", "disposition": "configured", "value_class": "machine"}],
+        )
         self.assertEqual(tools["gaori"]["version"], "0.1.12")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
@@ -597,10 +645,11 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(podway["versions_match"])
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_v021_is_the_minimum_supported_release(self) -> None:
+    def test_podway_v023_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
             ("v0.2.0", False),
-            ("v0.2.1", True),
+            ("v0.2.2", False),
+            ("v0.2.3", True),
             ("0.2.99", True),
             ("v0.3.0", False),
         ):
@@ -744,7 +793,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.13")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.14")
         self.assertFalse(tools["mulgae"]["probes"]["providers"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["providers"]["exit_code"], 4)
         self.assertEqual(tools["mulgae"]["probes"]["providers"]["reason_codes"], ["readiness_unverified"])
@@ -805,7 +854,8 @@ class InspectToolsTest(unittest.TestCase):
     def test_mulgae_version_and_installation_prerequisites_are_explicit(self) -> None:
         cases = (
             ("v0.1.12", False, "degraded"),
-            ("v0.1.13", True, "installed"),
+            ("v0.1.13", False, "degraded"),
+            ("v0.1.14", True, "installed"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -833,7 +883,7 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(go["version"], version)
                 self.assertEqual(go["supported"], supported)
 
-    def test_mulgae_config_v2_pair_and_private_policy_are_verified(self) -> None:
+    def test_mulgae_config_v3_pair_and_private_policy_are_verified(self) -> None:
         self.install_fake_tools()
         self.install_mulgae_config()
         with (
@@ -873,7 +923,7 @@ class InspectToolsTest(unittest.TestCase):
         self.install_fake_tools()
         self.repository.joinpath(".mulgae").mkdir()
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            "version: 2\n", encoding="utf-8"
+            'version: 3\nexecution:\n  workspace_access: "none"\n', encoding="utf-8"
         )
         self.repository.joinpath(".gitignore").write_text(
             "/.mulgae/*\n!/.mulgae/config.yaml\n", encoding="utf-8"
@@ -882,6 +932,39 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(mulgae["status"], "degraded")
         config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
         self.assertEqual(config["reason_codes"], ["local_config_missing"])
+
+    def test_mulgae_config_v2_pair_is_rejected(self) -> None:
+        self.install_fake_tools()
+        self.repository.joinpath(".mulgae").mkdir()
+        self.repository.joinpath(".mulgae/config.yaml").write_text(
+            "version: 2\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".mulgae/local.yaml").write_text(
+            "version: 2\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".mulgae/local.yaml").chmod(0o600)
+        self.repository.joinpath(".gitignore").write_text(
+            "/.mulgae/*\n!/.mulgae/config.yaml\n", encoding="utf-8"
+        )
+        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertEqual(mulgae["status"], "degraded")
+        config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
+        self.assertEqual(config["reason_codes"], ["configuration_rejected"])
+
+    def test_mulgae_v2_command_envelope_is_rejected(self) -> None:
+        self.install_fake_tools(mulgae_output_schema="mulgae-command-result.v2")
+        self.install_mulgae_config()
+        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertEqual(mulgae["status"], "degraded")
+        for probe_name in (
+            "doctor",
+            "providers",
+            "effective_config",
+            "provenance_config",
+        ):
+            probe = mulgae["probes"][probe_name]
+            self.assertFalse(probe["ok"])
+            self.assertEqual(probe["error_code"], "unexpected_output_schema")
 
     def test_mulgae_skill_is_independent_from_cli_and_mcp_health(self) -> None:
         self.install_mulgae_skill(root=self.home / ".agents/skills")
@@ -1206,6 +1289,7 @@ class InspectToolsTest(unittest.TestCase):
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
+                    "schema_version": "mulgae-command-result.v3",
                     "result": {
                         "kind": "configuration",
                         "config_uri": ".mulgae/config.yaml",
@@ -1236,6 +1320,7 @@ class InspectToolsTest(unittest.TestCase):
                 "exit_code": 3,
                 "timed_out": False,
                 "result": {
+                    "schema_version": "mulgae-command-result.v3",
                     "result": {"kind": "configuration", "config_uri": None},
                     "reasons": [
                         {"code": "config_unreadable", "message": "hidden detail"},
@@ -1275,6 +1360,22 @@ class InspectToolsTest(unittest.TestCase):
                 "error_code": "execution_failed",
             },
         )
+
+        wrong_schema = inspect_tools.normalize_mulgae_config(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": {
+                    "schema_version": "mulgae-command-result.v2",
+                    "result": {"kind": "configuration"},
+                },
+            }
+        )
+        self.assertFalse(wrong_schema["ok"])
+        self.assertEqual(wrong_schema["error_code"], "unexpected_output_schema")
+        self.assertNotIn("result", wrong_schema)
 
     def test_default_inspection_does_not_call_podway_inspector(self) -> None:
         with mock.patch("inspect_tools.inspect_podway") as podway_inspector:

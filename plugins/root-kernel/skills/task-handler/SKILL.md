@@ -72,7 +72,7 @@ If a postcondition fails, keep the goal active, preserve the latest safe reposit
 
 When Podway is active:
 
-- Immediately before each phase delegation, re-read status and next and verify this task's Procedure ID, canonical identity, session, attempt, goal revision, and expected node. After the leaf returns native evidence, independently verify its postcondition, record the bounded result with current fences, and advance only through `podway --json next` allowed actions.
+- Immediately before each phase delegation, run `podway observe --json --wait-for-idle` and verify this task's Procedure ID, canonical identity, session, attempt, goal revision, and expected node from the observation. After the leaf returns native evidence, independently verify its postcondition, record the bounded result with current fences, and advance only through an action allowed by `guidance.allowed_actions` and represented by a current `mutation_templates` entry.
 - Verification failure selects the procedure's failed route. Review findings, review-pass file changes, or a rejected final approval select the matching rework route even when the final re-review is clean; after recording it, match the rework depth to the correction — explicit manual rework to `implement` for a behavior change, to `verify` for evidence or test corrections, and the automatic `refine` route for cleanup-only work; for a documentation-only correction, complete `refine` with no-op evidence and advance to `document` normally.
 - Record `changes-requested` only for an explicit correction request or a specifically unmet gate. For `Keep in review`, silence, or an ambiguous answer, record no decision and leave the session at its current node.
 - Record the assessed outcome at `record-outcome` from the goal assessment plus the verification gaps, finding dispositions, and documentation gaps carried by the leaf reports, before requesting final approval.
@@ -89,7 +89,7 @@ Keep the goal active through every phase. Mark it complete only after `$root-ker
 
 Do not create or read `.root-kernel-dev-skills` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence.
 
-When Podway is active, its status and next envelopes are also required reconstruction evidence. Resume at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree; otherwise stop rather than repairing history by inference.
+When Podway is active, its latest `podway.observation-result/v1` envelope is also required reconstruction evidence. Resume at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree; otherwise stop rather than repairing history by inference.
 
 Resume at the earliest phase whose postcondition is not currently proven. Do not repeat a proven phase merely to recreate a report, but invalidate affected evidence when task-owned code, tests, documentation, roadmap state, review target, or repository authority changed after that evidence was recorded.
 

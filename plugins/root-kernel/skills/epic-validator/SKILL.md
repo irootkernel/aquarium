@@ -46,7 +46,9 @@ Run the audit without an active goal and without source mutation:
 4. Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
 5. Verify every candidate finding against current authority and implementation. Record only confirmed gaps; do not turn review hypotheses into work automatically.
 
-With Podway active, re-read status and next before each bounded audit or remediation delegation and verify the expected Procedure ID, epic and baseline identity, session, attempt, goal revision, and current node. Independently verify returned native evidence before recording the baseline and fresh audit or deciding whether gaps exist. A clean decision advances to final review; confirmed gaps advance to remediation. Do not record candidate findings as confirmed Podway gaps before adjudication.
+With Podway active, run `podway observe --json --wait-for-idle` before each bounded audit or remediation delegation and verify the expected Procedure ID, epic and baseline identity, session, attempt, goal revision, and current node from that observation. Independently verify returned native evidence before recording the baseline and fresh audit or deciding whether gaps exist.
+
+Select only actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries. A clean decision advances to final review; confirmed gaps advance to remediation. Do not record candidate findings as confirmed Podway gaps before adjudication.
 
 ## Group and Complete Remediation Goals
 

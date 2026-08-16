@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Root Kernel development tooling for a repository. Use when the user explicitly invokes $root-kernel:dev-setup; asks to install, initialize, repair, or audit the Sanho CLI or use-sanho skill, the Mulgae CLI, use-mulgae skill, Config v2, or project MCP, the Gaori CLI, use-gaori skill, or project MCP, the Podway CLI, daemon, use-podway skill, or Root Kernel procedures, or the third-party Lora skills; or wants to replace duplicated AGENTS.md tool guidance with skill references and repository-specific overrides."
+description: "Diagnose and configure Root Kernel development tooling for a repository. Use when the user explicitly invokes $root-kernel:dev-setup; asks to install, initialize, repair, or audit the Sanho CLI or use-sanho skill, the Mulgae CLI, use-mulgae skill, Config v3, Codex provider profiles, or project MCP, the Gaori CLI, use-gaori skill, or project MCP, the Podway CLI, daemon, use-podway skill, or Root Kernel procedures, or the third-party Lora skills; or wants to replace duplicated AGENTS.md tool guidance with skill references and repository-specific overrides."
 ---
 
 # Development Setup
@@ -51,19 +51,21 @@ For each selected tool:
 
 For Sanho, support only stable `v0.2.6` through `v0.2.x`. Resolve one exact tag and use it for both the CLI and `use-sanho` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, workspace initialization, and lifecycle repair as separate approval boundaries. A paired recommendation is not approval for both components. Treat missing, incomplete, invalid, and duplicate skill installations separately from CLI or workspace health.
 
-For Mulgae, support only stable `v0.1.13` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-mulgae` source. Require Go `1.26.6` or newer for installation, without treating an older Go toolchain as a runtime failure of an already healthy binary.
+For Mulgae, support only stable `v0.1.14` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-mulgae` source. Require Go `1.26.6` or newer for installation, without treating an older Go toolchain as a runtime failure of an already healthy binary.
 
-Keep CLI installation or upgrade, user-scoped skill installation or replacement, project Config v2 and ignore changes, local bootstrap or refresh, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI and configuration health. Never start a Mulgae review, preflight capture, provider call, or MCP server during setup.
+Keep CLI installation or upgrade, user-scoped skill installation or replacement, project Config v3 and ignore changes, local bootstrap or refresh, Codex credential-profile mapping, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI and configuration health. Never authenticate a provider or start a Mulgae review, preflight capture, provider call, or MCP server during setup.
 
 For Gaori, support only stable `v0.1.12` through `v0.1.x`. Resolve one exact tag and use it for both the CLI and `use-gaori` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, repository config and ignore changes, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI health. Never start a Gaori run or MCP test command during setup.
 
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
-For Podway, support only stable `v0.2.1` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
+For Podway, support only stable `v0.2.3` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
 
 Keep release lookup, binary installation, user-scoped skill installation or replacement, LaunchAgent installation, repository initialization, managed-procedure installation or update, legacy-state recovery, and managed-Procedure removal as distinct proposed actions. None of these actions activates Podway for a Root Kernel workflow.
 
 Verify the release checksum before installing both matching binaries, then install or refresh the per-user LaunchAgent using the approved absolute daemon path. Disclose that the release is unsigned and not notarized, runs as a same-user local service after GUI login, and stores runtime state in the worktree.
+
+If an installation is interrupted after Podway prepares authenticated service metadata, rerun the same approved `podway daemon install --daemon-path <absolute-podwayd-path>` command without a socket override. Do not edit service metadata or LaunchAgent files manually.
 
 Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, require the user to make any desired backup, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_configured` as legacy Procedure state.
 
@@ -96,7 +98,7 @@ Report:
 - selected, skipped, and planned tools;
 - resolved versions and sources;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
-- Mulgae CLI, project and local Config v2, `use-mulgae` skill, provider readiness, installation prerequisites, and project MCP state separately;
+- Mulgae CLI, project and local Config v3, `use-mulgae` skill, provider and Codex-profile readiness, installation prerequisites, and project MCP state separately;
 - Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;
 - Podway CLI, daemon, workspace, Root Kernel readiness, legacy-state detection, and `use-podway` skill state separately;
 - commands run and their exit status;

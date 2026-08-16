@@ -51,7 +51,7 @@ For each non-terminal task in order:
 6. Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
 7. Move the task to its defined successful state and commit one isolated task-owned diff under the task ID. Complete the goal only after the commit exists, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
 
-With Podway active, re-read status and next before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, attempt, goal revision, and current node. Start or resume the matching goal procedure only after approval, mirror it in the Codex goal, independently verify returned native evidence before recording it, and only then select its decisions and assess each criterion.
+With Podway active, run `podway observe --json --wait-for-idle` before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, attempt, goal revision, and current node from that observation. Start or resume the matching goal procedure only after approval, mirror it in the Codex goal, independently verify returned native evidence before recording it, and only then select decisions and assess criteria through actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries.
 
 After step 7, complete the Podway session, verify its terminal outcome, perform the handoff checks again, then reset that session before starting the next goal. Never reset to bypass a failed or non-terminal outcome.
 

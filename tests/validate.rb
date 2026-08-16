@@ -196,15 +196,19 @@ assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is miss
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
 assert(!tool_catalog.include?("--skill lore-setup"), "Lora setup skill must not be installed")
 assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex"), "Lora scope must be global Codex")
-assert(tool_catalog.include?("stable `v0.2.1` through `v0.2.x`") &&
+assert(tool_catalog.include?("stable `v0.2.3` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
        "Podway CLI, daemon, and use-podway must share the supported approved release")
 assert(tool_catalog.include?("shasum -a 256 -c"), "Podway checksum verification is missing")
 assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.status-result/v2") &&
-       tool_catalog.include?("podway.next-result/v2"),
-       "Podway v0.2.1 JSON contracts are missing")
+       tool_catalog.include?("podway.observation-result/v1"),
+       "Podway v0.2.3 JSON contracts are missing")
+assert(tool_catalog.include?("same approved command") &&
+       tool_catalog.include?("no `--socket` override") &&
+       tool_catalog.include?("prior launchd label to unload"),
+       "Podway v0.2.3 LaunchAgent replacement recovery is missing")
 assert(tool_catalog.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED") &&
        tool_catalog.include?("podway reset --all") &&
        tool_catalog.include?("separate explicit approval"),
@@ -219,7 +223,7 @@ assert(tool_catalog.include?("readiness_status=not_configured") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
-assert(ROOT.join("README.md").read.include?("v0.2.1 through v0.2.x") &&
+assert(ROOT.join("README.md").read.include?("v0.2.3 through v0.2.x") &&
        ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
        "public Podway support and optional skill guidance are missing")
 assert(ROOT.join("README.md").read.include?("selects Podway by default") &&
@@ -270,7 +274,7 @@ assert(agents_reference.include?("$use-gaori") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-gaori")
 
-assert(tool_catalog.include?("stable `v0.1.13` through `v0.1.x`") &&
+assert(tool_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
        tool_catalog.include?("Go `1.26.6` or newer") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
@@ -279,8 +283,26 @@ assert(tool_catalog.include?("stable `v0.1.13` through `v0.1.x`") &&
 assert(tool_catalog.include?(".mulgae/local.yaml") &&
        tool_catalog.include?("mode-`0600`") &&
        tool_catalog.include?("!/.mulgae/config.yaml") &&
-       tool_catalog.include?("mulgae init --refresh-local --output json"),
-       "Mulgae split Config v2 setup and ignore guidance is incomplete")
+       tool_catalog.include?("mulgae init --refresh-local --output json") &&
+       tool_catalog.include?("execution.workspace_access: none"),
+       "Mulgae split Config v3 setup and ignore guidance is incomplete")
+assert(tool_catalog.include?("mulgae-command-result.v3") &&
+       tool_catalog.include?("mulgae-review-preflight.v3") &&
+       tool_catalog.include?("Config v1 and v2 are unsupported") &&
+       tool_catalog.include?("no automatic migration"),
+       "Mulgae v0.1.14 contracts and legacy-config guidance are incomplete")
+assert(tool_catalog.include?("Codex CLI `0.147.0` or newer") &&
+       tool_catalog.include?("default_credential_profile") &&
+       tool_catalog.include?("credential_homes") &&
+       tool_catalog.include?("auth.json") &&
+       tool_catalog.include?("active setup session") &&
+       tool_catalog.include?("role-to-profile aliases"),
+       "Mulgae Codex credential-profile guidance is incomplete")
+assert(tool_catalog.include?("mode-`0700` backup directory") &&
+       tool_catalog.include?("cp -p") &&
+       tool_catalog.include?("restoration commands") &&
+       tool_catalog.include?("If Config v3 initialization fails"),
+       "Mulgae legacy-config backup and rollback guidance is incomplete")
 assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
        tool_catalog.include?("required = true") &&
        tool_catalog.include?("startup_timeout_sec = 30") &&
@@ -288,9 +310,10 @@ assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
        tool_catalog.include?("codex mcp get mulgae --json"),
        "Mulgae project-local MCP setup and verification guidance is incomplete")
 assert(dev_setup.include?("use-mulgae") &&
-       dev_setup.include?("project Config v2 and ignore changes") &&
-       dev_setup.include?("Never start a Mulgae review, preflight capture, provider call, or MCP server during setup"),
-       "dev-setup must separate Mulgae CLI, skill, Config v2, and MCP boundaries")
+       dev_setup.include?("project Config v3 and ignore changes") &&
+       dev_setup.include?("Codex credential-profile mapping") &&
+       dev_setup.include?("start a Mulgae review, preflight capture, provider call, or MCP server during setup"),
+       "dev-setup must separate Mulgae CLI, skill, Config v3, Codex profile, and MCP boundaries")
 assert(agents_reference.include?("$use-mulgae") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-mulgae")
@@ -305,9 +328,17 @@ assert(agents_reference.include?("$use-mulgae") &&
 end
 assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("Do not start a second MCP server") &&
+       task_review.include?("mulgae-review-preflight.v3") &&
+       task_review.include?("mulgae-command-result.v3") &&
+       task_review.include?("mulgae status --run r_... --output json") &&
+       task_review.include?("mulgae findings --run r_... --severity low --output json") &&
+       task_review.include?("at most 20 highest-severity records") &&
+       task_review.include?("complete provider stdout and stderr") &&
        task_review.include?("never blindly retry an uncertain review mutation"),
        "task-review must preserve the optional use-mulgae and MCP fallback boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
+       ROOT.join("PRIVACY.md").read.include?("complete provider stdout and stderr") &&
+       ROOT.join("PRIVACY.md").read.include?("auth.json") &&
        ROOT.join("PRIVACY.md").read.include?("does not run reviews, start the MCP server"),
        "privacy policy must disclose Mulgae skill installation and MCP boundaries")
 
@@ -451,8 +482,10 @@ assert(task_handler.include?("A leaf skill's report is a handoff summary, not pr
        "task-handler must verify leaf postconditions independently")
 assert(task_handler.include?("Resume at the earliest phase whose postcondition is not currently proven"),
        "task-handler must reconstruct safe resume state")
-assert(task_handler.include?("podway --json next"),
-       "task-handler must read the next Podway node deterministically")
+assert(task_handler.include?("podway observe --json --wait-for-idle") &&
+       task_handler.include?("guidance.allowed_actions") &&
+       task_handler.include?("mutation_templates"),
+       "task-handler must consume the authoritative Podway observation")
 assert(task_handler.include?("re-enter the earliest phase that owns the requested change"),
        "task-handler must route rework to the owning phase")
 assert(task_handler.include?("Do not create or read `.root-kernel-dev-skills`"),
@@ -782,7 +815,7 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.1` through `v0.2.x`"),
+  assert(body.include?("stable `v0.2.3` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
 end
 

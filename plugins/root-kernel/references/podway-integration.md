@@ -19,7 +19,7 @@ For an opted-out workflow, do not load or reference `$use-podway`, run a Podway 
 
 ## Check Readiness on the Default Path
 
-Unless the workflow is already opted out, verify that Podway is ready for Root Kernel use before requesting plan or execution-envelope approval. Readiness requires the supported stable `v0.2.1` through `v0.2.x` CLI and matching daemon on native Apple Silicon macOS, reachable healthy workspace state, `.podway/config.yaml`, `.podway/.gitignore`, and all three tracked managed files byte-identical to the plugin sources and valid under `podway procedure check --warnings-as-errors`:
+Unless the workflow is already opted out, verify that Podway is ready for Root Kernel use before requesting plan or execution-envelope approval. Readiness requires the supported stable `v0.2.3` through `v0.2.x` CLI and matching daemon on native Apple Silicon macOS, reachable healthy workspace state, `.podway/config.yaml`, `.podway/.gitignore`, and all three tracked managed files byte-identical to the plugin sources and valid under `podway procedure check --warnings-as-errors`:
 
 - `.podway/procedures/root-kernel-task-v2.yaml`;
 - `.podway/procedures/root-kernel-goal-v2.yaml`;
@@ -40,11 +40,11 @@ Podway evidence is a caller-recorded claim. Verify tests, reviews, approvals, re
 
 ## Read and Mutate Safely
 
-Use `podway --json status` and `podway --json next`; never parse human output. Require successful runtime commands to use `podway.output/v3`, status and next results to identify `podway.status-result/v2` and `podway.next-result/v2`, and failures to use `podway.error/v1`. `podway version --json` retains its compact result.
+Use `podway observe --json --wait-for-idle`; never parse human output. Require successful runtime commands to use `podway.output/v3`, observations to identify `podway.observation-result/v1`, and failures to use `podway.error/v1`. Treat the observation as one authoritative snapshot: read identity and queue state from `status`, current guidance and allowed actions from `guidance`, bounded item declarations from `active_items`, and copyable fenced commands from `mutation_templates`. A null `guidance` means the session is completed or cancelled. `podway version --json` retains its compact result.
 
-Before every mutation, re-read state and pass every applicable workspace, session, session-revision, attempt, goal-revision, and item-revision fence plus a deterministic operation-specific idempotency key. Use only IDs from machine fields such as `allowed_option_ids` and `allowed_manual_rework_targets`, and use `podway help <route>` rather than inventing flags.
+Before every mutation, re-observe and pass every applicable workspace, session, session-revision, attempt, goal-revision, and item-revision fence plus a deterministic operation-specific idempotency key. Select only commands present in the latest `mutation_templates`, fill semantic placeholders only from verified work, and use only IDs from machine fields such as `allowed_option_ids` and `allowed_manual_rework_targets`. Use `podway help <route>` rather than inventing flags.
 
-After every successful mutation, re-read status rather than calculating revisions locally. On a precondition failure, re-read and derive the next action again. On `MUTATION_OUTCOME_UNKNOWN`, use `podway --json job lookup --idempotency-key <key>` and reconcile the durable result before considering resubmission with the same canonical request and key.
+After every successful mutation, re-observe rather than calculating revisions locally. On a precondition failure, re-observe and derive the next action again. On `MUTATION_OUTCOME_UNKNOWN`, use `podway --json job lookup --idempotency-key <key>` and reconcile the durable result before considering resubmission with the same canonical request and key.
 
 Record bounded summaries and references, not source contents, credentials, raw provider payloads, or full logs. For checks record the exact command, actor provenance, exit status, current source revision or dirty-tree identity, and a digest or stable evidence reference. For review record the exact target, run identity, coverage and publication status, findings-query status, and unresolved valid findings.
 
@@ -52,7 +52,7 @@ Record bounded summaries and references, not source contents, credentials, raw p
 
 Only `task-handler`, `epic-handler`, and `epic-validator` may inspect, own, or mutate a Root Kernel Podway session, and only on the default Podway path for that exact workflow. Leaf and utility skills stay Podway-blind and return native implementation, test, cleanup, documentation, review, or closeout evidence to their caller.
 
-Before delegating work, the owner re-reads status and next and verifies the expected immutable Procedure ID, canonical workflow identity, session, attempt, goal revision, and current graph node. After delegation, the owner independently verifies the leaf postcondition, records only the supported bounded evidence with fresh fences, and selects only an allowed transition. The leaf never inspects or records Podway state.
+Before delegating work, the owner re-observes and verifies the expected immutable Procedure ID, canonical workflow identity, session, attempt, goal revision, and current graph node. After delegation, the owner independently verifies the leaf postcondition, records only the supported bounded evidence with fresh fences, and selects only a transition allowed by the observation guidance and represented by a current mutation template. The leaf never inspects or records Podway state.
 
 A session is Root Kernel-owned only when its immutable Procedure ID and task title or canonical identity match the current workflow. If discovery reveals a different, mismatched, cancelled, or unfinished current session, stop, report its session ID, Procedure ID, lifecycle, current node and attempt, and available canonical identity, and ask the user to choose repair or an explicit opt-out for this workflow.
 

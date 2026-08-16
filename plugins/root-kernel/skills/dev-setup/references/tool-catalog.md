@@ -49,7 +49,7 @@ For an explicitly requested repair, load and follow the installed `$use-sanho` l
 
 Official source: `https://github.com/irootkernel/mulgae`
 
-Supported release line: stable `v0.1.13` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.12 does not provide the required split Config v2, skill, or MCP surfaces, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
+Supported release line: stable `v0.1.14` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.13 retains the unsupported Config v2 and prior command-result and preflight contracts, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
 
 Install an approved tag:
 
@@ -59,17 +59,47 @@ go install github.com/irootkernel/mulgae@<tag>
 
 The binary does not install the agent skill. Diagnose the CLI, configuration, and provider readiness with `command -v mulgae`, `mulgae version --json`, `mulgae doctor --output json`, `mulgae config --mode effective --output json`, `mulgae config --mode provenance --output json`, and `mulgae providers --include-unverified --output json`.
 
-Read stable fields and reason codes from complete JSON envelopes even when a readiness or configuration command exits non-zero. Treat missing shared project policy, missing machine-local configuration, and missing provider authentication separately, and never report native homes, executable paths, credentials, diagnostic messages, request IDs, or timestamps.
+Require `mulgae-command-result.v3` for doctor, providers, and config JSON. Read stable fields and reason codes from complete envelopes even when a readiness or configuration command exits non-zero. Treat missing shared project policy, missing machine-local configuration, and missing provider authentication separately, and never report native homes, executable paths, credential-profile homes, credentials, diagnostic messages, request IDs, timestamps, or raw provider output.
 
 For a new Codex user-scoped skill installation, fetch only these files from `https://raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/` into a temporary directory under `~/.agents/skills`: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-mulgae` frontmatter before atomically moving it to `~/.agents/skills/use-mulgae`.
 
 If the target already exists, compare it with the approved source, show the complete diff, and obtain separate replacement approval; preserve a recoverable sibling backup and report its path. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
-Mulgae Config v2 has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Ask which providers and roles to configure. Automatic provider selection requires authenticated ZCode and AGY; Kimi is opt-in, and bare initialization enables only the required `logic` role. Show discovered executable or launcher paths only in the exact private setup proposal, never in the diagnostic report.
+Mulgae Config v3 has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Keep `execution.workspace_access: none`. Ask which providers and roles to configure. Automatic provider selection still requires authenticated ZCode and AGY; Kimi and Codex are explicit opt-ins, and bare initialization enables only the required `logic` role. Show discovered executable, launcher, data-home, and credential-home paths only in the exact private setup proposal, never in the diagnostic report.
 
-For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates both Config v2 files and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
+For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates both Config v3 files and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
 
-When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`. Keep new initialization, clone bootstrap, and refresh as distinct approvals. Config v1 is unsupported and has no automatic migration; show the exact legacy file, backup, and removal proposal and obtain separate destructive approval before initializing Config v2.
+When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`. Keep new initialization, clone bootstrap, and refresh as distinct approvals. Config v1 and v2 are unsupported and have no automatic migration; show the exact legacy files without reading or printing their contents. Before removal, separately propose a user-chosen mode-`0700` backup directory outside the repository, preserve both files and their modes with `cp -p`, and privately verify file names, modes, and SHA-256 digests. Disclose the exact backup and `cp -p` restoration commands, then obtain separate approval for backup creation and destructive legacy-file removal. If Config v3 initialization fails, preserve the failure and backup, do not partially edit either authority, and offer the disclosed restoration as a new approval. Never reinterpret legacy provider policy or private paths automatically.
+
+When the user selects Codex, require a real Codex CLI `0.147.0` or newer and let Mulgae diagnose its authenticated readiness; never sign in, read `auth.json`, or accept an API-key environment variable on the user's behalf. A single-profile configuration uses the selected native Codex login with `mulgae init --providers codex --roles <roles> --output json`. Optional model and reasoning-effort values are shared project policy; omission preserves Codex CLI defaults.
+
+For several Codex identities, keep the two authorities separate using this Config v3 shape; it is sufficient for the active setup session even when a newly replaced `$use-mulgae` skill will not load until Codex restarts:
+
+```yaml
+# .mulgae/config.yaml project policy (relevant fields)
+providers:
+  codex:
+    default_credential_profile: "personal"
+roles:
+  logic: {enabled: true, primary_provider: "codex"}
+  security: {enabled: true, primary_provider: "codex", credential_profile: "work"}
+```
+
+```yaml
+# .mulgae/local.yaml private machine mapping (relevant fields)
+providers:
+  codex:
+    executable: "/absolute/path/to/the/common/codex"
+    credential_homes:
+      - profile: "personal"
+        home: "/absolute/private/CODEX_HOME"
+      - profile: "work"
+        home: "/absolute/private/work-CODEX_HOME"
+```
+
+Use operator-chosen lowercase kebab-case aliases, map exactly the default and role override aliases in lexical order, and use one common real Codex executable. Obtain separate approval for the shared policy and private local mapping, show the exact proposed YAML privately, and preserve unrelated Config v3 fields. Mulgae may project only the selected home's `auth.json` into a disposable runtime; do not expose profile paths or credential material. After writing, require effective config to report `workspace_access=none` and the intended role-to-profile aliases, provenance to classify `providers.codex.credential_homes` as local machine state, and doctor/providers to report Codex ready without returning any home path.
+
+Mulgae v0.1.14 preserves complete provider stdout and stderr without a product byte ceiling. Keep those transcripts in private Mulgae runtime state and consume only bounded structured status, finding, and readiness fields in Root Kernel reports. Setup verification remains limited to doctor, providers, effective config, and provenance config; do not use preflight merely to validate configuration.
 
 Propose these root-anchored Git ignore rules through an exact reviewed diff:
 
@@ -94,7 +124,7 @@ tool_timeout_sec = 54000
 
 Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify only the effective registration with `codex mcp get mulgae --json`: it must be enabled STDIO, resolve to the selected binary, bind its argument and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults.
 
-Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources.
+Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources. The attached MCP surface remains versioned independently; CLI fallback preflight must identify `mulgae-review-preflight.v3`.
 
 Verify configuration, provider readiness, skill files, and MCP registration only. Do not start the MCP server or run review, preflight, follow-up, delta, rerun, report, export, or any command that captures, transmits, or writes review source or artifacts during setup.
 
@@ -169,9 +199,9 @@ Verify that `lore-commits/SKILL.md` and `lore-query/SKILL.md` exist, have valid 
 
 Official source: `https://github.com/irootkernel/podway`
 
-Supported release line: stable `v0.2.1` through `v0.2.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI, daemon, and optional `use-podway` skill; v0.2.0 retains incompatible Procedure v1 and success-envelope surfaces, and do not automatically cross into `v0.3+`.
+Supported release line: stable `v0.2.3` through `v0.2.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI, daemon, and optional `use-podway` skill; v0.2.2 lacks the required interrupted LaunchAgent replacement recovery, and do not automatically cross into `v0.3+`.
 
-Resolve the exact release from GitHub Releases and download the Apple Silicon archive plus its published `.sha256` file. Disclose that release binaries are unsigned and not notarized. Verify with `shasum -a 256 -c` before installing both `podway` and `podwayd` at the approved user-local paths. Do not accept a prerelease, a version before v0.2.1, `v0.3+`, an unverified archive, mixed CLI and daemon versions, or unsupported platform.
+Resolve the exact release from GitHub Releases and download the Apple Silicon archive plus its published `.sha256` file. Disclose that release binaries are unsigned and not notarized. Verify with `shasum -a 256 -c` before installing both `podway` and `podwayd` at the approved user-local paths. Do not accept a prerelease, a version before v0.2.3, `v0.3+`, an unverified archive, mixed CLI and daemon versions, or unsupported platform.
 
 The binaries do not install the agent skill. Diagnose `use-podway` independently in the Codex skill roots. For a new Codex user-scoped installation, fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md` from `https://raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/` into a temporary directory under `~/.agents/skills`. Verify the complete file set, SHA-256 digests, and `name: use-podway` frontmatter before atomically moving it to `~/.agents/skills/use-podway`. Disclose every raw GitHub endpoint and the user-global target before approval.
 
@@ -184,7 +214,9 @@ podway daemon install --daemon-path <absolute-podwayd-path>
 podway daemon status --json
 ```
 
-The LaunchAgent runs after GUI login under the same OS user and is not a multi-user security boundary. Verify the compact `podway version --json` result, the `podway.output/v3` daemon envelope with `podway.daemon-status-result/v1`, daemon reachability and exact version match, and the `podway.output/v3` doctor envelope when the worktree is initialized. Runtime status and next must identify `podway.status-result/v2` and `podway.next-result/v2`; errors remain `podway.error/v1`.
+If that install is interrupted after authenticated service metadata is prepared, rerun the same approved command with the same absolute daemon path and no `--socket` override. Podway v0.2.3 reconciles the prepared receipt and waits for the prior launchd label to unload before replacement bootstrap. Never edit service metadata, sockets, receipts, or LaunchAgent files to recover the installation.
+
+The LaunchAgent runs after GUI login under the same OS user and is not a multi-user security boundary. Verify the compact `podway version --json` result, the `podway.output/v3` daemon envelope with `podway.daemon-status-result/v1`, daemon reachability and exact version match, and the `podway.output/v3` doctor envelope when the worktree is initialized. The read-only readiness inspector may inventory a session through `podway.status-result/v2`; managed workflow automation must use `podway observe --json --wait-for-idle` and require `podway.observation-result/v1`. Errors remain `podway.error/v1`.
 
 Repository initialization and Root Kernel readiness configuration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
 
