@@ -1,6 +1,6 @@
 {
   "name": "aquarium",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Evidence-gated epic and task delivery with optional Podway v2 execution memory and safe development-tool setup for Codex.",
   "author": {
     "name": "Root Kernel",
