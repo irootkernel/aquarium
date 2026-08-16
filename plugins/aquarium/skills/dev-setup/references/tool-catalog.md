@@ -9,6 +9,9 @@ Use only the section for a selected tool. Repository instructions override this 
 - Diagnose credentials by whether the owning CLI reports readiness. Never print, copy, or persist credential material.
 - Keep configuration in each tool's native files. Never create `.aquarium`, a selection manifest, or a shadow version registry.
 - Treat every init, ignore edit, hook edit, global install, and network operation as a disclosed mutation requiring approval.
+- Apply the backup policy selected under `Choose a Backup Policy for Existing State` to every approved action that overwrites or removes an existing binary, skill, configuration, service, managed Procedure, or runtime state.
+
+A backup choice requires exact backup and restoration commands plus verification before mutation. A no-backup choice requires the exact loss and recovery boundary in the proposal but no retained copy of the replaced state. It never waives source, checksum, frontmatter, diff, target, or post-install verification, and incoming payload staging is not a backup.
 
 ## Sanho
 
@@ -26,7 +29,7 @@ The binary does not install the agent skill. Diagnose the CLI and workspace with
 
 For a new Codex user-scoped skill installation, fetch only these files from `https://raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/` into a temporary directory under `~/.agents/skills`: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-sanho` frontmatter before atomically moving it to `~/.agents/skills/use-sanho`. Disclose every raw GitHub endpoint and the user-global target before approval.
 
-If the target already exists, compare it with the approved source, show the complete diff, and obtain separate replacement approval; preserve a recoverable sibling backup and report its path. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
+If the target already exists, compare it with the approved source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
 `sanho status` separates committed `HEAD` prediction from working-copy and local operation readiness. Consume `relation`, `publication`, `sync_preview`, `working_copy`, `local_readiness`, and `sync_in_progress` independently. Do not expose project URLs, actor email, workspace IDs, private paths, or doctor details in setup reports.
 
@@ -65,13 +68,21 @@ Setup does not need `mulgae providers --output json`. If that command is explici
 
 For a new Codex user-scoped skill installation, fetch only these files from `https://raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/` into a temporary directory under `~/.agents/skills`: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-mulgae` frontmatter before atomically moving it to `~/.agents/skills/use-mulgae`.
 
-If the target already exists, compare it with the approved source, show the complete diff, and obtain separate replacement approval; preserve a recoverable sibling backup and report its path. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
+If the target already exists, compare it with the approved source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
 Mulgae Config v3 has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Keep `execution.workspace_access: none`. Ask which providers and roles to configure. Automatic provider selection still requires authenticated ZCode and AGY; Kimi and Codex are explicit opt-ins, and bare initialization enables only the required `logic` role. Show discovered executable, launcher, data-home, and credential-home paths only in the exact private setup proposal, never in the diagnostic report.
 
 For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates both Config v3 files and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
 
-When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`. Keep new initialization, clone bootstrap, and refresh as distinct approvals. Config v1 and v2 are unsupported and have no automatic migration; show the exact legacy files without reading or printing their contents. Before removal, separately propose a user-chosen mode-`0700` backup directory outside the repository, preserve both files and their modes with `cp -p`, and privately verify file names, modes, and SHA-256 digests. Disclose the exact backup and `cp -p` restoration commands, then obtain separate approval for backup creation and destructive legacy-file removal. If Config v3 initialization fails, preserve the failure and backup, do not partially edit either authority, and offer the disclosed restoration as a new approval. Never reinterpret legacy provider policy or private paths automatically.
+When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`; apply the shared backup policy to the replaced local file. Keep new initialization, clone bootstrap, and refresh as distinct approvals.
+
+Config v1 and v2 are unsupported and have no automatic migration. Show the exact legacy files without reading or printing their contents and apply the shared backup policy before removal.
+
+Under the backup policy, separately propose a user-chosen mode-`0700` backup directory outside the repository, preserve both files and their modes with `cp -p`, privately verify file names, modes, and SHA-256 digests, and disclose the exact `cp -p` restoration commands.
+
+Under the no-backup policy, disclose that legacy project policy, private paths, modes, and other local-only values will not be recoverable unless the user independently versioned them. Obtain separate approval for the exact destructive legacy-file removal under either policy.
+
+If Config v3 initialization fails, preserve the failure and do not partially edit either authority. Offer the disclosed restoration only when a verified backup exists; otherwise report that no rollback copy is available. Never reinterpret legacy provider policy or private paths automatically.
 
 When the user selects Codex, require a real Codex CLI `0.147.0` or newer and let Mulgae diagnose its authenticated readiness; never sign in, read `auth.json`, or accept an API-key environment variable on the user's behalf. A single-profile configuration uses the selected native Codex login with `mulgae init --providers codex --roles <roles> --output json`. Optional model and reasoning-effort values are shared project policy; omission preserves Codex CLI defaults.
 
@@ -148,7 +159,7 @@ The binary does not install the agent skill. Diagnose the CLI and repository wit
 
 For a new Codex user-scoped skill installation, fetch only these files from `https://raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/` into a temporary directory under `~/.agents/skills`: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-gaori` frontmatter before atomically moving it to `~/.agents/skills/use-gaori`. Disclose every raw GitHub endpoint and the user-global target before approval.
 
-If the target already exists, compare it with the approved source, show the complete diff, and obtain separate replacement approval; preserve a recoverable sibling backup and report its path. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex if the skill does not appear in the active session.
+If the target already exists, compare it with the approved source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex if the skill does not appear in the active session.
 
 Discover required checks from repository instructions, task runners, manifests, and CI before proposing `.gaori/tester.yaml` schema version 2. Map each configured command ID to an existing argv array, non-empty tags, explicit parser, and timeout. Do not add secrets, absolute paths, or machine-specific arguments to portable configuration.
 
@@ -197,7 +208,7 @@ npx skills add https://github.com/tmdgusya/lora#<tag-or-full-sha> \
 
 This command contacts npm and GitHub and writes under the Codex user-global skill directory. Do not install or invoke Lora's `lore-setup`; it copies the full Lore protocol into AGENTS.md and conflicts with the reference-and-override policy. If `lore-setup` is already installed, report it without removing or rewriting it.
 
-Verify that `lore-commits/SKILL.md` and `lore-query/SKILL.md` exist, have valid frontmatter, and match the approved source ref. Do not treat installation as commit authority.
+Before updating an existing `lore-commits` or `lore-query`, compare its complete installed file set with the approved source, show the target and diff, and apply the shared backup policy before the approved `npx skills add` action. Under the no-backup policy, disclose that local modifications will not be recoverable from the source ref. Verify that `lore-commits/SKILL.md` and `lore-query/SKILL.md` exist, have valid frontmatter, and match the approved source ref. Do not treat installation as commit authority.
 
 ## Podway
 
@@ -209,7 +220,7 @@ Resolve the exact release from GitHub Releases and download the Apple Silicon ar
 
 The binaries do not install the agent skill. Diagnose `use-podway` independently in the Codex skill roots. For a new Codex user-scoped installation, fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md` from `https://raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/` into a temporary directory under `~/.agents/skills`. Verify the complete file set, SHA-256 digests, and `name: use-podway` frontmatter before atomically moving it to `~/.agents/skills/use-podway`. Disclose every raw GitHub endpoint and the user-global target before approval.
 
-If the target exists, compare it with the approved source, show the complete diff, and obtain separate replacement approval; preserve a recoverable sibling backup and report its path. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
+If the target exists, compare it with the approved source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
 Install or refresh the per-user service only after separate approval:
 
@@ -222,14 +233,18 @@ If that install is interrupted after authenticated service metadata is prepared,
 
 The LaunchAgent runs after GUI login under the same OS user and is not a multi-user security boundary. Verify the compact `podway version --json` result, the `podway.output/v3` daemon envelope with `podway.daemon-status-result/v1`, daemon reachability and exact version match, and the `podway.output/v3` doctor envelope when the worktree is initialized. The read-only readiness inspector may inventory a session through `podway.status-result/v2`; managed workflow automation must use `podway observe --json --wait-for-idle` and require `podway.observation-result/v1`. Errors remain `podway.error/v1`.
 
+Treat that bounded inventory as readiness evidence only. Never use dev-setup to observe, cancel, discard, or reset a routine supported Procedure v2 current session; return an exact standalone `$use-podway` lifecycle request instead. Keep `LEGACY_PROCEDURE_STATE_UNSUPPORTED` and its separately approved workspace-wide `podway reset --all` recovery as the only session-state reset exception in this catalog.
+
 Repository initialization and Aquarium readiness configuration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
 
 ```bash
 podway procedure check --warnings-as-errors <procedure-file>
 ```
 
-The three required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, and `aquarium-validation-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v3 inspection omits Podway unless invoked with `--include-podway`. Updating a tracked copy requires showing and approving its exact diff; an active session retains its immutable snapshot.
+The three required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, and `aquarium-validation-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v3 inspection omits Podway unless invoked with `--include-podway`.
+
+Updating a tracked copy requires showing and approving its exact diff and applying the shared backup policy; an active session retains its immutable snapshot.
 
 The renamed inspector reports `migration_required=true` when any tracked or untracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, or `root-kernel-validation-v2.yaml` remains in `.podway/procedures/`. This is a product-rename migration and forces degraded readiness until the old files are separately removed and the `aquarium-*` files are installed. Finish or explicitly dispose of any active old session first; never convert or delete its runtime history as part of managed-file replacement.
 
-`LEGACY_PROCEDURE_STATE_UNSUPPORTED` has a different meaning: the runtime contains Procedure v1 task state. Do not convert, edit, or delete that state automatically. Report the exact worktree and error, let the user make any desired backup, then require separate explicit approval before the supported `podway reset --all` recovery.
+`LEGACY_PROCEDURE_STATE_UNSUPPORTED` has a different meaning: the runtime contains Procedure v1 task state. Do not convert, edit, or delete that state automatically. Report the exact worktree and error and apply the shared backup policy before separately proposing the supported `podway reset --all` recovery. Under the no-backup policy, disclose that the reset permanently deletes the legacy runtime history and that Git cannot restore it, then require separate explicit approval.

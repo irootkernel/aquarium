@@ -178,6 +178,11 @@ assert(dev_setup.include?("the directory containing this `SKILL.md`"),
        "dev-setup must resolve its bundled references relative to its own skill directory")
 assert(dev_setup.include?("treat it as scoped intake"),
        "dev-setup must scope a narrow request instead of widening it")
+assert(dev_setup.include?("Do not use for routine supported Procedure v2 session observation") &&
+       dev_setup.include?("Reject a handoff whose only requested action is routine supported Procedure v2") &&
+       dev_setup.include?("without starting broad setup discovery") &&
+       dev_setup.include?("legacy `podway reset --all` path is a setup-recovery exception"),
+       "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
 assert(dev_setup.include?("Do not create or read `.aquarium`"),
        "dev-setup must not create shadow orchestration state")
 lookup_approval_index = dev_setup.index("obtain explicit ask/answer approval for that network operation")
@@ -187,6 +192,26 @@ assert(lookup_approval_index && version_resolution_index && action_approval_inde
        lookup_approval_index < version_resolution_index && version_resolution_index < action_approval_index &&
        dev_setup.include?("A lookup approval authorizes no installation or other mutation"),
        "dev-setup must approve release metadata lookup before resolution and approve setup separately")
+backup_policy_index = dev_setup.index("Choose a Backup Policy for Existing State")
+assert(backup_policy_index && backup_policy_index < action_approval_index &&
+       dev_setup.include?("Create and verify backups") &&
+       dev_setup.include?("Proceed without backups") &&
+       dev_setup.include?("current setup request") &&
+       dev_setup.include?("The policy does not authorize any mutation") &&
+       dev_setup.include?("Do not ask about backups for diagnosis or a new installation") &&
+       dev_setup.include?("Never persist the choice") &&
+       dev_setup.include?("existing state backed up or deliberately left without a backup"),
+       "dev-setup must keep backup choice request-scoped and separate from mutation approval")
+assert(dev_setup.include?("does not recover local modifications") &&
+       dev_setup.include?("private configuration, untracked files, and runtime history may be permanently lost") &&
+       dev_setup.include?("incoming payload in a temporary location is not a backup"),
+       "dev-setup must disclose no-backup recovery limits without skipping payload validation")
+assert(tool_catalog.include?("every approved action that overwrites or removes") &&
+       tool_catalog.include?("no retained copy of the replaced state") &&
+       tool_catalog.include?("incoming payload staging is not a backup") &&
+       tool_catalog.scan("follow the shared backup policy").length >= 4 &&
+       !tool_catalog.include?("preserve a recoverable sibling backup"),
+       "tool replacement guidance must support the shared no-backup policy")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
@@ -196,6 +221,9 @@ assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is miss
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
 assert(!tool_catalog.include?("--skill lore-setup"), "Lora setup skill must not be installed")
 assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex"), "Lora scope must be global Codex")
+assert(tool_catalog.include?("Before updating an existing `lore-commits` or `lore-query`") &&
+       tool_catalog.include?("apply the shared backup policy before the approved `npx skills add` action"),
+       "Lora skill updates must follow the request-scoped backup policy")
 assert(tool_catalog.include?("stable `v0.2.3` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
@@ -205,13 +233,19 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.status-result/v2") &&
        tool_catalog.include?("podway.observation-result/v1"),
        "Podway v0.2.3 JSON contracts are missing")
+assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence only") &&
+       tool_catalog.include?("Never use dev-setup to observe, cancel, discard, or reset") &&
+       tool_catalog.include?("only session-state reset exception"),
+       "Podway setup catalog must exclude routine Procedure v2 lifecycle operations")
 assert(tool_catalog.include?("same approved command") &&
        tool_catalog.include?("no `--socket` override") &&
        tool_catalog.include?("prior launchd label to unload"),
        "Podway v0.2.3 LaunchAgent replacement recovery is missing")
 assert(tool_catalog.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED") &&
        tool_catalog.include?("podway reset --all") &&
-       tool_catalog.include?("separate explicit approval"),
+       tool_catalog.include?("separate explicit approval") &&
+       tool_catalog.include?("permanently deletes the legacy runtime history") &&
+       tool_catalog.include?("Git cannot restore it"),
        "Podway legacy-state recovery boundary is missing")
 assert(tool_catalog.include?("aquarium-task-v2") &&
        tool_catalog.include?("aquarium-goal-v2") &&
@@ -248,6 +282,10 @@ assert(ROOT.join("README.md").read.include?("selects Podway by default") &&
        ROOT.join("README.md").read.include?("opt the current task, epic, or validation out") &&
        ROOT.join("README.md").read.include?("before its first managed-session mutation"),
        "public Podway guidance must document default use and pre-session opt-out")
+assert(ROOT.join("README.md").read.include?("Degraded readiness routes to `dev-setup` repair") &&
+       ROOT.join("README.md").read.include?("A healthy conflicting session is a lifecycle conflict instead") &&
+       ROOT.join("README.md").read.include?("explicitly invoke `use-podway` to cancel or discard it"),
+       "public Podway guidance must separate setup repair from session lifecycle")
 assert(ROOT.join("README.md").read.include?("leave the session active for later resumption") &&
        ROOT.join("README.md").read.include?("cancel the task while preserving history") &&
        ROOT.join("README.md").read.include?("reset the session and delete its history"),
@@ -323,8 +361,10 @@ assert(tool_catalog.include?("Codex CLI `0.147.0` or newer") &&
 assert(tool_catalog.include?("mode-`0700` backup directory") &&
        tool_catalog.include?("cp -p") &&
        tool_catalog.include?("restoration commands") &&
+       tool_catalog.include?("Under the no-backup policy") &&
+       tool_catalog.include?("no rollback copy is available") &&
        tool_catalog.include?("If Config v3 initialization fails"),
-       "Mulgae legacy-config backup and rollback guidance is incomplete")
+       "Mulgae legacy-config backup choice and rollback guidance is incomplete")
 assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
        tool_catalog.include?("required = true") &&
        tool_catalog.include?("startup_timeout_sec = 30") &&
@@ -513,6 +553,9 @@ assert(task_handler.include?("re-enter the earliest phase that owns the requeste
        "task-handler must route rework to the owning phase")
 assert(task_handler.include?("Do not create or read `.aquarium`"),
        "task-handler must not create shadow orchestration state")
+assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
+       task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
+       "task-handler must not reinterpret a healthy session conflict as setup readiness")
 assert(task_handler.lines.length < 100, "task-handler must remain orchestration-focused")
 
 podway_reference = PLUGIN.join("references/podway-integration.md")
@@ -526,8 +569,10 @@ assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
        podway_contract.include?("job lookup") &&
        podway_contract.include?("idempotency key"),
        "Podway mutation reconciliation is missing")
-assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` may inspect, own, or mutate"),
-       "Podway session ownership is missing")
+assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` may own or advance") &&
+       podway_contract.include?("standalone user request that explicitly invokes `$use-podway`") &&
+       podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis"),
+       "Podway workflow ownership and standalone lifecycle authority are not separated")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
        podway_contract.include?("Aquarium roadmap authority"),
@@ -545,6 +590,13 @@ assert(podway_contract.include?("handler invocation selects Podway by default") 
 assert(podway_contract.include?("choose between repair") &&
        podway_contract.include?("Do not silently fall back"),
        "Podway readiness failures must require a repair-or-opt-out decision")
+assert(podway_contract.include?("healthy supported Procedure v2 session conflict as a lifecycle conflict") &&
+       podway_contract.include?("different, mismatched, completed, cancelled, or unfinished current session") &&
+       podway_contract.include?("never route it to `$aquarium:dev-setup` repair") &&
+       podway_contract.include?("resume unfinished work through its matching handler") &&
+       podway_contract.include?("standalone explicit `$use-podway` request") &&
+       podway_contract.include?("naming the repository and observed session ID"),
+       "healthy Podway session conflicts must route to lifecycle ownership, not setup repair")
 assert(podway_contract.include?("current-session discard flow") &&
        podway_contract.include?("After the session starts, do not abandon it") &&
        podway_contract.include?("Never cancel, reset, replace, reopen, or reinterpret the conflicting session automatically"),
@@ -566,10 +618,15 @@ assert(podway_contract.include?("None of these dispositions commits work, change
 { "task-handler" => task_handler, "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
   assert(body.include?("Use Podway by default") &&
          body.include?("explicit pre-session opt-out") &&
+         body.include?("On degraded readiness") &&
          body.include?("`$aquarium:dev-setup` repair") &&
+         body.include?("shared lifecycle-conflict route") &&
+         body.include?("explicit `$use-podway` request") &&
+         body.include?("Never describe that conflict as setup repair") &&
+         !body.include?("on degraded readiness or") &&
          body.include?("shared `Handle In-Progress Stop Requests` flow") &&
          body.include?("never assume pause, cancel, reset"),
-         "#{name} must default to Podway, support pre-session opt-out, and classify in-progress stops")
+         "#{name} must separate readiness repair, lifecycle conflicts, opt-out, and in-progress stops")
 end
 assert(agents_reference.include?("$use-podway") &&
        agents_reference.include?("only the corresponding CLI is installed"),

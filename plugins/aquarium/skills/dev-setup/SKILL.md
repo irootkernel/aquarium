@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Lora, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance."
+description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Lora, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
 ---
 
 # Development Setup
@@ -8,6 +8,8 @@ description: "Diagnose and configure Aquarium repository tooling. Use when the u
 Configure selected development tools without inventing shared project state or silently rewriting agent guidance. Treat diagnosis, installation, native configuration, and AGENTS.md editing as distinct authority boundaries.
 
 Read [podway-integration.md](../../references/podway-integration.md) only when the user explicitly selects Podway diagnosis or setup. Managed Aquarium Procedures or other repository state never select Podway by themselves.
+
+Do not use this skill to observe, cancel, discard, or reset a routine supported Procedure v2 current session. Return an exact standalone `$use-podway` lifecycle request naming the repository, operation, and any session ID supplied by the caller instead. Keep installation, daemon, workspace readiness, managed-Procedure changes, and `LEGACY_PROCEDURE_STATE_UNSUPPORTED` recovery in this skill; the legacy `podway reset --all` path is a setup-recovery exception, not normal session cleanup.
 
 ## Establish the Repository
 
@@ -33,11 +35,25 @@ After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch
 
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
-When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal; skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
+When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Reject a handoff whose only requested action is routine supported Procedure v2 session observation, cancellation, discard, or reset, and return the exact `$use-podway` lifecycle request without starting broad setup discovery.
+
+Otherwise keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal. Skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
 A selection expresses intent only. It does not authorize a command that writes files, installs software, changes hooks, contacts a provider, or modifies user-global state.
+
+## Choose a Backup Policy for Existing State
+
+When an approved setup plan will first overwrite or remove existing tool, skill, configuration, service, managed-Procedure, or runtime state, establish one backup policy for the current setup request. If the user already explicitly requested backups or no backups, adopt that choice without asking again. Otherwise offer `Create and verify backups` and `Proceed without backups`, recommending the backup choice. Do not ask about backups for diagnosis or a new installation that replaces nothing.
+
+Keep the selected policy for later overwrite and removal proposals in the same setup request unless the user changes it. The policy does not authorize any mutation: continue to show and separately approve every exact replacement or removal. Never persist the choice in repository or user-global configuration.
+
+For the backup policy, show the exact backup path, commands, verification, and restoration procedure before approval, and stop before mutation if the selected backup cannot be verified. For the no-backup policy, state the exact existing paths or state that will be lost and the available recovery boundary.
+
+A published Git ref may allow a distributed skill or binary to be installed again, but it does not recover local modifications. Treat tracked state as recoverable only when it already exists in Git history, and disclose that private configuration, untracked files, and runtime history may be permanently lost.
+
+Preparing and validating an incoming payload in a temporary location is not a backup and remains required.
 
 ## Propose Exact Setup Actions
 
@@ -45,8 +61,8 @@ For each selected tool:
 
 1. Disclose the official release-metadata endpoint and bounded lookup needed to resolve the version and source provenance described in the tool catalog, then obtain explicit ask/answer approval for that network operation.
 2. Only after lookup approval, resolve the exact stable version and source provenance. A lookup approval authorizes no installation or other mutation.
-3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, and expected side effects.
-4. Identify existing state that will be preserved and any command that might stage files or install hooks.
+3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
+4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
 5. Obtain separate explicit ask/answer approval for the displayed action.
 6. Execute only the approved action, stop on unexpected prompts or side effects, and verify with read-only commands.
 
@@ -72,7 +88,7 @@ Verify the release checksum before installing both matching binaries, then insta
 
 If an installation is interrupted after Podway prepares authenticated service metadata, rerun the same approved `podway daemon install --daemon-path <absolute-podwayd-path>` command without a socket override. Do not edit service metadata or LaunchAgent files manually.
 
-Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, require the user to make any desired backup, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_configured` as legacy Procedure state.
+Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, report the exact worktree and stable error code, apply the current backup policy, and separately propose the confirmed `podway reset --all` recovery. Do not treat the inspection status `not_configured` as legacy Procedure state.
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
@@ -104,6 +120,7 @@ Report:
 
 - selected, skipped, and planned tools;
 - resolved versions and sources;
+- selected backup policy, existing state backed up or deliberately left without a backup, backup verification and restoration paths when applicable, and the disclosed recovery boundary;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
 - Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and project MCP state separately;
 - Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;

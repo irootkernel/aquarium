@@ -22,8 +22,9 @@ Before planning:
 3. Inspect branch, upstream, staged, unstaged, untracked, and conflicted state. Separate task-owned work from pre-existing work.
 4. Discover repository-native build, verification, documentation synchronization, Gaori, `$use-gaori`, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, and Lore guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 5. Record authority already granted for mutation, staging, review, commit, amend, push, PR changes, provider use, and destructive actions.
-6. Route a missing or unhealthy prerequisite to an exact `$aquarium:dev-setup` continuation request. Do not install or initialize tools here.
-7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. A matching recoverable session becomes part of the plan; on degraded readiness or a session not owned by this exact task, stop and ask the user to choose `$aquarium:dev-setup` repair or an explicit opt-out for this task.
+6. Route a missing or unhealthy tooling or readiness prerequisite to an exact `$aquarium:dev-setup` continuation request. Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite, and do not install or initialize tools here.
+7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. On degraded readiness, stop and ask the user to choose `$aquarium:dev-setup` repair or an explicit opt-out for this task.
+   A matching recoverable session becomes part of the plan. For a healthy session not owned by this exact task, use the shared lifecycle-conflict route: resume it through its matching owner, leave it untouched through task opt-out, or hand its cancellation or discard to an explicit `$use-podway` request. Never describe that conflict as setup repair.
 
 In a Sanho-managed repository, record whether `$use-sanho` is available. If repository guidance requires it and it is missing or invalid, route an exact `$aquarium:dev-setup` continuation request. Otherwise keep it optional and let the document and close phases apply the repository's fallback Sanho guidance at their actual Git boundary.
 
