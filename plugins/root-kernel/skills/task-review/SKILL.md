@@ -16,7 +16,7 @@ Fixing findings in this phase changes the diff, so all affected prior phase evid
 3. Reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or MCP is unavailable and repository guidance requires it, keep the task in review and route that exact gap to `$root-kernel:dev-setup`; otherwise report the unavailable integration once and use the CLI fallback below. Do not start a second MCP server from the shell.
 4. Select exactly one target that contains the complete task diff and excludes unrelated work. A clean task-only dirty state may use `--dirty` to capture staged and unstaged changes; otherwise use another exact supported target and stop if isolation is unsafe.
 5. Run execution-free preflight through the selected interface, require `mulgae-review-preflight.v3`, and inspect captured files, exclusions, roles, credential-profile routing, provider timeouts, permission modes, and artist inputs when UI work is present.
-6. Run the review once with machine-readable output and require `mulgae-command-result.v3` from the CLI fallback. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure; never blindly retry an uncertain review mutation.
+6. Run the review once with machine-readable output and require `mulgae-command-result.v4` from the CLI fallback. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure. Mulgae already owns its one bounded same-provider retry for eligible transient failures; report its final typed result and never add another review, qualification, or heartbeat invocation.
 
 For CLI fallback, replace `<target-flag>` with exactly one authorized target and keep the returned `r_...` identity fenced across the reads:
 
@@ -27,7 +27,7 @@ mulgae status --run r_... --output json
 mulgae findings --run r_... --severity low --output json
 ```
 
-The preflight payload must be `mulgae-review-preflight.v3`; every CLI command envelope must be `mulgae-command-result.v3`. Exit `1` is a policy outcome whose envelope still requires inspection. For any typed operational failure or allocated-but-uncertain run identity, inspect status once and stop instead of resubmitting the review.
+The preflight payload must be `mulgae-review-preflight.v3`; every CLI command envelope must be `mulgae-command-result.v4`. Exit `1` is a policy outcome whose envelope still requires inspection. For any typed operational failure or allocated-but-uncertain run identity, inspect status once and stop instead of resubmitting the review.
 7. Treat every finding as an advisory hypothesis. Verify it against the roadmap, current code, and tests before changing anything.
 8. Fix every valid in-scope finding, add regression coverage where useful, and run finding-specific follow-up when supported.
 9. Re-run affected checks and final repository gates after fixes. Preserve the task-owned staging and unrelated-work boundaries established by the orchestrator.

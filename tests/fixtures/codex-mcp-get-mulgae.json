@@ -1,0 +1,146 @@
+{
+  "required_true": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "env": {"SECRET_TOKEN": "must-not-leak"},
+      "env_vars": [],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "required_false": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": false,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "required_absent": {
+    "name": "mulgae",
+    "enabled": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "wrong_command": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<wrong-command>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "wrong_args": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<wrong-repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "wrong_cwd": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<wrong-repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "startup_timeout": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 29,
+    "tool_timeout_sec": 54000
+  },
+  "tool_timeout": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 53999
+  },
+  "disabled": {
+    "name": "mulgae",
+    "enabled": false,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "non_stdio": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "http",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  },
+  "invalid_required": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": "true",
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 30,
+    "tool_timeout_sec": 54000
+  }
+}

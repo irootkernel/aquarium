@@ -223,6 +223,19 @@ assert(tool_catalog.include?("readiness_status=not_configured") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")
 assert(tool_catalog.include?("https://github.com/irootkernel/podway"), "Podway source URL is missing")
+assert(tool_catalog.include?("mulgae-doctor-result.v2") &&
+       tool_catalog.include?("configured_readiness.state=ready") &&
+       tool_catalog.include?("binary_available") &&
+       tool_catalog.include?("cli_compatible") &&
+       tool_catalog.include?("required_unverifiable") &&
+       tool_catalog.include?("absence alone is not a mismatch") &&
+       !tool_catalog.include?("provider_static_admission") &&
+       !tool_catalog.include?("live_review"),
+       "Mulgae setup diagnostics must use Doctor v2 and preserve Codex output capability")
+assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
+       dev_setup.include?("Never authenticate a provider, inspect a prior run") &&
+       dev_setup.include?("--require-mulgae-mcp"),
+       "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
 assert(ROOT.join("README.md").read.include?("v0.2.3 through v0.2.x") &&
        ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
        "public Podway support and optional skill guidance are missing")
@@ -274,7 +287,7 @@ assert(agents_reference.include?("$use-gaori") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-gaori")
 
-assert(tool_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
+assert(tool_catalog.include?("stable `v0.1.15` through `v0.1.x`") &&
        tool_catalog.include?("Go `1.26.6` or newer") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
@@ -286,11 +299,15 @@ assert(tool_catalog.include?(".mulgae/local.yaml") &&
        tool_catalog.include?("mulgae init --refresh-local --output json") &&
        tool_catalog.include?("execution.workspace_access: none"),
        "Mulgae split Config v3 setup and ignore guidance is incomplete")
-assert(tool_catalog.include?("mulgae-command-result.v3") &&
+assert(tool_catalog.include?("mulgae-command-result.v4") &&
+       tool_catalog.include?("mulgae-doctor-result.v2") &&
+       tool_catalog.include?("mulgae-provider-heartbeat-result.v1") &&
+       tool_catalog.include?("authentication_failure") &&
+       tool_catalog.include?("malformed_response") &&
        tool_catalog.include?("mulgae-review-preflight.v3") &&
        tool_catalog.include?("Config v1 and v2 are unsupported") &&
        tool_catalog.include?("no automatic migration"),
-       "Mulgae v0.1.14 contracts and legacy-config guidance are incomplete")
+       "Mulgae v0.1.15 contracts and legacy-config guidance are incomplete")
 assert(tool_catalog.include?("Codex CLI `0.147.0` or newer") &&
        tool_catalog.include?("default_credential_profile") &&
        tool_catalog.include?("credential_homes") &&
@@ -312,7 +329,8 @@ assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
 assert(dev_setup.include?("use-mulgae") &&
        dev_setup.include?("project Config v3 and ignore changes") &&
        dev_setup.include?("Codex credential-profile mapping") &&
-       dev_setup.include?("start a Mulgae review, preflight capture, provider call, or MCP server during setup"),
+       dev_setup.include?("start a Mulgae heartbeat, review, qualification, preflight capture, live provider request") &&
+       dev_setup.include?("source transmission, or MCP server during setup"),
        "dev-setup must separate Mulgae CLI, skill, Config v3, Codex profile, and MCP boundaries")
 assert(agents_reference.include?("$use-mulgae") &&
        agents_reference.include?("only the corresponding CLI is installed"),
@@ -329,12 +347,12 @@ end
 assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("Do not start a second MCP server") &&
        task_review.include?("mulgae-review-preflight.v3") &&
-       task_review.include?("mulgae-command-result.v3") &&
+       task_review.include?("mulgae-command-result.v4") &&
        task_review.include?("mulgae status --run r_... --output json") &&
        task_review.include?("mulgae findings --run r_... --severity low --output json") &&
        task_review.include?("at most 20 highest-severity records") &&
        task_review.include?("complete provider stdout and stderr") &&
-       task_review.include?("never blindly retry an uncertain review mutation"),
+       task_review.include?("never add another review, qualification, or heartbeat invocation"),
        "task-review must preserve the optional use-mulgae and MCP fallback boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
        ROOT.join("PRIVACY.md").read.include?("complete provider stdout and stderr") &&

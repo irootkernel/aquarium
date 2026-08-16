@@ -15,8 +15,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v3"
-MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v3"
+SCHEMA_VERSION = "root-kernel-dev-setup-inspection.v4"
+MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v4"
+MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 SANHO_SKILL_FILES = (
     "SKILL.md",
@@ -156,6 +157,11 @@ def normalized_version(version: str | None) -> str | None:
     return version.removeprefix("v")
 
 
+def codex_version_from_output(output: str) -> str | None:
+    match = re.search(r"\bcodex(?:-cli)?\s+v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b", output)
+    return match.group(1) if match else None
+
+
 def supported_podway_version(version: str | None) -> bool:
     if not version:
         return False
@@ -181,7 +187,7 @@ def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 14)
+    return bool(match and int(match.group(1)) >= 15)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -543,64 +549,13 @@ def normalize_mulgae_command_envelope(
     envelope = probe.get("result")
     if not isinstance(envelope, dict):
         return normalized, None
-    if envelope.get("schema_version") != MULGAE_COMMAND_RESULT_SCHEMA:
-        normalized["ok"] = False
-        normalized["error_code"] = "unexpected_output_schema"
+    schema = envelope.get("schema_version")
+    if isinstance(schema, str):
+        normalized["output_schema"] = schema
+    if schema != MULGAE_COMMAND_RESULT_SCHEMA:
+        normalized["error_code"] = "unsupported_output_schema"
         return normalized, None
     return normalized, envelope
-
-
-def normalize_mulgae_config(probe: dict[str, Any]) -> dict[str, Any]:
-    normalized, envelope = normalize_mulgae_command_envelope(probe)
-    if not isinstance(envelope, dict):
-        return normalized
-    command_result = envelope.get("result")
-    if isinstance(command_result, dict):
-        safe_result: dict[str, Any] = {
-            key: command_result[key]
-            for key in ("kind", "mode", "config_uri", "config_sha256")
-            if isinstance(command_result.get(key), str)
-        }
-        policy = command_result.get("policy")
-        if isinstance(policy, dict):
-            safe_policy: dict[str, Any] = {}
-            configured = policy.get("configured_provider_ids")
-            if isinstance(configured, list) and all(
-                isinstance(provider, str) for provider in configured
-            ):
-                safe_policy["configured_provider_ids"] = configured
-            policy_body = policy.get("policy")
-            if isinstance(policy_body, dict):
-                selected_policy = selected_fields(
-                    policy_body, ("workspace_access", "required_roles")
-                )
-                assignments = policy_body.get("role_assignments")
-                if isinstance(assignments, list):
-                    selected_policy["role_assignments"] = [
-                        selected_fields(
-                            assignment,
-                            ("role", "primary_provider", "credential_profile"),
-                        )
-                        for assignment in assignments
-                        if isinstance(assignment, dict)
-                    ]
-                safe_policy["policy"] = selected_policy
-            if safe_policy:
-                safe_result["policy"] = safe_policy
-        provenance = command_result.get("provenance")
-        if isinstance(provenance, list):
-            safe_result["provenance"] = [
-                selected_fields(
-                    row, ("field", "source", "disposition", "value_class")
-                )
-                for row in provenance
-                if isinstance(row, dict)
-            ]
-        normalized["result"] = safe_result
-    reason_codes = mulgae_reason_codes(envelope)
-    if reason_codes:
-        normalized["reason_codes"] = reason_codes
-    return normalized
 
 
 def mulgae_reason_codes(envelope: Any) -> list[str]:
@@ -609,22 +564,151 @@ def mulgae_reason_codes(envelope: Any) -> list[str]:
     return [
         reason["code"]
         for reason in envelope["reasons"]
-        if isinstance(reason, dict) and isinstance(reason.get("code"), str)
+        if isinstance(reason, dict)
+        and isinstance(reason.get("code"), str)
+        and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", reason["code"])
     ]
 
 
-def normalize_mulgae_providers(probe: dict[str, Any]) -> dict[str, Any]:
-    normalized, envelope = normalize_mulgae_command_envelope(probe)
-    if isinstance(envelope, dict):
-        result = envelope.get("result")
-        if isinstance(result, dict):
-            normalized["result"] = selected_fields(
-                result, ("kind", "ready_provider_count")
+def normalize_mulgae_diagnostic_check(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    status = value.get("status")
+    reason_codes = value.get("reason_codes")
+    if status not in {"verified", "failed", "unverifiable", "not_applicable"}:
+        return None
+    if not isinstance(reason_codes, list) or not all(
+        isinstance(reason, str)
+        and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", reason) is not None
+        for reason in reason_codes
+    ):
+        return None
+    return {"status": status, "reason_codes": reason_codes}
+
+
+def normalize_mulgae_readiness(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    state = value.get("state")
+    exit_code = value.get("exit_code")
+    reason_codes = value.get("reason_codes")
+    if state not in {"ready", "degraded", "unverified", "unsafe"}:
+        return None
+    if (
+        exit_code not in {0, 4, 8}
+        or isinstance(exit_code, bool)
+        or not isinstance(reason_codes, list)
+    ):
+        return None
+    if not all(
+        isinstance(reason, str)
+        and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", reason) is not None
+        for reason in reason_codes
+    ):
+        return None
+    return {"state": state, "exit_code": exit_code, "reason_codes": reason_codes}
+
+
+def normalize_mulgae_cli_compatibility(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    status = value.get("status")
+    if status not in {"verified", "failed", "unverifiable", "not_applicable"}:
+        return None
+    fields = (
+        "observed_version",
+        "eligibility",
+        "compatibility",
+        "minimum_version",
+        "verified_latest",
+        "reason_code",
+    )
+    if not all(isinstance(value.get(field), str) for field in fields):
+        return None
+    if value["eligibility"] not in {"eligible", "ineligible", "not_evaluated"}:
+        return None
+    if value["compatibility"] not in {
+        "verified",
+        "newer_than_verified",
+        "below_minimum",
+        "malformed",
+        "not_observed",
+    }:
+        return None
+    version_pattern = r"(?:|\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)"
+    if any(
+        re.fullmatch(version_pattern, value[field]) is None
+        for field in ("observed_version", "minimum_version", "verified_latest")
+    ):
+        return None
+    if value["reason_code"] and re.fullmatch(
+        r"[a-z][a-z0-9_]{0,63}", value["reason_code"]
+    ) is None:
+        return None
+    return {"status": status, **{field: value[field] for field in fields}}
+
+
+def normalize_mulgae_provider_inventory(value: Any) -> list[dict[str, Any]] | None:
+    if not isinstance(value, list) or len(value) != 4:
+        return None
+    inventory: list[dict[str, Any]] = []
+    for row in value:
+        if not isinstance(row, dict):
+            return None
+        family = row.get("family")
+        configured = row.get("configured")
+        referenced_by_roles = row.get("referenced_by_roles")
+        state = row.get("state")
+        reason = row.get("reason")
+        binary_available = normalize_mulgae_diagnostic_check(
+            row.get("binary_available")
+        )
+        cli_compatible = normalize_mulgae_cli_compatibility(
+            row.get("cli_compatible")
+        )
+        if (
+            family not in {"kimi", "zcode", "agy", "codex"}
+            or not isinstance(configured, bool)
+            or not isinstance(referenced_by_roles, list)
+            or not all(
+                role
+                in {
+                    "logic",
+                    "security",
+                    "maintainability",
+                    "product",
+                    "documentation",
+                    "testing",
+                    "artist",
+                }
+                for role in referenced_by_roles
             )
-        reason_codes = mulgae_reason_codes(envelope)
-        if reason_codes:
-            normalized["reason_codes"] = reason_codes
-    return normalized
+            or state not in {
+                "eligible",
+                "unavailable",
+                "not_configured",
+                "not_observed",
+            }
+            or not isinstance(reason, str)
+            or re.fullmatch(r"[a-z][a-z0-9_]{0,63}", reason) is None
+            or binary_available is None
+            or cli_compatible is None
+        ):
+            return None
+        inventory.append(
+            {
+                "family": family,
+                "configured": configured,
+                "referenced_by_roles": referenced_by_roles,
+                "state": state,
+                "reason": reason,
+                "binary_available": binary_available,
+                "cli_compatible": cli_compatible,
+            }
+        )
+    if [row["family"] for row in inventory] != ["kimi", "zcode", "agy", "codex"]:
+        return None
+    return inventory
 
 
 def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
@@ -636,7 +720,14 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     if isinstance(result, dict):
         safe: dict[str, Any] = selected_fields(result, ("kind", "readiness"))
         if isinstance(doctor, dict):
-            safe_doctor: dict[str, Any] = {}
+            schema = doctor.get("schema_version")
+            if isinstance(schema, str):
+                normalized["result_schema"] = schema
+            if schema != MULGAE_DOCTOR_RESULT_SCHEMA:
+                normalized["doctor_capability"] = "unsupported"
+                normalized["result"] = safe
+                return normalized
+            safe_doctor: dict[str, Any] = {"schema_version": schema}
             config = selected_fields(
                 doctor.get("config"),
                 (
@@ -654,20 +745,34 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
             if isinstance(configured, list) and all(
                 isinstance(provider, str) for provider in configured
             ):
-                safe_doctor["configured_provider_ids"] = configured
+                canonical = ["kimi", "zcode", "agy", "codex"]
+                if configured == [
+                    provider for provider in canonical if provider in configured
+                ]:
+                    safe_doctor["configured_provider_ids"] = configured
             inventory = doctor.get("provider_inventory")
             if isinstance(inventory, list):
-                safe_doctor["provider_inventory"] = [
-                    selected_fields(provider, ("family", "state", "reason"))
-                    for provider in inventory
-                    if isinstance(provider, dict)
-                ]
-            for name, fields in (
-                ("assignment", ("state", "resilience")),
-                ("readiness", ("state", "exit_code", "reason_codes")),
+                safe_inventory = normalize_mulgae_provider_inventory(inventory)
+                if safe_inventory is not None:
+                    safe_doctor["provider_inventory"] = safe_inventory
+            for name in (
+                "config_v3",
+                "local_configuration",
+                "provider_identity",
             ):
-                selected = selected_fields(doctor.get(name), fields)
-                if selected:
+                selected = normalize_mulgae_diagnostic_check(doctor.get(name))
+                if selected is not None:
+                    safe_doctor[name] = selected
+            assignment = selected_fields(doctor.get("assignment"), ("state", "resilience"))
+            if assignment:
+                safe_doctor["assignment"] = assignment
+            for name in (
+                "readiness",
+                "configured_readiness",
+                "role_route_readiness",
+            ):
+                selected = normalize_mulgae_readiness(doctor.get(name))
+                if selected is not None:
                     safe_doctor[name] = selected
             platform_evidence = doctor.get("platform_evidence")
             if isinstance(platform_evidence, list):
@@ -676,7 +781,24 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
                     for evidence in platform_evidence
                     if isinstance(evidence, dict)
                 ]
+            required_fields = {
+                "config_v3",
+                "local_configuration",
+                "provider_identity",
+                "configured_provider_ids",
+                "provider_inventory",
+                "readiness",
+                "configured_readiness",
+                "role_route_readiness",
+            }
+            if not required_fields.issubset(safe_doctor):
+                normalized["doctor_capability"] = "invalid"
+                normalized["result"] = safe
+                return normalized
+            normalized["doctor_capability"] = "supported"
             safe["doctor"] = safe_doctor
+        else:
+            normalized["doctor_capability"] = "unsupported"
         normalized["result"] = safe
     reason_codes = mulgae_reason_codes(envelope)
     if reason_codes:
@@ -741,8 +863,13 @@ def inspect_mulgae_mcp(
         "enabled": None,
         "stdio": None,
         "repository_bound": None,
+        "arguments_match": None,
         "cwd_bound": None,
         "required": None,
+        "required_verification": "unverifiable",
+        "required_output_capability": "unknown",
+        "compatibility_reason": None,
+        "codex_version": None,
         "command_resolvable": None,
         "binary_matches_selected": None,
         "startup_timeout_sec": None,
@@ -754,6 +881,13 @@ def inspect_mulgae_mcp(
             {"status": "unavailable", "reason": "codex_executable_missing"}
         )
         return registration
+    version_probe = run_command(
+        [codex_executable, "--version"], repository, timeout_seconds
+    )
+    if version_probe["ok"]:
+        registration["codex_version"] = codex_version_from_output(
+            version_probe["stdout"]
+        )
     probe = json_probe(
         [codex_executable, "mcp", "get", "mulgae", "--json"],
         repository,
@@ -775,6 +909,26 @@ def inspect_mulgae_mcp(
         )
         return registration
 
+    if "required" not in result:
+        required = None
+        required_verification = "unverifiable"
+        required_output_capability = "not_reported"
+        compatibility_reason = "required_unverifiable"
+    elif isinstance(result["required"], bool):
+        required = result["required"]
+        required_verification = "verified" if required else "mismatch"
+        required_output_capability = "reported"
+        compatibility_reason = None
+    else:
+        registration.update(
+            {
+                "status": "degraded",
+                "reason": "invalid_registration_result",
+                "required_output_capability": "invalid",
+            }
+        )
+        return registration
+
     command = transport.get("command")
     resolved_command: Path | None = None
     if isinstance(command, str) and command:
@@ -788,14 +942,18 @@ def inspect_mulgae_mcp(
 
     args = transport.get("args")
     repository_bound = False
-    server_mode = False
+    arguments_match = False
     if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
-        server_mode = bool(args and args[0] == "mcp")
         try:
-            root_index = args.index("--project-root")
-            configured_root = Path(args[root_index + 1]).expanduser().resolve()
+            configured_root = Path(args[2]).expanduser().resolve()
             repository_bound = configured_root == repository
-        except (ValueError, IndexError, OSError):
+            arguments_match = (
+                len(args) == 3
+                and args[0] == "mcp"
+                and args[1] == "--project-root"
+                and repository_bound
+            )
+        except (IndexError, OSError):
             repository_bound = False
 
     raw_cwd = transport.get("cwd", result.get("cwd"))
@@ -805,8 +963,16 @@ def inspect_mulgae_mcp(
         cwd_bound = False
     startup_timeout = result.get("startup_timeout_sec")
     tool_timeout = result.get("tool_timeout_sec")
-    startup_supported = isinstance(startup_timeout, (int, float)) and startup_timeout >= 30
-    tool_supported = isinstance(tool_timeout, (int, float)) and tool_timeout >= 54000
+    startup_supported = (
+        isinstance(startup_timeout, (int, float))
+        and not isinstance(startup_timeout, bool)
+        and startup_timeout >= 30
+    )
+    tool_supported = (
+        isinstance(tool_timeout, (int, float))
+        and not isinstance(tool_timeout, bool)
+        and tool_timeout >= 54000
+    )
     binary_matches = bool(
         resolved_command
         and mulgae_executable
@@ -817,8 +983,12 @@ def inspect_mulgae_mcp(
             "enabled": result.get("enabled") is True,
             "stdio": transport.get("type") == "stdio",
             "repository_bound": repository_bound,
+            "arguments_match": arguments_match,
             "cwd_bound": cwd_bound,
-            "required": result.get("required") is True,
+            "required": required,
+            "required_verification": required_verification,
+            "required_output_capability": required_output_capability,
+            "compatibility_reason": compatibility_reason,
             "command_resolvable": resolved_command is not None,
             "binary_matches_selected": binary_matches,
             "startup_timeout_sec": startup_timeout,
@@ -829,10 +999,9 @@ def inspect_mulgae_mcp(
         registration["project_config_present"]
         and registration["enabled"]
         and registration["stdio"]
-        and repository_bound
+        and arguments_match
         and cwd_bound
-        and registration["required"]
-        and server_mode
+        and required_verification in {"verified", "unverifiable"}
         and binary_matches
         and startup_supported
         and tool_supported
@@ -845,7 +1014,9 @@ def inspect_mulgae_mcp(
     return registration
 
 
-def inspect_mulgae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
+def inspect_mulgae(
+    repository: Path, timeout_seconds: float, require_mcp: bool = False
+) -> dict[str, Any]:
     tool = base_tool("mulgae")
     tool["version_supported"] = False
     tool["platform"] = {
@@ -873,12 +1044,29 @@ def inspect_mulgae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["mcp_registration"] = inspect_mulgae_mcp(
         repository, tool["executable"], timeout_seconds
     )
+    unavailable_check = {"status": "not_applicable", "reason_codes": []}
+    unavailable_readiness = {
+        "state": "unverified",
+        "exit_code": 4,
+        "reason_codes": ["doctor_v2_not_observed"],
+    }
+    tool["provider_inventory"] = []
+    tool["mcp_required_for_status"] = require_mcp
+    tool["health"] = {
+        "mulgae_cli_compatibility": (
+            "unavailable" if not tool["installed"] else "unverifiable"
+        ),
+        "doctor_contract": "not_observed",
+        "config_v3": unavailable_check.copy(),
+        "local_configuration": unavailable_check.copy(),
+        "provider_identity": unavailable_check.copy(),
+        "configured_readiness": unavailable_readiness.copy(),
+        "role_route_readiness": unavailable_readiness.copy(),
+        "mcp_registration": tool["mcp_registration"]["status"],
+    }
     if not tool["installed"]:
         tool["probes"]["version"] = skipped_probe("executable_missing")
         tool["probes"]["doctor"] = skipped_probe("executable_missing")
-        tool["probes"]["providers"] = skipped_probe("executable_missing")
-        tool["probes"]["effective_config"] = skipped_probe("executable_missing")
-        tool["probes"]["provenance_config"] = skipped_probe("executable_missing")
         return tool
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
@@ -891,80 +1079,78 @@ def inspect_mulgae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         repository,
         timeout_seconds,
     )
-    providers_probe = json_probe(
-        [
-            tool["executable"],
-            "providers",
-            "--include-unverified",
-            "--output",
-            "json",
-        ],
-        repository,
-        timeout_seconds,
-    )
-    effective_probe = json_probe(
-        [tool["executable"], "config", "--mode", "effective", "--output", "json"],
-        repository,
-        timeout_seconds,
-    )
-    provenance_probe = json_probe(
-        [tool["executable"], "config", "--mode", "provenance", "--output", "json"],
-        repository,
-        timeout_seconds,
-    )
     normalized_doctor = normalize_mulgae_doctor(doctor_probe)
-    tool["probes"].update(
-        {
-            "doctor": normalized_doctor,
-            "providers": normalize_mulgae_providers(providers_probe),
-            "effective_config": normalize_mulgae_config(effective_probe),
-            "provenance_config": normalize_mulgae_config(provenance_probe),
-        }
-    )
+    tool["probes"]["doctor"] = normalized_doctor
 
-    project_config, local_config, runtime = tool["configuration"][:3]
+    project_config, local_config = tool["configuration"][:2]
     both_missing = not project_config["present"] and not local_config["present"]
     doctor_result = normalized_doctor.get("result")
     doctor_payload = (
         doctor_result.get("doctor") if isinstance(doctor_result, dict) else None
     )
-    readiness = (
-        doctor_payload.get("readiness") if isinstance(doctor_payload, dict) else None
-    )
-    config_state = (
-        doctor_payload.get("config") if isinstance(doctor_payload, dict) else None
-    )
-    configuration_policy_ok = (
-        project_config["present"]
-        and not project_config["ignored"]
-        and local_config["present"]
-        and local_config["ignored"]
-        and not local_config["tracked"]
-        and local_config["mode_0600"]
-        and runtime["ignored"]
-    )
-    healthy = (
+    mulgae_cli_compatible = (
         version_probe["ok"]
         and tool["version_supported"]
         and tool["platform"]["supported"]
-        and doctor_probe["ok"]
-        and isinstance(readiness, dict)
-        and readiness.get("state") == "ready"
-        and isinstance(config_state, dict)
-        and config_state.get("status") == "ready"
-        and providers_probe["ok"]
-        and effective_probe["ok"]
-        and provenance_probe["ok"]
-        and configuration_policy_ok
     )
-    if healthy:
+    health = tool["health"]
+    health["mulgae_cli_compatibility"] = (
+        "compatible" if mulgae_cli_compatible else "incompatible"
+    )
+    doctor_supported = normalized_doctor.get("doctor_capability") == "supported"
+    doctor_capability = normalized_doctor.get("doctor_capability")
+    health["doctor_contract"] = (
+        doctor_capability
+        if doctor_capability in {"supported", "unsupported", "invalid"}
+        else "unsupported"
+    )
+    if doctor_supported and isinstance(doctor_payload, dict):
+        for name in (
+            "config_v3",
+            "local_configuration",
+            "provider_identity",
+            "configured_readiness",
+            "role_route_readiness",
+        ):
+            value = doctor_payload.get(name)
+            if isinstance(value, dict):
+                health[name] = value
+        inventory = doctor_payload.get("provider_inventory")
+        if isinstance(inventory, list):
+            tool["provider_inventory"] = inventory
+    else:
+        capability_reason = (
+            "doctor_v2_invalid"
+            if health["doctor_contract"] == "invalid"
+            else "doctor_v2_unsupported"
+        )
+        unsupported = {
+            "status": "unverifiable",
+            "reason_codes": [capability_reason],
+        }
+        health["config_v3"] = unsupported.copy()
+        health["local_configuration"] = unsupported.copy()
+        health["provider_identity"] = unsupported.copy()
+        unsupported_readiness = {
+            "state": "unverified",
+            "exit_code": 4,
+            "reason_codes": [capability_reason],
+        }
+        health["configured_readiness"] = unsupported_readiness.copy()
+        health["role_route_readiness"] = unsupported_readiness.copy()
+
+    configured_readiness = health["configured_readiness"]
+    offline_ready = (
+        configured_readiness.get("state") == "ready"
+        and configured_readiness.get("exit_code") == 0
+    )
+    mcp_status = tool["mcp_registration"]["status"]
+    mcp_blocks = mcp_status == "degraded" or (
+        require_mcp and mcp_status != "configured"
+    )
+    if mulgae_cli_compatible and doctor_supported and offline_ready and not mcp_blocks:
         tool["status"] = "configured"
-    elif (
-        both_missing
-        and version_probe["ok"]
-        and tool["version_supported"]
-        and tool["platform"]["supported"]
-    ):
+    elif both_missing and mulgae_cli_compatible and doctor_supported and not mcp_blocks:
         tool["status"] = "installed"
     else:
         tool["status"] = "degraded"
@@ -1422,12 +1608,17 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
 
 
 def inspect(
-    requested_path: str, timeout_seconds: float, include_podway: bool = False
+    requested_path: str,
+    timeout_seconds: float,
+    include_podway: bool = False,
+    require_mulgae_mcp: bool = False,
 ) -> dict[str, Any]:
     repository = resolve_repository(requested_path, timeout_seconds)
     tools = {
         "sanho": inspect_sanho(repository, timeout_seconds),
-        "mulgae": inspect_mulgae(repository, timeout_seconds),
+        "mulgae": inspect_mulgae(
+            repository, timeout_seconds, require_mcp=require_mulgae_mcp
+        ),
         "gaori": inspect_gaori(repository, timeout_seconds),
         "lora": inspect_lora(),
     }
@@ -1456,6 +1647,11 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Include explicitly requested Podway readiness diagnostics",
     )
+    parser.add_argument(
+        "--require-mulgae-mcp",
+        action="store_true",
+        help="Require an explicitly selected Mulgae MCP registration for status",
+    )
     arguments = parser.parse_args()
     if arguments.timeout_seconds <= 0:
         raise InspectionError(
@@ -1477,6 +1673,7 @@ def main() -> int:
                 arguments.repository,
                 arguments.timeout_seconds,
                 include_podway=arguments.include_podway,
+                require_mulgae_mcp=arguments.require_mulgae_mcp,
             )
         )
         return 0

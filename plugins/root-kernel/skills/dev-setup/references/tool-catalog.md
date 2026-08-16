@@ -49,7 +49,7 @@ For an explicitly requested repair, load and follow the installed `$use-sanho` l
 
 Official source: `https://github.com/irootkernel/mulgae`
 
-Supported release line: stable `v0.1.14` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.13 retains the unsupported Config v2 and prior command-result and preflight contracts, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
+Supported release line: stable `v0.1.15` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.14 lacks the Doctor v2 offline-readiness contract, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
 
 Install an approved tag:
 
@@ -57,9 +57,11 @@ Install an approved tag:
 go install github.com/irootkernel/mulgae@<tag>
 ```
 
-The binary does not install the agent skill. Diagnose the CLI, configuration, and provider readiness with `command -v mulgae`, `mulgae version --json`, `mulgae doctor --output json`, `mulgae config --mode effective --output json`, `mulgae config --mode provenance --output json`, and `mulgae providers --include-unverified --output json`.
+The binary does not install the agent skill. Default setup diagnosis uses only `command -v mulgae`, `mulgae version --json`, and `mulgae doctor --output json`, plus effective Codex MCP inspection when available. Require the `mulgae-command-result.v4` envelope and feature-detect `result.doctor.schema_version=mulgae-doctor-result.v2`. If Doctor v2 is absent, report the capability as unsupported; never fabricate failed dimensions or reconstruct them from `.mulgae/config.yaml` or `.mulgae/local.yaml`.
 
-Require `mulgae-command-result.v3` for doctor, providers, and config JSON. Read stable fields and reason codes from complete envelopes even when a readiness or configuration command exits non-zero. Treat missing shared project policy, missing machine-local configuration, and missing provider authentication separately, and never report native homes, executable paths, credential-profile homes, credentials, diagnostic messages, request IDs, timestamps, or raw provider output.
+Project Doctor v2 reports `config_v3`, `local_configuration`, `provider_identity`, `configured_readiness`, and `role_route_readiness` independently. Preserve its `verified`, `failed`, `unverifiable`, and `not_applicable` states and each configured `provider_inventory[]` row's `binary_available` and `cli_compatible` fields. Use `cli_compatible.eligibility` as Mulgae's provider-version decision; `newer_than_verified` remains ready when eligibility is `eligible`. Treat setup as configured only when `configured_readiness.state=ready` and `exit_code=0`. Do not gate or report setup on static evidence, heartbeat, historical reviews, or `review_qualified`, and never report native homes, executable paths, credential-profile homes, credentials, diagnostic messages, request IDs, timestamps, or raw provider output.
+
+Setup does not need `mulgae providers --output json`. If that command is explicitly inspected outside the default setup flow, keep `offline_ready_provider_count` and `static_evidence_ready_provider_count` distinct; missing static evidence is not a generic unavailable provider.
 
 For a new Codex user-scoped skill installation, fetch only these files from `https://raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/` into a temporary directory under `~/.agents/skills`: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-mulgae` frontmatter before atomically moving it to `~/.agents/skills/use-mulgae`.
 
@@ -97,9 +99,11 @@ providers:
         home: "/absolute/private/work-CODEX_HOME"
 ```
 
-Use operator-chosen lowercase kebab-case aliases, map exactly the default and role override aliases in lexical order, and use one common real Codex executable. Obtain separate approval for the shared policy and private local mapping, show the exact proposed YAML privately, and preserve unrelated Config v3 fields. Mulgae may project only the selected home's `auth.json` into a disposable runtime; do not expose profile paths or credential material. After writing, require effective config to report `workspace_access=none` and the intended role-to-profile aliases, provenance to classify `providers.codex.credential_homes` as local machine state, and doctor/providers to report Codex ready without returning any home path.
+Use operator-chosen lowercase kebab-case aliases, map exactly the default and role override aliases in lexical order, and use one common real Codex executable. Obtain separate approval for the shared policy and private local mapping, show the exact proposed YAML privately, and preserve unrelated Config v3 fields. Mulgae may project only the selected home's `auth.json` into a disposable runtime; do not expose profile paths or credential material. After writing, require Doctor v2 to verify provider identity, report the intended role-to-profile aliases through redacted role references, and mark Codex binary and CLI compatibility ready without returning any home or executable path.
 
-Mulgae v0.1.14 preserves complete provider stdout and stderr without a product byte ceiling. Keep those transcripts in private Mulgae runtime state and consume only bounded structured status, finding, and readiness fields in Root Kernel reports. Setup verification remains limited to doctor, providers, effective config, and provenance config; do not use preflight merely to validate configuration.
+Mulgae v0.1.15 preserves complete provider stdout and stderr without a product byte ceiling. Keep those transcripts in private Mulgae runtime state and consume only bounded structured status, finding, and readiness fields in Root Kernel review workflows. Setup verification remains limited to version, Doctor v2, and effective MCP registration. Doctor's adapter-owned local version command is offline: it uses no credential projection, project working directory, provider API, or network request. Do not inspect runs or invoke heartbeat, qualification, preflight, review, source transmission, or MCP startup to validate setup.
+
+Heartbeat is outside setup. Only after a separate explicit user request acknowledging possible authentication, network access, cost, and remote logging may an agent propose `mulgae heartbeat --provider <family> --authorize-live-request --output json`, adding `--credential-profile <profile>` only for an explicitly selected named Codex configuration. Never add `--authorize-live-request` automatically. Require `mulgae-provider-heartbeat-result.v1` and preserve its typed `succeeded`, `provider_failure`, `timeout`, `authentication_failure`, `malformed_response`, or `execution_failure` status without retry. Do not promote success into offline readiness or review qualification. Without authorization, preserve Mulgae's `attempted=false` and `live_authorization_required` result.
 
 Propose these root-anchored Git ignore rules through an exact reviewed diff:
 
@@ -122,11 +126,11 @@ startup_timeout_sec = 30
 tool_timeout_sec = 54000
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify only the effective registration with `codex mcp get mulgae --json`: it must be enabled STDIO, resolve to the selected binary, bind its argument and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults.
+Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify only the effective registration with `codex mcp get mulgae --json`: it must be enabled STDIO, resolve to the selected binary, bind its exact `mcp --project-root <canonical-root>` arguments and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
 
 Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources. The attached MCP surface remains versioned independently; CLI fallback preflight must identify `mulgae-review-preflight.v3`.
 
-Verify configuration, provider readiness, skill files, and MCP registration only. Do not start the MCP server or run review, preflight, follow-up, delta, rerun, report, export, or any command that captures, transmits, or writes review source or artifacts during setup.
+Verify configuration, provider readiness, skill files, and MCP registration only. Do not start the MCP server or run heartbeat, review, qualification, preflight, follow-up, delta, rerun, report, export, or any command that captures, transmits, or writes review source or artifacts during setup. Mulgae owns its bounded same-provider retry; never add a downstream review, qualification, or heartbeat retry for a final typed failure.
 
 ## Gaori
 
