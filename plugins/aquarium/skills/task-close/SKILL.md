@@ -1,11 +1,11 @@
 ---
 name: task-close
-description: "Confirm, mark complete, and optionally commit one reviewed roadmap task. Use when $aquarium:task-handler delegates closeout or when the user explicitly invokes $aquarium:task-close with exact task identity, complete review evidence, and a final task diff."
+description: "Confirm and close one reviewed roadmap task, including an explicitly selected terminal status and optional commit handoff. Use when $aquarium:task-handler delegates closeout or when the user explicitly invokes $aquarium:task-close with exact task identity, complete review evidence, and a final task diff."
 ---
 
 # Task Close
 
-Close only the reviewed task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final task diff, verification summary, documentation state, and complete Mulgae evidence.
+Close only the reviewed task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final task diff, verification summary, documentation state, and complete Mulgae evidence. This phase owns completion evidence and lifecycle selection; `$aquarium:task-commit` owns any actual commit.
 
 ## Assemble Existing Evidence
 
@@ -13,40 +13,34 @@ Determine whether repository authority makes an authorized commit, publication, 
 
 Assemble evidence already produced by the agent and explicitly supplied by the user. Do not rerun user-confirmed tests or documentation checks solely to mark the task complete or prepare a commit. Repository-required hooks, generators, and synchronization commands still apply when they cannot be waived; disclose and report them separately.
 
-Confirm that approved requirements, applicable verification, deslop, optimization, durable documentation, Mulgae review, and finding dispositions are represented in the final task evidence. Do not invent a completed state when the roadmap lacks one.
+Confirm that approved requirements, applicable verification, deslop, optimization, durable documentation, Mulgae review, and finding dispositions are represented in the final task evidence. Do not invent a terminal state when the roadmap lacks one.
+
+## Select the Terminal Status
+
+Before final approval, re-read the exact task entry and classify terminal states only from the roadmap vocabulary. Treat `Completed`, `Blocked`, and `Deferred` as terminal only when that roadmap defines them with completion meanings.
+
+Preserve an existing terminal state. For a non-terminal task, show its exact current status and ask the user to select one available roadmap-defined terminal state, keep the current state, or cancel. When only one terminal state exists, ask for confirmation rather than choosing it. Never select a terminal state from evidence, prior intent, or the usual successful outcome.
+
+If the user keeps the task non-terminal or cancels, do not commit and return the exact remaining gap. Otherwise show the exact proposed status-only edit before asking for final approval.
 
 ## Ask for Final Approval
 
-Re-read the roadmap vocabulary, present or identify the exact final task diff, and show the exact proposed status-only edit. Determine whether the repository requires a commit and whether the user requested one. Use structured `request_user_input` when available and ask all three questions together:
+Present or identify the exact final task diff, selected status edit, and whether a commit is proposed. Use structured `request_user_input` when available and ask all three questions together:
 
 1. Tests: "Have you reviewed the current applicable test evidence, including who ran each check, and accepted it for this final implementation?" Offer `Evidence accepted`, `Not yet or failed`, and `Not applicable`.
 2. Documentation: "Have you reviewed and accepted the documentation and roadmap changes in this final diff?" Offer `Docs approved`, `Needs revision`, and `Not applicable`.
-3. Implementation: Ask "Do you fully approve this implementation and want it marked complete?" and state whether a commit is proposed. Offer `Approve and commit` only when a commit is requested or required, offer `Approve and close without commit` unless repository authority requires a commit for completion, and always offer `Request changes`; complete the set with `Keep in review` when only one approval option applies.
+3. Implementation: Ask whether the user fully approves this implementation with the displayed terminal status. Offer `Approve and commit` only when a commit is requested or required, offer `Approve and close without commit` unless repository authority requires a commit, and always offer `Request changes`; include `Keep in review` when only one approval option applies.
 
 If structured ask/answer is unavailable, ask the same three concise questions one at a time. Count `Not applicable` as affirmative only when explicitly selected and consistent with repository requirements. Only `Approve and commit` and `Approve and close without commit` are affirmative implementation answers. Never infer approval from silence, an earlier commit request, or general satisfaction.
 
-If any answer is negative, pending, ambiguous, or inconsistent with a required gate, keep the review or other non-terminal state, do not commit, and return the feedback or exact gap. Treat `Keep in review` as a hold without requested changes and `Request changes` as a correction request naming the exact objection.
+If any answer is negative, pending, ambiguous, or inconsistent with a required gate, preserve the current non-terminal state, do not commit, and return the feedback or exact gap. Treat `Keep in review` as a hold without requested changes and `Request changes` as a correction request naming the exact objection.
 
-## Transition and Optional Commit
+## Apply and Hand Off
 
-Only after all three answers are affirmative:
+Only after all three answers are affirmative, apply the exact approved status edit and run mandatory status-specific documentation synchronization or validation not covered by current evidence. The approved status-only edit does not invalidate approval; any other task-owned code, test, documentation, or roadmap change does, so show the updated final diff and ask again.
 
-1. Re-read the exact task entry and allowed lifecycle vocabulary.
-2. Classify terminal states from that roadmap. Treat `Completed`, `Blocked`, and `Deferred` as terminal only when defined with those meanings.
-3. Preserve an existing terminal state. For a non-terminal state, select the existing successful terminal state, normally `Completed`, based on the recorded approvals and assembled evidence.
-4. Never select `Blocked` or `Deferred`: this workflow only preserves one the roadmap already records. Never convert either to `Completed` without fresh evidence that work resumed and received approval.
-5. Run only mandatory status-specific documentation synchronization and validation not covered by current evidence.
-6. If `Approve and commit` was selected, apply the exact approved status edit and stage the complete task-owned final diff while preserving unrelated staged content. Stop if exact task-owned paths or hunks cannot be isolated safely, then re-read the staged roadmap entry and complete staged task diff immediately before committing.
-7. If `Approve and close without commit` was selected, apply only the exact approved status edit, do not stage or commit anything, and verify the task is terminal while the task-owned final diff remains uncommitted. This path is unavailable when repository authority requires a commit for completion.
+For `Approve and close without commit`, do not stage or commit anything. Verify the task is terminal while the complete task-owned diff remains uncommitted. This path is unavailable when repository authority requires a commit for completion.
 
-The exact proposed status-only edit is part of approval and does not invalidate it. Any other task-owned code, test, documentation, or roadmap change after the answers invalidates all three confirmations; show the updated final diff and ask again.
+For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, exact commit scope, verification and Mulgae evidence, and the user's one-commit authorization. Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
 
-The `Approve and commit` answer authorizes one commit of the displayed task-owned diff. The `Approve and close without commit` answer authorizes only the displayed status edit and no Git staging or commit. Neither answer authorizes amend, push, PR changes, or unrelated staging. Use repository commit conventions and safe lease checks for any separately authorized publication action.
-
-Before an authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary status workflow when available. If unavailable and repository guidance requires it, stop and return an exact `$aquarium:dev-setup` continuation request. Otherwise run the repository's required Sanho check or the minimal `sanho status --json` fallback, derive action from current structured state, and never treat status as commit authority.
-
-After the commit and its hooks, re-run the applicable status workflow and report only the resulting evidence. For any separately authorized push, use the skill's refreshed push-boundary workflow; commit approval never grants synchronization or push authority.
-
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository title prefixes and task-ID rules override Lore's summary line. Lore never grants Git authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup` continuation request. When no repository rule requires Lore and it is unavailable, report that once and match the recurring subject, body, and trailer structure in `git log -5 --format=fuller` instead.
-
-Return the three answers, final roadmap state, mandatory commands and exit codes, staged paths, commit identifier when created, publication state, and remaining gaps to the orchestrator.
+Return the three answers, final roadmap state, selected terminal status, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.

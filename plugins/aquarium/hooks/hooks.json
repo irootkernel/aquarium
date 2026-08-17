@@ -1,0 +1,18 @@
+{
+  "description": "Route direct roadmap-repository commits through Aquarium task-commit.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/task_commit_gate.py\"",
+            "timeout": 5,
+            "statusMessage": "Checking the Aquarium roadmap commit boundary"
+          }
+        ]
+      }
+    ]
+  }
+}

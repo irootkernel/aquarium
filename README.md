@@ -15,6 +15,7 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$aquarium:epic-handler` with a roadmap path and one epic ID |
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$aquarium:epic-validator` with a roadmap path and one epic ID |
 | `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
+| `task-commit` | Reconcile roadmap ownership and lifecycle state, then create one authorized isolated commit. | Automatic for commit requests, or explicit: `$aquarium:task-commit` |
 | `dev-setup` | Diagnose and configure selected development tools and paired agent skills, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$aquarium:dev-setup` |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
 | `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$aquarium:deslop` |
@@ -31,9 +32,15 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `task-refine` | Run deslop, establish the staged baseline, and perform bounded optimization. |
 | `task-document` | Update durable documentation and move the roadmap task to its defined review state. |
 | `task-review` | Run Mulgae against one exact complete task target and resolve valid findings. |
-| `task-close` | Obtain final user approval, update terminal status, and perform only the authorized commit. |
+| `task-close` | Obtain final user approval, apply the user-selected terminal status, and hand an authorized commit to `task-commit`. |
 
-The three goal-centered workflows have distinct entry points. `epic-handler` connects multiple task goals into one epic outcome while leaving each task's internal procedure flexible. `task-handler` strengthens the procedure around one task goal with explicit phases and user-visible transition gates. `epic-validator` starts from a committed completed epic, independently audits it, and resolves confirmed gaps through sequential remediation goals. None invokes another. Commit, upstream publication, and live validation remain separate states.
+The three goal-centered workflows have distinct entry points. `epic-handler` connects multiple task goals into one epic outcome while leaving each task's internal procedure flexible. `task-handler` strengthens the procedure around one task goal with explicit phases and user-visible transition gates, moving it to a defined `In Progress` state after plan approval when available. `epic-validator` starts from a committed completed epic, independently audits it, and resolves confirmed gaps through sequential remediation goals. None invokes another. Their actual commits share `task-commit`. Direct commit requests require explicit task relationship and lifecycle or checkpoint confirmation; handler commits carry the owner's approved lifecycle or record decision in a bounded handoff. Commit, upstream publication, and live validation remain separate states.
+
+### Roadmap commit guard
+
+Aquarium includes a local `PreToolUse` hook that detects direct shell `git commit` commands in repositories with tracked roadmap lifecycle files. Such commits must pass through `task-commit`; repositories without a detected roadmap are unaffected. The hook uses only the command, working directory, tracked roadmap paths, and local lifecycle text, and neither writes project state nor transmits data.
+
+After installing or upgrading Aquarium, open `/hooks` and explicitly trust the plugin hook. Skill matching is best-effort, while the trusted hook supplies the deterministic direct-command guard. It is not complete enforcement: commits created indirectly by another tool may not pass through the shell boundary.
 
 ### Optional Podway integration
 
@@ -52,7 +59,7 @@ codex plugin marketplace add irootkernel/aquarium --ref main
 codex plugin add aquarium@aquarium
 ```
 
-Restart Codex after installation or upgrade so the active session reloads the installed skill snapshot.
+Restart Codex after installation or upgrade so the active session reloads the installed skill snapshot, then open `/hooks` and trust Aquarium's roadmap commit guard.
 
 ### Migrating from Root Kernel
 
@@ -77,15 +84,16 @@ Repositories configured for Podway must remove the tracked `.podway/procedures/r
 
 ## Validate
 
-Run the dependency-free repository validation:
+Run the repository validation (the lint step requires Ruff):
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py
+python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py
 ruby tests/validate.rb
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py
 git diff --check
 ```
 
-The validation checks plugin metadata, skill frontmatter and UI metadata, setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
+The validation checks plugin metadata, skill frontmatter and UI metadata, the roadmap commit hook, setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
 
 ## Documentation style
 

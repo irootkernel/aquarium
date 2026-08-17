@@ -60,6 +60,7 @@ expected_skill_names = %w[
   epic-validator
   independent-review
   task-close
+  task-commit
   task-document
   task-handler
   task-implement
@@ -70,7 +71,7 @@ expected_skill_names = %w[
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
        "plugin skill set does not match the expected skills")
-implicit_invocation_skills = %w[deslop]
+implicit_invocation_skills = %w[deslop task-commit]
 
 skill_paths.each do |path|
   body = path.read
@@ -160,6 +161,7 @@ task_refine = PLUGIN.join("skills/task-refine/SKILL.md").read
 task_document = PLUGIN.join("skills/task-document/SKILL.md").read
 task_review = PLUGIN.join("skills/task-review/SKILL.md").read
 task_close = PLUGIN.join("skills/task-close/SKILL.md").read
+task_commit = PLUGIN.join("skills/task-commit/SKILL.md").read
 
 assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
@@ -424,16 +426,14 @@ assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&
 {
   "task-handler" => task_handler,
   "task-document" => task_document,
-  "task-close" => task_close,
+  "task-commit" => task_commit,
   "epic-handler" => epic_handler,
   "epic-validator" => epic_validator,
 }.each do |name, body|
   assert(body.include?("$use-sanho"), "#{name} must route relevant Sanho boundaries through use-sanho")
 end
-assert(task_close.include?("After the commit and its hooks") &&
-       epic_handler.include?("after the commit and hooks") &&
-       epic_validator.include?("after the commit and hooks"),
-       "commit-owning skills must refresh Sanho evidence after hooks")
+assert(task_commit.include?("After the commit and its hooks"),
+       "task-commit must refresh Sanho evidence after hooks")
 
 assert(epic_handler.include?("one canonical roadmap path inside that repository") &&
        epic_handler.include?("exactly one epic ID"),
@@ -452,11 +452,9 @@ assert(epic_handler.include?("Run Mulgae at least once on the latest complete ta
        "epic-handler must require task and convergent epic Mulgae review")
 assert(epic_handler.include?("It does not authorize amend, push, PR or release changes"),
        "epic-handler must preserve publication boundaries")
-assert(epic_handler.include?("reference `$lore-commits` and follow it when available") &&
-       epic_handler.include?("git log -5 --format=fuller") &&
-       epic_handler.include?("subject, body, and trailer structure") &&
-       epic_handler.include?("If fewer than five commits exist"),
-       "epic-handler must prefer Lore without making it a hard dependency")
+assert(epic_handler.include?("$aquarium:task-commit") &&
+       epic_handler.include?("Never commit independently"),
+       "epic-handler must hand actual commits to task-commit")
 assert(epic_handler.include?("Do not create or read `.aquarium`"),
        "epic-handler must not create shadow orchestration state")
 assert(epic_handler.include?("dependency DAG") && epic_handler.include?("exact revision") &&
@@ -517,13 +515,12 @@ assert(epic_validator.include?("Mulgae on the latest complete remediation target
 assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
        epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
        "epic-validator must invalidate stale evidence and avoid empty closeout commits")
-assert(epic_validator.include?("reference `$lore-commits` and follow it when available") &&
-       epic_validator.include?("git log -5 --format=fuller") &&
-       epic_validator.include?("If fewer than five commits exist"),
-       "epic-validator must prefer Lore with a repository-history fallback")
+assert(epic_validator.include?("$aquarium:task-commit") &&
+       epic_validator.include?("Never commit independently"),
+       "epic-validator must hand actual commits to task-commit")
 assert(epic_validator.include?("Commit is not upstream publication") &&
        epic_validator.include?("Do not create or read `.aquarium`") &&
-       epic_validator.include?("compare the commit with that snapshot byte-for-byte"),
+       epic_validator.include?("byte-for-byte snapshot verification"),
        "epic-validator must preserve publication and shadow-state boundaries")
 assert(epic_validator.lines.length < 120, "epic-validator must remain orchestration-focused")
 
@@ -545,6 +542,10 @@ assert(task_handler.include?("A leaf skill's report is a handoff summary, not pr
        "task-handler must verify leaf postconditions independently")
 assert(task_handler.include?("Resume at the earliest phase whose postcondition is not currently proven"),
        "task-handler must reconstruct safe resume state")
+assert(task_handler.include?("Immediately after plan approval and before implementation") &&
+       task_handler.include?("change it to `In Progress` only when that exact state is defined") &&
+       task_handler.include?("ask whether to reopen it"),
+       "task-handler must establish the roadmap active state before implementation")
 assert(task_handler.include?("podway observe --json --wait-for-idle") &&
        task_handler.include?("guidance.allowed_actions") &&
        task_handler.include?("mutation_templates"),
@@ -556,7 +557,7 @@ assert(task_handler.include?("Do not create or read `.aquarium`"),
 assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
        task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
-assert(task_handler.lines.length < 100, "task-handler must remain orchestration-focused")
+assert(task_handler.lines.length < 105, "task-handler must remain orchestration-focused")
 
 podway_reference = PLUGIN.join("references/podway-integration.md")
 assert(podway_reference.file?, "shared Podway integration contract is missing")
@@ -571,7 +572,9 @@ assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
        "Podway mutation reconciliation is missing")
 assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` may own or advance") &&
        podway_contract.include?("standalone user request that explicitly invokes `$use-podway`") &&
-       podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis"),
+       podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis") &&
+       podway_contract.include?("`$aquarium:task-commit` may inspect only bounded read-only current-session facts") &&
+       podway_contract.include?("must never advance or mutate Podway"),
        "Podway workflow ownership and standalone lifecycle authority are not separated")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
@@ -825,32 +828,32 @@ assert(task_review.include?("Select exactly one target that contains the complet
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),
        "task-review must verify Mulgae findings")
 
-approval_start_index = task_close.index("Re-read the roadmap vocabulary")
+terminal_status_index = task_close.index("Treat `Completed`, `Blocked`, and `Deferred` as terminal")
+status_choice_index = task_close.index("ask the user to select", terminal_status_index)
+approval_start_index = task_close.index("## Ask for Final Approval", status_choice_index)
 ask_index = task_close.index("request_user_input", approval_start_index)
 tests_confirmation_index = task_close.index("Evidence accepted", ask_index)
 docs_confirmation_index = task_close.index("Docs approved", ask_index)
 implementation_confirmation_index = task_close.index("Approve and commit", ask_index)
 non_commit_confirmation_index = task_close.index("Approve and close without commit", ask_index)
-terminal_status_index = task_close.index("Treat `Completed`, `Blocked`, and `Deferred` as terminal")
-staged_status_index = task_close.index("re-read the staged roadmap entry", terminal_status_index)
-non_commit_transition_index = task_close.index("do not stage or commit anything", terminal_status_index)
-commit_authority_index = task_close.index("authorizes one commit", staged_status_index)
-assert(approval_start_index && ask_index && tests_confirmation_index && docs_confirmation_index &&
-       implementation_confirmation_index && non_commit_confirmation_index && terminal_status_index &&
-       staged_status_index && non_commit_transition_index && commit_authority_index &&
+non_commit_transition_index = task_close.index("do not stage or commit anything", approval_start_index)
+handoff_index = task_close.index("invoke `$aquarium:task-commit`", non_commit_transition_index)
+assert(terminal_status_index && status_choice_index && approval_start_index && ask_index &&
+       tests_confirmation_index && docs_confirmation_index && implementation_confirmation_index &&
+       non_commit_confirmation_index && non_commit_transition_index && handoff_index &&
+       terminal_status_index < status_choice_index && status_choice_index < approval_start_index &&
        approval_start_index < ask_index && ask_index < tests_confirmation_index &&
        tests_confirmation_index < docs_confirmation_index && docs_confirmation_index < implementation_confirmation_index &&
-       implementation_confirmation_index < terminal_status_index && terminal_status_index < staged_status_index &&
-       terminal_status_index < non_commit_transition_index && staged_status_index < commit_authority_index,
+       implementation_confirmation_index < non_commit_transition_index && non_commit_transition_index < handoff_index,
        "task-close terminal-state commit and non-commit gates are missing or misordered")
 assert(task_close.include?("do not stage or commit anything") &&
        task_close.include?("This path is unavailable when repository authority requires a commit for completion"),
        "task-close must support a safe non-commit closeout path")
 assert(task_close.include?("including who ran each check") && !task_close.include?("personally run"),
        "task-close must accept evidence with explicit agent or user provenance")
-assert(task_close.include?("Any other task-owned code, test, documentation, or roadmap change after the answers invalidates all three confirmations"),
+assert(task_close.include?("any other task-owned code, test, documentation, or roadmap change does"),
        "task-close must invalidate stale confirmations")
-assert(task_close.include?("The exact proposed status-only edit is part of approval and does not invalidate it"),
+assert(task_close.include?("The approved status-only edit does not invalidate approval"),
        "task-close must keep the approved status transition actionable")
 assert(task_close.include?("Do not rerun user-confirmed tests or documentation checks solely"),
        "task-close must avoid redundant closeout verification")
@@ -858,11 +861,39 @@ assert(task_close.include?("Never infer approval from silence"),
        "task-close must require explicit approval")
 assert(task_close.include?("If structured ask/answer is unavailable"),
        "task-close must define an ask/answer fallback")
-assert(task_close.include?("$lore-commits"), "task-close must honor Lore guidance")
-assert(task_close.include?("unless repository authority requires a commit for completion"),
+assert(task_close.include?("This path is unavailable when repository authority requires a commit for completion"),
        "task-close must bound the non-commit path by repository authority")
 assert(task_close.include?("Only `Approve and commit` and `Approve and close without commit` are affirmative implementation answers"),
        "task-close must enumerate the affirmative implementation answers")
+assert(task_close.include?("Never select a terminal state") &&
+       task_close.include?("When only one terminal state exists, ask for confirmation") &&
+       task_close.include?("Do not stage or commit independently"),
+       "task-close must leave lifecycle choice to the user and commit execution to task-commit")
+
+assert(task_commit.include?("always ask whether the commit belongs to one exact task") &&
+       task_commit.include?("Never infer the relationship") &&
+       task_commit.include?("require an exact task ID") &&
+       task_commit.include?("The initial commit request does not satisfy this dedicated confirmation") &&
+       task_commit.include?("Never choose a terminal state for the user") &&
+       task_commit.include?("explicitly authorize a checkpoint commit") &&
+       task_commit.include?("reconcile lifecycle state again on every later commit request"),
+       "task-commit must require explicit task relationship and lifecycle decisions")
+assert(task_commit.include?("active matching `task-handler`, `epic-handler`, `epic-validator`") &&
+       task_commit.include?("only from that owner's explicit commit handoff") &&
+       task_commit.include?("lifecycle decision as either an exact approved edit or an explicit statement") &&
+       task_commit.include?("record decision as either an exact approved edit or an explicit statement") &&
+       task_commit.include?("review run when applicable") &&
+       task_commit.include?("Do not offer an independent path"),
+       "task-commit must not bypass an active managed workflow")
+assert(task_commit.include?("AQUARIUM_COMMIT_GATE=task-commit-v1 git commit") &&
+       task_commit.include?("Never export it globally") &&
+       task_commit.include?("indirect commits performed by other tools may not pass"),
+       "task-commit must scope and disclose the direct-command hook marker")
+assert(task_commit.include?("$lore-commits") &&
+       task_commit.include?("git log -5 --format=fuller") &&
+       task_commit.include?("$aquarium:dev-setup") &&
+       task_commit.include?("After the commit and its hooks"),
+       "task-commit must own Lore, setup escalation, and post-hook verification")
 
 MULGAE_COMPLETENESS_SENTENCE =
   "Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, " \
@@ -877,14 +908,6 @@ MULGAE_COMPLETENESS_SENTENCE =
          "canonical Mulgae completeness sentence has drifted: #{name}")
 end
 
-{ "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
-  assert(body.include?("Before a non-trivial commit, reference `$lore-commits`") &&
-         body.include?("If fewer than five commits exist") &&
-         body.include?("If repository guidance requires Lore") &&
-         body.include?("Lore, which never grants commit authority"),
-         "canonical Lore commit paragraph has drifted: #{name}")
-end
-
 approval_precondition = "Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval."
 { "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
   assert(body.include?(approval_precondition), "pre-approval mutation ban is missing: #{name}")
@@ -897,11 +920,6 @@ end
 }.each do |name, body|
   assert(body.include?("stable `v0.2.3` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
-end
-
-{ "epic-handler" => epic_handler, "epic-validator" => epic_validator, "task-close" => task_close }.each do |name, body|
-  assert(body.include?("git log -5 --format=fuller") && body.include?("$aquarium:dev-setup"),
-         "Lore fallback must pair repository history with setup escalation: #{name}")
 end
 
 phase_names.each do |name|
@@ -922,16 +940,40 @@ assert(deslop_description.include?("'clean this up'"),
 %w[LICENSE README.md PRIVACY.md TERMS.md .github/workflows/validate.yml].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
 end
-[PLUGIN.join("skills"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
+[PLUGIN.join("skills"), PLUGIN.join("hooks"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
   assert(path.directory?, "distribution directory is missing: #{path}")
 end
 assert(manifest.fetch("skills") == "./skills/", "plugin manifest skills path is incorrect")
 
+hooks_path = PLUGIN.join("hooks/hooks.json")
+hook_script = PLUGIN.join("hooks/task_commit_gate.py")
+assert(hooks_path.file? && hook_script.file?, "roadmap commit hook files are missing")
+hooks = JSON.parse(hooks_path.read)
+pre_tool_hooks = hooks.fetch("hooks").fetch("PreToolUse")
+assert(pre_tool_hooks.length == 1 && pre_tool_hooks.fetch(0).fetch("matcher") == "^Bash$",
+       "roadmap commit hook must target Bash PreToolUse")
+hook_command = pre_tool_hooks.fetch(0).fetch("hooks").fetch(0).fetch("command")
+assert(hook_command == 'python3 "${PLUGIN_ROOT}/hooks/task_commit_gate.py"',
+       "roadmap commit hook must resolve its script through PLUGIN_ROOT")
+assert(hook_script.read.include?('git_output(root, "ls-files", "-z")') &&
+       hook_script.read.include?("AQUARIUM_COMMIT_GATE=task-commit-v1") &&
+       !hook_script.read.match?(/https?:\/\//),
+       "roadmap commit hook must remain local and use the task-commit marker")
+assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust") &&
+       ROOT.join("README.md").read.include?("indirectly by another tool may not pass") &&
+       ROOT.join("PRIVACY.md").read.include?("reads up to two million characters") &&
+       ROOT.join("TERMS.md").read.include?("not a security boundary or complete enforcement mechanism"),
+       "public policies must disclose hook trust, local inspection, and enforcement limits")
+
 workflow = ROOT.join(".github/workflows/validate.yml").read
 assert(workflow.include?("ruby/setup-ruby@v1"), "CI must configure Ruby explicitly")
 assert(workflow.include?("actions/setup-python@v5"), "CI must configure Python explicitly")
-assert(workflow.include?("python -m unittest tests/test_inspect_tools.py"), "CI must run inspection tests")
+assert(workflow.include?("tests/test_inspect_tools.py tests/test_task_commit_gate.py"),
+       "CI must run inspection and commit-hook tests")
 assert(workflow.include?("ruby tests/validate.rb"), "CI must run repository validation")
+assert(workflow.include?("astral-sh/ruff-action@v4.1.0") &&
+       workflow.include?("plugins/aquarium/hooks/task_commit_gate.py"),
+       "CI must lint the roadmap commit hook")
 assert(workflow.include?("git diff --check"), "CI must reject whitespace damage")
 
 readme = ROOT.join("README.md").read
@@ -955,7 +997,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler dev-setup independent-review deslop].each do |name|
+%w[epic-handler epic-validator task-handler task-commit dev-setup independent-review deslop].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Commit"
+  short_description: "Guard roadmap-aware task commits safely"
+  default_prompt: "Use $aquarium:task-commit to prepare and create a roadmap-aware commit safely."
+policy:
+  allow_implicit_invocation: true

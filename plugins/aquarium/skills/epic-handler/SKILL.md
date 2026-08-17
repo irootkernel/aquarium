@@ -50,7 +50,7 @@ For each non-terminal task in order:
 4. Run proportionate repository-authorized checks. Focused green checks prove only mapped requirements; forbidden or unavailable database, E2E, live, or broad gates remain explicit evidence gaps and are never run merely because another workflow normally would.
 5. Run Mulgae at least once on the latest complete task target, including task-owned staged, unstaged, untracked, generated, and derived files. Verify findings as hypotheses, fix every valid in-scope issue, rerun affected checks, and review the changed target again until no valid finding remains.
 6. Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
-7. Move the task to its defined successful state and commit one isolated task-owned diff under the task ID. Complete the goal only after the commit exists, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
+7. Move the task to its defined successful state and hand the exact isolated task-owned diff, lifecycle evidence, task ID, and approved commit authority to `$aquarium:task-commit`. Complete the goal only after its commit exists, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
 
 With Podway active, run `podway observe --json --wait-for-idle` before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, attempt, goal revision, and current node from that observation. Start or resume the matching goal procedure only after approval, mirror it in the Codex goal, independently verify returned native evidence before recording it, and only then select decisions and assess criteria through actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries.
 
@@ -68,25 +68,19 @@ With Podway active, begin the final audit in `aquarium-validation-v2` after the 
 
 Classify each verified gap by canonical requirement owner, not file count or edit location:
 
-- A violation owned by one task remains task-owned even if that task is Completed or the fix crosses modules. Create a new goal for that task, transition through the roadmap's reopen state and back to success when one is defined, obtain fresh verification and Mulgae evidence, and commit under its task ID.
-- An epic seam invariant owned by no single task is cross-task. Create an epic remediation goal and commit the isolated correction under the epic ID.
+- A violation owned by one task remains task-owned even if that task is Completed or the fix crosses modules. Create a new goal for that task, transition through the roadmap's reopen state and back to success when one is defined, obtain fresh verification and Mulgae evidence, and hand the isolated correction to `$aquarium:task-commit` under its task ID.
+- An epic seam invariant owned by no single task is cross-task. Create an epic remediation goal and hand the isolated correction to `$aquarium:task-commit` under the epic ID.
 - Work requiring another repository is external. Stop with its owner, exact revision, and missing evidence; do not edit it.
 
 If ownership is ambiguous, stop before goal creation and report the missing authority. Process task-owned gaps in canonical task order, then cross-task gaps. After each remediation goal, discard the prior audit and audit again from scratch. When an external blocker is resolved, first revalidate the DAG at its new exact revision and restart the audit.
 
-Only after a clean latest-snapshot audit and complete Mulgae evidence may one final epic closeout goal be created. Transition the epic to its successful state, perform authorized synchronization, and create an epic-ID closeout commit only for an actual isolated diff. Never create an empty commit.
+Only after a clean latest-snapshot audit and complete Mulgae evidence may one final epic closeout goal be created. Transition the epic to its successful state, perform authorized synchronization, and hand an actual isolated epic-ID closeout diff to `$aquarium:task-commit`. Never create an empty commit.
 
-## Commit Safely and Report
+## Hand Off Commits and Report
 
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, and match recurring subject, body, and trailer structure without copying unrelated content. If fewer than five commits exist, inspect all; with none use a concise imperative subject.
+For each approved commit, invoke `$aquarium:task-commit` with repository, canonical roadmap, task or epic ID, exact lifecycle decision or explicit absence, exact record decision or explicit absence, isolated scope, current verification and Mulgae evidence, and one-commit authority. That skill owns staging, Lore and Sanho checks, the direct commit, hook reconciliation, and snapshot verification. Never commit independently, amend, or infer push authority.
 
-If repository guidance requires Lore, stop and return an exact `$aquarium:dev-setup` continuation request instead of falling back. Repository-required IDs and prefixes override Lore, which never grants commit authority.
-
-Before each authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available; after the commit and hooks, refresh the applicable Sanho evidence. If unavailable and repository guidance requires it, stop and route to `$aquarium:dev-setup`; otherwise use the repository's required Sanho check or the minimal `sanho status --json` fallback and report the missing specialized guidance.
-
-Use the refreshed push-boundary workflow only for a separately authorized push. Sanho status never grants commit, synchronization, or push authority.
-
-Immediately before each commit, confirm the reviewed implementation equals the staged diff except for its planned status-only transition and record the staged tree and blob identities. Afterward compare the commit with that snapshot byte-for-byte and inspect staged, unstaged, and untracked state for residue or hook changes. Do not amend without separate authority.
+Use `$use-sanho` directly only for separately authorized synchronization outside the commit boundary. Use its refreshed push workflow only for a separately authorized push. Commit and upstream publication remain separate states.
 
 Do not create or read `.aquarium` or other shadow state. Resume from roadmap, Git history and worktree, current goal, recoverable approval, repository evidence, and Mulgae records; request fresh approval when the envelope cannot be recovered.
 

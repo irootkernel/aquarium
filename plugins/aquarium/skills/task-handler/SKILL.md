@@ -32,7 +32,7 @@ When repository guidance selects Gaori for verification, record whether `$use-ga
 
 Record whether `$use-mulgae`, the supported configured CLI, and the attached project MCP are available. Route a missing or invalid skill or required MCP to `$aquarium:dev-setup` only when repository policy requires that component; otherwise keep the optional integration independent and let the review phase use `$use-mulgae` when available or its bounded CLI fallback when specialized guidance is unavailable.
 
-Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$aquarium:task-refine`, and the approved final task-owned staging in `$aquarium:task-close`; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging.
+Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$aquarium:task-refine`, and an approved lifecycle edit; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging. An authorized commit is handed to `$aquarium:task-commit`.
 
 Do not start or mutate Podway before plan approval. By default the plan discloses session start or resume, bounded evidence, decisions, rework, goal assessment, and completion. Approval explicitly omitting Podway approves the plan without those operations. Accept opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution.
 
@@ -50,19 +50,21 @@ Resolve every phase skill from the installed Aquarium plugin, read its complete 
 
 Treat a missing phase skill as a broken plugin installation. Do not silently inline, reconstruct, reorder, or substitute its workflow.
 
+Immediately after plan approval and before implementation, re-read the task lifecycle vocabulary. If the task already uses `In Progress` or `In Review`, preserve it. If it is terminal, ask whether to reopen it through a roadmap-defined active state and stop unless the user approves the exact edit. Otherwise change it to `In Progress` only when that exact state is defined; when it is absent, preserve the current status rather than inventing one. Treat this status-only edit as task-owned and verify it before loading `$aquarium:task-implement`.
+
 ## Gate Transitions
 
 After each phase, re-read the roadmap entry, Git state, affected files, and phase evidence. A leaf skill's report is a handoff summary, not proof by itself. Continue only when these postconditions hold:
 
 | Phase | Required postcondition |
 |---|---|
-| Plan | A decision-complete plan is explicitly approved; when Plan mode requires a handoff, it ends with an exact continuation prompt for that approved plan. |
+| Plan | A decision-complete plan is explicitly approved; any roadmap-defined `In Progress` transition is applied and verified before implementation; when Plan mode requires a handoff, it ends with an exact continuation prompt for that approved plan. |
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
 | Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
 | Document | Durable documentation is current, the roadmap uses its defined review state, and applicable documentation checks have evidence. |
 | Review | One exact complete task target received Mulgae review and every valid finding is resolved or explicitly dispositioned. |
-| Close | The user approved tests, documentation, and the exact final implementation; the intended terminal status and any authorized commit are verified. |
+| Close | The user approved tests, documentation, the exact final implementation, and the terminal status; any authorized commit succeeded through `$aquarium:task-commit`. |
 
 If a postcondition fails, keep the goal active, preserve the latest safe repository state, report the exact gap, and do not load the next phase. Then re-enter the earliest phase that owns the requested change and re-run every later phase whose evidence that change invalidates:
 

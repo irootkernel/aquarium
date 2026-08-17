@@ -55,8 +55,8 @@ Select only actions allowed by `guidance.allowed_actions` and represented by cur
 
 Group confirmed gaps by canonical requirement owner and coherent implementation boundary. Do not add new roadmap tasks or invent task IDs.
 
-- For a gap owned by one existing task, create or resume one remediation goal containing that task ID and commit the isolated correction under that task ID. If the roadmap defines a reopen state, transition through it and return to success; otherwise preserve the successful state and record remediation evidence.
-- For a cross-task seam or omitted epic-level design requirement owned by no existing task, create one epic remediation goal and commit the isolated correction under the epic ID.
+- For a gap owned by one existing task, create or resume one remediation goal containing that task ID and hand the isolated correction to `$aquarium:task-commit` under that task ID. If the roadmap defines a reopen state, transition through it and return to success; otherwise preserve the successful state and record remediation evidence.
+- For a cross-task seam or omitted epic-level design requirement owned by no existing task, create one epic remediation goal and hand the isolated correction to `$aquarium:task-commit` under the epic ID.
 - For work owned by another repository, stop with its owner, exact revision, and missing evidence. Never mutate that repository.
 
 If ownership is ambiguous, stop before goal creation and report the missing authority. Order task-owned groups by dependencies and roadmap order, then epic-owned groups. Never run two remediation goals concurrently.
@@ -68,7 +68,7 @@ For each goal:
 3. Add a concise roadmap remediation note using repository conventions with owner, summary, planned commit identity, verification evidence, Mulgae result, and audited snapshot; do not create a new task entry.
 4. Record resulting remediation commit IDs in the final validation record rather than attempting to predict a commit's own hash.
 
-Stage only the goal-owned diff, including its lifecycle and remediation note. Confirm the reviewed implementation equals the staged diff except for the planned status or validation-record-only roadmap change, then record the staged tree and blob identities. Commit once under the owning task or epic ID, compare the commit with that snapshot byte-for-byte, verify no goal-owned residue or unintended hook change remains, then complete the goal.
+Confirm the goal-owned diff, including its lifecycle and remediation note, equals the reviewed implementation except for the planned status or validation-record-only roadmap change. Hand that exact scope, its evidence, owning task or epic ID, and approved one-commit authority to `$aquarium:task-commit`; verify its returned commit snapshot, residue, and hook evidence before completing the goal.
 
 ## Re-audit to Convergence
 
@@ -78,18 +78,12 @@ With Podway active, record each remediation group and new audit attempt. Stale o
 
 When an external blocker is resolved, revalidate its exact committed revision and evidence before restarting the audit. Any code, test, durable documentation, generated, or derived change after verification or final review makes affected evidence stale; the exact planned status or validation-record-only roadmap change is the sole exception.
 
-Declare completion only when the fresh Codex audit has no confirmed gap, every required check has current passing evidence, whole-epic Mulgae evidence is complete, every member task and the epic have roadmap-defined successful states, and no epic-owned residue remains. Record the final audited snapshot and evidence in the roadmap. Create an epic-ID validation-record commit only when that produces an actual isolated diff; never duplicate an equivalent record or create an empty commit.
+Declare completion only when the fresh Codex audit has no confirmed gap, every required check has current passing evidence, whole-epic Mulgae evidence is complete, every member task and the epic have roadmap-defined successful states, and no epic-owned residue remains. Record the final audited snapshot and evidence in the roadmap. Hand an actual isolated epic-ID validation-record diff to `$aquarium:task-commit`; never duplicate an equivalent record or create an empty commit.
 
-## Commit and Report Safely
+## Hand Off Commits and Report Safely
 
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. If unavailable and no repository rule requires Lore, report that once, inspect `git log -5 --format=fuller`, and match recurring subject, body, and trailer structure without copying unrelated content. If fewer than five commits exist, inspect all; with none use a concise imperative subject.
+Every remediation or validation-record commit goes through `$aquarium:task-commit` with the repository, canonical roadmap, exact task or epic ID, the approved lifecycle decision as an exact edit or explicit absence, the approved record decision as an exact edit or explicit absence, exact isolated scope, current verification and Mulgae evidence, and one-commit authority. That skill owns staging, Lore and Sanho commit-boundary checks, the direct commit, hook reconciliation, and byte-for-byte snapshot verification. Never commit independently.
 
-If repository guidance requires Lore, stop and return an exact `$aquarium:dev-setup` continuation request instead of falling back. Repository-required IDs and prefixes override Lore, which never grants commit authority.
-
-Before each authorized commit in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available; after the commit and hooks, refresh the applicable Sanho evidence. If unavailable and repository guidance requires it, stop and route to `$aquarium:dev-setup`; otherwise use the repository's required Sanho check or the minimal `sanho status --json` fallback and report the missing specialized guidance.
-
-Use the refreshed push-boundary workflow only for a separately authorized push. Sanho status never grants commit, synchronization, or push authority.
-
-Commit is not upstream publication. Do not push, amend, open or modify a PR, release, or claim live validation without separate authority and evidence. Request renewed approval when remediation would add a new requirement, cross repository scope, cause destructive impact, or exceed a safely isolatable existing epic requirement.
+Use `$use-sanho` directly only for separately authorized synchronization outside the commit boundary. Commit is not upstream publication. Do not push, amend, open or modify a PR, release, or claim live validation without separate authority and evidence. Request renewed approval when remediation would add a new requirement, cross repository scope, cause destructive impact, or exceed a safely isolatable existing epic requirement.
 
 Do not create or read `.aquarium` or other shadow state. Resume from roadmap, Git history and worktree, current goal, recoverable approval, repository evidence, and Mulgae records. At each stop report baseline, audit status, remediation groups and owners, current goal, commits, checks, Mulgae capture and findings status, roadmap notes, worktree boundaries, publication state, and exact next safe action.
