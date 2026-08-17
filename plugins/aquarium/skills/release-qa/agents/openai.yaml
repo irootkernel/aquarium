@@ -1,0 +1,6 @@
+interface:
+  display_name: "Release QA"
+  short_description: "Exercise release changes in isolated scenarios"
+  default_prompt: "Use $aquarium:release-qa to QA the current main release candidate with isolated scenarios."
+policy:
+  allow_implicit_invocation: false

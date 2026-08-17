@@ -1,0 +1,80 @@
+---
+name: release-qa
+description: "Run read-only, scenario-based QA for the exact current main release candidate against the contracts and changes since the previous stable release, without rerunning existing automated tests or proposing fixes. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
+---
+
+# Release QA
+
+Assess one exact committed `main` candidate through isolated user scenarios. Treat existing automated checks as already successful, mutate only disposable fixtures under `/tmp`, and report verified defects without implementing or proposing solutions.
+
+Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material. It also authorizes creation and mutation of bounded `/tmp` fixtures and fresh subagents for local QA.
+
+It does not authorize source edits, staging, commits, pushes, tags, releases, networked or live product scenarios, credential inspection or changes, new authentication, global installation or configuration, persistent daemons, or remediation.
+
+## Establish the Release Contract
+
+1. Resolve the Git root and read all applicable instructions and release policy. Inspect the worktree, conflicts, current branch, `HEAD`, local `main`, upstream, remote `main`, existing tags, and configured hosting Releases. Record the exact candidate SHA.
+2. Require a clean worktree and one unambiguous committed candidate where `HEAD`, local `main`, upstream, and remote `main` agree. Treat read-only remote and hosting metadata lookup needed to establish those facts as explicitly authorized release discovery, not scenario authorization.
+   - Permit the configured Git and hosting clients to use existing ambient authentication for private repositories, but never inspect, read, copy, print, persist, refresh, or reconfigure credential material and never initiate an authentication flow.
+   - Return `INCOMPLETE` when access fails or the candidate, remote state, or published release authority cannot be established; never fetch, merge, switch branches, stash, or clean to repair it.
+3. Accept an intended release version supplied by the user. Otherwise follow repository version policy; when none exists, propose the next patch after the latest stable release and obtain confirmation before QA. Do not edit version metadata.
+4. Resolve the previous release from the latest non-draft, non-prerelease published Release reachable from the candidate, or from an exact tag explicitly confirmed by the user. Stop on conflicting tags or Releases, an existing target-version tag or Release, or a baseline not contained in the candidate.
+5. When no release tag exists, ask whether this is the first release and confirm its intended version. After confirmation, use the full reachable history and current public surface as new-release scope, with no regression baseline. Without confirmation return `INCOMPLETE`.
+6. Define the delta as every commit after the previous release through the candidate. When that range is empty, report that there is no release delta and return `INCOMPLETE` rather than `PASS`.
+
+The previous release is assumed to work. Inspect its committed code, documentation, and tests only to reconstruct established behavior; do not check it out or execute it.
+
+## Build the Coverage Matrix
+
+Read the commit list, complete diff, current public documentation, changed skills and instructions, runtime entrypoints, and relevant existing tests. Do not treat commit subjects as sufficient evidence.
+
+Map every commit and material changed surface to one or more of:
+
+- an existing-behavior regression scenario derived from the previous release contract;
+- a new-behavior success and failure scenario derived from the candidate contract;
+- a changed-skill representative, boundary, or misuse prompt;
+- a documentation, example, link, installation, or cross-file consistency inspection.
+
+Give every user-visible or operationally risky change at least one executable scenario. Static inspection is sufficient only when the changed contract has no executable behavior. Record exclusions with exact evidence instead of silently sampling them away.
+
+Do not run existing automated tests, `make test`, test runners, test scripts, linters, formatters, validators, generators, snapshot updates, CI commands, Gaori, Mulgae, or provider reviews. Existing tests may be read as specifications, but their presence or prior success does not prove the release scenarios.
+
+## Exercise Disposable Projects
+
+1. Create one evidence root with `mktemp -d /tmp/release-qa.XXXXXX` and a separate fixture directory for each scenario. Record the root and retain it for user inspection.
+2. Use the current repository's candidate binaries, source entrypoints, scripts, skills, documentation, and other resources by exact path. Do not clone or execute the previous release. Keep the source repository read-only and confirm its Git status is unchanged after every scenario group.
+3. Redirect `HOME`, XDG directories, temporary state, build outputs, and language or tool caches into the evidence root wherever applicable. Never write user-global state or rely on ambient credentials.
+4. Prefer an existing candidate artifact. When execution requires a build, run only the smallest non-test build whose outputs and caches can be isolated under `/tmp`; do not permit network access or global installation. Record an evidence gap when a safe isolated build is impossible.
+5. Keep scenarios offline and local by default. Do not contact live services, authenticate, start a persistent daemon, or send repository content externally. Record the blocked scenario as an evidence gap unless the user separately authorizes the exact external action.
+6. Capture the command, working directory, controlled environment, exit status, output, and material resulting files. Stop local background processes before completing the scenario.
+
+## Dispatch Fresh Scenario Agents
+
+Use the available agent delegation surface to dispatch fresh subagents for independent risk clusters. Give each worker only the exact candidate paths, raw baseline contract and delta relevant to its cluster, assigned `/tmp` fixture, and scenario objective. Do not disclose suspected findings, expected defects, intended fixes, or another worker's output.
+
+Require every worker to avoid existing test commands, source-repository writes, network access, credentials, global state, remediation, release-readiness decisions, and next-action recommendations. A worker may mutate only its assigned fixture and must return commands, observations, evidence paths, and source-repository status; the coordinator alone assigns final severity and status.
+
+Do not replace an unavailable, failed, or timed-out fresh worker with coordinator execution or static review. Mark its required coverage as missing and return `INCOMPLETE`. Parallelize independent clusters when capacity allows without weakening isolation.
+
+Adjudicate every worker report against the release contract and candidate. Reproduce a suspected defect in a clean sibling fixture or confirm it directly from deterministic evidence before accepting it. Put unreproduced, environment-dependent, or authority-dependent claims under evidence gaps, not findings.
+
+## Report Evidence, Not Solutions
+
+Choose one overall result in this order:
+
+1. `INCOMPLETE` when any required release fact, scenario, fresh-worker result, or safe execution prerequisite is missing, even when verified findings also exist.
+2. `FINDINGS` when coverage is complete and at least one verified defect remains.
+3. `PASS` only when coverage is complete and no verified defect remains.
+
+Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, commit-to-scenario matrix, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
+
+Classify verified findings as:
+
+- **Critical**: security, privacy, data loss, or broadly destructive behavior;
+- **High**: a core regression or promised new capability that is unusable;
+- **Medium**: a bounded functional, skill, or documentation defect with material user impact;
+- **Low**: a reproducible non-cosmetic inconsistency or minor usability defect.
+
+For each finding give the violated baseline or candidate contract, reproduction steps, expected and actual behavior, impact, exact source and evidence locations, and confidence. Exclude style preferences, praise, speculative risks, duplicate symptoms, and claims the coordinator could not verify.
+
+Do not edit source files, stage, commit, publish, propose fixes, recommend patches, or decide whether to release. State that remediation requires a separate user request.

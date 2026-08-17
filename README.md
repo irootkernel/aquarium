@@ -4,7 +4,7 @@
 
 By [Root Kernel](https://home.rootkernel.xyz)
 
-Aquarium is a Codex plugin marketplace for evidence-gated roadmap delivery, optional Podway v2 execution memory, and safe development-tool setup across Aquarium projects.
+Aquarium is a Codex plugin marketplace for evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup across Aquarium projects.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -16,9 +16,12 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$aquarium:epic-validator` with a roadmap path and one epic ID |
 | `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
 | `task-commit` | Reconcile roadmap ownership and lifecycle state, then create one authorized isolated commit. | Automatic for commit requests, or explicit: `$aquarium:task-commit` |
+| `release-qa` | Exercise changes since the previous stable release through isolated user scenarios without rerunning existing tests or proposing fixes. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
 | `dev-setup` | Diagnose and configure selected development tools, automatically compare selected paired skills with their latest supported releases, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$aquarium:dev-setup` |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
 | `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$aquarium:deslop` |
+
+Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
 
 ### Task-handler phases
 

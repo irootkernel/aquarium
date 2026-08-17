@@ -59,6 +59,7 @@ expected_skill_names = %w[
   epic-handler
   epic-validator
   independent-review
+  release-qa
   task-close
   task-commit
   task-document
@@ -96,7 +97,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[deslop lora lore orchestration podway] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[deslop lora lore orchestration podway release qa] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.5", "plugin version must be 0.1.5")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -104,6 +105,8 @@ unless release_tag.empty?
          "release tag #{release_tag} must match plugin version v#{manifest.fetch('version')}")
 end
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
+assert(manifest.dig("interface", "longDescription").include?("release-candidate QA"),
+       "plugin description must advertise release QA")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
 prompts = manifest.fetch("interface").fetch("defaultPrompt")
@@ -153,6 +156,7 @@ epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
 independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
+release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
 deslop = PLUGIN.join("skills/deslop/SKILL.md").read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
@@ -248,10 +252,15 @@ assert(tool_catalog.include?("every approved action that overwrites or removes")
        "tool replacement guidance must support the shared no-backup policy")
 assert(ROOT.join("README.md").read.include?("automatically reads that tool's official GitHub release metadata") &&
        ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
-       ROOT.join("PRIVACY.md").read.include?("One bounded read-only exception applies") &&
+       ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
        ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
+assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes read-only queries") &&
+       ROOT.join("README.md").read.include?("existing ambient authentication for private repositories") &&
+       ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
+       ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
+       "public documentation must disclose release-qa network and private-repository authentication boundaries")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
@@ -782,7 +791,7 @@ assert(task_review.include?("only a pass with no file changes supports `approved
 
 podway_blind_skills = %w[
   task-plan task-implement task-verify task-refine task-document task-review task-close
-  independent-review deslop
+  independent-review release-qa deslop
 ]
 podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
@@ -817,6 +826,28 @@ assert(independent_review.include?("Valid") && independent_review.include?("Inva
        "independent-review must adjudicate reviewer findings")
 assert(!independent_review.include?("owning Aquarium workflow requested"),
        "independent-review must not reintroduce the removed owning-workflow qualifier")
+
+assert(release_qa.include?("user explicitly invokes") &&
+       release_qa.include?("The previous release is assumed to work") &&
+       release_qa.include?("Map every commit"),
+       "release-qa must remain explicit and cover the complete release delta")
+assert(release_qa.include?("Do not run existing automated tests") &&
+       release_qa.include?("mktemp -d /tmp/release-qa.XXXXXX") &&
+       release_qa.include?("fresh subagents"),
+       "release-qa must use isolated scenarios without duplicating existing tests")
+assert(release_qa.include?("already-configured ambient authentication") &&
+       release_qa.include?("existing ambient authentication for private repositories") &&
+       release_qa.include?("never initiate an authentication flow") &&
+       release_qa.include?("networked or live product scenarios"),
+       "release-qa must separate authorized release discovery from credentials and networked scenarios")
+assert(release_qa.include?("Do not replace an unavailable, failed, or timed-out fresh worker") &&
+       release_qa.include?("source repository read-only") &&
+       release_qa.include?("Do not edit source files") &&
+       release_qa.include?("release-readiness decisions"),
+       "release-qa must fail incomplete instead of weakening isolation")
+assert(release_qa.include?("`PASS`") && release_qa.include?("`FINDINGS`") &&
+       release_qa.include?("`INCOMPLETE`") && release_qa.include?("propose fixes"),
+       "release-qa must report evidence without remediation")
 
 assert(task_plan.include?("decision-complete plan"), "task-plan must own decision-complete planning")
 assert(task_plan.include?("Do not create a goal"), "task-plan must remain mutation-free")
@@ -1035,7 +1066,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit dev-setup independent-review deslop].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review deslop].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),

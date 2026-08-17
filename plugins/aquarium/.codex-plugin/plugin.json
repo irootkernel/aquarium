@@ -17,6 +17,8 @@
     "orchestration",
     "setup",
     "testing",
+    "release",
+    "qa",
     "review",
     "deslop",
     "lora",
@@ -30,7 +32,7 @@
   "interface": {
     "displayName": "Aquarium",
     "shortDescription": "Epic delivery, validation, and task workflows.",
-    "longDescription": "Aquarium provides framework-agnostic development-tool setup, optional Podway v2 execution memory, procedure-strengthened single-task delivery, sequential epic orchestration, and cold validation that remediates confirmed gaps in a completed epic.",
+    "longDescription": "Aquarium provides framework-agnostic development-tool setup, isolated release-candidate QA, optional Podway v2 execution memory, procedure-strengthened single-task delivery, sequential epic orchestration, and cold validation that remediates confirmed gaps in a completed epic.",
     "developerName": "Root Kernel",
     "category": "Developer Tools",
     "capabilities": [
