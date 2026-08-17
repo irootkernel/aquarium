@@ -1,6 +1,6 @@
 ---
 name: release-qa
-description: "Run read-only, scenario-based QA for the exact current main release candidate against the contracts and changes since the previous stable release, without rerunning existing automated tests or proposing fixes. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
+description: "Run read-only, scenario-based QA for the exact current main release candidate against the contracts and changes since the previous stable release, before or after target-version metadata is committed, without rerunning existing automated tests or proposing fixes. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
 ---
 
 # Release QA
@@ -17,10 +17,13 @@ It does not authorize source edits, staging, commits, pushes, tags, releases, ne
 2. Require a clean worktree and one unambiguous committed candidate where `HEAD`, local `main`, upstream, and remote `main` agree. Treat read-only remote and hosting metadata lookup needed to establish those facts as explicitly authorized release discovery, not scenario authorization.
    - Permit the configured Git and hosting clients to use existing ambient authentication for private repositories, but never inspect, read, copy, print, persist, refresh, or reconfigure credential material and never initiate an authentication flow.
    - Return `INCOMPLETE` when access fails or the candidate, remote state, or published release authority cannot be established; never fetch, merge, switch branches, stash, or clean to repair it.
-3. Accept an intended release version supplied by the user. Otherwise follow repository version policy; when none exists, propose the next patch after the latest stable release and obtain confirmation before QA. Do not edit version metadata.
+3. Accept an intended release version supplied by the user. Otherwise follow repository version policy; when none exists, propose the next patch after the latest stable release and obtain confirmation before QA. Treat the intended version as the prospective release identifier, not as a required value in candidate files. Do not edit version metadata.
+   - Proceed whether committed version metadata still names the previous release or already names the intended version. Neither state is an `INCOMPLETE` condition or finding by itself.
+   - When the candidate already contains the intended version, include that version change in the release delta and inspect its manifest, documentation, and pinned-validation consistency.
+   - Do not run tag-time validators or require target-version metadata merely to establish the QA candidate. A dirty worktree still prevents an exact committed candidate under step 2, regardless of which files are dirty.
 4. Resolve the previous release from the latest non-draft, non-prerelease published Release reachable from the candidate, or from an exact tag explicitly confirmed by the user. Stop on conflicting tags or Releases, an existing target-version tag or Release, or a baseline not contained in the candidate.
 5. When no release tag exists, ask whether this is the first release and confirm its intended version. After confirmation, use the full reachable history and current public surface as new-release scope, with no regression baseline. Without confirmation return `INCOMPLETE`.
-6. Define the delta as every commit after the previous release through the candidate. When that range is empty, report that there is no release delta and return `INCOMPLETE` rather than `PASS`.
+6. Define the delta solely from Git history as every commit after the previous release through the candidate, independent of the version currently recorded in candidate files. For example, with previous release `v0.2.3`, ten later candidate commits, and intended version `v0.2.4`, cover all ten commits whether the files still say `v0.2.3` or already say `v0.2.4`. When that range is empty, report that there is no release delta and return `INCOMPLETE` rather than `PASS`.
 
 The previous release is assumed to work. Inspect its committed code, documentation, and tests only to reconstruct established behavior; do not check it out or execute it.
 
@@ -78,3 +81,5 @@ Classify verified findings as:
 For each finding give the violated baseline or candidate contract, reproduction steps, expected and actual behavior, impact, exact source and evidence locations, and confidence. Exclude style preferences, praise, speculative risks, duplicate symptoms, and claims the coordinator could not verify.
 
 Do not edit source files, stage, commit, publish, propose fixes, recommend patches, or decide whether to release. State that remediation requires a separate user request.
+
+When remediation adds commits, treat the new `main` SHA as a new candidate and rerun release QA over the complete previous-release-to-candidate delta. Version metadata may be committed before or after a passing QA run; its timing never narrows the delta or substitutes for scenario evidence.

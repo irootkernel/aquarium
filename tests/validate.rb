@@ -886,6 +886,17 @@ assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
        release_qa.include?("Map every commit"),
        "release-qa must remain explicit and cover the complete release delta")
+assert(release_qa.include?("prospective release identifier, not as a required value in candidate files") &&
+       release_qa.include?("committed version metadata still names the previous release or already names the intended version") &&
+       release_qa.include?("Neither state is an `INCOMPLETE` condition or finding by itself") &&
+       release_qa.include?("Define the delta solely from Git history") &&
+       release_qa.include?("whether the files still say `v0.2.3` or already say `v0.2.4`"),
+       "release-qa must accept candidates before or after target-version metadata is committed")
+assert(release_qa.include?("A dirty worktree still prevents an exact committed candidate") &&
+       release_qa.include?("When remediation adds commits") &&
+       release_qa.include?("rerun release QA over the complete previous-release-to-candidate delta") &&
+       release_qa.include?("its timing never narrows the delta"),
+       "release-qa must distinguish version timing from candidate identity and re-QA remediated candidates")
 assert(release_qa.include?("Do not run existing automated tests") &&
        release_qa.include?("mktemp -d /tmp/release-qa.XXXXXX") &&
        release_qa.include?("fresh subagents"),

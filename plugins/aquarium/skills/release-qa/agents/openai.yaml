@@ -1,6 +1,6 @@
 interface:
   display_name: "Release QA"
-  short_description: "Exercise release changes in isolated scenarios"
-  default_prompt: "Use $aquarium:release-qa to QA the current main release candidate with isolated scenarios."
+  short_description: "QA release deltas before or after version bumps"
+  default_prompt: "Use $aquarium:release-qa to QA a main candidate for an intended version before or after its version metadata is updated."
 policy:
   allow_implicit_invocation: false
