@@ -18,7 +18,7 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway completely and keeps an absent optional Mulgae MCP registration non-gating.
    When the current request explicitly selects Podway, add `--include-podway`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when either component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
-5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step.
+5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
 6. Do not create or read `.aquarium` or any equivalent central selection file.
 
 ## Use Ask/Answer for Decisions
@@ -33,6 +33,8 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch. Ask about Podway, Lora, and whether to prepare an AGENTS.md proposal in subsequent batches. For each active tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording when it is already installed. For Sanho, Mulgae, Gaori, and Podway, make `Install or upgrade the CLI and paired skill` the recommended setup choice, but report each component independently and preserve a healthy CLI when its optional skill is absent.
 
+Disclose in these four tools' selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
+
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
 When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Reject a handoff whose only requested action is routine supported Procedure v2 session observation, cancellation, discard, or reset, and return the exact `$use-podway` lifecycle request without starting broad setup discovery.
@@ -41,7 +43,23 @@ Otherwise keep the read-only discovery above, then ask only about the named tool
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
-A selection expresses intent only. It does not authorize a command that writes files, installs software, changes hooks, contacts a provider, or modifies user-global state.
+A selection expresses intent and, only for a selected Sanho, Mulgae, Gaori, or Podway tool, authorizes the disclosed bounded skill freshness comparison below. It does not authorize a command that writes persistent files, installs software, replaces a skill, changes hooks, contacts a provider, or modifies user-global state.
+
+## Compare Selected Agent Skills First
+
+Immediately after Sanho, Mulgae, Gaori, or Podway is selected as either `Install and configure` or `Diagnose only`, and before proposing any other network operation for that tool, compare its paired skill. Do not fetch or compare a skipped or not-yet-selected tool, and do not widen a scoped continuation to the other three tools.
+
+1. From the official GitHub Releases metadata, resolve the newest non-draft, non-prerelease tag within the tool's supported release line. Fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md` for that tag from the catalog's `raw.githubusercontent.com` source into an ephemeral temporary directory.
+2. Before comparing, require all four regular files, compute their SHA-256 digests, and verify the expected `name: use-sanho`, `name: use-mulgae`, `name: use-gaori`, or `name: use-podway` frontmatter. Reject redirects or responses that resolve outside the disclosed official endpoints. Never execute fetched content.
+3. Compare the verified source against exactly `~/.agents/skills/<skill-name>` as complete directory trees. Treat missing expected files, different bytes, invalid frontmatter, symlinks, and any extra local files as differences. Other Codex skill roots remain diagnostic evidence only; never update or remove another discovered copy through this automatic comparison.
+4. If the trees match exactly, report the source tag and `current` status without asking an update question. If the target is absent, show the exact target and ask separately whether to install it. If it differs, show the source tag, the complete file-set diff including additions and deletions, and ask separately whether to replace it after establishing the backup policy. One skill target requires one explicit installation or replacement approval; approval for another tool does not apply.
+5. If metadata lookup, download, validation, or comparison fails, report `freshness_unverifiable` with the failed endpoint or validation stage, make no freshness claim, remove the temporary payload when possible, and continue any safe local diagnosis. Do not propose an installation or replacement from an unverified payload.
+
+The automatic comparison authorizes only these selected-skill metadata and raw-file reads plus ephemeral payload preparation. CLI archives, checksums, package managers, repository remotes, providers, MCP processes, and every other network operation retain their normal disclosure and explicit approval requirements. Reuse the verified exact tag and payload for a later approved skill action instead of performing a second release lookup.
+
+If a selected tool's installed CLI, or Podway's CLI and daemon, does not match that tag, report the compatibility mismatch and keep each required runtime upgrade and skill replacement as separately approved actions; never create a mixed-version installation.
+
+Immediately before an approved installation or replacement, re-read the exact target and require it to match the absence or complete digest snapshot used for the displayed proposal. If it changed, discard the approval, fetch and validate a fresh payload, regenerate the complete diff, and ask again. Clean up every ephemeral payload after an exact match, refusal, failure, or completed action.
 
 ## Choose a Backup Policy for Existing State
 
@@ -59,8 +77,8 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 For each selected tool:
 
-1. Disclose the official release-metadata endpoint and bounded lookup needed to resolve the version and source provenance described in the tool catalog, then obtain explicit ask/answer approval for that network operation.
-2. Only after lookup approval, resolve the exact stable version and source provenance. A lookup approval authorizes no installation or other mutation.
+1. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora or any lookup outside that bounded comparison, disclose the official release-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
+2. Show the exact resolved stable version and source provenance. If the automatic comparison was `freshness_unverifiable`, repeat the bounded comparison without separate approval before proposing a skill action, but obtain approval for any other lookup or download.
 3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
 4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
 5. Obtain separate explicit ask/answer approval for the displayed action.
@@ -120,6 +138,7 @@ Report:
 
 - selected, skipped, and planned tools;
 - resolved versions and sources;
+- each selected paired skill's comparison tag, exact `~/.agents/skills` target, `current`, `missing`, `different`, or `freshness_unverifiable` result, temporary-payload cleanup, and any installation or replacement decision;
 - selected backup policy, existing state backed up or deliberately left without a backup, backup verification and restoration paths when applicable, and the disclosed recovery boundary;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
 - Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and project MCP state separately;

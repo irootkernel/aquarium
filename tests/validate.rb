@@ -187,13 +187,45 @@ assert(dev_setup.include?("Do not use for routine supported Procedure v2 session
        "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
 assert(dev_setup.include?("Do not create or read `.aquarium`"),
        "dev-setup must not create shadow orchestration state")
-lookup_approval_index = dev_setup.index("obtain explicit ask/answer approval for that network operation")
-version_resolution_index = dev_setup.index("resolve the exact stable version and source provenance")
+selection_disclosure_index = dev_setup.index("Disclose in these four tools' selection choices")
+comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
-assert(lookup_approval_index && version_resolution_index && action_approval_index &&
-       lookup_approval_index < version_resolution_index && version_resolution_index < action_approval_index &&
-       dev_setup.include?("A lookup approval authorizes no installation or other mutation"),
-       "dev-setup must approve release metadata lookup before resolution and approve setup separately")
+assert(selection_disclosure_index && comparison_index && action_approval_index &&
+       selection_disclosure_index < comparison_index && comparison_index < action_approval_index,
+       "dev-setup must disclose and perform selected-skill comparison before mutation approval")
+assert(dev_setup.include?("either `Install and configure` or `Diagnose only`") &&
+       dev_setup.include?("Do not fetch or compare a skipped or not-yet-selected tool") &&
+       dev_setup.include?("do not widen a scoped continuation to the other three tools") &&
+       dev_setup.include?("except for the exact selected-skill freshness comparison authorized below"),
+       "dev-setup must compare only explicitly selected Sanho, Mulgae, Gaori, or Podway skills")
+assert(dev_setup.include?("newest non-draft, non-prerelease tag within the tool's supported release line") &&
+       dev_setup.include?("Fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`") &&
+       dev_setup.include?("compute their SHA-256 digests") &&
+       dev_setup.include?("Never execute fetched content"),
+       "dev-setup must bound and verify the automatic skill payload")
+assert(dev_setup.include?("against exactly `~/.agents/skills/<skill-name>` as complete directory trees") &&
+       dev_setup.include?("any extra local files as differences") &&
+       dev_setup.include?("Other Codex skill roots remain diagnostic evidence only"),
+       "dev-setup must compare the exact user skill target without mutating duplicate roots")
+assert(dev_setup.include?("`current` status without asking an update question") &&
+       dev_setup.include?("ask separately whether to install it") &&
+       dev_setup.include?("complete file-set diff including additions and deletions") &&
+       dev_setup.include?("One skill target requires one explicit installation or replacement approval"),
+       "dev-setup must distinguish matching, missing, and drifted selected skills")
+assert(dev_setup.include?("report `freshness_unverifiable`") &&
+       dev_setup.include?("Do not propose an installation or replacement from an unverified payload") &&
+       dev_setup.include?("every other network operation retain their normal disclosure and explicit approval requirements"),
+       "dev-setup must fail freshness checks closed without widening the approval exception")
+assert(dev_setup.include?("require it to match the absence or complete digest snapshot") &&
+       dev_setup.include?("If it changed, discard the approval") &&
+       dev_setup.include?("Clean up every ephemeral payload") &&
+       dev_setup.include?("each selected paired skill's comparison tag"),
+       "dev-setup must invalidate stale skill approvals and clean temporary payloads")
+assert(tool_catalog.include?("No separate approval is required for that comparison") &&
+       tool_catalog.include?("network operation outside this exact exception") &&
+       tool_catalog.scan("automatically fetched and verified").length == 4 &&
+       tool_catalog.scan("comparison fetch itself needs no separate approval").length == 4,
+       "tool catalog must apply the same bounded comparison exception to all four paired skills")
 backup_policy_index = dev_setup.index("Choose a Backup Policy for Existing State")
 assert(backup_policy_index && backup_policy_index < action_approval_index &&
        dev_setup.include?("Create and verify backups") &&
@@ -214,6 +246,12 @@ assert(tool_catalog.include?("every approved action that overwrites or removes")
        tool_catalog.scan("follow the shared backup policy").length >= 4 &&
        !tool_catalog.include?("preserve a recoverable sibling backup"),
        "tool replacement guidance must support the shared no-backup policy")
+assert(ROOT.join("README.md").read.include?("automatically reads that tool's official GitHub release metadata") &&
+       ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
+       ROOT.join("PRIVACY.md").read.include?("One bounded read-only exception applies") &&
+       ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
+       ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
+       "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
