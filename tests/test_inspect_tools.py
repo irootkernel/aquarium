@@ -116,15 +116,15 @@ class InspectToolsTest(unittest.TestCase):
     def install_fake_tools(
         self,
         malformed_sanho: bool = False,
-        sanho_version: str = "v0.2.6",
+        sanho_version: str = "v0.2.7",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.15",
+        mulgae_version: str = "v0.1.16",
         mulgae_output_schema: str = "mulgae-command-result.v4",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
         mulgae_mcp_mode: str | None = None,
         go_version: str = "go1.26.6",
-        gaori_version: str = "0.1.12",
+        gaori_version: str = "0.1.13",
         gaori_config_ok: bool = True,
         malformed_gaori_config: bool = False,
         slow_gaori_config: bool = False,
@@ -601,7 +601,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn("secret-value", completed.stdout)
         self.assertNotIn("credential: hidden", completed.stdout)
         tools = json.loads(completed.stdout)["tools"]
-        self.assertEqual(tools["sanho"]["version"], "v0.2.6")
+        self.assertEqual(tools["sanho"]["version"], "v0.2.7")
         self.assertTrue(tools["sanho"]["version_supported"])
         self.assertEqual(tools["sanho"]["status"], "configured")
         self.assertEqual(tools["sanho"]["agent_skill"]["status"], "missing")
@@ -617,7 +617,7 @@ class InspectToolsTest(unittest.TestCase):
             tools["sanho"]["probes"]["status"]["result"]["sync_preview"]["conflict_count"],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.15")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.16")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -644,7 +644,7 @@ class InspectToolsTest(unittest.TestCase):
         zcode = tools["mulgae"]["provider_inventory"][1]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
-        self.assertEqual(tools["gaori"]["version"], "0.1.12")
+        self.assertEqual(tools["gaori"]["version"], "0.1.13")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
         self.assertEqual(tools["gaori"]["agent_skill"]["status"], "missing")
@@ -936,7 +936,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.15")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.16")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -947,7 +947,9 @@ class InspectToolsTest(unittest.TestCase):
     def test_sanho_version_support_and_doctor_warnings_are_explicit(self) -> None:
         cases = (
             ("v0.2.5", False, "degraded"),
-            ("v0.2.6", True, "configured"),
+            ("v0.2.6", False, "degraded"),
+            ("v0.2.7", True, "configured"),
+            ("v0.2.7-rc.1", False, "degraded"),
             ("v0.2.99", True, "configured"),
             ("v0.3.0", False, "degraded"),
         )
@@ -999,10 +1001,10 @@ class InspectToolsTest(unittest.TestCase):
 
     def test_mulgae_version_and_installation_prerequisites_are_explicit(self) -> None:
         cases = (
-            ("v0.1.12", False, "degraded"),
-            ("v0.1.13", False, "degraded"),
             ("v0.1.14", False, "degraded"),
-            ("v0.1.15", True, "installed"),
+            ("v0.1.15", False, "degraded"),
+            ("v0.1.16", True, "installed"),
+            ("v0.1.16-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -1309,7 +1311,9 @@ class InspectToolsTest(unittest.TestCase):
     def test_gaori_version_support_and_config_check_are_explicit(self) -> None:
         cases = (
             ("0.1.11", False, "degraded"),
-            ("0.1.12", True, "configured"),
+            ("0.1.12", False, "degraded"),
+            ("0.1.13", True, "configured"),
+            ("v0.1.13-rc.1", False, "degraded"),
             ("v0.1.99", True, "configured"),
             ("0.2.0", False, "degraded"),
         )

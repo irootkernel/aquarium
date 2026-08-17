@@ -16,7 +16,8 @@ Fixing findings in this phase changes the diff, so all affected prior phase evid
 3. Reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or MCP is unavailable and repository guidance requires it, keep the task in review and route that exact gap to `$aquarium:dev-setup`; otherwise report the unavailable integration once and use the CLI fallback below. Do not start a second MCP server from the shell.
 4. Select exactly one target that contains the complete task diff and excludes unrelated work. A clean task-only dirty state may use `--dirty` to capture staged and unstaged changes; otherwise use another exact supported target and stop if isolation is unsafe.
 5. Run execution-free preflight through the selected interface, require `mulgae-review-preflight.v3`, and inspect captured files, exclusions, roles, credential-profile routing, provider timeouts, permission modes, and artist inputs when UI work is present.
-6. Run the review once with machine-readable output and require `mulgae-command-result.v4` from the CLI fallback. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure. Mulgae already owns its one bounded same-provider retry for eligible transient failures; report its final typed result and never add another review, qualification, or heartbeat invocation.
+6. Run the review once with machine-readable output and require `mulgae-command-result.v4` from the CLI fallback. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure.
+   Mulgae preserves each accepted Markdown report byte-for-byte and may derive finding candidates through its private internal `002-extract` artifact. Its retry, repair, and extraction paths share the single second provider-invocation slot, so never run that artifact manually or add another review, qualification, heartbeat, extraction, or retry invocation.
 
 For CLI fallback, replace `<target-flag>` with exactly one authorized target and keep the returned `r_...` identity fenced across the reads:
 
@@ -36,9 +37,11 @@ The preflight payload must be `mulgae-review-preflight.v3`; every CLI command en
 
 Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
 
+Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
+
 Do not count a cancelled lane, operational failure, incomplete capture, unavailable findings query, or unverified finding as successful review evidence. Do not commit or publish in this phase.
 
-Mulgae retains complete provider stdout and stderr without a product byte ceiling. Keep raw transcripts and credential-profile paths in private Mulgae runtime state.
+Mulgae retains complete provider stdout and stderr without a product byte ceiling. Keep raw transcripts, accepted reports, extraction artifacts, and credential-profile paths in private Mulgae runtime state.
 
 Verify every finding locally, but bound the orchestrator handoff to counts by severity and disposition plus at most 20 highest-severity records containing only finding ID, severity, disposition, and affected repository-relative paths.
 

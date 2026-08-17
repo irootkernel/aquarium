@@ -17,7 +17,7 @@ A backup choice requires exact backup and restoration commands plus verification
 
 Official source: `https://github.com/irootkernel/sanho`
 
-Supported release line: stable `v0.2.6` through `v0.2.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill; do not pair the v0.2.6 skill contract with an older CLI or automatically cross into `v0.3+`.
+Supported release line: stable `v0.2.7` through `v0.2.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill; v0.2.6 does not provide the required push-preview, canonical-history, commit-inspection, or normalized JSON argument-error surfaces, and do not automatically cross into `v0.3+`.
 
 Install an approved tag:
 
@@ -25,7 +25,7 @@ Install an approved tag:
 go install github.com/irootkernel/sanho/cmd/sanho@<tag>
 ```
 
-The binary does not install the agent skill. Diagnose the CLI and workspace with `command -v sanho`, `sanho version --json`, `sanho status --json`, and `sanho doctor --json`; diagnose `use-sanho` independently in the Codex skill roots. Read JSON rather than inferring state from human tables or exit status alone. Doctor exits 0 when it reports warnings, so treat a positive `warnings` count as degraded even when the process succeeds.
+The binary does not install the agent skill. Diagnose the CLI and workspace with `command -v sanho`, `sanho version --json`, `sanho status --json`, and `sanho doctor --json`; diagnose `use-sanho` independently in the Codex skill roots. Read JSON rather than inferring state from human tables or exit status alone. Doctor exits 0 when it reports warnings, so treat a positive `warnings` count as degraded even when the process succeeds. Every malformed `--json` invocation must return the stable `invalid_arguments` error envelope; parse that envelope separately from the process exit and never reinterpret it as workspace state.
 
 For a new Codex user-scoped skill installation, use only these files from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/` payload: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-sanho` frontmatter before atomically moving it to `~/.agents/skills/use-sanho`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
 
@@ -34,6 +34,10 @@ If the target already exists, compare it with the verified source, show the comp
 `sanho status` separates committed `HEAD` prediction from working-copy and local operation readiness. Consume `relation`, `publication`, `sync_preview`, `working_copy`, `local_readiness`, and `sync_in_progress` independently. Do not expose project URLs, actor email, workspace IDs, private paths, or doctor details in setup reports.
 
 Use `sanho check --require-clean`, `--require-current`, and `--require-published` only when repository authority selects those policies. Exit 1 with `passed:false` is a policy mismatch; an `error` envelope means evaluation failed. `--require-current` contacts the canonical remote and requires network approval. `sanho diff`, `sanho diff --refresh`, and `sanho diff --local` are read-only inspection commands without JSON output; `--refresh` contacts the canonical remote.
+
+At an authorized push boundary, leave `sanho preview --json` to the matching `use-sanho` skill. Preview writes nothing and reports a blocked push at exit 0, so branch on `blocked` and `verdict`, not the exit code; add `--refresh` only with network authorization when the verdict must match the canonical state the hook will fetch. A preview describes one snapshot and never grants push authority, while `sanho check` remains the explicit policy gate.
+
+Leave canonical history and rewrite-recovery inspection to the matching `use-sanho` skill through read-only `sanho log` and `sanho show <commit>`. Both default to the cached canonical snapshot and `--refresh` requires network authorization. Source filters must use exact non-empty repository or workspace values from observed provenance; an `external` entry has `source: null` and matches no source filter. Use `show` before adopting an external recovery anchor, preserve binary content as classified with null content, and treat `too_large` as a bounded refusal rather than loading the document another way.
 
 Initialization always requires a user-confirmed project name. Inspect `sanho state --all --json` and normalize it without reporting private URLs or paths. A registered v2 project with a non-empty canonical URL may be reused without repeating the URL; an unregistered project still requires a user-confirmed documentation repository URL:
 
@@ -52,7 +56,7 @@ For an explicitly requested repair, load and follow the installed `$use-sanho` l
 
 Official source: `https://github.com/irootkernel/mulgae`
 
-Supported release line: stable `v0.1.15` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.14 lacks the Doctor v2 offline-readiness contract, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
+Supported release line: stable `v0.1.16` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.15 lacks the prose-first structured-extraction contract, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
 
 Install an approved tag:
 
@@ -72,7 +76,9 @@ If the target already exists, compare it with the verified source, show the comp
 
 Mulgae Config v3 has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Keep `execution.workspace_access: none`. Ask which providers and roles to configure. Automatic provider selection still requires authenticated ZCode and AGY; Kimi and Codex are explicit opt-ins, and bare initialization enables only the required `logic` role. Show discovered executable, launcher, data-home, and credential-home paths only in the exact private setup proposal, never in the diagnostic report.
 
-For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates both Config v3 files and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
+For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates both Config v3 files, writes `validation.extraction.enabled: true` for prose-first structured finding extraction, and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
+
+An older Config v3 that omits `validation.extraction.enabled` remains valid and treats extraction as disabled/defaulted. Do not add the field during diagnosis, clone bootstrap, refresh, or an unrelated repair. Enabling it in an existing project changes shared project policy and requires an exact diff plus separate approval. Once the field is written, every collaborator and automation reading the config must use Mulgae v0.1.16 or newer because v0.1.15 rejects the unknown field; never claim backward compatibility or silently remove the policy.
 
 When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`; apply the shared backup policy to the replaced local file. Keep new initialization, clone bootstrap, and refresh as distinct approvals.
 
@@ -112,7 +118,11 @@ providers:
 
 Use operator-chosen lowercase kebab-case aliases, map exactly the default and role override aliases in lexical order, and use one common real Codex executable. Obtain separate approval for the shared policy and private local mapping, show the exact proposed YAML privately, and preserve unrelated Config v3 fields. Mulgae may project only the selected home's `auth.json` into a disposable runtime; do not expose profile paths or credential material. After writing, require Doctor v2 to verify provider identity, report the intended role-to-profile aliases through redacted role references, and mark Codex binary and CLI compatibility ready without returning any home or executable path.
 
-Mulgae v0.1.15 preserves complete provider stdout and stderr without a product byte ceiling. Keep those transcripts in private Mulgae runtime state and consume only bounded structured status, finding, and readiness fields in Aquarium review workflows. Setup verification remains limited to version, Doctor v2, and effective MCP registration. Doctor's adapter-owned local version command is offline: it uses no credential projection, project working directory, provider API, or network request. Do not inspect runs or invoke heartbeat, qualification, preflight, review, source transmission, or MCP startup to validate setup.
+Mulgae v0.1.16 preserves the accepted Markdown report byte-for-byte, then may use the internal `002-extract` artifact to derive structured finding candidates. Retry, repair, and extraction share the single second provider-invocation slot, so extraction does not increase the existing invocation budget; never run `002-extract` manually or add an agent-side retry. Keep reports, extraction artifacts, complete provider stdout, and complete provider stderr in private Mulgae runtime state. Consume only bounded structured status, finding, and readiness fields in Aquarium workflows, and verify every extracted finding as an advisory hypothesis against current authority and implementation.
+
+Track `structured_extraction_status` as an evidence axis independent of review completion: `structured` means structured candidates were derived, `mixed` means only some accepted reports produced them, and `reports_only` means accepted reports remain authoritative without structured candidates. `reports_only` is not itself a failure and never replaces or relaxes capture coverage, CI decision, publication, findings-query, or unresolved-valid-finding requirements.
+
+Setup verification remains limited to version, Doctor v2, and effective MCP registration. The command envelope remains `mulgae-command-result.v4`, Doctor remains `mulgae-doctor-result.v2`, and preflight remains `mulgae-review-preflight.v3`; do not infer new setup probes from extraction support. Doctor's adapter-owned local version command is offline: it uses no credential projection, project working directory, provider API, or network request. Do not inspect config contents or runs, and do not invoke heartbeat, qualification, preflight, review, source transmission, or MCP startup to validate setup.
 
 Heartbeat is outside setup. Only after a separate explicit user request acknowledging possible authentication, network access, cost, and remote logging may an agent propose `mulgae heartbeat --provider <family> --authorize-live-request --output json`, adding `--credential-profile <profile>` only for an explicitly selected named Codex configuration. Never add `--authorize-live-request` automatically. Require `mulgae-provider-heartbeat-result.v1` and preserve its typed `succeeded`, `provider_failure`, `timeout`, `authentication_failure`, `malformed_response`, or `execution_failure` status without retry. Do not promote success into offline readiness or review qualification. Without authorization, preserve Mulgae's `attempted=false` and `live_authorization_required` result.
 
@@ -147,7 +157,7 @@ Verify configuration, provider readiness, skill files, and MCP registration only
 
 Official source: `https://github.com/irootkernel/gaori`
 
-Supported release line: stable `v0.1.12` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` skill; v0.1.11 does not provide the required config-check, skill, portable-policy, or MCP surfaces, and do not automatically cross into `v0.2+`.
+Supported release line: stable `v0.1.13` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` skill; v0.1.12 does not provide the required parser and completed-run discovery, bounded redaction measurement, rule-proposal inventory, or seven-tool MCP surface, and do not automatically cross into `v0.2+`.
 
 Install an approved tag:
 
@@ -161,7 +171,7 @@ For a new Codex user-scoped skill installation, use only these files from the au
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex if the skill does not appear in the active session.
 
-Discover required checks from repository instructions, task runners, manifests, and CI before proposing `.gaori/tester.yaml` schema version 2. Map each configured command ID to an existing argv array, non-empty tags, explicit parser, and timeout. Do not add secrets, absolute paths, or machine-specific arguments to portable configuration.
+Discover required checks from repository instructions, task runners, manifests, and CI before proposing `.gaori/tester.yaml` schema version 2. Map each configured command ID to an existing argv array, non-empty tags, explicit parser, and timeout. Use `gaori --json parsers list` as the authoritative live registry before selecting a parser. The v0.1.13 registry has fifteen labels; `dotnet-test` and `gradle-test` are Experimental and their bounded summaries may require manual confirmation. Use `gaori --json parsers detect <raw-log>` only to diagnose an explicitly selected existing log: it reports candidates without selecting a parser, loading configuration, creating evidence, or changing the command result. Do not add secrets, absolute paths, or machine-specific arguments to portable configuration.
 
 Gaori is an optional execution and evidence-compression wrapper; it does not create a new test gate, change command authorization, override the child process exit status, or grant acceptance. Keep runtime state local while allowing Git to track portable config and reviewed active rules. Replace a blanket `.gaori/` ignore entry only through an approved exact diff:
 
@@ -175,7 +185,9 @@ Gaori is an optional execution and evidence-compression wrapper; it does not cre
 !.gaori/tester/rules/*.yaml
 ```
 
-This keeps `.gaori/toolchain.yaml`, `.gaori/rule-proposals/`, `.gaori/runs/`, and every other Gaori path local. Active rule YAML is executable extraction policy: do not create, update, stage, or commit it without the user's specific intent and review. Validate approved config or rule changes with `gaori --json config check`; do not run configured tests during setup.
+This keeps `.gaori/toolchain.yaml`, `.gaori/rule-proposals/`, `.gaori/runs/`, and every other Gaori path local. Active rule YAML is executable extraction policy: do not create, update, stage, or commit it without the user's specific intent and review. Validate approved config or rule changes with `gaori --json config check`. When approved redaction patterns change and the user has explicitly selected an existing raw log no larger than 256 KiB, use `gaori --json config check --sample <raw-log>` to report ordered match and replaced-byte counts without emitting matched text or pattern definitions. Do not run configured tests during setup.
+
+Leave completed evidence and proposal reconciliation to the matching `use-gaori` skill. Its `gaori --json runs list`, `gaori --json rules proposals`, and `gaori rules show --proposal <name>` paths are read-only discovery, not repair, activation, command reruns, or durable job recovery. Never inspect prior run contents or raw logs automatically during setup.
 
 Treat MCP as an optional, separately approved project-local component. For a trusted project, merge this machine-specific entry into `.codex/config.toml` while preserving unrelated configuration:
 
@@ -186,7 +198,7 @@ args = ["--repo", "<absolute-git-root>", "mcp"]
 tool_timeout_sec = 60
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Never stage it during setup. Verify only the effective registration with `codex mcp get gaori --json`; do not start the server or a test. Report disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted project entries as degraded. Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, `cancel_run`, and `get_excerpt`.
+Show the complete diff and whether `.codex/config.toml` is tracked before approval. Never stage it during setup. Verify only the effective registration with `codex mcp get gaori --json`; do not start the server or a test. Report disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted project entries as degraded. Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, `cancel_run`, `get_excerpt`, and the read-only `list_runs` completed-evidence inventory. `list_runs` is stateless and cannot recover an invocation ID or reattach a disconnected run.
 
 ## Lora / Lore
 

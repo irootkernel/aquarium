@@ -152,6 +152,9 @@ dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
 tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
+sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
+mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
+gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
 epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
@@ -342,28 +345,55 @@ assert(ROOT.join("README.md").read.include?("leave the session active for later 
 assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
        "privacy policy must disclose Podway skill installation")
-assert(tool_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
-assert(tool_catalog.include?("stable `v0.1.12` through `v0.1.x`") &&
-       tool_catalog.include?("same exact tag") &&
-       tool_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/"),
+assert(gaori_catalog, "Gaori tool catalog section is missing")
+assert(gaori_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
+assert(gaori_catalog.include?("stable `v0.1.13` through `v0.1.x`") &&
+       gaori_catalog.include?("same exact tag") &&
+       gaori_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/") &&
+       dev_setup.include?("stable `v0.1.13` through `v0.1.x`") &&
+       ROOT.join("README.md").read.include?("Aquarium supports stable v0.1.13 through v0.1.x"),
        "Gaori CLI and use-gaori must share the supported approved release")
-assert(tool_catalog.include?("gaori --json config check") &&
-       tool_catalog.include?("!.gaori/tester.yaml") &&
-       tool_catalog.include?("!.gaori/tester/rules/*.yaml"),
+assert(gaori_catalog.include?("gaori --json config check") &&
+       gaori_catalog.include?("gaori --json config check --sample <raw-log>") &&
+       gaori_catalog.include?("gaori --json parsers list") &&
+       gaori_catalog.include?("gaori --json parsers detect <raw-log>") &&
+       gaori_catalog.include?("`dotnet-test` and `gradle-test` are Experimental") &&
+       gaori_catalog.include?("!.gaori/tester.yaml") &&
+       gaori_catalog.include?("!.gaori/tester/rules/*.yaml"),
        "Gaori portable config and non-executing validation guidance is incomplete")
-assert(tool_catalog.include?("[mcp_servers.gaori]") &&
-       tool_catalog.include?("tool_timeout_sec = 60") &&
-       tool_catalog.include?("codex mcp get gaori --json"),
+assert(gaori_catalog.include?("gaori --json runs list") &&
+       gaori_catalog.include?("gaori --json rules proposals") &&
+       gaori_catalog.include?("gaori rules show --proposal <name>"),
+       "Gaori read-only evidence and proposal discovery guidance is incomplete")
+assert(gaori_catalog.include?("[mcp_servers.gaori]") &&
+       gaori_catalog.include?("tool_timeout_sec = 60") &&
+       gaori_catalog.include?("codex mcp get gaori --json") &&
+       gaori_catalog.include?("read-only `list_runs`") &&
+       gaori_catalog.include?("cannot recover an invocation ID or reattach"),
        "Gaori project-local MCP setup and verification guidance is incomplete")
-assert(tool_catalog.include?("stable `v0.2.6` through `v0.2.x`") &&
-       tool_catalog.include?("same exact tag") &&
-       tool_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/"),
+assert(sanho_catalog, "Sanho tool catalog section is missing")
+assert(sanho_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
+       sanho_catalog.include?("same exact tag") &&
+       sanho_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/") &&
+       dev_setup.include?("stable `v0.2.7` through `v0.2.x`") &&
+       ROOT.join("README.md").read.include?("Aquarium supports stable v0.2.7 through v0.2.x"),
        "Sanho CLI and use-sanho must share the supported approved release")
-assert(tool_catalog.include?("sanho check --require-clean") &&
-       tool_catalog.include?("sanho diff --refresh") &&
-       tool_catalog.include?("sanho workspace forget <workspace-id>") &&
-       tool_catalog.include?("sanho doctor --fix"),
-       "Sanho v0.2.6 diagnosis and repair guidance is incomplete")
+assert(sanho_catalog.include?("sanho check --require-clean") &&
+       sanho_catalog.include?("sanho diff --refresh") &&
+       sanho_catalog.include?("sanho workspace forget <workspace-id>") &&
+       sanho_catalog.include?("sanho doctor --fix"),
+       "Sanho v0.2.7 diagnosis and repair guidance is incomplete")
+assert(sanho_catalog.include?("sanho preview --json") &&
+       sanho_catalog.include?("`blocked` and `verdict`") &&
+       sanho_catalog.include?("reports a blocked push at exit 0") &&
+       sanho_catalog.include?("never grants push authority"),
+       "Sanho push-preview guidance is incomplete")
+assert(sanho_catalog.include?("sanho log") &&
+       sanho_catalog.include?("sanho show <commit>") &&
+       sanho_catalog.include?("an `external` entry has `source: null`") &&
+       sanho_catalog.include?("`too_large`") &&
+       sanho_catalog.include?("`invalid_arguments` error envelope"),
+       "Sanho history, recovery, and JSON error guidance is incomplete")
 assert(agents_reference.include?("$use-sanho") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-sanho")
@@ -379,46 +409,66 @@ assert(agents_reference.include?("$use-gaori") &&
        agents_reference.include?("only the corresponding CLI is installed"),
        "AGENTS guidance must conditionally reference use-gaori")
 
-assert(tool_catalog.include?("stable `v0.1.15` through `v0.1.x`") &&
-       tool_catalog.include?("Go `1.26.6` or newer") &&
-       tool_catalog.include?("same exact tag") &&
-       tool_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
-       tool_catalog.include?("~/.agents/skills/use-mulgae"),
+assert(mulgae_catalog, "Mulgae tool catalog section is missing")
+assert(mulgae_catalog.include?("stable `v0.1.16` through `v0.1.x`") &&
+       mulgae_catalog.include?("Go `1.26.6` or newer") &&
+       mulgae_catalog.include?("same exact tag") &&
+       mulgae_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
+       mulgae_catalog.include?("~/.agents/skills/use-mulgae") &&
+       dev_setup.include?("stable `v0.1.16` through `v0.1.x`") &&
+       ROOT.join("README.md").read.include?("stable v0.1.16 through v0.1.x"),
        "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
-assert(tool_catalog.include?(".mulgae/local.yaml") &&
-       tool_catalog.include?("mode-`0600`") &&
-       tool_catalog.include?("!/.mulgae/config.yaml") &&
-       tool_catalog.include?("mulgae init --refresh-local --output json") &&
-       tool_catalog.include?("execution.workspace_access: none"),
+assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
+       mulgae_catalog.include?("mode-`0600`") &&
+       mulgae_catalog.include?("!/.mulgae/config.yaml") &&
+       mulgae_catalog.include?("mulgae init --refresh-local --output json") &&
+       mulgae_catalog.include?("execution.workspace_access: none"),
        "Mulgae split Config v3 setup and ignore guidance is incomplete")
-assert(tool_catalog.include?("mulgae-command-result.v4") &&
-       tool_catalog.include?("mulgae-doctor-result.v2") &&
-       tool_catalog.include?("mulgae-provider-heartbeat-result.v1") &&
-       tool_catalog.include?("authentication_failure") &&
-       tool_catalog.include?("malformed_response") &&
-       tool_catalog.include?("mulgae-review-preflight.v3") &&
-       tool_catalog.include?("Config v1 and v2 are unsupported") &&
-       tool_catalog.include?("no automatic migration"),
-       "Mulgae v0.1.15 contracts and legacy-config guidance are incomplete")
-assert(tool_catalog.include?("Codex CLI `0.147.0` or newer") &&
-       tool_catalog.include?("default_credential_profile") &&
-       tool_catalog.include?("credential_homes") &&
-       tool_catalog.include?("auth.json") &&
-       tool_catalog.include?("active setup session") &&
-       tool_catalog.include?("role-to-profile aliases"),
+assert(mulgae_catalog.include?("mulgae-command-result.v4") &&
+       mulgae_catalog.include?("mulgae-doctor-result.v2") &&
+       mulgae_catalog.include?("mulgae-provider-heartbeat-result.v1") &&
+       mulgae_catalog.include?("authentication_failure") &&
+       mulgae_catalog.include?("malformed_response") &&
+       mulgae_catalog.include?("mulgae-review-preflight.v3") &&
+       mulgae_catalog.include?("Config v1 and v2 are unsupported") &&
+       mulgae_catalog.include?("no automatic migration"),
+       "Mulgae v0.1.16 contracts and legacy-config guidance are incomplete")
+assert(mulgae_catalog.include?("validation.extraction.enabled: true") &&
+       mulgae_catalog.include?("disabled/defaulted") &&
+       mulgae_catalog.include?("changes shared project policy") &&
+       mulgae_catalog.include?("every collaborator and automation") &&
+       mulgae_catalog.include?("Mulgae v0.1.16 or newer") &&
+       mulgae_catalog.include?("v0.1.15 rejects the unknown field"),
+       "Mulgae structured-extraction Config v3 compatibility guidance is incomplete")
+assert(mulgae_catalog.include?("accepted Markdown report byte-for-byte") &&
+       mulgae_catalog.include?("`002-extract`") &&
+       mulgae_catalog.include?("single second provider-invocation slot") &&
+       mulgae_catalog.include?("does not increase the existing invocation budget") &&
+       mulgae_catalog.include?("structured_extraction_status") &&
+       mulgae_catalog.include?("`structured`") &&
+       mulgae_catalog.include?("`mixed`") &&
+       mulgae_catalog.include?("`reports_only`") &&
+       mulgae_catalog.include?("not itself a failure"),
+       "Mulgae structured-extraction evidence contract is incomplete")
+assert(mulgae_catalog.include?("Codex CLI `0.147.0` or newer") &&
+       mulgae_catalog.include?("default_credential_profile") &&
+       mulgae_catalog.include?("credential_homes") &&
+       mulgae_catalog.include?("auth.json") &&
+       mulgae_catalog.include?("active setup session") &&
+       mulgae_catalog.include?("role-to-profile aliases"),
        "Mulgae Codex credential-profile guidance is incomplete")
-assert(tool_catalog.include?("mode-`0700` backup directory") &&
-       tool_catalog.include?("cp -p") &&
-       tool_catalog.include?("restoration commands") &&
-       tool_catalog.include?("Under the no-backup policy") &&
-       tool_catalog.include?("no rollback copy is available") &&
-       tool_catalog.include?("If Config v3 initialization fails"),
+assert(mulgae_catalog.include?("mode-`0700` backup directory") &&
+       mulgae_catalog.include?("cp -p") &&
+       mulgae_catalog.include?("restoration commands") &&
+       mulgae_catalog.include?("Under the no-backup policy") &&
+       mulgae_catalog.include?("no rollback copy is available") &&
+       mulgae_catalog.include?("If Config v3 initialization fails"),
        "Mulgae legacy-config backup choice and rollback guidance is incomplete")
-assert(tool_catalog.include?("[mcp_servers.mulgae]") &&
-       tool_catalog.include?("required = true") &&
-       tool_catalog.include?("startup_timeout_sec = 30") &&
-       tool_catalog.include?("tool_timeout_sec = 54000") &&
-       tool_catalog.include?("codex mcp get mulgae --json"),
+assert(mulgae_catalog.include?("[mcp_servers.mulgae]") &&
+       mulgae_catalog.include?("required = true") &&
+       mulgae_catalog.include?("startup_timeout_sec = 30") &&
+       mulgae_catalog.include?("tool_timeout_sec = 54000") &&
+       mulgae_catalog.include?("codex mcp get mulgae --json"),
        "Mulgae project-local MCP setup and verification guidance is incomplete")
 assert(dev_setup.include?("use-mulgae") &&
        dev_setup.include?("project Config v3 and ignore changes") &&
@@ -446,7 +496,10 @@ assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("mulgae findings --run r_... --severity low --output json") &&
        task_review.include?("at most 20 highest-severity records") &&
        task_review.include?("complete provider stdout and stderr") &&
-       task_review.include?("never add another review, qualification, or heartbeat invocation"),
+       task_review.include?("accepted Markdown report byte-for-byte") &&
+       task_review.include?("private internal `002-extract` artifact") &&
+       task_review.include?("single second provider-invocation slot") &&
+       task_review.include?("never run that artifact manually"),
        "task-review must preserve the optional use-mulgae and MCP fallback boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
        ROOT.join("PRIVACY.md").read.include?("complete provider stdout and stderr") &&
@@ -464,7 +517,9 @@ assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
 end
 assert(task_verify.include?("original documented test command directly") &&
        task_verify.include?("Gaori evidence compression was unavailable") &&
-       task_verify.include?("artifact `status`, `extractor_status`, and truncation"),
+       task_verify.include?("artifact `status`, `extractor_status`, and truncation") &&
+       task_verify.include?("read-only `list_runs`") &&
+       !task_verify.include?("all six connected MCP tools"),
        "task-verify must preserve Gaori fallback and evidence boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&
        ROOT.join("PRIVACY.md").read.include?("intentionally unredacted"),
@@ -968,6 +1023,11 @@ MULGAE_COMPLETENESS_SENTENCE =
   "Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, " \
   "`publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. " \
   "Provider success or exit status alone is insufficient."
+MULGAE_EXTRACTION_EVIDENCE_SENTENCE =
+  "Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. " \
+  "`reports_only` is not itself a failure and does not replace or relax any completion condition above; " \
+  "the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis " \
+  "that requires local verification."
 {
   "epic-handler" => epic_handler,
   "epic-validator" => epic_validator,
@@ -975,6 +1035,8 @@ MULGAE_COMPLETENESS_SENTENCE =
 }.each do |name, body|
   assert(body.include?(MULGAE_COMPLETENESS_SENTENCE),
          "canonical Mulgae completeness sentence has drifted: #{name}")
+  assert(body.include?(MULGAE_EXTRACTION_EVIDENCE_SENTENCE),
+         "canonical Mulgae extraction-evidence sentence has drifted: #{name}")
 end
 
 approval_precondition = "Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval."

@@ -178,21 +178,21 @@ def supported_sanho_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.2\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 6)
+    return bool(match and int(match.group(1)) >= 7)
 
 
 def supported_gaori_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 12)
+    return bool(match and int(match.group(1)) >= 13)
 
 
 def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 15)
+    return bool(match and int(match.group(1)) >= 16)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
