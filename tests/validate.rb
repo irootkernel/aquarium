@@ -1012,6 +1012,59 @@ assert(task_refine.include?("never report an unmeasured performance gain as meas
 
 assert(task_document.include?("preferring `In Review` only when that value is defined"),
        "task-document must use the roadmap's review vocabulary")
+handoff_semantics_index = task_document.index("## Handoff Semantics")
+sync_documentation_index = task_document.index("## Synchronize and Validate")
+assert(handoff_semantics_index && sync_documentation_index && handoff_semantics_index < sync_documentation_index,
+       "task-document must define handoff semantics before synchronization")
+assert(task_document.include?("**Internal handoff:**") &&
+       task_document.include?("Name every consuming task") &&
+       task_document.include?("authoritative source or starting point") &&
+       task_document.include?("required and prohibited actions") &&
+       task_document.include?("invalidates existing evidence or requires revalidation") &&
+       task_document.include?("remove or update the entry after use") &&
+       task_document.include?("Never accumulate Internal handoffs as permanent completed-task history"),
+       "task-document must define the Internal handoff consumer and lifecycle")
+assert(task_document.include?("**External handoff:**") &&
+       task_document.include?("stable cross-epic dependency or constraint") &&
+       task_document.include?("downstream epic, task, consumer, or subsystem") &&
+       task_document.include?("removal or update when the underlying contract changes") &&
+       task_document.include?("no External handoff is currently required or omitting the section"),
+       "task-document must define the External handoff threshold and lifecycle")
+assert(task_document.include?("When no actionable Internal or External instruction exists, create no repository handoff") &&
+       task_document.include?("update only the affected durable documentation and lifecycle state"),
+       "task-document must allow lifecycle-only completion without a handoff")
+assert(task_document.include?("Will this instruction materially reduce the next development AI's analysis time or risk of an incorrect implementation?") &&
+       ["Reference this", "Be careful about this", "You must do this", "You must not do this", "Revalidate when this changes"].all? { |category| task_document.include?(category) },
+       "task-document must apply the downstream usefulness test and actionable categories")
+assert(task_document.include?("task completion report") &&
+       task_document.include?("Git log substitute") &&
+       task_document.include?("managed-session export") &&
+       task_document.include?("test report") &&
+       task_document.include?("list of files or commands changed") &&
+       task_document.include?("prefer a link to the authoritative source"),
+       "task-document must reject evidence-log handoffs and prefer canonical references")
+assert(task_document.include?("required for downstream correctness, compatibility, or reproducibility") &&
+       task_document.include?("why the next task needs it") &&
+       task_document.include?("when it becomes stale") &&
+       task_document.include?("what must be revalidated after it changes"),
+       "task-document must bound exact evidence with staleness and revalidation rules")
+assert(task_document.include?("This phase report is orchestration evidence, not a repository handoff") &&
+       task_document.include?("Do not copy it into durable documentation unless an item independently passes the downstream usefulness test"),
+       "task-document must keep its complete phase report separate from durable handoffs")
+assert(task_handler.include?("every repository handoff is actionable for a named future consumer") &&
+       task_handler.include?("clear Internal or External lifecycle") &&
+       task_handler.include?("completion evidence is not duplicated as handoff prose") &&
+       task_handler.include?("consumed or stale Internal entries are removed or updated") &&
+       task_handler.include?("documentation validation has current evidence"),
+       "task-handler must enforce the durable repository handoff postcondition")
+assert(task_handler.include?("a leaf skill's phase handoff summary to the orchestrator") &&
+       task_handler.include?("Podway evidence recorded for session recovery") &&
+       task_handler.include?("a durable repository handoff for future development agents") &&
+       task_handler.include?("Only the last belongs in project documentation"),
+       "task-handler must separate orchestration, Podway, and repository handoff evidence")
+assert(task_handler.include?("Reject or rework documentation") &&
+       task_handler.include?("primarily an audit log, completion summary, or collection of evidence"),
+       "task-handler must return evidence-log documentation for rework")
 assert(task_review.include?("Select exactly one target that contains the complete task diff"),
        "task-review must isolate one complete Mulgae target")
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),

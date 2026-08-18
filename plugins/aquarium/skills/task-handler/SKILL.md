@@ -64,11 +64,11 @@ After each phase, re-read the roadmap entry, Git state, affected files, and phas
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
 | Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
-| Document | Durable documentation is current, the roadmap uses its defined review state, and applicable documentation checks have evidence. |
+| Document | Durable specifications and roadmap state are current; applicable documentation validation has current evidence; every repository handoff is actionable for a named future consumer with a clear Internal or External lifecycle; completion evidence is not duplicated as handoff prose; and consumed or stale Internal entries are removed or updated. |
 | Review | One exact complete task target received Mulgae review and every valid finding is resolved or explicitly dispositioned. |
 | Close | The user approved tests, documentation, the exact final implementation, and the terminal status; any authorized commit succeeded through `$aquarium:task-commit`. |
 
-If a postcondition fails, keep the goal active, preserve the latest safe repository state, report the exact gap, and do not load the next phase. Then re-enter the earliest phase that owns the requested change and re-run every later phase whose evidence that change invalidates:
+Distinguish a leaf skill's phase handoff summary to the orchestrator, Podway evidence recorded for session recovery, and a durable repository handoff for future development agents. Only the last belongs in project documentation. Reject or rework documentation when its handoff is primarily an audit log, completion summary, or collection of evidence. On failure, re-enter the earliest phase that owns the requested change and rerun invalidated later phases; keep the goal active, preserve safe state, report the gap, and stop before the next phase:
 
 - `$aquarium:task-implement` for a behavior change, including a rejected final approval whose correction changes behavior;
 - `$aquarium:task-verify` for missing evidence;
