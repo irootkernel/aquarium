@@ -27,7 +27,7 @@ Before requesting approval:
 
 Present one bounded validation envelope covering direct audit, authorized checks, disclosed Mulgae source transmission, remediation of confirmed gaps required by existing epic authority, roadmap remediation notes, isolated staging, one commit per remediation goal, and a necessary final epic validation-record commit. Ask once for explicit approval. Approval does not cover new product requirements, another repository, amend, push, PR or release changes, live rollout, destructive actions, installation, or unrelated staging.
 
-By default the envelope must cover starting or resuming the matching validation session, bounded evidence recording, decisions, rework, goal assessment, and terminal completion. Treat approval that explicitly omits Podway as approval of the same envelope without those operations.
+By default the envelope must cover creating or resuming the prepared validation session, the separate fenced `begin`, bounded evidence recording, decisions, rework, goal assessment, terminal completion, and any supported terminal disposition. Treat approval that explicitly omits Podway as approval of the same envelope without those operations.
 
 Accept that opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution. Never reset or replace another session automatically.
 
@@ -48,7 +48,7 @@ Run the audit without an active goal and without source mutation:
    Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
 5. Verify every candidate finding against current authority and implementation. Record only confirmed gaps; do not turn review hypotheses into work automatically.
 
-With Podway active, run `podway observe --json --wait-for-idle` before each bounded audit or remediation delegation and verify the expected Procedure ID, epic and baseline identity, session, attempt, goal revision, and current node from that observation. Independently verify returned native evidence before recording the baseline and fresh audit or deciding whether gaps exist.
+With Podway active, create or resume the matching prepared validation session only after approval, re-observe and `begin` it, then run `podway observe --json --wait-for-idle` before each bounded audit or remediation delegation and verify the expected Procedure ID, epic and baseline identity, session, lifecycle, revision, attempt, goal revision, and current node. Independently verify returned native evidence before recording the baseline and fresh audit or deciding whether gaps exist.
 
 Select only actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries. A clean decision advances to final review; confirmed gaps advance to remediation. Do not record candidate findings as confirmed Podway gaps before adjudication.
 
@@ -80,6 +80,8 @@ With Podway active, record each remediation group and new audit attempt. Stale o
 When an external blocker is resolved, revalidate its exact committed revision and evidence before restarting the audit. Any code, test, durable documentation, generated, or derived change after verification or final review makes affected evidence stale; the exact planned status or validation-record-only roadmap change is the sole exception.
 
 Declare completion only when the fresh Codex audit has no confirmed gap, every required check has current passing evidence, whole-epic Mulgae evidence is complete, every member task and the epic have roadmap-defined successful states, and no epic-owned residue remains. Record the final audited snapshot and evidence in the roadmap. Hand an actual isolated epic-ID validation-record diff to `$aquarium:task-commit`; never duplicate an equivalent record or create an empty commit.
+
+With Podway active, complete the validation session only after the validation-record commit and clean residue are verified, record `handed_off` with that exact commit SHA, and leave the final terminal session intact. If no authoritative external result exists, leave it undisposed rather than inventing a reference or choosing force cleanup.
 
 ## Hand Off Commits and Report Safely
 

@@ -47,11 +47,13 @@ After installing or upgrading Aquarium, open `/hooks` and explicitly trust the p
 
 ### Optional Podway integration
 
-[Podway](https://github.com/irootkernel/podway) v0.2.3 through v0.2.x can provide durable Procedure v2 state for Aquarium workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default.
+[Podway](https://github.com/irootkernel/podway) v0.2.4 through v0.2.x can provide durable Procedure v2 state for Aquarium workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default. A new session starts as prepared, then the owning handler re-observes it and uses `begin` to create attempt 1 and the initial goal.
 
 The user may explicitly opt the current task, epic, or validation out before its first managed-session mutation; that choice never carries into later work. Otherwise the handler checks readiness and discloses Podway operations in its plan or execution envelope. Degraded readiness routes to `dev-setup` repair or workflow opt-out. A healthy conflicting session is a lifecycle conflict instead: resume it through its matching handler, leave it untouched through opt-out, or explicitly invoke `use-podway` to cancel or discard it. Handlers alone own and advance Aquarium workflows; standalone `use-podway` lifecycle requests do not adopt roadmap ownership.
 
 During an active session, a stop request requires an explicit disposition: leave the session active for later resumption, cancel the task while preserving history, or reset the session and delete its history. Cancellation is not a pause and cannot reactivate; reset requires a dry run and separate confirmation of the irreversible history loss. Continuing the remaining Aquarium work without Podway starts a new explicitly opted-out workflow rather than changing the active workflow in place.
+
+At a successful terminal boundary, Aquarium records `handed_off` only when an exact authoritative external result such as the committed roadmap task is verified. An approved internal epic boundary with no external handoff may record `not_required` only when the same handler retains ownership and must replace the session. Otherwise Aquarium leaves the terminal session undisposed. It never chooses force reset or force replacement automatically.
 
 ## Install
 
@@ -85,7 +87,7 @@ When `dev-setup` selects Sanho, Mulgae, Gaori, or Podway for setup or diagnosis,
 - [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Aquarium supports stable v0.1.16 through v0.1.x, including Config v3, Doctor v2 offline readiness, prose-first structured finding extraction, and explicit Codex provider profiles, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
 - [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Aquarium supports stable v0.1.13 through v0.1.x, including read-only parser and completed-run discovery, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.3 through v0.2.x and can separately install the matching optional `use-podway` user skill.
+- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.4 through v0.2.x and can separately install the matching optional `use-podway` user skill.
 
 ## Validate
 

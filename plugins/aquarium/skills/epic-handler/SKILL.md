@@ -30,7 +30,7 @@ Produce one concise, decision-complete epic plan: goal and non-goals, dependency
 
 Ask once for explicit approval of the plan and execution envelope. Approval covers bounded implementation decisions, repository-authorized checks, disclosed Mulgae transmission, task and epic staging, one task-ID commit per task, and necessary remediation or closeout commits. It does not authorize amend, push, PR or release changes, live rollout, destructive actions, installation, another repository, or unrelated staging. Commit and upstream publication are separate states.
 
-By default the envelope must cover starting or resuming the matching managed sessions, recording bounded evidence and decisions, goal revision and rework required by in-scope changes, terminal completion, and reset only after a successfully terminal Aquarium-owned session has been handed off to current roadmap, commit, and worktree evidence. Treat approval that explicitly omits Podway as approval of the same envelope without those operations.
+By default the envelope must cover creating or resuming each prepared managed session, the separate fenced `begin`, recording bounded evidence and decisions, goal revision and rework required by in-scope changes, terminal completion, supported terminal disposition, and eligible replacement only after the authoritative roadmap, commit, review, and worktree evidence has been re-read. Treat approval that explicitly omits Podway as approval of the same envelope without those operations.
 
 Accept an opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution. Never mutate a conflicting session automatically.
 
@@ -53,9 +53,11 @@ For each non-terminal task in order:
    Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
 7. Move the task to its defined successful state and hand the exact isolated task-owned diff, lifecycle evidence, task ID, and approved commit authority to `$aquarium:task-commit`. Complete the goal only after its commit exists, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
 
-With Podway active, run `podway observe --json --wait-for-idle` before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, attempt, goal revision, and current node from that observation. Start or resume the matching goal procedure only after approval, mirror it in the Codex goal, independently verify returned native evidence before recording it, and only then select decisions and assess criteria through actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries.
+With Podway active, run `podway observe --json --wait-for-idle` before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, lifecycle, revision, and, when running, its attempt, goal revision, and current node.
 
-After step 7, complete the Podway session, verify its terminal outcome, perform the handoff checks again, then reset that session before starting the next goal. Never reset to bypass a failed or non-terminal outcome.
+Start or resume the matching prepared goal procedure only after approval, re-observe and `begin` it before work, mirror its goal in the Codex goal, and independently verify returned native evidence before recording it. Only then select decisions and assess criteria through actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries.
+
+After step 7, complete the Podway session, verify its terminal outcome, and repeat the handoff checks. Record `handed_off` with the exact task commit SHA. When another member task remains, use the fresh eligible replacement template to atomically create its prepared session and re-observe before `begin`; after the final member task, leave the disposed terminal session for the audit transition below. Never replace a failed, non-terminal, undisposed, or insufficiently evidenced session.
 
 Use a fresh read-only subagent for an independent perspective when task risk or uncertainty merits it; do not substitute that review for Mulgae, do not invoke `$aquarium:independent-review`, which only the user starts, and do not let it impose the `$aquarium:task-handler` phase workflow.
 
@@ -65,7 +67,9 @@ Keep implementation snapshot, verification snapshot, Mulgae target, lifecycle st
 
 After all tasks are terminal, audit the latest committed epic state without an active goal or source mutation. Build a requirement-to-owner-to-production-to-test-to-document matrix across every task and inspect integration seams, consumers, persistence, concurrency, migrations, generated artifacts, recovery, operations, and roadmap consistency. Run only approved epic checks and one complete Mulgae review of the exact latest epic target.
 
-With Podway active, begin the final audit in `aquarium-validation-v2` after the last task session is safely reset. Record each fresh audit, route confirmed gaps through remediation and re-audit, and assess the epic goal only from the latest complete evidence. Remediation goals inside the active validation session are Codex goals recorded at its `remediate` node, never nested Podway sessions. Complete and reset that validation session before starting the closeout goal, which runs in its own `aquarium-goal-v2` session.
+With Podway active, atomically replace the disposed last-task session with a prepared `aquarium-validation-v2` session, then re-observe and `begin` the final audit. Record each fresh audit, route confirmed gaps through remediation and re-audit, and assess the epic goal only from the latest complete evidence. Remediation goals inside the active validation session are Codex goals recorded at its `remediate` node, never nested Podway sessions.
+
+After the validation session succeeds, use `handed_off` only when an exact authoritative external result already exists. Otherwise record `not_required` only after verifying that this same approved handler retains ownership and the closeout session requires the slot. Atomically replace the disposed validation session with the prepared closeout goal and `begin` it.
 
 Classify each verified gap by canonical requirement owner, not file count or edit location:
 
@@ -75,7 +79,7 @@ Classify each verified gap by canonical requirement owner, not file count or edi
 
 If ownership is ambiguous, stop before goal creation and report the missing authority. Process task-owned gaps in canonical task order, then cross-task gaps. After each remediation goal, discard the prior audit and audit again from scratch. When an external blocker is resolved, first revalidate the DAG at its new exact revision and restart the audit.
 
-Only after a clean latest-snapshot audit and complete Mulgae evidence may one final epic closeout goal be created. Transition the epic to its successful state, perform authorized synchronization, and hand an actual isolated epic-ID closeout diff to `$aquarium:task-commit`. Never create an empty commit.
+Only after a clean latest-snapshot audit and complete Mulgae evidence may one final epic closeout goal be created. Transition the epic to its successful state, perform authorized synchronization, and hand an actual isolated epic-ID closeout diff to `$aquarium:task-commit`. Complete the closeout Podway session only after that commit is verified, record `handed_off` with its exact SHA, and leave the final terminal session intact. Never create an empty commit.
 
 ## Hand Off Commits and Report
 

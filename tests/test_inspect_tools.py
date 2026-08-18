@@ -131,14 +131,15 @@ class InspectToolsTest(unittest.TestCase):
         gaori_mcp_mode: str | None = None,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.3",
-        podway_daemon_version: str = "0.2.3",
+        podway_version: str = "v0.2.4",
+        podway_daemon_version: str = "0.2.4",
         podway_daemon_reachable: bool = True,
         podway_doctor_ok: bool = True,
         podway_active_session: bool = False,
+        podway_prepared_session: bool = False,
         podway_procedure_ok: bool = True,
         podway_output_schema: str = "podway.output/v3",
-        podway_status_result_schema: str = "podway.status-result/v2",
+        podway_status_result_schema: str = "podway.status-result/v3",
         podway_legacy_state: bool = False,
     ) -> None:
         mulgae_mcp_fixture_names = {
@@ -418,15 +419,16 @@ class InspectToolsTest(unittest.TestCase):
                         print(json.dumps(dict(schema="podway.error/v1", command="session.status", code="LEGACY_PROCEDURE_STATE_UNSUPPORTED")))
                         raise SystemExit(5)
                     if {podway_active_session!r}:
-                        print(json.dumps(dict(schema={podway_output_schema!r}, command="session.status", result=dict(
+                        status = dict(
                             schema={podway_status_result_schema!r},
                             procedure=dict(schema="podway.procedure/v2", id="aquarium-task-v2", version="1", digest="sha256:procedure"),
-                            session=dict(id="00000000-0000-4000-8000-000000000001", lifecycle="running", revision=7),
-                            current=dict(node=dict(graph_node_id="verify")),
-                            goal_revision=2,
-                            goal=dict(statement="sensitive goal text"),
-                            item_values=[dict(value="sensitive evidence")],
-                        ))))
+                            session=dict(id="00000000-0000-4000-8000-000000000001", lifecycle="prepared" if {podway_prepared_session!r} else "running", revision=0 if {podway_prepared_session!r} else 7),
+                            current=None if {podway_prepared_session!r} else dict(node=dict(graph_node_id="verify")),
+                            item_values=[] if {podway_prepared_session!r} else [dict(value="sensitive evidence")],
+                        )
+                        if not {podway_prepared_session!r}:
+                            status.update(goal_revision=2, goal=dict(statement="sensitive goal text"))
+                        print(json.dumps(dict(schema={podway_output_schema!r}, command="session.status", result=status)))
                         raise SystemExit(0)
                     print(json.dumps({{"schema": "podway.error/v1", "command": "session.status", "code": "SESSION_NOT_FOUND", "retryable": False, "exit_code": 1, "details": {{}}}}))
                     raise SystemExit(1)
@@ -788,11 +790,12 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(podway["versions_match"])
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_v023_is_the_minimum_supported_release(self) -> None:
+    def test_podway_v024_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
             ("v0.2.0", False),
             ("v0.2.2", False),
-            ("v0.2.3", True),
+            ("v0.2.3", False),
+            ("v0.2.4", True),
             ("0.2.99", True),
             ("v0.3.0", False),
         ):
@@ -816,12 +819,12 @@ class InspectToolsTest(unittest.TestCase):
                     podway["status"], "installed" if supported else "degraded"
                 )
 
-    def test_podway_requires_v3_envelopes_and_v2_session_results(self) -> None:
+    def test_podway_requires_v3_envelopes_and_v3_session_results(self) -> None:
         cases = (
             {"podway_output_schema": "podway.output/v2"},
             {
                 "podway_active_session": True,
-                "podway_status_result_schema": "podway.status-result/v1",
+                "podway_status_result_schema": "podway.status-result/v2",
             },
         )
         for options in cases:
@@ -920,6 +923,31 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(session["goal_revision"], 2)
         self.assertNotIn("sensitive goal text", completed.stdout)
         self.assertNotIn("sensitive evidence", completed.stdout)
+
+    def test_prepared_session_inventory_has_no_cursor_or_goal(self) -> None:
+        self.install_fake_tools(
+            podway_active_session=True,
+            podway_prepared_session=True,
+        )
+        self.install_managed_podway_procedures()
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+        session = podway["probes"]["session_status"]["result"]
+        self.assertEqual(
+            session["session"],
+            {
+                "id": "00000000-0000-4000-8000-000000000001",
+                "lifecycle": "prepared",
+                "revision": 0,
+            },
+        )
+        self.assertIsNone(session["current_graph_node_id"])
+        self.assertIsNone(session["goal_revision"])
+        self.assertEqual(podway["readiness_status"], "ready")
 
     def test_malformed_json_and_timeout_degrade_only_the_affected_probes(self) -> None:
         self.install_fake_tools(

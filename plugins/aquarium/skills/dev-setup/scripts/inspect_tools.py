@@ -171,7 +171,7 @@ def supported_podway_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.2\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 3)
+    return bool(match and int(match.group(1)) >= 4)
 
 
 def supported_sanho_version(version: str | None) -> bool:
@@ -1523,7 +1523,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         normalized_session, session_result = normalize_podway_envelope(
             session_probe,
             "session.status",
-            ("podway.status-result/v2", "podway.compact-status-result/v2"),
+            ("podway.status-result/v3", "podway.compact-status-result/v3"),
         )
         if isinstance(doctor_payload, dict) and isinstance(
             doctor_payload.get("healthy"), bool

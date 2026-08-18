@@ -34,7 +34,9 @@ Record whether `$use-mulgae`, the supported configured CLI, and the attached pro
 
 Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$aquarium:task-refine`, and an approved lifecycle edit; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging. An authorized commit is handed to `$aquarium:task-commit`.
 
-Do not start or mutate Podway before plan approval. By default the plan discloses session start or resume, bounded evidence, decisions, rework, goal assessment, and completion. Approval explicitly omitting Podway approves the plan without those operations. Accept opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution.
+Do not start or mutate Podway before plan approval. By default the plan discloses prepared session start or resume, the separate fenced `begin`, bounded evidence, decisions, rework, goal assessment, completion, and any supported terminal disposition.
+
+Approval explicitly omitting Podway approves the plan without those operations. Accept opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution.
 
 ## Load Phase Skills in Order
 
@@ -80,6 +82,7 @@ When Podway is active:
 - Record `changes-requested` only for an explicit correction request or a specifically unmet gate. For `Keep in review`, silence, or an ambiguous answer, record no decision and leave the session at its current node.
 - Record the assessed outcome at `record-outcome` from the goal assessment plus the verification gaps, finding dispositions, and documentation gaps carried by the leaf reports, before requesting final approval.
 - Request a successful terminal transition only after an `achieved` goal assessment. After `not-achieved`, re-enter the owning phase through manual rework or report the exact blocker; after `superseded`, use a goal revision with a declared rework target or stop and report the supersession. Neither outcome may select a successful roadmap state or complete the Codex goal as achieved.
+- After terminal success, record `handed_off` only when the successful roadmap task, exact required commit SHA, evidence, and clean task-owned residue have all been re-read; otherwise leave the session undisposed. Never reset the final task session automatically.
 - Any desired-outcome change uses a goal revision and declared rework target.
 
 ## Own Goal Lifetime
@@ -92,7 +95,7 @@ Keep the goal active through every phase. Mark it complete only after `$aquarium
 
 Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence.
 
-When Podway is active, its latest `podway.observation-result/v1` envelope is also required reconstruction evidence. Resume at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree; otherwise stop rather than repairing history by inference.
+When Podway is active, its latest `podway.observation-result/v2` envelope is also required reconstruction evidence. A matching prepared revision resumes through its fresh `session.begin` template; a running session resumes at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree. Otherwise stop rather than repairing history by inference.
 
 Resume at the earliest phase whose postcondition is not currently proven. Do not repeat a proven phase merely to recreate a report, but invalidate affected evidence when task-owned code, tests, documentation, roadmap state, review target, or repository authority changed after that evidence was recorded.
 
