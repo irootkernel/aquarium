@@ -276,7 +276,7 @@ assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex
 assert(tool_catalog.include?("Before updating an existing `lore-commits` or `lore-query`") &&
        tool_catalog.include?("apply the shared backup policy before the approved `npx skills add` action"),
        "Lora skill updates must follow the request-scoped backup policy")
-assert(tool_catalog.include?("stable `v0.2.4` through `v0.2.x`") &&
+assert(tool_catalog.include?("stable `v0.2.5` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
        "Podway CLI, daemon, and use-podway must share the supported approved release")
@@ -291,13 +291,13 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.session-reset-result/v1") &&
        tool_catalog.include?("podway.job-result/v4") &&
        tool_catalog.include?("podway.job-lookup-result/v4"),
-       "Podway v0.2.4 JSON contracts are missing")
+       "Podway v0.2.5 JSON contracts are missing")
 assert(tool_catalog.include?("prepared revision-0 session") &&
        tool_catalog.include?("session.begin") &&
        tool_catalog.include?("Terminal sessions expose a disposition template") &&
        tool_catalog.include?("start --replace-eligible") &&
        tool_catalog.include?("Never substitute force reset or force replacement"),
-       "Podway v0.2.4 prepared lifecycle and eligible replacement guidance is missing")
+       "Podway v0.2.5 prepared lifecycle and eligible replacement guidance is missing")
 assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence only") &&
        tool_catalog.include?("Never use dev-setup to observe, cancel, discard, or reset") &&
        tool_catalog.include?("only session-state reset exception"),
@@ -305,7 +305,15 @@ assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence
 assert(tool_catalog.include?("same approved command") &&
        tool_catalog.include?("no `--socket` override") &&
        tool_catalog.include?("prior launchd label to unload"),
-       "Podway v0.2.4 LaunchAgent replacement recovery is missing")
+       "Podway v0.2.5 LaunchAgent replacement recovery is missing")
+assert(tool_catalog.include?("migrated reset-receipt read-back") &&
+       tool_catalog.include?("degraded-store reset recovery") &&
+       tool_catalog.include?("podway.daemon-log/v1") &&
+       tool_catalog.include?("ten 1-MiB daemon-log files") &&
+       tool_catalog.include?("LaunchAgent standard output and error go to `/dev/null`") &&
+       tool_catalog.include?("disposable full-store openability or internal-codec inspection fails") &&
+       tool_catalog.include?("recoverability never grants deletion authority"),
+       "Podway v0.2.5 recovery and bounded logging guidance is missing")
 assert(tool_catalog.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED") &&
        tool_catalog.include?("podway reset --all") &&
        tool_catalog.include?("separate explicit approval") &&
@@ -340,7 +348,7 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
        dev_setup.include?("Never authenticate a provider, inspect a prior run") &&
        dev_setup.include?("--require-mulgae-mcp"),
        "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
-assert(ROOT.join("README.md").read.include?("v0.2.4 through v0.2.x") &&
+assert(ROOT.join("README.md").read.include?("v0.2.5 through v0.2.x") &&
        ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
        "public Podway support and optional skill guidance are missing")
 assert(ROOT.join("README.md").read.include?("selects Podway by default") &&
@@ -360,7 +368,7 @@ assert(ROOT.join("README.md").read.include?("starts as prepared") &&
        ROOT.join("README.md").read.include?("exact authoritative external result") &&
        ROOT.join("README.md").read.include?("leaves the terminal session undisposed") &&
        ROOT.join("README.md").read.include?("never chooses force reset or force replacement"),
-       "public Podway v0.2.4 lifecycle and disposition policy is incomplete")
+       "public Podway v0.2.5 lifecycle and disposition policy is incomplete")
 assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
        "privacy policy must disclose Podway skill installation")
@@ -702,7 +710,7 @@ assert(podway_contract.include?("podway.observation-result/v2") &&
        podway_contract.include?("podway.session-reset-result/v1") &&
        podway_contract.include?("Do not record evidence") &&
        podway_contract.include?("matching prepared session is recoverable workflow state"),
-       "Podway v0.2.4 prepared-session contract is missing")
+       "Podway v0.2.5 prepared-session contract is missing")
 assert(podway_contract.include?("## Record Terminal Ownership Conservatively") &&
        podway_contract.include?("Use `handed_off` only when an exact authoritative external result already exists") &&
        podway_contract.include?("exact commit SHA") &&
@@ -781,7 +789,7 @@ assert(epic_handler.include?("Record `handed_off` with the exact task commit SHA
        epic_handler.include?("fresh eligible replacement template") &&
        epic_handler.include?("record `not_required` only after verifying") &&
        epic_handler.include?("leave the final terminal session intact"),
-       "epic-handler must sequence v0.2.4 dispositions and eligible replacements")
+       "epic-handler must sequence v0.2.5 dispositions and eligible replacements")
 assert(epic_validator.include?("validation-record commit") &&
        epic_validator.include?("record `handed_off` with that exact commit SHA") &&
        epic_validator.include?("leave the final terminal session intact") &&
@@ -1167,7 +1175,7 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.4` through `v0.2.x`"),
+  assert(body.include?("stable `v0.2.5` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
 end
 
