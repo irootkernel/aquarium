@@ -423,8 +423,9 @@ assert(ROOT.join("README.md").read.include?("Git-backed design workflows use") &
        ROOT.join("README.md").read.include?("before its first managed-session mutation"),
        "public Podway guidance must document default use and pre-session opt-out")
 assert(ROOT.join("README.md").read.include?("Degraded readiness routes to `dev-setup` repair") &&
-       ROOT.join("README.md").read.include?("A healthy conflicting session is a lifecycle conflict instead") &&
-       ROOT.join("README.md").read.include?("explicitly invoke `use-podway` to cancel or discard it"),
+       ROOT.join("README.md").read.include?("undisposed terminal nonmatching session is a lifecycle conflict") &&
+       ROOT.join("README.md").read.include?("atomically replaced by the approved successor") &&
+       ROOT.join("README.md").read.include?("reset is not a prerequisite"),
        "public Podway guidance must separate setup repair from session lifecycle")
 assert(ROOT.join("README.md").read.include?("leave the session active for later resumption") &&
        ROOT.join("README.md").read.include?("cancel the task while preserving history") &&
@@ -883,16 +884,17 @@ assert(podway_contract.include?("owning Aquarium invocation selects Podway by de
 assert(podway_contract.include?("choose between repair") &&
        podway_contract.include?("Do not silently fall back"),
        "Podway readiness failures must require a repair-or-opt-out decision")
-assert(podway_contract.include?("healthy supported Procedure v2 session conflict as a lifecycle conflict") &&
-       podway_contract.include?("different, mismatched, prepared, completed, cancelled, or unfinished current session") &&
-       podway_contract.include?("never route it to `$aquarium:dev-setup` repair") &&
-       podway_contract.include?("resume unfinished work through its matching owner") &&
+assert(podway_contract.include?("prepared, running, incomplete, or undisposed terminal session is a blocking lifecycle conflict") &&
+       podway_contract.include?("disposed terminal session is an eligible successor candidate") &&
+       podway_contract.include?("Never route it to `$aquarium:dev-setup` repair") &&
+       podway_contract.include?("Resume unfinished work through its matching owner") &&
        podway_contract.include?("standalone explicit `$use-podway` request") &&
-       podway_contract.include?("naming the repository and observed session ID"),
+       podway_contract.include?("without a separate reset") &&
+       podway_contract.include?("Reset is deletion, not preparation for a successor workflow"),
        "healthy Podway session conflicts must route to lifecycle ownership, not setup repair")
 assert(podway_contract.include?("current-session discard flow") &&
        podway_contract.include?("After the session starts, do not abandon it") &&
-       podway_contract.include?("Never cancel, reset, replace, reopen, or reinterpret the conflicting session automatically"),
+       podway_contract.include?("Never cancel, reset, force-replace, reopen, or reinterpret a blocking lifecycle conflict automatically"),
        "Podway sessions must not be abandoned or cleaned up automatically")
 assert(podway_contract.include?("## Handle In-Progress Stop Requests") &&
        podway_contract.include?("**Resume later:**") &&
@@ -914,7 +916,9 @@ assert(podway_contract.include?("None of these dispositions commits work, change
          body.include?("On degraded readiness") &&
          body.include?("`$aquarium:dev-setup` repair") &&
          body.include?("shared lifecycle-conflict route") &&
-         body.include?("explicit `$use-podway` request") &&
+         body.include?("explicit cancellation or deletion to `$use-podway`") &&
+         body.include?("disposed terminal session with verified handoff evidence") &&
+         body.include?("use `start --replace-eligible` without a separate reset") &&
          body.include?("Never describe that conflict as setup repair") &&
          !body.include?("on degraded readiness or") &&
          body.include?("shared `Handle In-Progress Stop Requests` flow") &&
