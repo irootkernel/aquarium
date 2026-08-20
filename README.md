@@ -24,7 +24,6 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `release-qa` | Exercise every active Design Gate and every release change through separate isolated QA matrices. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
 | `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
-| `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$aquarium:deslop` |
 
 Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
 
@@ -77,6 +76,8 @@ codex plugin add aquarium@aquarium
 
 Restart Codex after installation or upgrade so the active session reloads the installed skill snapshot, then open `/hooks` and trust Aquarium's roadmap commit guard.
 
+Aquarium does not bundle third-party skill or documentation sources. Its workflows use separately installed upstream Lora, Ouroboros, and Cursor Team Kit Deslop capabilities; `$aquarium:dev-setup` diagnoses them and proposes exact-source installation or repair behind separate approvals. The upstream `$deslop` skill is a required prerequisite for task delivery.
+
 ### Migrating from Root Kernel
 
 Aquarium v0.1.4 replaces the previous marketplace, plugin invocation prefix, inspection schema, and managed Podway Procedure IDs without compatibility aliases. Before upgrading, finish or explicitly dispose of any active `root-kernel-*` Podway session; Aquarium does not convert or delete its runtime history. Then remove the previous installation, add the renamed marketplace, install Aquarium, and restart Codex:
@@ -98,8 +99,13 @@ When `dev-setup` selects Sanho, Mulgae, Gaori, or Podway for setup or diagnosis,
 - [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Aquarium supports stable v0.1.16 through v0.1.x, including Config v3, Doctor v2 offline readiness, prose-first structured finding extraction, and explicit Codex provider profiles, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
 - [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Aquarium supports stable v0.1.13 through v0.1.x, including read-only parser and completed-run discovery, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
+- [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) provides the separately installed upstream `deslop` skill required by Aquarium task refinement.
 - [Podway](https://github.com/irootkernel/podway) guards Aquarium's default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.5 through v0.2.x and can separately install the matching optional `use-podway` user skill.
 - [Ouroboros](https://github.com/Q00/ouroboros) supplies bounded discovery, PM, Seed, and QA leaf capabilities to the five explicit design workflows. Aquarium supports `>=0.51.1,<0.52.0`; `dev-setup` keeps package installation, Codex refresh, and MCP/runtime setup behind separate approvals and never invokes a provider during setup.
+
+## Thanks
+
+Thanks to [Lora](https://github.com/tmdgusya/lora) for the Lore commit skills, [Ouroboros](https://github.com/Q00/ouroboros) for its discovery and specification capabilities, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) for the `deslop` skill. Aquarium uses these as separately installed upstream capabilities and does not vendor their skill or documentation sources. Ouroboros and Cursor Team Kit provide MIT LICENSE files; Lora declares MIT in its README.
 
 ## Validate
 
@@ -120,4 +126,4 @@ Do not hard-wrap prose in project documentation. Keep each prose paragraph on on
 
 ## License
 
-This repository is licensed under the [MIT License](LICENSE). The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice.
+This repository is licensed under the [MIT License](LICENSE).

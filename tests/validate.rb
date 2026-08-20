@@ -55,7 +55,6 @@ end
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
   design-qa
-  deslop
   dev-setup
   epic-handler
   epic-validator
@@ -77,7 +76,7 @@ expected_skill_names = %w[
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
        "plugin skill set does not match the expected skills")
-implicit_invocation_skills = %w[deslop task-commit]
+implicit_invocation_skills = %w[task-commit]
 
 skill_paths.each do |path|
   body = path.read
@@ -163,13 +162,13 @@ tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
 gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
+deslop_catalog = tool_catalog[/^## Cursor Team Kit \/ Deslop\n.*?(?=^## )/m]
 ouroboros_catalog = tool_catalog[/^## Ouroboros\n.*\z/m]
 epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
 independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
-deslop = PLUGIN.join("skills/deslop/SKILL.md").read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
 task_verify = PLUGIN.join("skills/task-verify/SKILL.md").read
@@ -216,6 +215,11 @@ assert(ouroboros_catalog &&
 assert(dev_setup.include?("Sanho, Mulgae, Gaori, and Podway selection choices") &&
        dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
        "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
+assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, or Deslop source") &&
+       dev_setup.include?("temporary detached checkout") &&
+       dev_setup.include?("one regular non-symlink installation") &&
+       dev_setup.include?("exact repository, roadmap, and task prompt"),
+       "dev-setup must install third-party skills from exact upstream sources")
 proposal_index = dev_setup.index("Ask whether to prepare")
 diff_index = dev_setup.index("Display the exact target path")
 apply_index = dev_setup.index("Apply exactly this diff")
@@ -307,6 +311,13 @@ assert(ROOT.join("PRIVACY.md").read.include?("The selected `ooo --version`") &&
        ROOT.join("PRIVACY.md").read.include?("do not contact a provider, initiate authentication, or make a network request") &&
        ROOT.join("PRIVACY.md").read.include?("without exposing credential material"),
        "privacy policy must disclose the local Ouroboros diagnosis boundary")
+assert(ROOT.join("PRIVACY.md").read.include?("Cursor Team Kit Deslop installation contacts GitHub and npm") &&
+       ROOT.join("PRIVACY.md").read.include?("writes the upstream `SKILL.md` and MIT LICENSE") &&
+       ROOT.join("PRIVACY.md").read.include?("does not bundle Lora, Ouroboros, or Cursor Team Kit skill or documentation sources"),
+       "privacy policy must disclose third-party skill installation and no-vendoring boundaries")
+assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, or Cursor Team Kit skill and documentation sources") &&
+       !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
+       "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
@@ -316,9 +327,21 @@ assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is miss
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
 assert(!tool_catalog.include?("--skill lore-setup"), "Lora setup skill must not be installed")
 assert(tool_catalog.include?("--global") && tool_catalog.include?("--agent codex"), "Lora scope must be global Codex")
+assert(tool_catalog.include?("git -C <temporary-source-root>/lora checkout --detach FETCH_HEAD") &&
+       tool_catalog.include?("npx skills add <temporary-source-root>/lora") &&
+       !tool_catalog.include?("tmdgusya/lora#<tag-or-full-sha>"),
+       "Lora must install from an exact detached upstream checkout")
 assert(tool_catalog.include?("Before updating an existing `lore-commits` or `lore-query`") &&
        tool_catalog.include?("apply the shared backup policy before the approved `npx skills add` action"),
        "Lora skill updates must follow the request-scoped backup policy")
+assert(deslop_catalog &&
+       deslop_catalog.include?("https://github.com/cursor/plugins") &&
+       deslop_catalog.include?("--skill deslop") &&
+       deslop_catalog.include?("<approved-full-sha>") &&
+       deslop_catalog.include?("cursor-team-kit/LICENSE ~/.agents/skills/deslop/LICENSE") &&
+       deslop_catalog.include?("byte-identical") &&
+       deslop_catalog.include?("no duplicate or symlink installation"),
+       "Deslop must install with its license from one exact Cursor upstream commit")
 assert(tool_catalog.include?("stable `v0.2.5` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
@@ -1135,16 +1158,16 @@ assert(task_review.include?("only a pass with no file changes supports `approved
 
 podway_blind_skills = %w[
   task-plan task-implement task-verify task-refine task-document task-review task-close
-  independent-review release-qa deslop
+  independent-review release-qa
 ]
 podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
   assert(!body.match?(/podway/i), "leaf and utility skill must remain Podway-blind: #{name}")
 end
 assert(independent_review.include?("Return the target and snapshot, independent reviewer verdict") &&
-       deslop.include?("Return the material cleanup performed") &&
+       task_refine.include?("Return deslop actions, optimization reasoning") &&
        task_close.include?("Return the three answers, final roadmap state"),
-       "Podway-blind review, deslop, and closeout must return native evidence")
+       "Podway-blind review, refinement, and closeout must return native evidence")
 assert(epic_validator.include?("ignore every Podway readiness or session state"),
        "opted-out epic validation must ignore every Podway state")
 assert(task_handler.include?("Immediately before each phase delegation") &&
@@ -1231,7 +1254,7 @@ assert(task_verify.include?("Stop and escalate to the orchestrator when a requir
 assert(task_verify.include?("when Gaori or another evidence-compression wrapper is used"),
        "task-verify must trust the underlying exit status behind evidence wrappers")
 
-deslop_index = task_refine.index("Load and follow the bundled `$aquarium:deslop`")
+deslop_index = task_refine.index("Load and follow the separately installed upstream `$deslop`")
 optimization_stage_index = task_refine.index("stage the current task-owned changes as the optimization baseline")
 optimization_index = task_refine.index("## Optimize")
 assert(deslop_index && optimization_stage_index && optimization_index &&
@@ -1245,6 +1268,11 @@ assert(task_refine.include?("preserve all pre-existing staged content"),
        "task-refine must protect existing staged work")
 assert(task_refine.include?("stage only the confirmed task-owned optimization delta"),
        "task-refine must refresh the staged task diff after verification")
+assert(task_refine.include?("never reconstruct or skip it") &&
+       task_handler.include?("Require one valid upstream `$deslop` installation before plan approval") &&
+       task_handler.include?("missing, duplicated, symlinked, lacks the upstream LICENSE, or has invalid frontmatter") &&
+       task_handler.include?("Never substitute an Aquarium-owned copy"),
+       "task delivery must require the separately installed upstream Deslop skill")
 assert(task_refine.include?("tracing callers and consumers"),
        "task-refine must verify whether task-introduced abstractions are necessary")
 assert(task_refine.include?("Remove an abstraction when it only adds indirection"),
@@ -1422,15 +1450,8 @@ phase_names.each do |name|
   assert(body.include?("to the orchestrator"), "leaf skill must return its report to the orchestrator: #{name}")
 end
 
-assert(PLUGIN.join("skills/deslop/LICENSE").read.include?("Copyright (c) 2026 Cursor"),
-       "deslop MIT attribution is missing")
-deslop = PLUGIN.join("skills/deslop/SKILL.md").read
-assert(deslop.include?("Return the material cleanup performed") &&
-       deslop.include?("to the delegating workflow or the user"),
-       "deslop must report its cleanup to either caller")
-deslop_description = YAML.safe_load(deslop.match(/\A---\n(.*?)\n---\n/m)[1], aliases: false).fetch("description")
-assert(deslop_description.include?("'clean this up'"),
-       "deslop description must trigger on the conversational cleanup phrasing")
+assert(!PLUGIN.join("skills/deslop").exist?,
+       "Aquarium must not bundle the third-party Deslop skill or license")
 
 %w[LICENSE README.md PRIVACY.md TERMS.md .github/workflows/validate.yml].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
@@ -1492,16 +1513,21 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review deslop new-project new-feature refactor war-room design-qa].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review new-project new-feature refactor war-room design-qa].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
-assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),
-       "README deslop upstream MIT attribution is missing")
+assert(!readme.include?("$aquarium:deslop") &&
+       readme.include?("upstream `$deslop` skill is a required prerequisite") &&
+       readme.include?("## Thanks") &&
+       readme.include?("does not vendor their skill or documentation sources") &&
+       readme.include?("Lora declares MIT in its README"),
+       "README must document external Deslop and thank all third-party skill sources")
 %w[
   https://github.com/irootkernel/sanho
   https://github.com/irootkernel/mulgae
   https://github.com/irootkernel/gaori
   https://github.com/tmdgusya/lora
+  https://github.com/cursor/plugins/tree/main/cursor-team-kit
   https://github.com/irootkernel/podway
   https://github.com/Q00/ouroboros
 ].each do |url|
@@ -1510,7 +1536,7 @@ end
 
 markdown_paths = Dir[ROOT.join("**/*.md")].map { |path| Pathname.new(path) }.sort
 document_paths = markdown_paths.dup
-document_paths.concat([ROOT.join("LICENSE"), PLUGIN.join("skills/deslop/LICENSE")])
+document_paths << ROOT.join("LICENSE")
 document_paths.uniq.each { |path| assert_no_hard_wrap(path) }
 
 markdown_paths.each do |path|

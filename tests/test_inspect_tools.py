@@ -493,12 +493,30 @@ class InspectToolsTest(unittest.TestCase):
             executable.write_text(source, encoding="utf-8")
             executable.chmod(0o755)
 
-    def install_lora_skill(self, name: str) -> None:
-        skill_directory = self.codex_home / "skills" / name
+    def install_lora_skill(self, name: str, root: Path | None = None) -> Path:
+        skill_directory = (root or self.codex_home / "skills") / name
         skill_directory.mkdir(parents=True)
         skill_directory.joinpath("SKILL.md").write_text(
             f"---\nname: {name}\ndescription: Test skill.\n---\n", encoding="utf-8"
         )
+        return skill_directory
+
+    def install_deslop_skill(
+        self,
+        root: Path | None = None,
+        name: str = "deslop",
+        include_license: bool = True,
+    ) -> Path:
+        skill_directory = (root or self.codex_home / "skills") / "deslop"
+        skill_directory.mkdir(parents=True)
+        skill_directory.joinpath("SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: Test skill.\n---\n", encoding="utf-8"
+        )
+        if include_license:
+            skill_directory.joinpath("LICENSE").write_text(
+                "MIT License\n", encoding="utf-8"
+            )
+        return skill_directory
 
     def install_agent_skill(
         self,
@@ -595,7 +613,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v5"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v6"
         )
         self.assertEqual(
             payload["repository"]["worktree"],
@@ -609,6 +627,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(payload["tools"]["gaori"]["agent_skill"]["status"], "missing")
         self.assertEqual(payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable")
         self.assertEqual(payload["tools"]["lora"]["status"], "missing")
+        self.assertEqual(payload["tools"]["deslop"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
 
     def test_configured_tools_are_normalized_without_config_contents(self) -> None:
@@ -644,6 +663,7 @@ class InspectToolsTest(unittest.TestCase):
         )
         for name in ("lore-commits", "lore-query", "lore-setup"):
             self.install_lora_skill(name)
+        self.install_deslop_skill()
         completed = self.inspect()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertNotIn("secret-value", completed.stdout)
@@ -706,6 +726,57 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(gaori_configuration[".gaori/toolchain.yaml"]["ignored"])
         self.assertEqual(tools["lora"]["status"], "configured")
         self.assertTrue(tools["lora"]["lore_setup_present"])
+        self.assertFalse(tools["lora"]["skills"]["lore-commits"]["duplicate"])
+        self.assertFalse(tools["lora"]["skills"]["lore-query"]["symlinked"])
+        self.assertEqual(tools["deslop"]["status"], "configured")
+        self.assertTrue(tools["deslop"]["installed"])
+
+    def test_deslop_invalid_frontmatter_is_degraded(self) -> None:
+        self.install_deslop_skill(name="wrong-name")
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertFalse(
+            deslop["agent_skill"]["installations"][0]["frontmatter_valid"]
+        )
+
+    def test_deslop_incomplete_installation_is_degraded(self) -> None:
+        (self.codex_home / "skills/deslop").mkdir(parents=True)
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertFalse(
+            deslop["agent_skill"]["installations"][0]["skill_file_present"]
+        )
+
+    def test_deslop_installation_without_license_is_degraded(self) -> None:
+        self.install_deslop_skill(include_license=False)
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertFalse(
+            deslop["agent_skill"]["installations"][0]["license_file_present"]
+        )
+
+    def test_deslop_duplicate_installations_are_degraded(self) -> None:
+        self.install_deslop_skill()
+        self.install_deslop_skill(root=self.home / ".agents/skills")
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertTrue(deslop["agent_skill"]["duplicate"])
+        self.assertEqual(len(deslop["agent_skill"]["installations"]), 2)
+
+    def test_deslop_symlink_installation_is_degraded(self) -> None:
+        source = self.install_deslop_skill(root=self.base / "source-skills")
+        target_root = self.codex_home / "skills"
+        target_root.mkdir(parents=True, exist_ok=True)
+        target_root.joinpath("deslop").symlink_to(source, target_is_directory=True)
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
+
     def test_matching_managed_procedures_are_ready_only_on_supported_platform(
         self,
     ) -> None:
@@ -1556,6 +1627,47 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(lora["installed"])
         self.assertFalse(lora["skills"]["lore-query"]["frontmatter_valid"])
 
+    def test_incomplete_lora_installation_is_degraded(self) -> None:
+        self.install_lora_skill("lore-commits")
+        (self.codex_home / "skills/lore-query").mkdir(parents=True)
+        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        self.assertEqual(lora["status"], "degraded")
+        self.assertFalse(lora["installed"])
+        self.assertFalse(
+            lora["skills"]["lore-query"]["installations"][0][
+                "skill_file_present"
+            ]
+        )
+
+    def test_duplicate_lora_installation_is_degraded(self) -> None:
+        for name in ("lore-commits", "lore-query"):
+            self.install_lora_skill(name)
+        self.install_lora_skill(
+            "lore-query", root=self.home / ".agents/skills"
+        )
+        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        self.assertEqual(lora["status"], "degraded")
+        self.assertFalse(lora["installed"])
+        self.assertTrue(lora["skills"]["lore-query"]["duplicate"])
+        self.assertEqual(
+            len(lora["skills"]["lore-query"]["installations"]), 2
+        )
+
+    def test_symlinked_lora_installation_is_degraded(self) -> None:
+        self.install_lora_skill("lore-commits")
+        source = self.install_lora_skill(
+            "lore-query", root=self.base / "source-skills"
+        )
+        target_root = self.codex_home / "skills"
+        target_root.mkdir(parents=True, exist_ok=True)
+        target_root.joinpath("lore-query").symlink_to(
+            source, target_is_directory=True
+        )
+        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        self.assertEqual(lora["status"], "degraded")
+        self.assertFalse(lora["installed"])
+        self.assertTrue(lora["skills"]["lore-query"]["symlinked"])
+
     def test_conflicted_files_are_counted_separately(self) -> None:
         default_branch = self.git("branch", "--show-current").stdout.strip()
         self.git("checkout", "--quiet", "-b", "other")
@@ -1594,7 +1706,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v5"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v6"
         )
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertIn("--repository", payload["error"]["message"])

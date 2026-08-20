@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Ouroboros, Lora, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
+description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Ouroboros, Lora, upstream Deslop, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
 ---
 
 # Development Setup
@@ -33,10 +33,11 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, use these batches and component boundaries:
 
-- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, and whether to prepare an AGENTS.md proposal.
+- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare an AGENTS.md proposal.
 - For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
 - For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
 - For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
+- For Lora and Deslop, report every discovered user-global installation, frontmatter validity, duplicate or symlink state, and upstream freshness independently.
 
 Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
 
@@ -82,7 +83,7 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 For each selected tool:
 
-1. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora or any lookup outside that bounded comparison, disclose the official release-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
+1. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, or any lookup outside that bounded comparison, disclose the official repository and commit-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
 2. Show the exact resolved stable version and source provenance. If the automatic comparison was `freshness_unverifiable`, repeat the bounded comparison without separate approval before proposing a skill action, but obtain approval for any other lookup or download.
 3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
 4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
@@ -123,6 +124,14 @@ Aquarium Podway readiness configuration has four disclosed parts:
 - Treat partial installation as degraded readiness, not activation or legacy state.
 
 Managed-Procedure removal is a separate destructive proposal. Show the exact managed procedure files to remove, preserve `.podway/config.yaml`, runtime state, custom procedures, and every session, and obtain explicit approval. Do not reset, cancel, or delete any session as part of setup or removal.
+
+## Install Third-Party Skills From Exact Upstream Sources
+
+Aquarium does not bundle Lora, Lore, or Deslop source. For Lora or Deslop, read the selected catalog section, obtain approval for the disclosed GitHub lookup, resolve the exact upstream commit, and compare the complete installed target with a temporary detached checkout before proposing installation or replacement. Never install directly from a moving `main`, use a full commit SHA as an `npx skills` URL fragment, merge local and upstream files, or treat frontmatter validity as freshness proof.
+
+For Lora, install only `lore-commits` and `lore-query` from the approved checkout through the catalog's local-source `npx skills add` command. Do not install `lore-setup`. For Deslop, install only `deslop` from the approved Cursor Team Kit checkout and preserve that checkout's upstream LICENSE beside the installed `SKILL.md`. Require byte-identical source files, `name: deslop`, one regular non-symlink installation, and no extra target files before reporting it current.
+
+Keep source lookup, existing-target backup policy, installation or replacement, and Codex restart as separate disclosed boundaries. A scoped continuation from `task-handler` or `task-refine` selects only Deslop; after successful installation, return the exact repository, roadmap, and task prompt needed to resume the caller.
 
 ## Configure Ouroboros With Separate Approvals
 

@@ -204,12 +204,16 @@ Show the complete diff and whether `.codex/config.toml` is tracked before approv
 
 Official source: `https://github.com/tmdgusya/lora`
 
-Lora distributes agent skills rather than a runtime service. Configure it for Codex user-global scope. Resolve the latest stable tag when one exists; otherwise resolve the full current `main` commit SHA and disclose that fallback before approval.
+Lora distributes agent skills rather than a runtime service. Configure it for Codex user-global scope. Resolve the latest stable tag when one exists; otherwise resolve the full current `main` commit SHA and disclose that fallback before approval. Because `npx skills add <repository>#<full-sha>` treats the SHA as a branch name, prepare a temporary detached checkout at the approved commit and install from that local source instead.
 
 Install only the two compatible skills from the approved ref:
 
 ```bash
-npx skills add https://github.com/tmdgusya/lora#<tag-or-full-sha> \
+git clone --filter=blob:none --no-checkout https://github.com/tmdgusya/lora <temporary-source-root>/lora
+git -C <temporary-source-root>/lora fetch --depth=1 origin <approved-tag-or-full-sha>
+git -C <temporary-source-root>/lora checkout --detach FETCH_HEAD
+git -C <temporary-source-root>/lora rev-parse HEAD
+npx skills add <temporary-source-root>/lora \
   --skill lore-commits \
   --skill lore-query \
   --global \
@@ -218,9 +222,35 @@ npx skills add https://github.com/tmdgusya/lora#<tag-or-full-sha> \
   --yes
 ```
 
-This command contacts npm and GitHub and writes under the Codex user-global skill directory. Do not install or invoke Lora's `lore-setup`; it copies the full Lore protocol into AGENTS.md and conflicts with the reference-and-override policy. If `lore-setup` is already installed, report it without removing or rewriting it.
+The clone and fetch contact GitHub, and `npx` contacts npm and writes under the Codex user-global skill directory. Require the detached `HEAD` to equal the approved ref before installation. Do not install or invoke Lora's `lore-setup`; it copies the full Lore protocol into AGENTS.md and conflicts with the reference-and-override policy. If `lore-setup` is already installed, report it without removing or rewriting it.
 
 Before updating an existing `lore-commits` or `lore-query`, compare its complete installed file set with the approved source, show the target and diff, and apply the shared backup policy before the approved `npx skills add` action. Under the no-backup policy, disclose that local modifications will not be recoverable from the source ref. Verify that `lore-commits/SKILL.md` and `lore-query/SKILL.md` exist, have valid frontmatter, and match the approved source ref. Do not treat installation as commit authority.
+
+## Cursor Team Kit / Deslop
+
+Official source: `https://github.com/cursor/plugins`
+
+Deslop is a separately installed upstream prerequisite, not an Aquarium skill. This integration has no supported skill-specific release line, so resolve and disclose the full current `main` commit SHA through official GitHub commit metadata, then prepare a temporary detached checkout at that exact commit. Never install from a moving `main` or use a full SHA as an `npx skills` URL fragment.
+
+Install only the upstream Deslop skill from the approved checkout and preserve its parent plugin's MIT notice:
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/cursor/plugins <temporary-source-root>/cursor-plugins
+git -C <temporary-source-root>/cursor-plugins fetch --depth=1 origin <approved-full-sha>
+git -C <temporary-source-root>/cursor-plugins checkout --detach FETCH_HEAD
+git -C <temporary-source-root>/cursor-plugins rev-parse HEAD
+npx skills add <temporary-source-root>/cursor-plugins/cursor-team-kit \
+  --skill deslop \
+  --global \
+  --agent codex \
+  --copy \
+  --yes
+install -m 0644 <temporary-source-root>/cursor-plugins/cursor-team-kit/LICENSE ~/.agents/skills/deslop/LICENSE
+```
+
+The clone and fetch contact GitHub, and `npx` contacts npm and writes `~/.agents/skills/deslop`. Show every endpoint, command, approved SHA, target, source digest, and expected file before installation approval. Verify that the installed `SKILL.md` and LICENSE are byte-identical to the detached checkout, the frontmatter is exactly `name: deslop`, the target contains no extra files, and no duplicate or symlink installation exists in another Codex skill root.
+
+If the target exists, compare its complete tree with the approved source plus LICENSE, show the complete diff, apply the shared backup policy, and obtain separate replacement approval. Never merge an Aquarium variant or local customization into the upstream payload. After installation or replacement, clean up the ephemeral checkout when possible and tell the user to restart Codex before resuming the requesting Aquarium workflow.
 
 ## Podway
 
@@ -257,7 +287,7 @@ Repository initialization and Aquarium readiness configuration require another a
 podway procedure check --warnings-as-errors <procedure-file>
 ```
 
-The five required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, `aquarium-validation-v2`, `aquarium-design-v2`, and `aquarium-war-room-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v5 inspection omits Podway unless invoked with `--include-podway`.
+The five required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, `aquarium-validation-v2`, `aquarium-design-v2`, and `aquarium-war-room-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v6 inspection omits Podway unless invoked with `--include-podway`.
 
 Updating a tracked copy requires showing and approving its exact diff and applying the shared backup policy; an active session retains its immutable snapshot.
 
@@ -273,7 +303,7 @@ Official source: `https://github.com/Q00/ouroboros`
 
 Python package: `ouroboros-ai`. Support only `>=0.51.1,<0.52.0`; do not automatically cross into `0.52+`. Installation requires an existing `uv` and one resolved exact package version. Show the Python package index request, exact version, package target, and `uv tool install ouroboros-ai==<exact-version>` or exact approved upgrade command before separate approval. Never install `uv` as a side effect and never install an unpinned range.
 
-Diagnose four independent components with the v5 inspector's explicit `--include-ouroboros` flag: `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. These probes are local and read-only: they do not contact a provider, initiate authentication, or make a network request, though the MCP doctor may inspect bounded local authentication-readiness metadata without exposing credential material. A healthy CLI does not prove that packaged Codex rules and skills are installed, that the MCP runtime is ready, or that Codex has an enabled registration.
+Diagnose four independent components with the v6 inspector's explicit `--include-ouroboros` flag: `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. These probes are local and read-only: they do not contact a provider, initiate authentication, or make a network request, though the MCP doctor may inspect bounded local authentication-readiness metadata without exposing credential material. A healthy CLI does not prove that packaged Codex rules and skills are installed, that the MCP runtime is ready, or that Codex has an enabled registration.
 
 The inspector checks Codex registration even when `ooo` is absent. Registration is `configured` only for a valid enabled entry, `missing` only for Codex's definite named-server-not-found response, `degraded` for disabled, incomplete, malformed, timed-out, or failed probes, and `unverifiable` when Codex itself is absent. Report only the normalized status and reason code; never expose raw registration stderr or configuration secrets.
 

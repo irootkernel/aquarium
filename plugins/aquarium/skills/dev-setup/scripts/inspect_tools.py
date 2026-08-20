@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v5"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v6"
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v4"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
@@ -1422,16 +1422,36 @@ def inspect_lora() -> dict[str, Any]:
     expected_names = ("lore-commits", "lore-query", "lore-setup")
     skills: dict[str, dict[str, Any]] = {}
     for name in expected_names:
-        paths = [root.joinpath(name, "SKILL.md") for root in skill_roots()]
-        matches = [path for path in paths if path.is_file()]
+        installations: list[dict[str, Any]] = []
+        for root in skill_roots():
+            skill_directory = root.joinpath(name)
+            skill_path = skill_directory.joinpath("SKILL.md")
+            if not (skill_directory.exists() or skill_directory.is_symlink()):
+                continue
+            installations.append(
+                {
+                    "location": str(skill_directory),
+                    "skill_file_present": skill_path.is_file(),
+                    "frontmatter_valid": skill_path.is_file()
+                    and frontmatter_name(skill_path) == name,
+                    "symlinked": skill_directory.is_symlink()
+                    or skill_path.is_symlink(),
+                }
+            )
         skills[name] = {
-            "present": bool(matches),
-            "locations": [str(path) for path in matches],
-            "frontmatter_valid": bool(matches)
-            and all(frontmatter_name(path) == name for path in matches),
+            "present": bool(installations),
+            "duplicate": len(installations) > 1,
+            "locations": [entry["location"] for entry in installations],
+            "frontmatter_valid": bool(installations)
+            and all(entry["frontmatter_valid"] for entry in installations),
+            "symlinked": any(entry["symlinked"] for entry in installations),
+            "installations": installations,
         }
     required_ready = all(
-        skills[name]["present"] and skills[name]["frontmatter_valid"]
+        len(skills[name]["installations"]) == 1
+        and skills[name]["installations"][0]["skill_file_present"]
+        and skills[name]["frontmatter_valid"]
+        and not skills[name]["symlinked"]
         for name in ("lore-commits", "lore-query")
     )
     any_present = any(skill["present"] for skill in skills.values())
@@ -1446,6 +1466,57 @@ def inspect_lora() -> dict[str, Any]:
         else ("degraded" if any_present else "missing"),
         "skills": skills,
         "lore_setup_present": skills["lore-setup"]["present"],
+        "configuration": [],
+        "probes": {},
+    }
+
+
+def inspect_deslop() -> dict[str, Any]:
+    name = "deslop"
+    installations: list[dict[str, Any]] = []
+    for root in skill_roots():
+        skill_directory = root.joinpath(name)
+        skill_path = skill_directory.joinpath("SKILL.md")
+        license_path = skill_directory.joinpath("LICENSE")
+        if not (skill_directory.exists() or skill_directory.is_symlink()):
+            continue
+        symlinked = (
+            skill_directory.is_symlink()
+            or skill_path.is_symlink()
+            or license_path.is_symlink()
+        )
+        installations.append(
+            {
+                "location": str(skill_directory),
+                "skill_file_present": skill_path.is_file(),
+                "license_file_present": license_path.is_file(),
+                "frontmatter_valid": skill_path.is_file()
+                and frontmatter_name(skill_path) == name,
+                "symlinked": symlinked,
+            }
+        )
+
+    ready = (
+        len(installations) == 1
+        and installations[0]["skill_file_present"]
+        and installations[0]["license_file_present"]
+        and installations[0]["frontmatter_valid"]
+        and not installations[0]["symlinked"]
+    )
+    return {
+        "catalog_status": "active",
+        "setup_supported": True,
+        "installed": ready,
+        "executable": None,
+        "version": None,
+        "status": "configured"
+        if ready
+        else ("degraded" if installations else "missing"),
+        "agent_skill": {
+            "present": bool(installations),
+            "duplicate": len(installations) > 1,
+            "installations": installations,
+        },
         "configuration": [],
         "probes": {},
     }
@@ -1797,6 +1868,7 @@ def inspect(
         ),
         "gaori": inspect_gaori(repository, timeout_seconds),
         "lora": inspect_lora(),
+        "deslop": inspect_deslop(),
     }
     if include_podway:
         tools["podway"] = inspect_podway(repository, timeout_seconds)

@@ -9,9 +9,7 @@ Refine only the verified task-owned diff established by `$aquarium:task-handler`
 
 ## Deslop
 
-Load and follow the bundled `$aquarium:deslop` skill against the task diff from its verified baseline. Report a broken plugin installation if it is unavailable. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.
-
-Remove only task-introduced abnormal comments, unjustified defensive paths, type-system bypasses, needless nesting, unused artifacts, and style inconsistent with surrounding code. Preserve behavior unless correcting a demonstrated bug.
+Load and follow the separately installed upstream `$deslop` skill against only the task-owned diff from its verified baseline. Aquarium's established baseline, task scope, unrelated-work preservation, verification, and reporting requirements override generic upstream assumptions. If `$deslop` is unavailable or invalid, stop and return an exact `$aquarium:dev-setup` continuation request; never reconstruct or skip it. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.
 
 ## Establish the Staged Baseline
 

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Deslop"
-  short_description: "Remove task-introduced AI code slop safely"
-  default_prompt: "Use $aquarium:deslop to clean up task-introduced code slop without changing behavior."
-policy:
-  allow_implicit_invocation: true

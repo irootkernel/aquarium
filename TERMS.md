@@ -6,7 +6,7 @@ The skills do not grant authority to access a repository, install software, chan
 
 The roadmap commit hook is an advisory local guardrail for direct shell `git commit` invocations, not a security boundary or complete enforcement mechanism. Users must explicitly trust it through Codex hook controls; indirect commits may bypass it, and the task relationship, lifecycle transition, and commit scope remain the user's responsibility.
 
-Sanho, Mulgae, Gaori, Podway, Lora, and bundled or installed skills retain their respective ownership and license terms. The bundled `deslop` skill includes its upstream MIT notice.
+Sanho, Mulgae, Gaori, Podway, Lora, Ouroboros, Cursor Team Kit, and installed third-party skills retain their respective ownership and license terms. Aquarium does not bundle the Lora, Ouroboros, or Cursor Team Kit skill and documentation sources; users install approved upstream copies under their original license terms.
 
 Podway installation, LaunchAgent changes, workspace initialization, managed-procedure updates, session mutation, and session reset remain separate authority boundaries. A Podway procedure records caller claims and does not establish the semantic truth of tests, reviews, approvals, or completion.
 
