@@ -33,6 +33,7 @@ A handler commit handoff must include:
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, reviewed snapshot, verdict, and review run when applicable, with inapplicable fields marked explicitly.
+- for an epic member task, either one exact deferred committed Mulgae run ID plus every exact deferred finding ID, or an explicit statement that no hardening deferral applies.
 
 Reject a stale, ambiguous, or incomplete handoff rather than reconstructing approval.
 
@@ -50,6 +51,12 @@ Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged
 
 Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository-required IDs and prefixes override Lore, which never grants commit authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup` continuation request. Otherwise report its absence once, inspect `git log -5 --format=fuller`, and match the recurring subject, body, and trailer structure; inspect all commits when fewer than five exist and use a concise imperative subject when none exist.
 
+When an epic-handler handoff includes a hardening deferral:
+
+- Reference `$use-mulgae` and use only read-only exact-run status and findings queries. Require committed publication, a successful findings query, and exact membership of every supplied finding ID in the supplied run.
+- Add one `Mulgae-Deferred-Run: r_...` custom Lore trailer and one repeated `Mulgae-Deferred-Finding: F...` trailer per unique finding, preserving the supplied order. Do not copy finding descriptions, severity, paths, reports, or private Mulgae artifacts into the commit message.
+- Reject an unavailable run, a mismatched or duplicate finding, an uncertain query, or deferral metadata from any caller other than the owning epic-handler. When the handoff explicitly says no deferral, add neither trailer.
+
 Before committing in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available. If unavailable and required, stop and route to `$aquarium:dev-setup`; otherwise use the repository-required check or minimal `sanho status --json` fallback. Sanho status never grants commit authority.
 
 ## Commit Through the Gate
@@ -62,6 +69,6 @@ AQUARIUM_COMMIT_GATE=task-commit-v1 git commit ...
 
 The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push.
 
-After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status. Report the commit ID, task relationship, final roadmap state, committed paths, checks and evidence inherited from the owner, remaining worktree state, and publication gap.
+After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte, verify any expected deferral trailers from the committed message, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status. Report the commit ID, task relationship, final roadmap state, committed paths, checks and evidence inherited from the owner, deferral trailer state when applicable, remaining worktree state, and publication gap.
 
 The bundled hook is a local guardrail, not complete enforcement: it detects direct shell `git commit` invocations in roadmap repositories, while indirect commits performed by other tools may not pass through that boundary.

@@ -54,7 +54,7 @@ Before every mutation, re-observe and pass every applicable workspace, session, 
 
 After every successful mutation, re-observe rather than calculating revisions locally. On a precondition failure, re-observe and derive the next action again. On `MUTATION_OUTCOME_UNKNOWN`, use `podway --json job lookup --idempotency-key <key>`, require `podway.job-lookup-result/v4`, and reconcile the durable result before considering resubmission with the same canonical request and key.
 
-Record bounded summaries and references, not source contents, credentials, raw provider payloads, or full logs. For checks record the exact command, actor provenance, exit status, current source revision or dirty-tree identity, and a digest or stable evidence reference. For review record the exact target, run identity, coverage and publication status, findings-query status, and unresolved valid findings.
+Record bounded summaries and references, not source contents, credentials, raw provider payloads, or full logs. For checks record the exact command, actor provenance, exit status, current source revision or dirty-tree identity, and a digest or stable evidence reference. For review record the ordinal and mode, exact target and run identity, coverage and publication status, findings-query status, unresolved valid findings, and any deferred run and finding identities.
 
 ## Own Sessions Conservatively
 
@@ -115,4 +115,4 @@ Replace any Aquarium session only after it is successfully terminal, its authori
 - `aquarium-design-v2` is owned by `new-project`, `new-feature`, `refactor`, or `design-qa` for one Git-backed design-document lifecycle. Ouroboros discovery and QA are leaf evidence; the owner retains Podway and repository authority.
 - `aquarium-war-room-v2` is owned only by `war-room`; it ends with an approved task, epic, or incomplete-investigation document and never records a fix implementation.
 
-The owner records a leaf report only after independently checking the leaf postcondition. A failed check or valid unresolved review finding must select the failure route and create fresh rework evidence. A final Podway `achieved` outcome cannot make a non-successful roadmap task successful, replace required approval, create a commit, or establish publication.
+The owner records a leaf report only after independently checking the leaf postcondition. A failed check or valid unresolved review finding must select the failure route and create fresh rework evidence while an authorized remediation budget remains. The only exceptions are epic-handler's explicit second-review member-task deferral and a confirmation-only review hold awaiting user direction; neither exception may be reinterpreted as clean review evidence. A final Podway `achieved` outcome cannot make a non-successful roadmap task successful, replace required approval, create a commit, or establish publication.

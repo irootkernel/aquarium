@@ -644,9 +644,24 @@ assert(epic_handler.include?("Do not invoke `$aquarium:task-handler` or its phas
        epic_handler.include?("sequence of goal-centered task executions") &&
        epic_handler.include?("do not manufacture phase artifacts"),
        "epic-handler must remain independent and goal-centered")
-assert(epic_handler.include?("Run Mulgae at least once on the latest complete task target") &&
+assert(epic_handler.include?("latest complete task target") &&
        epic_handler.include?("audit again from scratch"),
        "epic-handler must require task and convergent epic Mulgae review")
+assert(epic_handler.include?("at most two operationally complete Mulgae review rounds") &&
+       epic_handler.include?("Round one is `remediation-eligible`; round two is `hardening-deferral-eligible`") &&
+       epic_handler.include?("Reconstruct member ordinals from verbose goal Procedure history for the current revision") &&
+       epic_handler.include?("preserve the count across rework and resumption") &&
+       epic_handler.include?("requires user authorization for exactly one extra full-target `hardening-deferral-eligible` review") &&
+       epic_handler.include?("Apply the second-round disposition to that authorized extra review") &&
+       epic_handler.include?("never silently run a third review or defer stale evidence") &&
+       epic_handler.include?("deferred-for-hardening") &&
+       epic_handler.include?("at most three whole-epic Mulgae review-and-remediation rounds") &&
+       epic_handler.include?("one fourth `confirmation-only` review") &&
+       epic_handler.include?("ask the user to authorize one additional fix-and-confirmation budget") &&
+       epic_handler.include?("ask again rather than restoring an unbounded loop") &&
+       epic_handler.include?("Do not use `followup`, `delta`, or `rerun`") &&
+       !epic_handler.include?("review the changed target again until no valid finding remains"),
+       "epic-handler must bound member-task and epic-hardening review convergence")
 assert(epic_handler.include?("It does not authorize amend, push, PR or release changes"),
        "epic-handler must preserve publication boundaries")
 assert(epic_handler.include?("$aquarium:task-commit") &&
@@ -709,6 +724,12 @@ assert(epic_validator.include?("Mulgae on the latest complete remediation target
        epic_validator.include?("publication_status=committed") &&
        epic_validator.include?("findings query succeeds"),
        "epic-validator must require complete per-goal and final Mulgae evidence")
+assert(epic_validator.include?("next positive ordinal for the current validation goal revision") &&
+       epic_validator.include?("exact committed run ID") &&
+       epic_validator.include?("`remediation-eligible` mode") &&
+       epic_validator.include?("an unprovable ordinal stops before review") &&
+       epic_validator.include?("never selects `confirmation-only` or `hardening-deferral-eligible` mode"),
+       "epic-validator must durably number cold whole-epic root reviews")
 assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
        epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
        "epic-validator must invalidate stale evidence and avoid empty closeout commits")
@@ -754,7 +775,7 @@ assert(task_handler.include?("Do not create or read `.aquarium`"),
 assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
        task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
-assert(task_handler.lines.length < 105, "task-handler must remain orchestration-focused")
+assert(task_handler.lines.length < 110, "task-handler must remain orchestration-focused")
 
 {
   "new-project" => new_project,
@@ -985,12 +1006,13 @@ expected_procedure_graphs = {
     "manual_targets" => %w[complete-work record-evidence],
     "evidence" => {
       "decide-evidence" => required_evidence.call("complete-work", "record-evidence"),
-      "assess-goal" => required_evidence.call("complete-work", "record-evidence")
+      "assess-goal" => [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", false]]
     },
     "nodes" => {
       "complete-work" => { "next" => "record-evidence" },
       "record-evidence" => { "next" => "decide-evidence" },
-      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "rework-required" => %w[complete-work rework] } },
+      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-deferral advance], "rework-required" => %w[complete-work rework] } },
+      "record-hardening-deferral" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
     }
@@ -1078,6 +1100,8 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
+  expected_version = %w[aquarium-task-v2.yaml aquarium-goal-v2.yaml aquarium-validation-v2.yaml].include?(filename) ? "2" : "1"
+  assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
   assert(procedure.fetch("manual_rework").fetch("allowed_targets") == expected.fetch("manual_targets"),
@@ -1113,6 +1137,53 @@ assert(task_assess_evidence == %w[record-plan implement verify refine document r
        "task procedure assess-goal must draw required evidence from the full phase trail")
 assert(task_procedure_text.include?("must reach implementation through manual rework"),
        "task procedure must document the manual-rework escape to implementation")
+
+review_item_index = lambda do |procedure, definition|
+  procedure.dig("node_definitions", definition, "items").to_h { |item| [item.fetch("id"), item] }
+end
+task_review_items = review_item_index.call(task_procedure, "review-record")
+assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
+       task_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
+       task_review_items.fetch("review-run-id").fetch("type") == "text",
+       "task procedure must record the Mulgae root review ordinal, mode, and exact run")
+assert(task_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
+       task_procedure_text.include?("Select no option while a confirmation-only review retains a valid finding"),
+       "task procedure must represent the confirmation-only user hold")
+assert(task_procedure_text.include?("Review is incomplete, CI failed, or a remediation-eligible valid finding"),
+       "task procedure must route a failing-CI review to rework even with zero findings")
+
+validation_procedure_text = procedures_directory.join("aquarium-validation-v2.yaml").read
+validation_procedure = YAML.safe_load(validation_procedure_text, aliases: false)
+validation_review_items = review_item_index.call(validation_procedure, "final-review-record")
+assert(validation_review_items.fetch("review-round").fetch("type") == "integer" &&
+       validation_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
+       validation_review_items.fetch("review-run-id").fetch("type") == "text" &&
+       validation_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
+       validation_procedure_text.include?("Evidence is stale or incomplete, CI failed"),
+       "validation procedure must record bounded whole-epic review state and its user hold")
+
+goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml").read, aliases: false)
+goal_review_items = review_item_index.call(goal_procedure, "evidence-record")
+assert(goal_review_items.fetch("review-round").fetch("type") == "integer" &&
+       goal_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible hardening-deferral-eligible] &&
+       goal_review_items.fetch("review-run-id").fetch("type") == "text",
+       "goal procedure must record the member-task review ordinal, mode, and exact run")
+goal_procedure_text = procedures_directory.join("aquarium-goal-v2.yaml").read
+assert(goal_procedure_text.include?("Required checks and review are complete, CI passed") &&
+       goal_procedure_text.include?("Evidence or CI failed"),
+       "goal procedure must require passing CI for support and route failure to rework")
+goal_deferral_items = review_item_index.call(goal_procedure, "hardening-deferral-record")
+assert(goal_deferral_items.fetch("hardening-deferral-run-id").fetch("type") == "text" &&
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("type") == "list" &&
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("unique") == true &&
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200,
+       "goal procedure must separate the exact deferred Mulgae run and finding identities")
+goal_procedure_nodes = goal_procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
+goal_assess_evidence = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map do |entry|
+  [entry.fetch("node"), entry.fetch("required")]
+end
+assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", false]],
+       "goal procedure must include optional hardening-deferral evidence in assessment")
 
 procedure_nodes = expected_procedure_graphs.transform_values { |spec| spec.fetch("nodes").keys }
 skill_procedure_owners = {
@@ -1159,6 +1230,21 @@ assert(task_handler.include?("only after an `achieved` goal assessment") &&
        "task-handler must gate success on the goal assessment and skip decisions on holds")
 assert(task_review.include?("only a pass with no file changes supports `approved`"),
        "task-review must route review-phase fixes through the rework path")
+assert(task_handler.include?("In rounds one through three") &&
+       task_handler.include?("Round four is confirmation-only") &&
+       task_handler.include?("Reset the ordinal only for an explicitly approved new goal revision") &&
+       task_handler.include?("Do not use `followup`, `delta`, or `rerun`") &&
+       task_handler.include?("never use `latest`, objective inference, or an uncertain candidate") &&
+       task_review.include?("handler-provided positive review ordinal") &&
+       task_review.include?("do not change files") &&
+       task_review.include?("Do not invoke `followup`, `delta`, `rerun`") &&
+       task_review.include?("failing decision or `request_changes` outcome still consumes the ordinal"),
+       "task-handler must stop early and escalate after bounded Mulgae remediation")
+assert(task_handler.include?("A session created from an earlier version of this managed Procedure is not migrated") &&
+       epic_handler.include?("Sessions created from an earlier version of this managed Procedure are not migrated") &&
+       !task_handler.include?("Legacy Procedure v1") &&
+       !epic_handler.include?("Existing immutable Procedure v1"),
+       "handlers must describe compatibility by managed Procedure version rather than a stale v1 label")
 
 podway_blind_skills = %w[
   task-plan task-implement task-verify task-refine task-document task-review task-close
@@ -1347,6 +1433,9 @@ assert(task_review.include?("Select exactly one target that contains the complet
        "task-review must isolate one complete Mulgae target")
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),
        "task-review must verify Mulgae findings")
+assert(task_review.include?("to the handler when delegated") &&
+       task_review.include?("to the invoking user with the exact `$aquarium:task-handler` continuation"),
+       "direct task-review must return remediation through the owning handler workflow")
 
 terminal_status_index = task_close.index("Treat `Completed`, `Blocked`, and `Deferred` as terminal")
 status_choice_index = task_close.index("ask the user to select", terminal_status_index)
@@ -1405,6 +1494,13 @@ assert(task_commit.include?("active matching `task-handler`, `epic-handler`, `ep
        task_commit.include?("review run when applicable") &&
        task_commit.include?("Do not offer an independent path"),
        "task-commit must not bypass an active managed workflow")
+assert(task_commit.include?("Mulgae-Deferred-Run: r_...") &&
+       task_commit.include?("Mulgae-Deferred-Finding: F...") &&
+       task_commit.include?("one repeated `Mulgae-Deferred-Finding: F...` trailer per unique finding") &&
+       task_commit.include?("Do not copy finding descriptions, severity, paths, reports, or private Mulgae artifacts") &&
+       task_commit.include?("verify any expected deferral trailers from the committed message") &&
+       epic_handler.include?("enumerate `Mulgae-Deferred-Run` and every repeated `Mulgae-Deferred-Finding` trailer"),
+       "epic deferrals must use exact Mulgae identities in bounded custom commit trailers")
 assert(task_commit.include?("AQUARIUM_COMMIT_GATE=task-commit-v1 git commit") &&
        task_commit.include?("Never export it globally") &&
        task_commit.include?("indirect commits performed by other tools may not pass"),
@@ -1415,10 +1511,6 @@ assert(task_commit.include?("$lore-commits") &&
        task_commit.include?("After the commit and its hooks"),
        "task-commit must own Lore, setup escalation, and post-hook verification")
 
-MULGAE_COMPLETENESS_SENTENCE =
-  "Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, " \
-  "`publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. " \
-  "Provider success or exit status alone is insufficient."
 MULGAE_EXTRACTION_EVIDENCE_SENTENCE =
   "Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. " \
   "`reports_only` is not itself a failure and does not replace or relax any completion condition above; " \
@@ -1429,11 +1521,19 @@ MULGAE_EXTRACTION_EVIDENCE_SENTENCE =
   "epic-validator" => epic_validator,
   "task-review" => task_review
 }.each do |name, body|
-  assert(body.include?(MULGAE_COMPLETENESS_SENTENCE),
-         "canonical Mulgae completeness sentence has drifted: #{name}")
+  assert(body.include?("`coverage_status=complete`") &&
+         body.include?("`ci_decision=pass`") &&
+         body.include?("`publication_status=committed`") &&
+         body.include?("findings query") &&
+         body.include?("zero unresolved valid findings") &&
+         body.include?("Provider success or exit status alone is insufficient"),
+         "Mulgae review approval conditions have drifted: #{name}")
   assert(body.include?(MULGAE_EXTRACTION_EVIDENCE_SENTENCE),
          "canonical Mulgae extraction-evidence sentence has drifted: #{name}")
 end
+assert(epic_handler.include?("failing CI decision consumes the ordinal but cannot approve") &&
+       task_review.include?("failing decision or `request_changes` outcome still consumes the ordinal"),
+       "bounded review rounds must separate operational completion from approval")
 
 approval_precondition = "Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval."
 { "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|

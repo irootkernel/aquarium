@@ -5,7 +5,9 @@ description: "Run and resolve Mulgae review for one complete roadmap task diff. 
 
 # Task Review
 
-Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, and current task-owned diff.
+Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. Require the handler-provided positive review ordinal, current goal revision, and `remediation-eligible` or `confirmation-only` mode when delegated; a direct invocation is one isolated remediation-eligible round with ordinal one and grants no later-round budget.
+
+One invocation consumes one round only after one root `review` run reaches committed publication with complete coverage and a successful findings query, including a `request_changes` policy outcome or failing CI decision. Preflight, status, findings and excerpt reads, and Mulgae-internal retry or extraction do not consume another round.
 
 Fixing findings in this phase changes the diff, so all affected prior phase evidence is stale — including implementation and verification evidence when a fix changes behavior or tests; the handler then selects `changes-requested` and reworks to the phase that owns the change, and only a pass with no file changes supports `approved`.
 
@@ -16,7 +18,7 @@ Fixing findings in this phase changes the diff, so all affected prior phase evid
 3. Reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or MCP is unavailable and repository guidance requires it, keep the task in review and route that exact gap to `$aquarium:dev-setup`; otherwise report the unavailable integration once and use the CLI fallback below. Do not start a second MCP server from the shell.
 4. Select exactly one target that contains the complete task diff and excludes unrelated work. A clean task-only dirty state may use `--dirty` to capture staged and unstaged changes; otherwise use another exact supported target and stop if isolation is unsafe.
 5. Run execution-free preflight through the selected interface, require `mulgae-review-preflight.v3`, and inspect captured files, exclusions, roles, credential-profile routing, provider timeouts, permission modes, and artist inputs when UI work is present.
-6. Run the review once with machine-readable output and require `mulgae-command-result.v4` from the CLI fallback. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure.
+6. Run the review once with machine-readable output and require `mulgae-command-result.v4` from the CLI fallback. Use the same bounded objective in preflight and execution, naming the task, current goal revision, review ordinal, and review mode. Preserve the exact returned run identity, then inspect authoritative run status and findings even when the review returns a policy outcome or typed operational failure.
    Mulgae preserves each accepted Markdown report byte-for-byte and may derive finding candidates through its private internal `002-extract` artifact. Its retry, repair, and extraction paths share the single second provider-invocation slot, so never run that artifact manually or add another review, qualification, heartbeat, extraction, or retry invocation.
 
 For CLI fallback, replace `<target-flag>` with exactly one authorized target and keep the returned `r_...` identity fenced across the reads:
@@ -30,12 +32,12 @@ mulgae findings --run r_... --severity low --output json
 
 The preflight payload must be `mulgae-review-preflight.v3`; every CLI command envelope must be `mulgae-command-result.v4`. Exit `1` is a policy outcome whose envelope still requires inspection. For any typed operational failure or allocated-but-uncertain run identity, inspect status once and stop instead of resubmitting the review.
 7. Treat every finding as an advisory hypothesis. Verify it against the roadmap, current code, and tests before changing anything.
-8. Fix every valid in-scope finding, add regression coverage where useful, and run finding-specific follow-up when supported.
-9. Re-run affected checks and final repository gates after fixes. Preserve the task-owned staging and unrelated-work boundaries established by the orchestrator.
+8. Verify and adjudicate every finding but do not change files. In `remediation-eligible` mode, return valid findings through the owning phase: to the handler when delegated, or to the invoking user with the exact `$aquarium:task-handler` continuation when invoked directly. In `confirmation-only` mode, return them unchanged for required user escalation.
+9. Do not invoke `followup`, `delta`, `rerun`, or another root review inside this bounded invocation. Each is a separate immutable run and cannot bypass or substitute for the handler's next full-target review ordinal. On an incomplete or operationally failed run, follow recovery guidance and return without consuming a round or blindly resubmitting.
 
 ## Bound the Evidence
 
-Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
+Treat a review round as operationally complete only when `coverage_status=complete`, `publication_status=committed`, the findings query succeeds, and the exact run has a terminal authoritative status. Record `ci_decision` independently: a failing decision or `request_changes` outcome still consumes the ordinal but cannot approve the task. Approval additionally requires `ci_decision=pass` and zero unresolved valid findings. Provider success or exit status alone is insufficient.
 
 Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
 
@@ -47,4 +49,4 @@ Verify every finding locally, but bound the orchestrator handoff to counts by se
 
 When more remain, include the omitted count and authoritative run/findings identity or digest. Never include descriptions, quotes, credential-profile paths, or raw provider payloads.
 
-Return the exact target, preflight summary, run and session IDs, command exit codes, findings with dispositions, finding-fix paths, follow-up evidence, and remaining operational gaps to the orchestrator.
+Return the exact target, goal revision, review ordinal and mode, preflight summary, run and session IDs, command exit codes, operational-completion status, CI decision, findings with dispositions, and remaining operational gaps to the orchestrator.
