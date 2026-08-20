@@ -12,7 +12,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "required_false": {
     "name": "mulgae",
@@ -25,7 +25,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "required_absent": {
     "name": "mulgae",
@@ -37,7 +37,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "wrong_command": {
     "name": "mulgae",
@@ -50,7 +50,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "wrong_args": {
     "name": "mulgae",
@@ -63,7 +63,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "wrong_cwd": {
     "name": "mulgae",
@@ -76,7 +76,7 @@
       "cwd": "<wrong-repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "startup_timeout": {
     "name": "mulgae",
@@ -89,7 +89,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 29,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "tool_timeout": {
     "name": "mulgae",
@@ -102,7 +102,20 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 53999
+    "tool_timeout_sec": 7500
+  },
+  "higher_timeout": {
+    "name": "mulgae",
+    "enabled": true,
+    "required": true,
+    "transport": {
+      "type": "stdio",
+      "command": "<mulgae>",
+      "args": ["mcp", "--project-root", "<repository>"],
+      "cwd": "<repository>"
+    },
+    "startup_timeout_sec": 31,
+    "tool_timeout_sec": 7502
   },
   "disabled": {
     "name": "mulgae",
@@ -115,7 +128,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "non_stdio": {
     "name": "mulgae",
@@ -128,7 +141,7 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   },
   "invalid_required": {
     "name": "mulgae",
@@ -141,6 +154,6 @@
       "cwd": "<repository>"
     },
     "startup_timeout_sec": 30,
-    "tool_timeout_sec": 54000
+    "tool_timeout_sec": 7501
   }
 }

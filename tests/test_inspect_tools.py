@@ -121,13 +121,13 @@ class InspectToolsTest(unittest.TestCase):
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.7",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.16",
-        mulgae_output_schema: str = "mulgae-command-result.v4",
+        mulgae_version: str = "v0.1.17",
+        mulgae_output_schema: str = "mulgae-command-result.v5",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
         mulgae_mcp_mode: str | None = None,
         go_version: str = "go1.26.6",
-        gaori_version: str = "0.1.13",
+        gaori_version: str = "0.1.14",
         gaori_config_ok: bool = True,
         malformed_gaori_config: bool = False,
         slow_gaori_config: bool = False,
@@ -167,6 +167,7 @@ class InspectToolsTest(unittest.TestCase):
             "insufficient-timeout": "startup_timeout",
             "startup-timeout": "startup_timeout",
             "tool-timeout": "tool_timeout",
+            "higher-timeout": "higher_timeout",
             "invalid-required": "invalid_required",
         }
         mulgae_mcp_result = (
@@ -427,7 +428,7 @@ class InspectToolsTest(unittest.TestCase):
                         result["enabled"] = "yes" if mode == "enabled-invalid" else mode != "disabled"
                     print(json.dumps(result))
                     raise SystemExit(0)
-                print(json.dumps({{
+                result = {{
                     "name": "gaori",
                     "enabled": mode != "disabled",
                     "transport": {{
@@ -438,8 +439,18 @@ class InspectToolsTest(unittest.TestCase):
                         "env_vars": [],
                         "cwd": None,
                     }},
-                    "tool_timeout_sec": 60,
-                }}))
+                }}
+                if mode != "timeout-absent":
+                    result["tool_timeout_sec"] = (
+                        "3601"
+                        if mode == "timeout-invalid"
+                        else 3600
+                        if mode == "tool-timeout"
+                        else 3602
+                        if mode == "higher-timeout"
+                        else 3601
+                    )
+                print(json.dumps(result))
                 raise SystemExit(0)
             if name == "podway":
                 if arguments == ["version", "--json"]:
@@ -685,7 +696,7 @@ class InspectToolsTest(unittest.TestCase):
             tools["sanho"]["probes"]["status"]["result"]["sync_preview"]["conflict_count"],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.16")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.17")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -712,7 +723,7 @@ class InspectToolsTest(unittest.TestCase):
         zcode = tools["mulgae"]["provider_inventory"][1]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
-        self.assertEqual(tools["gaori"]["version"], "0.1.13")
+        self.assertEqual(tools["gaori"]["version"], "0.1.14")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
         self.assertEqual(tools["gaori"]["agent_skill"]["status"], "missing")
@@ -1085,7 +1096,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.16")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.17")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -1152,8 +1163,9 @@ class InspectToolsTest(unittest.TestCase):
         cases = (
             ("v0.1.14", False, "degraded"),
             ("v0.1.15", False, "degraded"),
-            ("v0.1.16", True, "installed"),
-            ("v0.1.16-rc.1", False, "degraded"),
+            ("v0.1.16", False, "degraded"),
+            ("v0.1.17", True, "installed"),
+            ("v0.1.17-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -1311,7 +1323,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(config["reason_codes"], ["config_yaml_invalid"])
 
     def test_mulgae_legacy_command_envelope_is_unsupported_not_fabricated(self) -> None:
-        self.install_fake_tools(mulgae_output_schema="mulgae-command-result.v3")
+        self.install_fake_tools(mulgae_output_schema="mulgae-command-result.v4")
         self.install_mulgae_config()
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
         self.assertEqual(mulgae["status"], "degraded")
@@ -1370,7 +1382,20 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["codex_version"], "0.147.0")
         self.assertTrue(registration["binary_matches_selected"])
         self.assertEqual(registration["startup_timeout_sec"], 30)
-        self.assertEqual(registration["tool_timeout_sec"], 54000)
+        self.assertEqual(registration["tool_timeout_sec"], 7501)
+
+    def test_mulgae_mcp_registration_accepts_larger_timeouts(self) -> None:
+        self.repository.joinpath(".codex").mkdir()
+        self.repository.joinpath(".codex/config.toml").write_text(
+            "[mcp_servers.mulgae]\n", encoding="utf-8"
+        )
+        self.install_fake_tools(mulgae_mcp_mode="higher-timeout")
+        registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+            "mcp_registration"
+        ]
+        self.assertEqual(registration["status"], "configured")
+        self.assertEqual(registration["startup_timeout_sec"], 31)
+        self.assertEqual(registration["tool_timeout_sec"], 7502)
 
     def test_mulgae_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
@@ -1461,8 +1486,9 @@ class InspectToolsTest(unittest.TestCase):
         cases = (
             ("0.1.11", False, "degraded"),
             ("0.1.12", False, "degraded"),
-            ("0.1.13", True, "configured"),
-            ("v0.1.13-rc.1", False, "degraded"),
+            ("0.1.13", False, "degraded"),
+            ("0.1.14", True, "configured"),
+            ("v0.1.14-rc.1", False, "degraded"),
             ("v0.1.99", True, "configured"),
             ("0.2.0", False, "degraded"),
         )
@@ -1547,14 +1573,34 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(registration["repository_bound"])
         self.assertTrue(registration["command_resolvable"])
         self.assertTrue(registration["binary_matches_selected"])
-        self.assertEqual(registration["tool_timeout_sec"], 60)
+        self.assertEqual(registration["tool_timeout_sec"], 3601)
+
+    def test_gaori_mcp_registration_accepts_larger_timeout(self) -> None:
+        self.repository.joinpath(".codex").mkdir()
+        self.repository.joinpath(".codex/config.toml").write_text(
+            "[mcp_servers.gaori]\n", encoding="utf-8"
+        )
+        self.install_fake_tools(gaori_mcp_mode="higher-timeout")
+        registration = json.loads(self.inspect().stdout)["tools"]["gaori"][
+            "mcp_registration"
+        ]
+        self.assertEqual(registration["status"], "configured")
+        self.assertEqual(registration["tool_timeout_sec"], 3602)
 
     def test_gaori_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
         self.repository.joinpath(".codex/config.toml").write_text(
             "[mcp_servers.gaori]\n", encoding="utf-8"
         )
-        for mode in ("wrong-repo", "disabled", "non-stdio", "missing-command"):
+        for mode in (
+            "wrong-repo",
+            "disabled",
+            "non-stdio",
+            "missing-command",
+            "tool-timeout",
+            "timeout-absent",
+            "timeout-invalid",
+        ):
             with self.subTest(mode=mode):
                 for executable in self.bin_directory.iterdir():
                     executable.unlink()
@@ -1839,7 +1885,7 @@ class InspectToolsTest(unittest.TestCase):
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v4",
+                    "schema_version": "mulgae-command-result.v5",
                     "result": {
                         "kind": "diagnosed",
                         "doctor": {"schema_version": "mulgae-doctor-result.v2"},

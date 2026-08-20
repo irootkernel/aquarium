@@ -16,8 +16,10 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = "aquarium-dev-setup-inspection.v6"
-MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v4"
+MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
+MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
+GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 SANHO_SKILL_FILES = (
     "SKILL.md",
@@ -187,14 +189,14 @@ def supported_gaori_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 13)
+    return bool(match and int(match.group(1)) >= 14)
 
 
 def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 16)
+    return bool(match and int(match.group(1)) >= 17)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -1043,7 +1045,7 @@ def inspect_mulgae_mcp(
     tool_supported = (
         isinstance(tool_timeout, (int, float))
         and not isinstance(tool_timeout, bool)
-        and tool_timeout >= 54000
+        and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
     )
     binary_matches = bool(
         resolved_command
@@ -1309,7 +1311,11 @@ def inspect_gaori_mcp(
         server_mode = bool(args and args[-1] == "mcp")
 
     tool_timeout = result.get("tool_timeout_sec")
-    timeout_supported = tool_timeout in (None, 60)
+    timeout_supported = (
+        isinstance(tool_timeout, (int, float))
+        and not isinstance(tool_timeout, bool)
+        and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
+    )
     binary_matches = bool(
         resolved_command
         and gaori_executable
