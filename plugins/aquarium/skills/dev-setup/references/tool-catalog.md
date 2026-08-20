@@ -56,7 +56,7 @@ For an explicitly requested repair, load and follow the installed `$use-sanho` l
 
 Official source: `https://github.com/irootkernel/mulgae`
 
-Supported release line: stable `v0.1.16` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.15 lacks the prose-first structured-extraction contract, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
+Supported release line: stable `v0.1.17` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.16 lacks the v5 CLI envelope and event-driven MCP review lifecycle required by Aquarium, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
 
 Install an approved tag:
 
@@ -64,7 +64,7 @@ Install an approved tag:
 go install github.com/irootkernel/mulgae@<tag>
 ```
 
-The binary does not install the agent skill. Default setup diagnosis uses only `command -v mulgae`, `mulgae version --json`, and `mulgae doctor --output json`, plus effective Codex MCP inspection when available. Require the `mulgae-command-result.v4` envelope and feature-detect `result.doctor.schema_version=mulgae-doctor-result.v2`. If Doctor v2 is absent, report the capability as unsupported; never fabricate failed dimensions or reconstruct them from `.mulgae/config.yaml` or `.mulgae/local.yaml`.
+The binary does not install the agent skill. Default setup diagnosis uses only `command -v mulgae`, `mulgae version --json`, and `mulgae doctor --output json`, plus effective Codex MCP inspection when available. Require the `mulgae-command-result.v5` envelope and feature-detect `result.doctor.schema_version=mulgae-doctor-result.v2`. If Doctor v2 is absent, report the capability as unsupported; never fabricate failed dimensions or reconstruct them from `.mulgae/config.yaml` or `.mulgae/local.yaml`.
 
 Project Doctor v2 reports `config_v3`, `local_configuration`, `provider_identity`, `configured_readiness`, and `role_route_readiness` independently. Preserve its `verified`, `failed`, `unverifiable`, and `not_applicable` states and each configured `provider_inventory[]` row's `binary_available` and `cli_compatible` fields. Use `cli_compatible.eligibility` as Mulgae's provider-version decision; `newer_than_verified` remains ready when eligibility is `eligible`. Treat setup as configured only when `configured_readiness.state=ready` and `exit_code=0`. Do not gate or report setup on static evidence, heartbeat, historical reviews, or `review_qualified`, and never report native homes, executable paths, credential-profile homes, credentials, diagnostic messages, request IDs, timestamps, or raw provider output.
 
@@ -122,7 +122,7 @@ Mulgae v0.1.16 preserves the accepted Markdown report byte-for-byte, then may us
 
 Track `structured_extraction_status` as an evidence axis independent of review completion: `structured` means structured candidates were derived, `mixed` means only some accepted reports produced them, and `reports_only` means accepted reports remain authoritative without structured candidates. `reports_only` is not itself a failure and never replaces or relaxes capture coverage, CI decision, publication, findings-query, or unresolved-valid-finding requirements.
 
-Setup verification remains limited to version, Doctor v2, and effective MCP registration. The command envelope remains `mulgae-command-result.v4`, Doctor remains `mulgae-doctor-result.v2`, and preflight remains `mulgae-review-preflight.v3`; do not infer new setup probes from extraction support. Doctor's adapter-owned local version command is offline: it uses no credential projection, project working directory, provider API, or network request. Do not inspect config contents or runs, and do not invoke heartbeat, qualification, preflight, review, source transmission, or MCP startup to validate setup.
+Setup verification remains limited to version, Doctor v2, and effective MCP registration. The command envelope is `mulgae-command-result.v5`, Doctor remains `mulgae-doctor-result.v2`, and preflight remains `mulgae-review-preflight.v3`; do not infer new setup probes from extraction or lifecycle support. Doctor's adapter-owned local version command is offline: it uses no credential projection, project working directory, provider API, or network request. Do not inspect config contents or runs, and do not invoke heartbeat, qualification, preflight, review, source transmission, or MCP startup to validate setup.
 
 Heartbeat is outside setup. Only after a separate explicit user request acknowledging possible authentication, network access, cost, and remote logging may an agent propose `mulgae heartbeat --provider <family> --authorize-live-request --output json`, adding `--credential-profile <profile>` only for an explicitly selected named Codex configuration. Never add `--authorize-live-request` automatically. Require `mulgae-provider-heartbeat-result.v1` and preserve its typed `succeeded`, `provider_failure`, `timeout`, `authentication_failure`, `malformed_response`, or `execution_failure` status without retry. Do not promote success into offline readiness or review qualification. Without authorization, preserve Mulgae's `attempted=false` and `live_authorization_required` result.
 
@@ -144,12 +144,12 @@ args = ["mcp", "--project-root", "<absolute-git-root>"]
 cwd = "<absolute-git-root>"
 required = true
 startup_timeout_sec = 30
-tool_timeout_sec = 54000
+tool_timeout_sec = 7501
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify only the effective registration with `codex mcp get mulgae --json`: it must be enabled STDIO, resolve to the selected binary, bind its exact `mcp --project-root <canonical-root>` arguments and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
+Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify only the effective registration with `codex mcp get mulgae --json`: it must be enabled STDIO, resolve to the selected binary, bind its exact `mcp --project-root <canonical-root>` arguments and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults. The 7501-second tool timeout covers the admitted two-hour review deadline plus retry and finalization margin; preserve any larger existing value. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
 
-Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources. The attached MCP surface remains versioned independently; CLI fallback preflight must identify `mulgae-review-preflight.v3`.
+Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `start_review`, `await_review`, `cancel_review`, the foreground-compatible `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources. The v0.1.17 lifecycle starts exactly once and awaits the same process-local invocation without transferring observer cancellation to provider execution; use the foreground path atomically when any lifecycle tool is absent. The attached MCP surface remains versioned independently; CLI fallback preflight must identify `mulgae-review-preflight.v3`.
 
 Verify configuration, provider readiness, skill files, and MCP registration only. Do not start the MCP server or run heartbeat, review, qualification, preflight, follow-up, delta, rerun, report, export, or any command that captures, transmits, or writes review source or artifacts during setup. Mulgae owns its bounded same-provider retry; never add a downstream review, qualification, or heartbeat retry for a final typed failure.
 
@@ -157,7 +157,7 @@ Verify configuration, provider readiness, skill files, and MCP registration only
 
 Official source: `https://github.com/irootkernel/gaori`
 
-Supported release line: stable `v0.1.13` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` skill; v0.1.12 does not provide the required parser and completed-run discovery, bounded redaction measurement, rule-proposal inventory, or seven-tool MCP surface, and do not automatically cross into `v0.2+`.
+Supported release line: stable `v0.1.14` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` skill; v0.1.13 lacks the terminal-only `await_run` surface required by Aquarium, and do not automatically cross into `v0.2+`.
 
 Install an approved tag:
 
@@ -171,7 +171,7 @@ For a new Codex user-scoped skill installation, use only these files from the au
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex if the skill does not appear in the active session.
 
-Discover required checks from repository instructions, task runners, manifests, and CI before proposing `.gaori/tester.yaml` schema version 2. Map each configured command ID to an existing argv array, non-empty tags, explicit parser, and timeout. Use `gaori --json parsers list` as the authoritative live registry before selecting a parser. The v0.1.13 registry has fifteen labels; `dotnet-test` and `gradle-test` are Experimental and their bounded summaries may require manual confirmation. Use `gaori --json parsers detect <raw-log>` only to diagnose an explicitly selected existing log: it reports candidates without selecting a parser, loading configuration, creating evidence, or changing the command result. Do not add secrets, absolute paths, or machine-specific arguments to portable configuration.
+Discover required checks from repository instructions, task runners, manifests, and CI before proposing `.gaori/tester.yaml` schema version 2. Map each configured command ID to an existing argv array, non-empty tags, explicit parser, and timeout. Use `gaori --json parsers list` as the authoritative live registry before selecting a parser. The v0.1.14 registry has fifteen labels; `dotnet-test` and `gradle-test` are Experimental and their bounded summaries may require manual confirmation. Use `gaori --json parsers detect <raw-log>` only to diagnose an explicitly selected existing log: it reports candidates without selecting a parser, loading configuration, creating evidence, or changing the command result. Do not add secrets, absolute paths, or machine-specific arguments to portable configuration.
 
 Gaori is an optional execution and evidence-compression wrapper; it does not create a new test gate, change command authorization, override the child process exit status, or grant acceptance. Keep runtime state local while allowing Git to track portable config and reviewed active rules. Replace a blanket `.gaori/` ignore entry only through an approved exact diff:
 
@@ -195,10 +195,10 @@ Treat MCP as an optional, separately approved project-local component. For a tru
 [mcp_servers.gaori]
 command = "<absolute-selected-gaori-path>"
 args = ["--repo", "<absolute-git-root>", "mcp"]
-tool_timeout_sec = 60
+tool_timeout_sec = 3601
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Never stage it during setup. Verify only the effective registration with `codex mcp get gaori --json`; do not start the server or a test. Report disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted project entries as degraded. Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, `cancel_run`, `get_excerpt`, and the read-only `list_runs` completed-evidence inventory. `list_runs` is stateless and cannot recover an invocation ID or reattach a disconnected run.
+Show the complete diff and whether `.codex/config.toml` is tracked before approval. Never stage it during setup. Verify only the effective registration with `codex mcp get gaori --json`; do not start the server or a test. Require a numeric, non-boolean `tool_timeout_sec` of at least 3601 seconds so the host deadline exceeds a one-hour command and evidence finalization, while preserving any larger existing value. Report missing or inadequate timeout, disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted project entries as degraded. Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, terminal-only `await_run`, `cancel_run`, `get_excerpt`, and the read-only `list_runs` completed-evidence inventory. `await_run` observes one process-local invocation without cancelling execution when that observer ends; use `get_run` or bounded `wait_run` when the host deadline cannot safely cover terminal completion. `list_runs` is stateless and cannot recover an invocation ID or reattach a disconnected run.
 
 ## Lora / Lore
 

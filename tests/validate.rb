@@ -442,11 +442,11 @@ assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        "privacy policy must disclose Podway skill installation")
 assert(gaori_catalog, "Gaori tool catalog section is missing")
 assert(gaori_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
-assert(gaori_catalog.include?("stable `v0.1.13` through `v0.1.x`") &&
+assert(gaori_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
        gaori_catalog.include?("same exact tag") &&
        gaori_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/") &&
-       dev_setup.include?("stable `v0.1.13` through `v0.1.x`") &&
-       ROOT.join("README.md").read.include?("Aquarium supports stable v0.1.13 through v0.1.x"),
+       dev_setup.include?("stable `v0.1.14` through `v0.1.x`") &&
+       ROOT.join("README.md").read.include?("Aquarium supports stable v0.1.14 through v0.1.x"),
        "Gaori CLI and use-gaori must share the supported approved release")
 assert(gaori_catalog.include?("gaori --json config check") &&
        gaori_catalog.include?("gaori --json config check --sample <raw-log>") &&
@@ -461,8 +461,10 @@ assert(gaori_catalog.include?("gaori --json runs list") &&
        gaori_catalog.include?("gaori rules show --proposal <name>"),
        "Gaori read-only evidence and proposal discovery guidance is incomplete")
 assert(gaori_catalog.include?("[mcp_servers.gaori]") &&
-       gaori_catalog.include?("tool_timeout_sec = 60") &&
+       gaori_catalog.include?("tool_timeout_sec = 3601") &&
        gaori_catalog.include?("codex mcp get gaori --json") &&
+       gaori_catalog.include?("terminal-only `await_run`") &&
+       gaori_catalog.include?("at least 3601 seconds") &&
        gaori_catalog.include?("read-only `list_runs`") &&
        gaori_catalog.include?("cannot recover an invocation ID or reattach"),
        "Gaori project-local MCP setup and verification guidance is incomplete")
@@ -505,13 +507,13 @@ assert(agents_reference.include?("$use-gaori") &&
        "AGENTS guidance must conditionally reference use-gaori")
 
 assert(mulgae_catalog, "Mulgae tool catalog section is missing")
-assert(mulgae_catalog.include?("stable `v0.1.16` through `v0.1.x`") &&
+assert(mulgae_catalog.include?("stable `v0.1.17` through `v0.1.x`") &&
        mulgae_catalog.include?("Go `1.26.6` or newer") &&
        mulgae_catalog.include?("same exact tag") &&
        mulgae_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
        mulgae_catalog.include?("~/.agents/skills/use-mulgae") &&
-       dev_setup.include?("stable `v0.1.16` through `v0.1.x`") &&
-       ROOT.join("README.md").read.include?("stable v0.1.16 through v0.1.x"),
+       dev_setup.include?("stable `v0.1.17` through `v0.1.x`") &&
+       ROOT.join("README.md").read.include?("stable v0.1.17 through v0.1.x"),
        "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
 assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
        mulgae_catalog.include?("mode-`0600`") &&
@@ -519,7 +521,7 @@ assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
        mulgae_catalog.include?("mulgae init --refresh-local --output json") &&
        mulgae_catalog.include?("execution.workspace_access: none"),
        "Mulgae split Config v3 setup and ignore guidance is incomplete")
-assert(mulgae_catalog.include?("mulgae-command-result.v4") &&
+assert(mulgae_catalog.include?("mulgae-command-result.v5") &&
        mulgae_catalog.include?("mulgae-doctor-result.v2") &&
        mulgae_catalog.include?("mulgae-provider-heartbeat-result.v1") &&
        mulgae_catalog.include?("authentication_failure") &&
@@ -527,7 +529,7 @@ assert(mulgae_catalog.include?("mulgae-command-result.v4") &&
        mulgae_catalog.include?("mulgae-review-preflight.v3") &&
        mulgae_catalog.include?("Config v1 and v2 are unsupported") &&
        mulgae_catalog.include?("no automatic migration"),
-       "Mulgae v0.1.16 contracts and legacy-config guidance are incomplete")
+       "Mulgae v0.1.17 contracts and legacy-config guidance are incomplete")
 assert(mulgae_catalog.include?("validation.extraction.enabled: true") &&
        mulgae_catalog.include?("disabled/defaulted") &&
        mulgae_catalog.include?("changes shared project policy") &&
@@ -562,8 +564,10 @@ assert(mulgae_catalog.include?("mode-`0700` backup directory") &&
 assert(mulgae_catalog.include?("[mcp_servers.mulgae]") &&
        mulgae_catalog.include?("required = true") &&
        mulgae_catalog.include?("startup_timeout_sec = 30") &&
-       mulgae_catalog.include?("tool_timeout_sec = 54000") &&
-       mulgae_catalog.include?("codex mcp get mulgae --json"),
+       mulgae_catalog.include?("tool_timeout_sec = 7501") &&
+       mulgae_catalog.include?("codex mcp get mulgae --json") &&
+       mulgae_catalog.include?("`start_review`, `await_review`, `cancel_review`") &&
+       mulgae_catalog.include?("preserve any larger existing value"),
        "Mulgae project-local MCP setup and verification guidance is incomplete")
 assert(dev_setup.include?("use-mulgae") &&
        dev_setup.include?("project Config v3 and ignore changes") &&
