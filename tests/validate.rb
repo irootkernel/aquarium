@@ -590,7 +590,10 @@ end
 assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("Do not start a second MCP server") &&
        task_review.include?("mulgae-review-preflight.v3") &&
-       task_review.include?("mulgae-command-result.v4") &&
+       task_review.include?("mulgae-command-result.v5") &&
+       task_review.include?("start exactly once") &&
+       task_review.include?("await_cancelled") &&
+       task_review.include?("never repeat `start_review`") &&
        task_review.include?("mulgae status --run r_... --output json") &&
        task_review.include?("mulgae findings --run r_... --severity low --output json") &&
        task_review.include?("at most 20 highest-severity records") &&
@@ -618,6 +621,8 @@ assert(task_verify.include?("original documented test command directly") &&
        task_verify.include?("Gaori evidence compression was unavailable") &&
        task_verify.include?("artifact `status`, `extractor_status`, and truncation") &&
        task_verify.include?("read-only `list_runs`") &&
+       task_verify.include?("followed by `await_run` on the same invocation") &&
+       task_verify.include?("Never repeat the start") &&
        !task_verify.include?("all six connected MCP tools"),
        "task-verify must preserve Gaori fallback and evidence boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&

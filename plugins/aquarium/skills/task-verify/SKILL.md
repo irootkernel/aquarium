@@ -36,7 +36,11 @@ Before running a check, account for current user-run evidence:
 
 Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when Gaori or another evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists. Stop and escalate to the orchestrator when a required gate is permanently blocked by repository policy, environment, or authority; never substitute a narrower check for it.
 
-When a selected long or noisy check is routed through Gaori, reference `$use-gaori` and follow its current CLI-or-MCP workflow when available. The installed skill decides between all connected Gaori MCP tools, including read-only `list_runs` discovery for completed standalone evidence, and the CLI fallback; do not reconstruct its execution, cancellation, cleanup, artifact, or recovery procedure here.
+When a selected long or noisy check is routed through Gaori, reference `$use-gaori` and follow its current CLI-or-MCP workflow when available.
+
+- Prefer one `start_configured_run` or `start_ad_hoc_run` followed by `await_run` on the same invocation when the complete tool surface is connected and the effective host timeout covers the command plus evidence finalization.
+- When that deadline is missing, unverified, or inadequate, preserve the invocation and use `get_run` or bounded `wait_run` observation instead. Never repeat the start merely because an await was cancelled or timed out.
+- The installed skill owns read-only `list_runs` discovery for completed standalone evidence and the CLI fallback. Do not reconstruct its execution, cancellation, cleanup, artifact, or recovery procedure here.
 
 If the skill is unavailable and repository guidance requires it, return an exact `$aquarium:dev-setup` continuation request. Otherwise run the repository's original documented test command directly and report that Gaori evidence compression was unavailable; if the original command cannot be established from repository authority, leave an evidence gap instead of inferring it from conversation memory.
 
