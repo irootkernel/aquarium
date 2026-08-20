@@ -7,6 +7,10 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 Verify the implemented task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff.
 
+Read [design-gates.md](../../references/design-gates.md). Resolve the effective Design Gate impact from the task first and then its parent epic, applying the documented legacy-only `Not required` rule when neither marker exists. Stop when the effective marker is missing in an enrolled repository or is `Pending`.
+
+For every inherited or task-explicit resolved active `GATE-*` ID, run its registered local offline procedure against the exact task snapshot with declared outputs and caches redirected to a disposable root, capture the objective pass condition and outcome, and verify that source-repository status is unchanged. Keep missing, stale, failed, mutating, or unexecutable gate evidence as a verification blocker.
+
 ## Build the Requirement-to-Test Matrix
 
 Build a requirement-to-test matrix from the roadmap rather than assuming fixed test folders. Consider only applicable layers:

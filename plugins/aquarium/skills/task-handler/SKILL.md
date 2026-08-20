@@ -13,12 +13,11 @@ Otherwise read the contract, own one `aquarium-task-v2` session for this canonic
 
 ## Establish the Task Contract
 
-Require one repository or working directory, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic-level requests, multiple tasks, requests without one canonical roadmap task identity, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
-
-Before planning:
+Require one mutable Git repository or a working directory inside it, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic-level requests, multiple tasks, requests without one canonical roadmap task identity, non-Git work, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
 
 1. Resolve the Git root and read every applicable instruction file.
-2. Read the roadmap entry and its linked specifications, decisions, contracts, and required artifacts.
+2. Read the roadmap entry, parent epic, linked authority, required artifacts, and [design-gates.md](../../references/design-gates.md). Resolve the effective `Design Gate impact` from the task first and then its parent epic. For a legacy repository with no enrolled current registry, record the reason before treating a missing marker as `Not required`; for an enrolled registry, treat a missing effective marker as a contract gap.
+   Stop before plan approval or implementation when the effective marker is missing or `Pending`. Resume only after an explicit `$aquarium:design-qa` run documents the marker as `Not required` or active `GATE-*` IDs.
 3. Inspect branch, upstream, staged, unstaged, untracked, and conflicted state. Separate task-owned work from pre-existing work.
 4. Discover repository-native build, verification, documentation synchronization, Gaori, `$use-gaori`, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, and Lore guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state.
 5. Record authority already granted for mutation, staging, review, commit, amend, push, PR changes, provider use, and destructive actions.

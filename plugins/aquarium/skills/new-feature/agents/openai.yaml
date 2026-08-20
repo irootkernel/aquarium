@@ -1,0 +1,6 @@
+interface:
+  display_name: "New Feature"
+  short_description: "Shape one feature epic"
+  default_prompt: "Use $aquarium:new-feature to draft one feature epic and its Design Gate impact without implementation."
+policy:
+  allow_implicit_invocation: false

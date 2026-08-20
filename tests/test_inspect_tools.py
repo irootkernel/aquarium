@@ -77,6 +77,7 @@ class InspectToolsTest(unittest.TestCase):
         repository: Path | None = None,
         timeout_seconds: float = 3.0,
         include_podway: bool = False,
+        include_ouroboros: bool = False,
         require_mulgae_mcp: bool = False,
     ) -> subprocess.CompletedProcess[str]:
         arguments = [
@@ -87,6 +88,8 @@ class InspectToolsTest(unittest.TestCase):
         ]
         if include_podway:
             arguments.append("--include-podway")
+        if include_ouroboros:
+            arguments.append("--include-ouroboros")
         if require_mulgae_mcp:
             arguments.append("--require-mulgae-mcp")
         return self.run_script(*arguments)
@@ -141,6 +144,12 @@ class InspectToolsTest(unittest.TestCase):
         podway_output_schema: str = "podway.output/v3",
         podway_status_result_schema: str = "podway.status-result/v3",
         podway_legacy_state: bool = False,
+        ouroboros_version: str | None = None,
+        ouroboros_version_ok: bool = True,
+        ouroboros_codex_doctor_ok: bool = True,
+        ouroboros_mcp_doctor_ok: bool = True,
+        ouroboros_mcp_doctor_malformed: bool = False,
+        ouroboros_mcp_mode: str | None = None,
     ) -> None:
         mulgae_mcp_fixture_names = {
             "configured": "required_true",
@@ -372,6 +381,17 @@ class InspectToolsTest(unittest.TestCase):
                     print("not-json" if {malformed_gaori_config!r} else json.dumps({{"schema_version": 2, "commands": ["unit"], "rules": {{"active": 0}}}}))
                     raise SystemExit(0 if {gaori_config_ok!r} else 2)
                 raise SystemExit(2)
+            if name == "ooo":
+                if arguments == ["--version"]:
+                    print("Ouroboros version " + {ouroboros_version!r})
+                    raise SystemExit(0 if {ouroboros_version_ok!r} else 1)
+                if arguments == ["codex", "doctor"]:
+                    print("Codex integration OK" if {ouroboros_codex_doctor_ok!r} else "Codex integration degraded")
+                    raise SystemExit(0 if {ouroboros_codex_doctor_ok!r} else 1)
+                if arguments == ["mcp", "doctor", "--json"]:
+                    print("not-json" if {ouroboros_mcp_doctor_malformed!r} else json.dumps([{{"name": "runtime", "status": "pass" if {ouroboros_mcp_doctor_ok!r} else "fail"}}]))
+                    raise SystemExit(0 if {ouroboros_mcp_doctor_ok!r} else 1)
+                raise SystemExit(2)
             if name == "codex":
                 if arguments == ["--version"]:
                     print("codex-cli 0.147.0")
@@ -379,13 +399,33 @@ class InspectToolsTest(unittest.TestCase):
                 if len(arguments) != 4 or arguments[:2] != ["mcp", "get"] or arguments[3] != "--json":
                     raise SystemExit(2)
                 server = arguments[2]
-                mode = {mulgae_mcp_mode!r} if server == "mulgae" else {gaori_mcp_mode!r}
+                mode = (
+                    {mulgae_mcp_mode!r}
+                    if server == "mulgae"
+                    else {gaori_mcp_mode!r}
+                    if server == "gaori"
+                    else {ouroboros_mcp_mode!r}
+                )
                 if mode == "missing":
-                    print(f"No MCP server named {{server}} found", file=sys.stderr)
+                    print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
                     raise SystemExit(1)
+                if mode == "timeout":
+                    time.sleep(4)
+                if mode == "probe-failure":
+                    print("secret registration failure", file=sys.stderr)
+                    raise SystemExit(2)
                 repository = {str(self.repository)!r} if mode != "wrong-repo" else "/tmp/wrong-repo"
                 if server == "mulgae":
                     print(json.dumps({mulgae_mcp_result!r}))
+                    raise SystemExit(0)
+                if server == "ouroboros":
+                    if mode == "malformed":
+                        print("not-json")
+                        raise SystemExit(0)
+                    result = {{"name": "ouroboros", "transport": {{"type": "stdio", "command": "ooo", "args": ["mcp", "serve"]}}}}
+                    if mode != "enabled-absent":
+                        result["enabled"] = "yes" if mode == "enabled-invalid" else mode != "disabled"
+                    print(json.dumps(result))
                     raise SystemExit(0)
                 print(json.dumps({{
                     "name": "gaori",
@@ -440,7 +480,13 @@ class InspectToolsTest(unittest.TestCase):
             """
         )
         names = ["go", "sanho", "mulgae", "gaori", "podway"]
-        if gaori_mcp_mode is not None or mulgae_mcp_mode is not None:
+        if ouroboros_version is not None:
+            names.append("ooo")
+        if (
+            gaori_mcp_mode is not None
+            or mulgae_mcp_mode is not None
+            or ouroboros_mcp_mode is not None
+        ):
             names.append("codex")
         for name in names:
             executable = self.bin_directory / name
@@ -549,7 +595,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v4"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v5"
         )
         self.assertEqual(
             payload["repository"]["worktree"],
@@ -716,6 +762,8 @@ class InspectToolsTest(unittest.TestCase):
                 ".podway/procedures/aquarium-task-v2.yaml",
                 ".podway/procedures/aquarium-goal-v2.yaml",
                 ".podway/procedures/aquarium-validation-v2.yaml",
+                ".podway/procedures/aquarium-design-v2.yaml",
+                ".podway/procedures/aquarium-war-room-v2.yaml",
             ],
         )
         for entry in managed:
@@ -1546,7 +1594,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
         self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v4"
+            payload["schema_version"], "aquarium-dev-setup-inspection.v5"
         )
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertIn("--repository", payload["error"]["message"])
@@ -1695,6 +1743,192 @@ class InspectToolsTest(unittest.TestCase):
             payload = inspect_tools.inspect(str(self.repository), 3.0)
         podway_inspector.assert_not_called()
         self.assertNotIn("podway", payload["tools"])
+
+    def test_default_inspection_does_not_call_ouroboros_inspector(self) -> None:
+        with mock.patch("inspect_tools.inspect_ouroboros") as ouroboros_inspector:
+            payload = inspect_tools.inspect(str(self.repository), 3.0)
+        ouroboros_inspector.assert_not_called()
+        self.assertNotIn("ouroboros", payload["tools"])
+
+    def test_ouroboros_supports_only_the_selected_minor_line(self) -> None:
+        expected = {
+            "0.51.0": False,
+            "0.51.1": True,
+            "v0.51.9": True,
+            "0.50.9": False,
+            "0.52.0": False,
+        }
+        for version, supported in expected.items():
+            with self.subTest(version=version):
+                self.assertEqual(
+                    inspect_tools.supported_ouroboros_version(version), supported
+                )
+
+    def test_ouroboros_version_parser_removes_terminal_formatting(self) -> None:
+        output = "\x1b[1mOuroboros\x1b[0m version \x1b[1m0.51\x1b[0m.\x1b[1m1\x1b[0m\n"
+        self.assertEqual(
+            inspect_tools.ouroboros_version_from_output(output), "0.51.1"
+        )
+
+    def test_ouroboros_version_parser_reports_unsupported_major(self) -> None:
+        output = "runtime 9.9.9\nOuroboros version 1.0.0\n"
+        version = inspect_tools.ouroboros_version_from_output(output)
+        self.assertEqual(version, "1.0.0")
+        self.assertFalse(inspect_tools.supported_ouroboros_version(version))
+
+    def test_installed_ouroboros_reports_configured_components(self) -> None:
+        self.install_fake_tools(
+            ouroboros_version="0.51.1", ouroboros_mcp_mode="configured"
+        )
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertEqual(ouroboros["version"], "0.51.1")
+        self.assertTrue(ouroboros["version_supported"])
+        self.assertEqual(ouroboros["codex_integration"]["status"], "configured")
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "configured")
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
+        self.assertEqual(ouroboros["status"], "configured")
+        self.assertNotIn("name", ouroboros)
+
+    def test_installed_ouroboros_keeps_component_failures_independent(self) -> None:
+        cases = (
+            ("codex", False, True, "degraded", "configured"),
+            ("mcp", True, False, "configured", "degraded"),
+        )
+        for name, codex_ok, mcp_ok, codex_status, mcp_status in cases:
+            with self.subTest(component=name):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.1",
+                    ouroboros_codex_doctor_ok=codex_ok,
+                    ouroboros_mcp_doctor_ok=mcp_ok,
+                    ouroboros_mcp_mode="configured",
+                )
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertEqual(
+                    ouroboros["codex_integration"]["status"], codex_status
+                )
+                self.assertEqual(ouroboros["mcp_runtime"]["status"], mcp_status)
+                self.assertEqual(
+                    ouroboros["mcp_registration"]["status"], "configured"
+                )
+                self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_ouroboros_version_failures_and_unsupported_versions_degrade(self) -> None:
+        for version, version_ok in (("0.52.0", True), ("0.51.1", False)):
+            with self.subTest(version=version, version_ok=version_ok):
+                self.install_fake_tools(
+                    ouroboros_version=version,
+                    ouroboros_version_ok=version_ok,
+                    ouroboros_mcp_mode="configured",
+                )
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertFalse(ouroboros["version_supported"])
+                self.assertEqual(ouroboros["probes"]["version"]["ok"], version_ok)
+                self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_ouroboros_malformed_mcp_doctor_json_degrades_runtime(self) -> None:
+        self.install_fake_tools(
+            ouroboros_version="0.51.1",
+            ouroboros_mcp_doctor_malformed=True,
+            ouroboros_mcp_mode="configured",
+        )
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "degraded")
+        self.assertEqual(
+            ouroboros["mcp_runtime"]["probe"]["error_code"], "invalid_json"
+        )
+        self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_ouroboros_registration_requires_explicit_enabled_true(self) -> None:
+        expected_reasons = {
+            "disabled": "registration_disabled",
+            "enabled-absent": "registration_enabled_missing",
+            "enabled-invalid": "registration_enabled_invalid",
+            "malformed": "registration_invalid_json",
+        }
+        for mode, reason in expected_reasons.items():
+            with self.subTest(mode=mode):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
+                )
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertEqual(
+                    ouroboros["mcp_registration"]["status"], "degraded"
+                )
+                self.assertEqual(
+                    ouroboros["mcp_registration"]["probe"]["reason"], reason
+                )
+                self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_ouroboros_registration_missing_is_distinct_from_probe_failure(self) -> None:
+        for mode, status, reason in (
+            ("missing", "missing", "registration_not_found"),
+            ("probe-failure", "degraded", "registration_probe_failed"),
+            ("timeout", "degraded", "registration_probe_timed_out"),
+        ):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
+                )
+                completed = self.inspect(
+                    include_ouroboros=True,
+                    timeout_seconds=0.05 if mode == "timeout" else 3.0,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                self.assertNotIn("secret registration failure", completed.stdout)
+                registration = json.loads(completed.stdout)["tools"]["ouroboros"][
+                    "mcp_registration"
+                ]
+                self.assertEqual(registration["status"], status)
+                self.assertEqual(registration["probe"]["reason"], reason)
+
+    def test_missing_ouroboros_still_inspects_codex_registration(self) -> None:
+        self.install_fake_tools(ouroboros_mcp_mode="configured")
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertFalse(ouroboros["installed"])
+        self.assertEqual(ouroboros["status"], "missing")
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
+        self.assertEqual(
+            ouroboros["probes"]["version"]["reason"], "executable_missing"
+        )
+
+    def test_installed_ouroboros_reports_registration_unverifiable_without_codex(
+        self,
+    ) -> None:
+        self.install_fake_tools(ouroboros_version="0.51.1")
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
+        self.assertEqual(
+            ouroboros["mcp_registration"]["probe"]["reason"],
+            "codex_executable_missing",
+        )
+        self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_explicit_ouroboros_inspection_reports_independent_components(self) -> None:
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertEqual(ouroboros["supported_range"], ">=0.51.1,<0.52.0")
+        self.assertEqual(ouroboros["status"], "missing")
+        self.assertEqual(ouroboros["codex_integration"]["status"], "missing")
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "missing")
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
+        self.assertEqual(
+            ouroboros["probes"]["version"]["reason"], "executable_missing"
+        )
 
     def test_supported_platform_readiness_is_verified_on_any_host(self) -> None:
         self.install_fake_tools()

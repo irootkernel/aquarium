@@ -1,0 +1,6 @@
+interface:
+  display_name: "War Room"
+  short_description: "Diagnose a difficult bug"
+  default_prompt: "Use $aquarium:war-room to diagnose one difficult bug and propose a task, epic, or incomplete result."
+policy:
+  allow_implicit_invocation: false

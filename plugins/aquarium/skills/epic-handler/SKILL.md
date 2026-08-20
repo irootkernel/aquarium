@@ -15,6 +15,10 @@ Otherwise read the contract and own one `aquarium-goal-v2` session per member-ta
 
 Require one mutable Git repository, one canonical roadmap path inside that repository, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, requests without one canonical roadmap epic identity, and external roadmap authorities. Inspect another repository read-only only when the roadmap explicitly names it; never mutate or create a goal for it.
 
+Read [design-gates.md](../../references/design-gates.md). Resolve every member task's effective `Design Gate impact` from the task first and then the epic before plan approval. Apply the documented legacy-only `Not required` rule when neither marker exists; in an enrolled repository, a missing effective marker is a contract gap.
+
+Stop before plan approval or implementation when any selected work is missing or `Pending`, and require an explicit `$aquarium:design-qa` run to document it. Carry every resolved active `GATE-*` ID into the plan, task checks, and final seam audit.
+
 Before requesting approval:
 
 1. Read repository instructions, the epic, every member task, linked authority, required artifacts, and explicit dependencies.

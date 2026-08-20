@@ -54,11 +54,15 @@ end
 
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
+  design-qa
   deslop
   dev-setup
   epic-handler
   epic-validator
   independent-review
+  new-feature
+  new-project
+  refactor
   release-qa
   task-close
   task-commit
@@ -69,6 +73,7 @@ expected_skill_names = %w[
   task-refine
   task-review
   task-verify
+  war-room
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
        "plugin skill set does not match the expected skills")
@@ -97,7 +102,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[deslop lora lore orchestration podway release qa] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[design deslop lora lore orchestration ouroboros podway release qa] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.8", "plugin version must be 0.1.8")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -105,12 +110,15 @@ unless release_tag.empty?
          "release tag #{release_tag} must match plugin version v#{manifest.fetch('version')}")
 end
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
-assert(manifest.dig("interface", "longDescription").include?("release-candidate QA"),
-       "plugin description must advertise release QA")
+assert(manifest.dig("interface", "longDescription").include?("release-candidate QA") &&
+       manifest.dig("interface", "longDescription").include?("Design Gates"),
+       "plugin description must advertise release QA and Design Gates")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
 prompts = manifest.fetch("interface").fetch("defaultPrompt")
 assert(prompts.is_a?(Array) && prompts.length == 2, "plugin defaultPrompt must contain two prompts")
+assert(prompts.any? { |prompt| prompt.include?("$aquarium:dev-setup") },
+       "plugin defaultPrompt must retain development-tool discovery")
 %w[websiteURL privacyPolicyURL termsOfServiceURL].each do |key|
   assert(manifest.fetch("interface").fetch(key).start_with?("https://"), "missing interface #{key}")
 end
@@ -155,6 +163,7 @@ tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
 gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
+ouroboros_catalog = tool_catalog[/^## Ouroboros\n.*\z/m]
 epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
@@ -169,14 +178,44 @@ task_document = PLUGIN.join("skills/task-document/SKILL.md").read
 task_review = PLUGIN.join("skills/task-review/SKILL.md").read
 task_close = PLUGIN.join("skills/task-close/SKILL.md").read
 task_commit = PLUGIN.join("skills/task-commit/SKILL.md").read
+design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
+new_project = PLUGIN.join("skills/new-project/SKILL.md").read
+new_feature = PLUGIN.join("skills/new-feature/SKILL.md").read
+refactor = PLUGIN.join("skills/refactor/SKILL.md").read
+war_room = PLUGIN.join("skills/war-room/SKILL.md").read
+ouroboros_contract = PLUGIN.join("references/ouroboros-integration.md").read
+design_gate_contract = PLUGIN.join("references/design-gates.md").read
 
 assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
-assert(dev_setup.include?("default inspection omits Podway completely") &&
-       dev_setup.include?("--include-podway"),
-       "dev-setup must probe Podway only after explicit selection")
+assert(dev_setup.include?("default inspection omits Podway and Ouroboros completely") &&
+       dev_setup.include?("--include-podway") &&
+       dev_setup.include?("--include-ouroboros"),
+       "dev-setup must probe Podway and Ouroboros only after explicit selection")
+
+assert(dev_setup.include?(">=0.51.1,<0.52.0") &&
+       dev_setup.include?("uv tool install ouroboros-ai==<exact-version>") &&
+       dev_setup.include?("ooo codex refresh") &&
+       dev_setup.include?("ooo setup --runtime codex --non-interactive --mcp-mode auto") &&
+       dev_setup.include?("three separate persistent mutations") &&
+       dev_setup.include?("must not call an Ouroboros provider"),
+       "dev-setup must separate pinned Ouroboros installation, Codex refresh, runtime setup, and provider authority")
+assert(ouroboros_catalog &&
+       ouroboros_catalog.include?("ooo --version") &&
+       ouroboros_catalog.include?("ooo codex doctor") &&
+       ouroboros_catalog.include?("ooo mcp doctor --json") &&
+       ouroboros_catalog.include?("codex mcp get ouroboros --json") &&
+       ouroboros_catalog.include?("Registration is `configured` only") &&
+       ouroboros_catalog.include?("`missing` only for Codex's definite named-server-not-found response") &&
+       ouroboros_catalog.include?("never expose raw registration stderr") &&
+       ouroboros_catalog.include?("local and read-only") &&
+       ouroboros_catalog.include?("do not contact a provider, initiate authentication, or make a network request"),
+       "Ouroboros catalog must diagnose CLI, Codex integration, runtime, and registration independently")
+assert(dev_setup.include?("Sanho, Mulgae, Gaori, and Podway selection choices") &&
+       dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
+       "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
 proposal_index = dev_setup.index("Ask whether to prepare")
 diff_index = dev_setup.index("Display the exact target path")
 apply_index = dev_setup.index("Apply exactly this diff")
@@ -194,7 +233,7 @@ assert(dev_setup.include?("Do not use for routine supported Procedure v2 session
        "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
 assert(dev_setup.include?("Do not create or read `.aquarium`"),
        "dev-setup must not create shadow orchestration state")
-selection_disclosure_index = dev_setup.index("Disclose in these four tools' selection choices")
+selection_disclosure_index = dev_setup.index("Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices")
 comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
 assert(selection_disclosure_index && comparison_index && action_approval_index &&
@@ -264,6 +303,10 @@ assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes re
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
        "public documentation must disclose release-qa network and private-repository authentication boundaries")
+assert(ROOT.join("PRIVACY.md").read.include?("The selected `ooo --version`") &&
+       ROOT.join("PRIVACY.md").read.include?("do not contact a provider, initiate authentication, or make a network request") &&
+       ROOT.join("PRIVACY.md").read.include?("without exposing credential material"),
+       "privacy policy must disclose the local Ouroboros diagnosis boundary")
 assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
@@ -351,8 +394,9 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
 assert(ROOT.join("README.md").read.include?("v0.2.5 through v0.2.x") &&
        ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
        "public Podway support and optional skill guidance are missing")
-assert(ROOT.join("README.md").read.include?("selects Podway by default") &&
-       ROOT.join("README.md").read.include?("opt the current task, epic, or validation out") &&
+assert(ROOT.join("README.md").read.include?("Git-backed design workflows use") &&
+       ROOT.join("README.md").read.include?("selects Podway by default") &&
+       ROOT.join("README.md").read.include?("opt the current Git-backed workflow out") &&
        ROOT.join("README.md").read.include?("before its first managed-session mutation"),
        "public Podway guidance must document default use and pre-session opt-out")
 assert(ROOT.join("README.md").read.include?("Degraded readiness routes to `dev-setup` repair") &&
@@ -688,6 +732,73 @@ assert(task_handler.include?("missing or unhealthy tooling or readiness prerequi
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
 assert(task_handler.lines.length < 105, "task-handler must remain orchestration-focused")
 
+{
+  "new-project" => new_project,
+  "new-feature" => new_feature,
+  "refactor" => refactor,
+  "war-room" => war_room,
+  "design-qa" => design_qa,
+}.each do |name, body|
+  assert(body.include?("ouroboros-integration.md") && body.include?("design-gates.md"),
+         "#{name} must use the shared Ouroboros and Design Gate contracts")
+  assert(body.include?("exact") && body.match?(/explicit approval/i),
+         "#{name} must gate durable document changes on exact-diff approval")
+end
+assert(new_project.include?("PRD and an initial roadmap") &&
+       new_project.include?("non-Git project") &&
+       new_project.include?("skip Podway completely") &&
+       new_project.include?("gate creation requires a later explicit"),
+       "new-project must stop at PRD and roadmap and keep non-Git work Podway-free")
+assert(new_feature.include?("exactly one feature epic") &&
+       refactor.include?("exactly one refactor epic") &&
+       refactor.include?("compatibility") && refactor.include?("rollback"),
+       "feature and refactor skills must produce one bounded epic")
+assert(war_room.include?("Do not implement a fix") &&
+       war_room.include?("bounded task") && war_room.include?("multi-work-unit epic") &&
+       war_room.include?("investigation incomplete") &&
+       war_room.include?("record its adjudicated result at `quality`") &&
+       war_room.include?("zero unresolved locally valid findings"),
+       "war-room must stop at diagnosis and one work-unit classification")
+assert(design_qa.include?("docs/gating-rules.md") &&
+       design_qa.include?("docs/gating-rules-retired.md") &&
+       design_qa.include?("authoritative current and retired registry paths") &&
+       design_qa.include?("concise title") &&
+       design_qa.include?("local offline") &&
+       design_qa.include?("tombstone") &&
+       design_qa.include?("impacted roadmap-marker diff") &&
+       design_qa.include?("retain the retired history"),
+       "design-qa must own executable current gates and retired bodies")
+assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") &&
+       ouroboros_contract.include?("blocks these Ouroboros-assisted workflows") &&
+       ouroboros_contract.include?("<owner-skill>:<canonical-identity>") &&
+       ouroboros_contract.include?("Do not let Ouroboros create or edit repository files directly") &&
+       ouroboros_contract.include?("`auto`, `run`, `ralph`, or `evolve`") &&
+       ouroboros_contract.include?("Podway-blind") &&
+       ouroboros_contract.include?("full provider prompts, transcripts"),
+       "shared Ouroboros contract must bound versions, execution, writes, Podway, and stored evidence")
+assert(design_gate_contract.include?("Design Gate impact") &&
+       design_gate_contract.include?("authoritative current and retired registry paths together") &&
+       design_gate_contract.include?("derive the retired path as its sibling") &&
+       design_gate_contract.include?("Every newly authored implementation work unit") &&
+       design_gate_contract.include?("inherit its parent epic's marker") &&
+       design_gate_contract.include?("missing effective marker is a contract gap") &&
+       design_gate_contract.include?("leaves the source repository unchanged") &&
+       design_gate_contract.include?("Reactivation replaces") &&
+       design_gate_contract.include?("must never have both an active body and a current tombstone") &&
+       design_gate_contract.include?("`Pending` blocks implementation") &&
+       design_gate_contract.include?("Only `$aquarium:design-qa`") &&
+       design_gate_contract.include?("Design Gate not enrolled") &&
+       design_gate_contract.include?("absence from the candidate is a contract finding"),
+       "Design Gate contract must define ownership, implementation blocking, and gradual enrollment")
+assert(task_handler.include?("Resolve the effective `Design Gate impact` from the task first and then its parent epic") &&
+       task_handler.include?("Stop before plan approval or implementation when the effective marker is missing or `Pending`") &&
+       epic_handler.include?("Resolve every member task's effective `Design Gate impact` from the task first and then the epic") &&
+       task_verify.include?("For every inherited or task-explicit resolved active `GATE-*` ID") &&
+       task_verify.include?("source-repository status is unchanged") &&
+       epic_validator.include?("integration seam") &&
+       task_document.include?("must not create, change, reactivate, retire"),
+       "delivery workflows must consume Design Gates without taking registry ownership")
+
 podway_reference = PLUGIN.join("references/podway-integration.md")
 assert(podway_reference.file?, "shared Podway integration contract is missing")
 podway_contract = podway_reference.read
@@ -719,7 +830,14 @@ assert(podway_contract.include?("## Record Terminal Ownership Conservatively") &
        podway_contract.include?("never choose force reset or force replacement automatically") &&
        podway_contract.include?("start --replace-eligible"),
        "Podway terminal disposition and eligible replacement policy is incomplete")
-assert(podway_contract.include?("Only `task-handler`, `epic-handler`, and `epic-validator` may own or advance") &&
+assert(podway_contract.include?("## Hand Off Across Workflow Owners") &&
+       podway_contract.include?("replace-after-disposition, never automatic resume") &&
+       podway_contract.include?("stable artifact reference") &&
+       podway_contract.include?("successor includes replacement") &&
+       podway_contract.include?("current eligible `session.start_replace` template") &&
+       podway_contract.include?("never force replacement"),
+       "Podway cross-owner handoff must be explicit, verified, and fenced")
+assert(podway_contract.include?("Only `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa` may own or advance") &&
        podway_contract.include?("standalone user request that explicitly invokes `$use-podway`") &&
        podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis") &&
        podway_contract.include?("`$aquarium:task-commit` may inspect only bounded read-only current-session facts") &&
@@ -732,11 +850,11 @@ assert(podway_contract.include?("$use-podway") &&
 assert(podway_contract.include?("readiness_status=not_configured") &&
        podway_contract.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED"),
        "Podway readiness absence and legacy runtime state are not distinguished")
-assert(podway_contract.include?("Select Podway by default for every invocation") &&
+assert(podway_contract.include?("Select Podway by default for every Git-backed invocation") &&
        podway_contract.include?("before its managed session starts") &&
        podway_contract.include?("never carry an opt-out forward implicitly"),
        "Podway must be default-selected with a workflow-local pre-session opt-out")
-assert(podway_contract.include?("handler invocation selects Podway by default") &&
+assert(podway_contract.include?("owning Aquarium invocation selects Podway by default") &&
        podway_contract.include?("invisible to that workflow"),
        "Podway availability must remain separate from handler selection")
 assert(podway_contract.include?("choose between repair") &&
@@ -745,7 +863,7 @@ assert(podway_contract.include?("choose between repair") &&
 assert(podway_contract.include?("healthy supported Procedure v2 session conflict as a lifecycle conflict") &&
        podway_contract.include?("different, mismatched, prepared, completed, cancelled, or unfinished current session") &&
        podway_contract.include?("never route it to `$aquarium:dev-setup` repair") &&
-       podway_contract.include?("resume unfinished work through its matching handler") &&
+       podway_contract.include?("resume unfinished work through its matching owner") &&
        podway_contract.include?("standalone explicit `$use-podway` request") &&
        podway_contract.include?("naming the repository and observed session ID"),
        "healthy Podway session conflicts must route to lifecycle ownership, not setup repair")
@@ -801,14 +919,24 @@ assert(agents_reference.include?("$use-podway") &&
 assert(agents_reference.include?("use Podway by default") &&
        agents_reference.include?("opts out before the first managed-session mutation") &&
        agents_reference.include?("cancellation, or current-session discard flow") &&
-       agents_reference.include?("Keep each handler opt-out local"),
+       agents_reference.include?("$aquarium:new-project") &&
+       agents_reference.include?("$aquarium:war-room") &&
+       agents_reference.include?("$aquarium:design-qa") &&
+       agents_reference.include?("Keep each owner opt-out local"),
        "AGENTS guidance must preserve default use and workflow-local opt-out")
 
+required_evidence = ->(*nodes) { nodes.map { |node| [node, true] } }
 expected_procedure_graphs = {
   "aquarium-task-v2.yaml" => {
     "id" => "aquarium-task-v2",
     "entry" => "record-plan",
     "manual_targets" => %w[implement verify refine document review],
+    "evidence" => {
+      "decide-verification" => required_evidence.call("implement", "verify"),
+      "decide-review" => required_evidence.call("review"),
+      "assess-goal" => required_evidence.call("record-plan", "implement", "verify", "refine", "document", "review"),
+      "approve-closeout" => required_evidence.call("assess-goal", "record-outcome")
+    },
     "nodes" => {
       "record-plan" => { "next" => "implement" },
       "implement" => { "next" => "verify" },
@@ -828,6 +956,10 @@ expected_procedure_graphs = {
     "id" => "aquarium-goal-v2",
     "entry" => "complete-work",
     "manual_targets" => %w[complete-work record-evidence],
+    "evidence" => {
+      "decide-evidence" => required_evidence.call("complete-work", "record-evidence"),
+      "assess-goal" => required_evidence.call("complete-work", "record-evidence")
+    },
     "nodes" => {
       "complete-work" => { "next" => "record-evidence" },
       "record-evidence" => { "next" => "decide-evidence" },
@@ -840,6 +972,12 @@ expected_procedure_graphs = {
     "id" => "aquarium-validation-v2",
     "entry" => "capture-baseline",
     "manual_targets" => %w[audit remediate re-audit final-review],
+    "evidence" => {
+      "decide-gaps" => required_evidence.call("audit"),
+      "decide-re-audit" => required_evidence.call("remediate", "re-audit"),
+      "decide-final-review" => required_evidence.call("final-review"),
+      "assess-goal" => required_evidence.call("capture-baseline", "final-review")
+    },
     "nodes" => {
       "capture-baseline" => { "next" => "audit" },
       "audit" => { "next" => "decide-gaps" },
@@ -849,6 +987,56 @@ expected_procedure_graphs = {
       "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate rework] } },
       "final-review" => { "next" => "decide-final-review" },
       "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework] } },
+      "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
+      "closeout" => { "terminal" => true }
+    }
+  },
+  "aquarium-design-v2.yaml" => {
+    "id" => "aquarium-design-v2",
+    "entry" => "capture-context",
+    "manual_targets" => %w[discover draft quality approve-diff],
+    "evidence" => {
+      "decide-quality" => required_evidence.call("draft", "quality"),
+      "approve-diff" => required_evidence.call("draft", "quality"),
+      "assess-goal" => required_evidence.call("capture-context", "apply-documents")
+    },
+    "nodes" => {
+      "capture-context" => { "next" => "discover" },
+      "discover" => { "next" => "draft" },
+      "draft" => { "next" => "quality" },
+      "quality" => { "next" => "decide-quality" },
+      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "revise" => %w[draft rework] } },
+      "approve-diff" => { "routes" => { "approved" => %w[apply-documents advance], "changes-requested" => %w[draft rework] } },
+      "apply-documents" => { "next" => "assess-goal" },
+      "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
+      "closeout" => { "terminal" => true }
+    }
+  },
+  "aquarium-war-room-v2.yaml" => {
+    "id" => "aquarium-war-room-v2",
+    "entry" => "capture-baseline",
+    "manual_targets" => %w[investigate draft-task draft-epic draft-incomplete],
+    "evidence" => {
+      "decide-cause" => required_evidence.call("investigate"),
+      "classify-scope" => required_evidence.call("investigate", "decide-cause"),
+      "quality" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] },
+      "decide-quality" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] } + [["quality", true]],
+      "approve-diff" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] } + [["quality", true]],
+      "assess-goal" => [["investigate", true], ["document", false], ["record-rejection", false]]
+    },
+    "nodes" => {
+      "capture-baseline" => { "next" => "investigate" },
+      "investigate" => { "next" => "decide-cause" },
+      "decide-cause" => { "routes" => { "established" => %w[classify-scope advance], "investigate-more" => %w[investigate rework], "blocked" => %w[draft-incomplete advance] } },
+      "classify-scope" => { "routes" => { "task" => %w[draft-task advance], "epic" => %w[draft-epic advance], "incomplete" => %w[draft-incomplete advance] } },
+      "draft-task" => { "next" => "quality" },
+      "draft-epic" => { "next" => "quality" },
+      "draft-incomplete" => { "next" => "quality" },
+      "quality" => { "next" => "decide-quality" },
+      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "revise" => %w[investigate rework] } },
+      "approve-diff" => { "routes" => { "approved" => %w[document advance], "changes-requested" => %w[record-rejection advance] } },
+      "document" => { "next" => "assess-goal" },
+      "record-rejection" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
     }
@@ -878,6 +1066,13 @@ expected_procedure_graphs.each do |filename, expected|
   end
   assert(actual_nodes == expected.fetch("nodes"),
          "managed procedure graph transitions drifted: #{filename}")
+  actual_evidence = procedure.dig("graph", "nodes").filter_map do |node|
+    next unless node.key?("evidence_from")
+    entries = node.fetch("evidence_from").map { |entry| [entry.fetch("node"), entry.fetch("required", true)] }
+    [node.fetch("id"), entries]
+  end.to_h
+  assert(actual_evidence == expected.fetch("evidence"),
+         "managed procedure evidence bindings drifted: #{filename}")
 end
 
 task_procedure_path = procedures_directory.join("aquarium-task-v2.yaml")
@@ -892,11 +1087,43 @@ assert(task_assess_evidence == %w[record-plan implement verify refine document r
 assert(task_procedure_text.include?("must reach implementation through manual rework"),
        "task procedure must document the manual-rework escape to implementation")
 
+procedure_nodes = expected_procedure_graphs.transform_values { |spec| spec.fetch("nodes").keys }
+skill_procedure_owners = {
+  "task-handler" => %w[aquarium-task-v2.yaml],
+  "task-plan" => %w[aquarium-task-v2.yaml],
+  "task-implement" => %w[aquarium-task-v2.yaml],
+  "task-verify" => %w[aquarium-task-v2.yaml],
+  "task-refine" => %w[aquarium-task-v2.yaml],
+  "task-document" => %w[aquarium-task-v2.yaml],
+  "task-review" => %w[aquarium-task-v2.yaml],
+  "task-close" => %w[aquarium-task-v2.yaml],
+  "epic-handler" => %w[aquarium-goal-v2.yaml aquarium-validation-v2.yaml],
+  "epic-validator" => %w[aquarium-validation-v2.yaml],
+  "new-project" => %w[aquarium-design-v2.yaml],
+  "new-feature" => %w[aquarium-design-v2.yaml],
+  "refactor" => %w[aquarium-design-v2.yaml],
+  "design-qa" => %w[aquarium-design-v2.yaml],
+  "war-room" => %w[aquarium-war-room-v2.yaml]
+}
+skill_procedure_owners.each do |skill_name, owners|
+  assert(expected_skill_names.include?(skill_name),
+         "Procedure ownership names an unknown skill: #{skill_name}")
+  owners.each do |owner|
+    assert(procedure_nodes.key?(owner),
+           "Procedure ownership names an unknown Procedure: #{skill_name} -> #{owner}")
+  end
+end
 skill_paths.each do |path|
   body = path.read
-  (body.scan(/session is at `([a-z][a-z0-9-]*)`/) + body.scan(/approved plan at `([a-z][a-z0-9-]*)`/)).flatten.each do |node_id|
-    assert(task_procedure_nodes.key?(node_id),
-           "skill references an unknown aquarium-task-v2 node: #{path} -> #{node_id}")
+  node_ids = (body.scan(/session is at `([a-z][a-z0-9-]*)`/) + body.scan(/approved plan at `([a-z][a-z0-9-]*)`/)).flatten
+  next if node_ids.empty?
+
+  skill_name = path.dirname.basename.to_s
+  owners = skill_procedure_owners[skill_name]
+  assert(owners, "skill with Podway node references has no Procedure ownership: #{path}")
+  node_ids.each do |node_id|
+    assert(owners.any? { |owner| procedure_nodes.fetch(owner).include?(node_id) },
+           "skill references a node outside its owned Procedures #{owners.join(', ')}: #{path} -> #{node_id}")
   end
 end
 
@@ -976,6 +1203,17 @@ assert(release_qa.include?("Do not replace an unavailable, failed, or timed-out 
 assert(release_qa.include?("`PASS`") && release_qa.include?("`FINDINGS`") &&
        release_qa.include?("`INCOMPLETE`") && release_qa.include?("propose fixes"),
        "release-qa must report evidence without remediation")
+assert(release_qa.include?("## Establish Design Gate Enrollment") &&
+       release_qa.include?("authoritative current and retired registry paths") &&
+       release_qa.include?("concise title") &&
+       release_qa.include?("Design Gate not enrolled") &&
+       release_qa.include?("existed in history but the candidate is missing") &&
+       release_qa.include?("every active gate") &&
+       release_qa.include?("under the disposable-project isolation regime below") &&
+       release_qa.include?("stop with `INCOMPLETE` on mutation") &&
+       release_qa.include?("sole exception is an exact local offline procedure") &&
+       release_qa.include?("both applicable matrices"),
+       "release-qa must combine gradual Design Gate enrollment with a separate release-delta matrix")
 
 assert(task_plan.include?("decision-complete plan"), "task-plan must own decision-complete planning")
 assert(task_plan.include?("Do not create a goal"), "task-plan must remain mutation-free")
@@ -1254,7 +1492,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review deslop].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review deslop new-project new-feature refactor war-room design-qa].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team Kit and retains its separate upstream MIT notice"),
@@ -1265,6 +1503,7 @@ assert(readme.include?("The bundled `deslop` skill is derived from Cursor Team K
   https://github.com/irootkernel/gaori
   https://github.com/tmdgusya/lora
   https://github.com/irootkernel/podway
+  https://github.com/Q00/ouroboros
 ].each do |url|
   assert(readme.include?(url), "README tool URL is missing: #{url}")
 end

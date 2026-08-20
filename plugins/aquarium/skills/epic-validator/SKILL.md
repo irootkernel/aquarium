@@ -15,6 +15,10 @@ Otherwise read the contract and own one `aquarium-validation-v2` session for thi
 
 Require one mutable Git repository, one canonical roadmap path inside it, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, and requests without one canonical roadmap epic identity.
 
+Read [design-gates.md](../../references/design-gates.md). Resolve each member task's effective Design Gate impact from the task first and then the epic, applying the documented legacy-only `Not required` rule when neither marker exists. Treat a missing effective marker in an enrolled repository or a `Pending` marker as an incomplete epic contract and stop before remediation.
+
+Resolve every effective active gate plus active gates whose scope covers an integration seam, and include their local offline checks in the requirement matrix and every fresh final audit. Redirect declared outputs and caches to disposable roots and verify that each gate leaves the source repository unchanged.
+
 Before requesting approval:
 
 1. Read applicable instructions, the epic, every member task, linked requirements, decisions, contracts, tests, documentation, and required or generated artifacts.

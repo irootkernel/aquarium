@@ -1,7 +1,7 @@
 {
   "name": "aquarium",
   "version": "0.1.8",
-  "description": "Evidence-gated epic and task delivery with optional Podway v2 execution memory and safe development-tool setup for Codex.",
+  "description": "Ouroboros-assisted design, durable gates, and evidence-gated delivery with optional Podway v2 execution memory.",
   "author": {
     "name": "Root Kernel",
     "email": "cs@rootkernel.xyz",
@@ -26,13 +26,15 @@
     "sanho",
     "mulgae",
     "gaori",
-    "podway"
+    "podway",
+    "ouroboros",
+    "design"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Aquarium",
-    "shortDescription": "Epic delivery, validation, and task workflows.",
-    "longDescription": "Aquarium provides framework-agnostic development-tool setup, isolated release-candidate QA, optional Podway v2 execution memory, procedure-strengthened single-task delivery, sequential epic orchestration, and cold validation that remediates confirmed gaps in a completed epic.",
+    "shortDescription": "Design, gate, deliver, and validate roadmap work.",
+    "longDescription": "Aquarium provides Ouroboros-assisted project and epic design, durable local Design Gates, isolated release-candidate QA, optional Podway v2 execution memory, task delivery, epic orchestration, and cold validation.",
     "developerName": "Root Kernel",
     "category": "Developer Tools",
     "capabilities": [
@@ -43,8 +45,8 @@
     "privacyPolicyURL": "https://github.com/irootkernel/aquarium/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/irootkernel/aquarium/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Use $aquarium:epic-handler to deliver one roadmap epic, $aquarium:epic-validator to validate a completed epic, or $aquarium:task-handler for one named task.",
-      "Use $aquarium:dev-setup to diagnose and configure development tools for this repository."
+      "Use $aquarium:new-project, $aquarium:new-feature, $aquarium:refactor, $aquarium:war-room, or $aquarium:design-qa for explicit design work.",
+      "Use $aquarium:task-handler or $aquarium:epic-handler to deliver roadmap work, $aquarium:release-qa for release gates, and $aquarium:dev-setup for tooling."
     ],
     "brandColor": "#10C4BE",
     "composerIcon": "./assets/logo-small.png",

@@ -1,0 +1,6 @@
+interface:
+  display_name: "New Project"
+  short_description: "Shape a PRD and initial roadmap"
+  default_prompt: "Use $aquarium:new-project to draft a greenfield PRD and initial roadmap without implementation."
+policy:
+  allow_implicit_invocation: false

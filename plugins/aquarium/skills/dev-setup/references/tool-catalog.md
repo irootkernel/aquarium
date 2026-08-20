@@ -251,13 +251,13 @@ The LaunchAgent runs after GUI login under the same OS user and is not a multi-u
 
 Treat that bounded inventory as readiness evidence only. Never use dev-setup to observe, cancel, discard, or reset a routine supported Procedure v2 current session; return an exact standalone `$use-podway` lifecycle request instead. Keep `LEGACY_PROCEDURE_STATE_UNSUPPORTED` and its separately approved workspace-wide `podway reset --all` recovery as the only session-state reset exception in this catalog.
 
-Repository initialization and Aquarium readiness configuration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`. Copy the three plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
+Repository initialization and Aquarium readiness configuration require another approval. `podway init` creates `.podway/config.yaml` and `.podway/.gitignore` for the repository to track, plus ignored `.podway/runtime/`. Copy the five plugin-owned Procedure v2 sources to `.podway/procedures/` byte-for-byte and validate each with:
 
 ```bash
 podway procedure check --warnings-as-errors <procedure-file>
 ```
 
-The three required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, and `aquarium-validation-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v3 inspection omits Podway unless invoked with `--include-podway`.
+The five required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, `aquarium-validation-v2`, `aquarium-design-v2`, and `aquarium-war-room-v2`. Their presence describes readiness, never workflow activation. All absent means `readiness_status=not_configured`; all present, tracked in Git, byte-identical, valid, and healthy means `readiness_status=ready`; partial, drifted, invalid, unsupported, or unhealthy state means `readiness_status=degraded`. The v5 inspection omits Podway unless invoked with `--include-podway`.
 
 Updating a tracked copy requires showing and approving its exact diff and applying the shared backup policy; an active session retains its immutable snapshot.
 
@@ -266,3 +266,17 @@ The renamed inspector reports `migration_required=true` when any tracked or untr
 `LEGACY_PROCEDURE_STATE_UNSUPPORTED` has a different meaning: the runtime contains Procedure v1 task state. Do not convert, edit, or delete that state automatically. Report the exact worktree and error and apply the shared backup policy before separately proposing the supported `podway reset --all` recovery. Under the no-backup policy, disclose that the reset permanently deletes the legacy runtime history and that Git cannot restore it, then require separate explicit approval.
 
 Podway v0.2.5 also preserves explicit confirmed `podway reset --all` recovery when the workspace binding is readable but disposable full-store openability or internal-codec inspection fails. Treat that condition as degraded, preserve the exact stable error evidence, apply the shared backup policy, and require a separate reset proposal and explicit approval; recoverability never grants deletion authority.
+
+## Ouroboros
+
+Official source: `https://github.com/Q00/ouroboros`
+
+Python package: `ouroboros-ai`. Support only `>=0.51.1,<0.52.0`; do not automatically cross into `0.52+`. Installation requires an existing `uv` and one resolved exact package version. Show the Python package index request, exact version, package target, and `uv tool install ouroboros-ai==<exact-version>` or exact approved upgrade command before separate approval. Never install `uv` as a side effect and never install an unpinned range.
+
+Diagnose four independent components with the v5 inspector's explicit `--include-ouroboros` flag: `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. These probes are local and read-only: they do not contact a provider, initiate authentication, or make a network request, though the MCP doctor may inspect bounded local authentication-readiness metadata without exposing credential material. A healthy CLI does not prove that packaged Codex rules and skills are installed, that the MCP runtime is ready, or that Codex has an enabled registration.
+
+The inspector checks Codex registration even when `ooo` is absent. Registration is `configured` only for a valid enabled entry, `missing` only for Codex's definite named-server-not-found response, `degraded` for disabled, incomplete, malformed, timed-out, or failed probes, and `unverifiable` when Codex itself is absent. Report only the normalized status and reason code; never expose raw registration stderr or configuration secrets.
+
+Package installation, `ooo codex refresh`, and `ooo setup --runtime codex --non-interactive --mcp-mode auto` are three separate persistent mutations with separate approvals. The refresh writes packaged rules and upstream Ouroboros skills into the active Codex home. Runtime setup may change Codex MCP configuration and Ouroboros runtime state. Re-read exact targets before each approved mutation and stop if they changed.
+
+No setup action authorizes a provider call, authentication, repository-source transmission, `auto`, `run`, `ralph`, `evolve`, Seed creation, or an Aquarium design workflow. Verify only version, Codex integration doctor, MCP doctor, effective registration, and, when safely observable in the active host, live MCP tool exposure. A Codex restart may be required after skill or MCP changes.

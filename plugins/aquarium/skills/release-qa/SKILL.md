@@ -5,7 +5,7 @@ description: "Run read-only, scenario-based QA for the exact current main releas
 
 # Release QA
 
-Assess one exact committed `main` candidate through isolated user scenarios. Treat existing automated checks as already successful, mutate only disposable fixtures under `/tmp`, and report verified defects without implementing or proposing solutions.
+Assess one exact committed `main` candidate through two independent matrices: every active Design Gate and every material release-delta change. Treat existing automated checks as already successful, mutate only disposable fixtures under `/tmp`, and report verified defects without implementing or proposing solutions.
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material. It also authorizes creation and mutation of bounded `/tmp` fixtures and fresh subagents for local QA.
 
@@ -27,11 +27,24 @@ It does not authorize source edits, staging, commits, pushes, tags, releases, ne
 
 The previous release is assumed to work. Inspect its committed code, documentation, and tests only to reconstruct established behavior; do not check it out or execute it.
 
-## Build the Coverage Matrix
+## Establish Design Gate Enrollment
+
+Read [design-gates.md](../../references/design-gates.md). Resolve the authoritative current and retired registry paths from repository authority, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults, and determine enrollment from candidate history, not only the current tree.
+
+- If no Design Gate registry has ever existed in reachable history, run the release-delta matrix alone and report `Design Gate not enrolled`. This gradual opt-in is not a finding and does not block `PASS` when delta coverage is otherwise complete.
+- If a registry existed in history but the candidate is missing its authoritative current path, record a contract finding. Never reinterpret deletion as opt-out.
+- When the registry exists, parse every active gate and require its stable ID, concise title, invariant, scope, positive and failure scenario, local offline source-read-only procedure, declared disposable outputs, objective pass condition, revalidation triggers, sources, and owner. A malformed active entry is a contract finding; an unexecutable required gate or missing evidence makes the result `INCOMPLETE`.
+- Exercise every active gate against the exact candidate, including gates unchanged in the release delta, under the disposable-project isolation regime below. Redirect its declared outputs and caches into the evidence root, compare source-repository status before and after each gate, and stop with `INCOMPLETE` on mutation. Keep its command, controlled environment, positive and failure outcomes, pass condition, and evidence path in an active Design Gate matrix. A verified active-gate failure is a finding.
+
+Gate additions, changes, reactivations, retirements, current tombstones, and retired-registry changes also belong to the release-delta matrix. Confirm that every retirement leaves a current tombstone in the resolved current registry and preserves the full retired body and rationale in the resolved retired registry. Confirm that every reactivation restores the same ID as one active current body, removes its current tombstone, retains retired history, and appends a reactivation record.
+
+Do not invoke providers or network services for a gate. A gate that requires either violates the Design Gate contract and cannot supply executable release evidence.
+
+## Build the Release Delta Matrix
 
 Read the commit list, complete diff, current public documentation, changed skills and instructions, runtime entrypoints, and relevant existing tests. Do not treat commit subjects as sufficient evidence.
 
-Map every commit and material changed surface to one or more of:
+Map every commit and material changed surface to one or more release-delta scenarios:
 
 - an existing-behavior regression scenario derived from the previous release contract;
 - a new-behavior success and failure scenario derived from the candidate contract;
@@ -40,7 +53,7 @@ Map every commit and material changed surface to one or more of:
 
 Give every user-visible or operationally risky change at least one executable scenario. Static inspection is sufficient only when the changed contract has no executable behavior. Record exclusions with exact evidence instead of silently sampling them away.
 
-Do not run existing automated tests, `make test`, test runners, test scripts, linters, formatters, validators, generators, snapshot updates, CI commands, Gaori, Mulgae, or provider reviews. Existing tests may be read as specifications, but their presence or prior success does not prove the release scenarios.
+Do not run existing automated tests, `make test`, test runners, test scripts, linters, formatters, validators, generators, snapshot updates, CI commands, Gaori, Mulgae, or provider reviews as release-delta scenarios. Existing tests may be read as specifications, but their presence or prior success does not prove the release scenarios. The sole exception is an exact local offline procedure registered by an active Design Gate; execute it only in the Design Gate matrix and do not count the same run as release-delta scenario coverage.
 
 ## Exercise Disposable Projects
 
@@ -63,13 +76,13 @@ Adjudicate every worker report against the release contract and candidate. Repro
 
 ## Report Evidence, Not Solutions
 
-Choose one overall result in this order:
+Choose one overall result in this order across both matrices:
 
-1. `INCOMPLETE` when any required release fact, scenario, fresh-worker result, or safe execution prerequisite is missing, even when verified findings also exist.
-2. `FINDINGS` when coverage is complete and at least one verified defect remains.
-3. `PASS` only when coverage is complete and no verified defect remains.
+1. `INCOMPLETE` when any required release fact, active-gate execution or evidence, delta scenario, fresh-worker result, or safe execution prerequisite is missing, even when verified findings also exist.
+2. `FINDINGS` when both applicable matrices are complete and at least one verified active-gate or release-delta defect remains.
+3. `PASS` only when the active Design Gate matrix, when enrolled, and the release-delta matrix are both complete and no verified defect remains.
 
-Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, commit-to-scenario matrix, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
+Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
 
 Classify verified findings as:
 

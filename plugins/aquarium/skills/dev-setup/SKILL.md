@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Lora, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
+description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Ouroboros, Lora, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
 ---
 
 # Development Setup
@@ -15,8 +15,8 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 
 1. Resolve the requested working directory to one Git root.
 2. Read applicable instruction files and inspect the branch, upstream, staged, unstaged, and untracked state.
-3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway completely and keeps an absent optional Mulgae MCP registration non-gating.
-   When the current request explicitly selects Podway, add `--include-podway`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when either component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
+3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
+   When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
 5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
 6. Do not create or read `.aquarium` or any equivalent central selection file.
@@ -31,9 +31,14 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 - Use direct text only for an identifier that cannot be discovered or represented by choices, such as an unknown private documentation repository URL.
 - If ask/answer is unavailable, ask one concise approval question at a time. Never infer approval from silence or from approval of a different setup action.
 
-After read-only discovery, ask about Sanho, Mulgae, and Gaori in the first batch. Ask about Podway, Lora, and whether to prepare an AGENTS.md proposal in subsequent batches. For each active tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording when it is already installed. For Sanho, Mulgae, Gaori, and Podway, make `Install or upgrade the CLI and paired skill` the recommended setup choice, but report each component independently and preserve a healthy CLI when its optional skill is absent.
+After read-only discovery, use these batches and component boundaries:
 
-Disclose in these four tools' selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
+- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, and whether to prepare an AGENTS.md proposal.
+- For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
+- For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
+- For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
+
+Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
 
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
@@ -112,12 +117,28 @@ Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-
 
 Aquarium Podway readiness configuration has four disclosed parts:
 
-- Copy all three plugin-owned procedure sources from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/` and check each with `podway procedure check --warnings-as-errors`.
+- Copy all five plugin-owned procedure sources from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/` and check each with `podway procedure check --warnings-as-errors`.
 - `podway init` also creates `.podway/config.yaml`, `.podway/.gitignore`, and ignored runtime state; show the exact proposed files and diff before approval.
 - When a managed procedure differs, show the exact source-to-project diff and obtain approval before replacing it; do not alter an active procedure snapshot.
 - Treat partial installation as degraded readiness, not activation or legacy state.
 
 Managed-Procedure removal is a separate destructive proposal. Show the exact managed procedure files to remove, preserve `.podway/config.yaml`, runtime state, custom procedures, and every session, and obtain explicit approval. Do not reset, cancel, or delete any session as part of setup or removal.
+
+## Configure Ouroboros With Separate Approvals
+
+Support only Ouroboros `>=0.51.1,<0.52.0`. Read [tool-catalog.md](references/tool-catalog.md), then diagnose with `--include-ouroboros`. Keep these four states independent: the `ooo` CLI and version, installed Codex rules and skills, Ouroboros MCP runtime health, and effective Codex MCP registration. Do not infer readiness from one passing component.
+
+Installation requires an already installed `uv`; never install a package manager as a side effect. Resolve one exact `ouroboros-ai` version inside the supported range, disclose the Python package index request and package target, show `uv tool install ouroboros-ai==<exact-version>` or the exact approved upgrade form, and obtain a dedicated approval before running it. Do not install from an unpinned range.
+
+Treat the following as three separate persistent mutations, each with its own displayed command, changed paths, and explicit approval:
+
+1. Exact package installation or upgrade through `uv`.
+2. `ooo codex refresh`, which installs or refreshes packaged Codex rules and upstream Ouroboros skills in the active Codex home.
+3. `ooo setup --runtime codex --non-interactive --mcp-mode auto`, which may update Codex MCP configuration and Ouroboros runtime state.
+
+Approval for one never authorizes another. Re-read targets immediately before each mutation and invalidate stale approval. Setup must not call an Ouroboros provider, authenticate, run `auto`, `run`, `ralph`, or `evolve`, transmit repository source, create a Seed, or start an Aquarium design workflow.
+
+After approved mutations, verify `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. When the active host can expose MCP tools safely, verify live exposure separately without invoking a provider. Report missing skills, rules, registration, runtime health, and live exposure as distinct gaps, and tell the user when a Codex restart is required.
 
 ## Gate AGENTS.md With Two Approvals
 
@@ -144,6 +165,7 @@ Report:
 - Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and project MCP state separately;
 - Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;
 - Podway CLI, daemon, workspace, Aquarium readiness, legacy-state detection, and `use-podway` skill state separately;
+- Ouroboros CLI and version support, Codex rules and skills, MCP runtime, effective registration, and live exposure separately;
 - commands run and their exit status;
 - native configuration and ignore paths changed;
 - verification evidence and remaining auth or environment gaps;

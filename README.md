@@ -4,7 +4,7 @@
 
 By [Root Kernel](https://home.rootkernel.xyz)
 
-Aquarium is a Codex plugin marketplace for evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup across Aquarium projects.
+Aquarium is a Codex plugin marketplace for Ouroboros-assisted project and epic design, durable Design Gates, evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -12,16 +12,27 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 
 | Skill | Purpose | Invocation |
 |---|---|---|
+| `new-project` | Shape a greenfield PRD and initial roadmap with Ouroboros, without implementation. | Explicit: `$aquarium:new-project` |
+| `new-feature` | Shape one feature epic and its Design Gate impact for an existing project. | Explicit: `$aquarium:new-feature` |
+| `refactor` | Shape one refactor epic with compatibility, migration, rollback, and gate impact. | Explicit: `$aquarium:refactor` |
+| `war-room` | Diagnose a difficult bug and propose a task, epic, or incomplete investigation without a fix. | Explicit: `$aquarium:war-room` |
+| `design-qa` | Create or update durable local Design Gates after Ouroboros QA and exact-diff approval. | Explicit: `$aquarium:design-qa` |
 | `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$aquarium:epic-handler` with a roadmap path and one epic ID |
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$aquarium:epic-validator` with a roadmap path and one epic ID |
 | `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
 | `task-commit` | Reconcile roadmap ownership and lifecycle state, then create one authorized isolated commit. | Automatic for commit requests, or explicit: `$aquarium:task-commit` |
-| `release-qa` | Exercise every change since the previous stable release through isolated user scenarios, before or after target-version metadata is committed, without rerunning existing tests or proposing fixes. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
-| `dev-setup` | Diagnose and configure selected development tools, automatically compare selected paired skills with their latest supported releases, and propose reference-based AGENTS.md guidance behind separate approvals. | Explicit: `$aquarium:dev-setup` |
+| `release-qa` | Exercise every active Design Gate and every release change through separate isolated QA matrices. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
+| `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
 | `deslop` | Remove task-introduced AI code slop without changing behavior or unrelated work. | Automatic when relevant, or explicit: `$aquarium:deslop` |
 
 Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
+
+### Ouroboros-assisted design and Design Gates
+
+The five design workflows are explicit-only. `new-project` produces a PRD and initial roadmap; `new-feature` and `refactor` each produce one epic; `war-room` stops at diagnosis and a task, epic, or incomplete-investigation proposal; `design-qa` alone may create, change, reactivate, or retire Design Gates. They use installed upstream Ouroboros interview, PM, Seed, and QA capabilities as bounded leaf operations. They never invoke Ouroboros execution loops or let a provider write repository files directly, and every durable document change requires a displayed exact diff and separate approval.
+
+The default current and retired registries are `docs/gating-rules.md` and `docs/gating-rules-retired.md`; repository authority may override the resolved pair. Active gates must be local and offline, with stable IDs, concise titles, invariants, positive and failure scenarios, objective pass conditions, revalidation triggers, sources, and owners. Retired gate bodies move to the resolved retired registry while the current registry retains tombstones. Every newly authored implementation task records `Design Gate impact` as `Not required`, `Pending`, or resolved `GATE-*` IDs; legacy tasks inherit their parent epic, while a missing effective marker blocks enrolled repositories. `Pending` blocks implementation. `release-qa` runs every active gate plus its commit-to-scenario delta matrix. A repository that never had a registry remains unenrolled and receives delta QA only, while deleting an established registry is a finding.
 
 ### Task-handler phases
 
@@ -47,9 +58,9 @@ After installing or upgrading Aquarium, open `/hooks` and explicitly trust the p
 
 ### Optional Podway integration
 
-[Podway](https://github.com/irootkernel/podway) v0.2.5 through v0.2.x can provide durable Procedure v2 state for Aquarium workflows on native Apple Silicon macOS. `dev-setup` can separately install the matching optional `use-podway` user skill and three managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness; invoking `task-handler`, `epic-handler`, or `epic-validator` selects Podway by default. A new session starts as prepared, then the owning handler re-observes it and uses `begin` to create attempt 1 and the initial goal.
+[Podway](https://github.com/irootkernel/podway) v0.2.5 through v0.2.x can provide durable Procedure v2 state for Aquarium workflows on native Apple Silicon macOS. Every Git-backed Aquarium owner selects Podway by default; `dev-setup` can separately install the matching optional `use-podway` user skill and five managed Procedures. The binary, skill, configuration, Procedures, daemon, and any existing session describe availability and readiness. Git-backed design workflows use `aquarium-design-v2`, `war-room` uses `aquarium-war-room-v2`, and the delivery workflows retain their task, goal, and validation Procedures. A non-Git `new-project` never initializes Git or Podway merely for workflow state. A new session starts as prepared, then its Aquarium owner re-observes it and uses `begin` to create attempt 1 and the initial goal.
 
-The user may explicitly opt the current task, epic, or validation out before its first managed-session mutation; that choice never carries into later work. Otherwise the handler checks readiness and discloses Podway operations in its plan or execution envelope. Degraded readiness routes to `dev-setup` repair or workflow opt-out. A healthy conflicting session is a lifecycle conflict instead: resume it through its matching handler, leave it untouched through opt-out, or explicitly invoke `use-podway` to cancel or discard it. Handlers alone own and advance Aquarium workflows; standalone `use-podway` lifecycle requests do not adopt roadmap ownership.
+The user may explicitly opt the current Git-backed workflow out before its first managed-session mutation; that choice never carries into later work. Otherwise the Aquarium owner checks readiness and discloses Podway operations and bounded Ouroboros calls in its execution envelope. Degraded readiness routes to `dev-setup` repair or workflow opt-out. A healthy conflicting session is a lifecycle conflict instead: resume it through its matching owner, leave it untouched through opt-out, or explicitly invoke `use-podway` to cancel or discard it. Aquarium owners alone advance their workflows; upstream Ouroboros skills are Podway-blind leaves.
 
 During an active session, a stop request requires an explicit disposition: leave the session active for later resumption, cancel the task while preserving history, or reset the session and delete its history. Cancellation is not a pause and cannot reactivate; reset requires a dry run and separate confirmation of the irreversible history loss. Continuing the remaining Aquarium work without Podway starts a new explicitly opted-out workflow rather than changing the active workflow in place.
 
@@ -87,7 +98,8 @@ When `dev-setup` selects Sanho, Mulgae, Gaori, or Podway for setup or diagnosis,
 - [Mulgae](https://github.com/irootkernel/mulgae) performs advisory multi-provider code review against an explicitly selected capture. Aquarium supports stable v0.1.16 through v0.1.x, including Config v3, Doctor v2 offline readiness, prose-first structured finding extraction, and explicit Codex provider profiles, can install the matching optional `use-mulgae` user skill, and can separately configure a repository-bound local MCP server.
 - [Gaori](https://github.com/irootkernel/gaori) runs existing checks while preserving raw logs and producing bounded evidence. Aquarium supports stable v0.1.13 through v0.1.x, including read-only parser and completed-run discovery, can install the matching optional `use-gaori` user skill, and can separately configure a repository-bound local MCP server.
 - [Lora](https://github.com/tmdgusya/lora) provides Lore skills for recording and querying decision context in Git trailers.
-- [Podway](https://github.com/irootkernel/podway) guards the handlers' default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.5 through v0.2.x and can separately install the matching optional `use-podway` user skill.
+- [Podway](https://github.com/irootkernel/podway) guards Aquarium's default local Procedure v2 execution state, rework, recorded evidence, and goal assessment without running commands or judging evidence truth. Aquarium supports stable v0.2.5 through v0.2.x and can separately install the matching optional `use-podway` user skill.
+- [Ouroboros](https://github.com/Q00/ouroboros) supplies bounded discovery, PM, Seed, and QA leaf capabilities to the five explicit design workflows. Aquarium supports `>=0.51.1,<0.52.0`; `dev-setup` keeps package installation, Codex refresh, and MCP/runtime setup behind separate approvals and never invokes a provider during setup.
 
 ## Validate
 
