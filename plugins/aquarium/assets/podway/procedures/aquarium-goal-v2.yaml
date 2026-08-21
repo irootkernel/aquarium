@@ -25,6 +25,12 @@ node_definitions:
         min_length: 1
         max_length: 512
         multiline: true
+      - id: plan-handoff-artifact
+        type: artifact
+        prompt: Attach the approved Markdown epic plan only for an explicit plan handoff.
+        required: false
+        allowed_media_types:
+          - text/markdown
   evidence-record:
     type: action
     title: Record verification and review

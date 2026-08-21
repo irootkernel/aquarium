@@ -18,6 +18,12 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
+      - id: plan-handoff-artifact
+        type: artifact
+        prompt: Attach the approved Markdown plan only for an explicit plan handoff.
+        required: false
+        allowed_media_types:
+          - text/markdown
   implementation-record:
     type: action
     title: Record implementation
