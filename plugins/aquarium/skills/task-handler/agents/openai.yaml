@@ -1,6 +1,6 @@
 interface:
   display_name: "Task Handler"
   short_description: "Strengthen the procedure around one task goal"
-  default_prompt: "Use $aquarium:task-handler with a roadmap path and one task ID to strengthen its delivery procedure."
+  default_prompt: "Use $aquarium:task-handler with one roadmap task to execute, prepare a plan handoff, or resume it."
 policy:
   allow_implicit_invocation: false

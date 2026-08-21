@@ -25,4 +25,4 @@ Produce a decision-complete plan containing:
 
 Ask for explicit approval of the plan. Do not treat discussion, partial agreement, or approval of a different action as plan approval. If approval is refused, withheld, or given for a different action, stop, report the exact missing decision, and do not enter implementation.
 
-If the host is in Plan mode, remain there and end with a continuation prompt that explicitly invokes `$aquarium:task-handler` with the same repository, roadmap path, and task ID to execute the approved plan. Return the plan, approval state, inspected authority paths, and unresolved gaps to the orchestrator.
+If the host is in Plan mode, remain there and end with a continuation prompt that explicitly invokes `$aquarium:task-handler` with the same repository, roadmap path, task ID, and handler-selected mode. `plan-only` ends without mutation, while `plan-handoff` prepares the approved handoff rather than implementing it. Return the plan, approval state, inspected authority paths, and unresolved gaps to the orchestrator.

@@ -1,15 +1,15 @@
 ---
 name: task-handler
-description: "Strengthen the procedure around exactly one named roadmap task goal through planning, implementation, verification, refinement, documentation, Mulgae review, and user-approved closeout. Use when the user explicitly invokes $aquarium:task-handler with a repository, canonical roadmap path, and exactly one task ID; require explicit invocation and one canonical roadmap task identity."
+description: "Strengthen or resume the procedure around exactly one named roadmap task goal through planning, implementation, verification, refinement, documentation, Mulgae review, and user-approved closeout, including an explicitly requested plan handoff. Use when the user explicitly invokes $aquarium:task-handler with a repository, canonical roadmap path, and exactly one task ID; require explicit invocation and one canonical roadmap task identity."
 ---
 
 # Task Handler
 
-Strengthen execution of one roadmap task goal by loading focused phase skills in order. Own task identity, authority, goal lifetime, phase transitions, resumption, and final evidence; leave phase-specific work to the corresponding leaf skill.
+Strengthen execution of one roadmap task goal with focused phase skills. Own task identity, authority, goal lifetime, transitions, resumption, and final evidence. Select `execute` by default, `plan-only` for a non-mutating plan, `plan-handoff` only when another agent will continue, and `resume` for continuation. Treat "plan only" as `plan-only`; for `plan-handoff` or its resume, read [plan-handoff.md](../../references/plan-handoff.md) and follow it.
 
 Use Podway by default. Exclude it only when the current user explicitly opts this task out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out task, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
-Otherwise read the contract, own one `aquarium-task-v2` session for this canonical task after plan approval, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. Do not let either goal mechanism replace roadmap authority.
+Otherwise read the contract, own one `aquarium-task-v2` session for this canonical task after plan approval, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. In `plan-only`, create neither goal nor session; in `plan-handoff`, create them only after approval and stop at `implement` with the verified plan artifact. Do not let either goal mechanism replace roadmap authority.
 
 ## Establish the Task Contract
 
@@ -35,7 +35,7 @@ Record whether `$use-mulgae`, the supported configured CLI, and the attached pro
 
 Repository and system instructions override this workflow. Explicit invocation authorizes task-scoped Mulgae review, the task-owned staging steps defined by `$aquarium:task-refine`, and an approved lifecycle edit; it does not authorize commit, amend, push, PR changes, destructive commands, source transmission outside the disclosed Mulgae review, or unrelated staging. An authorized commit is handed to `$aquarium:task-commit`.
 
-Do not start or mutate Podway before plan approval. By default the plan discloses prepared session start or resume, the separate fenced `begin`, bounded evidence, decisions, rework, goal assessment, completion, and any supported terminal disposition.
+Do not start or mutate Podway before plan approval. By default the plan discloses prepared session start or resume, the separate fenced `begin`, bounded evidence, decisions, rework, goal assessment, completion, and any supported terminal disposition. `plan-only` stops without mutation; `plan-handoff` additionally discloses the private temporary plan file, artifact attachment, running-session stop, successor propagation when applicable, exact resume report, and final cleanup.
 
 Approval explicitly omitting Podway approves the plan without those operations. Accept opt-out only before the first managed-session mutation. Afterward classify every stop or opt-out request through the shared `Handle In-Progress Stop Requests` flow; never assume pause, cancel, reset, or an in-place switch to non-Podway execution.
 
@@ -53,7 +53,7 @@ Resolve every phase skill from the installed Aquarium plugin, read its complete 
 
 Treat a missing phase skill as a broken plugin installation. Do not silently inline, reconstruct, reorder, or substitute its workflow.
 
-Immediately after plan approval and before implementation, re-read the task lifecycle vocabulary. If the task already uses `In Progress` or `In Review`, preserve it. If it is terminal, ask whether to reopen it through a roadmap-defined active state and stop unless the user approves the exact edit. Otherwise change it to `In Progress` only when that exact state is defined; when it is absent, preserve the current status rather than inventing one. Treat this status-only edit as task-owned and verify it before loading `$aquarium:task-implement`.
+Immediately after plan approval and before implementation, re-read the task lifecycle vocabulary; in `plan-handoff`, defer this roadmap edit until `resume`. Preserve `In Progress` or `In Review`. For a terminal task, ask whether to reopen it through a roadmap-defined active state and stop without approval. Otherwise change it to `In Progress` only when that exact state is defined; when absent, preserve the current status. Verify this task-owned edit before loading `$aquarium:task-implement`.
 
 ## Gate Transitions
 
@@ -61,7 +61,7 @@ After each phase, re-read the roadmap entry, Git state, affected files, and phas
 
 | Phase | Required postcondition |
 |---|---|
-| Plan | A decision-complete plan is explicitly approved; any roadmap-defined `In Progress` transition is applied and verified before implementation; when Plan mode requires a handoff, it ends with an exact continuation prompt for that approved plan. |
+| Plan | A decision-complete plan is explicitly approved; `plan-only` makes no mutation; `plan-handoff` makes no roadmap edit, records the verified artifact, stops at `implement`, and returns the exact session-bound continuation; any roadmap-defined `In Progress` transition is applied and verified only before implementation. |
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
 | Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
@@ -100,10 +100,10 @@ Keep the goal active through every phase. Mark it complete only after `$aquarium
 
 Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence.
 
-When Podway is active, its latest `podway.observation-result/v2` envelope is also required reconstruction evidence. A matching prepared revision resumes through its fresh `session.begin` template; a running session resumes at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree. Otherwise stop rather than repairing history by inference.
+When Podway is active, its latest `podway.observation-result/v2` envelope is also required reconstruction evidence. A matching prepared revision resumes through its fresh `session.begin` template; a running session resumes at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree. A recorded plan handoff also requires the exact artifact checks in the shared reference. Otherwise stop rather than repairing history by inference.
 
 Resume at the earliest phase whose postcondition is not currently proven. Do not repeat a proven phase merely to recreate a report, but invalidate affected evidence when task-owned code, tests, documentation, roadmap state, review target, or repository authority changed after that evidence was recorded.
 
 ## Report Orchestration State
 
-Keep progress updates concise. At every stop and final handoff, report the completed phase, next phase, task-owned paths, current roadmap status, agent-run and user-run checks, staged and unstaged state, Mulgae run and findings status, goal state, and any remaining commit or publication gap.
+Keep progress updates concise. At every stop and final handoff, report the completed phase, next phase, task-owned paths, current roadmap status, agent-run and user-run checks, staged and unstaged state, Mulgae run and findings status, goal state, and any remaining commit or publication gap. A plan handoff must also report every session and artifact identity required by the shared reference.
