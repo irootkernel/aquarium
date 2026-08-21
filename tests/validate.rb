@@ -188,6 +188,9 @@ refactor = PLUGIN.join("skills/refactor/SKILL.md").read
 war_room = PLUGIN.join("skills/war-room/SKILL.md").read
 ouroboros_contract = PLUGIN.join("references/ouroboros-integration.md").read
 design_gate_contract = PLUGIN.join("references/design-gates.md").read
+plan_handoff_path = PLUGIN.join("references/plan-handoff.md")
+assert(plan_handoff_path.file?, "shared plan-handoff contract is missing")
+plan_handoff_contract = plan_handoff_path.read
 
 assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
@@ -814,6 +817,52 @@ assert(task_handler.include?("missing or unhealthy tooling or readiness prerequi
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
 assert(task_handler.lines.length < 110, "task-handler must remain orchestration-focused")
 
+assert(task_handler.include?("`execute` by default") &&
+       task_handler.include?("`plan-only`") &&
+       task_handler.include?("`plan-handoff`") &&
+       task_handler.include?("`resume`") &&
+       task_handler.include?("plan-handoff.md") &&
+       epic_handler.include?("`execute` by default") &&
+       epic_handler.include?("`plan-only`") &&
+       epic_handler.include?("`plan-handoff`") &&
+       epic_handler.include?("`resume`") &&
+       epic_handler.include?("plan-handoff.md"),
+       "task-handler and epic-handler must expose the shared four-mode handoff contract")
+assert(plan_handoff_contract.include?("Treat an unqualified request to \"plan only\" as `plan-only`") &&
+       plan_handoff_contract.include?("another AI or agent will continue") &&
+       plan_handoff_contract.include?("requires the default Podway path") &&
+       plan_handoff_contract.include?("Do not create the handoff file, a Codex goal, or a Podway session before") &&
+       plan_handoff_contract.include?(".podway/runtime/handoffs/<initial-session-id>/plan.md") &&
+       plan_handoff_contract.include?("Never accept a caller-supplied file name") &&
+       plan_handoff_contract.include?("65,536 UTF-8 bytes") &&
+       plan_handoff_contract.include?("Never overwrite different bytes") &&
+       plan_handoff_contract.include?("SHA-256 and byte size") &&
+       plan_handoff_contract.include?("The session ID is mandatory output") &&
+       plan_handoff_contract.include?("exactly one running session") &&
+       plan_handoff_contract.include?("without suspend, cancel, reset, replacement") &&
+       plan_handoff_contract.include?("remove only that exact handoff file"),
+       "plan handoff must be opt-in, session-derived, bounded, verifiable, resumable, and narrowly cleaned up")
+assert(task_handler.include?("stop at `implement`") &&
+       epic_handler.include?("stop with required work items unset") &&
+       epic_handler.include?("every successor session") &&
+       epic_handler.include?("validation baseline"),
+       "handlers must stop before work and preserve the plan across their owned session topology")
+{
+  "epic-validator" => epic_validator,
+  "new-project" => new_project,
+  "new-feature" => new_feature,
+  "refactor" => refactor,
+  "war-room" => war_room,
+  "design-qa" => design_qa,
+}.each do |name, body|
+  assert(!body.include?("mode=plan-handoff") && !body.include?("plan-handoff.md"),
+         "plan handoff mode must not be exposed by #{name}")
+end
+assert(ROOT.join("README.md").read.include?("The other Aquarium workflows do not expose these modes") &&
+       ROOT.join("PRIVACY.md").read.include?("does not create this file for ordinary execution or plan-only requests") &&
+       ROOT.join("PRIVACY.md").read.include?("Podway records only its local path, SHA-256, byte size, and media type"),
+       "public documentation must bound plan-handoff scope and local data handling")
+
 {
   "new-project" => new_project,
   "new-feature" => new_feature,
@@ -1178,6 +1227,14 @@ assert(task_procedure_text.include?("must reach implementation through manual re
 review_item_index = lambda do |procedure, definition|
   procedure.dig("node_definitions", definition, "items").to_h { |item| [item.fetch("id"), item] }
 end
+plan_handoff_item = lambda do |procedure, definition|
+  item = review_item_index.call(procedure, definition).fetch("plan-handoff-artifact")
+  assert(item.fetch("type") == "artifact" &&
+         item.fetch("required") == false &&
+         item.fetch("allowed_media_types") == ["text/markdown"],
+         "#{procedure.fetch('id')} #{definition} must expose one optional Markdown plan artifact")
+end
+plan_handoff_item.call(task_procedure, "plan-record")
 task_review_items = review_item_index.call(task_procedure, "review-record")
 assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
        task_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
@@ -1191,6 +1248,7 @@ assert(task_procedure_text.include?("Review is incomplete, CI failed, or a remed
 
 validation_procedure_text = procedures_directory.join("aquarium-validation-v2.yaml").read
 validation_procedure = YAML.safe_load(validation_procedure_text, aliases: false)
+plan_handoff_item.call(validation_procedure, "baseline-record")
 validation_review_items = review_item_index.call(validation_procedure, "final-review-record")
 assert(validation_review_items.fetch("review-round").fetch("type") == "integer" &&
        validation_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
@@ -1200,6 +1258,7 @@ assert(validation_review_items.fetch("review-round").fetch("type") == "integer" 
        "validation procedure must record bounded whole-epic review state and its user hold")
 
 goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml").read, aliases: false)
+plan_handoff_item.call(goal_procedure, "work-record")
 goal_review_items = review_item_index.call(goal_procedure, "evidence-record")
 assert(goal_review_items.fetch("review-round").fetch("type") == "integer" &&
        goal_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible hardening-deferral-eligible] &&

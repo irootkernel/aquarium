@@ -17,9 +17,9 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `refactor` | Shape one refactor epic with compatibility, migration, rollback, and gate impact. | Explicit: `$aquarium:refactor` |
 | `war-room` | Diagnose a difficult bug and propose a task, epic, or incomplete investigation without a fix. | Explicit: `$aquarium:war-room` |
 | `design-qa` | Create or update durable local Design Gates after Ouroboros QA and exact-diff approval. | Explicit: `$aquarium:design-qa` |
-| `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit. | Explicit: `$aquarium:epic-handler` with a roadmap path and one epic ID |
+| `epic-handler` | Orchestrate an epic through sequential task goals and a convergent epic-wide audit, with optional plan handoff. | Explicit: `$aquarium:epic-handler` with a roadmap path and one epic ID |
 | `epic-validator` | Cold-validate a completed epic and converge confirmed gaps through remediation goals. | Explicit: `$aquarium:epic-validator` with a roadmap path and one epic ID |
-| `task-handler` | Strengthen the procedure around one task goal through focused phase skills and verified transitions. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
+| `task-handler` | Strengthen the procedure around one task goal through focused phase skills, verified transitions, and optional plan handoff. | Explicit: `$aquarium:task-handler` with a roadmap path and one task ID |
 | `task-commit` | Reconcile roadmap ownership and lifecycle state, then create one authorized isolated commit. | Automatic for commit requests, or explicit: `$aquarium:task-commit` |
 | `release-qa` | Exercise every active Design Gate and every release change through separate isolated QA matrices. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
 | `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
@@ -49,6 +49,8 @@ The default current and retired registries are `docs/gating-rules.md` and `docs/
 | `task-close` | Obtain final user approval, apply the user-selected terminal status, and hand an authorized commit to `task-commit`. |
 
 The three goal-centered workflows have distinct entry points. `epic-handler` connects multiple task goals into one epic outcome while leaving each task's internal procedure flexible. Its member tasks stop after at most two Mulgae reviews and defer second-review findings to epic hardening; hardening performs at most three review-and-fix rounds plus one confirmation review before asking the user. `task-handler` strengthens the procedure around one task goal with explicit phases and user-visible transition gates, moving it to a defined `In Progress` state after plan approval when available; it uses the same three-round-plus-confirmation limit. Any clean review ends immediately. `epic-validator` starts from a committed completed epic, independently audits it, and resolves confirmed gaps through sequential remediation goals. None invokes another. Their actual commits share `task-commit`. Direct commit requests require explicit task relationship and lifecycle or checkpoint confirmation; handler commits carry the owner's approved lifecycle or record decision in a bounded handoff. Commit, upstream publication, and live validation remain separate states.
+
+`task-handler` and `epic-handler` accept `mode=execute` by default, `mode=plan-only` for a non-mutating plan, `mode=plan-handoff` when another agent will continue, and `mode=resume` for the matching running session. An explicit handoff stores the approved Markdown once under `.podway/runtime/handoffs/<initial-session-id>/plan.md`, records only its local artifact metadata in Podway, and reports the exact session ID and continuation request. A plain request to plan only does not create that file or a session. The other Aquarium workflows do not expose these modes.
 
 ### Roadmap commit guard
 
