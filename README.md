@@ -25,8 +25,11 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
 | `dev-setup-bundle` | Apply development-tool setup to explicit Git repositories from one external YAML manifest. | Explicit: `$aquarium:dev-setup-bundle` with a manifest path |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
+| `orca-review` | Review one exact repository snapshot with a user-selected installed AI CLI through supervised Orca orchestration. | Explicit: `$aquarium:orca-review` with one exact review target |
 
 Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
+
+`$aquarium:orca-review` requires the separately installed `$orca-cli` skill and a ready Orca runtime, then offers only locally detected Claude, Codex, Cursor, and Kimi CLIs. The final tool:model selection discloses the exact target and digest and authorizes transmission of only that review scope to the selected provider; the skill does not install tools, authenticate providers, modify the checkout, run tests, or switch providers after a failed launch.
 
 ### Ouroboros-assisted design and Design Gates
 

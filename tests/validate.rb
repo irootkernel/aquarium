@@ -62,6 +62,7 @@ expected_skill_names = %w[
   independent-review
   new-feature
   new-project
+  orca-review
   refactor
   release-qa
   task-close
@@ -174,6 +175,8 @@ epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
 independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
+orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
+orca_provider_contracts = PLUGIN.join("skills/orca-review/references/provider-contracts.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
@@ -356,8 +359,16 @@ assert(ROOT.join("PRIVACY.md").read.include?("Cursor Team Kit Deslop installatio
        ROOT.join("PRIVACY.md").read.include?("does not bundle Lora, Ouroboros, or Cursor Team Kit skill or documentation sources"),
        "privacy policy must disclose third-party skill installation and no-vendoring boundaries")
 assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, or Cursor Team Kit skill and documentation sources") &&
+       ROOT.join("TERMS.md").read.include?("users install approved upstream copies under their original license terms") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
+assert(ROOT.join("README.md").read.include?("authorizes transmission of only that review scope to the selected provider") &&
+       ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
+       ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only that disclosed source") &&
+       ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
+       ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
+       ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code"),
+       "README, privacy policy, and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
   "## Core Behavior",
   "## Master Preferences",
@@ -1416,12 +1427,14 @@ assert(task_handler.include?("A session created from an earlier version of this 
 
 podway_blind_skills = %w[
   task-plan task-implement task-verify task-refine task-document task-review task-close
-  independent-review release-qa
+  independent-review orca-review release-qa
 ]
 podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
   assert(!body.match?(/podway/i), "leaf and utility skill must remain Podway-blind: #{name}")
 end
+assert(!orca_provider_contracts.match?(/podway/i),
+       "orca-review provider contracts must remain Podway-blind")
 assert(independent_review.include?("Return the target and snapshot, independent reviewer verdict") &&
        task_refine.include?("Return deslop actions, optimization reasoning") &&
        task_close.include?("Return the three answers, final roadmap state"),
@@ -1451,6 +1464,92 @@ assert(independent_review.include?("Valid") && independent_review.include?("Inva
        "independent-review must adjudicate reviewer findings")
 assert(!independent_review.include?("owning Aquarium workflow requested"),
        "independent-review must not reintroduce the removed owning-workflow qualifier")
+
+assert(orca_review.include?("user explicitly invokes") &&
+       orca_review.include?("does not replace `$aquarium:independent-review`") &&
+       orca_review.include?("skills get orca-cli") &&
+       orca_review.include?("skills get orchestration"),
+       "orca-review must remain explicit, separate, and load version-matched Orca guides")
+other_skill_behavior_paths = (expected_skill_names - ["orca-review"]).flat_map do |name|
+  Dir[PLUGIN.join("skills/#{name}/**/*.md")].map { |path| Pathname.new(path) }
+end
+shared_workflow_reference_paths = Dir[PLUGIN.join("references/**/*.md")].map { |path| Pathname.new(path) }
+(other_skill_behavior_paths + shared_workflow_reference_paths).sort.each do |path|
+  assert(!path.read.include?("$aquarium:orca-review"),
+         "another Aquarium workflow source must not invoke orca-review: #{path.relative_path_from(PLUGIN)}")
+end
+assert(orca_review.include?("separately installed `$orca-cli` skill") &&
+       orca_review.include?("Never substitute a generic subagent") &&
+       orca_review.include?("starting the installed Orca runtime when needed") &&
+       orca_review.include?("An operational failure is not an `APPROVE` result"),
+       "orca-review must fail closed on missing or unverifiable Orca prerequisites")
+assert(orca_review.include?("git diff --cached --binary") &&
+       orca_review.include?("`git diff --binary`") &&
+       orca_review.include?("without `git write-tree`") &&
+       orca_review.include?("path and SHA-256 digest of every applicable instruction file and named requirement authority") &&
+       orca_review.include?("recompute the recorded target, instruction, and authority digests") &&
+       orca_review.include?("recompute the target and every instruction and authority digest") &&
+       orca_review.include?("require a new final provider selection") &&
+       orca_review.include?("index blobs") &&
+       orca_review.include?("resolved endpoint commits, not working-tree copies") &&
+       orca_review.include?("authoritative worker evidence that the reviewer read index blobs") &&
+       orca_review.include?("authoritative worker evidence that the reviewer read the resolved endpoint blobs") &&
+       orca_review.include?("target, an instruction file, or authority changed") &&
+       orca_review.include?("exact scope cannot be verified") &&
+       orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
+       "orca-review must bind and revalidate an exact non-mutating review snapshot")
+assert(orca_review.include?("request_user_input") &&
+       orca_review.include?("Present no more than three choices") &&
+       orca_review.include?("Even when one choice is available") &&
+       orca_review.include?("structured ask/answer is unavailable") &&
+       orca_review.include?("stop without selecting a provider or transmitting source") &&
+       orca_review.include?("Never auto-select"),
+       "orca-review must use explicit structured provider selection without silent defaults")
+%w[
+  claude:fable\ with\ opus/sonnet
+  claude:opus
+  codex:gpt-5.6-sol
+  cursor:grok-4.6
+  kimi:k3
+].each do |label|
+  assert(orca_review.include?(label), "orca-review provider label is missing: #{label}")
+end
+assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
+       orca_review.include?("Probe only these executable names with `command -v` followed by their local version command: `claude --version`, `codex --version`, `cursor-agent --version`, and `kimi --version`") &&
+       orca_review.include?("A command is available only when both probes succeed") &&
+       orca_review.include?("Do not authenticate, list remote models"),
+       "orca-review must show only locally healthy CLI choices without provider probes")
+assert(orca_provider_contracts.include?("claude --model fable --permission-mode plan") &&
+       orca_provider_contracts.include?("claude --model opus --permission-mode plan") &&
+       orca_provider_contracts.include?("codex --model gpt-5.6-sol --sandbox read-only --ask-for-approval never") &&
+       orca_provider_contracts.include?("cursor-agent --model grok-4.6 --mode plan") &&
+       orca_provider_contracts.include?("kimi --model k3 --plan") &&
+       orca_provider_contracts.include?("terminal create --worktree current") &&
+       orca_review.include?("Do not create another Git worktree or reuse an existing AI terminal"),
+       "orca-review must launch every selected model through a read-only current-worktree terminal")
+assert(orca_provider_contracts.include?("Fable is the master reviewer") &&
+       orca_provider_contracts.include?("explicit per-invocation `opus` or `sonnet` model") &&
+       orca_provider_contracts.include?("model: inherit") &&
+       orca_provider_contracts.scan("records the requested model and verifies the effective model from native Agent task or session metadata or an explicit runtime model identity").length == 2 &&
+       orca_provider_contracts.scan("A missing, ambiguous, or mismatched effective model makes the topology unverifiable and prevents a clean verdict").length == 2 &&
+       orca_provider_contracts.include?("primary model explicitly selected") &&
+       orca_review.include?("required subagent topology and effective-model verification duties copied from the reference") &&
+       orca_review.include?("participant-wide read-only restrictions") &&
+       orca_review.include?("Require the lead to:") &&
+       orca_review.include?("Subagents return evidence only to the lead") &&
+       orca_review.include?("retrieve the complete authoritative worker evidence through `worker-read`") &&
+       orca_review.include?("authoritative transcript or scope evidence is unavailable") &&
+       orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
+       "orca-review must preserve provider-specific orchestration and effective-model verification")
+assert(orca_review.include?("run no tests, builds, generators, formatters, linters") &&
+       orca_review.include?("It does not authorize edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request") &&
+       orca_review.include?("report no modified files") &&
+       orca_review.include?("Valid") &&
+       orca_review.include?("Invalid") &&
+       orca_review.include?("Needs confirmation") &&
+       orca_review.include?("Never retry a provider automatically, switch providers") &&
+       orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
+       "orca-review must remain read-only and locally adjudicate bounded results")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -1789,7 +1888,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle independent-review new-project new-feature refactor war-room design-qa].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle independent-review orca-review new-project new-feature refactor war-room design-qa].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(!readme.include?("$aquarium:deslop") &&
