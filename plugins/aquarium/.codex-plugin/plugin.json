@@ -1,6 +1,6 @@
 {
   "name": "aquarium",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Ouroboros-assisted design, durable gates, and evidence-gated delivery with optional Podway v2 execution memory.",
   "author": {
     "name": "Root Kernel",
