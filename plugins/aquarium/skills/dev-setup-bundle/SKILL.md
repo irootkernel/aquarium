@@ -19,9 +19,9 @@ Read [manifest.md](references/manifest.md), then read [the development setup ski
 
 ## Confirm the Normalized Selection
 
-Show the manifest digest and an ordered matrix of ready and invalid targets, input paths, canonical Git roots, effective tools, project MCP selections, AGENTS.md proposal policy, worktree state, and local readiness. Disclose that confirming a selection containing Sanho, Mulgae, Gaori, or Podway authorizes the bounded official GitHub Releases and raw-file freshness comparison defined by `dev-setup`, but no installation or replacement.
+Show the manifest digest and an ordered matrix of ready and invalid targets, input paths, canonical Git roots, effective tools, project MCP selections, repository-guidance proposal policy, worktree state, and local readiness. Disclose that confirming a selection containing Sanho, Mulgae, Gaori, or Podway authorizes the bounded official GitHub Releases and raw-file freshness comparison defined by `dev-setup`, but no installation or replacement.
 
-Use the host's structured ask/answer tool when available to confirm the normalized selection before any network comparison. A refusal stops the bundle without mutation. Confirmation is not approval for a CLI, skill, daemon, configuration, MCP registration, managed Procedure, AGENTS.md edit, or any other persistent action.
+Use the host's structured ask/answer tool when available to confirm the normalized selection before any network comparison. A refusal stops the bundle without mutation. Confirmation is not approval for a CLI, skill, daemon, configuration, MCP registration, managed Procedure, root AGENTS.md/CLAUDE.md edit, or any other persistent action.
 
 Immediately before that confirmation, rerun the normalizer and require the manifest digest, target order, canonical repositories, and selections to match. Any change invalidates the displayed selection and requires a new preflight.
 
@@ -35,9 +35,11 @@ If a shared action fails or is declined, mark every dependent target `partial`, 
 
 ## Configure Targets in Order
 
-Process ready targets in manifest order. Pass `dev-setup` a normalized bundle handoff containing the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and AGENTS.md policy. Never pass the manifest path or ask `dev-setup` to read it.
+Process ready targets in manifest order. Pass `dev-setup` a normalized bundle handoff containing the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and repository-guidance policy. Never pass the manifest path or ask `dev-setup` to read it.
 
-Use the normalized tools as `Install and configure` selections and the normalized project MCP and AGENTS.md values as preselected choices. Still show and separately approve every exact persistent action required by `dev-setup`. Ask only for identifiers that repository state and the manifest selection cannot supply, such as a new Sanho project name or documentation repository URL.
+Use the normalized tools as `Install and configure` selections and the normalized project MCP and repository-guidance values as preselected choices. `agents_guidance: propose` preselects preparation of the complete AGENTS.md operating contract and CLAUDE.md delegation proposal, not merely tool references.
+
+Still show and separately approve every exact persistent action required by `dev-setup`. Ask only for unresolved identifiers or mandatory policy choices that repository state and the manifest selection cannot supply, such as a new Sanho project name, documentation repository URL, or missing commit-header convention.
 
 An unexpected failure, declined action, lifecycle conflict, or overlapping worktree change affects only that action and its dependent readiness. Record the actual state and continue with the next independent action or target. Do not roll back successful actions automatically, retry an unchanged failed mutation, stage, commit, push, invoke providers, start reviews or tests, or activate a Podway workflow.
 

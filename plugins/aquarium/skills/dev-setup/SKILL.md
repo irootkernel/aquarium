@@ -1,11 +1,11 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository tooling. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit Sanho, Mulgae, Gaori, Podway, Ouroboros, Lora, upstream Deslop, paired skills, MCP registrations, Config v3, provider profiles, or AGENTS.md tool guidance. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
+description: "Diagnose and configure Aquarium repository tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit supported tools, paired skills, project MCP state, or an evidence-based AGENTS.md operating contract with CLAUDE.md delegation. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
 ---
 
 # Development Setup
 
-Configure selected development tools without inventing shared project state or silently rewriting agent guidance. Treat diagnosis, installation, native configuration, and AGENTS.md editing as distinct authority boundaries.
+Configure selected development tools and evidence-based repository operating guidance without inventing shared project state or silently rewriting instruction files. Treat diagnosis, installation, native configuration, and root AGENTS.md/CLAUDE.md editing as distinct authority boundaries.
 
 Read [podway-integration.md](../../references/podway-integration.md) only when the user explicitly selects Podway diagnosis or setup. Managed Aquarium Procedures or other repository state never select Podway by themselves.
 
@@ -18,7 +18,7 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
    When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
-5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
+5. Discover existing root instruction files, project authorities, tool guidance, commit-message rules, and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
 6. Do not create or read `.aquarium` or any equivalent central selection file. `$aquarium:dev-setup-bundle` may separately normalize an explicit external manifest, but this skill receives only its bounded normalized handoff and never the manifest path or contents.
 
 ## Use Ask/Answer for Decisions
@@ -33,7 +33,7 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, use these batches and component boundaries:
 
-- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare an AGENTS.md proposal.
+- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
 - For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
 - For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
 - For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
@@ -43,13 +43,13 @@ Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either a
 
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
-A `dev-setup-bundle` handoff is a preselected multi-tool setup request, not a scoped repair continuation. Require the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and AGENTS.md policy.
+A `dev-setup-bundle` handoff is a preselected multi-tool setup request, not a scoped repair continuation. Require the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and repository-guidance policy.
 
-Reinspect that repository, use the normalized tools as `Install and configure` selections, use the MCP and AGENTS.md values as their preselected choices, and retain every exact mutation, backup, approval, and stale-target boundary below. Reject a handoff that includes an unsupported tool, selects project MCP outside Mulgae or Gaori, selects MCP for an absent effective tool, or asks this skill to read the manifest.
+Reinspect that repository, use the normalized tools as `Install and configure` selections, use the MCP and repository-guidance values as their preselected choices, and retain every exact mutation, backup, approval, and stale-target boundary below. Reject a handoff that includes an unsupported tool, selects project MCP outside Mulgae or Gaori, selects MCP for an absent effective tool, or asks this skill to read the manifest.
 
 When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Reject a handoff whose only requested action is routine supported Procedure v2 session observation, cancellation, discard, or reset, and return the exact `$use-podway` lifecycle request without starting broad setup discovery.
 
-Otherwise keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal. Skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
+Otherwise keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal. Skip the remaining batches and the repository-guidance question unless the user asks for it, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
@@ -155,18 +155,19 @@ Approval for one never authorizes another. Re-read targets immediately before ea
 
 After approved mutations, verify `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. When the active host can expose MCP tools safely, verify live exposure separately without invoking a provider. Report missing skills, rules, registration, runtime health, and live exposure as distinct gaps, and tell the user when a Codex restart is required.
 
-## Gate AGENTS.md With Two Approvals
+## Gate Repository Guidance With Two Approvals
 
-Handle AGENTS.md independently from tool setup:
+Handle root AGENTS.md and CLAUDE.md independently from tool setup:
 
-1. Ask whether to prepare a reference-based AGENTS.md proposal. Offer `Show proposal`, `Diagnose only`, and `Skip`.
-2. Only after `Show proposal`, read [agents-guidance.md](references/agents-guidance.md), then classify existing text into duplicated skill behavior, repository-specific overrides, and ambiguous text that must be preserved.
-3. Display the exact target path and complete proposed diff. Do not edit the file yet.
-4. Ask whether to `Apply exactly this diff`, `Revise proposal`, or `Do not apply`.
-5. Before applying, re-read the file and compare it with the bytes used to produce the proposal. If it changed, discard the approval, regenerate the diff, and ask again.
-6. Apply only the approved diff. Then show the actual diff and verify that overrides and unrelated user content remain.
+1. Ask whether to prepare an evidence-based repository operating-guidance proposal. Offer `Show proposal`, `Diagnose only`, and `Skip`.
+2. For either `Show proposal` or `Diagnose only`, read [agents-guidance.md](references/agents-guidance.md) and inspect the local sources it identifies. Diagnosis reports coverage and conflicts without drafting or mutation.
+3. For `Show proposal`, resolve every material conflict and the mandatory `Project Configuration` > `Commit Messages` rule before finalizing the proposal. If no authoritative commit header exists, ask the user to choose one; recent Git history is evidence only and never sufficient authority by itself.
+4. Display the exact root AGENTS.md and CLAUDE.md paths and one complete combined diff. Do not edit either file yet. Preserve substantive CLAUDE.md guidance in AGENTS.md before proposing the canonical delegation file.
+5. Ask whether to `Apply exactly this diff`, `Revise proposal`, or `Do not apply`.
+6. Before applying, re-read both files and compare them with the bytes or explicit absence used to produce the proposal. If either changed, discard the approval, regenerate the combined diff, and ask again.
+7. Apply only the approved diff. Then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, repository-specific rules, and unrelated user content.
 
-The first answer authorizes proposal preparation only. General setup approval, install approval, and the instruction to use this skill never authorize AGENTS.md mutation. Do not edit nested AGENTS.md, CLAUDE.md, stage, or commit without separate explicit approval.
+The first answer authorizes proposal preparation or diagnosis only. General setup approval, install approval, and the instruction to use this skill never authorize instruction-file mutation. The second approval covers only the exact displayed root AGENTS.md/CLAUDE.md diff; it never authorizes nested instruction files, staging, committing, or publication.
 
 ## Report the Result
 
@@ -184,9 +185,9 @@ Report:
 - commands run and their exit status;
 - native configuration and ignore paths changed;
 - verification evidence and remaining auth or environment gaps;
-- whether AGENTS.md was skipped, proposed, revised, or applied;
+- whether repository guidance was skipped, diagnosed, proposed, revised, or applied, including AGENTS.md structure, mandatory commit-message authority, and CLAUDE.md delegation state;
 - worktree changes, with staging and publication state stated separately.
 
 For a `dev-setup-bundle` handoff, also return the manifest digest, target index, canonical Git root, and a target result of `ready`, `partial`, `failed`, `declined`, or `skipped`, with unmet dependencies and an exact resumption request. Return the result to the bundle owner so it can continue independent targets and produce one aggregate report.
 
-Do not claim a tool is configured merely because its binary exists. Do not claim AGENTS.md was approved when only a proposal was requested.
+Do not claim a tool is configured merely because its binary exists. Do not claim repository guidance was approved when only a proposal was requested.

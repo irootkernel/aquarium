@@ -162,6 +162,8 @@ dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
 dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
 dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
+root_agents = ROOT.join("AGENTS.md").read
+root_claude = ROOT.join("CLAUDE.md").read
 tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
@@ -224,6 +226,11 @@ assert(dev_setup_bundle_manifest.include?("schema: aquarium.dev-setup-bundle/v1"
        dev_setup_bundle_manifest.include?("YAML merge key") &&
        dev_setup_bundle_manifest.include?("Do not put credentials"),
        "dev-setup-bundle manifest contract is incomplete")
+assert(dev_setup_bundle.include?("complete AGENTS.md operating contract and CLAUDE.md delegation proposal") &&
+       dev_setup_bundle.include?("missing commit-header convention") &&
+       dev_setup_bundle_manifest.include?("mandatory project-specific commit-message rule") &&
+       dev_setup_bundle_manifest.include?("Applying the complete displayed diff remains separately approved"),
+       "bundle AGENTS guidance must select the full operating contract without widening apply authority")
 
 assert(dev_setup.include?(">=0.51.1,<0.52.0") &&
        dev_setup.include?("uv tool install ouroboros-ai==<exact-version>") &&
@@ -251,12 +258,14 @@ assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, or Deslop source
        dev_setup.include?("one regular non-symlink installation") &&
        dev_setup.include?("exact repository, roadmap, and task prompt"),
        "dev-setup must install third-party skills from exact upstream sources")
-proposal_index = dev_setup.index("Ask whether to prepare")
-diff_index = dev_setup.index("Display the exact target path")
+proposal_index = dev_setup.index("Ask whether to prepare an evidence-based repository operating-guidance proposal")
+diff_index = dev_setup.index("Display the exact root AGENTS.md and CLAUDE.md paths")
 apply_index = dev_setup.index("Apply exactly this diff")
 assert(proposal_index && diff_index && apply_index && proposal_index < diff_index && diff_index < apply_index,
-       "AGENTS proposal and apply approvals are not ordered")
-assert(dev_setup.include?("If it changed, discard the approval"), "stale AGENTS approval guard is missing")
+       "repository-guidance proposal and apply approvals are not ordered")
+assert(dev_setup.include?("If either changed, discard the approval") &&
+       dev_setup.include?("second approval covers only the exact displayed root AGENTS.md/CLAUDE.md diff"),
+       "combined instruction-file stale approval guard is missing")
 assert(dev_setup.include?("the directory containing this `SKILL.md`"),
        "dev-setup must resolve its bundled references relative to its own skill directory")
 assert(dev_setup.include?("treat it as scoped intake"),
@@ -349,10 +358,73 @@ assert(ROOT.join("PRIVACY.md").read.include?("Cursor Team Kit Deslop installatio
 assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, or Cursor Team Kit skill and documentation sources") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
-assert(agents_reference.include?("Repository-specific rules below override"), "override precedence is missing")
+required_guidance_sections = [
+  "## Core Behavior",
+  "## Master Preferences",
+  "## Aquarium Development Guide",
+  "## Project Configuration",
+  "### Repository Index and Authorities",
+  "### Commit Messages",
+  "### Project-Specific Operating Rules"
+]
+guidance_indexes = required_guidance_sections.map { |heading| agents_reference.index(heading) }
+assert(guidance_indexes.all? && guidance_indexes == guidance_indexes.sort,
+       "AGENTS operating-contract sections are missing or out of order")
+assert(agents_reference.include?("Every applied AGENTS.md must contain all four top-level sections") &&
+       agents_reference.include?("Keep `Commit Messages` inside `Project Configuration`") &&
+       agents_reference.include?("ask the user to choose one and do not finalize or apply") &&
+       agents_reference.include?("recent commit subjects only as evidence"),
+       "AGENTS guidance must keep project commit-message configuration mandatory and explicit")
+assert(agents_reference.include?("Repository-specific rules in `Project Configuration` override") &&
+       agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
+       "override and conditional paired-skill precedence is missing")
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
        "AGENTS reference guidance must distinguish epic delivery and validation")
+assert(agents_reference.include?("substantive CLAUDE.md") &&
+       agents_reference.include?("merge every non-duplicate or stricter rule into AGENTS.md") &&
+       agents_reference.include?("one complete combined diff for both files") &&
+       agents_reference.include?("A change to either target invalidates approval") &&
+       agents_reference.include?("Do not edit nested AGENTS.md, nested CLAUDE.md"),
+       "AGENTS guidance must reconcile root Claude guidance without widening file scope")
+assert(agents_reference.include?("2c606141936f1eeef17fa3043a72095b4765b9c2") &&
+       agents_reference.include?("Do not contact that repository or fetch its text while preparing a proposal"),
+       "the core behavior attribution must be pinned and runtime-offline")
+
+root_guidance_sections = [
+  "## Core Behavior",
+  "## Master Preferences",
+  "## Aquarium Development Guide",
+  "## Project Configuration",
+  "### Repository Index and Authorities",
+  "### Commit Messages",
+  "### Project-Specific Operating Rules",
+  "### Release Policy"
+]
+root_guidance_indexes = root_guidance_sections.map { |heading| root_agents.index(heading) }
+assert(root_guidance_indexes.all? && root_guidance_indexes == root_guidance_indexes.sort,
+       "Aquarium AGENTS.md must use the reusable repository operating-contract order")
+assert(!root_agents.match?(/^## Commit Messages$/) &&
+       root_agents.include?("Every commit title must start with exactly one approved uppercase header") &&
+       root_agents.include?("[FEAT]") && root_agents.include?("[FIX]") &&
+       root_agents.include?("[DEV]") && root_agents.include?("[TEST]") &&
+       root_agents.include?("[DOC]") && root_agents.include?("[CI]") &&
+       root_agents.include?("[REL]") && root_agents.include?("[INT]"),
+       "Aquarium commit headers must be a mandatory Project Configuration subsection")
+assert(root_agents.include?("use exactly `Master`") &&
+       root_agents.include?("$aquarium:dev-setup-bundle") &&
+       root_agents.include?(".podway/procedures/aquarium-*-v2.yaml") &&
+       root_agents.include?("RELEASE_TAG=v<version> ruby tests/validate.rb"),
+       "Aquarium's applied guidance must preserve preferences, workflow references, and release policy")
+expected_claude_delegation = <<~MARKDOWN
+  # CLAUDE.md
+
+  This repository uses `AGENTS.md` as the canonical agent instruction file.
+
+  Claude Code agents must read and follow `AGENTS.md` first. If any guidance here conflicts with `AGENTS.md`, `AGENTS.md` wins.
+MARKDOWN
+assert(root_claude == expected_claude_delegation,
+       "root CLAUDE.md must be the canonical AGENTS.md delegation file")
 
 assert(tool_catalog.include?("--skill lore-commits"), "Lora commit skill is missing")
 assert(tool_catalog.include?("--skill lore-query"), "Lora query skill is missing")
@@ -523,7 +595,7 @@ assert(sanho_catalog.include?("sanho log") &&
        sanho_catalog.include?("`invalid_arguments` error envelope"),
        "Sanho history, recovery, and JSON error guidance is incomplete")
 assert(agents_reference.include?("$use-sanho") &&
-       agents_reference.include?("only the corresponding CLI is installed"),
+       agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-sanho")
 assert(dev_setup.include?("CLI installation or upgrade") &&
        dev_setup.include?("user-scoped skill installation or replacement") &&
@@ -534,7 +606,7 @@ assert(dev_setup.include?("use-gaori") &&
        dev_setup.include?("Never start a Gaori run or MCP test command during setup"),
        "dev-setup must separate Gaori CLI, skill, config, and MCP boundaries")
 assert(agents_reference.include?("$use-gaori") &&
-       agents_reference.include?("only the corresponding CLI is installed"),
+       agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-gaori")
 
 assert(mulgae_catalog, "Mulgae tool catalog section is missing")
@@ -607,7 +679,7 @@ assert(dev_setup.include?("use-mulgae") &&
        dev_setup.include?("source transmission, or MCP server during setup"),
        "dev-setup must separate Mulgae CLI, skill, Config v3, Codex profile, and MCP boundaries")
 assert(agents_reference.include?("$use-mulgae") &&
-       agents_reference.include?("only the corresponding CLI is installed"),
+       agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-mulgae")
 
 {
@@ -1048,15 +1120,15 @@ assert(epic_validator.include?("validation-record commit") &&
        epic_validator.include?("leave it undisposed rather than inventing a reference"),
        "epic-validator must hand off only a verified durable validation result")
 assert(agents_reference.include?("$use-podway") &&
-       agents_reference.include?("only the corresponding CLI is installed"),
+       agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-podway")
 assert(agents_reference.include?("use Podway by default") &&
        agents_reference.include?("opts out before the first managed-session mutation") &&
-       agents_reference.include?("cancellation, or current-session discard flow") &&
+       agents_reference.include?("diagnosis, recovery, cancellation, or discard operation") &&
        agents_reference.include?("$aquarium:new-project") &&
        agents_reference.include?("$aquarium:war-room") &&
        agents_reference.include?("$aquarium:design-qa") &&
-       agents_reference.include?("Keep each owner opt-out local"),
+       agents_reference.include?("workflow skills retain their stricter roadmap, ownership, and approval rules"),
        "AGENTS guidance must preserve default use and workflow-local opt-out")
 
 required_evidence = ->(*nodes) { nodes.map { |node| [node, true] } }

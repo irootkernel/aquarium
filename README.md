@@ -114,6 +114,8 @@ targets:
     project_mcp_exclude: [gaori]
 ```
 
+`agents_guidance: propose` prepares a separately approved, evidence-based repository operating contract rather than a tool-reference fragment. The proposal keeps AGENTS.md canonical, includes a mandatory project-specific commit-message subsection, and reconciles root CLAUDE.md to a thin delegation file; unresolved commit conventions or conflicting existing guidance still require a per-repository user decision before the exact diff can be applied.
+
 When `dev-setup` selects Sanho, Mulgae, Gaori, or Podway for setup or diagnosis, it automatically reads that tool's official GitHub release metadata and four public skill files to compare the latest supported stable skill with the exact `~/.agents/skills/use-*` target. Matching skills require no prompt; missing or different skills are installed or replaced only after an exact proposal and separate approval. Unselected tools and other network operations are not covered by this comparison authorization.
 
 - [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository. Aquarium supports stable v0.2.7 through v0.2.x, including read-only push preview and canonical history inspection, and can separately install the matching optional `use-sanho` user skill for Git-boundary guidance.

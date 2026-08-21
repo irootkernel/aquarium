@@ -31,7 +31,7 @@ Supported tools are `sanho`, `mulgae`, `gaori`, `podway`, `ouroboros`, `lora`, a
 
 For each target, effective tools are `defaults.tools` plus `include` minus `exclude`. Effective project MCP selections are `defaults.project_mcp` plus `project_mcp_include` minus `project_mcp_exclude`. The same value may not appear in both sides of one override, project MCP supports only `mulgae` and `gaori`, and every effective MCP selection must also be an effective tool. Each list must contain unique strings.
 
-`agents_guidance` must be `skip` or `propose`. A target value overrides the default. `propose` authorizes only preparation of the existing `dev-setup` AGENTS.md proposal; applying the displayed diff remains separately approved.
+`agents_guidance` must be `skip` or `propose`. A target value overrides the default. `propose` preselects preparation of the complete `dev-setup` repository operating-guidance proposal: the root AGENTS.md structure, mandatory project-specific commit-message rule, evidence-based project index, applicable Aquarium references, and root CLAUDE.md delegation. It does not supply a missing commit-header convention or resolve conflicting existing guidance; `dev-setup` asks for those decisions before finalizing the proposal. Applying the complete displayed diff remains separately approved.
 
 Paths may be absolute or relative to the manifest directory. Each must resolve inside a Git worktree; the normalizer returns its canonical Git root. Globs and environment or tilde expansion are not performed. Targets that resolve to the same canonical Git root or shared Git common directory are all invalid so one repository cannot receive ambiguous selections across linked worktrees.
 

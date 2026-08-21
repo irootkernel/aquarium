@@ -1,0 +1,25 @@
+version: 2
+commands:
+  unit:
+    command: ["python3", "-m", "unittest", "tests/test_inspect_tools.py", "tests/test_task_commit_gate.py", "tests/test_normalize_manifest.py"]
+    tags: [python, unit]
+    parser: generic
+    timeout_sec: 1800
+  validate:
+    command: ["ruby", "tests/validate.rb"]
+    tags: [ruby, validation]
+    parser: generic
+    timeout_sec: 1800
+  all:
+    command: ["sh", "-c", "python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py && ruby tests/validate.rb"]
+    tags: [python, ruby, full]
+    parser: generic
+    timeout_sec: 3600
+redaction:
+  patterns:
+    - name: credential-assignment
+      regex: '(?i)\b(authorization|api[_-]?key|token|secret|password)=\S+'
+      replace: '$1=<redacted>'
+    - name: bearer-token
+      regex: '(?i)(Bearer)\s+\S+'
+      replace: '$1 <redacted>'
