@@ -19,7 +19,7 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
    When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
 5. Discover existing tool guidance and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
-6. Do not create or read `.aquarium` or any equivalent central selection file.
+6. Do not create or read `.aquarium` or any equivalent central selection file. `$aquarium:dev-setup-bundle` may separately normalize an explicit external manifest, but this skill receives only its bounded normalized handoff and never the manifest path or contents.
 
 ## Use Ask/Answer for Decisions
 
@@ -43,6 +43,10 @@ Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either a
 
 When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
 
+A `dev-setup-bundle` handoff is a preselected multi-tool setup request, not a scoped repair continuation. Require the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and AGENTS.md policy.
+
+Reinspect that repository, use the normalized tools as `Install and configure` selections, use the MCP and AGENTS.md values as their preselected choices, and retain every exact mutation, backup, approval, and stale-target boundary below. Reject a handoff that includes an unsupported tool, selects project MCP outside Mulgae or Gaori, selects MCP for an absent effective tool, or asks this skill to read the manifest.
+
 When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Reject a handoff whose only requested action is routine supported Procedure v2 session observation, cancellation, discard, or reset, and return the exact `$use-podway` lifecycle request without starting broad setup discovery.
 
 Otherwise keep the read-only discovery above, then ask only about the named tool and anything its repair requires, including explicitly requested Podway readiness repair or managed-Procedure removal. Skip the remaining batches and the AGENTS.md question unless the user asks for them, and end by reporting the resolved gap and the exact prompt that resumes the routing workflow.
@@ -54,6 +58,8 @@ A selection expresses intent and, only for a selected Sanho, Mulgae, Gaori, or P
 ## Compare Selected Agent Skills First
 
 Immediately after Sanho, Mulgae, Gaori, or Podway is selected as either `Install and configure` or `Diagnose only`, and before proposing any other network operation for that tool, compare its paired skill. Do not fetch or compare a skipped or not-yet-selected tool, and do not widen a scoped continuation to the other three tools.
+
+Within one confirmed `dev-setup-bundle` request, accept the bundle owner's already verified exact tag, complete source file set, digests, endpoint provenance, ephemeral payload, and installed-target digest snapshot for a selected tool instead of repeating the comparison for each repository. Revalidate the payload and target snapshot before an approved action, use it only for the matching tool, and preserve every cleanup and stale-approval rule below.
 
 1. From the official GitHub Releases metadata, resolve the newest non-draft, non-prerelease tag within the tool's supported release line. Fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md` for that tag from the catalog's `raw.githubusercontent.com` source into an ephemeral temporary directory.
 2. Before comparing, require all four regular files, compute their SHA-256 digests, and verify the expected `name: use-sanho`, `name: use-mulgae`, `name: use-gaori`, or `name: use-podway` frontmatter. Reject redirects or responses that resolve outside the disclosed official endpoints. Never execute fetched content.
@@ -180,5 +186,7 @@ Report:
 - verification evidence and remaining auth or environment gaps;
 - whether AGENTS.md was skipped, proposed, revised, or applied;
 - worktree changes, with staging and publication state stated separately.
+
+For a `dev-setup-bundle` handoff, also return the manifest digest, target index, canonical Git root, and a target result of `ready`, `partial`, `failed`, `declined`, or `skipped`, with unmet dependencies and an exact resumption request. Return the result to the bundle owner so it can continue independent targets and produce one aggregate report.
 
 Do not claim a tool is configured merely because its binary exists. Do not claim AGENTS.md was approved when only a proposal was requested.

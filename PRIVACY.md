@@ -4,6 +4,8 @@ Aquarium contains instructions for Codex. The plugin does not operate a hosted s
 
 Some instructed workflows can invoke local or third-party tools after explicit user approval. Two bounded read-only network operations are authorized by an explicit tool selection or skill invocation without a second network prompt.
 
+`dev-setup-bundle` reads only the explicitly supplied local YAML manifest and the listed Git repositories needed for setup preflight. It keeps the manifest path and digest only for the active request, does not discover sibling repositories, persist the manifest, or transmit its contents, and delegates every selected tool action to the same disclosure and approval boundaries as `dev-setup`.
+
 Selecting Sanho, Mulgae, Gaori, or Podway in `dev-setup` automatically contacts that tool's official GitHub Releases metadata endpoint and `raw.githubusercontent.com`, downloads four public skill files to ephemeral storage, and compares them with the exact `~/.agents/skills/use-*` target. It sends no repository or local skill content, persists no downloaded file without separate approval, and does not authorize any other network operation or mutation.
 
 Explicitly invoking `release-qa` automatically queries the repository's configured Git remote and hosting Release metadata to establish remote `main`, tags, and the latest stable published release. Configured Git and hosting clients may use existing ambient authentication for private repositories, but the skill does not inspect, read, copy, print, persist, refresh, or reconfigure credential material, initiate authentication, upload source, or authorize network access from QA scenarios; unavailable access leaves the QA result incomplete.
