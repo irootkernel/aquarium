@@ -11,9 +11,9 @@ Before either mode, inspect the worktree, the local and remote `main` commits, t
 Update the plugin manifest version and its pinned validation expectation, then run the complete applicable local release gate:
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py
+python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 RELEASE_TAG=v<version> ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 git diff --check <previous-release-tag>
 ```
 

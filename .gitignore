@@ -7,3 +7,5 @@ __pycache__/
 .omx/
 .claude/
 .codex/
+
+.targets.yaml
