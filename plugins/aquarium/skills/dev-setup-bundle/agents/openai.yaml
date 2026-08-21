@@ -1,0 +1,6 @@
+interface:
+  display_name: "Development Setup Bundle"
+  short_description: "Configure tools across explicit Git repositories"
+  default_prompt: "Use $aquarium:dev-setup-bundle with this YAML manifest to configure its Git repositories."
+policy:
+  allow_implicit_invocation: false

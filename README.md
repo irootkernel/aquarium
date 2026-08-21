@@ -23,6 +23,7 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `task-commit` | Reconcile roadmap ownership and lifecycle state, then create one authorized isolated commit. | Automatic for commit requests, or explicit: `$aquarium:task-commit` |
 | `release-qa` | Exercise every active Design Gate and every release change through separate isolated QA matrices. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
 | `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
+| `dev-setup-bundle` | Apply development-tool setup to explicit Git repositories from one external YAML manifest. | Explicit: `$aquarium:dev-setup-bundle` with a manifest path |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
 
 Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
@@ -93,6 +94,24 @@ Repositories configured for Podway must remove the tracked `.podway/procedures/r
 
 ## Development-tool ecosystem
 
+`$aquarium:dev-setup-bundle` accepts one explicitly supplied external YAML manifest, validates every target before setup, prepares shared user-global components once, and applies the existing `dev-setup` approval boundaries to each ready Git repository. It never discovers repositories, persists the manifest as Aquarium state, stages, commits, or rolls back successful work automatically; a failed target does not prevent independent targets from continuing. See the [bundle manifest reference](plugins/aquarium/skills/dev-setup-bundle/references/manifest.md) for the complete schema.
+
+Bundle normalization requires user-provided Python 3.10 or newer and PyYAML 6.x. Aquarium never installs or upgrades those runtime dependencies as a setup side effect; missing or unsupported PyYAML stops before network access or repository mutation.
+
+```yaml
+schema: aquarium.dev-setup-bundle/v1
+defaults:
+  tools: [mulgae, gaori, podway, ouroboros, lora, deslop]
+  project_mcp: [mulgae, gaori]
+  agents_guidance: skip
+targets:
+  - path: ../dolgorae/gaori
+  - path: ../ember-quest/ember-quest
+    include: [sanho]
+    exclude: [ouroboros]
+    project_mcp_exclude: [gaori]
+```
+
 When `dev-setup` selects Sanho, Mulgae, Gaori, or Podway for setup or diagnosis, it automatically reads that tool's official GitHub release metadata and four public skill files to compare the latest supported stable skill with the exact `~/.agents/skills/use-*` target. Matching skills require no prompt; missing or different skills are installed or replaced only after an exact proposal and separate approval. Unselected tools and other network operations are not covered by this comparison authorization.
 
 - [Sanho](https://github.com/irootkernel/sanho) synchronizes project documentation with its canonical documentation repository. Aquarium supports stable v0.2.7 through v0.2.x, including read-only push preview and canonical history inspection, and can separately install the matching optional `use-sanho` user skill for Git-boundary guidance.
@@ -109,12 +128,12 @@ Thanks to [Lora](https://github.com/tmdgusya/lora) for the Lore commit skills, [
 
 ## Validate
 
-Run the repository validation (the lint step requires Ruff):
+Run the repository validation (the Python tests require PyYAML 6.x and the lint step requires Ruff):
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py
+python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 git diff --check
 ```
 

@@ -55,6 +55,7 @@ end
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
   design-qa
+  dev-setup-bundle
   dev-setup
   epic-handler
   epic-validator
@@ -157,6 +158,9 @@ assert(marketplace_plugin.dig("policy", "authentication") == "ON_INSTALL",
 
 dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
+dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
+dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
+dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
 tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
@@ -193,6 +197,30 @@ assert(dev_setup.include?("default inspection omits Podway and Ouroboros complet
        dev_setup.include?("--include-podway") &&
        dev_setup.include?("--include-ouroboros"),
        "dev-setup must probe Podway and Ouroboros only after explicit selection")
+assert(dev_setup.include?("A `dev-setup-bundle` handoff is a preselected multi-tool setup request") &&
+       dev_setup.include?("never the manifest path or contents") &&
+       dev_setup.include?("already verified exact tag") &&
+       dev_setup.include?("target result of `ready`, `partial`, `failed`, `declined`, or `skipped`"),
+       "dev-setup must accept bounded bundle handoffs without weakening setup authority")
+
+assert(dev_setup_bundle_script.file?, "dev-setup-bundle manifest normalizer is missing")
+assert(dev_setup_bundle.include?("python3 <skill-directory>/scripts/normalize_manifest.py --manifest <path>") &&
+       dev_setup_bundle.include?("Python 3.10 or newer and PyYAML 6.x") &&
+       dev_setup_bundle.include?("do not install or upgrade either dependency") &&
+       dev_setup_bundle.include?("do not parse the manifest approximately") &&
+       dev_setup_bundle.include?("canonical Git roots") &&
+       dev_setup_bundle.include?("continue with the remaining `ready` targets") &&
+       dev_setup_bundle.include?("Never pass the manifest path") &&
+       dev_setup_bundle.include?("Do not roll back successful actions automatically") &&
+       dev_setup_bundle.include?("Before the first mutation and before each later target"),
+       "dev-setup-bundle workflow must preserve manifest, continuation, and partial-failure boundaries")
+assert(dev_setup_bundle_manifest.include?("schema: aquarium.dev-setup-bundle/v1") &&
+       dev_setup_bundle_manifest.include?("defaults.tools` plus `include` minus `exclude`") &&
+       dev_setup_bundle_manifest.include?("project MCP supports only `mulgae` and `gaori`") &&
+       dev_setup_bundle_manifest.include?("same canonical Git root or shared Git common directory") &&
+       dev_setup_bundle_manifest.include?("YAML merge key") &&
+       dev_setup_bundle_manifest.include?("Do not put credentials"),
+       "dev-setup-bundle manifest contract is incomplete")
 
 assert(dev_setup.include?(">=0.51.1,<0.52.0") &&
        dev_setup.include?("uv tool install ouroboros-ai==<exact-version>") &&
@@ -1597,12 +1625,16 @@ assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust"
 workflow = ROOT.join(".github/workflows/validate.yml").read
 assert(workflow.include?("ruby/setup-ruby@v1"), "CI must configure Ruby explicitly")
 assert(workflow.include?("actions/setup-python@v5"), "CI must configure Python explicitly")
-assert(workflow.include?("tests/test_inspect_tools.py tests/test_task_commit_gate.py"),
-       "CI must run inspection and commit-hook tests")
+assert(workflow.include?('python -m pip install "PyYAML==6.0.3"'),
+       "CI must install the pinned supported PyYAML version")
+assert(workflow.include?("tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py"),
+       "CI must run inspection, commit-hook, and bundle-normalizer tests")
 assert(workflow.include?("ruby tests/validate.rb"), "CI must run repository validation")
 assert(workflow.include?("astral-sh/ruff-action@v4.1.0") &&
-       workflow.include?("plugins/aquarium/hooks/task_commit_gate.py"),
-       "CI must lint the roadmap commit hook")
+       workflow.include?("plugins/aquarium/hooks/task_commit_gate.py") &&
+       workflow.include?("plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py") &&
+       workflow.include?("tests/test_normalize_manifest.py"),
+       "CI must lint the roadmap commit hook and bundle normalizer")
 assert(workflow.include?("git diff --check"), "CI must reject whitespace damage")
 
 readme = ROOT.join("README.md").read
@@ -1626,7 +1658,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup independent-review new-project new-feature refactor war-room design-qa].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle independent-review new-project new-feature refactor war-room design-qa].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(!readme.include?("$aquarium:deslop") &&
