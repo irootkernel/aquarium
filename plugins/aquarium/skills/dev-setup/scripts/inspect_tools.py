@@ -515,7 +515,13 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def skill_root_symlinked(root: Path) -> bool:
+    return root.is_symlink() or root.parent.is_symlink()
+
+
 def safe_skill_file_state(directory: Path, relative_path: str) -> tuple[bool, bool]:
+    if skill_root_symlinked(directory.parent):
+        return False, True
     current = directory
     if current.is_symlink():
         return False, True
@@ -526,10 +532,41 @@ def safe_skill_file_state(directory: Path, relative_path: str) -> tuple[bool, bo
     return current.is_file(), False
 
 
+def safe_managed_file_state(path: Path, boundary: Path) -> tuple[bool, bool]:
+    try:
+        relative = path.relative_to(boundary)
+    except ValueError:
+        return False, True
+    current = boundary
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return False, True
+    return current.is_file(), False
+
+
 def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str, Any]:
     installations: list[dict[str, Any]] = []
     for root in skill_roots():
         directory = root / name
+        if skill_root_symlinked(root):
+            installations.append(
+                {
+                    "path": str(directory),
+                    "symlinked": True,
+                    "frontmatter_valid": False,
+                    "files": [
+                        {
+                            "path": relative_path,
+                            "present": False,
+                            "symlinked": True,
+                            "sha256": None,
+                        }
+                        for relative_path in required_files
+                    ],
+                }
+            )
+            continue
         if not directory.exists() and not directory.is_symlink():
             continue
         files = []
@@ -549,7 +586,7 @@ def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str,
         installations.append(
             {
                 "path": str(directory),
-                "symlinked": directory.is_symlink(),
+                "symlinked": any(entry["symlinked"] for entry in files),
                 "frontmatter_valid": bool(skill_entry["present"])
                 and frontmatter_name(skill_path) == name,
                 "files": files,
@@ -981,12 +1018,37 @@ def mulgae_configuration_entry(
     return entry
 
 
+def project_mcp_origin_verified(
+    codex_executable: str,
+    repository: Path,
+    name: str,
+    effective: dict[str, Any],
+    timeout_seconds: float,
+) -> bool:
+    config_path = repository / ".codex" / "config.toml"
+    present, symlinked = safe_managed_file_state(config_path, repository)
+    if not present or symlinked:
+        return False
+    ambient_probe = json_probe(
+        [codex_executable, "mcp", "get", name, "--json"],
+        Path(config_path.anchor),
+        timeout_seconds,
+    )
+    if not ambient_probe["ok"]:
+        return ambient_probe["exit_code"] == 1 and not ambient_probe["timed_out"]
+    return ambient_probe.get("result") != effective
+
+
 def inspect_mulgae_mcp(
     repository: Path, mulgae_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
+    project_config_present, _ = safe_managed_file_state(
+        repository / ".codex" / "config.toml", repository
+    )
     registration: dict[str, Any] = {
         "status": "missing",
-        "project_config_present": repository.joinpath(".codex/config.toml").is_file(),
+        "project_config_present": project_config_present,
+        "project_origin_verified": False,
         "enabled": None,
         "stdio": None,
         "repository_bound": None,
@@ -1035,6 +1097,10 @@ def inspect_mulgae_mcp(
             {"status": "degraded", "reason": "invalid_registration_result"}
         )
         return registration
+    project_origin_verified = project_mcp_origin_verified(
+        codex_executable, repository, "mulgae", result, timeout_seconds
+    )
+    registration["project_origin_verified"] = project_origin_verified
 
     if "required" not in result:
         required = None
@@ -1131,6 +1197,7 @@ def inspect_mulgae_mcp(
     )
     if (
         registration["project_config_present"]
+        and project_origin_verified
         and registration["enabled"]
         and registration["stdio"]
         and arguments_match
@@ -1142,7 +1209,16 @@ def inspect_mulgae_mcp(
     ):
         registration["status"] = "configured"
     else:
-        registration.update({"status": "degraded", "reason": "registration_mismatch"})
+        registration.update(
+            {
+                "status": "degraded",
+                "reason": (
+                    "project_registration_origin_unverified"
+                    if not project_origin_verified
+                    else "registration_mismatch"
+                ),
+            }
+        )
     return registration
 
 
@@ -1293,10 +1369,11 @@ def inspect_gaori_mcp(
     repository: Path, gaori_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
     project_config = repository.joinpath(".codex/config.toml")
-    project_config_present = project_config.is_file()
+    project_config_present, _ = safe_managed_file_state(project_config, repository)
     registration: dict[str, Any] = {
         "status": "missing",
         "project_config_present": project_config_present,
+        "project_origin_verified": False,
         "enabled": None,
         "stdio": None,
         "repository_bound": None,
@@ -1331,6 +1408,10 @@ def inspect_gaori_mcp(
             {"status": "degraded", "reason": "invalid_registration_result"}
         )
         return registration
+    project_origin_verified = project_mcp_origin_verified(
+        codex_executable, repository, "gaori", result, timeout_seconds
+    )
+    registration["project_origin_verified"] = project_origin_verified
 
     transport = result.get("transport")
     if not isinstance(transport, dict):
@@ -1397,6 +1478,7 @@ def inspect_gaori_mcp(
     )
     if (
         project_config_present
+        and project_origin_verified
         and enabled
         and stdio
         and repository_bound
@@ -1407,7 +1489,11 @@ def inspect_gaori_mcp(
         registration["status"] = "configured"
     else:
         registration["status"] = "degraded"
-        registration["reason"] = "registration_mismatch"
+        registration["reason"] = (
+            "project_registration_origin_unverified"
+            if not project_origin_verified
+            else "registration_mismatch"
+        )
     return registration
 
 
@@ -1468,9 +1554,9 @@ def skill_roots() -> list[Path]:
     )
     roots: list[Path] = []
     for candidate in candidates:
-        resolved = candidate.resolve()
-        if resolved not in roots:
-            roots.append(resolved)
+        lexical = Path(os.path.abspath(candidate))
+        if lexical not in roots:
+            roots.append(lexical)
     return roots
 
 
@@ -1496,6 +1582,16 @@ def inspect_lora() -> dict[str, Any]:
         for root in skill_roots():
             skill_directory = root.joinpath(name)
             skill_path = skill_directory.joinpath("SKILL.md")
+            if skill_root_symlinked(root):
+                installations.append(
+                    {
+                        "location": str(skill_directory),
+                        "skill_file_present": False,
+                        "frontmatter_valid": False,
+                        "symlinked": True,
+                    }
+                )
+                continue
             if not (skill_directory.exists() or skill_directory.is_symlink()):
                 continue
             skill_file_present, symlinked = safe_skill_file_state(
@@ -1531,9 +1627,11 @@ def inspect_lora() -> dict[str, Any]:
         "catalog_status": "active",
         "setup_supported": True,
         "installed": required_ready,
+        "complete_tree_verified": False,
+        "verification_scope": "structure_only",
         "executable": None,
         "version": None,
-        "status": "configured"
+        "status": "unverifiable"
         if required_ready
         else ("degraded" if any_present else "missing"),
         "skills": skills,
@@ -1549,6 +1647,17 @@ def inspect_deslop() -> dict[str, Any]:
     for root in skill_roots():
         skill_directory = root.joinpath(name)
         skill_path = skill_directory.joinpath("SKILL.md")
+        if skill_root_symlinked(root):
+            installations.append(
+                {
+                    "location": str(skill_directory),
+                    "skill_file_present": False,
+                    "license_file_present": False,
+                    "frontmatter_valid": False,
+                    "symlinked": True,
+                }
+            )
+            continue
         if not (skill_directory.exists() or skill_directory.is_symlink()):
             continue
         skill_file_present, skill_symlinked = safe_skill_file_state(
@@ -1696,20 +1805,29 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         source = PODWAY_SOURCE_DIRECTORY / name
         target = repository / ".podway" / "procedures" / name
         relative_path = str(target.relative_to(repository))
-        source_digest = file_sha256(source)
-        target_digest = file_sha256(target)
-        present = target.is_file()
+        source_present, source_symlinked = safe_managed_file_state(
+            source, PODWAY_SOURCE_DIRECTORY
+        )
+        present, symlinked = safe_managed_file_state(target, repository)
+        source_digest = file_sha256(source) if source_present else None
+        target_digest = file_sha256(target) if present else None
         matching = (
-            present and source_digest is not None and target_digest == source_digest
+            present
+            and not symlinked
+            and source_present
+            and not source_symlinked
+            and source_digest is not None
+            and target_digest == source_digest
         )
         tracked = present and tracked_by_git(repository, relative_path, timeout_seconds)
-        present_count += int(present)
+        present_count += int(present or symlinked)
         matching_count += int(matching)
         tracked_count += int(tracked)
         managed.append(
             {
                 "path": relative_path,
                 "present": present,
+                "symlinked": symlinked,
                 "tracked": tracked,
                 "source_sha256": source_digest,
                 "installed_sha256": target_digest,
@@ -1719,12 +1837,13 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     for name in LEGACY_PODWAY_PROCEDURES:
         target = repository / ".podway" / "procedures" / name
         relative_path = str(target.relative_to(repository))
-        present = target.is_file()
-        legacy_present_count += int(present)
+        present, symlinked = safe_managed_file_state(target, repository)
+        legacy_present_count += int(present or symlinked)
         legacy_managed.append(
             {
                 "path": relative_path,
                 "present": present,
+                "symlinked": symlinked,
                 "tracked": present
                 and tracked_by_git(repository, relative_path, timeout_seconds),
             }

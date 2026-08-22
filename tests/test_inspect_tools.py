@@ -129,12 +129,14 @@ class InspectToolsTest(unittest.TestCase):
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
         mulgae_mcp_mode: str | None = None,
+        mulgae_mcp_global: bool = False,
         go_version: str = "go1.26.6",
         gaori_version: str = "0.1.14",
         gaori_config_ok: bool = True,
         malformed_gaori_config: bool = False,
         slow_gaori_config: bool = False,
         gaori_mcp_mode: str | None = None,
+        gaori_mcp_global: bool = False,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
         podway_version: str = "v0.2.5",
@@ -410,6 +412,16 @@ class InspectToolsTest(unittest.TestCase):
                     if server == "gaori"
                     else {ouroboros_mcp_mode!r}
                 )
+                global_registration = (
+                    {mulgae_mcp_global!r}
+                    if server == "mulgae"
+                    else {gaori_mcp_global!r}
+                    if server == "gaori"
+                    else True
+                )
+                if server in {{"mulgae", "gaori"}} and pathlib.Path.cwd().resolve() != pathlib.Path({str(self.repository)!r}).resolve() and not global_registration:
+                    print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
+                    raise SystemExit(1)
                 if mode == "missing":
                     print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
                     raise SystemExit(1)
@@ -525,6 +537,30 @@ class InspectToolsTest(unittest.TestCase):
             f"---\nname: {name}\ndescription: Test skill.\n---\n", encoding="utf-8"
         )
         return skill_directory
+
+    def write_project_mcp_config(
+        self, name: str, *, startup: int = 30, timeout: int | None = None
+    ) -> None:
+        self.repository.joinpath(".codex").mkdir(exist_ok=True)
+        if name == "mulgae":
+            args = ["mcp", "--project-root", str(self.repository)]
+            cwd = f"cwd = {json.dumps(str(self.repository))}\n"
+            tool_timeout = timeout or 7501
+        else:
+            args = ["--repo", str(self.repository), "mcp"]
+            cwd = ""
+            tool_timeout = timeout or 3601
+        self.repository.joinpath(".codex/config.toml").write_text(
+            f"[mcp_servers.{name}]\n"
+            f"command = {json.dumps(str(self.bin_directory / name))}\n"
+            f"args = {json.dumps(args)}\n"
+            f"{cwd}"
+            "enabled = true\n"
+            + ("required = true\n" if name == "mulgae" else "")
+            + (f"startup_timeout_sec = {startup}\n" if name == "mulgae" else "")
+            + f"tool_timeout_sec = {tool_timeout}\n",
+            encoding="utf-8",
+        )
 
     def install_deslop_skill(
         self,
@@ -755,7 +791,8 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(gaori_configuration[".gaori/tester.yaml"]["ignored"])
         self.assertFalse(gaori_configuration[".gaori/tester/rules/"]["ignored"])
         self.assertTrue(gaori_configuration[".gaori/toolchain.yaml"]["ignored"])
-        self.assertEqual(tools["lora"]["status"], "configured")
+        self.assertEqual(tools["lora"]["status"], "unverifiable")
+        self.assertFalse(tools["lora"]["complete_tree_verified"])
         self.assertTrue(tools["lora"]["lore_setup_present"])
         self.assertFalse(tools["lora"]["skills"]["lore-commits"]["duplicate"])
         self.assertFalse(tools["lora"]["skills"]["lore-query"]["symlinked"])
@@ -805,6 +842,21 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
+
+    def test_symlinked_codex_home_is_not_traversed_for_skills(self) -> None:
+        external_home = self.base / "external-codex"
+        self.install_gaori_skill(root=external_home / "skills")
+        symlink_home = self.base / "codex-link"
+        symlink_home.symlink_to(external_home, target_is_directory=True)
+        self.environment["CODEX_HOME"] = str(symlink_home)
+
+        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+
+        self.assertEqual(skill["status"], "degraded")
+        installation = skill["installations"][0]
+        self.assertTrue(installation["symlinked"])
+        self.assertFalse(installation["frontmatter_valid"])
+        self.assertTrue(all(item["sha256"] is None for item in installation["files"]))
 
     def test_matching_managed_procedures_are_ready_only_on_supported_platform(
         self,
@@ -885,6 +937,32 @@ class InspectToolsTest(unittest.TestCase):
                         "digest": "sha256:procedure",
                     },
                 )
+
+    def test_symlinked_managed_procedure_is_never_hashed_or_checked(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures(tracked=False)
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        external = self.base / "external-procedure.yaml"
+        external.write_bytes(
+            (
+                ROOT / "plugins/aquarium/assets/podway/procedures/aquarium-task-v2.yaml"
+            ).read_bytes()
+        )
+        target.unlink()
+        target.symlink_to(external)
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertTrue(entry["symlinked"])
+        self.assertFalse(entry["present"])
+        self.assertIsNone(entry["installed_sha256"])
+        self.assertNotIn("check", entry)
 
     def test_partial_or_drifted_managed_procedures_are_degraded(self) -> None:
         self.install_fake_tools()
@@ -1412,10 +1490,7 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
     def test_mulgae_mcp_registration_is_scoped_and_sanitized(self) -> None:
-        self.repository.joinpath(".codex").mkdir()
-        self.repository.joinpath(".codex/config.toml").write_text(
-            "[mcp_servers.mulgae]\n", encoding="utf-8"
-        )
+        self.write_project_mcp_config("mulgae")
         self.install_fake_tools(mulgae_mcp_mode="configured")
         completed = self.inspect()
         self.assertNotIn("must-not-leak", completed.stdout)
@@ -1438,10 +1513,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["tool_timeout_sec"], 7501)
 
     def test_mulgae_mcp_registration_accepts_larger_timeouts(self) -> None:
-        self.repository.joinpath(".codex").mkdir()
-        self.repository.joinpath(".codex/config.toml").write_text(
-            "[mcp_servers.mulgae]\n", encoding="utf-8"
-        )
+        self.write_project_mcp_config("mulgae", startup=31, timeout=7502)
         self.install_fake_tools(mulgae_mcp_mode="higher-timeout")
         registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
             "mcp_registration"
@@ -1449,6 +1521,28 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["status"], "configured")
         self.assertEqual(registration["startup_timeout_sec"], 31)
         self.assertEqual(registration["tool_timeout_sec"], 7502)
+
+    def test_project_mcp_origin_requires_matching_local_entry(self) -> None:
+        self.repository.joinpath(".codex").mkdir()
+        self.repository.joinpath(".codex/config.toml").write_text(
+            '[mcp_servers.other]\ncommand = "other"\nargs = []\n',
+            encoding="utf-8",
+        )
+        self.install_fake_tools(
+            mulgae_mcp_mode="configured",
+            mulgae_mcp_global=True,
+            gaori_mcp_mode="configured",
+            gaori_mcp_global=True,
+        )
+
+        tools = json.loads(self.inspect().stdout)["tools"]
+        for name in ("mulgae", "gaori"):
+            registration = tools[name]["mcp_registration"]
+            self.assertEqual(registration["status"], "degraded")
+            self.assertFalse(registration["project_origin_verified"])
+            self.assertEqual(
+                registration["reason"], "project_registration_origin_unverified"
+            )
 
     def test_mulgae_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
@@ -1474,13 +1568,13 @@ class InspectToolsTest(unittest.TestCase):
                     self.inspect(timeout_seconds=NORMAL_PROBE_TIMEOUT_SECONDS).stdout
                 )["tools"]["mulgae"]["mcp_registration"]
                 self.assertEqual(registration["status"], "degraded")
-                self.assertEqual(registration["reason"], "registration_mismatch")
+                self.assertIn(
+                    registration["reason"],
+                    {"registration_mismatch", "project_registration_origin_unverified"},
+                )
 
     def test_mulgae_mcp_absent_required_is_compatible_but_unverifiable(self) -> None:
-        self.repository.joinpath(".codex").mkdir()
-        self.repository.joinpath(".codex/config.toml").write_text(
-            "[mcp_servers.mulgae]\nrequired = true\n", encoding="utf-8"
-        )
+        self.write_project_mcp_config("mulgae")
         self.install_fake_tools(mulgae_mcp_mode="required-absent")
         registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
             "mcp_registration"
@@ -1610,10 +1704,7 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
     def test_gaori_mcp_registration_is_scoped_and_sanitized(self) -> None:
-        self.repository.joinpath(".codex").mkdir()
-        self.repository.joinpath(".codex/config.toml").write_text(
-            "[mcp_servers.gaori]\n", encoding="utf-8"
-        )
+        self.write_project_mcp_config("gaori")
         self.install_fake_tools(gaori_mcp_mode="configured")
         completed = self.inspect()
         self.assertNotIn("must-not-leak", completed.stdout)
@@ -1629,10 +1720,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["tool_timeout_sec"], 3601)
 
     def test_gaori_mcp_registration_accepts_larger_timeout(self) -> None:
-        self.repository.joinpath(".codex").mkdir()
-        self.repository.joinpath(".codex/config.toml").write_text(
-            "[mcp_servers.gaori]\n", encoding="utf-8"
-        )
+        self.write_project_mcp_config("gaori", timeout=3602)
         self.install_fake_tools(gaori_mcp_mode="higher-timeout")
         registration = json.loads(self.inspect().stdout)["tools"]["gaori"][
             "mcp_registration"
@@ -1664,7 +1752,10 @@ class InspectToolsTest(unittest.TestCase):
                     "mcp_registration"
                 ]
                 self.assertEqual(registration["status"], "degraded")
-                self.assertEqual(registration["reason"], "registration_mismatch")
+                self.assertIn(
+                    registration["reason"],
+                    {"registration_mismatch", "project_registration_origin_unverified"},
+                )
                 if mode == "wrong-command":
                     self.assertTrue(registration["command_resolvable"])
                     self.assertFalse(registration["binary_matches_selected"])

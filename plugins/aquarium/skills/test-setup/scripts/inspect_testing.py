@@ -42,7 +42,10 @@ UNITTEST_COMMAND_PATTERN = re.compile(
     r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
 )
 SENSITIVE_PATH_COMPONENT = re.compile(
-    r"(?i)(?:^|[._-])(auth|credential|key|secret|token)(?:[._-]|$)"
+    r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
+)
+INFORMATION_ONLY_ARGUMENT = re.compile(
+    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--list|--list-tests)(?:\s|$)"
 )
 
 
@@ -178,6 +181,10 @@ def command_preserves_failure(command: str) -> bool:
     return "|" not in command and ";" not in command
 
 
+def command_executes_tests(command: str) -> bool:
+    return not INFORMATION_ONLY_ARGUMENT.search(command)
+
+
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
     definitions: dict[str, list[str]] = {}
     content = read_optional_text(repository / "Makefile")
@@ -217,7 +224,11 @@ def command_matches_python_runner(
     command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
 ) -> bool:
     match = pattern.search(command)
-    if not match or not command_preserves_failure(command):
+    if (
+        not match
+        or not command_preserves_failure(command)
+        or not command_executes_tests(command)
+    ):
         return False
     runner = match.group("runner")
     if not runner or not runner.startswith("$"):
@@ -226,6 +237,20 @@ def command_matches_python_runner(
     values = variables.get(name, set())
     return bool(values) and all(
         re.fullmatch(r"(?:\S*/)?python(?:\d+(?:\.\d+)*)?", value) for value in values
+    )
+
+
+def runner_variable_is(
+    command: str,
+    variable_name: str,
+    executable: str,
+    variables: dict[str, set[str]],
+) -> bool:
+    if not re.search(rf"\$\({variable_name}\)|\$\{{{variable_name}\}}", command):
+        return True
+    values = variables.get(variable_name, set())
+    return bool(values) and all(
+        re.fullmatch(rf"(?:\S*/)?{re.escape(executable)}", value) for value in values
     )
 
 
@@ -285,6 +310,7 @@ def inspect_frameworks(
             commands[stage]
             and any(
                 command_preserves_failure(command)
+                and command_executes_tests(command)
                 and re.search(r"^\s*[@+]*\s*ginkgo(?:\s|$)", command)
                 for command in commands[stage]
             )
@@ -380,6 +406,7 @@ def inspect_frameworks(
         if any(
             isinstance(command, str)
             and command_preserves_failure(command)
+            and command_executes_tests(command)
             and re.search(r"^\s*bun\s+test(?:\s|$)", command)
             for command in unit_int_scripts
         ):
@@ -396,6 +423,7 @@ def inspect_frameworks(
         runs_vitest = all(
             isinstance(command, str)
             and command_preserves_failure(command)
+            and command_executes_tests(command)
             and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
             for command in unit_int_scripts
         )
@@ -423,6 +451,8 @@ def inspect_frameworks(
                     command,
                 )
                 and command_preserves_failure(command)
+                and command_executes_tests(command)
+                and runner_variable_is(command, "CARGO", "cargo", make_variables)
                 for command in commands[stage]
             )
             for stage in ("test-unit", "test-int")
@@ -454,6 +484,7 @@ def inspect_frameworks(
                 commands[stage]
                 and any(
                     command_preserves_failure(command)
+                    and command_executes_tests(command)
                     and re.search(r"^\s*[@+]*\s*flutter\s+test(?:\s|$)", command)
                     for command in commands[stage]
                 )
@@ -480,6 +511,7 @@ def inspect_frameworks(
                 commands[stage]
                 and any(
                     command_preserves_failure(command)
+                    and command_executes_tests(command)
                     and re.search(r"^\s*[@+]*\s*dart\s+test(?:\s|$)", command)
                     for command in commands[stage]
                 )
@@ -611,13 +643,20 @@ def parse_makefile(
     return targets, phony, includes
 
 
-def bun_adapter_matches(recipe: list[str], script: str) -> bool:
+def bun_adapter_matches(
+    recipe: list[str], script: str, variables: dict[str, set[str]]
+) -> bool:
     if len(recipe) != 1:
         return False
     pattern = re.compile(
         rf"^[+@]*\s*(?:bun|\$\(BUN\)|\$\{{BUN\}})\s+run\s+{re.escape(script)}\s*$"
     )
-    return command_preserves_failure(recipe[0]) and bool(pattern.fullmatch(recipe[0]))
+    return (
+        command_preserves_failure(recipe[0])
+        and command_executes_tests(recipe[0])
+        and bool(pattern.fullmatch(recipe[0]))
+        and runner_variable_is(recipe[0], "BUN", "bun", variables)
+    )
 
 
 def inspect_makefile(
@@ -641,11 +680,13 @@ def inspect_makefile(
         return result, findings
 
     targets, phony, includes = parse_makefile(content)
+    make_variables = make_variable_values(repository)
     result["includes"] = includes
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
         or re.search(
-            r"(?m)^\s*(?:override\s+)?(?:SHELL|\.SHELLFLAGS)\s*[:?+]?=", content
+            r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
+            content,
         )
     )
     result["authority_includes_unresolved"] = bool(includes)
@@ -710,7 +751,7 @@ def inspect_makefile(
             for target, script in adapter_map.items():
                 definition = targets[target][0]
                 matches = not definition["prerequisites"] and bun_adapter_matches(
-                    definition["recipe"], script
+                    definition["recipe"], script, make_variables
                 )
                 result["targets"][target]["bun_adapter"] = matches
                 adapter_ok = adapter_ok and matches
@@ -804,7 +845,7 @@ def inspect_bun(
         for name, value in scripts.items()
         if isinstance(value, str)
         and re.search(
-            r"(?:^|(?:&&|\|\||[;|])\s*)(?:(?:command|exec)\s+)*(?:(?:\S*/)?env(?:\s+-\S+)*\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
+            r"(?:^|[\s;&|()])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
             value,
         )
     )

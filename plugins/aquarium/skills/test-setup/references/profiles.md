@@ -16,7 +16,7 @@ test:
 	$(MAKE) test-e2e
 ```
 
-Do not express the four stages as prerequisites: `make -j` may run them concurrently. Additional logging is allowed, but additional test gates belong inside one of the four handlers rather than beside them in `test`.
+Do not express the four stages as prerequisites: `make -j` may run them concurrently. Assignments to `MAKEFLAGS`, `MFLAGS`, or `GNUMAKEFLAGS` and custom global shell semantics make fail-fast behavior unverifiable unless a future inspector proves them harmless. Additional logging is allowed, but additional test gates belong inside one of the four handlers rather than beside them in `test`.
 
 ## TypeScript and Bun
 
@@ -39,7 +39,7 @@ The scripts are literal, one-way handlers:
 
 These command bodies are examples except for the four script names and aggregate order. New TypeScript unit and integration layers use a project-pinned Vitest dependency executed through `bun run`; Bun remains the package manager and script orchestrator, and npm is not introduced. A pre-existing Bun test, Jest, or Node.js test layer requires an approved `AQTEST-009` waiver rather than introducing Vitest beside it. Do not install dependencies from a test handler.
 
-The root Makefile is a compatibility adapter whose five targets call only `bun run test`, `bun run test:prepare`, `bun run test:unit`, `bun run test:int`, and `bun run test:e2e` respectively. Package scripts never call Make, so `make test` and `bun run test` execute the same handlers exactly once. Always use `bun run test` for the package script; bare `bun test` invokes Bun's test runner instead.
+The root Makefile is a compatibility adapter whose five targets call only `bun run test`, `bun run test:prepare`, `bun run test:unit`, `bun run test:int`, and `bun run test:e2e` respectively. A `$(BUN)` adapter is valid only when every static definition resolves to `bun`. Package scripts never call Make, including through `time`, `command`, `exec`, `env`, grouping, or another shell wrapper, so `make test` and `bun run test` execute the same handlers exactly once. Always use `bun run test` for the package script; bare `bun test` invokes Bun's test runner instead.
 
 For a browser or web-page product, Playwright in TypeScript is the preferred E2E implementation and needs no waiver. For a TypeScript CLI, service, library, or other non-web-page product, Python remains the preferred black-box E2E implementation and the Bun handler launches it. An existing equivalent runner in another language may remain only through an approved legacy waiver.
 

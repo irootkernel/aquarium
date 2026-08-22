@@ -221,9 +221,12 @@ assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Pod
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
 assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
-       dev_setup_script_body.include?('"symlinked": directory.is_symlink()') &&
+       dev_setup_script_body.include?("skill_root_symlinked") &&
        dev_setup_script_body.include?('entry["symlinked"]') &&
        dev_setup_script_body.include?("safe_skill_file_state") &&
+       dev_setup_script_body.include?("safe_managed_file_state") &&
+       dev_setup_script_body.include?("project_mcp_origin_verified") &&
+       dev_setup_script_body.include?("project_registration_origin_unverified") &&
        dev_setup_script_body.include?('args == ["mcp", "serve"]') &&
        dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
        "dev-setup inspector must reject non-exact Gaori arguments and symlinked paired skills")
@@ -402,7 +405,10 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("section_content") &&
        test_setup_script_body.include?("runs_cargo_test") &&
        test_setup_script_body.include?("command_preserves_failure") &&
+       test_setup_script_body.include?("command_executes_tests") &&
        test_setup_script_body.include?("global_shell_semantics") &&
+       test_setup_script_body.include?("GNUMAKEFLAGS") &&
+       test_setup_script_body.include?("runner_variable_is") &&
        test_setup_script_body.include?("runs_dart_test") &&
        test_setup_script_body.include?("sensitive_relative_path") &&
        test_setup_script_body.include?("make_variable_values") &&
@@ -433,6 +439,7 @@ assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("Test Frameworks") &&
        test_setup_contract.include?("Gaori Mapping") &&
        test_setup_contract.include?("Approved by Master") &&
+       test_setup_contract.include?("help, version, collection-only, or list-only") &&
        test_setup_contract.include?("Stale waivers do not authorize a skip"),
        "test contract must define stable rules and bounded legacy waivers")
 assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
@@ -441,6 +448,7 @@ assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
        test_setup_profiles.include?("Ginkgo v2 with Gomega") &&
        test_setup_profiles.include?("project-pinned Vitest dependency") &&
        test_setup_profiles.include?("Bun remains the package manager and script orchestrator") &&
+       test_setup_profiles.include?("`MAKEFLAGS`, `MFLAGS`, or `GNUMAKEFLAGS`") &&
        test_setup_profiles.include?("New unit, integration, and Python E2E layers use pytest") &&
        test_setup_profiles.include?("New Dart unit and integration layers use `package:test`") &&
        test_setup_profiles.include?("Gaori is an optional evidence-compression adapter") &&
@@ -556,7 +564,9 @@ assert(tool_catalog.include?("git -C <temporary-source-root>/lora checkout --det
        !tool_catalog.include?("tmdgusya/lora#<tag-or-full-sha>"),
        "Lora must install from an exact detached upstream checkout")
 assert(tool_catalog.include?("Before updating an existing `lore-commits` or `lore-query`") &&
-       tool_catalog.include?("apply the shared backup policy before the approved `npx skills add` action"),
+       tool_catalog.include?("apply the shared backup policy before the approved `npx skills add` action") &&
+       tool_catalog.include?("reject missing and extra paths") &&
+       tool_catalog.include?("structural presence and frontmatter as `unverifiable`"),
        "Lora skill updates must follow the request-scoped backup policy")
 assert(deslop_catalog &&
        deslop_catalog.include?("https://github.com/cursor/plugins") &&
@@ -669,6 +679,7 @@ assert(gaori_catalog.include?("gaori --json runs list") &&
 assert(gaori_catalog.include?("[mcp_servers.gaori]") &&
        gaori_catalog.include?("tool_timeout_sec = 3601") &&
        gaori_catalog.include?("codex mcp get gaori --json") &&
+       gaori_catalog.include?("project_registration_origin_unverified") &&
        gaori_catalog.include?("terminal-only `await_run`") &&
        gaori_catalog.include?("at least 3601 seconds") &&
        gaori_catalog.include?("read-only `list_runs`") &&
@@ -770,6 +781,7 @@ assert(mulgae_catalog.include?("[mcp_servers.mulgae]") &&
        mulgae_catalog.include?("startup_timeout_sec = 30") &&
        mulgae_catalog.include?("tool_timeout_sec = 7501") &&
        mulgae_catalog.include?("codex mcp get mulgae --json") &&
+       mulgae_catalog.include?("project_registration_origin_unverified") &&
        mulgae_catalog.include?("`start_review`, `await_review`, `cancel_review`") &&
        mulgae_catalog.include?("preserve any larger existing value"),
        "Mulgae project-local MCP setup and verification guidance is incomplete")
