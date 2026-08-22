@@ -54,6 +54,9 @@ MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
 OPAQUE_PARAMETER_DEFAULT = re.compile(r"\$\{[^}]*:-[^}]*\}")
+OPAQUE_SHELL_EXPANSION = re.compile(
+    r"`[^`]*`|\$\(|\$\{[^}]*(?::-|:=|[-=+?])[^}]*\}|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})"
+)
 
 
 class InspectionError(Exception):
@@ -146,6 +149,8 @@ def unsafe_root_authorities(repository: Path) -> list[str]:
             "pyproject.toml",
             "setup.py",
             "setup.cfg",
+            "pytest.ini",
+            "tox.ini",
             "pubspec.yaml",
             "package.json",
             "bun.lock",
@@ -825,7 +830,7 @@ def inspect_makefile(
 
     targets, phony, includes = parse_makefile(content)
     make_variables = make_variable_values(repository)
-    result["includes"] = includes
+    result["include_count"] = len(includes)
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
         or "\\\n" in content
@@ -843,7 +848,7 @@ def inspect_makefile(
         public_definitions = [
             {
                 "line": definition["line"],
-                "prerequisites": definition["prerequisites"],
+                "prerequisite_count": len(definition["prerequisites"]),
                 "recipe_command_count": len(definition["recipe"]),
             }
             for definition in definitions
@@ -1003,7 +1008,7 @@ def inspect_bun(
             )
             or MAKE_ALIAS_PATTERN.search(normalized_shell_words)
             or OPAQUE_PARAMETER_DEFAULT.search(normalized_shell_words)
-            or re.search(r"\$\(", normalized_shell_words)
+            or OPAQUE_SHELL_EXPANSION.search(normalized_shell_words)
         )
 
     result["make_cycles"] = sorted(

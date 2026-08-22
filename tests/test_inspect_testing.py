@@ -705,6 +705,30 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertEqual(result["bun"]["make_cycles"], ["test:e2e"])
 
+    def test_bun_script_opaque_shell_expansions_are_fail_closed(self) -> None:
+        commands = (
+            "`printf make` test-e2e",
+            '"$MAKE" test-e2e',
+            '"$RUNNER" test-e2e',
+            "${RUNNER-make} test-e2e",
+            "${RUNNER:=make} test-e2e",
+        )
+        for command in commands:
+            with self.subTest(command=command):
+                self.write_bun_package()
+                package = json.loads(
+                    self.repository.joinpath("package.json").read_text(encoding="utf-8")
+                )
+                package["scripts"]["test:e2e"] = command
+                self.write("package.json", json.dumps(package))
+                self.write_bun_adapter()
+                self.enroll("typescript-bun")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                self.assertEqual(result["structural_status"], "nonconforming")
+                self.assertEqual(result["bun"]["make_cycles"], ["test:e2e"])
+
     def test_bun_script_env_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -1010,9 +1034,11 @@ class InspectTestingTest(unittest.TestCase):
         self.write_bun_adapter()
         makefile = self.repository / "Makefile"
         makefile.write_text(
-            makefile.read_text(encoding="utf-8").replace(
+            makefile.read_text(encoding="utf-8")
+            .replace(".PHONY:", f"include config.mk?token={secret}\n\n.PHONY:")
+            .replace(
                 "test-e2e:\n\tbun run test:e2e",
-                f"test-e2e:\n\tAPI_TOKEN={secret} bun run test:e2e",
+                f"test-e2e: prerequisite-{secret}\n\tAPI_TOKEN={secret} bun run test:e2e",
             ),
             encoding="utf-8",
         )
@@ -1022,6 +1048,28 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertNotIn(secret, serialized)
         self.assertNotIn("recipe", serialized.replace("recipe_command_count", ""))
+
+    def test_symlinked_pytest_configuration_is_rejected(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        external = Path(self.temporary_directory.name) / "external-pytest.ini"
+        external.write_text("[pytest]\naddopts = --funcargs\n", encoding="utf-8")
+        self.repository.joinpath("pytest.ini").symlink_to(external)
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "root_authority_symlinked", {item["code"] for item in result["findings"]}
+        )
 
     def test_pytest_collection_alias_is_not_canonical(self) -> None:
         self.write_make_contract()

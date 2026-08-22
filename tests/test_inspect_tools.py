@@ -1626,6 +1626,27 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["status"], "degraded")
         self.assertEqual(registration["reason"], "registration_probe_failed")
 
+    def test_named_mcp_absence_requires_clean_stdout_and_paired_quotes(self) -> None:
+        base = {
+            "exit_code": 1,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": "Error: No MCP server named 'mulgae' found.\n",
+        }
+
+        self.assertTrue(inspect_tools.named_mcp_server_missing(base, "mulgae"))
+        self.assertFalse(
+            inspect_tools.named_mcp_server_missing(
+                {**base, "stdout": '{"unexpected":true}\n'}, "mulgae"
+            )
+        )
+        self.assertFalse(
+            inspect_tools.named_mcp_server_missing(
+                {**base, "stderr": "Error: No MCP server named 'mulgae\" found.\n"},
+                "mulgae",
+            )
+        )
+
     def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
         self.write_project_mcp_config("mulgae")
         self.install_fake_tools(

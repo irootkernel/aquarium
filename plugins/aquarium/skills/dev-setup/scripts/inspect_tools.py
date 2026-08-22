@@ -160,8 +160,9 @@ def named_mcp_server_missing(raw_probe: dict[str, Any], name: str) -> bool:
     return bool(
         raw_probe["exit_code"] == 1
         and not raw_probe["timed_out"]
+        and not raw_probe.get("stdout", "").strip()
         and re.fullmatch(
-            rf"\s*Error: No MCP server named ['\"]?{re.escape(name)}['\"]? found\.\s*",
+            rf"\s*Error: No MCP server named (?P<quote>['\"]?){re.escape(name)}(?P=quote) found\.\s*",
             raw_probe.get("stderr", ""),
         )
     )
@@ -1089,13 +1090,7 @@ def project_mcp_origin_verified(
         timeout_seconds,
     )
     if not ambient_raw["ok"]:
-        missing = re.fullmatch(
-            rf"\s*Error: No MCP server named ['\"]?{re.escape(name)}['\"]? found\.\s*",
-            ambient_raw.get("stderr", ""),
-        )
-        return bool(
-            ambient_raw["exit_code"] == 1 and not ambient_raw["timed_out"] and missing
-        )
+        return named_mcp_server_missing(ambient_raw, name)
     try:
         ambient_result = json.loads(ambient_raw["stdout"])
     except json.JSONDecodeError:
