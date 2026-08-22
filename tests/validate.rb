@@ -143,8 +143,9 @@ assert(PLUGIN.join("assets/logo-black.png").file?, "dark-theme README logo is mi
 assert_png(PLUGIN.join("assets/logo-black.png"), 1024, 1024)
 
 marketplace = JSON.parse(ROOT.join(".agents/plugins/marketplace.json").read)
-assert(marketplace.fetch("name") == "aquarium", "marketplace name is incorrect")
-assert(!marketplace.dig("interface", "displayName").to_s.empty?, "marketplace interface displayName is missing")
+assert(marketplace.fetch("name") == "root-kernel", "marketplace name is incorrect")
+assert(marketplace.dig("interface", "displayName") == "Root Kernel",
+       "marketplace interface displayName is incorrect")
 marketplace_plugins = marketplace.fetch("plugins")
 assert(marketplace_plugins.is_a?(Array) && marketplace_plugins.length == 1,
        "marketplace must publish exactly one plugin")
@@ -1966,7 +1967,7 @@ assert(readme.include?("https://home.rootkernel.xyz"), "README homepage is missi
 assert(readme.include?("mailto:cs@rootkernel.xyz"), "README support email is missing")
 assert(readme.include?("codex plugin marketplace add irootkernel/aquarium --ref main"),
        "README marketplace install command is missing")
-assert(readme.include?("codex plugin add aquarium@aquarium"),
+assert(readme.include?("codex plugin add aquarium@root-kernel"),
        "README plugin install command is missing")
 assert(readme.include?("By [Root Kernel](https://home.rootkernel.xyz)"),
        "README Root Kernel byline is missing")
@@ -1974,6 +1975,10 @@ assert(readme.include?("codex plugin remove root-kernel") &&
        readme.include?("codex plugin marketplace remove root-kernel-dev-skills") &&
        readme.include?("$aquarium:dev-setup"),
        "README product-rename migration is missing")
+assert(readme.include?("codex plugin remove aquarium@aquarium") &&
+       readme.include?("codex plugin marketplace remove aquarium") &&
+       readme.include?("hook identity includes the marketplace name"),
+       "README marketplace-rename migration is missing")
 expected_skill_names.each do |name|
   assert(readme.include?("`#{name}`"), "README skill entry is missing: #{name}")
 end

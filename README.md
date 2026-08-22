@@ -4,7 +4,7 @@
 
 By [Root Kernel](https://home.rootkernel.xyz)
 
-Aquarium is a Codex plugin marketplace for Ouroboros-assisted project and epic design, durable Design Gates, common test setup, evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup.
+Aquarium is a Codex plugin distributed through the Root Kernel marketplace for Ouroboros-assisted project and epic design, durable Design Gates, common test setup, evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -86,14 +86,27 @@ Add the Git marketplace and install the plugin:
 
 ```bash
 codex plugin marketplace add irootkernel/aquarium --ref main
-codex plugin add aquarium@aquarium
+codex plugin add aquarium@root-kernel
 ```
 
 Restart Codex after installation or upgrade so the active session reloads the installed skill snapshot, then open `/hooks` and trust Aquarium's roadmap commit guard.
 
 Aquarium does not bundle third-party skill or documentation sources. Its workflows use separately installed upstream Lora, Ouroboros, and Cursor Team Kit Deslop capabilities; `$aquarium:dev-setup` diagnoses them and proposes exact-source installation or repair behind separate approvals. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
-### Migrating from Root Kernel
+### Migrating the Marketplace Identity
+
+The marketplace identity changed from `aquarium` to `root-kernel`; the plugin name and `$aquarium:*` skill namespace are unchanged. Existing installations must remove the old plugin identity and marketplace before installing the new identity:
+
+```bash
+codex plugin remove aquarium@aquarium
+codex plugin marketplace remove aquarium
+codex plugin marketplace add irootkernel/aquarium --ref main
+codex plugin add aquarium@root-kernel
+```
+
+Restart Codex and trust Aquarium's roadmap commit guard again because the hook identity includes the marketplace name.
+
+### Migrating from the Legacy Root Kernel Plugin
 
 Aquarium v0.1.4 replaces the previous marketplace, plugin invocation prefix, inspection schema, and managed Podway Procedure IDs without compatibility aliases. Before upgrading, finish or explicitly dispose of any active `root-kernel-*` Podway session; Aquarium does not convert or delete its runtime history. Then remove the previous installation, add the renamed marketplace, install Aquarium, and restart Codex:
 
@@ -101,7 +114,7 @@ Aquarium v0.1.4 replaces the previous marketplace, plugin invocation prefix, ins
 codex plugin remove root-kernel
 codex plugin marketplace remove root-kernel-dev-skills
 codex plugin marketplace add irootkernel/aquarium --ref main
-codex plugin add aquarium@aquarium
+codex plugin add aquarium@root-kernel
 ```
 
 Repositories configured for Podway must remove the tracked `.podway/procedures/root-kernel-{task,goal,validation}-v2.yaml` files and install the corresponding `aquarium-*` Procedures through a separately approved `$aquarium:dev-setup` migration. Do not replace managed Procedures while an old session is active.
