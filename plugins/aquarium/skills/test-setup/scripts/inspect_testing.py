@@ -36,10 +36,13 @@ PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
 PYTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
 )
 UNITTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+)
+SENSITIVE_PATH_COMPONENT = re.compile(
+    r"(?i)(?:^|[._-])(auth|credential|key|secret|token)(?:[._-]|$)"
 )
 
 
@@ -58,6 +61,17 @@ def finding(code: str, severity: str, message: str) -> dict[str, str]:
     return {"code": code, "severity": severity, "message": message}
 
 
+def sensitive_relative_path(path: Path, repository: Path) -> bool:
+    try:
+        parts = path.relative_to(repository).parts
+    except ValueError:
+        return True
+    return any(
+        part.lower().startswith(".env") or SENSITIVE_PATH_COMPONENT.search(part)
+        for part in parts
+    )
+
+
 def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[str]:
     languages: set[str] = set()
     if (repository / "go.mod").is_file():
@@ -67,7 +81,10 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
     if any(
         (repository / name).is_file()
         for name in ("pyproject.toml", "setup.py", "setup.cfg")
-    ) or any(repository.glob("requirements*.txt")):
+    ) or any(
+        not sensitive_relative_path(path, repository)
+        for path in repository.glob("requirements*.txt")
+    ):
         languages.add("python")
     if (repository / "pubspec.yaml").is_file():
         languages.add("dart")
@@ -158,16 +175,69 @@ def command_preserves_failure(command: str) -> bool:
     prefix = re.match(r"^[@+-]*", stripped)
     if prefix and "-" in prefix.group(0):
         return False
-    return "||" not in command and ";" not in command
+    return "|" not in command and ";" not in command
 
 
-def python_stage_parser(commands: list[str]) -> str | None:
+def make_variable_values(repository: Path) -> dict[str, set[str]]:
+    definitions: dict[str, list[str]] = {}
+    content = read_optional_text(repository / "Makefile")
+    for line in content.splitlines():
+        if line.startswith("\t"):
+            continue
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|:=|=)\s*(.*?)\s*$", line)
+        if match:
+            definitions.setdefault(match.group(1), []).append(match.group(2))
+
+    def resolve(value: str, seen: frozenset[str]) -> set[str]:
+        reference = re.search(r"\$\(([^)]+)\)|\$\{([^}]+)\}", value)
+        if not reference:
+            return {value}
+        name = reference.group(1) or reference.group(2)
+        if name in seen or name not in definitions:
+            return set()
+        resolved: set[str] = set()
+        for replacement in definitions[name]:
+            expanded = (
+                value[: reference.start()] + replacement + value[reference.end() :]
+            )
+            resolved.update(resolve(expanded, seen | {name}))
+        return resolved
+
+    return {
+        name: {
+            expanded
+            for value in values
+            for expanded in resolve(value, frozenset({name}))
+        }
+        for name, values in definitions.items()
+    }
+
+
+def command_matches_python_runner(
+    command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
+) -> bool:
+    match = pattern.search(command)
+    if not match or not command_preserves_failure(command):
+        return False
+    runner = match.group("runner")
+    if not runner or not runner.startswith("$"):
+        return True
+    name = runner[2:-1]
+    values = variables.get(name, set())
+    return bool(values) and all(
+        re.fullmatch(r"(?:\S*/)?python(?:\d+(?:\.\d+)*)?", value) for value in values
+    )
+
+
+def python_stage_parser(
+    commands: list[str], variables: dict[str, set[str]]
+) -> str | None:
     has_pytest = any(
-        command_preserves_failure(command) and PYTEST_COMMAND_PATTERN.search(command)
+        command_matches_python_runner(command, PYTEST_COMMAND_PATTERN, variables)
         for command in commands
     )
     has_unittest = any(
-        command_preserves_failure(command) and UNITTEST_COMMAND_PATTERN.search(command)
+        command_matches_python_runner(command, UNITTEST_COMMAND_PATTERN, variables)
         for command in commands
     )
     if has_pytest and not has_unittest:
@@ -181,6 +251,8 @@ def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) ->
     ignored = {".git", ".venv", "node_modules", "vendor"}
     for path in repository.rglob(f"*{suffix}"):
         if any(part in ignored for part in path.parts):
+            continue
+        if sensitive_relative_path(path, repository):
             continue
         try:
             if path.is_symlink() or path.stat().st_size > 1_000_000:
@@ -199,6 +271,7 @@ def inspect_frameworks(
     entries: list[dict[str, Any]] = []
     findings: list[dict[str, str]] = []
     commands = stage_commands(repository, package)
+    make_variables = make_variable_values(repository)
 
     if "go" in languages:
         go_mod = read_optional_text(repository / "go.mod")
@@ -258,9 +331,10 @@ def inspect_frameworks(
         has_pytest_declaration = any(
             re.search(r"\bpytest\b", read_optional_text(path))
             for path in authority_paths
+            if not sensitive_relative_path(path, repository)
         )
         stage_parsers = {
-            stage: python_stage_parser(commands[stage])
+            stage: python_stage_parser(commands[stage], make_variables)
             for stage in ("test-unit", "test-int")
         }
         has_pytest_command = "pytest" in stage_parsers.values()
@@ -444,7 +518,7 @@ def inspect_frameworks(
     }
     if len(entries) == 1 and entries[0]["language"] == "python":
         for stage in ("test-unit", "test-int"):
-            detected_parser = python_stage_parser(commands[stage])
+            detected_parser = python_stage_parser(commands[stage], make_variables)
             if detected_parser is not None:
                 stage_parser_defaults[stage] = detected_parser
     gaori = {
@@ -570,7 +644,11 @@ def inspect_makefile(
     result["includes"] = includes
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
+        or re.search(
+            r"(?m)^\s*(?:override\s+)?(?:SHELL|\.SHELLFLAGS)\s*[:?+]?=", content
+        )
     )
+    result["authority_includes_unresolved"] = bool(includes)
     result["targets"] = {}
     missing = []
     duplicates = []
@@ -611,7 +689,16 @@ def inspect_makefile(
         )
 
     if not missing and not duplicates:
-        if profile == "typescript-bun":
+        if result["global_shell_semantics"] or result["authority_includes_unresolved"]:
+            result["aggregate_mode"] = "unverifiable"
+            findings.append(
+                finding(
+                    "make_authority_unverifiable",
+                    "unverifiable",
+                    "Included or custom global Make semantics prevent fail-fast proof.",
+                )
+            )
+        elif profile == "typescript-bun":
             adapter_map = {
                 "test": "test",
                 "test-prepare": "test:prepare",
@@ -655,15 +742,6 @@ def inspect_makefile(
                         "make_aggregate_parallel_unsafe",
                         "error",
                         "test uses prerequisites, which do not preserve stage order under make -j.",
-                    )
-                )
-            elif result["global_shell_semantics"]:
-                result["aggregate_mode"] = "unverifiable"
-                findings.append(
-                    finding(
-                        "make_aggregate_fail_fast_unverifiable",
-                        "unverifiable",
-                        "Global Make shell or error-ignore semantics prevent fail-fast proof.",
                     )
                 )
             elif only_recursive_calls and recursive_calls == list(MAKE_STAGES):
@@ -726,7 +804,7 @@ def inspect_bun(
         for name, value in scripts.items()
         if isinstance(value, str)
         and re.search(
-            r"(?:^|(?:&&|\|\||[;|])\s*)(?:(?:command|exec)\s+)*(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
+            r"(?:^|(?:&&|\|\||[;|])\s*)(?:(?:command|exec)\s+)*(?:(?:\S*/)?env(?:\s+-\S+)*\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
             value,
         )
     )

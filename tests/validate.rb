@@ -222,7 +222,10 @@ assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deter
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
 assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?('"symlinked": directory.is_symlink()') &&
-       dev_setup_script_body.include?('entry["symlinked"]'),
+       dev_setup_script_body.include?('entry["symlinked"]') &&
+       dev_setup_script_body.include?("safe_skill_file_state") &&
+       dev_setup_script_body.include?('args == ["mcp", "serve"]') &&
+       dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
        "dev-setup inspector must reject non-exact Gaori arguments and symlinked paired skills")
 assert(dev_setup.include?("default inspection omits Podway and Ouroboros completely") &&
        dev_setup.include?("--include-podway") &&
@@ -271,6 +274,8 @@ assert(ouroboros_catalog &&
        ouroboros_catalog.include?("ooo mcp doctor --json") &&
        ouroboros_catalog.include?("codex mcp get ouroboros --json") &&
        ouroboros_catalog.include?("Registration is `configured` only") &&
+       ouroboros_catalog.include?('args = ["mcp", "serve"]') &&
+       ouroboros_catalog.include?("resolves its command to the selected `ooo` executable") &&
        ouroboros_catalog.include?("`missing` only for Codex's definite named-server-not-found response") &&
        ouroboros_catalog.include?("never expose raw registration stderr") &&
        ouroboros_catalog.include?("local and read-only") &&
@@ -399,6 +404,9 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("command_preserves_failure") &&
        test_setup_script_body.include?("global_shell_semantics") &&
        test_setup_script_body.include?("runs_dart_test") &&
+       test_setup_script_body.include?("sensitive_relative_path") &&
+       test_setup_script_body.include?("make_variable_values") &&
+       test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
        test_setup_script_body.include?("pending-patrol") &&
@@ -1570,13 +1578,13 @@ assert(orca_review.include?("git diff --cached --binary") &&
        orca_review.include?("without `git write-tree`") &&
        orca_review.include?("path and SHA-256 digest of every applicable instruction file and named requirement authority") &&
        orca_review.include?("recompute the recorded target and every source-manifest file digest") &&
-       orca_review.include?("recompute every provider-visible snapshot and prompt record plus all three consented digests") &&
+       orca_review.include?("recompute every provider-visible snapshot and Aquarium Task record plus all three consented digests") &&
        orca_review.include?("Any change invalidates final consent") &&
        orca_review.include?("index blobs") &&
        orca_review.include?("resolved endpoint commits, not working-tree copies") &&
        orca_review.include?("authoritative worker evidence that the reviewer read index blobs") &&
        orca_review.include?("authoritative worker evidence that the reviewer read the resolved endpoint blobs") &&
-       orca_review.include?("immutable snapshot, exact prompt, or any consented digest changed") &&
+       orca_review.include?("immutable snapshot, exact Aquarium Task, or any consented digest changed") &&
        orca_review.include?("authoritative worker evidence does not bind every participant to that snapshot") &&
        orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
        "orca-review must bind and revalidate an exact non-mutating review snapshot")
@@ -1592,6 +1600,7 @@ assert(orca_review.include?("every repository, target, supporting-source, instru
        orca_review.include?("every provider-readable regular file and symlink identity") &&
        orca_review.include?("including standalone `.git` metadata") &&
        orca_review.include?("second, final structured choice") &&
+       orca_review.include?("Orca-owned runtime metadata") &&
        orca_review.include?("this final choice alone authorizes registration and transmission"),
        "orca-review provider consent must bind the complete transmitted context manifest")
 %w[
@@ -1621,6 +1630,9 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_review.include?("repo add --path <absoluteSnapshotPath> --json") &&
        orca_review.include?("project setups --json") &&
        orca_review.include?("project setup-delete --setup <recordedSetupId> --json") &&
+       orca_review.include?("task-create --spec <exactAquariumTaskSpec>") &&
+       orca_review.include?("worker-retain --dispatch <dispatchId> --json") &&
+       orca_review.include?("After any terminal launch, worker-start, or Dispatch attempt") &&
        orca_review.include?("retain the exact temporary registration and owned snapshot through scope revalidation") &&
        orca_review.include?("only when the worker was settled and successfully released and no retention was requested") &&
        orca_review.include?("Retained or active workers keep both") &&

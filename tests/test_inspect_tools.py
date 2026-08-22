@@ -426,7 +426,14 @@ class InspectToolsTest(unittest.TestCase):
                     if mode == "malformed":
                         print("not-json")
                         raise SystemExit(0)
-                    result = {{"name": "ouroboros", "transport": {{"type": "stdio", "command": "ooo", "args": ["mcp", "serve"]}}}}
+                    result = {{
+                        "name": "wrong-name" if mode == "wrong-name" else "ouroboros",
+                        "transport": {{
+                            "type": "http" if mode == "non-stdio" else "stdio",
+                            "command": "wrong-ooo" if mode == "wrong-command" else "ooo",
+                            "args": ["serve"] if mode == "wrong-args" else ["mcp", "serve"],
+                        }},
+                    }}
                     if mode != "enabled-absent":
                         result["enabled"] = "yes" if mode == "enabled-invalid" else mode != "disabled"
                     print(json.dumps(result))
@@ -504,6 +511,8 @@ class InspectToolsTest(unittest.TestCase):
             names.append("codex")
         if gaori_mcp_mode == "wrong-command":
             names.append("wrong-gaori")
+        if ouroboros_mcp_mode == "wrong-command":
+            names.append("wrong-ooo")
         for name in names:
             executable = self.bin_directory / name
             executable.write_text(source, encoding="utf-8")
@@ -1676,6 +1685,33 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(skill["status"], "degraded")
         self.assertTrue(skill["installations"][0]["symlinked"])
 
+    def test_symlinked_paired_skill_ancestor_is_not_read(self) -> None:
+        self.install_gaori_skill()
+        skill_directory = self.codex_home / "skills/use-gaori"
+        shutil.rmtree(skill_directory / "references")
+        external = self.base / "sensitive"
+        external.mkdir()
+        for name in ("lifecycle", "authoring", "recovery"):
+            external.joinpath(f"{name}.md").write_text(
+                "credential-value-must-not-be-read\n", encoding="utf-8"
+            )
+        skill_directory.joinpath("references").symlink_to(
+            external, target_is_directory=True
+        )
+
+        completed = self.inspect()
+        skill = json.loads(completed.stdout)["tools"]["gaori"]["agent_skill"]
+
+        self.assertNotIn("credential-value-must-not-be-read", completed.stdout)
+        self.assertEqual(skill["status"], "degraded")
+        references = [
+            entry
+            for entry in skill["installations"][0]["files"]
+            if entry["path"].startswith("references/")
+        ]
+        self.assertTrue(all(entry["symlinked"] for entry in references))
+        self.assertTrue(all(entry["sha256"] is None for entry in references))
+
     def test_gaori_mcp_absence_is_not_cli_degradation(self) -> None:
         self.install_fake_tools(gaori_mcp_mode="missing")
         gaori = json.loads(self.inspect().stdout)["tools"]["gaori"]
@@ -2076,6 +2112,21 @@ class InspectToolsTest(unittest.TestCase):
                 )
                 self.assertEqual(ouroboros["status"], "degraded")
 
+    def test_ouroboros_registration_requires_exact_stdio_command(self) -> None:
+        for mode in ("wrong-name", "non-stdio", "wrong-command", "wrong-args"):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
+                )
+                completed = self.inspect(include_ouroboros=True)
+                registration = json.loads(completed.stdout)["tools"]["ouroboros"][
+                    "mcp_registration"
+                ]
+                self.assertEqual(registration["status"], "degraded")
+                self.assertEqual(
+                    registration["probe"]["reason"], "registration_mismatch"
+                )
+
     def test_ouroboros_registration_missing_is_distinct_from_probe_failure(
         self,
     ) -> None:
@@ -2109,7 +2160,7 @@ class InspectToolsTest(unittest.TestCase):
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertFalse(ouroboros["installed"])
         self.assertEqual(ouroboros["status"], "missing")
-        self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
         self.assertEqual(ouroboros["probes"]["version"]["reason"], "executable_missing")
 
     def test_installed_ouroboros_reports_registration_unverifiable_without_codex(

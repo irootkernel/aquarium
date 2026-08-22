@@ -302,9 +302,38 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertTrue(result["make"]["global_shell_semantics"])
         self.assertIn(
-            "make_aggregate_fail_fast_unverifiable",
+            "make_authority_unverifiable",
             {item["code"] for item in result["findings"]},
         )
+
+    def test_custom_make_shell_is_unverifiable(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            "SHELL := /bin/true\n" + makefile.read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertTrue(result["make"]["global_shell_semantics"])
+
+    def test_included_make_authority_is_unverifiable(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            "include ignored.mk\n" + makefile.read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        self.write("ignored.mk", ".IGNORE:\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertTrue(result["make"]["authority_includes_unresolved"])
 
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
@@ -650,6 +679,21 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
 
+    def test_bun_script_absolute_make_reverse_edge_is_rejected(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " && /usr/bin/make auxiliary"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+
     def test_vitest_runner_that_swallows_failure_is_not_canonical(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -667,6 +711,64 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(framework["unit_int_parser"], "generic")
         self.assertTrue(framework["waiver_required"])
+
+    def test_python_pipeline_runner_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit | tee unit.log"
+        )
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int | tee int.log"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_unresolved_python_make_variable_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = "PYTHON := echo\n" + makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\t$(PYTHON) -m pytest unit"
+        )
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\t$(PYTHON) -m pytest int"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_sensitive_python_file_is_not_read_for_framework_detection(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = "PYTHON := python3\n" + makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\t$(PYTHON) -m pytest unit"
+        )
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\t$(PYTHON) -m pytest int"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write(".env.test.py", "import unittest\ncredential = 'must-not-read'\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "conforming")
+        self.assertEqual(self.framework(result, "python")["detected"], ["pytest"])
 
     def test_make_runner_with_error_ignore_prefix_is_not_canonical(self) -> None:
         self.write_make_contract()

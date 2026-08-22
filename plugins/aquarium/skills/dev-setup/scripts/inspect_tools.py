@@ -375,7 +375,7 @@ def normalized_probe(probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def classify_ouroboros_registration(
-    raw_probe: dict[str, Any],
+    raw_probe: dict[str, Any], ouroboros_executable: str | None
 ) -> dict[str, Any]:
     probe = {
         key: raw_probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
@@ -411,8 +411,37 @@ def classify_ouroboros_registration(
     if not isinstance(result, dict):
         probe["reason"] = "registration_result_invalid"
         return {"status": "degraded", "probe": probe}
-    if result.get("enabled") is True:
+    transport = result.get("transport")
+    command = transport.get("command") if isinstance(transport, dict) else None
+    args = transport.get("args") if isinstance(transport, dict) else None
+    resolved_command: Path | None = None
+    if isinstance(command, str) and command:
+        candidate = Path(command).expanduser()
+        if (
+            candidate.is_absolute()
+            and candidate.is_file()
+            and os.access(candidate, os.X_OK)
+        ):
+            resolved_command = candidate.resolve()
+        elif not candidate.is_absolute():
+            discovered = shutil.which(command)
+            if discovered:
+                resolved_command = Path(discovered).resolve()
+    registration_matches = bool(
+        result.get("name") == "ouroboros"
+        and result.get("enabled") is True
+        and isinstance(transport, dict)
+        and transport.get("type") == "stdio"
+        and args == ["mcp", "serve"]
+        and resolved_command
+        and ouroboros_executable
+        and resolved_command == Path(ouroboros_executable).resolve()
+    )
+    if registration_matches:
         return {"status": "configured", "probe": probe}
+    if result.get("enabled") is True:
+        probe["reason"] = "registration_mismatch"
+        return {"status": "degraded", "probe": probe}
     if result.get("enabled") is False:
         probe["reason"] = "registration_disabled"
     elif "enabled" not in result:
@@ -486,27 +515,43 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def safe_skill_file_state(directory: Path, relative_path: str) -> tuple[bool, bool]:
+    current = directory
+    if current.is_symlink():
+        return False, True
+    for part in Path(relative_path).parts:
+        current = current / part
+        if current.is_symlink():
+            return False, True
+    return current.is_file(), False
+
+
 def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str, Any]:
     installations: list[dict[str, Any]] = []
     for root in skill_roots():
         directory = root / name
         if not directory.exists() and not directory.is_symlink():
             continue
+        files = []
+        for relative_path in required_files:
+            path = directory / relative_path
+            present, symlinked = safe_skill_file_state(directory, relative_path)
+            files.append(
+                {
+                    "path": relative_path,
+                    "present": present,
+                    "symlinked": symlinked,
+                    "sha256": file_sha256(path) if present else None,
+                }
+            )
+        skill_entry = next(entry for entry in files if entry["path"] == "SKILL.md")
         skill_path = directory / "SKILL.md"
-        files = [
-            {
-                "path": relative_path,
-                "present": (directory / relative_path).is_file(),
-                "symlinked": (directory / relative_path).is_symlink(),
-                "sha256": file_sha256(directory / relative_path),
-            }
-            for relative_path in required_files
-        ]
         installations.append(
             {
                 "path": str(directory),
                 "symlinked": directory.is_symlink(),
-                "frontmatter_valid": frontmatter_name(skill_path) == name,
+                "frontmatter_valid": bool(skill_entry["present"])
+                and frontmatter_name(skill_path) == name,
                 "files": files,
             }
         )
@@ -1453,14 +1498,16 @@ def inspect_lora() -> dict[str, Any]:
             skill_path = skill_directory.joinpath("SKILL.md")
             if not (skill_directory.exists() or skill_directory.is_symlink()):
                 continue
+            skill_file_present, symlinked = safe_skill_file_state(
+                skill_directory, "SKILL.md"
+            )
             installations.append(
                 {
                     "location": str(skill_directory),
-                    "skill_file_present": skill_path.is_file(),
-                    "frontmatter_valid": skill_path.is_file()
+                    "skill_file_present": skill_file_present,
+                    "frontmatter_valid": skill_file_present
                     and frontmatter_name(skill_path) == name,
-                    "symlinked": skill_directory.is_symlink()
-                    or skill_path.is_symlink(),
+                    "symlinked": symlinked,
                 }
             )
         skills[name] = {
@@ -1502,20 +1549,21 @@ def inspect_deslop() -> dict[str, Any]:
     for root in skill_roots():
         skill_directory = root.joinpath(name)
         skill_path = skill_directory.joinpath("SKILL.md")
-        license_path = skill_directory.joinpath("LICENSE")
         if not (skill_directory.exists() or skill_directory.is_symlink()):
             continue
-        symlinked = (
-            skill_directory.is_symlink()
-            or skill_path.is_symlink()
-            or license_path.is_symlink()
+        skill_file_present, skill_symlinked = safe_skill_file_state(
+            skill_directory, "SKILL.md"
         )
+        license_file_present, license_symlinked = safe_skill_file_state(
+            skill_directory, "LICENSE"
+        )
+        symlinked = skill_symlinked or license_symlinked
         installations.append(
             {
                 "location": str(skill_directory),
-                "skill_file_present": skill_path.is_file(),
-                "license_file_present": license_path.is_file(),
-                "frontmatter_valid": skill_path.is_file()
+                "skill_file_present": skill_file_present,
+                "license_file_present": license_file_present,
+                "frontmatter_valid": skill_file_present
                 and frontmatter_name(skill_path) == name,
                 "symlinked": symlinked,
             }
@@ -1563,7 +1611,9 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             repository,
             timeout_seconds,
         )
-        tool["mcp_registration"] = classify_ouroboros_registration(registration_raw)
+        tool["mcp_registration"] = classify_ouroboros_registration(
+            registration_raw, tool["executable"]
+        )
     else:
         tool["mcp_registration"] = {
             "status": "unverifiable",
