@@ -1,11 +1,13 @@
 ---
 name: release-qa
-description: "Run one scenario-based QA pass for the exact current main release candidate against the contracts and changes since the previous stable release. When verified findings exist, apply bounded remediation, report it, and require explicit user confirmation before any new QA pass. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
+description: "Run one full scenario-based QA pass for an exact main release candidate, or one bounded confirmation pass after that full pass produces remediated findings. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
 ---
 
 # Release QA
 
-Assess one exact committed `main` candidate through two independent matrices: every active Design Gate and every material release-delta change. Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. One invocation owns exactly one QA pass and, when that pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
+Assess one exact committed `main` candidate in either `full` or `confirmation` mode. A first pass is always `full` and uses two independent matrices: every active Design Gate and every material release-delta change. A later pass may use `confirmation` only under the bounded contract below.
+
+Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. One invocation owns exactly one QA pass and, when a full pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material.
 
@@ -28,6 +30,33 @@ It does not authorize staging, commits, pushes, tags, releases, networked or liv
 6. Define the delta solely from Git history as every commit after the previous release through the candidate, independent of the version currently recorded in candidate files. For example, with previous release `v0.2.3`, ten later candidate commits, and intended version `v0.2.4`, cover all ten commits whether the files still say `v0.2.3` or already say `v0.2.4`. When that range is empty, report that there is no release delta and return `INCOMPLETE` rather than `PASS`.
 
 The previous release is assumed to work. Inspect its committed code, documentation, and tests only to reconstruct established behavior; do not check it out or execute it.
+
+## Select Full or Confirmation Mode
+
+Use `full` mode unless the enclosing release workflow supplies a confirmation manifest under `/tmp` that records all of the following exact facts:
+
+- the intended version, previous release, current candidate SHA, and previous full-pass candidate SHA;
+- the retained previous evidence root and the non-empty remediation commit range ending at the current candidate;
+- the previous five-cluster matrix, every verified finding reproduction scenario, and every source surface changed by remediation;
+- `confirmation_attempt: 1`, with evidence that no earlier confirmation pass was started for this full-pass candidate and remediation range.
+
+Reject `confirmation` as `INCOMPLETE` if the manifest, retained evidence, exact Git objects, ancestry, remediation range, or one-attempt fact cannot be established. The confirmation candidate must still satisfy the clean and unambiguous committed-`main` rules above. A confirmation manifest is disposable workflow evidence, never repository authority; do not copy its date, intermediate candidate SHA, or evidence path into repository documentation.
+
+In `full` mode, follow every section below and explore the complete Design Gate and release-delta matrices. In `confirmation` mode, do not rebuild or broaden those matrices. Dispatch fresh workers only for these five fixed clusters from the previous matrix:
+
+1. commit-hook behavior, covering the previous matrix and the confirmed bypass and false-positive scenarios;
+2. test-inspector environment, command, and framework scenarios;
+3. dev-setup malformed output plus the previous MCP and manifest baseline matrix;
+4. review-workflow validation graph and Delivery settlement;
+5. shipped package, public documentation, and Procedure parity.
+
+For each cluster, rerun every scenario recorded in its previous matrix, every confirmed finding reproduction, and every scenario whose exercised surface changed in the remediation range. Existing tests and validators remain prohibited as QA scenario evidence. Capture the same command, controlled environment, outcome, resulting files, worker identity, and source-repository status required for a full pass, but write all new evidence beneath a fresh confirmation evidence root.
+
+Confirmation is a fixed verification pass, not a new edge-case search. Do not invent additional Bash syntax variants, fuzz parser inputs, or probe new generated-directory names. Do not turn a hook boundary that the candidate publicly documents as incomplete into a release blocker. A directly observed failure of a fixed scenario remains a finding; this restriction only forbids expanding the scenario inventory.
+
+Confirmation may run exactly once after one full pass and its bounded remediation. It returns `PASS` only when every fixed scenario succeeds and no evidence gap remains. On `FINDINGS` or `INCOMPLETE`, stop the release without remediation, another confirmation, or another automatic full pass.
+
+Route any same-family parser hardening to a separately authorized change, or require an explicit user risk-acceptance decision outside release QA. A confirmation `PASS` ends release QA for that candidate; do not run another release-qa pass before the already-authorized release gate.
 
 ## Establish Design Gate Enrollment
 
@@ -97,10 +126,14 @@ For each finding give the violated baseline or candidate contract, reproduction 
 
 When the result is `PASS`, return the evidence and allow an already-authorized enclosing release workflow to continue its normal release procedure without another QA confirmation. `PASS` does not itself authorize staging, commits, pushes, tags, or publication.
 
-When the result is `FINDINGS`, complete the current QA report first, then leave QA mode and implement only the smallest safe fixes for the verified findings. Add or adjust focused regression coverage when the finding is executable, run only the focused checks needed to verify the edits, and preserve unrelated work. Do not broaden remediation into general hardening, accept speculative edge cases as new scope, update evidence documents merely to bind an intermediate candidate SHA, stage, commit, push, or start another QA pass.
+When a full-mode result is `FINDINGS`, complete the current QA report first, then leave QA mode and implement only the smallest safe fixes for the verified findings. Add or adjust focused regression coverage when the finding is executable, run only the focused checks needed to verify the edits, and preserve unrelated work. Do not broaden remediation into general hardening, accept speculative edge cases as new scope, update evidence documents merely to bind an intermediate candidate SHA, stage, commit, push, or start another QA pass.
+
+A confirmation-mode result never authorizes remediation; apply the stop and escalation rule in the confirmation contract instead.
 
 After remediation, report the findings, why each required correction, the exact files changed, focused checks and outcomes, remaining uncertainty, and current Git state. Then stop and ask for explicit user confirmation before preparing a new committed candidate or running release QA again. The original release request, prior confirmation, silence, or a successful focused check is not confirmation for another QA pass.
 
 When the result is `INCOMPLETE`, report the missing prerequisite or evidence and stop. Do not reinterpret incomplete coverage as a finding-remediation cycle and do not retry automatically.
 
-After the user explicitly confirms another review, prepare a clean exact candidate only through the enclosing repository workflow and begin one new release-qa invocation over the complete previous-release-to-candidate delta. If that pass finds another issue, repeat the report-and-confirm boundary; never enter an automatic review-remediation loop. Version metadata may be committed before or after a passing QA run; its timing never narrows the delta or substitutes for scenario evidence.
+After the user explicitly confirms the one bounded confirmation review, prepare a clean exact candidate only through the enclosing repository workflow and begin one new release-qa invocation with the required confirmation manifest. Do not substitute another full pass or a looser delta review. If confirmation does not pass, stop under its escalation rule; never enter an automatic review-remediation loop.
+
+Version metadata may be committed before or after a passing QA run; its timing never narrows the original full-pass delta or substitutes for scenario evidence.

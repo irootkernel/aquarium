@@ -1817,8 +1817,8 @@ assert(release_qa.include?("prospective release identifier, not as a required va
        "release-qa must accept candidates before or after target-version metadata is committed")
 assert(release_qa.include?("A dirty worktree still prevents an exact committed candidate") &&
        release_qa.include?("prepare a clean exact candidate only through the enclosing repository workflow") &&
-       release_qa.include?("one new release-qa invocation over the complete previous-release-to-candidate delta") &&
-       release_qa.include?("its timing never narrows the delta"),
+       release_qa.include?("one new release-qa invocation with the required confirmation manifest") &&
+       release_qa.include?("timing never narrows the original full-pass delta"),
        "release-qa must distinguish version timing from candidate identity and re-QA remediated candidates")
 assert(release_qa.include?("Do not run existing automated tests") &&
        release_qa.include?("mktemp -d /tmp/release-qa.XXXXXX") &&
@@ -1834,6 +1834,25 @@ assert(release_qa.include?("Do not replace an unavailable, failed, or timed-out 
        release_qa.include?("It never starts a second QA pass by itself") &&
        release_qa.include?("release-readiness decisions"),
        "release-qa must fail incomplete instead of weakening isolation")
+assert(release_qa.include?("A first pass is always `full`") &&
+       release_qa.include?("confirmation_attempt: 1") &&
+       release_qa.include?("previous five-cluster matrix") &&
+       release_qa.include?("remediation commit range ending at the current candidate") &&
+       release_qa.include?("Confirmation may run exactly once"),
+       "release-qa confirmation must require exact prior evidence, candidate identity, and one bounded attempt")
+assert(release_qa.include?("commit-hook behavior") &&
+       release_qa.include?("test-inspector environment") &&
+       release_qa.include?("dev-setup malformed output") &&
+       release_qa.include?("review-workflow validation graph and Delivery settlement") &&
+       release_qa.include?("shipped package, public documentation, and Procedure parity") &&
+       release_qa.include?("Existing tests and validators remain prohibited as QA scenario evidence"),
+       "release-qa confirmation must preserve the fixed five-cluster scenario matrix")
+assert(release_qa.include?("Do not invent additional Bash syntax variants") &&
+       release_qa.include?("Do not turn a hook boundary that the candidate publicly documents as incomplete into a release blocker") &&
+       release_qa.include?("stop the release without remediation, another confirmation, or another automatic full pass") &&
+       release_qa.include?("same-family parser hardening") &&
+       release_qa.include?("do not run another release-qa pass"),
+       "release-qa confirmation must forbid scope expansion and automatic re-review")
 assert(release_qa.include?("`PASS`") && release_qa.include?("`FINDINGS`") &&
        release_qa.include?("`INCOMPLETE`") &&
        release_qa.include?("implement only the smallest safe fixes") &&
