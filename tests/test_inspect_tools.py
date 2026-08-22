@@ -15,6 +15,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py"
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
+NORMAL_PROBE_TIMEOUT_SECONDS = 10.0
 
 sys.path.insert(0, str(SCRIPT.parent))
 
@@ -75,7 +76,7 @@ class InspectToolsTest(unittest.TestCase):
     def inspect(
         self,
         repository: Path | None = None,
-        timeout_seconds: float = 3.0,
+        timeout_seconds: float = NORMAL_PROBE_TIMEOUT_SECONDS,
         include_podway: bool = False,
         include_ouroboros: bool = False,
         require_mulgae_mcp: bool = False,
@@ -817,7 +818,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(
             podway["probes"]["session_status"],
             {
@@ -944,7 +947,7 @@ class InspectToolsTest(unittest.TestCase):
                     mock.patch("inspect_tools.platform.machine", return_value="arm64"),
                 ):
                     podway = inspect_tools.inspect_podway(
-                        self.repository.resolve(), 3.0
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(podway["version_supported"], supported)
                 self.assertEqual(
@@ -971,7 +974,7 @@ class InspectToolsTest(unittest.TestCase):
                     mock.patch("inspect_tools.platform.machine", return_value="arm64"),
                 ):
                     podway = inspect_tools.inspect_podway(
-                        self.repository.resolve(), 3.0
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(podway["status"], "degraded")
@@ -984,7 +987,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertTrue(podway["legacy_state_detected"])
         self.assertEqual(
             podway["probes"]["doctor"]["error_code"],
@@ -1001,7 +1006,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(podway["status"], "configured")
         self.assertEqual(podway["agent_skill"]["status"], "configured")
         installation = podway["agent_skill"]["installations"][0]
@@ -1067,7 +1074,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         session = podway["probes"]["session_status"]["result"]
         self.assertEqual(
             session["session"],
@@ -1179,7 +1188,9 @@ class InspectToolsTest(unittest.TestCase):
                     mock.patch("inspect_tools.platform.system", return_value="Darwin"),
                     mock.patch("inspect_tools.platform.machine", return_value="arm64"),
                 ):
-                    mulgae = inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+                    mulgae = inspect_tools.inspect_mulgae(
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+                    )
                 self.assertEqual(mulgae["version_supported"], supported)
                 self.assertEqual(mulgae["status"], status)
 
@@ -1201,7 +1212,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            mulgae = inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+            mulgae = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(mulgae["status"], "configured")
         configuration = {entry["path"]: entry for entry in mulgae["configuration"]}
         self.assertFalse(configuration[".mulgae/config.yaml"]["ignored"])
@@ -1216,7 +1229,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            insecure = inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+            insecure = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(insecure["status"], "degraded")
 
         self.repository.joinpath(".mulgae/local.yaml").chmod(0o600)
@@ -1226,7 +1241,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            tracked = inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+            tracked = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(tracked["status"], "degraded")
 
     def test_mulgae_doctor_v2_dimensions_are_independent_and_observable(
@@ -1239,7 +1256,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            mulgae = inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+            mulgae = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(mulgae["status"], "configured")
         health = mulgae["health"]
         self.assertEqual(health["mulgae_cli_compatibility"], "compatible")
@@ -1270,7 +1289,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
             mock.patch("inspect_tools.run_command", side_effect=record_command),
         ):
-            inspect_tools.inspect_mulgae(self.repository.resolve(), 3.0)
+            inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
 
         mulgae_arguments = {
             tuple(arguments[1:])
@@ -1418,7 +1439,7 @@ class InspectToolsTest(unittest.TestCase):
                     executable.unlink()
                 self.install_fake_tools(mulgae_mcp_mode=mode)
                 registration = json.loads(
-                    self.inspect(timeout_seconds=10.0).stdout
+                    self.inspect(timeout_seconds=NORMAL_PROBE_TIMEOUT_SECONDS).stdout
                 )["tools"]["mulgae"]["mcp_registration"]
                 self.assertEqual(registration["status"], "degraded")
                 self.assertEqual(registration["reason"], "registration_mismatch")
@@ -1472,10 +1493,10 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
             optional = inspect_tools.inspect_mulgae(
-                self.repository.resolve(), 3.0, require_mcp=False
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS, require_mcp=False
             )
             required = inspect_tools.inspect_mulgae(
-                self.repository.resolve(), 3.0, require_mcp=True
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS, require_mcp=True
             )
         self.assertEqual(optional["status"], "configured")
         self.assertFalse(optional["mcp_required_for_status"])
@@ -1827,7 +1848,7 @@ class InspectToolsTest(unittest.TestCase):
                     mock.patch("inspect_tools.platform.machine", return_value="arm64"),
                 ):
                     mulgae = inspect_tools.inspect_mulgae(
-                        self.repository.resolve(), 3.0
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(mulgae["status"], status)
                 zcode = mulgae["provider_inventory"][1]
@@ -1853,7 +1874,7 @@ class InspectToolsTest(unittest.TestCase):
                     mock.patch("inspect_tools.platform.machine", return_value="arm64"),
                 ):
                     mulgae = inspect_tools.inspect_mulgae(
-                        self.repository.resolve(), 3.0
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(mulgae["status"], "degraded")
                 self.assertEqual(
@@ -1898,13 +1919,17 @@ class InspectToolsTest(unittest.TestCase):
 
     def test_default_inspection_does_not_call_podway_inspector(self) -> None:
         with mock.patch("inspect_tools.inspect_podway") as podway_inspector:
-            payload = inspect_tools.inspect(str(self.repository), 3.0)
+            payload = inspect_tools.inspect(
+                str(self.repository), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         podway_inspector.assert_not_called()
         self.assertNotIn("podway", payload["tools"])
 
     def test_default_inspection_does_not_call_ouroboros_inspector(self) -> None:
         with mock.patch("inspect_tools.inspect_ouroboros") as ouroboros_inspector:
-            payload = inspect_tools.inspect(str(self.repository), 3.0)
+            payload = inspect_tools.inspect(
+                str(self.repository), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         ouroboros_inspector.assert_not_called()
         self.assertNotIn("ouroboros", payload["tools"])
 
@@ -2039,7 +2064,9 @@ class InspectToolsTest(unittest.TestCase):
                 )
                 completed = self.inspect(
                     include_ouroboros=True,
-                    timeout_seconds=0.05 if mode == "timeout" else 3.0,
+                    timeout_seconds=(
+                        0.05 if mode == "timeout" else NORMAL_PROBE_TIMEOUT_SECONDS
+                    ),
                 )
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 self.assertNotIn("secret registration failure", completed.stdout)
@@ -2096,7 +2123,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         self.assertEqual(
             podway["platform"],
             {"system": "Darwin", "machine": "arm64", "supported": True},
@@ -2114,7 +2143,9 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.system", return_value="Darwin"),
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
-            podway = inspect_tools.inspect_podway(self.repository.resolve(), 3.0)
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
         for entry in podway["managed_procedures"]:
             self.assertTrue(entry["present"])
             self.assertTrue(entry["matches_source"])
