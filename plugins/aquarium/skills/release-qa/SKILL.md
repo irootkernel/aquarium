@@ -1,15 +1,17 @@
 ---
 name: release-qa
-description: "Run read-only, scenario-based QA for the exact current main release candidate against the contracts and changes since the previous stable release, before or after target-version metadata is committed, without rerunning existing automated tests or proposing fixes. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
+description: "Run one scenario-based QA pass for the exact current main release candidate against the contracts and changes since the previous stable release. When verified findings exist, apply bounded remediation, report it, and require explicit user confirmation before any new QA pass. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
 ---
 
 # Release QA
 
-Assess one exact committed `main` candidate through two independent matrices: every active Design Gate and every material release-delta change. Treat existing automated checks as already successful, mutate only disposable fixtures under `/tmp`, and report verified defects without implementing or proposing solutions.
+Assess one exact committed `main` candidate through two independent matrices: every active Design Gate and every material release-delta change. Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. One invocation owns exactly one QA pass and, when that pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
 
-Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material. It also authorizes creation and mutation of bounded `/tmp` fixtures and fresh subagents for local QA.
+Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material.
 
-It does not authorize source edits, staging, commits, pushes, tags, releases, networked or live product scenarios, credential inspection or changes, new authentication, global installation or configuration, persistent daemons, or remediation.
+It also authorizes creation and mutation of bounded `/tmp` fixtures, fresh subagents for local QA, and the smallest local source, test, or documentation remediation directly required by verified findings after the QA pass completes. Run only focused checks needed to verify that remediation; the repository release policy remains authoritative for any later full gate.
+
+It does not authorize staging, commits, pushes, tags, releases, networked or live product scenarios, credential inspection or changes, new authentication, global installation or configuration, persistent daemons, or a second QA pass. Preserve unrelated work. Stop before remediation when a finding needs a material product choice, authority expansion, or unrelated refactor, and report that decision instead.
 
 ## Establish the Release Contract
 
@@ -74,7 +76,7 @@ Do not replace an unavailable, failed, or timed-out fresh worker with coordinato
 
 Adjudicate every worker report against the release contract and candidate. Reproduce a suspected defect in a clean sibling fixture or confirm it directly from deterministic evidence before accepting it. Put unreproduced, environment-dependent, or authority-dependent claims under evidence gaps, not findings.
 
-## Report Evidence, Not Solutions
+## Report and Enforce the Convergence Boundary
 
 Choose one overall result in this order across both matrices:
 
@@ -93,6 +95,12 @@ Classify verified findings as:
 
 For each finding give the violated baseline or candidate contract, reproduction steps, expected and actual behavior, impact, exact source and evidence locations, and confidence. Exclude style preferences, praise, speculative risks, duplicate symptoms, and claims the coordinator could not verify.
 
-Do not edit source files, stage, commit, publish, propose fixes, recommend patches, or decide whether to release. State that remediation requires a separate user request.
+When the result is `PASS`, return the evidence and allow an already-authorized enclosing release workflow to continue its normal release procedure without another QA confirmation. `PASS` does not itself authorize staging, commits, pushes, tags, or publication.
 
-When remediation adds commits, treat the new `main` SHA as a new candidate and rerun release QA over the complete previous-release-to-candidate delta. Version metadata may be committed before or after a passing QA run; its timing never narrows the delta or substitutes for scenario evidence.
+When the result is `FINDINGS`, complete the current QA report first, then leave QA mode and implement only the smallest safe fixes for the verified findings. Add or adjust focused regression coverage when the finding is executable, run only the focused checks needed to verify the edits, and preserve unrelated work. Do not broaden remediation into general hardening, accept speculative edge cases as new scope, update evidence documents merely to bind an intermediate candidate SHA, stage, commit, push, or start another QA pass.
+
+After remediation, report the findings, why each required correction, the exact files changed, focused checks and outcomes, remaining uncertainty, and current Git state. Then stop and ask for explicit user confirmation before preparing a new committed candidate or running release QA again. The original release request, prior confirmation, silence, or a successful focused check is not confirmation for another QA pass.
+
+When the result is `INCOMPLETE`, report the missing prerequisite or evidence and stop. Do not reinterpret incomplete coverage as a finding-remediation cycle and do not retry automatically.
+
+After the user explicitly confirms another review, prepare a clean exact candidate only through the enclosing repository workflow and begin one new release-qa invocation over the complete previous-release-to-candidate delta. If that pass finds another issue, repeat the report-and-confirm boundary; never enter an automatic review-remediation loop. Version metadata may be committed before or after a passing QA run; its timing never narrows the delta or substitutes for scenario evidence.

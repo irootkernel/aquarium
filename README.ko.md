@@ -61,7 +61,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 ## 운영 경계
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
-- `release-qa` 호출은 구성된 Git remote와 hosting의 release metadata에 대한 read-only 조회를 허용하며, private repository에 대한 기존 ambient authentication 사용을 포함합니다. Source upload나 credential 처리는 하지 않습니다.
+- `release-qa` 호출은 QA 1회, private repository에 대한 기존 ambient authentication을 사용하는 구성된 Git remote와 hosting의 release metadata read-only 조회, 검증된 finding의 제한된 local 수정을 허용합니다. 수정 후에는 새 QA 전에 명시적 확인을 받기 위해 멈추며, source upload나 credential 처리는 하지 않습니다.
 - Setup이나 진단 대상으로 선택한 Sanho, Mulgae, Gaori, Podway는 설치된 `use-*` skill과 비교하기 위해 official GitHub Releases metadata를 자동으로 조회하고 `raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다. 선택하지 않은 도구와 그 밖의 network 작업은 포함되지 않으며, setup은 AI provider를 호출하지 않습니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 

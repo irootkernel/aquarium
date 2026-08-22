@@ -391,7 +391,7 @@ assert(ROOT.join("README.md").read.include?("automatically query their official 
        ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
-assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes read-only queries") &&
+assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes one QA pass") &&
        ROOT.join("README.md").read.include?("existing ambient authentication for private repositories") &&
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
@@ -1748,8 +1748,8 @@ assert(release_qa.include?("prospective release identifier, not as a required va
        release_qa.include?("whether the files still say `v0.2.3` or already say `v0.2.4`"),
        "release-qa must accept candidates before or after target-version metadata is committed")
 assert(release_qa.include?("A dirty worktree still prevents an exact committed candidate") &&
-       release_qa.include?("When remediation adds commits") &&
-       release_qa.include?("rerun release QA over the complete previous-release-to-candidate delta") &&
+       release_qa.include?("prepare a clean exact candidate only through the enclosing repository workflow") &&
+       release_qa.include?("one new release-qa invocation over the complete previous-release-to-candidate delta") &&
        release_qa.include?("its timing never narrows the delta"),
        "release-qa must distinguish version timing from candidate identity and re-QA remediated candidates")
 assert(release_qa.include?("Do not run existing automated tests") &&
@@ -1763,12 +1763,17 @@ assert(release_qa.include?("already-configured ambient authentication") &&
        "release-qa must separate authorized release discovery from credentials and networked scenarios")
 assert(release_qa.include?("Do not replace an unavailable, failed, or timed-out fresh worker") &&
        release_qa.include?("source repository read-only") &&
-       release_qa.include?("Do not edit source files") &&
+       release_qa.include?("It never starts a second QA pass by itself") &&
        release_qa.include?("release-readiness decisions"),
        "release-qa must fail incomplete instead of weakening isolation")
 assert(release_qa.include?("`PASS`") && release_qa.include?("`FINDINGS`") &&
-       release_qa.include?("`INCOMPLETE`") && release_qa.include?("propose fixes"),
-       "release-qa must report evidence without remediation")
+       release_qa.include?("`INCOMPLETE`") &&
+       release_qa.include?("implement only the smallest safe fixes") &&
+       release_qa.include?("stop and ask for explicit user confirmation") &&
+       release_qa.include?("never enter an automatic review-remediation loop") &&
+       release_qa.include?("update evidence documents merely to bind an intermediate candidate SHA") &&
+       !release_qa.include?("remediation requires a separate user request"),
+       "release-qa must remediate once and require confirmation before re-review")
 assert(release_qa.include?("## Establish Design Gate Enrollment") &&
        release_qa.include?("authoritative current and retired registry paths") &&
        release_qa.include?("concise title") &&

@@ -61,7 +61,7 @@ Together they form one governed path from scoping to documentation sync, so one 
 ## Operating Boundaries
 
 - Invoking a workflow grants only the effects its skill documents. Installation, authentication, source transmission, tests, staging, commits, pushes, publication, and destructive lifecycle actions each need separate authority.
-- Invoking `release-qa` authorizes read-only queries to the configured Git remote and its hosted release metadata, including existing ambient authentication for private repositories. It never uploads source or handles credentials.
+- Invoking `release-qa` authorizes one QA pass, read-only queries to the configured Git remote and its hosted release metadata using existing ambient authentication for private repositories, and bounded local remediation of verified findings. After remediation it stops for explicit confirmation before any new QA pass; it never uploads source or handles credentials.
 - When selected for setup or diagnosis, Sanho, Mulgae, Gaori, and Podway automatically query their official GitHub Releases metadata and download four public skill files from `raw.githubusercontent.com` into ephemeral storage to compare with the installed `use-*` skill. Unselected tools and other network operations are not covered, and setup never calls an AI provider.
 - Aquarium creates no central project-state file. [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md) hold the complete data and authority contracts.
 
