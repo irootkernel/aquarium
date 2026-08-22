@@ -4,7 +4,7 @@
 
 By [Root Kernel](https://home.rootkernel.xyz)
 
-Aquarium is a Codex plugin marketplace for Ouroboros-assisted project and epic design, durable Design Gates, evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup.
+Aquarium is a Codex plugin marketplace for Ouroboros-assisted project and epic design, durable Design Gates, common test setup, evidence-gated roadmap delivery, release-candidate QA, optional Podway v2 execution memory, and safe development-tool setup.
 
 Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
@@ -24,12 +24,21 @@ Website: [home.rootkernel.xyz](https://home.rootkernel.xyz) · Support: [cs@root
 | `release-qa` | Exercise every active Design Gate and every release change through separate isolated QA matrices. | Explicit: `$aquarium:release-qa` with an intended version or version confirmation |
 | `dev-setup` | Diagnose and configure selected development tools, including independent Ouroboros CLI, Codex, MCP, and runtime state. | Explicit: `$aquarium:dev-setup` |
 | `dev-setup-bundle` | Apply development-tool setup to explicit Git repositories from one external YAML manifest. | Explicit: `$aquarium:dev-setup-bundle` with a manifest path |
+| `test-setup` | Audit and configure the common Make or Bun testing contract and approved legacy waivers. | Explicit: `$aquarium:test-setup` for one repository |
 | `independent-review` | Run a supervised read-only requirements and code review with a fresh Codex, then adjudicate its findings. | Explicit: `$aquarium:independent-review` with one epic or task ID |
 | `orca-review` | Review one exact repository snapshot with a user-selected installed AI CLI through supervised Orca orchestration. | Explicit: `$aquarium:orca-review` with one exact review target |
 
 Invoking `release-qa` authorizes read-only queries to the repository's configured Git remote and hosting Release metadata without another network prompt. Configured clients may use existing ambient authentication for private repositories, but the skill never reads, reports, persists, refreshes, or changes credentials, starts authentication, uploads source, or permits network access from QA scenarios.
 
 `$aquarium:orca-review` requires the separately installed `$orca-cli` skill and a ready Orca runtime, then offers only locally detected Claude, Codex, Cursor, and Kimi CLIs. The final tool:model selection discloses the exact target and digest and authorizes transmission of only that review scope to the selected provider; the skill does not install tools, authenticate providers, modify the checkout, run tests, or switch providers after a failed launch.
+
+### Common test setup
+
+`$aquarium:test-setup` enrolls one repository in `aquarium-test-contract/v1` through a root `TESTING.md`, after an exact-diff approval. The contract exposes prepare, unit, integration, and E2E stages plus one serial fail-fast aggregate. Make owns orchestration for ordinary and polyglot roots; a TypeScript-only root uses pinned Bun scripts as the execution authority and retains matching Make adapters. Integration remains self-contained without a real database or external service, while E2E drives a production-equivalent artifact in a reproducible non-production environment and fails instead of silently skipping missing prerequisites.
+
+New projects receive no waivers. Their default frameworks are Ginkgo v2 with Gomega for Go, pytest for Python, Vitest executed through Bun for TypeScript, Cargo test for Rust, `package:test` for Dart, `flutter_test` for Flutter, and Patrol for Flutter E2E. Web E2E uses Playwright; other black-box E2E is Python-preferred. A pre-existing project may retain an equivalent package manager, runner, framework, or supported diagnostic deviation only after Master approves the exact legacy evidence, residual risk, and revalidation triggers recorded in `TESTING.md`. Common entrypoints, serial order, unit and integration isolation, silent-skip prevention, and production safety cannot be waived. Applying files never authorizes a container, database, external sandbox, or paid E2E run; the skill discloses and asks separately before those effects.
+
+Gaori integration is optional. When present, framework-specific parsers are assigned only to commands with one output format; mixed aggregates use `generic`, and the wrapped command's exit code remains the pass/fail authority.
 
 ### Ouroboros-assisted design and Design Gates
 
@@ -138,13 +147,13 @@ Thanks to [Lora](https://github.com/tmdgusya/lora) for the Lore commit skills, [
 Run the repository validation (the Python tests require PyYAML 6.x and the lint step requires Ruff):
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
+python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/skills/test-setup/scripts/inspect_testing.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 git diff --check
 ```
 
-The validation checks plugin metadata, skill frontmatter and UI metadata, the roadmap commit hook, setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
+The validation checks plugin metadata, skill frontmatter and UI metadata, the roadmap commit hook, development and test setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
 
 ## Documentation style
 

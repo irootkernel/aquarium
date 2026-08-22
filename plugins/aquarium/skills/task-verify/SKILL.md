@@ -13,6 +13,8 @@ For every inherited or task-explicit resolved active `GATE-*` ID, run its regist
 
 ## Build the Requirement-to-Test Matrix
 
+When root `TESTING.md` registers `aquarium-test-contract/v1`, read it with the executable Makefile or Bun scripts. Treat their documented complete aggregate as the repository-wide gate, reject stale or unapproved waivers, and keep any required stage that did not run as an evidence gap. A disagreement between `TESTING.md` and the executable handlers is a contract defect; do not choose whichever command is easier to run. An unenrolled repository retains its established local test authority and is not enrolled implicitly during task verification.
+
 Build a requirement-to-test matrix from the roadmap rather than assuming fixed test folders. Consider only applicable layers:
 
 - formatting, linting, static analysis, type checking, architecture rules, and builds;

@@ -74,6 +74,7 @@ expected_skill_names = %w[
   task-refine
   task-review
   task-verify
+  test-setup
   war-room
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
@@ -112,14 +113,17 @@ unless release_tag.empty?
 end
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
 assert(manifest.dig("interface", "longDescription").include?("release-candidate QA") &&
-       manifest.dig("interface", "longDescription").include?("Design Gates"),
-       "plugin description must advertise release QA and Design Gates")
+       manifest.dig("interface", "longDescription").include?("Design Gates") &&
+       manifest.dig("interface", "longDescription").include?("test setup"),
+       "plugin description must advertise test setup, release QA, and Design Gates")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
 prompts = manifest.fetch("interface").fetch("defaultPrompt")
 assert(prompts.is_a?(Array) && prompts.length == 2, "plugin defaultPrompt must contain two prompts")
 assert(prompts.any? { |prompt| prompt.include?("$aquarium:dev-setup") },
        "plugin defaultPrompt must retain development-tool discovery")
+assert(prompts.any? { |prompt| prompt.include?("$aquarium:test-setup") },
+       "plugin defaultPrompt must expose test setup")
 %w[websiteURL privacyPolicyURL termsOfServiceURL].each do |key|
   assert(manifest.fetch("interface").fetch(key).start_with?("https://"), "missing interface #{key}")
 end
@@ -186,6 +190,11 @@ task_document = PLUGIN.join("skills/task-document/SKILL.md").read
 task_review = PLUGIN.join("skills/task-review/SKILL.md").read
 task_close = PLUGIN.join("skills/task-close/SKILL.md").read
 task_commit = PLUGIN.join("skills/task-commit/SKILL.md").read
+test_setup = PLUGIN.join("skills/test-setup/SKILL.md").read
+test_setup_contract = PLUGIN.join("skills/test-setup/references/contract.md").read
+test_setup_profiles = PLUGIN.join("skills/test-setup/references/profiles.md").read
+test_setup_script = PLUGIN.join("skills/test-setup/scripts/inspect_testing.py")
+test_setup_script_body = test_setup_script.read
 design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
 new_project = PLUGIN.join("skills/new-project/SKILL.md").read
 new_feature = PLUGIN.join("skills/new-feature/SKILL.md").read
@@ -350,6 +359,52 @@ assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes re
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
        "public documentation must disclose release-qa network and private-repository authentication boundaries")
+assert(test_setup_script.file?, "test-setup structural inspector is missing")
+assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
+       test_setup_script_body.include?('"semantic_scope": "not_evaluated"') &&
+       test_setup_script_body.include?("framework_waiver_required") &&
+       test_setup_script_body.include?("pending-dart-test") &&
+       test_setup_script_body.include?("pending-patrol") &&
+       !test_setup_script_body.include?("import subprocess"),
+       "test-setup inspector must remain local, structural, and non-executing")
+assert(test_setup.include?("scripts/inspect_testing.py") &&
+       test_setup.include?("conservative structural evidence only") &&
+       test_setup.include?("Apply exactly this diff") &&
+       test_setup.include?("configured but unverified"),
+       "test-setup must separate structural audit, exact-diff approval, and runtime proof")
+assert(test_setup.include?("does not authorize a test that creates containers") &&
+       test_setup.include?("proven non-production") &&
+       test_setup.include?("never convert them into a successful skip") &&
+       ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `test-setup`") &&
+       ROOT.join("PRIVACY.md").read.include?("obtains separate approval before execution"),
+       "test-setup and public privacy guidance must preserve effectful E2E approval and production safety")
+assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
+       test_setup_contract.include?("AQTEST-001") &&
+       test_setup_contract.include?("AQTEST-009") &&
+       test_setup_contract.include?("Test Frameworks") &&
+       test_setup_contract.include?("Gaori Mapping") &&
+       test_setup_contract.include?("Approved by Master") &&
+       test_setup_contract.include?("Stale waivers do not authorize a skip"),
+       "test contract must define stable rules and bounded legacy waivers")
+assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
+       test_setup_profiles.include?("Do not express the four stages as prerequisites") &&
+       test_setup_profiles.include?("bun run test:prepare && bun run test:unit && bun run test:int && bun run test:e2e") &&
+       test_setup_profiles.include?("Ginkgo v2 with Gomega") &&
+       test_setup_profiles.include?("project-pinned Vitest dependency") &&
+       test_setup_profiles.include?("Bun remains the package manager and script orchestrator") &&
+       test_setup_profiles.include?("New unit, integration, and Python E2E layers use pytest") &&
+       test_setup_profiles.include?("New Dart unit and integration layers use `package:test`") &&
+       test_setup_profiles.include?("Gaori is an optional evidence-compression adapter") &&
+       test_setup_profiles.include?("specialized miss does not fall back to `generic`") &&
+       test_setup_profiles.include?("Playwright in TypeScript is the preferred E2E implementation") &&
+       test_setup_profiles.include?("root Makefile remains the aggregate authority"),
+       "test profiles must preserve framework, parser, orchestration, and polyglot contracts")
+assert(test_setup.include?("Gaori remains optional") &&
+       test_setup.include?("gaori parsers list") &&
+       test_setup.include?("does not prove support maturity") &&
+       ROOT.join("README.md").read.include?("Ginkgo v2 with Gomega") &&
+       ROOT.join("README.md").read.include?("Gaori integration is optional"),
+       "test setup must keep canonical frameworks aligned with optional Gaori evidence")
 assert(ROOT.join("PRIVACY.md").read.include?("The selected `ooo --version`") &&
        ROOT.join("PRIVACY.md").read.include?("do not contact a provider, initiate authentication, or make a network request") &&
        ROOT.join("PRIVACY.md").read.include?("without exposing credential material"),
@@ -392,6 +447,9 @@ assert(agents_reference.include?("Repository-specific rules in `Project Configur
 assert(agents_reference.include?("$aquarium:epic-handler") &&
        agents_reference.include?("$aquarium:epic-validator"),
        "AGENTS reference guidance must distinguish epic delivery and validation")
+assert(agents_reference.include?("$aquarium:test-setup") &&
+       agents_reference.include?("common Make or Bun testing contract"),
+       "AGENTS reference guidance must route common test setup")
 assert(agents_reference.include?("substantive CLAUDE.md") &&
        agents_reference.include?("merge every non-duplicate or stricter rule into AGENTS.md") &&
        agents_reference.include?("one complete combined diff for both files") &&
@@ -1610,6 +1668,12 @@ assert(task_verify.include?("Stop and escalate to the orchestrator when a requir
        "task-verify must escalate a permanently blocked gate")
 assert(task_verify.include?("when Gaori or another evidence-compression wrapper is used"),
        "task-verify must trust the underlying exit status behind evidence wrappers")
+assert(task_verify.include?("aquarium-test-contract/v1") &&
+       task_verify.include?("reject stale or unapproved waivers") &&
+       task_verify.include?("An unenrolled repository") &&
+       new_project.include?("initial testing-foundation work unit") &&
+       new_project.include?("not eligible for a legacy waiver"),
+       "new-project and task-verify must integrate test enrollment without retroactive enforcement")
 
 deslop_index = task_refine.index("Load and follow the separately installed upstream `$deslop`")
 optimization_stage_index = task_refine.index("stage the current task-owned changes as the optimization baseline")
@@ -1888,7 +1952,7 @@ end
 readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
 assert(readme_table_names.sort == expected_skill_names.sort,
        "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle independent-review orca-review new-project new-feature refactor war-room design-qa].each do |name|
+%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle test-setup independent-review orca-review new-project new-feature refactor war-room design-qa].each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(!readme.include?("$aquarium:deslop") &&

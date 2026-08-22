@@ -91,6 +91,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, or incomplete-investigation proposal.
 - Use `$aquarium:design-qa` to create, change, reactivate, or retire local Design Gates.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
+- Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$use-sanho` at an authorized commit or push boundary in a Sanho-managed repository, or for an explicitly requested Sanho operation.
 - Use `$use-mulgae` for an authorized Mulgae review, run inspection, finding follow-up, configuration diagnosis, cleanup plan, or recovery.
 - Use `$use-gaori` when a selected long or noisy check is routed through Gaori or existing Gaori evidence must be inspected.

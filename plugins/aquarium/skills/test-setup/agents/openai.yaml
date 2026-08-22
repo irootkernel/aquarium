@@ -1,0 +1,6 @@
+interface:
+  display_name: "Test Setup"
+  short_description: "Configure the common Aquarium test contract"
+  default_prompt: "Use $aquarium:test-setup to audit and configure this repository's common testing contract."
+policy:
+  allow_implicit_invocation: false

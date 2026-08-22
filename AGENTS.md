@@ -47,6 +47,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:war-room` for difficult-bug diagnosis and `$aquarium:design-qa` for local Design Gate lifecycle work.
 - Use `$aquarium:release-qa` for exact release-candidate verification and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
+- Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$use-sanho`, `$use-mulgae`, `$use-gaori`, and `$use-podway` for their respective local tool operations. Aquarium workflow skills retain their stricter roadmap, ownership, and approval rules.
 - Treat `.podway/procedures/aquarium-*-v2.yaml` as the repository-local workflow evidence and routing authority.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
@@ -91,9 +92,9 @@ Before either mode, inspect the worktree, the local and remote `main` commits, t
 Update the plugin manifest version and its pinned validation expectation, then run the complete applicable local release gate:
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
+python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 RELEASE_TAG=v<version> ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
+ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/skills/test-setup/scripts/inspect_testing.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 git diff --check <previous-release-tag>
 ```
 

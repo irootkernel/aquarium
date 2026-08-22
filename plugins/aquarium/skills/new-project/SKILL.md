@@ -9,6 +9,10 @@ Create a PRD and initial roadmap for one new project. Do not implement code, ini
 
 Read [ouroboros-integration.md](../../references/ouroboros-integration.md) and [design-gates.md](../../references/design-gates.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely.
 
-Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, and acceptance evidence. Use installed upstream `$interview` and `$pm` only after the approved execution envelope. Produce a PRD and an initial roadmap with explicit epics and ordered work units. Put an explicit `Design Gate impact` of `Not required` or `Pending` on every implementation task, propagating the containing epic decision when applicable; gate creation requires a later explicit `$aquarium:design-qa` invocation.
+Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, and acceptance evidence. Use installed upstream `$interview` and `$pm` only after the approved execution envelope. Produce a PRD and an initial roadmap with explicit epics and ordered work units.
+
+Include an initial testing-foundation work unit that establishes `aquarium-test-contract/v1` through a later explicit `$aquarium:test-setup` invocation; a new project is not eligible for a legacy waiver.
+
+Put an explicit `Design Gate impact` of `Not required` or `Pending` on every implementation task, propagating the containing epic decision when applicable; gate creation requires a later explicit `$aquarium:design-qa` invocation.
 
 Run upstream `$qa` on the draft, adjudicate every issue, then present the exact paths and complete proposed diff. Apply documents only after explicit approval and snapshot recheck. Report resulting paths, validation, gate impact, unresolved decisions, and the exact next explicit skill; do not begin delivery.
