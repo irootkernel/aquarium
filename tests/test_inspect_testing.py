@@ -714,6 +714,9 @@ class InspectTestingTest(unittest.TestCase):
             "${RUNNER:=make} test-e2e",
             "${RUNNER%foo} test-e2e",
             "${RUNNER#prefix} test-e2e",
+            'set -- m a k e; IFS=; "$*" test-e2e',
+            'set -- make; "$@" test-e2e',
+            'RUNNER=make; "$0" test-e2e',
         )
         for command in commands:
             with self.subTest(command=command):
@@ -1408,7 +1411,10 @@ class InspectTestingTest(unittest.TestCase):
             ".RECIPEPREFIX := >\n",
             "test-%: BUN = true\n",
             "$(eval test-unit: ; @true)\n",
+            "DYNAMIC := $(eval test-unit: ; @true)\n",
             "ifeq ($(MODE),fast)\ntest-unit: ; @true\nendif\n",
+            "define MAKEFLAGS\n-i\nendef\n",
+            "MAKE := true\n",
         )
         for addition in additions:
             with self.subTest(addition=addition):

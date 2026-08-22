@@ -95,7 +95,7 @@ Snapshot `project setups --json`, register only the snapshot with `repo add --pa
 
 Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve exactly to the snapshot. Stop instead of supplying an unproven project, host, or setup identity.
 
-On a registration or path-verification failure before terminal or worker launch, remove only the exact registration and snapshot when their identities are proven, then stop.
+On any failure before terminal or worker launch, including registration, path verification, Run creation, or Task creation, inspect the local runtime and every partially created identity once. Remove only the exact owned registration, snapshot, and coordinator manifest when their identities are proven. Remove an exact owned Task or Run only through cleanup grammar established by the live guide; otherwise report that bounded retained lifecycle state for manual recovery, then stop.
 
 Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Immediately before terminal creation and again immediately before the source-bearing Dispatch, revalidate the local runtime, provider executable path, digest and version, exact setup and snapshot-path mapping, every provider-visible snapshot and Aquarium Task byte, and all three consented digests. Any drift stops before Dispatch; do not transmit and do not repair the consented bytes in place.
 

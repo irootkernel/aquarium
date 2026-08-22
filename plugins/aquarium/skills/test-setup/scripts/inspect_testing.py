@@ -54,7 +54,7 @@ MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
 OPAQUE_PARAMETER_DEFAULT = re.compile(r"\$\{[^}]*:-[^}]*\}")
-OPAQUE_SHELL_EXPANSION = re.compile(r"`[^`]*`|\$\(|\$\{|\$[A-Za-z_]|\$[\"']")
+OPAQUE_SHELL_EXPANSION = re.compile(r"`[^`]*`|\$")
 
 
 class InspectionError(Exception):
@@ -730,8 +730,13 @@ def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any
     if not result["present"]:
         return None, result
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=lambda constant: (_ for _ in ()).throw(
+                ValueError(f"invalid JSON constant: {constant}")
+            ),
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
         result["error"] = type(error).__name__
         return None, result
     if not isinstance(value, dict):
@@ -850,11 +855,15 @@ def inspect_makefile(
             r"(?m)^[^#\t\n][^:\n]*:\s*(?:(?:override|export)\s+)*[A-Za-z_][A-Za-z0-9_]*\s*[:?+]?=",
             content,
         )
-        or re.search(r"(?m)^\s*\$\((?:eval|call|foreach|if)\b", content)
+        or re.search(r"(?m)^[^#\t\n]*\$\((?:eval|call|foreach|if)\b", content)
         or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
+        or re.search(
+            r"(?m)^\s*(?:override\s+)?define\s+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\b",
+            content,
+        )
         or "\\\n" in content
         or re.search(
-            r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
+            r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
             content,
         )
     )

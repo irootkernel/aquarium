@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
 import re
@@ -143,8 +144,13 @@ def parse_json_probe(raw_probe: dict[str, Any]) -> dict[str, Any]:
     if not raw_probe["attempted"] or raw_probe["timed_out"]:
         return probe
     try:
-        probe["result"] = json.loads(raw_probe["stdout"])
-    except json.JSONDecodeError:
+        probe["result"] = json.loads(
+            raw_probe["stdout"],
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"invalid JSON constant: {value}")
+            ),
+        )
+    except (json.JSONDecodeError, ValueError):
         probe["ok"] = False
         probe["error_code"] = "invalid_json"
     return probe
@@ -477,16 +483,33 @@ def normalize_sanho_status(probe: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(result, dict) or isinstance(result.get("error"), dict):
         return normalized
     safe: dict[str, Any] = {}
+    relation = result.get("relation")
+    if (
+        isinstance(relation, dict)
+        and isinstance(relation.get("known"), bool)
+        and all(
+            isinstance(relation.get(name), int)
+            and not isinstance(relation.get(name), bool)
+            and relation[name] >= 0
+            for name in ("behind", "ahead")
+        )
+    ):
+        safe["relation"] = selected_fields(relation, ("known", "behind", "ahead"))
     for name, fields in (
-        ("relation", ("known", "behind", "ahead")),
         ("publication", ("known", "pending")),
         ("working_copy", ("known", "docs_clean")),
     ):
-        selected = selected_fields(result.get(name), fields)
-        if selected:
-            safe[name] = selected
-    preview = selected_fields(result.get("sync_preview"), ("known", "clean"))
+        source = result.get(name)
+        if isinstance(source, dict) and all(
+            isinstance(source.get(field), bool) for field in fields
+        ):
+            safe[name] = selected_fields(source, fields)
     raw_preview = result.get("sync_preview")
+    preview = {}
+    if isinstance(raw_preview, dict) and all(
+        isinstance(raw_preview.get(field), bool) for field in ("known", "clean")
+    ):
+        preview = selected_fields(raw_preview, ("known", "clean"))
     if isinstance(raw_preview, dict) and isinstance(raw_preview.get("conflicts"), list):
         preview["conflict_count"] = len(raw_preview["conflicts"])
     if preview:
@@ -495,15 +518,28 @@ def normalize_sanho_status(probe: dict[str, Any]) -> dict[str, Any]:
     if isinstance(readiness, dict):
         safe_readiness = {}
         for operation in ("sync", "pull"):
-            selected = selected_fields(
-                readiness.get(operation), ("ready", "blocked_by")
-            )
-            if selected:
-                safe_readiness[operation] = selected
+            source = readiness.get(operation)
+            if (
+                isinstance(source, dict)
+                and isinstance(source.get("ready"), bool)
+                and isinstance(source.get("blocked_by"), list)
+            ):
+                safe_readiness[operation] = {
+                    "ready": source["ready"],
+                    "blocked_by_count": len(source["blocked_by"]),
+                }
         if safe_readiness:
             safe["local_readiness"] = safe_readiness
     if isinstance(result.get("sync_in_progress"), bool):
         safe["sync_in_progress"] = result["sync_in_progress"]
+    normalized["contract_valid"] = {
+        "relation",
+        "publication",
+        "working_copy",
+        "sync_preview",
+        "local_readiness",
+        "sync_in_progress",
+    }.issubset(safe)
     if safe:
         normalized["result"] = safe
     return normalized
@@ -515,15 +551,21 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(result, dict) or isinstance(result.get("error"), dict):
         return normalized
     safe: dict[str, Any] = {}
-    if isinstance(result.get("warnings"), int):
+    if (
+        isinstance(result.get("warnings"), int)
+        and not isinstance(result.get("warnings"), bool)
+        and result["warnings"] >= 0
+    ):
         safe["warnings"] = result["warnings"]
     checks = result.get("checks")
     if isinstance(checks, list):
-        safe["checks"] = [
-            selected_fields(check, ("name", "severity"))
+        safe["check_count"] = len(checks)
+        safe["warning_check_count"] = sum(
+            1
             for check in checks
-            if isinstance(check, dict)
-        ]
+            if isinstance(check, dict) and check.get("severity") == "warning"
+        )
+    normalized["contract_valid"] = "warnings" in safe and "check_count" in safe
     if safe:
         normalized["result"] = safe
     return normalized
@@ -675,8 +717,10 @@ def normalize_podway_envelope(
     schema = envelope.get("schema")
     if schema == "podway.error/v1":
         code = envelope.get("code")
-        if isinstance(code, str):
+        if code in {"SESSION_NOT_FOUND", "LEGACY_PROCEDURE_STATE_UNSUPPORTED"}:
             normalized["error_code"] = code
+        else:
+            normalized["error_code"] = "unrecognized_podway_error"
         normalized["output_schema"] = schema
         return normalized, None
     if schema != "podway.output/v3":
@@ -748,8 +792,8 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         "configured"
         if version_probe["ok"]
         and tool["version_supported"]
-        and status_probe["ok"]
-        and doctor_probe["ok"]
+        and normalized_status.get("contract_valid") is True
+        and normalized_doctor.get("contract_valid") is True
         and no_doctor_warnings
         else "degraded"
     )
@@ -932,7 +976,7 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     result = envelope.get("result")
     doctor = result.get("doctor") if isinstance(result, dict) else None
     if isinstance(result, dict):
-        safe: dict[str, Any] = selected_fields(result, ("kind", "readiness"))
+        safe: dict[str, Any] = {}
         if isinstance(doctor, dict):
             schema = doctor.get("schema_version")
             if isinstance(schema, str):
@@ -942,17 +986,32 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
                 normalized["result"] = safe
                 return normalized
             safe_doctor: dict[str, Any] = {"schema_version": schema}
-            config = selected_fields(
-                doctor.get("config"),
-                (
-                    "status",
-                    "uri",
-                    "locality",
-                    "native_home_identity",
-                    "provenance_state",
-                    "reason_codes",
-                ),
-            )
+            raw_config = doctor.get("config")
+            config: dict[str, Any] = {}
+            if isinstance(raw_config, dict):
+                allowed_config_values = {
+                    "status": {"ready", "missing", "invalid", "unsafe"},
+                    "locality": {"verified", "rejected", "not_observed"},
+                    "provenance_state": {"accepted", "rejected", "not_observed"},
+                }
+                for name, allowed in allowed_config_values.items():
+                    value = raw_config.get(name)
+                    if value in allowed:
+                        config[name] = value
+                reason_codes = raw_config.get("reason_codes")
+                allowed_config_reasons = {
+                    "config_missing",
+                    "local_config_missing",
+                    "config_provider_identity_invalid",
+                    "config_role_mapping_invalid",
+                    "config_yaml_invalid",
+                    "config_locality_unsafe",
+                    "config_not_observed_due_to_locality",
+                }
+                if isinstance(reason_codes, list) and all(
+                    code in allowed_config_reasons for code in reason_codes
+                ):
+                    config["reason_codes"] = reason_codes
             if config:
                 safe_doctor["config"] = config
             configured = doctor.get("configured_provider_ids")
@@ -977,9 +1036,13 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
                 selected = normalize_mulgae_diagnostic_check(doctor.get(name))
                 if selected is not None:
                     safe_doctor[name] = selected
-            assignment = selected_fields(
-                doctor.get("assignment"), ("state", "resilience")
-            )
+            raw_assignment = doctor.get("assignment")
+            assignment = {}
+            if isinstance(raw_assignment, dict):
+                for name in ("state", "resilience"):
+                    value = raw_assignment.get(name)
+                    if value in {"ready", "unavailable", "not_observed"}:
+                        assignment[name] = value
             if assignment:
                 safe_doctor["assignment"] = assignment
             for name in (
@@ -993,9 +1056,12 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
             platform_evidence = doctor.get("platform_evidence")
             if isinstance(platform_evidence, list):
                 safe_doctor["platform_evidence"] = [
-                    selected_fields(evidence, ("cell", "native"))
+                    {"cell": evidence["cell"], "native": evidence["native"]}
                     for evidence in platform_evidence
                     if isinstance(evidence, dict)
+                    and evidence.get("cell")
+                    in {"darwin-arm64", "darwin-amd64", "linux-amd64", "linux-arm64"}
+                    and isinstance(evidence.get("native"), bool)
                 ]
             required_fields = {
                 "config_v3",
@@ -1132,8 +1198,13 @@ def project_mcp_origin_verified(
     if not ambient_raw["ok"]:
         return named_mcp_server_missing(ambient_raw, name)
     try:
-        ambient_result = json.loads(ambient_raw["stdout"])
-    except json.JSONDecodeError:
+        ambient_result = json.loads(
+            ambient_raw["stdout"],
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"invalid JSON constant: {value}")
+            ),
+        )
+    except (json.JSONDecodeError, ValueError):
         return False
     return ambient_result != effective
 
@@ -1274,11 +1345,13 @@ def inspect_mulgae_mcp(
     startup_supported = (
         isinstance(startup_timeout, (int, float))
         and not isinstance(startup_timeout, bool)
+        and math.isfinite(startup_timeout)
         and startup_timeout >= 30
     )
     tool_supported = (
         isinstance(tool_timeout, (int, float))
         and not isinstance(tool_timeout, bool)
+        and math.isfinite(tool_timeout)
         and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
     )
     binary_matches = bool(
@@ -1609,6 +1682,7 @@ def inspect_gaori_mcp(
     timeout_supported = (
         isinstance(tool_timeout, (int, float))
         and not isinstance(tool_timeout, bool)
+        and math.isfinite(tool_timeout)
         and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
     )
     binary_matches = bool(
@@ -2056,22 +2130,30 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     daemon_reachable = False
     daemon_target = None
     if isinstance(daemon_payload, dict):
-        daemon_version = daemon_payload.get("daemon_version")
-        daemon_reachable = daemon_payload.get("reachable") is True
-        daemon_target = daemon_payload.get("target")
-        normalized_daemon["result"] = {
-            key: daemon_payload[key]
-            for key in (
-                "installed",
-                "loaded",
-                "reachable",
-                "status",
-                "daemon_version",
-                "target",
-                "contract_manifest_schema",
-                "contract_manifest_digest",
+        observed_daemon_version = daemon_payload.get("daemon_version")
+        daemon_version = (
+            observed_daemon_version
+            if isinstance(observed_daemon_version, str)
+            and re.fullmatch(
+                r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?",
+                observed_daemon_version,
             )
-            if key in daemon_payload
+            else None
+        )
+        daemon_reachable = daemon_payload.get("reachable") is True
+        observed_target = daemon_payload.get("target")
+        daemon_target = (
+            observed_target
+            if observed_target in {"aarch64-apple-darwin", "x86_64-apple-darwin"}
+            else None
+        )
+        normalized_daemon["result"] = {
+            "installed": daemon_payload.get("installed") is True,
+            "loaded": daemon_payload.get("loaded") is True,
+            "reachable": daemon_reachable,
+            "running": daemon_payload.get("status") == "running",
+            "version_valid": daemon_version is not None,
+            "target_supported": daemon_target is not None,
         }
     tool["probes"]["daemon_status"] = normalized_daemon
     tool["daemon_version"] = daemon_version
@@ -2108,20 +2190,26 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             current = session_result.get("current")
             node = current.get("node") if isinstance(current, dict) else None
             normalized_session["result"] = {
-                "procedure": {
-                    key: procedure[key]
-                    for key in ("schema", "id", "version", "digest")
-                    if isinstance(procedure, dict) and key in procedure
-                },
-                "goal_revision": session_result.get("goal_revision"),
-                "session": {
-                    key: session[key]
-                    for key in ("id", "lifecycle", "revision")
-                    if isinstance(session, dict) and key in session
-                },
-                "current_graph_node_id": (
-                    node.get("graph_node_id") if isinstance(node, dict) else None
-                ),
+                "procedure_present": isinstance(procedure, dict),
+                "procedure_schema_valid": isinstance(procedure, dict)
+                and procedure.get("schema") == "podway.procedure/v2",
+                "goal_revision": session_result.get("goal_revision")
+                if isinstance(session_result.get("goal_revision"), int)
+                and not isinstance(session_result.get("goal_revision"), bool)
+                else None,
+                "session_present": isinstance(session, dict),
+                "session_lifecycle": session.get("lifecycle")
+                if isinstance(session, dict)
+                and session.get("lifecycle")
+                in {"prepared", "active", "completed", "cancelled", "discarded"}
+                else None,
+                "session_revision": session.get("revision")
+                if isinstance(session, dict)
+                and isinstance(session.get("revision"), int)
+                and not isinstance(session.get("revision"), bool)
+                else None,
+                "current_graph_node_present": isinstance(node, dict)
+                and isinstance(node.get("graph_node_id"), str),
             }
         tool["probes"]["doctor"] = normalized_doctor
         tool["probes"]["session_status"] = normalized_session
@@ -2159,8 +2247,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             )
             entry["check"] = normalized_check
             if isinstance(payload, dict):
-                entry["check"]["valid"] = payload.get("valid")
-                entry["check"]["digest"] = payload.get("digest")
+                entry["check"]["valid"] = payload.get("valid") is True
             procedure_checks_ok = (
                 procedure_checks_ok
                 and normalized_check["ok"]

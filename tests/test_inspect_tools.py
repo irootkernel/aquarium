@@ -949,7 +949,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(podway["readiness_status"], "ready")
         self.assertEqual(podway["status"], "configured")
 
-    def test_managed_procedure_checks_report_validity_and_digest(self) -> None:
+    def test_managed_procedure_checks_report_validity_without_payload(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         completed = self.inspect(include_podway=True)
@@ -977,7 +977,6 @@ class InspectToolsTest(unittest.TestCase):
                         "output_schema": "podway.output/v3",
                         "result_schema": "podway.procedure-diagnostics-result/v1",
                         "valid": True,
-                        "digest": "sha256:procedure",
                     },
                 )
 
@@ -1193,14 +1192,15 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(podway["status"], "degraded")
 
-    def test_active_session_inventory_exposes_identity_without_evidence(self) -> None:
+    def test_active_session_inventory_exposes_state_without_identity(self) -> None:
         self.install_fake_tools(podway_active_session=True)
         self.install_managed_podway_procedures()
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         session = podway["probes"]["session_status"]["result"]
-        self.assertEqual(session["procedure"]["id"], "aquarium-task-v2")
-        self.assertEqual(session["current_graph_node_id"], "verify")
+        self.assertTrue(session["procedure_present"])
+        self.assertTrue(session["procedure_schema_valid"])
+        self.assertTrue(session["current_graph_node_present"])
         self.assertEqual(session["goal_revision"], 2)
         self.assertNotIn("sensitive goal text", completed.stdout)
         self.assertNotIn("sensitive evidence", completed.stdout)
@@ -1220,15 +1220,10 @@ class InspectToolsTest(unittest.TestCase):
                 self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
             )
         session = podway["probes"]["session_status"]["result"]
-        self.assertEqual(
-            session["session"],
-            {
-                "id": "00000000-0000-4000-8000-000000000001",
-                "lifecycle": "prepared",
-                "revision": 0,
-            },
-        )
-        self.assertIsNone(session["current_graph_node_id"])
+        self.assertTrue(session["session_present"])
+        self.assertEqual(session["session_lifecycle"], "prepared")
+        self.assertEqual(session["session_revision"], 0)
+        self.assertFalse(session["current_graph_node_present"])
         self.assertIsNone(session["goal_revision"])
         self.assertEqual(podway["readiness_status"], "ready")
 
@@ -1688,6 +1683,91 @@ class InspectToolsTest(unittest.TestCase):
 
         self.assertNotIn("result", normalized)
         self.assertNotIn("credential", json.dumps(normalized))
+
+    def test_json_probe_rejects_nonfinite_constants(self) -> None:
+        for constant in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(constant=constant):
+                probe = inspect_tools.parse_json_probe(
+                    {
+                        "attempted": True,
+                        "ok": True,
+                        "exit_code": 0,
+                        "timed_out": False,
+                        "stdout": f'{{"value":{constant}}}',
+                    }
+                )
+
+                self.assertFalse(probe["ok"])
+                self.assertEqual(probe["error_code"], "invalid_json")
+
+    def test_sanho_normalizers_emit_only_typed_aggregate_evidence(self) -> None:
+        secret = "QA21_SYNTHETIC_SECRET"
+        status = inspect_tools.normalize_sanho_status(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": {
+                    "relation": {"known": True, "behind": secret, "ahead": 0},
+                    "local_readiness": {
+                        "sync": {"ready": False, "blocked_by": [secret]},
+                        "pull": {"ready": False, "blocked_by": [secret]},
+                    },
+                },
+            }
+        )
+        doctor = inspect_tools.normalize_sanho_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": {
+                    "warnings": 0,
+                    "checks": [{"name": secret, "severity": secret}],
+                },
+            }
+        )
+
+        self.assertFalse(status["contract_valid"])
+        self.assertTrue(doctor["contract_valid"])
+        self.assertNotIn(secret, json.dumps({"status": status, "doctor": doctor}))
+
+    def test_untrusted_mulgae_and_podway_fields_are_not_reflected(self) -> None:
+        secret = "QA21_SYNTHETIC_SECRET"
+        mulgae = inspect_tools.normalize_mulgae_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": {
+                    "schema_version": "mulgae-command-result.v5",
+                    "result": {
+                        "kind": secret,
+                        "readiness": secret,
+                        "doctor": {
+                            "schema_version": "mulgae-doctor-result.v2",
+                            "config": {"status": secret, "uri": secret},
+                        },
+                    },
+                },
+            }
+        )
+        podway, _ = inspect_tools.normalize_podway_envelope(
+            {
+                "attempted": True,
+                "ok": False,
+                "exit_code": 1,
+                "timed_out": False,
+                "result": {"schema": "podway.error/v1", "code": secret},
+            },
+            "session.status",
+        )
+
+        self.assertNotIn(secret, json.dumps({"mulgae": mulgae, "podway": podway}))
+        self.assertEqual(podway["error_code"], "unrecognized_podway_error")
 
     def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
         self.write_project_mcp_config("mulgae")
