@@ -1657,7 +1657,13 @@ assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-m
        orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan") &&
        orca_provider_contracts.include?("<PROVIDER> --model k3 --plan") &&
        orca_provider_contracts.include?("terminal create --worktree path:<absoluteSnapshotPath>") &&
+       orca_provider_contracts.include?("complete pinned command vector") &&
+       orca_provider_contracts.include?("without re-parsing it through a shell or dropping its fixed arguments") &&
        orca_provider_contracts.include?("using `<PROVIDER>` as the command's executable") &&
+       orca_provider_contracts.include?("Before `orchestration dispatch --inject`") &&
+       orca_provider_contracts.include?("exact consented effective model") &&
+       orca_review.include?("Before any source-bearing Dispatch") &&
+       orca_review.include?("never transmit source merely to probe the model") &&
        orca_review.include?("Never expose or identify the original checkout to a participant") &&
        orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute native-executable path") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&

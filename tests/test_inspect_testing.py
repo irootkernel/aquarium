@@ -676,12 +676,47 @@ class TestInspectTesting:
         assert result["structural_status"] == "nonconforming"
         assert "bun_lock_missing" in {item["code"] for item in result["findings"]}
 
+    def test_typescript_profile_allows_python_pytest_e2e_handler(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "python3 -m pytest tests/e2e"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+        assert result["selected_profile"] == "typescript-bun"
+        assert result["structural_status"] == "conforming"
+
+    def test_typescript_profile_requires_waiver_for_python_unittest_e2e(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "python3 -m unittest discover tests/e2e"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "typescript")["status"] == "waiver_required"
+
     @pytest.mark.parametrize(
         ("name", "content"),
         [
             ("requirements.txt", "# pytest\n"),
             ("setup.py", "# pytest\nfrom setuptools import setup\nsetup()\n"),
             ("setup.py", "from setuptools import setup\nsetup(name='pytest')\n"),
+            (
+                "setup.py",
+                "from setuptools import setup\nsetup(extras_require={'pytest': ['requests==2.0.0']})\n",
+            ),
             ("setup.cfg", "[metadata]\nname = pytest\n"),
         ],
     )

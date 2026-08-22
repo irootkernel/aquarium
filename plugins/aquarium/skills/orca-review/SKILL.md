@@ -107,7 +107,9 @@ On any failure before terminal or worker launch, including registration, path ve
 
 Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Immediately before terminal creation and again immediately before the source-bearing Dispatch, revalidate the local runtime, provider executable path, native file type, digest and version, exact setup and snapshot-path mapping, every provider-visible snapshot and Aquarium Task byte, and all three consented digests. Any drift stops before Dispatch; do not transmit and do not repair the consented bytes in place.
 
-Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path, then use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble.
+Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path.
+
+Before any source-bearing Dispatch, inspect the terminal creation result and bounded readiness transcript and require an exact effective-model identity equal to the consented tool:model. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; never transmit source merely to probe the model. Only after that confirmation may `dispatch --inject` send the Task with its disclosed lifecycle preamble.
 
 Never expose or identify the original checkout to a participant, register a linked Git worktree, resolve the provider from terminal `PATH`, or reuse an existing AI terminal.
 

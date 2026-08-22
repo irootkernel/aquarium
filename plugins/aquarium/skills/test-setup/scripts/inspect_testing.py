@@ -135,20 +135,6 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
     if safe_repository_file(repository / "pubspec.yaml", repository):
         languages.add("dart")
 
-    executable_authority = read_optional_text(repository / "Makefile", repository)
-    if package:
-        scripts = package.get("scripts")
-        if isinstance(scripts, dict):
-            executable_authority += "\n" + "\n".join(
-                value for value in scripts.values() if isinstance(value, str)
-            )
-    if re.search(
-        r"(?:^|[\s;&|])(?:(?:\S*/)?python(?:\d+(?:\.\d+)*)?\s+-m\s+)?"
-        r"(?:pytest|unittest|(?:\S*/)?nose(?:2)?|(?:\S*/)?nosetests)(?:\s|$)",
-        executable_authority,
-    ):
-        languages.add("python")
-
     typescript_manifest = any(
         safe_repository_file(path, repository)
         for path in repository.glob("tsconfig*.json")
@@ -536,6 +522,24 @@ def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
             tree = ast.parse(content, filename="setup.py")
         except SyntaxError:
             return False
+
+        def ast_dependency_values(value: ast.AST) -> list[str]:
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                return [value.value]
+            if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+                return [
+                    item
+                    for child in value.elts
+                    for item in ast_dependency_values(child)
+                ]
+            if isinstance(value, ast.Dict):
+                return [
+                    item
+                    for child in value.values
+                    for item in ast_dependency_values(child)
+                ]
+            return []
+
         candidates: list[str] = []
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
@@ -547,11 +551,7 @@ def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
                     "extras_require",
                 }:
                     continue
-                candidates.extend(
-                    child.value
-                    for child in ast.walk(keyword.value)
-                    if isinstance(child, ast.Constant) and isinstance(child.value, str)
-                )
+                candidates.extend(ast_dependency_values(keyword.value))
         return any(pytest_requirement(value) for value in candidates)
     parser = configparser.ConfigParser(interpolation=None)
     try:
@@ -829,9 +829,21 @@ def inspect_frameworks(
             and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
             for command in unit_int_scripts
         )
+        e2e_command = scripts.get("test:e2e")
+        unsupported_python_e2e = isinstance(e2e_command, str) and (
+            command_matches_python_runner(
+                e2e_command, UNITTEST_COMMAND_PATTERN, make_variables
+            )
+            or command_matches_python_runner(
+                e2e_command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
+            )
+        )
         status = (
             "canonical"
-            if detected == ["vitest"] and "vitest" in dependencies and runs_vitest
+            if detected == ["vitest"]
+            and "vitest" in dependencies
+            and runs_vitest
+            and not unsupported_python_e2e
             else "waiver_required"
         )
         entries.append(
