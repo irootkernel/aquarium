@@ -432,7 +432,14 @@ class TestInspectTesting:
         assert framework["unit_int_parser"] == "ginkgo"
 
     def test_ginkgo_information_commands_are_not_canonical(self) -> None:
-        for subcommand in ("help", "labels", "outline", "version"):
+        for subcommand in (
+            "--dry-run ./...",
+            "build ./...",
+            "help",
+            "labels",
+            "outline",
+            "version",
+        ):
             with case(subcommand=subcommand):
                 self.write_ginkgo_make_contract()
                 makefile = self.repository / "Makefile"
@@ -609,6 +616,35 @@ class TestInspectTesting:
 
         assert result["structural_status"] == "nonconforming"
         assert "pyproject_invalid" in {item["code"] for item in result["findings"]}
+
+    def test_invalid_python_config_cannot_prove_pytest(self) -> None:
+        for name, config in (
+            ("pytest.ini", "[pytest\naddopts = -ra\n"),
+            ("setup.cfg", "[tool:pytest\naddopts = -ra\n"),
+        ):
+            with case(name=name):
+                self.write_make_contract()
+                makefile = self.repository / "Makefile"
+                makefile.write_text(
+                    makefile.read_text(encoding="utf-8")
+                    .replace(
+                        "test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit"
+                    )
+                    .replace(
+                        "test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"
+                    ),
+                    encoding="utf-8",
+                )
+                self.write("requirements.txt", "pytest==9.1.1\n")
+                self.write(name, config)
+                self.enroll("make")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                assert result["structural_status"] == "nonconforming"
+                assert "python_config_invalid" in {
+                    item["code"] for item in result["findings"]
+                }
 
     def test_testing_document_profile_must_match_executable_authority(self) -> None:
         self.write_make_contract()

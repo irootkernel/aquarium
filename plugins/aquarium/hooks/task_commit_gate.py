@@ -126,7 +126,9 @@ def shell_segments(command: str) -> list[list[str]]:
 
 
 def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | None:
+    segment = list(segment)
     index = 0
+    split_expansions = 0
     assignments: list[str] = []
     while index < len(segment) and ASSIGNMENT_PATTERN.match(segment[index]):
         assignments.append(segment[index])
@@ -155,12 +157,32 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 cwd = candidate if candidate.is_absolute() else cwd / candidate
                 index += 1
                 continue
-            if token in {"-u", "--unset", "-P", "--split-string"}:
+            if token in {"-S", "--split-string"}:
+                if index + 1 >= len(segment) or split_expansions >= 16:
+                    return None
+                try:
+                    replacement = shlex.split(segment[index + 1], posix=True)
+                except ValueError:
+                    return None
+                segment[index : index + 2] = replacement
+                split_expansions += 1
+                continue
+            if token.startswith("--split-string="):
+                if split_expansions >= 16:
+                    return None
+                try:
+                    replacement = shlex.split(token.split("=", 1)[1], posix=True)
+                except ValueError:
+                    return None
+                segment[index : index + 1] = replacement
+                split_expansions += 1
+                continue
+            if token in {"-u", "--unset", "-P"}:
                 if index + 1 >= len(segment):
                     return None
                 index += 2
                 continue
-            if token.startswith(("--unset=", "--split-string=")):
+            if token.startswith("--unset="):
                 index += 1
                 continue
             if token.startswith("-"):
@@ -174,7 +196,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         return None
     index += 1
 
-    option_base = cwd
+    git_path_base = cwd
     probe_cwd = cwd
     git_dir: Path | None = None
     while index < len(segment):
@@ -194,7 +216,10 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
             if index + 1 >= len(segment):
                 return None
             candidate = Path(segment[index + 1])
-            probe_cwd = candidate if candidate.is_absolute() else probe_cwd / candidate
+            git_path_base = (
+                candidate if candidate.is_absolute() else git_path_base / candidate
+            )
+            probe_cwd = git_path_base
             index += 2
             continue
         if token in {"--git-dir", "--work-tree"}:
@@ -202,7 +227,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 return None
             candidate = Path(segment[index + 1])
             candidate = (
-                candidate if candidate.is_absolute() else option_base / candidate
+                candidate if candidate.is_absolute() else git_path_base / candidate
             )
             if token == "--work-tree":
                 probe_cwd = candidate
@@ -213,13 +238,15 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         if token.startswith("--work-tree="):
             candidate = Path(token.split("=", 1)[1])
             probe_cwd = (
-                candidate if candidate.is_absolute() else option_base / candidate
+                candidate if candidate.is_absolute() else git_path_base / candidate
             )
             index += 1
             continue
         if token.startswith("--git-dir="):
             candidate = Path(token.split("=", 1)[1])
-            git_dir = candidate if candidate.is_absolute() else option_base / candidate
+            git_dir = (
+                candidate if candidate.is_absolute() else git_path_base / candidate
+            )
             index += 1
             continue
         if token in OPTIONS_WITH_VALUES or token.startswith("--namespace="):

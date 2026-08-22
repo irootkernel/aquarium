@@ -48,10 +48,10 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run)(?:[\s\"'\],};&|()]|$)"
 )
 INFORMATION_ONLY_SUBCOMMAND = re.compile(
-    r"^\s*[@+]*\s*ginkgo\s+(?:help|labels|outline|version)(?:\s|$)"
+    r"^\s*[@+]*\s*ginkgo\s+(?:build|help|labels|outline|version)(?:\s|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
@@ -395,6 +395,20 @@ def pytest_control_only_configuration(
     return False
 
 
+def invalid_python_config_authorities(repository: Path) -> set[str]:
+    invalid: set[str] = set()
+    for name in ("pytest.ini", "setup.cfg", "tox.ini"):
+        content = read_optional_text(repository / name, repository)
+        if not content:
+            continue
+        parser = configparser.ConfigParser(interpolation=None)
+        try:
+            parser.read_string(content)
+        except configparser.Error:
+            invalid.add(name)
+    return invalid
+
+
 def command_matches_python_runner(
     command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
 ) -> bool:
@@ -526,6 +540,15 @@ def inspect_frameworks(
         )
 
     if "python" in languages:
+        invalid_configs = invalid_python_config_authorities(repository)
+        for name in sorted(invalid_configs):
+            findings.append(
+                finding(
+                    "python_config_invalid",
+                    "error",
+                    f"{name} is invalid and cannot prove pytest configuration.",
+                )
+            )
         pyproject_path = repository / "pyproject.toml"
         pyproject_content = read_optional_text(pyproject_path, repository)
         pyproject_valid = True
@@ -551,7 +574,8 @@ def inspect_frameworks(
         ) or any(
             re.search(r"\bpytest\b", read_optional_text(path, repository))
             for path in authority_paths
-            if not sensitive_relative_path(path, repository)
+            if path.name not in invalid_configs
+            and not sensitive_relative_path(path, repository)
         )
         stage_parsers = {
             stage: python_stage_parser(commands[stage], make_variables)
@@ -576,6 +600,7 @@ def inspect_frameworks(
         status = (
             "canonical"
             if pyproject_valid
+            and not invalid_configs
             and has_pytest_declaration
             and all(parser == "pytest" for parser in stage_parsers.values())
             and not has_unittest
@@ -898,7 +923,7 @@ def inspect_makefile(
         )
         or re.search(r"\$\((?:eval|call|foreach|if)\b", content)
         or re.search(
-            r"(?m)^\s*(?!override\s)(?:export\s+)?(?:BUN|CARGO|PYTHON|RUFF)\s*\?=",
+            r"(?m)^\s*(?:(?:override|export)\s+)*(?:BUN|CARGO|PYTHON|RUFF)\s*\?=",
             content,
         )
         or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)

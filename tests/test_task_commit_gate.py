@@ -133,6 +133,9 @@ class TaskCommitGateTests(unittest.TestCase):
             self.run_hook(outside, f"env -P /usr/bin -C {repo} git commit -m work")
         )
         self.assert_denied(
+            self.run_hook(outside, f"env -S 'git -C {repo} commit -m work'")
+        )
+        self.assert_denied(
             self.run_hook(
                 outside,
                 f"git --git-dir={repo / '.git'} --work-tree={repo} commit -m work",
@@ -149,6 +152,12 @@ class TaskCommitGateTests(unittest.TestCase):
         self.addCleanup(git_link.unlink)
         self.assert_denied(
             self.run_hook(outside, f"git --git-dir={git_link} commit -m work")
+        )
+        self.assert_denied(
+            self.run_hook(outside, f"git -C {repo.name} --git-dir=.git commit -m work")
+        )
+        self.assert_denied(
+            self.run_hook(outside, f"git -C {repo.name} --work-tree=. commit -m work")
         )
 
     def test_marker_text_outside_git_environment_does_not_bypass(self) -> None:
