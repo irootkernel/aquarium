@@ -676,13 +676,17 @@ class TestInspectTesting:
         assert result["structural_status"] == "nonconforming"
         assert "bun_lock_missing" in {item["code"] for item in result["findings"]}
 
-    def test_typescript_profile_allows_python_pytest_e2e_handler(self) -> None:
+    @pytest.mark.parametrize("e2e_path", ["tests/e2e", "e2e"])
+    def test_typescript_profile_allows_python_pytest_e2e_handler(
+        self, e2e_path: str
+    ) -> None:
         self.write_bun_package()
         package = json.loads(
             self.repository.joinpath("package.json").read_text(encoding="utf-8")
         )
-        package["scripts"]["test:e2e"] = "python3 -m pytest tests/e2e"
+        package["scripts"]["test:e2e"] = f"python3 -m pytest {e2e_path}"
         self.write("package.json", json.dumps(package))
+        self.write(f"{e2e_path}/test_cli.py", "def test_cli():\n    assert True\n")
         self.write_bun_adapter()
         self.enroll("typescript-bun")
 

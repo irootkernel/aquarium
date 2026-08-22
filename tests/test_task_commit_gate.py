@@ -104,6 +104,11 @@ class TaskCommitGateTests(unittest.TestCase):
         command = "cat <<'EOF'\ngit commit -m not-real\nEOF\n"
         self.assertIsNone(self.run_hook(repo, command))
 
+    def test_command_substitution_text_inside_heredoc_is_ignored(self) -> None:
+        repo = self.make_repo("TASK-1 | Completed\n")
+        command = "cat <<'EOF'\n$(git commit -m not-real)\nEOF\n"
+        self.assertIsNone(self.run_hook(repo, command))
+
     def test_commit_after_heredoc_is_denied(self) -> None:
         repo = self.make_repo("TASK-1 | Completed\n")
         command = "cat <<'EOF'\nnot a command\nEOF\ngit commit -m real\n"
@@ -120,6 +125,10 @@ class TaskCommitGateTests(unittest.TestCase):
         self.assert_denied(
             self.run_hook(parent, f"cd {repo.name} && git commit -m work")
         )
+        self.assert_denied(
+            self.run_hook(repo, "cd definitely-missing || git commit -m work")
+        )
+        self.assertIsNone(self.run_hook(repo, "cd . || git commit -m work"))
 
     def test_env_chdir_and_git_worktree_retargeting_are_resolved(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")

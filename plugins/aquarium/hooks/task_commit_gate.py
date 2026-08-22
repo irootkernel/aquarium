@@ -98,31 +98,31 @@ def without_heredoc_bodies(command: str) -> str:
     return "".join(output)
 
 
-def shell_segments(command: str) -> list[list[str]]:
-    source = without_heredoc_bodies(command)
+def shell_segments(command: str) -> list[tuple[list[str], str | None]]:
+    source = command
     source = source.replace("\\\r\n", "").replace("\\\n", "")
     lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n")
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     lexer.commenters = ""
 
-    segments: list[list[str]] = []
+    segments: list[tuple[list[str], str | None]] = []
     current: list[str] = []
     try:
         tokens = iter(lexer)
         for token in tokens:
             if token and all(char in SEPARATOR_CHARS for char in token):
                 if current:
-                    segments.append(current)
+                    segments.append((current, token))
                     current = []
                 continue
             current.append(token)
     except ValueError:
         if current:
-            segments.append(current)
+            segments.append((current, None))
         return segments
     if current:
-        segments.append(current)
+        segments.append((current, None))
     return segments
 
 
@@ -453,7 +453,7 @@ def should_deny(payload: dict[str, Any]) -> bool:
     cwd_value = payload.get("cwd")
     cwd = Path(cwd_value) if isinstance(cwd_value, str) else Path.cwd()
 
-    command, fragments = executable_control_fragments(command)
+    command, fragments = executable_control_fragments(without_heredoc_bodies(command))
     if any(
         should_deny({"tool_input": {"command": fragment}, "cwd": str(cwd)})
         for fragment in fragments
@@ -461,12 +461,23 @@ def should_deny(payload: dict[str, Any]) -> bool:
         return True
 
     probe_base = cwd
-    for segment in shell_segments(command):
+    skip_next = False
+    for segment, separator in shell_segments(command):
+        if skip_next:
+            skip_next = False
+            continue
         if segment and segment[0] == "cd" and len(segment) == 2:
             candidate = Path(segment[1])
-            probe_base = (
+            destination = (
                 candidate if candidate.is_absolute() else probe_base / candidate
             )
+            succeeded = destination.is_dir()
+            if succeeded:
+                probe_base = destination
+            if (separator == "&&" and not succeeded) or (
+                separator == "||" and succeeded
+            ):
+                skip_next = True
             continue
         invocation = git_commit_invocation(segment, probe_base)
         if invocation is None:

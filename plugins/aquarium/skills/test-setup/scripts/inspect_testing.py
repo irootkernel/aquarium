@@ -8,6 +8,7 @@ import configparser
 import json
 import math
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -163,15 +164,52 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
             r"(?:pytest|unittest|(?:\S*/)?nose(?:2)?|(?:\S*/)?nosetests)(?:\s|$)",
             executable_authority,
         )
+        owned_python_e2e_roots: list[Path] = []
+        if package and "typescript" in languages:
+            scripts = package.get("scripts")
+            e2e_command = scripts.get("test:e2e") if isinstance(scripts, dict) else None
+            if isinstance(e2e_command, str):
+                try:
+                    tokens = shlex.split(e2e_command, posix=True)
+                except ValueError:
+                    tokens = []
+                pytest_index = next(
+                    (
+                        index
+                        for index, token in enumerate(tokens)
+                        if Path(token).name == "pytest"
+                    ),
+                    None,
+                )
+                if pytest_index is not None:
+                    for token in tokens[pytest_index + 1 :]:
+                        if token in {"&&", "||", ";", "|"}:
+                            break
+                        if token.startswith("-") or "$" in token:
+                            continue
+                        candidate = Path(token)
+                        if (
+                            not candidate.is_absolute()
+                            and candidate.parts
+                            and candidate.parts[0] not in {".", ".."}
+                        ):
+                            owned_python_e2e_roots.append(candidate)
+
+        def typescript_owned_e2e_source(path: Path) -> bool:
+            if "typescript" not in languages:
+                return False
+            relative = path.relative_to(repository)
+            return any(
+                relative == root or root in relative.parents
+                for root in owned_python_e2e_roots
+            )
+
         python_source = any(
             safe_repository_file(path, repository)
             and not sensitive_relative_path(path, repository)
             for path in repository.rglob("*.py")
             if not any(part in {".git", ".venv", "vendor"} for part in path.parts)
-            and not (
-                "typescript" in languages
-                and path.relative_to(repository).parts[:2] == ("tests", "e2e")
-            )
+            and not typescript_owned_e2e_source(path)
         )
         if python_runner or python_source:
             languages.add("python")
