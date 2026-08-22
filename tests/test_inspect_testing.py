@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 import textwrap
-import unittest
+from contextlib import contextmanager
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "plugins/aquarium/skills/test-setup/scripts/inspect_testing.py"
@@ -16,14 +17,19 @@ sys.path.insert(0, str(SCRIPT.parent))
 import inspect_testing
 
 
-class InspectTestingTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary_directory = tempfile.TemporaryDirectory()
-        self.repository = Path(self.temporary_directory.name) / "repository"
-        self.repository.mkdir()
+@contextmanager
+def case(**labels: object):
+    try:
+        yield
+    except AssertionError as error:
+        raise AssertionError(f"case {labels}: {error}") from error
 
-    def tearDown(self) -> None:
-        self.temporary_directory.cleanup()
+
+class TestInspectTesting:
+    @pytest.fixture(autouse=True)
+    def repository_fixture(self, tmp_path: Path) -> None:
+        self.repository = tmp_path / "repository"
+        self.repository.mkdir()
 
     def write(self, relative_path: str, content: str) -> None:
         path = self.repository / relative_path
@@ -206,25 +212,24 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["selected_profile"], "make")
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(result["make"]["aggregate_mode"], "recursive_recipe")
-        self.assertEqual(
-            result["make"]["aggregate_recursive_calls"],
-            list(inspect_testing.MAKE_STAGES),
+        assert result["selected_profile"] == "make"
+        assert result["structural_status"] == "conforming"
+        assert result["make"]["aggregate_mode"] == "recursive_recipe"
+        assert result["make"]["aggregate_recursive_calls"] == list(
+            inspect_testing.MAKE_STAGES
         )
 
     def test_symlinked_root_makefile_is_not_read(self) -> None:
-        external = Path(self.temporary_directory.name) / "credentials.make"
+        external = self.repository.parent / "credentials.make"
         external.write_text("credential-marker: secret\n", encoding="utf-8")
         (self.repository / "Makefile").symlink_to(external)
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertFalse(result["make"]["present"])
-        self.assertNotIn("credential-marker", json.dumps(result))
+        assert result["structural_status"] == "nonconforming"
+        assert not result["make"]["present"]
+        assert "credential-marker" not in json.dumps(result)
 
     def test_prerequisite_aggregate_is_parallel_unsafe(self) -> None:
         self.write(
@@ -240,12 +245,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["make"]["aggregate_mode"], "prerequisites")
-        self.assertIn(
-            "make_aggregate_parallel_unsafe",
-            {item["code"] for item in result["findings"]},
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert result["make"]["aggregate_mode"] == "prerequisites"
+        assert "make_aggregate_parallel_unsafe" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_quoted_recursive_make_text_is_not_an_executable_stage(self) -> None:
         self.write(
@@ -265,9 +269,9 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
-        self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["aggregate_mode"] == "unverifiable"
+        assert result["make"]["aggregate_recursive_calls"] == []
 
     def test_error_ignoring_recursive_make_calls_are_not_fail_fast(self) -> None:
         self.write_make_contract()
@@ -280,9 +284,9 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
-        self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["aggregate_mode"] == "unverifiable"
+        assert result["make"]["aggregate_recursive_calls"] == []
 
     def test_extra_make_aggregate_command_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -297,8 +301,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["aggregate_mode"] == "unverifiable"
 
     def test_oneshell_make_aggregate_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -311,12 +315,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(result["make"]["global_shell_semantics"])
-        self.assertIn(
-            "make_authority_unverifiable",
-            {item["code"] for item in result["findings"]},
-        )
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["global_shell_semantics"]
+        assert "make_authority_unverifiable" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_custom_make_shell_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -329,8 +332,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(result["make"]["global_shell_semantics"])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["global_shell_semantics"]
 
     def test_makeflags_error_ignoring_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -343,8 +346,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(result["make"]["global_shell_semantics"])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["global_shell_semantics"]
 
     def test_included_make_authority_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -358,8 +361,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(result["make"]["authority_includes_unresolved"])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["authority_includes_unresolved"]
 
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
@@ -368,15 +371,15 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["detected_languages"], ["typescript"])
-        self.assertEqual(result["selected_profile"], "typescript-bun")
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertTrue(result["bun"]["aggregate_serial"])
-        self.assertEqual(result["make"]["aggregate_mode"], "bun_adapter")
-        self.assertEqual(self.framework(result, "typescript")["status"], "canonical")
-        self.assertEqual(
-            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-unit"],
-            "vitest",
+        assert result["detected_languages"] == ["typescript"]
+        assert result["selected_profile"] == "typescript-bun"
+        assert result["structural_status"] == "conforming"
+        assert result["bun"]["aggregate_serial"]
+        assert result["make"]["aggregate_mode"] == "bun_adapter"
+        assert self.framework(result, "typescript")["status"] == "canonical"
+        assert (
+            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-unit"]
+            == "vitest"
         )
 
     def test_bun_reverse_make_edge_and_unpinned_runtime_fail(self) -> None:
@@ -394,10 +397,10 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         codes = {item["code"] for item in result["findings"]}
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn("bun_aggregate_invalid", codes)
-        self.assertIn("bun_make_cycle", codes)
-        self.assertIn("bun_version_unpinned", codes)
+        assert result["structural_status"] == "nonconforming"
+        assert "bun_aggregate_invalid" in codes
+        assert "bun_make_cycle" in codes
+        assert "bun_version_unpinned" in codes
 
     def test_polyglot_root_keeps_make_authority(self) -> None:
         self.write_ginkgo_make_contract()
@@ -407,13 +410,13 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["detected_languages"], ["go", "typescript"])
-        self.assertEqual(result["selected_profile"], "polyglot-make")
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(result["make"]["aggregate_mode"], "recursive_recipe")
-        self.assertEqual(
-            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-unit"],
-            "generic",
+        assert result["detected_languages"] == ["go", "typescript"]
+        assert result["selected_profile"] == "polyglot-make"
+        assert result["structural_status"] == "conforming"
+        assert result["make"]["aggregate_mode"] == "recursive_recipe"
+        assert (
+            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-unit"]
+            == "generic"
         )
 
     def test_go_ginkgo_and_gomega_are_canonical(self) -> None:
@@ -424,13 +427,13 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "go")
 
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(framework["status"], "canonical")
-        self.assertEqual(framework["unit_int_parser"], "ginkgo")
+        assert result["structural_status"] == "conforming"
+        assert framework["status"] == "canonical"
+        assert framework["unit_int_parser"] == "ginkgo"
 
     def test_ginkgo_information_commands_are_not_canonical(self) -> None:
         for subcommand in ("help", "labels", "outline", "version"):
-            with self.subTest(subcommand=subcommand):
+            with case(subcommand=subcommand):
                 self.write_ginkgo_make_contract()
                 makefile = self.repository / "Makefile"
                 makefile.write_text(
@@ -444,7 +447,7 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
+                assert result["structural_status"] == "unverifiable"
 
     def test_go_standard_testing_requires_legacy_waiver_review(self) -> None:
         self.write_make_contract()
@@ -455,11 +458,11 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "go")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(framework["waiver_required"])
-        self.assertIn(
-            "framework_waiver_required", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "unverifiable"
+        assert framework["waiver_required"]
+        assert "framework_waiver_required" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_stale_go_dependencies_do_not_select_ginkgo_parser(self) -> None:
         self.write_make_contract()
@@ -471,9 +474,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "go")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["unit_int_parser"], "generic")
-        self.assertTrue(framework["waiver_required"])
+        assert result["structural_status"] == "unverifiable"
+        assert framework["unit_int_parser"] == "generic"
+        assert framework["waiver_required"]
 
     def test_dependency_only_python_does_not_select_pytest_parser(self) -> None:
         self.write_make_contract()
@@ -485,11 +488,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
-        self.assertEqual(self.framework(result, "rust")["unit_int_parser"], "generic")
-        self.assertEqual(
-            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-int"],
-            "generic",
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
+        assert self.framework(result, "rust")["unit_int_parser"] == "generic"
+        assert (
+            result["frameworks"]["gaori"]["stage_parser_defaults"]["test-int"]
+            == "generic"
         )
 
     def test_python_mixed_frameworks_require_waiver_and_map_stage_parsers(self) -> None:
@@ -525,11 +528,11 @@ class InspectTestingTest(unittest.TestCase):
         framework = self.framework(result, "python")
         parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["detected"], ["pytest", "unittest"])
-        self.assertTrue(framework["waiver_required"])
-        self.assertEqual(parsers["test-unit"], "pytest")
-        self.assertEqual(parsers["test-int"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert framework["detected"] == ["pytest", "unittest"]
+        assert framework["waiver_required"]
+        assert parsers["test-unit"] == "pytest"
+        assert parsers["test-int"] == "generic"
 
     def test_requirements_only_python_root_detects_mixed_frameworks(self) -> None:
         self.write(
@@ -556,11 +559,9 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["detected_languages"], ["python"])
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(
-            self.framework(result, "python")["detected"], ["pytest", "unittest"]
-        )
+        assert result["detected_languages"] == ["python"]
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["detected"] == ["pytest", "unittest"]
 
     def test_python_dependency_and_opaque_wrapper_are_not_canonical(self) -> None:
         self.write_make_contract()
@@ -578,9 +579,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "python")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["detected"], ["pytest", "unittest"])
-        self.assertEqual(framework["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert framework["detected"] == ["pytest", "unittest"]
+        assert framework["unit_int_parser"] == "generic"
 
     def test_invalid_root_package_manifest_is_nonconforming(self) -> None:
         self.write_make_contract()
@@ -589,10 +590,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "package_json_invalid", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "package_json_invalid" in {item["code"] for item in result["findings"]}
 
     def test_invalid_pyproject_cannot_prove_pytest(self) -> None:
         self.write_make_contract()
@@ -608,10 +607,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "pyproject_invalid", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "pyproject_invalid" in {item["code"] for item in result["findings"]}
 
     def test_testing_document_profile_must_match_executable_authority(self) -> None:
         self.write_make_contract()
@@ -620,10 +617,10 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "testing_profile_mismatch", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "testing_profile_mismatch" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_testing_document_requires_every_contract_section(self) -> None:
         self.write_make_contract()
@@ -631,10 +628,10 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "testing_sections_missing", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "testing_sections_missing" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_testing_document_requires_nonempty_contract_sections(self) -> None:
         self.write_make_contract()
@@ -648,11 +645,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertFalse(result["testing_document"]["sections"]["Canonical Commands"])
-        self.assertIn(
-            "testing_sections_missing", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert not result["testing_document"]["sections"]["Canonical Commands"]
+        assert "testing_sections_missing" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_contract_marker_outside_contract_section_does_not_enroll(self) -> None:
         self.write_make_contract()
@@ -667,12 +664,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertFalse(result["testing_document"]["contract_registered"])
-        self.assertIn(
-            "testing_contract_unregistered",
-            {item["code"] for item in result["findings"]},
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert not result["testing_document"]["contract_registered"]
+        assert "testing_contract_unregistered" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()
@@ -689,9 +685,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "typescript")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["detected"], ["bun-test"])
-        self.assertTrue(framework["waiver_required"])
+        assert result["structural_status"] == "unverifiable"
+        assert framework["detected"] == ["bun-test"]
+        assert framework["waiver_required"]
 
     def test_vitest_dependency_without_vitest_runners_is_not_canonical(self) -> None:
         self.write_bun_package()
@@ -707,9 +703,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "typescript")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["unit_int_parser"], "generic")
-        self.assertTrue(framework["waiver_required"])
+        assert result["structural_status"] == "unverifiable"
+        assert framework["unit_int_parser"] == "generic"
+        assert framework["waiver_required"]
 
     def test_bun_script_command_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -723,9 +719,9 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
-        self.assertIn("bun_make_cycle", {item["code"] for item in result["findings"]})
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
+        assert "bun_make_cycle" in {item["code"] for item in result["findings"]}
 
     def test_bun_script_command_substitution_is_fail_closed(self) -> None:
         self.write_bun_package()
@@ -739,8 +735,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:e2e"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:e2e"]
 
     def test_bun_script_opaque_shell_expansions_are_fail_closed(self) -> None:
         commands = (
@@ -756,7 +752,7 @@ class InspectTestingTest(unittest.TestCase):
             'RUNNER=make; "$0" test-e2e',
         )
         for command in commands:
-            with self.subTest(command=command):
+            with case(command=command):
                 self.write_bun_package()
                 package = json.loads(
                     self.repository.joinpath("package.json").read_text(encoding="utf-8")
@@ -768,8 +764,8 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "nonconforming")
-                self.assertEqual(result["bun"]["make_cycles"], ["test:e2e"])
+                assert result["structural_status"] == "nonconforming"
+                assert result["bun"]["make_cycles"] == ["test:e2e"]
 
     def test_bun_script_env_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -783,8 +779,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_absolute_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -798,8 +794,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_wrapped_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -813,8 +809,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_quoted_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -828,8 +824,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_make_alias_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
@@ -845,8 +841,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_quote_joined_make_alias_is_rejected(self) -> None:
         self.write_bun_package()
@@ -862,8 +858,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_empty_quote_joined_make_is_rejected(self) -> None:
         self.write_bun_package()
@@ -877,12 +873,12 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_semicolon_alias_and_backslash_make_are_rejected(self) -> None:
         for command in ("M=make; sh -c '$M test-unit'", r"m\ake test-unit"):
-            with self.subTest(command=command):
+            with case(command=command):
                 self.write_bun_package()
                 package = json.loads(
                     self.repository.joinpath("package.json").read_text(encoding="utf-8")
@@ -894,8 +890,8 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "nonconforming")
-                self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+                assert result["structural_status"] == "nonconforming"
+                assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_bun_script_extended_make_assignments_are_rejected(self) -> None:
         for command in (
@@ -903,7 +899,7 @@ class InspectTestingTest(unittest.TestCase):
             r"M=make\  && $M test-unit",
             "M=${TOOL:-make} && $M test-unit",
         ):
-            with self.subTest(command=command):
+            with case(command=command):
                 self.write_bun_package()
                 package = json.loads(
                     self.repository.joinpath("package.json").read_text(encoding="utf-8")
@@ -915,8 +911,8 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "nonconforming")
-                self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+                assert result["structural_status"] == "nonconforming"
+                assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_vitest_runner_that_swallows_failure_is_not_canonical(self) -> None:
         self.write_bun_package()
@@ -932,9 +928,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "typescript")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["unit_int_parser"], "generic")
-        self.assertTrue(framework["waiver_required"])
+        assert result["structural_status"] == "unverifiable"
+        assert framework["unit_int_parser"] == "generic"
+        assert framework["waiver_required"]
 
     def test_python_pipeline_runner_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -952,8 +948,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_unresolved_python_make_variable_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -971,8 +967,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_override_python_make_variable_is_resolved(self) -> None:
         self.write_make_contract()
@@ -989,8 +985,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_sensitive_python_file_is_not_read_for_framework_detection(self) -> None:
         self.write_make_contract()
@@ -1009,8 +1005,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(self.framework(result, "python")["detected"], ["pytest"])
+        assert result["structural_status"] == "conforming"
+        assert self.framework(result, "python")["detected"] == ["pytest"]
 
     def test_plural_sensitive_python_file_is_not_read(self) -> None:
         self.write_make_contract()
@@ -1026,8 +1022,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(self.framework(result, "python")["detected"], ["pytest"])
+        assert result["structural_status"] == "conforming"
+        assert self.framework(result, "python")["detected"] == ["pytest"]
 
     def test_pytest_information_only_command_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1043,8 +1039,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_pytest_funcargs_alias_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1062,8 +1058,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_inspection_output_redacts_make_recipes_and_bun_commands(self) -> None:
         secret = "AQUARIUM_QA_SYNTHETIC_PROOF"
@@ -1090,8 +1086,8 @@ class InspectTestingTest(unittest.TestCase):
 
         serialized = json.dumps(inspect_testing.inspect_repository(self.repository))
 
-        self.assertNotIn(secret, serialized)
-        self.assertNotIn("recipe", serialized.replace("recipe_command_count", ""))
+        assert secret not in serialized
+        assert "recipe" not in serialized.replace("recipe_command_count", "")
 
     def test_symlinked_pytest_configuration_is_rejected(self) -> None:
         self.write_make_contract()
@@ -1103,17 +1099,17 @@ class InspectTestingTest(unittest.TestCase):
         )
         makefile.write_text(content, encoding="utf-8")
         self.write("requirements.txt", "pytest==9.1.1\n")
-        external = Path(self.temporary_directory.name) / "external-pytest.ini"
+        external = self.repository.parent / "external-pytest.ini"
         external.write_text("[pytest]\naddopts = --funcargs\n", encoding="utf-8")
         self.repository.joinpath("pytest.ini").symlink_to(external)
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "root_authority_symlinked", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "root_authority_symlinked" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_pytest_prefixed_module_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1129,8 +1125,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_opaque_pytest_shell_expansion_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1151,12 +1147,12 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_pytest_collection_alias_is_not_canonical(self) -> None:
         for option in ("--co", "--collectonly", "-V"):
-            with self.subTest(option=option):
+            with case(option=option):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 content = (
@@ -1176,10 +1172,8 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
-                self.assertEqual(
-                    self.framework(result, "python")["unit_int_parser"], "generic"
-                )
+                assert result["structural_status"] == "unverifiable"
+                assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_pytest_fixtures_command_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1194,8 +1188,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_pytest_addopts_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1211,7 +1205,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_pytest_ini_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1228,7 +1222,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_quoted_pyproject_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1248,7 +1242,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_multiline_pyproject_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1268,7 +1262,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_quote_joined_pytest_control_option_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1289,7 +1283,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_quote_joined_static_pytest_controls_are_not_canonical(self) -> None:
         for authority, content in (
@@ -1299,7 +1293,7 @@ class InspectTestingTest(unittest.TestCase):
                 '[tool.pytest.ini_options]\naddopts = "--collect\\"\\"-only"\n',
             ),
         ):
-            with self.subTest(authority=authority):
+            with case(authority=authority):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 make_content = (
@@ -1321,7 +1315,7 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
+                assert result["structural_status"] == "unverifiable"
 
     def test_additive_pytest_addopts_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1337,11 +1331,11 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_pytest_cache_and_setup_only_commands_are_not_canonical(self) -> None:
         for option in ("--cache-show", "--setup-plan", "--setup-only"):
-            with self.subTest(option=option):
+            with case(option=option):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 content = (
@@ -1360,7 +1354,7 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
+                assert result["structural_status"] == "unverifiable"
 
     def test_pytest_control_option_before_shell_operator_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1381,14 +1375,14 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_pytest_redirection_is_not_execution_proof(self) -> None:
         for command in (
             "python3 -m pytest tests >/dev/null",
             "python3 -m pytest --collect-only>/dev/null",
         ):
-            with self.subTest(command=command):
+            with case(command=command):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 content = (
@@ -1402,7 +1396,7 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
+                assert result["structural_status"] == "unverifiable"
 
     def test_pytest_parameter_default_is_not_execution_proof(self) -> None:
         self.write_make_contract()
@@ -1419,7 +1413,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_bun_parameter_default_script_is_fail_closed(self) -> None:
         self.write_bun_package()
@@ -1435,8 +1429,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        assert result["structural_status"] == "nonconforming"
+        assert result["bun"]["make_cycles"] == ["test:unit"]
 
     def test_make_recipe_continuation_is_unverifiable(self) -> None:
         self.write_make_contract()
@@ -1450,8 +1444,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertTrue(result["make"]["global_shell_semantics"])
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["global_shell_semantics"]
 
     def test_dynamic_make_authorities_are_unverifiable(self) -> None:
         additions = (
@@ -1465,9 +1459,12 @@ class InspectTestingTest(unittest.TestCase):
             "export PYTEST_ADDOPTS\n",
             "undefine MAKE\n",
             "test-unit:\n\t$(eval DYNAMIC := true)\n",
+            "PYTHON ?= python3\n",
+            "CARGO ?= cargo\n",
+            "BUN ?= bun\n",
         )
         for addition in additions:
-            with self.subTest(addition=addition):
+            with case(addition=addition):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 makefile.write_text(
@@ -1478,24 +1475,24 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
-                self.assertTrue(result["make"]["global_shell_semantics"])
+                assert result["structural_status"] == "unverifiable"
+                assert result["make"]["global_shell_semantics"]
 
     def test_symlinked_legacy_lock_authority_is_rejected(self) -> None:
         self.write_bun_package()
         self.write_bun_adapter()
         self.write("bun.lock", "lockfileVersion = 1\n")
-        external = Path(self.temporary_directory.name) / "external-pnpm-lock.yaml"
+        external = self.repository.parent / "external-pnpm-lock.yaml"
         external.write_text("lockfileVersion: 9\n", encoding="utf-8")
         self.repository.joinpath("pnpm-lock.yaml").symlink_to(external)
         self.enroll("typescript-bun")
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "root_authority_symlinked", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "root_authority_symlinked" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_ansi_quoted_pytest_option_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1517,12 +1514,12 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_unresolved_pytest_addopts_expansion_is_not_canonical(self) -> None:
         for value in ("--collect$()-only", "--collect$(UNDEFINED)-only"):
-            with self.subTest(value=value):
+            with case(value=value):
                 self.write_make_contract()
                 makefile = self.repository / "Makefile"
                 makefile.write_text(
@@ -1535,21 +1532,21 @@ class InspectTestingTest(unittest.TestCase):
 
                 result = inspect_testing.inspect_repository(self.repository)
 
-                self.assertEqual(result["structural_status"], "unverifiable")
+                assert result["structural_status"] == "unverifiable"
 
     def test_symlinked_requirements_authority_is_reported(self) -> None:
         self.write_make_contract()
-        external = Path(self.temporary_directory.name) / "requirements.txt"
+        external = self.repository.parent / "requirements.txt"
         external.write_text("pytest==9.1.1\n", encoding="utf-8")
         self.repository.joinpath("requirements.txt").symlink_to(external)
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertIn(
-            "root_authority_symlinked", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert "root_authority_symlinked" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_background_pytest_command_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1565,8 +1562,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
     def test_make_runner_with_error_ignore_prefix_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1583,8 +1580,8 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "python")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert framework["unit_int_parser"] == "generic"
 
     def test_rust_without_cargo_test_runner_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1594,9 +1591,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "rust")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["unit_int_parser"], "generic")
-        self.assertTrue(framework["waiver_required"])
+        assert result["structural_status"] == "unverifiable"
+        assert framework["unit_int_parser"] == "generic"
+        assert framework["waiver_required"]
 
     def test_rust_with_cargo_test_runners_is_canonical(self) -> None:
         self.write_make_contract()
@@ -1615,9 +1612,9 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "rust")
 
-        self.assertEqual(result["structural_status"], "conforming")
-        self.assertEqual(framework["unit_int_parser"], "cargo-test")
-        self.assertFalse(framework["waiver_required"])
+        assert result["structural_status"] == "conforming"
+        assert framework["unit_int_parser"] == "cargo-test"
+        assert not framework["waiver_required"]
 
     def test_cargo_no_run_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1634,7 +1631,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+        assert result["structural_status"] == "unverifiable"
 
     def test_rust_runner_variable_must_resolve_to_cargo(self) -> None:
         self.write_make_contract()
@@ -1649,8 +1646,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "rust")["unit_int_parser"], "generic")
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "rust")["unit_int_parser"] == "generic"
 
     def test_bun_adapter_variable_must_resolve_to_bun(self) -> None:
         self.write_bun_package()
@@ -1665,8 +1662,8 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(result["make"]["aggregate_mode"], "invalid_bun_adapter")
+        assert result["structural_status"] == "nonconforming"
+        assert result["make"]["aggregate_mode"] == "invalid_bun_adapter"
 
     def test_legacy_bun_lock_requires_waiver_even_with_bun_lock(self) -> None:
         self.write_bun_package()
@@ -1676,11 +1673,10 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertIn(
-            "bun_legacy_lock_waiver_required",
-            {item["code"] for item in result["findings"]},
-        )
+        assert result["structural_status"] == "unverifiable"
+        assert "bun_legacy_lock_waiver_required" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_dart_and_flutter_pending_gaori_parsers_are_explicit(self) -> None:
         self.write_make_contract()
@@ -1699,9 +1695,9 @@ class InspectTestingTest(unittest.TestCase):
         dart_result = inspect_testing.inspect_repository(self.repository)
         dart = self.framework(dart_result, "dart")
 
-        self.assertEqual(dart["status"], "canonical")
-        self.assertEqual(dart["unit_int_parser"], "generic")
-        self.assertEqual(dart["parser_support"], "pending-dart-test")
+        assert dart["status"] == "canonical"
+        assert dart["unit_int_parser"] == "generic"
+        assert dart["parser_support"] == "pending-dart-test"
 
         self.write(
             "pubspec.yaml",
@@ -1723,10 +1719,10 @@ class InspectTestingTest(unittest.TestCase):
         flutter_result = inspect_testing.inspect_repository(self.repository)
         flutter = self.framework(flutter_result, "flutter")
 
-        self.assertEqual(flutter["status"], "canonical")
-        self.assertEqual(flutter["unit_int_parser"], "flutter-test")
-        self.assertEqual(flutter["e2e_parser"], "generic")
-        self.assertEqual(flutter["e2e_parser_support"], "pending-patrol")
+        assert flutter["status"] == "canonical"
+        assert flutter["unit_int_parser"] == "flutter-test"
+        assert flutter["e2e_parser"] == "generic"
+        assert flutter["e2e_parser_support"] == "pending-patrol"
 
     def test_dart_dependency_without_runner_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1736,8 +1732,8 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
         framework = self.framework(result, "dart")
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(framework["status"], "waiver_required")
+        assert result["structural_status"] == "unverifiable"
+        assert framework["status"] == "waiver_required"
 
     def test_included_targets_are_unverifiable_not_assumed_missing(self) -> None:
         self.write("Makefile", "include tests.mk\n")
@@ -1750,19 +1746,19 @@ class InspectTestingTest(unittest.TestCase):
             if item["code"] == "make_targets_missing"
         )
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertEqual(target_finding["severity"], "unverifiable")
+        assert result["structural_status"] == "nonconforming"
+        assert target_finding["severity"] == "unverifiable"
 
     def test_missing_testing_document_does_not_enroll_repository(self) -> None:
         self.write_make_contract()
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "nonconforming")
-        self.assertFalse(result["testing_document"]["contract_registered"])
-        self.assertIn(
-            "testing_document_missing", {item["code"] for item in result["findings"]}
-        )
+        assert result["structural_status"] == "nonconforming"
+        assert not result["testing_document"]["contract_registered"]
+        assert "testing_document_missing" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_cli_returns_structured_error_for_missing_repository(self) -> None:
         missing = self.repository.resolve() / "missing"
@@ -1775,11 +1771,9 @@ class InspectTestingTest(unittest.TestCase):
         )
         payload = json.loads(completed.stdout)
 
-        self.assertEqual(completed.returncode, 2)
-        self.assertEqual(
-            payload["schema_version"], "aquarium-test-setup-inspection-error.v1"
-        )
-        self.assertEqual(payload["error"]["code"], "repository_not_found")
+        assert completed.returncode == 2
+        assert payload["schema_version"] == "aquarium-test-setup-inspection-error.v1"
+        assert payload["error"]["code"] == "repository_not_found"
 
     def test_cli_does_not_reflect_unknown_argument_values(self) -> None:
         secret = "QA20_SYNTHETIC_SECRET"
@@ -1791,9 +1785,5 @@ class InspectTestingTest(unittest.TestCase):
             text=True,
         )
 
-        self.assertEqual(completed.returncode, 2)
-        self.assertNotIn(secret, completed.stdout)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert completed.returncode == 2
+        assert secret not in completed.stdout

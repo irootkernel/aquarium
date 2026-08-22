@@ -2034,6 +2034,7 @@ assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust"
 
 makefile = ROOT.join("Makefile").read
 testing_document = ROOT.join("TESTING.md").read
+inspect_testing_tests = ROOT.join("tests/test_inspect_testing.py").read
 testing_headings = [
   "Contract",
   "Canonical Commands",
@@ -2075,6 +2076,12 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),
        "Aquarium must remain enrolled in its own common test contract")
+assert(inspect_testing_tests.include?("import pytest") &&
+       inspect_testing_tests.include?("@pytest.fixture(autouse=True)") &&
+       !inspect_testing_tests.match?(/^import unittest$/) &&
+       !inspect_testing_tests.match?(/class\s+\w+\(unittest\.TestCase\)/) &&
+       !inspect_testing_tests.include?("self.assert"),
+       "the new inspector integration suite must remain native pytest")
 gaori_commands = YAML.safe_load(ROOT.join(".gaori/tester.yaml").read, aliases: false).fetch("commands")
 expected_gaori_handlers = {
   "test" => ["make", "test"],

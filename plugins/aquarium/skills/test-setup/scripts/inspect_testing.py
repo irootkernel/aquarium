@@ -897,6 +897,10 @@ def inspect_makefile(
             content,
         )
         or re.search(r"\$\((?:eval|call|foreach|if)\b", content)
+        or re.search(
+            r"(?m)^\s*(?!override\s)(?:export\s+)?(?:BUN|CARGO|PYTHON|RUFF)\s*\?=",
+            content,
+        )
         or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
         or re.search(
             r"(?m)^\s*(?:override\s+)?define\s+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\b",

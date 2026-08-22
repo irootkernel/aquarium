@@ -155,6 +155,14 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 cwd = candidate if candidate.is_absolute() else cwd / candidate
                 index += 1
                 continue
+            if token in {"-u", "--unset", "-P", "--split-string"}:
+                if index + 1 >= len(segment):
+                    return None
+                index += 2
+                continue
+            if token.startswith(("--unset=", "--split-string=")):
+                index += 1
+                continue
             if token.startswith("-"):
                 index += 1
                 continue
@@ -166,13 +174,19 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         return None
     index += 1
 
+    option_base = cwd
     probe_cwd = cwd
     git_dir: Path | None = None
     while index < len(segment):
         token = segment[index]
         if token == "commit":
-            if git_dir is not None and git_dir.name == ".git":
-                probe_cwd = git_dir.parent
+            if git_dir is not None:
+                try:
+                    resolved_git_dir = git_dir.resolve()
+                except OSError:
+                    return None
+                if resolved_git_dir.name == ".git":
+                    probe_cwd = resolved_git_dir.parent
             return probe_cwd, GATE_ASSIGNMENT in assignments
         if token == "--":
             return None
@@ -187,7 +201,9 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
             if index + 1 >= len(segment):
                 return None
             candidate = Path(segment[index + 1])
-            candidate = candidate if candidate.is_absolute() else probe_cwd / candidate
+            candidate = (
+                candidate if candidate.is_absolute() else option_base / candidate
+            )
             if token == "--work-tree":
                 probe_cwd = candidate
             else:
@@ -196,12 +212,14 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
             continue
         if token.startswith("--work-tree="):
             candidate = Path(token.split("=", 1)[1])
-            probe_cwd = candidate if candidate.is_absolute() else probe_cwd / candidate
+            probe_cwd = (
+                candidate if candidate.is_absolute() else option_base / candidate
+            )
             index += 1
             continue
         if token.startswith("--git-dir="):
             candidate = Path(token.split("=", 1)[1])
-            git_dir = candidate if candidate.is_absolute() else probe_cwd / candidate
+            git_dir = candidate if candidate.is_absolute() else option_base / candidate
             index += 1
             continue
         if token in OPTIONS_WITH_VALUES or token.startswith("--namespace="):

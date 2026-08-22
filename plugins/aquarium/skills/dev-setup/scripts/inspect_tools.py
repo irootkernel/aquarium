@@ -2404,7 +2404,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Require an explicitly selected Mulgae MCP registration for status",
     )
     arguments = parser.parse_args()
-    if arguments.timeout_seconds <= 0:
+    if not math.isfinite(arguments.timeout_seconds) or arguments.timeout_seconds <= 0:
         raise InspectionError(
             "invalid_arguments", "--timeout-seconds must be greater than zero"
         )
