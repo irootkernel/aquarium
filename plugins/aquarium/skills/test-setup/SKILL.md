@@ -13,7 +13,7 @@ Read [contract.md](references/contract.md), then read the applicable sections of
 
 1. Resolve one Git root and read every applicable instruction file.
 2. Inspect HEAD, branch, upstream, staged, unstaged, untracked, and conflicted state. Preserve unrelated work.
-3. Read the root Makefile, package manifests and lockfiles, test configuration, CI, existing test suites, public usage documentation, environment setup, and root `TESTING.md` when present.
+3. Read the root Makefile, package manifests and lockfiles, test configuration, CI, existing test suites, public usage documentation, non-secret environment setup, and root `TESTING.md` when present. Never read credential values or open `.env*`, authentication, key, token, secret, or credential files. Derive variable names only from non-secret documentation or templates proven to contain placeholders, or from redacted output of the owning tool; report a gap when values would be required.
 4. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_testing.py --repository <git-root>`. Treat its JSON as conservative structural evidence only: it does not execute Make, Bun, tests, formatters, package hooks, or arbitrary project code and cannot prove test semantics or waiver equivalence.
 5. If Python is unavailable or the inspection fails, report the gap and perform the same read-only inspection manually. Do not install a runtime or dependency as a fallback.
 

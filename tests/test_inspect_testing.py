@@ -288,6 +288,24 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
 
+    def test_oneshell_make_aggregate_is_unverifiable(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        makefile.write_text(
+            ".ONESHELL:\n" + makefile.read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertTrue(result["make"]["global_shell_semantics"])
+        self.assertIn(
+            "make_aggregate_fail_fast_unverifiable",
+            {item["code"] for item in result["findings"]},
+        )
+
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
         self.write_bun_adapter()
@@ -617,6 +635,57 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
         self.assertIn("bun_make_cycle", {item["code"] for item in result["findings"]})
 
+    def test_bun_script_env_make_reverse_edge_is_rejected(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " && env MODE=test make auxiliary"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+
+    def test_vitest_runner_that_swallows_failure_is_not_canonical(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " || true"
+        package["scripts"]["test:int"] += " || true"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "typescript")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["unit_int_parser"], "generic")
+        self.assertTrue(framework["waiver_required"])
+
+    def test_make_runner_with_error_ignore_prefix_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        content = makefile.read_text(encoding="utf-8")
+        content = content.replace("test-unit:\n\t@true", "test-unit:\n\t-pytest unit")
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\t-pytest integration"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "python")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["unit_int_parser"], "generic")
+
     def test_rust_without_cargo_test_runner_is_not_canonical(self) -> None:
         self.write_make_contract()
         self.write("Cargo.toml", '[package]\nname = "fixture"\nversion = "0.1.0"\n')
@@ -666,6 +735,15 @@ class InspectTestingTest(unittest.TestCase):
 
     def test_dart_and_flutter_pending_gaori_parsers_are_explicit(self) -> None:
         self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        content = makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\tdart test test/unit"
+        )
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\tdart test test/integration"
+        )
+        makefile.write_text(content, encoding="utf-8")
         self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
         self.enroll("make")
 
@@ -688,6 +766,10 @@ class InspectTestingTest(unittest.TestCase):
               patrol: ^4.0.0
             """,
         )
+        content = makefile.read_text(encoding="utf-8").replace(
+            "dart test", "flutter test"
+        )
+        makefile.write_text(content, encoding="utf-8")
 
         flutter_result = inspect_testing.inspect_repository(self.repository)
         flutter = self.framework(flutter_result, "flutter")
@@ -696,6 +778,17 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(flutter["unit_int_parser"], "flutter-test")
         self.assertEqual(flutter["e2e_parser"], "generic")
         self.assertEqual(flutter["e2e_parser_support"], "pending-patrol")
+
+    def test_dart_dependency_without_runner_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "dart")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["status"], "waiver_required")
 
     def test_included_targets_are_unverifiable_not_assumed_missing(self) -> None:
         self.write("Makefile", "include tests.mk\n")

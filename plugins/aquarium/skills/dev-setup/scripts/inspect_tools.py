@@ -497,6 +497,7 @@ def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str,
             {
                 "path": relative_path,
                 "present": (directory / relative_path).is_file(),
+                "symlinked": (directory / relative_path).is_symlink(),
                 "sha256": file_sha256(directory / relative_path),
             }
             for relative_path in required_files
@@ -504,6 +505,7 @@ def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str,
         installations.append(
             {
                 "path": str(directory),
+                "symlinked": directory.is_symlink(),
                 "frontmatter_valid": frontmatter_name(skill_path) == name,
                 "files": files,
             }
@@ -512,8 +514,10 @@ def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str,
         status = "missing"
     elif (
         len(installations) == 1
+        and not installations[0]["symlinked"]
         and installations[0]["frontmatter_valid"]
         and all(entry["present"] for entry in installations[0]["files"])
+        and not any(entry["symlinked"] for entry in installations[0]["files"])
     ):
         status = "configured"
     else:
@@ -1309,15 +1313,20 @@ def inspect_gaori_mcp(
                 resolved_command = Path(discovered).resolve()
 
     repository_bound = False
-    server_mode = False
-    if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
+    arguments_match = False
+    if (
+        isinstance(args, list)
+        and all(isinstance(argument, str) for argument in args)
+        and len(args) == 3
+        and args[0] == "--repo"
+        and args[2] == "mcp"
+    ):
         try:
-            repo_index = args.index("--repo")
-            configured_repository = Path(args[repo_index + 1]).expanduser().resolve()
-            repository_bound = configured_repository == repository
-        except (ValueError, IndexError, OSError):
-            repository_bound = False
-        server_mode = bool(args and args[-1] == "mcp")
+            configured_repository = Path(args[1]).expanduser().resolve()
+        except OSError:
+            configured_repository = None
+        repository_bound = configured_repository == repository
+        arguments_match = repository_bound
 
     tool_timeout = result.get("tool_timeout_sec")
     timeout_supported = (
@@ -1335,6 +1344,7 @@ def inspect_gaori_mcp(
             "enabled": enabled,
             "stdio": stdio,
             "repository_bound": repository_bound,
+            "arguments_match": arguments_match,
             "command_resolvable": resolved_command is not None,
             "binary_matches_selected": binary_matches,
             "tool_timeout_sec": tool_timeout,
@@ -1345,7 +1355,7 @@ def inspect_gaori_mcp(
         and enabled
         and stdio
         and repository_bound
-        and server_mode
+        and arguments_match
         and binary_matches
         and timeout_supported
     ):

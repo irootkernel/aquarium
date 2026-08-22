@@ -172,6 +172,7 @@ assert(marketplace_plugin.dig("policy", "authentication") == "ON_INSTALL",
 
 dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
+dev_setup_script_body = dev_setup_script.read
 dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
 dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
 dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
@@ -219,6 +220,10 @@ assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex as
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
+assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
+       dev_setup_script_body.include?('"symlinked": directory.is_symlink()') &&
+       dev_setup_script_body.include?('entry["symlinked"]'),
+       "dev-setup inspector must reject non-exact Gaori arguments and symlinked paired skills")
 assert(dev_setup.include?("default inspection omits Podway and Ouroboros completely") &&
        dev_setup.include?("--include-podway") &&
        dev_setup.include?("--include-ouroboros"),
@@ -304,6 +309,9 @@ assert(dev_setup.include?("Never read credential values in this skill, even afte
        dev_setup.include?("Diagnosis reports coverage and conflicts without drafting or mutation") &&
        agents_reference.include?("Diagnosis uses its structure and evidence rules without drafting"),
        "dev-setup must keep credential values unread and diagnose-only guidance non-drafting")
+assert(dev_setup.include?("When another copy exists, report the duplicate risk") &&
+       dev_setup.include?("never create a known duplicate"),
+       "dev-setup must not install a canonical paired skill beside a known alternate-root copy")
 selection_disclosure_index = dev_setup.index("Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices")
 comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
@@ -388,6 +396,9 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("only_recursive_calls") &&
        test_setup_script_body.include?("section_content") &&
        test_setup_script_body.include?("runs_cargo_test") &&
+       test_setup_script_body.include?("command_preserves_failure") &&
+       test_setup_script_body.include?("global_shell_semantics") &&
+       test_setup_script_body.include?("runs_dart_test") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
        test_setup_script_body.include?("pending-patrol") &&
@@ -398,6 +409,10 @@ assert(test_setup.include?("scripts/inspect_testing.py") &&
        test_setup.include?("Apply exactly this diff") &&
        test_setup.include?("configured but unverified"),
        "test-setup must separate structural audit, exact-diff approval, and runtime proof")
+assert(test_setup.include?("Never read credential values or open `.env*`, authentication, key, token, secret, or credential files") &&
+       test_setup.include?("templates proven to contain placeholders") &&
+       test_setup.include?("report a gap when values would be required"),
+       "test-setup must never read credential values during repository inspection")
 assert(test_setup.include?("does not authorize a test that creates containers") &&
        test_setup.include?("proven non-production") &&
        test_setup.include?("never convert them into a successful skip") &&
@@ -443,13 +458,14 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only those disclosed bytes") &&
+       ROOT.join("PRIVACY.md").read.include?("initial structured choice authorizes local preparation") &&
+       ROOT.join("PRIVACY.md").read.include?("Only the second, final structured tool:model choice authorizes") &&
        ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
-       ROOT.join("PRIVACY.md").read.include?("temporarily registers that exact folder with local Orca") &&
+       ROOT.join("PRIVACY.md").read.include?("every provider-readable snapshot file") &&
        ROOT.join("PRIVACY.md").read.include?("removes the exact registration and snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
-       ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
+       ROOT.join("TERMS.md").read.include?("Only the second, final structured tool:model selection grants authority") &&
        ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code"),
        "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
@@ -1553,14 +1569,14 @@ assert(orca_review.include?("git diff --cached --binary") &&
        orca_review.include?("`git diff --binary`") &&
        orca_review.include?("without `git write-tree`") &&
        orca_review.include?("path and SHA-256 digest of every applicable instruction file and named requirement authority") &&
-       orca_review.include?("recompute the recorded target and every transmission-manifest file digest") &&
-       orca_review.include?("recompute every immutable snapshot file digest and both consented digests") &&
-       orca_review.include?("require a new final provider selection") &&
+       orca_review.include?("recompute the recorded target and every source-manifest file digest") &&
+       orca_review.include?("recompute every provider-visible snapshot and prompt record plus all three consented digests") &&
+       orca_review.include?("Any change invalidates final consent") &&
        orca_review.include?("index blobs") &&
        orca_review.include?("resolved endpoint commits, not working-tree copies") &&
        orca_review.include?("authoritative worker evidence that the reviewer read index blobs") &&
        orca_review.include?("authoritative worker evidence that the reviewer read the resolved endpoint blobs") &&
-       orca_review.include?("immutable snapshot or either consented digest changed") &&
+       orca_review.include?("immutable snapshot, exact prompt, or any consented digest changed") &&
        orca_review.include?("authoritative worker evidence does not bind every participant to that snapshot") &&
        orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
        "orca-review must bind and revalidate an exact non-mutating review snapshot")
@@ -1568,13 +1584,15 @@ assert(orca_review.include?("request_user_input") &&
        orca_review.include?("Present no more than three choices") &&
        orca_review.include?("Even when one choice is available") &&
        orca_review.include?("structured ask/answer is unavailable") &&
-       orca_review.include?("stop without selecting a provider or transmitting source") &&
+       orca_review.include?("stop without preparing a snapshot or transmitting source") &&
        orca_review.include?("Never auto-select"),
        "orca-review must use explicit structured provider selection without silent defaults")
 assert(orca_review.include?("every repository, target, supporting-source, instruction, and authority file") &&
        orca_review.include?("newline-terminated `<sha256>  <source-identity>` lines") &&
-       orca_review.include?("context-manifest digest") &&
-       orca_review.include?("require a new final provider selection for both disclosed digests"),
+       orca_review.include?("every provider-readable regular file and symlink identity") &&
+       orca_review.include?("including standalone `.git` metadata") &&
+       orca_review.include?("second, final structured choice") &&
+       orca_review.include?("this final choice alone authorizes registration and transmission"),
        "orca-review provider consent must bind the complete transmitted context manifest")
 %w[
   claude:fable\ with\ opus/sonnet
@@ -1604,6 +1622,8 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_review.include?("project setups --json") &&
        orca_review.include?("project setup-delete --setup <recordedSetupId> --json") &&
        orca_review.include?("retain the exact temporary registration and owned snapshot through scope revalidation") &&
+       orca_review.include?("only when the worker was settled and successfully released and no retention was requested") &&
+       orca_review.include?("Retained or active workers keep both") &&
        orca_review.include?("Require every participant to read only the immutable snapshot"),
        "orca-review must launch every selected model through the consent-bound immutable snapshot")
 assert(orca_provider_contracts.include?("Fable is the master reviewer") &&

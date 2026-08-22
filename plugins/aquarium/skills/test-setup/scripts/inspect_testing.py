@@ -36,10 +36,10 @@ PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
 PYTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+-]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
+    r"^\s*[@+]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
 )
 UNITTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+-]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+    r"^\s*[@+]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
 )
 
 
@@ -153,10 +153,23 @@ def stage_commands(
     return commands
 
 
+def command_preserves_failure(command: str) -> bool:
+    stripped = command.lstrip()
+    prefix = re.match(r"^[@+-]*", stripped)
+    if prefix and "-" in prefix.group(0):
+        return False
+    return "||" not in command and ";" not in command
+
+
 def python_stage_parser(commands: list[str]) -> str | None:
-    command_text = "\n".join(commands)
-    has_pytest = bool(PYTEST_COMMAND_PATTERN.search(command_text))
-    has_unittest = bool(UNITTEST_COMMAND_PATTERN.search(command_text))
+    has_pytest = any(
+        command_preserves_failure(command) and PYTEST_COMMAND_PATTERN.search(command)
+        for command in commands
+    )
+    has_unittest = any(
+        command_preserves_failure(command) and UNITTEST_COMMAND_PATTERN.search(command)
+        for command in commands
+    )
     if has_pytest and not has_unittest:
         return "pytest"
     if has_unittest:
@@ -198,7 +211,8 @@ def inspect_frameworks(
         has_ginkgo_command = all(
             commands[stage]
             and any(
-                re.search(r"^\s*[@+-]*\s*ginkgo(?:\s|$)", command)
+                command_preserves_failure(command)
+                and re.search(r"^\s*[@+]*\s*ginkgo(?:\s|$)", command)
                 for command in commands[stage]
             )
             for stage in ("test-unit", "test-int")
@@ -290,7 +304,9 @@ def inspect_frameworks(
         dependencies = package_dependencies(package)
         detected: list[str] = []
         if any(
-            isinstance(command, str) and re.search(r"^\s*bun\s+test(?:\s|$)", command)
+            isinstance(command, str)
+            and command_preserves_failure(command)
+            and re.search(r"^\s*bun\s+test(?:\s|$)", command)
             for command in unit_int_scripts
         ):
             detected.append("bun-test")
@@ -305,6 +321,7 @@ def inspect_frameworks(
                 detected.append(label)
         runs_vitest = all(
             isinstance(command, str)
+            and command_preserves_failure(command)
             and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
             for command in unit_int_scripts
         )
@@ -328,9 +345,10 @@ def inspect_frameworks(
             commands[stage]
             and any(
                 re.search(
-                    r"^\s*[@+-]*\s*(?:cargo|\$\(CARGO\)|\$\{CARGO\})(?:\s+\+\S+)?\s+test(?:\s|$)",
+                    r"^\s*[@+]*\s*(?:cargo|\$\(CARGO\)|\$\{CARGO\})(?:\s+\+\S+)?\s+test(?:\s|$)",
                     command,
                 )
+                and command_preserves_failure(command)
                 for command in commands[stage]
             )
             for stage in ("test-unit", "test-int")
@@ -358,25 +376,48 @@ def inspect_frameworks(
                 for name in ("flutter_test", "patrol")
                 if re.search(rf"(?m)^\s*{name}:\s*", pubspec)
             ]
-            status = "canonical" if "flutter_test" in detected else "waiver_required"
+            runs_flutter_test = all(
+                commands[stage]
+                and any(
+                    command_preserves_failure(command)
+                    and re.search(r"^\s*[@+]*\s*flutter\s+test(?:\s|$)", command)
+                    for command in commands[stage]
+                )
+                for stage in ("test-unit", "test-int")
+            )
+            status = (
+                "canonical"
+                if "flutter_test" in detected and runs_flutter_test
+                else "waiver_required"
+            )
             entry = framework_entry(
                 "flutter",
                 ["flutter_test", "patrol-e2e"],
                 detected,
                 status,
-                "flutter-test",
+                "flutter-test" if status == "canonical" else "generic",
             )
             entry["e2e_parser"] = "generic"
             entry["e2e_parser_support"] = "pending-patrol"
             entries.append(entry)
         else:
             has_test = bool(re.search(r"(?m)^\s*test:\s*", pubspec))
+            runs_dart_test = all(
+                commands[stage]
+                and any(
+                    command_preserves_failure(command)
+                    and re.search(r"^\s*[@+]*\s*dart\s+test(?:\s|$)", command)
+                    for command in commands[stage]
+                )
+                for stage in ("test-unit", "test-int")
+            )
+            status = "canonical" if has_test and runs_dart_test else "waiver_required"
             entries.append(
                 framework_entry(
                     "dart",
                     ["package:test"],
                     ["package:test"] if has_test else [],
-                    "canonical" if has_test else "waiver_required",
+                    status,
                     "generic",
                     "pending-dart-test",
                 )
@@ -500,9 +541,9 @@ def bun_adapter_matches(recipe: list[str], script: str) -> bool:
     if len(recipe) != 1:
         return False
     pattern = re.compile(
-        rf"^[+@-]*\s*(?:bun|\$\(BUN\)|\$\{{BUN\}})\s+run\s+{re.escape(script)}\s*$"
+        rf"^[+@]*\s*(?:bun|\$\(BUN\)|\$\{{BUN\}})\s+run\s+{re.escape(script)}\s*$"
     )
-    return bool(pattern.fullmatch(recipe[0]))
+    return command_preserves_failure(recipe[0]) and bool(pattern.fullmatch(recipe[0]))
 
 
 def inspect_makefile(
@@ -527,6 +568,9 @@ def inspect_makefile(
 
     targets, phony, includes = parse_makefile(content)
     result["includes"] = includes
+    result["global_shell_semantics"] = bool(
+        re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
+    )
     result["targets"] = {}
     missing = []
     duplicates = []
@@ -613,6 +657,15 @@ def inspect_makefile(
                         "test uses prerequisites, which do not preserve stage order under make -j.",
                     )
                 )
+            elif result["global_shell_semantics"]:
+                result["aggregate_mode"] = "unverifiable"
+                findings.append(
+                    finding(
+                        "make_aggregate_fail_fast_unverifiable",
+                        "unverifiable",
+                        "Global Make shell or error-ignore semantics prevent fail-fast proof.",
+                    )
+                )
             elif only_recursive_calls and recursive_calls == list(MAKE_STAGES):
                 result["aggregate_mode"] = "recursive_recipe"
             else:
@@ -673,7 +726,7 @@ def inspect_bun(
         for name, value in scripts.items()
         if isinstance(value, str)
         and re.search(
-            r"(?:^|(?:&&|\|\||[;|])\s*)(?:command\s+)?(?:make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
+            r"(?:^|(?:&&|\|\||[;|])\s*)(?:(?:command|exec)\s+)*(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
             value,
         )
     )

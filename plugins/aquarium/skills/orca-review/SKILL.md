@@ -7,7 +7,7 @@ description: "Run one supervised, read-only review of an exact repository snapsh
 
 Review one exact repository snapshot through one user-selected AI CLI while preserving the checkout, supervising the worker through Orca, and independently verifying the returned findings. This is a standalone utility; it does not replace `$aquarium:independent-review` or the Mulgae phase owned by `$aquarium:task-review`.
 
-Explicit invocation authorizes read-only local discovery, starting the installed Orca runtime when needed, and the structured provider-selection question. Selecting an option authorizes transmission of only the disclosed review snapshot and authority context to that provider, plus creation and cleanup of one disclosed private snapshot and its temporary Orca existing-folder registration.
+Explicit invocation authorizes read-only local discovery, starting the installed Orca runtime when needed, and structured preparation and final-transmission questions. A preparation choice authorizes only local creation of one disclosed private snapshot and exact provider prompt; it authorizes no Orca registration or provider transmission. Only the later final tool:model choice authorizes transmission of the complete disclosed snapshot and prompt bytes to that provider, plus temporary Orca registration and cleanup.
 
 It does not authorize source-checkout edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request.
 
@@ -49,19 +49,29 @@ Build the selection menu from successful probes only:
 
 Fail closed when no supported CLI is available. Do not infer model availability from installation; the selected launch verifies it.
 
-Use the host's structured ask/answer tool, normally `request_user_input`, whenever available. Present no more than three choices in one call; when more are available, paginate with one navigation choice such as `More installed AIs` and then show only the remaining exact tool:model labels. Keep navigation choices separate from final provider consent. Even when one choice is available, require the user to select it.
+Use the host's structured ask/answer tool, normally `request_user_input`, whenever available. Present no more than three choices in one call; when more are available, paginate with one navigation choice such as `More installed AIs` and then show only the remaining exact tool:model labels. Even when one choice is available, require the user to select which exact tool:model snapshot to prepare.
 
-Before presenting a final choice, build and display a complete transmission manifest. It must list every repository, target, supporting-source, instruction, and authority file whose bytes the reviewer may receive, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the context-manifest digest.
+Before presenting a preparation choice, build and display a source manifest. It must list every repository, target, supporting-source, instruction, and authority file intended for materialization, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the source-manifest digest.
 
-Each final choice must identify the exact tool:model, review target and digest, context-manifest digest, temporary private-snapshot registration and cleanup, and that selecting it authorizes transmission of only that displayed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source.
+Each preparation choice must identify the exact tool:model, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
 
-Never auto-select, infer consent from silence, or treat approval for another provider, snapshot, or context manifest as consent.
+Never auto-select, infer consent from silence, or treat preparation approval or approval for another provider, snapshot, or manifest as transmission consent.
 
 ## Dispatch the Reviewer
 
-Immediately after selection and before reading provider instructions, creating Orca state, or transmitting source, recompute the recorded target and every transmission-manifest file digest plus the context-manifest digest. If any digest or recorded target identity differs, do not transmit; establish the changed target again and require a new final provider selection for both disclosed digests.
+Immediately after the preparation choice and before reading provider instructions or creating snapshot state, recompute the recorded target and every source-manifest file digest plus the source-manifest digest. If any digest or recorded target identity differs, do not prepare or transmit; establish the changed target again and require a new preparation choice.
 
-After that check succeeds, materialize only those verified bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence, store the transmission manifest inside it, make the complete snapshot read-only, and recompute every snapshot file digest. Stop unless that snapshot exactly reproduces the consented target and context-manifest digests.
+After that check succeeds, read [provider-contracts.md](references/provider-contracts.md) and materialize only the verified source bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence. Reject any symlink whose resolved target escapes the snapshot.
+
+Build the exact Aquarium-supplied Task specification and Dispatch prompt before transmission. In a coordinator-only sibling directory outside the provider-visible snapshot, create the complete transmission manifest over every provider-readable regular file and symlink identity in the finished snapshot, including standalone `.git` metadata, plus the exact Aquarium-supplied Task and Dispatch prompt bytes.
+
+Sort newline-terminated `<sha256>  <provider-visible-identity>` records and hash them as the transmission-manifest digest. Make the complete snapshot read-only, then recompute and require every manifest record to match.
+
+Present a second, final structured choice that identifies the exact tool:model, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and prompt scope. State that this final choice alone authorizes registration and transmission of only those bytes to the selected provider.
+
+A decline deletes only the owned snapshot and coordinator manifest. Any unavailable structured ask/answer surface stops without registration or transmission.
+
+Immediately after final selection and before creating Orca state or transmitting source, recompute the target, source manifest, every provider-visible snapshot and prompt record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
 
 After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded exact-route help fallback above.
 
@@ -71,11 +81,11 @@ Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve
 
 On any failure, remove only the exact registration and snapshot when their identities are proven, then stop.
 
-Read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead through the recorded exact snapshot path selector, and inject one supervised Dispatch through the live orchestration contract. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
+Create or bind one Run, create one review Task from the exact consented Task bytes, start one fresh selected lead through the recorded exact snapshot path selector, and inject the exact consented Dispatch bytes through the live orchestration contract. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
 
-The Task specification must include the original absolute Git root as report identity only, immutable snapshot root, exact target and digest, complete context-manifest digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema.
+The Task specification must include the original absolute Git root as report identity only, immutable snapshot root, exact target identity and digest, source-manifest digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema. Do not embed the complete transmission-manifest digest in bytes hashed by that same manifest.
 
-Require every participant to read only the immutable snapshot and bind authoritative worker scope evidence to both consented digests. Do not include the coordinator's suspected findings or intended fixes.
+Require every participant to read only the immutable snapshot and bind authoritative worker scope evidence to the exact target and source-manifest digest. Bind the complete transmission-manifest digest separately to the authoritative Run, Task, and Dispatch identities in coordinator evidence. Do not include the coordinator's suspected findings or intended fixes.
 
 Require the lead to:
 
@@ -101,13 +111,13 @@ Follow the live guide's exact recovery action for launch, Dispatch, delivery, or
 
 ## Revalidate and Report
 
-Immediately after completion, recompute every immutable snapshot file digest and both consented digests, then inspect the original Git state separately.
+Immediately after completion, recompute every provider-visible snapshot and prompt record plus all three consented digests, then inspect the original Git state separately.
 
 For a staged target, verify from the authoritative worker evidence that the reviewer read index blobs and `git diff --cached`, not working-tree copies.
 
 For a commit or range target, verify from the authoritative worker evidence that the reviewer read the resolved endpoint blobs and diffs rather than working-tree copies.
 
-Invalidate the review when the immutable snapshot or either consented digest changed, the worker modified files, authoritative worker evidence does not bind every participant to that snapshot, the reviewer examined the original checkout or another scope, or the selected provider's required subagent topology and effective models cannot be verified. Report later original-checkout drift separately and never reinterpret the review as covering those newer bytes.
+Invalidate the review when the immutable snapshot, exact prompt, or any consented digest changed, the worker modified files, authoritative worker evidence does not bind every participant to that snapshot, the reviewer examined the original checkout or another scope, or the selected provider's required subagent topology and effective models cannot be verified. Report later original-checkout drift separately and never reinterpret the review as covering those newer bytes.
 
 Verify every returned finding against the exact authority, index or commit snapshot, production callers, persistence and race boundaries, and existing tests without changing files or running checks. Classify each item as:
 
@@ -117,6 +127,8 @@ Verify every returned finding against the exact authority, index or commit snaps
 
 If the lead returned `APPROVE`, first confirm the intended target, authority, topology, digest stability, and empty modified-file set. Missing output, unverifiable model use, scope drift, lifecycle failure, or incomplete adjudication prevents a clean verdict.
 
-After scope revalidation and local adjudication finish, remove the exact temporary registration with `project setup-delete --setup <recordedSetupId> --json`, confirm that setup identity is absent from `project setups --json`, and delete only the owned snapshot. A cleanup failure is an operational gap and prevents reporting complete cleanup; never delete a pre-existing or ambiguously identified setup.
+After scope revalidation and local adjudication finish, clean up only when the worker was settled and successfully released and no retention was requested. Remove the exact temporary registration with `project setup-delete --setup <recordedSetupId> --json`, confirm that setup identity is absent from `project setups --json`, and delete only the owned snapshot and coordinator manifest.
+
+Retained or active workers keep both until an explicitly requested later settlement. A cleanup failure is an operational gap and prevents reporting complete cleanup; never delete a pre-existing or ambiguously identified setup.
 
 Return the target and digest, selected tool:model and CLI version, source-transmission consent, review topology, independent reviewer verdict, valid findings, confirmation needs, rejected count, recommended responses, snapshot registration and cleanup status, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Do not expose credentials, private provider payloads, raw transcripts, or subagent reasoning.

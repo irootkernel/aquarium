@@ -437,7 +437,7 @@ class InspectToolsTest(unittest.TestCase):
                     "transport": {{
                         "type": "http" if mode == "non-stdio" else "stdio",
                         "command": "/tmp/missing-gaori" if mode == "missing-command" else {str(self.bin_directory / "wrong-gaori")!r} if mode == "wrong-command" else {str(self.bin_directory / "gaori")!r},
-                        "args": ["--repo", repository, "mcp"],
+                        "args": (["--unexpected"] if mode == "extra-arg" else []) + ["--repo", repository, "mcp"],
                         "env": {{"SECRET_TOKEN": "must-not-leak"}},
                         "env_vars": [],
                         "cwd": None,
@@ -1417,6 +1417,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(registration["enabled"])
         self.assertTrue(registration["stdio"])
         self.assertTrue(registration["repository_bound"])
+        self.assertTrue(registration["arguments_match"])
         self.assertTrue(registration["cwd_bound"])
         self.assertTrue(registration["required"])
         self.assertEqual(registration["required_verification"], "verified")
@@ -1644,6 +1645,7 @@ class InspectToolsTest(unittest.TestCase):
             "tool-timeout",
             "timeout-absent",
             "timeout-invalid",
+            "extra-arg",
         ):
             with self.subTest(mode=mode):
                 for executable in self.bin_directory.iterdir():
@@ -1657,6 +1659,22 @@ class InspectToolsTest(unittest.TestCase):
                 if mode == "wrong-command":
                     self.assertTrue(registration["command_resolvable"])
                     self.assertFalse(registration["binary_matches_selected"])
+                if mode == "extra-arg":
+                    self.assertFalse(registration["arguments_match"])
+
+    def test_symlinked_paired_skill_is_degraded(self) -> None:
+        source = self.base / "source-skill"
+        self.install_gaori_skill(root=source)
+        target_root = self.codex_home / "skills"
+        target_root.mkdir(parents=True, exist_ok=True)
+        target_root.joinpath("use-gaori").symlink_to(
+            source / "use-gaori", target_is_directory=True
+        )
+
+        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+
+        self.assertEqual(skill["status"], "degraded")
+        self.assertTrue(skill["installations"][0]["symlinked"])
 
     def test_gaori_mcp_absence_is_not_cli_degradation(self) -> None:
         self.install_fake_tools(gaori_mcp_mode="missing")
