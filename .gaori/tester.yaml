@@ -1,20 +1,30 @@
 version: 2
 commands:
-  unit:
-    command: ["python3", "-m", "unittest", "tests/test_inspect_tools.py", "tests/test_inspect_testing.py", "tests/test_task_commit_gate.py", "tests/test_normalize_manifest.py"]
-    tags: [python, unit]
-    parser: generic
-    timeout_sec: 1800
-  validate:
-    command: ["ruby", "tests/validate.rb"]
-    tags: [ruby, validation]
-    parser: generic
-    timeout_sec: 1800
-  all:
-    command: ["sh", "-c", "python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py && ruby tests/validate.rb"]
-    tags: [python, ruby, full]
+  test:
+    command: ["make", "test"]
+    tags: [full, make, python, ruby]
     parser: generic
     timeout_sec: 3600
+  test-prepare:
+    command: ["make", "test-prepare"]
+    tags: [make, prepare, python, ruby]
+    parser: generic
+    timeout_sec: 1800
+  test-unit:
+    command: ["make", "test-unit"]
+    tags: [python, unit]
+    parser: pytest
+    timeout_sec: 1800
+  test-int:
+    command: ["make", "test-int"]
+    tags: [integration, python]
+    parser: generic
+    timeout_sec: 1800
+  test-e2e:
+    command: ["make", "test-e2e"]
+    tags: [e2e, python]
+    parser: pytest
+    timeout_sec: 1800
 redaction:
   patterns:
     - name: credential-assignment

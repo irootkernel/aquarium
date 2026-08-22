@@ -144,16 +144,15 @@ Thanks to [Lora](https://github.com/tmdgusya/lora) for the Lore commit skills, [
 
 ## Validate
 
-Run the repository validation (the Python tests require PyYAML 6.x and the lint step requires Ruff):
+Install the exact development dependencies outside the test handlers, then run the repository-owned serial gate:
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
-ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/skills/test-setup/scripts/inspect_testing.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
-git diff --check
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+make test
 ```
 
-The validation checks plugin metadata, skill frontmatter and UI metadata, the roadmap commit hook, development and test setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
+See [TESTING.md](TESTING.md) for the authoritative stage mapping, framework evidence, local black-box E2E environment, diagnostics, and approved legacy waiver. The aggregate checks plugin metadata, skill frontmatter and UI metadata, the roadmap commit hook, development and test setup safety invariants, third-party attribution, distribution files, managed Podway procedures and their rework routes, cross-file pinned wording, relative Markdown links, and the no-hard-wrap documentation convention.
 
 ## Documentation style
 

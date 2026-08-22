@@ -1888,7 +1888,7 @@ end
 assert(!PLUGIN.join("skills/deslop").exist?,
        "Aquarium must not bundle the third-party Deslop skill or license")
 
-%w[LICENSE README.md PRIVACY.md TERMS.md].each do |relative_path|
+%w[LICENSE Makefile README.md PRIVACY.md TESTING.md TERMS.md pyproject.toml requirements.txt].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
 end
 [PLUGIN.join("skills"), PLUGIN.join("hooks"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
@@ -1915,6 +1915,49 @@ assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust"
        ROOT.join("PRIVACY.md").read.include?("reads up to two million characters") &&
        ROOT.join("TERMS.md").read.include?("not a security boundary or complete enforcement mechanism"),
        "public policies must disclose hook trust, local inspection, and enforcement limits")
+
+makefile = ROOT.join("Makefile").read
+testing_document = ROOT.join("TESTING.md").read
+testing_headings = [
+  "Contract",
+  "Canonical Commands",
+  "Stage Mapping",
+  "Test Frameworks",
+  "Gaori Mapping",
+  "E2E Environment",
+  "Language Diagnostics",
+  "Legacy Waivers"
+]
+assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit test-int test-e2e") &&
+       %w[test-prepare test-unit test-int test-e2e].all? { |target| makefile.include?("$(MAKE) #{target}") } &&
+       makefile.include?("VENV_DIR ?= .venv") &&
+       makefile.include?("test-requirements:") &&
+       %w[test-prepare test-unit test-int test-e2e].all? { |target| makefile.include?("#{target}: test-requirements") } &&
+       makefile.include?("pip install -r requirements.txt") &&
+       makefile.include?("export GIT_PAGER := cat") &&
+       makefile.include?("export PAGER := cat") &&
+       makefile.include?("export PYTEST_DISABLE_PLUGIN_AUTOLOAD := 1") &&
+       makefile.include?("git --no-pager diff --check"),
+       "root Makefile must expose the serial common test contract")
+assert(testing_document.include?("aquarium-test-contract/v1") &&
+       testing_headings.all? { |heading| testing_document.include?("## #{heading}") } &&
+       testing_document.include?("AQ-WAIVER-001") &&
+       testing_document.include?("Approved by Master: 2026-08-22") &&
+       root_agents.include?("`Makefile` is the executable test authority") &&
+       root_agents.include?("RELEASE_TAG=v<version> make test") &&
+       ROOT.join("README.md").read.include?("make test"),
+       "Aquarium must remain enrolled in its own common test contract")
+gaori_commands = YAML.safe_load(ROOT.join(".gaori/tester.yaml").read, aliases: false).fetch("commands")
+expected_gaori_handlers = {
+  "test" => ["make", "test"],
+  "test-prepare" => ["make", "test-prepare"],
+  "test-unit" => ["make", "test-unit"],
+  "test-int" => ["make", "test-int"],
+  "test-e2e" => ["make", "test-e2e"]
+}
+assert(gaori_commands.keys.sort == expected_gaori_handlers.keys.sort &&
+       expected_gaori_handlers.all? { |name, command| gaori_commands.dig(name, "command") == command },
+       "Gaori must wrap each common Make handler without duplicating its implementation")
 
 readme = ROOT.join("README.md").read
 assert(readme.include?("plugins/aquarium/assets/logo-white.png"), "README light-theme logo is missing")

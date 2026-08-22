@@ -168,7 +168,9 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
             probe_cwd = candidate if candidate.is_absolute() else probe_cwd / candidate
             index += 2
             continue
-        if token in OPTIONS_WITH_VALUES or token.startswith(("--git-dir=", "--work-tree=", "--namespace=")):
+        if token in OPTIONS_WITH_VALUES or token.startswith(
+            ("--git-dir=", "--work-tree=", "--namespace=")
+        ):
             index += 2 if token in OPTIONS_WITH_VALUES else 1
             continue
         if token.startswith("-"):
@@ -207,7 +209,9 @@ def is_roadmap_repository(root: Path) -> bool:
         if not raw_path:
             continue
         relative = os.fsdecode(raw_path)
-        if not any("roadmap" in part.casefold() for part in PurePosixPath(relative).parts):
+        if not any(
+            "roadmap" in part.casefold() for part in PurePosixPath(relative).parts
+        ):
             continue
         candidate = root / relative
         try:
@@ -248,7 +252,9 @@ def should_deny(payload: dict[str, Any]) -> bool:
     for segment in shell_segments(command):
         if segment and segment[0] == "cd" and len(segment) == 2:
             candidate = Path(segment[1])
-            probe_base = candidate if candidate.is_absolute() else probe_base / candidate
+            probe_base = (
+                candidate if candidate.is_absolute() else probe_base / candidate
+            )
             continue
         invocation = git_commit_invocation(segment, probe_base)
         if invocation is None:

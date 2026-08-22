@@ -48,7 +48,10 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
         languages.add("go")
     if (repository / "Cargo.toml").is_file():
         languages.add("rust")
-    if any((repository / name).is_file() for name in ("pyproject.toml", "setup.py", "setup.cfg")):
+    if any(
+        (repository / name).is_file()
+        for name in ("pyproject.toml", "setup.py", "setup.cfg")
+    ):
         languages.add("python")
     if (repository / "pubspec.yaml").is_file():
         languages.add("dart")
@@ -119,7 +122,9 @@ def inspect_frameworks(
 
     if "go" in languages:
         go_mod = read_optional_text(repository / "go.mod")
-        detected = [name for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE) if name in go_mod]
+        detected = [
+            name for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE) if name in go_mod
+        ]
         status = "canonical" if len(detected) == 2 else "waiver_required"
         entries.append(
             framework_entry("go", ["ginkgo-v2", "gomega"], detected, status, "ginkgo")
@@ -132,7 +137,10 @@ def inspect_frameworks(
             repository / "setup.py",
             *sorted(repository.glob("requirements*.txt")),
         ]
-        has_pytest = any(re.search(r"\bpytest\b", read_optional_text(path)) for path in authority_paths)
+        has_pytest = any(
+            re.search(r"\bpytest\b", read_optional_text(path))
+            for path in authority_paths
+        )
         entries.append(
             framework_entry(
                 "python",
@@ -173,12 +181,17 @@ def inspect_frameworks(
 
     if "rust" in languages:
         entries.append(
-            framework_entry("rust", ["cargo-test"], ["cargo-test"], "canonical", "cargo-test")
+            framework_entry(
+                "rust", ["cargo-test"], ["cargo-test"], "canonical", "cargo-test"
+            )
         )
 
     if "dart" in languages:
         pubspec = read_optional_text(repository / "pubspec.yaml")
-        is_flutter = bool(re.search(r"(?m)^\s*flutter:\s*$", pubspec)) or "sdk: flutter" in pubspec
+        is_flutter = (
+            bool(re.search(r"(?m)^\s*flutter:\s*$", pubspec))
+            or "sdk: flutter" in pubspec
+        )
         if is_flutter:
             detected = [
                 name
@@ -187,7 +200,11 @@ def inspect_frameworks(
             ]
             status = "canonical" if "flutter_test" in detected else "waiver_required"
             entry = framework_entry(
-                "flutter", ["flutter_test", "patrol-e2e"], detected, status, "flutter-test"
+                "flutter",
+                ["flutter_test", "patrol-e2e"],
+                detected,
+                status,
+                "flutter-test",
             )
             entry["e2e_parser"] = "generic"
             entry["e2e_parser_support"] = "pending-patrol"
@@ -234,7 +251,11 @@ def inspect_frameworks(
 
 def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     path = repository / "package.json"
-    result: dict[str, Any] = {"path": str(path), "present": path.is_file(), "valid": False}
+    result: dict[str, Any] = {
+        "path": str(path),
+        "present": path.is_file(),
+        "valid": False,
+    }
     if not path.is_file():
         return None, result
     try:
@@ -249,7 +270,9 @@ def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any
     return value, result
 
 
-def parse_makefile(content: str) -> tuple[dict[str, list[dict[str, Any]]], set[str], list[str]]:
+def parse_makefile(
+    content: str,
+) -> tuple[dict[str, list[dict[str, Any]]], set[str], list[str]]:
     lines = content.splitlines()
     targets: dict[str, list[dict[str, Any]]] = {}
     phony: set[str] = set()
@@ -316,18 +339,24 @@ def bun_adapter_matches(recipe: list[str], script: str) -> bool:
     return bool(pattern.fullmatch(recipe[0]))
 
 
-def inspect_makefile(repository: Path, profile: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def inspect_makefile(
+    repository: Path, profile: str
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
     path = repository / "Makefile"
     result: dict[str, Any] = {"path": str(path), "present": path.is_file()}
     findings: list[dict[str, str]] = []
     if not path.is_file():
-        findings.append(finding("makefile_missing", "error", "Root Makefile is missing."))
+        findings.append(
+            finding("makefile_missing", "error", "Root Makefile is missing.")
+        )
         return result, findings
     try:
         content = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         result["read_error"] = type(error).__name__
-        findings.append(finding("makefile_unreadable", "error", "Root Makefile is unreadable."))
+        findings.append(
+            finding("makefile_unreadable", "error", "Root Makefile is unreadable.")
+        )
         return result, findings
 
     targets, phony, includes = parse_makefile(content)
@@ -347,16 +376,28 @@ def inspect_makefile(repository: Path, profile: str) -> tuple[dict[str, Any], li
         elif len(definitions) > 1:
             duplicates.append(name)
         if name not in phony:
-            findings.append(finding("make_target_not_phony", "error", f"{name} is not declared phony."))
+            findings.append(
+                finding(
+                    "make_target_not_phony", "error", f"{name} is not declared phony."
+                )
+            )
 
     if missing:
         severity = "unverifiable" if includes else "error"
         findings.append(
-            finding("make_targets_missing", severity, f"Missing literal targets: {', '.join(missing)}.")
+            finding(
+                "make_targets_missing",
+                severity,
+                f"Missing literal targets: {', '.join(missing)}.",
+            )
         )
     if duplicates:
         findings.append(
-            finding("make_targets_ambiguous", "unverifiable", f"Multiple definitions: {', '.join(duplicates)}.")
+            finding(
+                "make_targets_ambiguous",
+                "unverifiable",
+                f"Multiple definitions: {', '.join(duplicates)}.",
+            )
         )
 
     if not missing and not duplicates:
@@ -376,7 +417,9 @@ def inspect_makefile(repository: Path, profile: str) -> tuple[dict[str, Any], li
                 )
                 result["targets"][target]["bun_adapter"] = matches
                 adapter_ok = adapter_ok and matches
-            result["aggregate_mode"] = "bun_adapter" if adapter_ok else "invalid_bun_adapter"
+            result["aggregate_mode"] = (
+                "bun_adapter" if adapter_ok else "invalid_bun_adapter"
+            )
             if not adapter_ok:
                 findings.append(
                     finding(
@@ -417,17 +460,28 @@ def inspect_makefile(repository: Path, profile: str) -> tuple[dict[str, Any], li
 
 
 def inspect_bun(
-    repository: Path, package: dict[str, Any] | None, package_result: dict[str, Any], required: bool
+    repository: Path,
+    package: dict[str, Any] | None,
+    package_result: dict[str, Any],
+    required: bool,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     result = dict(package_result)
     findings: list[dict[str, str]] = []
     if not package_result["present"]:
         if required:
-            findings.append(finding("package_json_missing", "error", "TypeScript root lacks package.json."))
+            findings.append(
+                finding(
+                    "package_json_missing",
+                    "error",
+                    "TypeScript root lacks package.json.",
+                )
+            )
         return result, findings
     if package is None:
         if required:
-            findings.append(finding("package_json_invalid", "error", "package.json is invalid."))
+            findings.append(
+                finding("package_json_invalid", "error", "package.json is invalid.")
+            )
         return result, findings
 
     scripts_value = package.get("scripts")
@@ -437,7 +491,10 @@ def inspect_bun(
     for name in BUN_SCRIPTS:
         value = scripts.get(name)
         present = isinstance(value, str) and bool(value.strip())
-        script_status[name] = {"present": present, "command": value if present else None}
+        script_status[name] = {
+            "present": present,
+            "command": value if present else None,
+        }
         if not present:
             missing.append(name)
     result["scripts"] = script_status
@@ -447,7 +504,8 @@ def inspect_bun(
     result["make_cycles"] = sorted(
         name
         for name, value in scripts.items()
-        if isinstance(value, str) and re.search(r"(?:^|[;&|]\s*)make\s+test(?:\s|$|:|-)", value)
+        if isinstance(value, str)
+        and re.search(r"(?:^|[;&|]\s*)make\s+test(?:\s|$|:|-)", value)
     )
     package_manager = package.get("packageManager")
     result["package_manager"] = package_manager
@@ -464,7 +522,11 @@ def inspect_bun(
     if required:
         if missing:
             findings.append(
-                finding("bun_scripts_missing", "error", f"Missing Bun scripts: {', '.join(missing)}.")
+                finding(
+                    "bun_scripts_missing",
+                    "error",
+                    f"Missing Bun scripts: {', '.join(missing)}.",
+                )
             )
         if not result["aggregate_serial"]:
             findings.append(
@@ -476,32 +538,62 @@ def inspect_bun(
             )
         if result["make_cycles"]:
             findings.append(
-                finding("bun_make_cycle", "error", "Bun test scripts call Make and create a reverse edge.")
+                finding(
+                    "bun_make_cycle",
+                    "error",
+                    "Bun test scripts call Make and create a reverse edge.",
+                )
             )
         if not result["bun_version_pinned"]:
             findings.append(
-                finding("bun_version_unpinned", "error", "packageManager must pin an exact Bun version.")
+                finding(
+                    "bun_version_unpinned",
+                    "error",
+                    "packageManager must pin an exact Bun version.",
+                )
             )
         if not result["lockfile"]["bun.lock"]:
-            findings.append(finding("bun_lock_missing", "error", "Tracked-format bun.lock is missing."))
+            findings.append(
+                finding(
+                    "bun_lock_missing", "error", "Tracked-format bun.lock is missing."
+                )
+            )
     return result, findings
 
 
-def inspect_testing_document(repository: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def inspect_testing_document(
+    repository: Path,
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
     path = repository / "TESTING.md"
-    result = {"path": str(path), "present": path.is_file(), "contract_registered": False}
+    result = {
+        "path": str(path),
+        "present": path.is_file(),
+        "contract_registered": False,
+    }
     findings: list[dict[str, str]] = []
     if not path.is_file():
-        findings.append(finding("testing_document_missing", "error", "Root TESTING.md is missing."))
+        findings.append(
+            finding("testing_document_missing", "error", "Root TESTING.md is missing.")
+        )
         return result, findings
     try:
-        result["contract_registered"] = CONTRACT_MARKER in path.read_text(encoding="utf-8")
+        result["contract_registered"] = CONTRACT_MARKER in path.read_text(
+            encoding="utf-8"
+        )
     except (OSError, UnicodeError):
-        findings.append(finding("testing_document_unreadable", "error", "Root TESTING.md is unreadable."))
+        findings.append(
+            finding(
+                "testing_document_unreadable", "error", "Root TESTING.md is unreadable."
+            )
+        )
         return result, findings
     if not result["contract_registered"]:
         findings.append(
-            finding("testing_contract_unregistered", "error", f"TESTING.md lacks {CONTRACT_MARKER}.")
+            finding(
+                "testing_contract_unregistered",
+                "error",
+                f"TESTING.md lacks {CONTRACT_MARKER}.",
+            )
         )
     return result, findings
 
@@ -514,7 +606,9 @@ def inspect_repository(repository: Path) -> dict[str, Any]:
     bun_result, bun_findings = inspect_bun(
         repository, package, package_result, required=profile == "typescript-bun"
     )
-    framework_result, framework_findings = inspect_frameworks(repository, languages, package)
+    framework_result, framework_findings = inspect_frameworks(
+        repository, languages, package
+    )
     document_result, document_findings = inspect_testing_document(repository)
     findings = make_findings + bun_findings + framework_findings + document_findings
     if any(item["severity"] == "error" for item in findings):
@@ -550,7 +644,9 @@ def main(arguments: list[str] | None = None) -> int:
         options = parse_arguments(arguments if arguments is not None else sys.argv[1:])
         repository = Path(options.repository).expanduser().resolve()
         if not repository.is_dir():
-            raise InspectionError("repository_not_found", "repository must be an existing directory")
+            raise InspectionError(
+                "repository_not_found", "repository must be an existing directory"
+            )
         payload = inspect_repository(repository)
     except InspectionError as error:
         payload = {

@@ -79,9 +79,7 @@ class TaskCommitGateTests(unittest.TestCase):
 
     def test_multiline_commit_message_is_denied(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")
-        self.assert_denied(
-            self.run_hook(repo, 'git commit -m "subject\nbody"')
-        )
+        self.assert_denied(self.run_hook(repo, 'git commit -m "subject\nbody"'))
 
     def test_quoted_heredoc_marker_in_multiline_message_is_not_masked(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")
@@ -118,19 +116,14 @@ class TaskCommitGateTests(unittest.TestCase):
     def test_git_dash_c_and_cd_are_resolved(self) -> None:
         repo = self.make_repo("TASK-1 | Deferred\n")
         parent = repo.parent
-        self.assert_denied(
-            self.run_hook(parent, f"git -C {repo.name} commit -m work")
-        )
+        self.assert_denied(self.run_hook(parent, f"git -C {repo.name} commit -m work"))
         self.assert_denied(
             self.run_hook(parent, f"cd {repo.name} && git commit -m work")
         )
 
     def test_marker_text_outside_git_environment_does_not_bypass(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")
-        command = (
-            "echo AQUARIUM_COMMIT_GATE=task-commit-v1; "
-            "git commit -m work"
-        )
+        command = "echo AQUARIUM_COMMIT_GATE=task-commit-v1; git commit -m work"
         self.assert_denied(self.run_hook(repo, command))
 
     def test_tracked_roadmap_symlink_is_not_followed(self) -> None:

@@ -14,10 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = (
-    ROOT
-    / "plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py"
-)
+SCRIPT = ROOT / "plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py"
 
 
 class NormalizeManifestTest(unittest.TestCase):
@@ -105,9 +102,7 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, "")
         plan = json.loads(result.stdout)
-        self.assertEqual(
-            plan["schema_version"], "aquarium-dev-setup-bundle-plan.v1"
-        )
+        self.assertEqual(plan["schema_version"], "aquarium-dev-setup-bundle-plan.v1")
         self.assertEqual(plan["manifest"]["path"], str(manifest.resolve()))
         self.assertEqual(
             plan["manifest"]["sha256"],
@@ -123,9 +118,7 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertNotIn("ouroboros", first["tools"])
         self.assertEqual(first["project_mcp"], ["mulgae"])
         self.assertEqual(first["agents_guidance"], "propose")
-        self.assertEqual(
-            plan["targets"][2]["reason_codes"], ["target_not_found"]
-        )
+        self.assertEqual(plan["targets"][2]["reason_codes"], ["target_not_found"])
         self.assertEqual(
             plan["shared_tools"],
             ["sanho", "mulgae", "gaori", "podway", "ouroboros", "lora", "deslop"],

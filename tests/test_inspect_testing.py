@@ -125,7 +125,10 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["selected_profile"], "make")
         self.assertEqual(result["structural_status"], "conforming")
         self.assertEqual(result["make"]["aggregate_mode"], "recursive_recipe")
-        self.assertEqual(result["make"]["aggregate_recursive_calls"], list(inspect_testing.MAKE_STAGES))
+        self.assertEqual(
+            result["make"]["aggregate_recursive_calls"],
+            list(inspect_testing.MAKE_STAGES),
+        )
 
     def test_prerequisite_aggregate_is_parallel_unsafe(self) -> None:
         self.write(
@@ -143,7 +146,10 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertEqual(result["make"]["aggregate_mode"], "prerequisites")
-        self.assertIn("make_aggregate_parallel_unsafe", {item["code"] for item in result["findings"]})
+        self.assertIn(
+            "make_aggregate_parallel_unsafe",
+            {item["code"] for item in result["findings"]},
+        )
 
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
@@ -165,9 +171,13 @@ class InspectTestingTest(unittest.TestCase):
 
     def test_bun_reverse_make_edge_and_unpinned_runtime_fail(self) -> None:
         self.write_bun_package(test_command="make test")
-        package = json.loads((self.repository / "package.json").read_text(encoding="utf-8"))
+        package = json.loads(
+            (self.repository / "package.json").read_text(encoding="utf-8")
+        )
         package.pop("packageManager")
-        (self.repository / "package.json").write_text(json.dumps(package), encoding="utf-8")
+        (self.repository / "package.json").write_text(
+            json.dumps(package), encoding="utf-8"
+        )
         self.write_bun_adapter()
         self.enroll("typescript-bun")
 
@@ -243,18 +253,24 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertTrue(framework["waiver_required"])
-        self.assertIn("framework_waiver_required", {item["code"] for item in result["findings"]})
+        self.assertIn(
+            "framework_waiver_required", {item["code"] for item in result["findings"]}
+        )
 
     def test_python_pytest_and_rust_use_supported_parsers(self) -> None:
         self.write_make_contract()
-        self.write("pyproject.toml", '[project.optional-dependencies]\ntest = ["pytest>=8"]\n')
+        self.write(
+            "pyproject.toml", '[project.optional-dependencies]\ntest = ["pytest>=8"]\n'
+        )
         self.write("Cargo.toml", '[package]\nname = "fixture"\nversion = "0.1.0"\n')
         self.enroll("polyglot-make")
 
         result = inspect_testing.inspect_repository(self.repository)
 
         self.assertEqual(self.framework(result, "python")["unit_int_parser"], "pytest")
-        self.assertEqual(self.framework(result, "rust")["unit_int_parser"], "cargo-test")
+        self.assertEqual(
+            self.framework(result, "rust")["unit_int_parser"], "cargo-test"
+        )
         self.assertEqual(
             result["frameworks"]["gaori"]["stage_parser_defaults"]["test-int"],
             "generic",
@@ -262,7 +278,9 @@ class InspectTestingTest(unittest.TestCase):
 
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()
-        package = json.loads((self.repository / "package.json").read_text(encoding="utf-8"))
+        package = json.loads(
+            (self.repository / "package.json").read_text(encoding="utf-8")
+        )
         package["devDependencies"].pop("vitest")
         package["scripts"]["test:unit"] = "bun test tests/unit"
         package["scripts"]["test:int"] = "bun test tests/integration"
@@ -316,7 +334,9 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
         target_finding = next(
-            item for item in result["findings"] if item["code"] == "make_targets_missing"
+            item
+            for item in result["findings"]
+            if item["code"] == "make_targets_missing"
         )
 
         self.assertEqual(result["structural_status"], "nonconforming")
@@ -329,7 +349,9 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertFalse(result["testing_document"]["contract_registered"])
-        self.assertIn("testing_document_missing", {item["code"] for item in result["findings"]})
+        self.assertIn(
+            "testing_document_missing", {item["code"] for item in result["findings"]}
+        )
 
     def test_cli_returns_structured_error_for_missing_repository(self) -> None:
         missing = self.repository / "missing"
@@ -343,7 +365,9 @@ class InspectTestingTest(unittest.TestCase):
         payload = json.loads(completed.stdout)
 
         self.assertEqual(completed.returncode, 2)
-        self.assertEqual(payload["schema_version"], "aquarium-test-setup-inspection-error.v1")
+        self.assertEqual(
+            payload["schema_version"], "aquarium-test-setup-inspection-error.v1"
+        )
         self.assertEqual(payload["error"]["code"], "repository_not_found")
 
 

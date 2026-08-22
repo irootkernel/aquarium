@@ -15,7 +15,9 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py"
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
-NORMAL_PROBE_TIMEOUT_SECONDS = 10.0
+# macOS may delay first execution of freshly written fixture binaries while
+# performing local trust checks. Timeout-specific tests pass shorter values.
+NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
 
 sys.path.insert(0, str(SCRIPT.parent))
 
@@ -543,7 +545,9 @@ class InspectToolsTest(unittest.TestCase):
             f"---\nname: {frontmatter_name or skill_name}\ndescription: Test skill.\n---\n",
             encoding="utf-8",
         )
-        references = ("lifecycle", "authoring", "recovery") if complete else ("lifecycle",)
+        references = (
+            ("lifecycle", "authoring", "recovery") if complete else ("lifecycle",)
+        )
         for reference in references:
             skill_directory.joinpath("references", f"{reference}.md").write_text(
                 f"# {reference}\n", encoding="utf-8"
@@ -624,9 +628,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v6"
-        )
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v6")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -635,9 +637,13 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(payload["tools"]["sanho"]["agent_skill"]["status"], "missing")
         self.assertEqual(payload["tools"]["mulgae"]["status"], "missing")
         self.assertEqual(payload["tools"]["mulgae"]["agent_skill"]["status"], "missing")
-        self.assertEqual(payload["tools"]["mulgae"]["mcp_registration"]["status"], "unavailable")
+        self.assertEqual(
+            payload["tools"]["mulgae"]["mcp_registration"]["status"], "unavailable"
+        )
         self.assertEqual(payload["tools"]["gaori"]["agent_skill"]["status"], "missing")
-        self.assertEqual(payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable")
+        self.assertEqual(
+            payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable"
+        )
         self.assertEqual(payload["tools"]["lora"]["status"], "missing")
         self.assertEqual(payload["tools"]["deslop"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
@@ -652,7 +658,8 @@ class InspectToolsTest(unittest.TestCase):
         )
         self.repository.joinpath(".mulgae").mkdir()
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            'version: 3\nexecution:\n  workspace_access: "none"\ncredential: hidden\n', encoding="utf-8"
+            'version: 3\nexecution:\n  workspace_access: "none"\ncredential: hidden\n',
+            encoding="utf-8",
         )
         self.repository.joinpath(".mulgae/local.yaml").write_text(
             "version: 3\nnative_home: /private/home\n", encoding="utf-8"
@@ -694,14 +701,17 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn("/private/personal", completed.stdout)
         self.assertNotIn("/private/work", completed.stdout)
         self.assertEqual(
-            tools["sanho"]["probes"]["status"]["result"]["sync_preview"]["conflict_count"],
+            tools["sanho"]["probes"]["status"]["result"]["sync_preview"][
+                "conflict_count"
+            ],
             1,
         )
         self.assertEqual(tools["mulgae"]["version"], "v0.1.17")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
-            if platform.system() == "Darwin" and platform.machine() in {"arm64", "aarch64"}
+            if platform.system() == "Darwin"
+            and platform.machine() in {"arm64", "aarch64"}
             else "degraded"
         )
         self.assertEqual(tools["mulgae"]["status"], expected_mulgae_status)
@@ -718,9 +728,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(
             tools["mulgae"]["health"]["configured_readiness"]["state"], "ready"
         )
-        self.assertEqual(
-            tools["mulgae"]["health"]["config_v3"]["status"], "verified"
-        )
+        self.assertEqual(tools["mulgae"]["health"]["config_v3"]["status"], "verified")
         zcode = tools["mulgae"]["provider_inventory"][1]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
@@ -748,9 +756,7 @@ class InspectToolsTest(unittest.TestCase):
         deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
-        self.assertFalse(
-            deslop["agent_skill"]["installations"][0]["frontmatter_valid"]
-        )
+        self.assertFalse(deslop["agent_skill"]["installations"][0]["frontmatter_valid"])
 
     def test_deslop_incomplete_installation_is_degraded(self) -> None:
         (self.codex_home / "skills/deslop").mkdir(parents=True)
@@ -801,7 +807,9 @@ class InspectToolsTest(unittest.TestCase):
             "arm64",
             "aarch64",
         }
-        self.assertTrue(all(item["matches_source"] for item in podway["managed_procedures"]))
+        self.assertTrue(
+            all(item["matches_source"] for item in podway["managed_procedures"])
+        )
         self.assertEqual(
             podway["readiness_status"],
             "ready" if platform_supported else "degraded",
@@ -900,7 +908,9 @@ class InspectToolsTest(unittest.TestCase):
             [".podway/procedures/root-kernel-task-v2.yaml"],
         )
 
-    def test_managed_procedures_without_initialized_workspace_are_degraded(self) -> None:
+    def test_managed_procedures_without_initialized_workspace_are_degraded(
+        self,
+    ) -> None:
         self.install_fake_tools()
         source = ROOT / "plugins/aquarium/assets/podway/procedures"
         target = self.repository / ".podway/procedures"
@@ -913,9 +923,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(podway["status"], "degraded")
 
     def test_unsupported_or_mixed_podway_versions_are_degraded(self) -> None:
-        self.install_fake_tools(
-            podway_version="v0.3.0", podway_daemon_version="0.2.7"
-        )
+        self.install_fake_tools(podway_version="v0.3.0", podway_daemon_version="0.2.7")
         self.install_managed_podway_procedures()
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
@@ -1027,12 +1035,14 @@ class InspectToolsTest(unittest.TestCase):
                 else:
                     self.install_podway_skill()
                     self.install_podway_skill(root=self.home / ".agents/skills")
-                podway = json.loads(
-                    self.inspect(include_podway=True).stdout
-                )["tools"]["podway"]
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
                 self.assertEqual(podway["agent_skill"]["status"], "degraded")
                 self.assertEqual(podway["readiness_status"], "not_configured")
-                self.assertEqual(podway["agent_skill"]["duplicate"], case == "duplicate")
+                self.assertEqual(
+                    podway["agent_skill"]["duplicate"], case == "duplicate"
+                )
 
     def test_unhealthy_daemon_doctor_or_procedure_is_degraded(self) -> None:
         cases = (
@@ -1164,7 +1174,9 @@ class InspectToolsTest(unittest.TestCase):
                 else:
                     self.install_sanho_skill()
                     self.install_sanho_skill(root=self.home / ".agents/skills")
-                skill = json.loads(self.inspect().stdout)["tools"]["sanho"]["agent_skill"]
+                skill = json.loads(self.inspect().stdout)["tools"]["sanho"][
+                    "agent_skill"
+                ]
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
@@ -1194,7 +1206,11 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(mulgae["version_supported"], supported)
                 self.assertEqual(mulgae["status"], status)
 
-        for version, supported in (("go1.26.5", False), ("go1.26.6", True), ("go1.27.0", True)):
+        for version, supported in (
+            ("go1.26.5", False),
+            ("go1.26.6", True),
+            ("go1.27.0", True),
+        ):
             with self.subTest(go_version=version):
                 for executable in self.bin_directory.iterdir():
                     executable.unlink()
@@ -1378,7 +1394,9 @@ class InspectToolsTest(unittest.TestCase):
                 else:
                     self.install_mulgae_skill()
                     self.install_mulgae_skill(root=self.home / ".agents/skills")
-                skill = json.loads(self.inspect().stdout)["tools"]["mulgae"]["agent_skill"]
+                skill = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+                    "agent_skill"
+                ]
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
@@ -1390,7 +1408,9 @@ class InspectToolsTest(unittest.TestCase):
         self.install_fake_tools(mulgae_mcp_mode="configured")
         completed = self.inspect()
         self.assertNotIn("must-not-leak", completed.stdout)
-        registration = json.loads(completed.stdout)["tools"]["mulgae"]["mcp_registration"]
+        registration = json.loads(completed.stdout)["tools"]["mulgae"][
+            "mcp_registration"
+        ]
         self.assertEqual(registration["status"], "configured")
         self.assertTrue(registration["enabled"])
         self.assertTrue(registration["stdio"])
@@ -1456,12 +1476,8 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(registration["status"], "configured")
         self.assertIsNone(registration["required"])
         self.assertEqual(registration["required_verification"], "unverifiable")
-        self.assertEqual(
-            registration["required_output_capability"], "not_reported"
-        )
-        self.assertEqual(
-            registration["compatibility_reason"], "required_unverifiable"
-        )
+        self.assertEqual(registration["required_output_capability"], "not_reported")
+        self.assertEqual(registration["compatibility_reason"], "required_unverifiable")
         self.assertNotIn("reason", registration)
 
     def test_mulgae_mcp_invalid_required_type_fails_closed(self) -> None:
@@ -1493,10 +1509,14 @@ class InspectToolsTest(unittest.TestCase):
             mock.patch("inspect_tools.platform.machine", return_value="arm64"),
         ):
             optional = inspect_tools.inspect_mulgae(
-                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS, require_mcp=False
+                self.repository.resolve(),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                require_mcp=False,
             )
             required = inspect_tools.inspect_mulgae(
-                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS, require_mcp=True
+                self.repository.resolve(),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                require_mcp=True,
             )
         self.assertEqual(optional["status"], "configured")
         self.assertFalse(optional["mcp_required_for_status"])
@@ -1701,35 +1721,25 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
         self.assertFalse(
-            lora["skills"]["lore-query"]["installations"][0][
-                "skill_file_present"
-            ]
+            lora["skills"]["lore-query"]["installations"][0]["skill_file_present"]
         )
 
     def test_duplicate_lora_installation_is_degraded(self) -> None:
         for name in ("lore-commits", "lore-query"):
             self.install_lora_skill(name)
-        self.install_lora_skill(
-            "lore-query", root=self.home / ".agents/skills"
-        )
+        self.install_lora_skill("lore-query", root=self.home / ".agents/skills")
         lora = json.loads(self.inspect().stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
         self.assertTrue(lora["skills"]["lore-query"]["duplicate"])
-        self.assertEqual(
-            len(lora["skills"]["lore-query"]["installations"]), 2
-        )
+        self.assertEqual(len(lora["skills"]["lore-query"]["installations"]), 2)
 
     def test_symlinked_lora_installation_is_degraded(self) -> None:
         self.install_lora_skill("lore-commits")
-        source = self.install_lora_skill(
-            "lore-query", root=self.base / "source-skills"
-        )
+        source = self.install_lora_skill("lore-query", root=self.base / "source-skills")
         target_root = self.codex_home / "skills"
         target_root.mkdir(parents=True, exist_ok=True)
-        target_root.joinpath("lore-query").symlink_to(
-            source, target_is_directory=True
-        )
+        target_root.joinpath("lore-query").symlink_to(source, target_is_directory=True)
         lora = json.loads(self.inspect().stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
@@ -1772,9 +1782,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-inspection.v6"
-        )
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v6")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertIn("--repository", payload["error"]["message"])
 
@@ -1949,9 +1957,7 @@ class InspectToolsTest(unittest.TestCase):
 
     def test_ouroboros_version_parser_removes_terminal_formatting(self) -> None:
         output = "\x1b[1mOuroboros\x1b[0m version \x1b[1m0.51\x1b[0m.\x1b[1m1\x1b[0m\n"
-        self.assertEqual(
-            inspect_tools.ouroboros_version_from_output(output), "0.51.1"
-        )
+        self.assertEqual(inspect_tools.ouroboros_version_from_output(output), "0.51.1")
 
     def test_ouroboros_version_parser_reports_unsupported_major(self) -> None:
         output = "runtime 9.9.9\nOuroboros version 1.0.0\n"
@@ -1990,13 +1996,9 @@ class InspectToolsTest(unittest.TestCase):
                 completed = self.inspect(include_ouroboros=True)
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
-                self.assertEqual(
-                    ouroboros["codex_integration"]["status"], codex_status
-                )
+                self.assertEqual(ouroboros["codex_integration"]["status"], codex_status)
                 self.assertEqual(ouroboros["mcp_runtime"]["status"], mcp_status)
-                self.assertEqual(
-                    ouroboros["mcp_registration"]["status"], "configured"
-                )
+                self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
                 self.assertEqual(ouroboros["status"], "degraded")
 
     def test_ouroboros_version_failures_and_unsupported_versions_degrade(self) -> None:
@@ -2044,15 +2046,15 @@ class InspectToolsTest(unittest.TestCase):
                 completed = self.inspect(include_ouroboros=True)
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
-                self.assertEqual(
-                    ouroboros["mcp_registration"]["status"], "degraded"
-                )
+                self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
                 self.assertEqual(
                     ouroboros["mcp_registration"]["probe"]["reason"], reason
                 )
                 self.assertEqual(ouroboros["status"], "degraded")
 
-    def test_ouroboros_registration_missing_is_distinct_from_probe_failure(self) -> None:
+    def test_ouroboros_registration_missing_is_distinct_from_probe_failure(
+        self,
+    ) -> None:
         for mode, status, reason in (
             ("missing", "missing", "registration_not_found"),
             ("probe-failure", "degraded", "registration_probe_failed"),
@@ -2084,9 +2086,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(ouroboros["installed"])
         self.assertEqual(ouroboros["status"], "missing")
         self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
-        self.assertEqual(
-            ouroboros["probes"]["version"]["reason"], "executable_missing"
-        )
+        self.assertEqual(ouroboros["probes"]["version"]["reason"], "executable_missing")
 
     def test_installed_ouroboros_reports_registration_unverifiable_without_codex(
         self,
@@ -2111,9 +2111,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(ouroboros["codex_integration"]["status"], "missing")
         self.assertEqual(ouroboros["mcp_runtime"]["status"], "missing")
         self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
-        self.assertEqual(
-            ouroboros["probes"]["version"]["reason"], "executable_missing"
-        )
+        self.assertEqual(ouroboros["probes"]["version"]["reason"], "executable_missing")
 
     def test_supported_platform_readiness_is_verified_on_any_host(self) -> None:
         self.install_fake_tools()

@@ -167,7 +167,9 @@ def normalized_version(version: str | None) -> str | None:
 
 
 def codex_version_from_output(output: str) -> str | None:
-    match = re.search(r"\bcodex(?:-cli)?\s+v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b", output)
+    match = re.search(
+        r"\bcodex(?:-cli)?\s+v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b", output
+    )
     return match.group(1) if match else None
 
 
@@ -450,7 +452,9 @@ def normalize_sanho_status(probe: dict[str, Any]) -> dict[str, Any]:
     if isinstance(readiness, dict):
         safe_readiness = {}
         for operation in ("sync", "pull"):
-            selected = selected_fields(readiness.get(operation), ("ready", "blocked_by"))
+            selected = selected_fields(
+                readiness.get(operation), ("ready", "blocked_by")
+            )
             if selected:
                 safe_readiness[operation] = selected
         if safe_readiness:
@@ -482,9 +486,7 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def inspect_agent_skill(
-    name: str, required_files: tuple[str, ...]
-) -> dict[str, Any]:
+def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str, Any]:
     installations: list[dict[str, Any]] = []
     for root in skill_roots():
         directory = root / name
@@ -508,8 +510,10 @@ def inspect_agent_skill(
         )
     if not installations:
         status = "missing"
-    elif len(installations) == 1 and installations[0]["frontmatter_valid"] and all(
-        entry["present"] for entry in installations[0]["files"]
+    elif (
+        len(installations) == 1
+        and installations[0]["frontmatter_valid"]
+        and all(entry["present"] for entry in installations[0]["files"])
     ):
         status = "configured"
     else:
@@ -597,9 +601,7 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     )
     normalized_status = normalize_sanho_status(status_probe)
     normalized_doctor = normalize_sanho_doctor(doctor_probe)
-    tool["probes"].update(
-        {"status": normalized_status, "doctor": normalized_doctor}
-    )
+    tool["probes"].update({"status": normalized_status, "doctor": normalized_doctor})
     doctor_result = normalized_doctor.get("result")
     no_doctor_warnings = (
         isinstance(doctor_result, dict) and doctor_result.get("warnings") == 0
@@ -715,9 +717,10 @@ def normalize_mulgae_cli_compatibility(value: Any) -> dict[str, Any] | None:
         for field in ("observed_version", "minimum_version", "verified_latest")
     ):
         return None
-    if value["reason_code"] and re.fullmatch(
-        r"[a-z][a-z0-9_]{0,63}", value["reason_code"]
-    ) is None:
+    if (
+        value["reason_code"]
+        and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", value["reason_code"]) is None
+    ):
         return None
     return {"status": status, **{field: value[field] for field in fields}}
 
@@ -737,9 +740,7 @@ def normalize_mulgae_provider_inventory(value: Any) -> list[dict[str, Any]] | No
         binary_available = normalize_mulgae_diagnostic_check(
             row.get("binary_available")
         )
-        cli_compatible = normalize_mulgae_cli_compatibility(
-            row.get("cli_compatible")
-        )
+        cli_compatible = normalize_mulgae_cli_compatibility(row.get("cli_compatible"))
         if (
             family not in {"kimi", "zcode", "agy", "codex"}
             or not isinstance(configured, bool)
@@ -757,7 +758,8 @@ def normalize_mulgae_provider_inventory(value: Any) -> list[dict[str, Any]] | No
                 }
                 for role in referenced_by_roles
             )
-            or state not in {
+            or state
+            not in {
                 "eligible",
                 "unavailable",
                 "not_configured",
@@ -837,7 +839,9 @@ def normalize_mulgae_doctor(probe: dict[str, Any]) -> dict[str, Any]:
                 selected = normalize_mulgae_diagnostic_check(doctor.get(name))
                 if selected is not None:
                     safe_doctor[name] = selected
-            assignment = selected_fields(doctor.get("assignment"), ("state", "resilience"))
+            assignment = selected_fields(
+                doctor.get("assignment"), ("state", "resilience")
+            )
             if assignment:
                 safe_doctor["assignment"] = assignment
             for name in (
@@ -907,9 +911,7 @@ def inspect_mulgae_installation_prerequisites(
         if isinstance(version, str):
             prerequisite["go"]["version"] = version
             prerequisite["go"]["supported"] = supported_mulgae_go_version(version)
-        normalized["result"] = selected_fields(
-            result, ("GOVERSION", "GOOS", "GOARCH")
-        )
+        normalized["result"] = selected_fields(result, ("GOVERSION", "GOOS", "GOARCH"))
     prerequisite["go"]["probe"] = normalized
     return prerequisite
 
@@ -921,7 +923,9 @@ def mulgae_configuration_entry(
     entry["tracked"] = tracked_by_git(repository, relative_path, timeout_seconds)
     if relative_path == ".mulgae/local.yaml":
         try:
-            entry["mode"] = oct(repository.joinpath(relative_path).stat().st_mode & 0o777)
+            entry["mode"] = oct(
+                repository.joinpath(relative_path).stat().st_mode & 0o777
+            )
         except OSError:
             entry["mode"] = None
         entry["mode_0600"] = entry["mode"] == "0o600"
@@ -1007,7 +1011,11 @@ def inspect_mulgae_mcp(
     resolved_command: Path | None = None
     if isinstance(command, str) and command:
         candidate = Path(command).expanduser()
-        if candidate.is_absolute() and candidate.is_file() and os.access(candidate, os.X_OK):
+        if (
+            candidate.is_absolute()
+            and candidate.is_file()
+            and os.access(candidate, os.X_OK)
+        ):
             resolved_command = candidate.resolve()
         elif not candidate.is_absolute():
             discovered = shutil.which(command)
@@ -1032,7 +1040,10 @@ def inspect_mulgae_mcp(
 
     raw_cwd = transport.get("cwd", result.get("cwd"))
     try:
-        cwd_bound = isinstance(raw_cwd, str) and Path(raw_cwd).expanduser().resolve() == repository
+        cwd_bound = (
+            isinstance(raw_cwd, str)
+            and Path(raw_cwd).expanduser().resolve() == repository
+        )
     except OSError:
         cwd_bound = False
     startup_timeout = result.get("startup_timeout_sec")
@@ -1082,9 +1093,7 @@ def inspect_mulgae_mcp(
     ):
         registration["status"] = "configured"
     else:
-        registration.update(
-            {"status": "degraded", "reason": "registration_mismatch"}
-        )
+        registration.update({"status": "degraded", "reason": "registration_mismatch"})
     return registration
 
 
@@ -1544,9 +1553,7 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             repository,
             timeout_seconds,
         )
-        tool["mcp_registration"] = classify_ouroboros_registration(
-            registration_raw
-        )
+        tool["mcp_registration"] = classify_ouroboros_registration(registration_raw)
     else:
         tool["mcp_registration"] = {
             "status": "unverifiable",
@@ -1576,8 +1583,7 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
         tool["version"]
     )
     tool["probes"]["version"] = {
-        key: version_raw[key]
-        for key in ("attempted", "ok", "exit_code", "timed_out")
+        key: version_raw[key] for key in ("attempted", "ok", "exit_code", "timed_out")
     }
 
     codex_doctor = run_command(
@@ -1774,25 +1780,22 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                     if isinstance(session, dict) and key in session
                 },
                 "current_graph_node_id": (
-                    node.get("graph_node_id")
-                    if isinstance(node, dict)
-                    else None
+                    node.get("graph_node_id") if isinstance(node, dict) else None
                 ),
             }
         tool["probes"]["doctor"] = normalized_doctor
         tool["probes"]["session_status"] = normalized_session
-        session_contract_ok = normalized_session["ok"] or normalized_session.get(
-            "error_code"
-        ) == "SESSION_NOT_FOUND"
+        session_contract_ok = (
+            normalized_session["ok"]
+            or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
+        )
         tool["legacy_state_detected"] = any(
             probe.get("error_code") == "LEGACY_PROCEDURE_STATE_UNSUPPORTED"
             for probe in (normalized_doctor, normalized_session)
         )
     else:
         tool["probes"]["doctor"] = skipped_probe("workspace_not_initialized")
-        tool["probes"]["session_status"] = skipped_probe(
-            "workspace_not_initialized"
-        )
+        tool["probes"]["session_status"] = skipped_probe("workspace_not_initialized")
 
     procedure_checks_ok = True
     if matching_count == len(PODWAY_PROCEDURES):

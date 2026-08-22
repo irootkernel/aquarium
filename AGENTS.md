@@ -60,9 +60,10 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - `plugins/aquarium/.codex-plugin/plugin.json` owns published plugin metadata and the release version.
 - `plugins/aquarium/skills/*/SKILL.md` and their linked references own workflow behavior; keep conditional detail in references instead of expanding every entrypoint.
 - `plugins/aquarium/assets/podway/procedures/` owns the Procedure sources installed into target repositories.
-- `tests/validate.rb` checks cross-skill, procedure, documentation, and release-contract invariants. Python unit tests cover the executable inspection, commit-gate, and bundle-normalization scripts.
+- `Makefile` is the executable test authority, and `TESTING.md` owns the enrolled `aquarium-test-contract/v1` stage, framework, environment, diagnostic, and waiver mapping.
+- `tests/validate.rb` checks cross-skill, procedure, documentation, and release-contract invariants. Python pytest unit and E2E tests cover isolated logic and black-box inspector scenarios; the approved legacy `unittest` integration suites cover executable inspection, commit-gate, and bundle-normalization boundaries.
 - `README.md`, `PRIVACY.md`, and `TERMS.md` are public product documentation and must stay aligned with shipped behavior.
-- Use the commands in the release policy below as the complete release gate. For an ordinary change, run the focused subset that covers the changed files and `git diff --check`.
+- Use the commands in the release policy below as the complete release gate. For an ordinary change, run the focused subset that covers the changed files and `git --no-pager diff --check`.
 
 ### Commit Messages
 
@@ -92,10 +93,8 @@ Before either mode, inspect the worktree, the local and remote `main` commits, t
 Update the plugin manifest version and its pinned validation expectation, then run the complete applicable local release gate:
 
 ```bash
-python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
-RELEASE_TAG=v<version> ruby tests/validate.rb
-ruff check plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py plugins/aquarium/skills/test-setup/scripts/inspect_testing.py plugins/aquarium/hooks/task_commit_gate.py tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
-git diff --check <previous-release-tag>
+RELEASE_TAG=v<version> make test
+git --no-pager diff --check <previous-release-tag>
 ```
 
 Also verify that a deliberately mismatched `RELEASE_TAG` is rejected, and run any additional repository-required or change-specific checks. Do not commit or publish when a required check fails or cannot be completed.
@@ -110,7 +109,7 @@ A light release may change only release metadata: the plugin manifest version an
 python3 -m json.tool plugins/aquarium/.codex-plugin/plugin.json >/dev/null
 ruby -c tests/validate.rb
 RELEASE_TAG=v<version> ruby tests/validate.rb
-git diff --check <previous-release-tag>
+git --no-pager diff --check <previous-release-tag>
 ```
 
 Do not rerun the full Python unit suite or lint unchanged Python files locally in light mode. The release-tag validation is the basic release-contract check. If preparing the release requires functional code changes, stop light mode and ask Master to choose full verification or provide fresh test confirmation for the new candidate.
