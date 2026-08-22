@@ -2434,6 +2434,23 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(probe["error_code"], "execution_failed")
         self.assertNotIn("result", probe)
 
+    def test_invalid_utf8_probe_output_is_replaced_and_classified(self) -> None:
+        raw_probe = inspect_tools.run_command(
+            [
+                sys.executable,
+                "-c",
+                "import os; os.write(1, b'\\xff')",
+            ],
+            self.repository,
+            1.0,
+        )
+
+        self.assertTrue(raw_probe["ok"])
+        self.assertEqual(raw_probe["stdout"], "\ufffd")
+        probe = inspect_tools.parse_json_probe(raw_probe)
+        self.assertFalse(probe["ok"])
+        self.assertEqual(probe["error_code"], "invalid_json")
+
     def test_mulgae_doctor_v2_provider_outcomes_gate_offline_readiness(self) -> None:
         self.install_mulgae_config()
         cases = (

@@ -133,6 +133,7 @@ def run_command(
             check=False,
             capture_output=True,
             text=True,
+            errors="replace",
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:

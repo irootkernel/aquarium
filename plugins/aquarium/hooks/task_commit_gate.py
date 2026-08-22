@@ -153,7 +153,7 @@ def without_heredoc_bodies(command: str) -> str:
 def shell_segments(command: str) -> list[tuple[list[str], str | None]]:
     source = command
     source = source.replace("\\\r\n", "").replace("\\\n", "")
-    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n")
+    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n()")
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     lexer.commenters = ""
@@ -217,14 +217,15 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
         name = match.group(1) or match.group(2)
         body = next(group for group in match.groups()[2:] if group is not None)
         if re.search(
-            rf"(?:^|[;&|\s]){re.escape(name)}(?:$|[;&|\s])", command[match.end() :]
+            rf"(?:^|[;&|()\s]){re.escape(name)}(?:$|[;&|()\s])",
+            command[match.end() :],
         ):
             fragments.append(body)
         return " "
 
     remaining = function_pattern.sub(remove_function, command)
 
-    case_pattern = re.compile(r"(?ms)\bcase\s+(\S+)\s+in\s+(.*?)\s+esac\b")
+    case_pattern = re.compile(r"(?ms)\bcase\s+(\S+)\s+in\s+(.*?)\s*esac\b")
 
     def resolve_case(match: re.Match[str]) -> str:
         if single_quoted(remaining, match.start()):
@@ -239,8 +240,40 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
 
     remaining = case_pattern.sub(resolve_case, remaining)
 
+    conditional_pattern = re.compile(
+        r"(?ms)\bif\s+(true|false)\s*;\s*then\s+(.*?)"
+        r"(?:\s*;\s*else\s+(.*?))?\s*;\s*fi\b"
+    )
+
+    def resolve_conditional(match: re.Match[str]) -> str:
+        if single_quoted(remaining, match.start()):
+            return match.group(0)
+        branch = match.group(2) if match.group(1) == "true" else match.group(3)
+        if branch:
+            fragments.append(branch)
+        return " "
+
+    remaining = conditional_pattern.sub(resolve_conditional, remaining)
+
+    loop_pattern = re.compile(
+        r"(?ms)\b(while|until)\s+(true|false)\s*;\s*do\s+(.*?)\s*;\s*done\b"
+    )
+
+    def resolve_loop(match: re.Match[str]) -> str:
+        if single_quoted(remaining, match.start()):
+            return match.group(0)
+        runs = (match.group(1), match.group(2)) in {
+            ("while", "true"),
+            ("until", "false"),
+        }
+        if runs:
+            fragments.append(match.group(3))
+        return " "
+
+    remaining = loop_pattern.sub(resolve_loop, remaining)
+
     substitution_pattern = re.compile(
-        r"`([^`]*)`|\$\(([^()]*)\)|[<>]\(([^()]*)\)", re.DOTALL
+        r"`((?:\\.|[^`])*)`|\$\(([^()]*)\)|[<>]\(([^()]*)\)", re.DOTALL
     )
 
     def remove_substitution(match: re.Match[str]) -> str:
@@ -252,7 +285,10 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
             or escaped(remaining, match.start())
         ):
             return match.group(0)
-        fragments.append(next(group for group in match.groups() if group is not None))
+        fragment = next(group for group in match.groups() if group is not None)
+        if match.group(1) is not None:
+            fragment = fragment.replace(r"\`", "`")
+        fragments.append(fragment)
         return " substitution "
 
     while True:

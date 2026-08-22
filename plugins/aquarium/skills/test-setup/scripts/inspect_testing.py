@@ -57,7 +57,8 @@ INFORMATION_ONLY_ARGUMENT = re.compile(
     r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run(?:=true)?|--dryRun(?:=true)?)(?:[\s\"'\],};&|()]|$)"
 )
 INFORMATION_ONLY_SUBCOMMAND = re.compile(
-    r"^\s*[@+]*\s*ginkgo\s+(?:build|help|labels|outline|version)(?:\s|$)"
+    r"^\s*[@+]*\s*(?:(?:bun\s+run\s+)?vitest\s+list|"
+    r"ginkgo\s+(?:build|help|labels|outline|version))(?:\s|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
@@ -324,7 +325,7 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
             and not sensitive_relative_path(path, repository)
             for path in repository.rglob("*.py")
             if not any(
-                part in {".git", ".tox", ".venv", "node_modules", "vendor"}
+                part in {".git", ".tox", ".venv", "node_modules", "vendor", "venv"}
                 for part in path.parts
             )
             and not typescript_owned_e2e_source(path)
@@ -819,7 +820,7 @@ def python_stage_parser(
 
 
 def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) -> bool:
-    ignored = {".git", ".tox", ".venv", "node_modules", "vendor"}
+    ignored = {".git", ".tox", ".venv", "node_modules", "vendor", "venv"}
     for path in repository.rglob(f"*{suffix}"):
         if any(part in ignored for part in path.parts):
             continue
@@ -850,6 +851,24 @@ def inspect_frameworks(
     if "go" in languages:
         go_mod = read_optional_text(repository / "go.mod", repository)
         go_sum = read_optional_text(repository / "go.sum", repository)
+        go_mod_dependencies = {
+            fields[0]
+            for line in go_mod.splitlines()
+            if (stripped := line.strip()) and not stripped.startswith("//")
+            if len(fields := stripped.split()) >= 2
+            if fields[0] != "require"
+        } | {
+            fields[1]
+            for line in go_mod.splitlines()
+            if (stripped := line.strip()).startswith("require ")
+            if len(fields := stripped.split()) >= 3
+        }
+        go_sum_dependencies = {
+            fields[0]
+            for line in go_sum.splitlines()
+            if (stripped := line.strip()) and not stripped.startswith("//")
+            if len(fields := stripped.split()) >= 2
+        }
         go_commands = "\n".join(
             command
             for stage in ("test-unit", "test-int")
@@ -866,19 +885,25 @@ def inspect_frameworks(
             for stage in ("test-unit", "test-int")
         )
         has_ginkgo_sources = all(
-            source_contains(repository, "_test.go", (re.escape(name),))
+            source_contains(
+                repository,
+                "_test.go",
+                (
+                    rf'(?m)^\s*(?:import\s+)?(?:[._A-Za-z][A-Za-z0-9_]*\s+)?"{re.escape(name)}(?:/[^"]*)?"',
+                ),
+            )
             for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
         )
         detected = [
             name
             for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
-            if name in go_mod
-            or name in go_sum
+            if name in go_mod_dependencies
+            or name in go_sum_dependencies
             or name in go_commands
             or has_ginkgo_sources
         ]
         dependencies_pinned = all(
-            name in go_mod and name in go_sum
+            name in go_mod_dependencies and name in go_sum_dependencies
             for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
         )
         status = (
@@ -1505,7 +1530,7 @@ def inspect_bun(
         normalized_shell_words = normalize_shell_token_joins(value)
         return bool(
             re.search(
-                r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
+                r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?g?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
                 normalized_shell_words,
             )
             or MAKE_ALIAS_PATTERN.search(normalized_shell_words)

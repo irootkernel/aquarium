@@ -51,6 +51,10 @@ When the cumulative budget expires without an accepted terminal delivery, inspec
 
 For an accepted `worker_done`, retrieve the complete worker transcript, process every delivered message, release the settled worker, and acknowledge the delivery only after the release decision. Release both succeeded and failed settled workers unless the user explicitly requested retention.
 
+Acceptance opens one five-minute settlement budget of at most 16 Delivery batches, including the terminal batch. After processing every message and completing the required release, acknowledge that exact batch without waiting and inspect the acknowledgement response.
+
+Process and acknowledge every returned heartbeat, duplicate or stale completion, question, or escalation under the same budget until no Delivery remains; do not release the already settled worker again. An unresolved question or escalation, release failure, or exhausted budget is an operational gap. Leave its Delivery unacknowledged for FIFO replay, preserve the lifecycle state, and require explicit user direction before any further drain.
+
 Do not release an active worker after a timeout, question, escalation, heartbeat, or rejected or stale completion. Follow the live guide's exact recovery action and never blindly resend an exactly-once `worker_done`. Keep technical review evidence and Orca lifecycle settlement as separate statuses.
 
 ## Adjudicate the Result

@@ -458,6 +458,32 @@ class TestInspectTesting:
 
                 assert result["structural_status"] == "unverifiable"
 
+    def test_go_comments_are_not_ginkgo_dependency_or_import_authority(self) -> None:
+        self.write_ginkgo_make_contract()
+        self.write(
+            "go.mod",
+            "module example.com/fixture\n\ngo 1.26\n\n"
+            "// github.com/onsi/ginkgo/v2 v2.27.2\n"
+            "// github.com/onsi/gomega v1.38.2\n",
+        )
+        self.write(
+            "go.sum",
+            "// github.com/onsi/ginkgo/v2 v2.27.2 h1:fixture\n"
+            "// github.com/onsi/gomega v1.38.2 h1:fixture\n",
+        )
+        self.write(
+            "fixture_test.go",
+            "package fixture_test\n\n"
+            "// github.com/onsi/ginkgo/v2\n"
+            "// github.com/onsi/gomega\n",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "go")["status"] == "waiver_required"
+
     def test_ginkgo_explicit_false_dry_run_executes_tests(self) -> None:
         self.write_ginkgo_make_contract()
         makefile = self.repository / "Makefile"
@@ -821,6 +847,53 @@ class TestInspectTesting:
         result = inspect_testing.inspect_repository(self.repository)
 
         assert result["detected_languages"] == ["typescript"]
+
+    def test_venv_python_is_not_product_or_framework_source(self) -> None:
+        self.write_bun_package()
+        self.write(
+            "venv/lib/python3.13/site-packages/example/test_helpers.py",
+            "import unittest\n",
+        )
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+        assert {entry["language"] for entry in result["frameworks"]["entries"]} == {
+            "typescript"
+        }
+
+    def test_vitest_list_subcommand_is_not_canonical(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] = "bun run vitest list tests/unit"
+        package["scripts"]["test:int"] = "bun run vitest list tests/integration"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "typescript")["status"] == "waiver_required"
+
+    def test_gmake_reverse_edge_is_a_bun_make_cycle(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " && gmake hidden-test"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert "test:unit" in result["bun"]["make_cycles"]
+        assert "bun_make_cycle" in {item["code"] for item in result["findings"]}
 
     def test_tox_python_is_not_product_or_framework_source(self) -> None:
         self.write_bun_package()

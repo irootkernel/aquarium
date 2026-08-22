@@ -1627,6 +1627,11 @@ assert(independent_review.include?("Do not rerun tests") && independent_review.i
        "independent-review must remain review-only")
 assert(independent_review.include?("Keep technical review evidence and Orca lifecycle settlement as separate statuses"),
        "independent-review must separate findings from lifecycle settlement")
+assert(independent_review.include?("five-minute settlement budget of at most 16 Delivery batches") &&
+       independent_review.include?("inspect the acknowledgement response") &&
+       independent_review.include?("until no Delivery remains") &&
+       independent_review.include?("Leave its Delivery unacknowledged for FIFO replay"),
+       "independent-review must drain post-terminal Delivery batches within one bounded settlement budget")
 assert(independent_review.include?("one cumulative liveness budget") &&
        independent_review.include?("using 30 minutes") &&
        independent_review.include?("charging every wait against the same remaining budget") &&

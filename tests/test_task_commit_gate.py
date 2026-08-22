@@ -190,21 +190,28 @@ class TaskCommitGateTests(unittest.TestCase):
         for command in (
             "{ git commit -m work; }",
             "( git commit -m work )",
+            "(git commit -m work)",
             "! git commit -m work",
             "if true; then git commit -m work; fi",
             "case x in x) git commit -m work;; esac",
+            "case x in x)git commit -m work;;esac",
             "commit_now() { git commit -m work; }; commit_now",
+            'f() { git commit -m work; }; echo "$(f)"',
             "function commit_now { git commit -m work; }; commit_now",
             "function commit_now() ( git commit -m work ); commit_now",
             "echo `git commit -m work`",
             "echo <(git commit -m work)",
             "diff <(command git commit -m $(echo work)) expected",
+            r"echo `echo \`git commit -m work\``",
         ):
             with self.subTest(command=command):
                 self.assert_denied(self.run_hook(repo, command))
 
         for command in (
             "case x in y) git commit -m work;; esac",
+            "if false; then git commit -m work; fi",
+            "while false; do git commit -m work; done",
+            "until true; do git commit -m work; done",
             "commit_now() { git commit -m work; }",
             "function commit_now { git commit -m work; }",
             "echo '`git commit -m work`'",
