@@ -1,7 +1,7 @@
 {
   "name": "aquarium",
   "version": "0.1.9",
-  "description": "Ouroboros-assisted design, durable gates, common test setup, and evidence-gated delivery with optional Podway v2 execution memory.",
+  "description": "AI Fleet engineering workflows for governed design, delivery, review, validation, testing, and release.",
   "author": {
     "name": "Root Kernel",
     "email": "cs@rootkernel.xyz",
@@ -14,6 +14,12 @@
     "roadmap",
     "epic",
     "task",
+    "ai-fleet",
+    "agentic",
+    "loop",
+    "graph",
+    "multi-agent",
+    "workflow",
     "orchestration",
     "setup",
     "testing",
@@ -33,8 +39,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Aquarium",
-    "shortDescription": "Design, test, gate, deliver, and validate roadmap work.",
-    "longDescription": "Aquarium provides Ouroboros-assisted project and epic design, common Make or Bun test setup, durable local Design Gates, isolated release-candidate QA, optional Podway v2 execution memory, task delivery, epic orchestration, and cold validation.",
+    "shortDescription": "Engineer reliable software with AI Fleets.",
+    "longDescription": "Aquarium turns fleets of AI agents and development tools into governed, evidence-backed workflows for design, task and epic delivery, bounded review and remediation loops, durable Design Gates, common test setup, release-candidate QA, and optional graph-backed execution memory.",
     "developerName": "Root Kernel",
     "category": "Developer Tools",
     "capabilities": [
@@ -48,8 +54,6 @@
       "Use $aquarium:new-project, $aquarium:new-feature, $aquarium:refactor, $aquarium:war-room, or $aquarium:design-qa for explicit design work.",
       "Use $aquarium:task-handler or $aquarium:epic-handler for delivery, $aquarium:release-qa for releases, and $aquarium:dev-setup or $aquarium:test-setup for setup."
     ],
-    "brandColor": "#10C4BE",
-    "composerIcon": "./assets/logo-small.png",
-    "logo": "./assets/logo-white.png"
+    "brandColor": "#10C4BE"
   }
 }

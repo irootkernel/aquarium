@@ -104,7 +104,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[design deslop lora lore orchestration ouroboros podway release qa] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[ai-fleet agentic design deslop graph loop lora lore multi-agent orchestration ouroboros podway release qa workflow] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.9", "plugin version must be 0.1.9")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -112,10 +112,25 @@ unless release_tag.empty?
          "release tag #{release_tag} must match plugin version v#{manifest.fetch('version')}")
 end
 assert(manifest.fetch("homepage") == "https://home.rootkernel.xyz", "plugin homepage is incorrect")
+assert(manifest.fetch("description").include?("AI Fleet") &&
+       manifest.dig("interface", "shortDescription").include?("AI Fleets") &&
+       manifest.dig("interface", "longDescription").include?("fleets of AI agents") &&
+       !manifest.fetch("description").start_with?("Ouroboros"),
+       "plugin metadata must position Aquarium as an AI Fleet engineering layer")
 assert(manifest.dig("interface", "longDescription").include?("release-candidate QA") &&
        manifest.dig("interface", "longDescription").include?("Design Gates") &&
        manifest.dig("interface", "longDescription").include?("test setup"),
        "plugin description must advertise test setup, release QA, and Design Gates")
+readme_introduction = ROOT.join("README.md").read.split("## Install", 2).first
+assert(readme_introduction.include?("engineering reliable software with AI Fleets") &&
+       readme_introduction.include?("Agentic Engineering") &&
+       readme_introduction.include?("Loop Engineering") &&
+       readme_introduction.include?("Graph Engineering") &&
+       readme_introduction.include?("not separate products or a rigid maturity model") &&
+       readme_introduction.include?("Codex is Aquarium's primary agent runtime") &&
+       readme_introduction.include?("rather than promising provider or framework neutrality") &&
+       readme_introduction.include?("Codex, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
+       "README introduction must lead with Aquarium's AI Fleet engineering identity")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
 prompts = manifest.fetch("interface").fetch("defaultPrompt")
@@ -131,16 +146,9 @@ interface = manifest.fetch("interface")
 assert(interface.fetch("websiteURL") == manifest.fetch("homepage"), "interface website must match the homepage")
 assert(interface.fetch("brandColor") == "#10C4BE", "plugin brand color is incorrect")
 
-expected_assets = {
-  "composerIcon" => ["./assets/logo-small.png", 389, 142],
-  "logo" => ["./assets/logo-white.png", 1024, 1024]
-}
-expected_assets.each do |key, (relative_path, expected_width, expected_height)|
-  assert(interface.fetch(key) == relative_path, "plugin #{key} path is incorrect")
-  assert_png(PLUGIN.join(relative_path.delete_prefix("./")), expected_width, expected_height)
-end
-assert(PLUGIN.join("assets/logo-black.png").file?, "dark-theme README logo is missing")
-assert_png(PLUGIN.join("assets/logo-black.png"), 1024, 1024)
+assert(!interface.key?("composerIcon") && !interface.key?("logo"),
+       "plugin manifest must not reference removed logo assets")
+assert_png(PLUGIN.join("assets/hero.png"), 2172, 724)
 
 marketplace = JSON.parse(ROOT.join(".agents/plugins/marketplace.json").read)
 assert(marketplace.fetch("name") == "root-kernel", "marketplace name is incorrect")
@@ -349,8 +357,11 @@ assert(tool_catalog.include?("every approved action that overwrites or removes")
        tool_catalog.scan("follow the shared backup policy").length >= 4 &&
        !tool_catalog.include?("preserve a recoverable sibling backup"),
        "tool replacement guidance must support the shared no-backup policy")
-assert(ROOT.join("README.md").read.include?("automatically reads that tool's official GitHub release metadata") &&
+assert(ROOT.join("README.md").read.include?("automatically query their official GitHub Releases metadata") &&
+       ROOT.join("README.md").read.include?("four public skill files from `raw.githubusercontent.com` into ephemeral storage") &&
        ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
+       ROOT.join("README.ko.md").read.include?("official GitHub Releases metadata를 자동으로 조회") &&
+       ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다") &&
        ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
        ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
@@ -403,7 +414,6 @@ assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
 assert(test_setup.include?("Gaori remains optional") &&
        test_setup.include?("gaori parsers list") &&
        test_setup.include?("does not prove support maturity") &&
-       ROOT.join("README.md").read.include?("Ginkgo v2 with Gomega") &&
        ROOT.join("README.md").read.include?("Gaori integration is optional"),
        "test setup must keep canonical frameworks aligned with optional Gaori evidence")
 assert(ROOT.join("PRIVACY.md").read.include?("The selected `ooo --version`") &&
@@ -418,13 +428,12 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        ROOT.join("TERMS.md").read.include?("users install approved upstream copies under their original license terms") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
-assert(ROOT.join("README.md").read.include?("authorizes transmission of only that review scope to the selected provider") &&
-       ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
+assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
        ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only that disclosed source") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
        ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code"),
-       "README, privacy policy, and terms must disclose Orca review consent, source transmission, local state, and external ownership")
+       "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
   "## Core Behavior",
   "## Master Preferences",
@@ -587,29 +596,11 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
        dev_setup.include?("Never authenticate a provider, inspect a prior run") &&
        dev_setup.include?("--require-mulgae-mcp"),
        "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
-assert(ROOT.join("README.md").read.include?("v0.2.5 through v0.2.x") &&
-       ROOT.join("README.md").read.include?("optional `use-podway` user skill"),
-       "public Podway support and optional skill guidance are missing")
-assert(ROOT.join("README.md").read.include?("Git-backed design workflows use") &&
-       ROOT.join("README.md").read.include?("selects Podway by default") &&
-       ROOT.join("README.md").read.include?("opt the current Git-backed workflow out") &&
-       ROOT.join("README.md").read.include?("before its first managed-session mutation"),
-       "public Podway guidance must document default use and pre-session opt-out")
-assert(ROOT.join("README.md").read.include?("Degraded readiness routes to `dev-setup` repair") &&
-       ROOT.join("README.md").read.include?("undisposed terminal nonmatching session is a lifecycle conflict") &&
-       ROOT.join("README.md").read.include?("atomically replaced by the approved successor") &&
-       ROOT.join("README.md").read.include?("reset is not a prerequisite"),
-       "public Podway guidance must separate setup repair from session lifecycle")
-assert(ROOT.join("README.md").read.include?("leave the session active for later resumption") &&
-       ROOT.join("README.md").read.include?("cancel the task while preserving history") &&
-       ROOT.join("README.md").read.include?("reset the session and delete its history"),
-       "public Podway guidance must distinguish pause, cancel, and reset")
-assert(ROOT.join("README.md").read.include?("starts as prepared") &&
-       ROOT.join("README.md").read.include?("uses `begin`") &&
-       ROOT.join("README.md").read.include?("exact authoritative external result") &&
-       ROOT.join("README.md").read.include?("leaves the terminal session undisposed") &&
-       ROOT.join("README.md").read.include?("never chooses force reset or force replacement"),
-       "public Podway v0.2.5 lifecycle and disposition policy is incomplete")
+assert(ROOT.join("README.md").read.include?("durable local execution memory") &&
+       ROOT.join("README.md").read.include?("selected by default for Git-backed Aquarium workflows") &&
+       ROOT.join("README.md").read.include?("opted out before the first managed-session mutation") &&
+       ROOT.join("README.md").read.include?("standalone `use-podway` skill"),
+       "public Podway guidance must explain its role and workflow boundary concisely")
 assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
        "privacy policy must disclose Podway skill installation")
@@ -618,8 +609,7 @@ assert(gaori_catalog.include?("gaori version --json"), "Gaori JSON version probe
 assert(gaori_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
        gaori_catalog.include?("same exact tag") &&
        gaori_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/") &&
-       dev_setup.include?("stable `v0.1.14` through `v0.1.x`") &&
-       ROOT.join("README.md").read.include?("Aquarium supports stable v0.1.14 through v0.1.x"),
+       dev_setup.include?("stable `v0.1.14` through `v0.1.x`"),
        "Gaori CLI and use-gaori must share the supported approved release")
 assert(gaori_catalog.include?("gaori --json config check") &&
        gaori_catalog.include?("gaori --json config check --sample <raw-log>") &&
@@ -645,8 +635,7 @@ assert(sanho_catalog, "Sanho tool catalog section is missing")
 assert(sanho_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
        sanho_catalog.include?("same exact tag") &&
        sanho_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/") &&
-       dev_setup.include?("stable `v0.2.7` through `v0.2.x`") &&
-       ROOT.join("README.md").read.include?("Aquarium supports stable v0.2.7 through v0.2.x"),
+       dev_setup.include?("stable `v0.2.7` through `v0.2.x`"),
        "Sanho CLI and use-sanho must share the supported approved release")
 assert(sanho_catalog.include?("sanho check --require-clean") &&
        sanho_catalog.include?("sanho diff --refresh") &&
@@ -685,8 +674,7 @@ assert(mulgae_catalog.include?("stable `v0.1.17` through `v0.1.x`") &&
        mulgae_catalog.include?("same exact tag") &&
        mulgae_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
        mulgae_catalog.include?("~/.agents/skills/use-mulgae") &&
-       dev_setup.include?("stable `v0.1.17` through `v0.1.x`") &&
-       ROOT.join("README.md").read.include?("stable v0.1.17 through v0.1.x"),
+       dev_setup.include?("stable `v0.1.17` through `v0.1.x`"),
        "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
 assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
        mulgae_catalog.include?("mode-`0600`") &&
@@ -1000,7 +988,7 @@ assert(task_handler.include?("stop at `implement`") &&
   assert(!body.include?("mode=plan-handoff") && !body.include?("plan-handoff.md"),
          "plan handoff mode must not be exposed by #{name}")
 end
-assert(ROOT.join("README.md").read.include?("The other Aquarium workflows do not expose these modes") &&
+assert(ROOT.join("README.md").read.include?("explicit plan handoff to another agent") &&
        ROOT.join("PRIVACY.md").read.include?("does not create this file for ordinary execution or plan-only requests") &&
        ROOT.join("PRIVACY.md").read.include?("Podway records only its local path, SHA-256, byte size, and media type"),
        "public documentation must bound plan-handoff scope and local data handling")
@@ -1889,7 +1877,7 @@ end
 assert(!PLUGIN.join("skills/deslop").exist?,
        "Aquarium must not bundle the third-party Deslop skill or license")
 
-%w[LICENSE Makefile README.md PRIVACY.md TESTING.md TERMS.md pyproject.toml requirements.txt].each do |relative_path|
+%w[LICENSE Makefile README.md README.ko.md PRIVACY.md TESTING.md TERMS.md pyproject.toml requirements.txt].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
 end
 [PLUGIN.join("skills"), PLUGIN.join("hooks"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
@@ -1961,8 +1949,39 @@ assert(gaori_commands.keys.sort == expected_gaori_handlers.keys.sort &&
        "Gaori must wrap each common Make handler without duplicating its implementation")
 
 readme = ROOT.join("README.md").read
-assert(readme.include?("plugins/aquarium/assets/logo-white.png"), "README light-theme logo is missing")
-assert(readme.include?("plugins/aquarium/assets/logo-black.png"), "README dark-theme logo is missing")
+korean_readme = ROOT.join("README.ko.md").read
+readme_skill_names = %w[
+  design-qa
+  dev-setup-bundle
+  dev-setup
+  epic-handler
+  epic-validator
+  independent-review
+  new-feature
+  new-project
+  refactor
+  release-qa
+  task-commit
+  task-handler
+  test-setup
+  war-room
+]
+assert(readme.lines.length <= 120 && korean_readme.lines.length <= 120,
+       "README files must remain concise product overviews")
+assert(readme.include?("plugins/aquarium/assets/hero.png"), "README hero image is missing")
+assert(readme.include?("[한국어](README.ko.md)") &&
+       korean_readme.include?("[English](README.md)") &&
+       readme.include?("[Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)") &&
+       korean_readme.include?("[Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)") &&
+       korean_readme.include?("plugins/aquarium/assets/hero.png"),
+       "README language navigation and Korean hero are incomplete")
+assert(korean_readme.include?("AI Fleet") &&
+       korean_readme.include?("Agentic Engineering") &&
+       korean_readme.include?("Loop Engineering") &&
+       korean_readme.include?("Graph Engineering") &&
+       %w[설치 주요\ 워크플로 생태계가\ 연결되는\ 방식 운영\ 경계 검증].all? { |heading| korean_readme.include?("## #{heading}") } &&
+       readme_skill_names.all? { |name| korean_readme.include?("$aquarium:#{name}") },
+       "Korean README must retain the product identity, core sections, and main workflows")
 assert(readme.include?("https://home.rootkernel.xyz"), "README homepage is missing")
 assert(readme.include?("mailto:cs@rootkernel.xyz"), "README support email is missing")
 assert(readme.include?("codex plugin marketplace add irootkernel/aquarium --ref main"),
@@ -1976,16 +1995,9 @@ assert(readme.include?("codex plugin remove root-kernel") &&
        readme.include?("$aquarium:dev-setup"),
        "README product-rename migration is missing")
 assert(readme.include?("codex plugin remove aquarium@aquarium") &&
-       readme.include?("codex plugin marketplace remove aquarium") &&
-       readme.include?("hook identity includes the marketplace name"),
+       readme.include?("codex plugin marketplace remove aquarium"),
        "README marketplace-rename migration is missing")
-expected_skill_names.each do |name|
-  assert(readme.include?("`#{name}`"), "README skill entry is missing: #{name}")
-end
-readme_table_names = readme.lines.filter_map { |line| line[/\A\| `([a-z-]+)` \|/, 1] }
-assert(readme_table_names.sort == expected_skill_names.sort,
-       "README tables must list exactly the expected skills once each")
-%w[epic-handler epic-validator task-handler task-commit release-qa dev-setup dev-setup-bundle test-setup independent-review orca-review new-project new-feature refactor war-room design-qa].each do |name|
+readme_skill_names.each do |name|
   assert(readme.include?("$aquarium:#{name}"), "README invocation token is missing: #{name}")
 end
 assert(!readme.include?("$aquarium:deslop") &&
