@@ -203,13 +203,15 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
         return backslashes % 2 == 1
 
     function_pattern = re.compile(
-        r"(?ms)\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*\{(.*?)\}\s*;?"
+        r"(?ms)(?:\bfunction\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\(\))?"
+        r"|\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\))\s*\{(.*?)\}\s*;?"
     )
 
     def remove_function(match: re.Match[str]) -> str:
         if single_quoted(command, match.start()):
             return match.group(0)
-        name, body = match.group(1), match.group(2)
+        name = match.group(1) or match.group(2)
+        body = match.group(3)
         if re.search(
             rf"(?:^|[;&|\s]){re.escape(name)}(?:$|[;&|\s])", command[match.end() :]
         ):
@@ -233,12 +235,14 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
 
     remaining = case_pattern.sub(resolve_case, remaining)
 
-    substitution_pattern = re.compile(r"`([^`]*)`|\$\(([^()]*)\)", re.DOTALL)
+    substitution_pattern = re.compile(
+        r"`([^`]*)`|\$\(([^()]*)\)|[<>]\(([^()]*)\)", re.DOTALL
+    )
 
     def remove_substitution(match: re.Match[str]) -> str:
         if single_quoted(remaining, match.start()) or escaped(remaining, match.start()):
             return match.group(0)
-        fragments.append(match.group(1) or match.group(2))
+        fragments.append(next(group for group in match.groups() if group is not None))
         return " substitution "
 
     remaining = substitution_pattern.sub(remove_substitution, remaining)

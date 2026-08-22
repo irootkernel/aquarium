@@ -51,7 +51,7 @@ Run the audit without an active goal and without source mutation:
 1. Build a requirement-to-owner-to-production-to-test-to-document matrix across every member task. Trace runtime wiring, consumers, persistence, concurrency, migrations, generated artifacts, failure and recovery behavior, operational guidance, external dependencies, and roadmap consistency.
 2. Inspect current code and evidence directly. Run only repository-authorized checks needed for the epic claim. Keep current agent-run, explicit user-run, unavailable, forbidden, stale, external, live, commit, and upstream publication evidence distinct; narrow green checks do not prove uncovered requirements.
 3. Run Mulgae on one exact latest epic target that excludes unrelated work and includes every epic-owned staged, unstaged, untracked, generated, and derived file.
-4. Treat Mulgae as complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
+4. Treat a Mulgae review as operationally complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, and the findings query succeeds. Classify that complete review as clean only when zero unresolved valid findings remain; otherwise apply the bounded remediation or explicit disposition rules below. Provider success or exit status alone is insufficient.
    Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
 5. Verify every candidate finding against current authority and implementation. Record only confirmed gaps; do not turn review hypotheses into work automatically.
 
@@ -92,7 +92,13 @@ With Podway active, record each remediation group, fresh audit, severity count, 
 
 When an external blocker is resolved, revalidate its exact committed revision and evidence before restarting the audit. Any code, test, durable documentation, generated, or derived change after verification or final review makes affected evidence stale; the exact planned status or validation-record-only roadmap change is the sole exception.
 
-Declare completion only when the fresh Codex audit has no confirmed gap, every required check has current passing evidence, whole-epic Mulgae evidence is complete, every member task and the epic have roadmap-defined successful states, and no epic-owned residue remains. Record the final audited snapshot and evidence in the roadmap. Hand an actual isolated epic-ID validation-record diff to `$aquarium:task-commit`; never duplicate an equivalent record or create an empty commit.
+Declare completion only when every required check has current passing evidence, whole-epic Mulgae evidence is operationally complete, every member task and the epic have roadmap-defined successful states, no epic-owned residue remains, and one of these closeout conditions holds:
+
+- The fresh Codex audit and latest review are clean.
+- Every remaining Medium and Low finding has an explicit `accepted-medium-risk` or `accepted-low` disposition, with no Critical or High finding.
+- Every selected Low-only micro correction has current focused evidence and a `user-authorized-micro-fix` record that identifies the preceding review as predating the correction.
+
+An incomplete review or `stop` disposition never supports completion. Record the final audited snapshot and evidence in the roadmap. Hand an actual isolated epic-ID validation-record diff to `$aquarium:task-commit`; never duplicate an equivalent record or create an empty commit.
 
 With Podway active, complete the validation session only after the validation-record commit and clean residue are verified, record `handed_off` with that exact commit SHA, and leave the final terminal session intact. If no authoritative external result exists, leave it undisposed rather than inventing a reference or choosing force cleanup.
 

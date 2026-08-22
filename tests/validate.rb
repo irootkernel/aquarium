@@ -995,8 +995,11 @@ assert(epic_validator.include?("Do not start a third review automatically") &&
        !epic_validator.include?("regroup and repeat the goal cycle"),
        "epic-validator must enforce one automatic confirmation and severity-based user direction")
 assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
+       epic_validator.include?("Treat a Mulgae review as operationally complete") &&
+       epic_validator.include?("Classify that complete review as clean only when zero unresolved valid findings remain") &&
+       epic_validator.include?("An incomplete review or `stop` disposition never supports completion") &&
        epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
-       "epic-validator must invalidate stale evidence and avoid empty closeout commits")
+       "epic-validator must separate review completion from clean or accepted closeout and avoid empty commits")
 assert(epic_validator.include?("$aquarium:task-commit") &&
        epic_validator.include?("Never commit independently"),
        "epic-validator must hand actual commits to task-commit")
@@ -1491,6 +1494,9 @@ validation_procedure_text = procedures_directory.join("aquarium-validation-v2.ya
 validation_procedure = YAML.safe_load(validation_procedure_text, aliases: false)
 plan_handoff_item.call(validation_procedure, "baseline-record")
 validation_review_items = review_item_index.call(validation_procedure, "final-review-record")
+validation_goal_options = validation_procedure.dig("node_definitions", "goal-assessment", "options").to_h do |option|
+  [option.fetch("id"), option.fetch("criteria")]
+end
 assert(validation_review_items.fetch("review-round").fetch("type") == "integer" &&
        validation_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
        validation_review_items.fetch("review-run-id").fetch("type") == "text" &&
@@ -1499,6 +1505,10 @@ assert(validation_review_items.fetch("review-round").fetch("type") == "integer" 
        validation_procedure_text.include?("one remediation pass and one next-ordinal whole-epic confirmation review") &&
        validation_procedure_text.include?("prior review covered its resulting bytes"),
        "validation procedure must record severity, bounded follow-up, user direction, and honest micro-fix coverage")
+assert(validation_goal_options.fetch("achieved").include?("reached from validated, record-accepted-low, record-accepted-medium-risk, or micro-remediate") &&
+       validation_goal_options.fetch("not-achieved").include?("record-stopped or record-incomplete") &&
+       validation_goal_options.fetch("not-achieved").include?("can never select achieved"),
+       "validation procedure must forbid achieved closeout from incomplete or stopped dispositions")
 
 goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml").read, aliases: false)
 plan_handoff_item.call(goal_procedure, "work-record")

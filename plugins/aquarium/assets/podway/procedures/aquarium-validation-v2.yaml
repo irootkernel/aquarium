@@ -211,10 +211,10 @@ node_definitions:
     options:
       - id: achieved
         label: Goal achieved
-        criteria: Fresh evidence is clean, or no Critical or High finding remains and every lower-severity finding has an explicit accepted-risk or micro-fix disposition.
+        criteria: This assessment was reached from validated, record-accepted-low, record-accepted-medium-risk, or micro-remediate; the review is operationally complete; no Critical or High finding remains; and every lower-severity finding has clean evidence, an explicit accepted-risk disposition, or a focused user-authorized micro-fix record.
       - id: not-achieved
         label: Goal not achieved
-        criteria: Fresh evidence does not support the current validation goal.
+        criteria: Fresh evidence does not support the current validation goal, including every path reached from record-stopped or record-incomplete; those dispositions can never select achieved.
       - id: superseded
         label: Goal superseded
         criteria: The current validation goal is no longer desired.
