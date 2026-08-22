@@ -181,7 +181,7 @@ def shell_segments(command: str) -> list[tuple[list[str], str | None]]:
 def executable_control_fragments(command: str) -> tuple[str, list[str]]:
     fragments: list[str] = []
 
-    def single_quoted(source: str, stop: int) -> bool:
+    def quote_at(source: str, stop: int) -> str | None:
         quote: str | None = None
         escaped = False
         for char in source[:stop]:
@@ -194,7 +194,10 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
                     quote = None
                 elif quote is None:
                     quote = char
-        return quote == "'"
+        return quote
+
+    def single_quoted(source: str, stop: int) -> bool:
+        return quote_at(source, stop) == "'"
 
     def escaped(source: str, index: int) -> bool:
         backslashes = 0
@@ -204,14 +207,15 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
 
     function_pattern = re.compile(
         r"(?ms)(?:\bfunction\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\(\))?"
-        r"|\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\))\s*\{(.*?)\}\s*;?"
+        r"|\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\))\s*"
+        r"(?:\{(.*?)\}|\((.*?)\))\s*;?"
     )
 
     def remove_function(match: re.Match[str]) -> str:
         if single_quoted(command, match.start()):
             return match.group(0)
         name = match.group(1) or match.group(2)
-        body = match.group(3)
+        body = next(group for group in match.groups()[2:] if group is not None)
         if re.search(
             rf"(?:^|[;&|\s]){re.escape(name)}(?:$|[;&|\s])", command[match.end() :]
         ):
@@ -240,12 +244,22 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
     )
 
     def remove_substitution(match: re.Match[str]) -> str:
-        if single_quoted(remaining, match.start()) or escaped(remaining, match.start()):
+        process_substitution = match.group(3) is not None
+        quote = quote_at(remaining, match.start())
+        if (
+            quote == "'"
+            or (process_substitution and quote == '"')
+            or escaped(remaining, match.start())
+        ):
             return match.group(0)
         fragments.append(next(group for group in match.groups() if group is not None))
         return " substitution "
 
-    remaining = substitution_pattern.sub(remove_substitution, remaining)
+    while True:
+        updated = substitution_pattern.sub(remove_substitution, remaining)
+        if updated == remaining:
+            break
+        remaining = updated
     return remaining, fragments
 
 

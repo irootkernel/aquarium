@@ -1336,10 +1336,9 @@ expected_procedure_graphs = {
     "manual_targets" => %w[audit remediate re-audit final-review micro-remediate],
     "evidence" => {
       "decide-gaps" => required_evidence.call("audit"),
-      "decide-re-audit" => required_evidence.call("remediate", "re-audit"),
       "decide-final-review" => required_evidence.call("final-review"),
-      "await-user-direction" => [["re-audit", false], ["final-review", false]],
-      "assess-goal" => [["capture-baseline", true], ["final-review", false], ["await-user-direction", false],
+      "await-user-direction" => [["final-review", true]],
+      "assess-goal" => [["capture-baseline", true], ["final-review", true], ["await-user-direction", false],
                         ["micro-remediate", false], ["record-accepted-low", false],
                         ["record-accepted-medium-risk", false], ["record-stopped", false], ["record-incomplete", false]]
     },
@@ -1348,8 +1347,7 @@ expected_procedure_graphs = {
       "audit" => { "next" => "decide-gaps" },
       "decide-gaps" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate advance] } },
       "remediate" => { "next" => "re-audit" },
-      "re-audit" => { "next" => "decide-re-audit" },
-      "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[await-user-direction advance] } },
+      "re-audit" => { "next" => "final-review" },
       "final-review" => { "next" => "decide-final-review" },
       "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework], "user-direction" => %w[await-user-direction advance], "incomplete" => %w[record-incomplete advance] } },
       "await-user-direction" => { "routes" => { "fix-and-review" => %w[audit rework], "accept-low" => %w[record-accepted-low advance], "micro-fix" => %w[micro-remediate advance], "accept-medium-risk" => %w[record-accepted-medium-risk advance], "stop" => %w[record-stopped advance] } },

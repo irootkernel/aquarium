@@ -822,6 +822,24 @@ class TestInspectTesting:
 
         assert result["detected_languages"] == ["typescript"]
 
+    def test_tox_python_is_not_product_or_framework_source(self) -> None:
+        self.write_bun_package()
+        self.write(
+            ".tox/lib/python3.13/site-packages/example/test_helpers.py",
+            "import unittest\n",
+        )
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+        assert result["frameworks"]["entries"] == [
+            entry
+            for entry in result["frameworks"]["entries"]
+            if entry["language"] == "typescript"
+        ]
+
     def test_typescript_profile_requires_waiver_for_python_unittest_e2e(self) -> None:
         self.write_bun_package()
         package = json.loads(

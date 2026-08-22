@@ -43,7 +43,7 @@ node_definitions:
   gap-decision:
     type: decision
     title: Evaluate audit gaps
-    objective: Route confirmed gaps to remediation and a clean audit to final review.
+    objective: Route the initial confirmed gaps to remediation and every post-remediation audit to final review before any user disposition.
     prompt: Does the fresh audit contain a confirmed gap?
     evidence_guidance:
       - Read the audit snapshot, matrix, checks, review, and confirmed gap count.
@@ -53,7 +53,7 @@ node_definitions:
         criteria: No confirmed gap remains and every required check has current evidence.
       - id: gaps-found
         label: Gaps found
-        criteria: At least one confirmed gap requires owned remediation.
+        criteria: At least one confirmed gap requires initial owned remediation or post-confirmation user direction.
     reason:
       required: true
       prompt: Explain the selection using the audit evidence.
@@ -72,7 +72,7 @@ node_definitions:
   final-review-record:
     type: action
     title: Record final validation evidence
-    intent: Record the latest clean audit and complete whole-epic Mulgae result.
+    intent: Record the latest audit and complete whole-epic Mulgae result, including every confirmation finding that requires user direction.
     items:
       - id: review-round
         type: integer
@@ -265,21 +265,7 @@ graph:
       next: re-audit
     - id: re-audit
       use: audit-record
-      next: decide-re-audit
-    - id: decide-re-audit
-      use: gap-decision
-      evidence_from:
-        - node: remediate
-          required: true
-        - node: re-audit
-          required: true
-      routes:
-        clean:
-          to: final-review
-          effect: advance
-        gaps-found:
-          to: await-user-direction
-          effect: advance
+      next: final-review
     - id: final-review
       use: final-review-record
       next: decide-final-review
@@ -304,10 +290,8 @@ graph:
     - id: await-user-direction
       use: review-direction-decision
       evidence_from:
-        - node: re-audit
-          required: false
         - node: final-review
-          required: false
+          required: true
       routes:
         fix-and-review:
           to: audit
@@ -345,7 +329,7 @@ graph:
         - node: capture-baseline
           required: true
         - node: final-review
-          required: false
+          required: true
         - node: await-user-direction
           required: false
         - node: micro-remediate

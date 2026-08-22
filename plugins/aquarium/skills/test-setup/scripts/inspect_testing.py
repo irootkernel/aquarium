@@ -324,7 +324,7 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
             and not sensitive_relative_path(path, repository)
             for path in repository.rglob("*.py")
             if not any(
-                part in {".git", ".venv", "node_modules", "vendor"}
+                part in {".git", ".tox", ".venv", "node_modules", "vendor"}
                 for part in path.parts
             )
             and not typescript_owned_e2e_source(path)
@@ -819,7 +819,7 @@ def python_stage_parser(
 
 
 def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) -> bool:
-    ignored = {".git", ".venv", "node_modules", "vendor"}
+    ignored = {".git", ".tox", ".venv", "node_modules", "vendor"}
     for path in repository.rglob(f"*{suffix}"):
         if any(part in ignored for part in path.parts):
             continue
