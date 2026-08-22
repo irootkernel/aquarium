@@ -1816,6 +1816,24 @@ class InspectToolsTest(unittest.TestCase):
         )
         self.assertNotIn("credential-marker", completed.stdout)
 
+    def test_symlinked_gaori_rule_file_is_not_probed(self) -> None:
+        rules = self.repository / ".gaori/tester/rules"
+        rules.mkdir(parents=True)
+        self.repository.joinpath(".gaori/tester.yaml").write_text(
+            "version: 2\n", encoding="utf-8"
+        )
+        external = self.base / "external-rule.yaml"
+        external.write_text("credential-marker: secret\n", encoding="utf-8")
+        rules.joinpath("external.yaml").symlink_to(external)
+        self.install_fake_tools()
+
+        completed = self.inspect()
+        gaori = json.loads(completed.stdout)["tools"]["gaori"]
+
+        self.assertTrue(gaori["configuration"][1]["tree_symlinked"])
+        self.assertFalse(gaori["probes"]["config_check"]["attempted"])
+        self.assertNotIn("credential-marker", completed.stdout)
+
     def test_symlinked_gaori_toolchain_is_not_probed(self) -> None:
         self.repository.joinpath(".gaori").mkdir()
         self.repository.joinpath(".gaori/tester.yaml").write_text(

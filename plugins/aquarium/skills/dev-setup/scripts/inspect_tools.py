@@ -567,6 +567,22 @@ def safe_managed_file_state(path: Path, boundary: Path) -> tuple[bool, bool]:
     return current.is_file(), False
 
 
+def managed_directory_tree_symlinked(path: Path, boundary: Path) -> bool:
+    _, symlinked = safe_managed_file_state(path, boundary)
+    if symlinked:
+        return True
+    if not path.is_dir():
+        return False
+    try:
+        for root, directories, files in os.walk(path, followlinks=False):
+            root_path = Path(root)
+            if any((root_path / name).is_symlink() for name in directories + files):
+                return True
+    except OSError:
+        return True
+    return False
+
+
 def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str, Any]:
     installations: list[dict[str, Any]] = []
     for root in skill_roots():
@@ -1594,6 +1610,9 @@ def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         configuration_entry(repository, ".gaori/toolchain.yaml", timeout_seconds),
         configuration_entry(repository, ".codex/config.toml", timeout_seconds),
     ]
+    tool["configuration"][1]["tree_symlinked"] = managed_directory_tree_symlinked(
+        repository / ".gaori/tester/rules", repository
+    )
     tool["mcp_registration"] = inspect_gaori_mcp(
         repository, tool["executable"], timeout_seconds
     )
@@ -1609,7 +1628,10 @@ def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["version_supported"] = supported_gaori_version(tool["version"])
     if not version_probe["ok"] or not tool["version_supported"]:
         tool["status"] = "degraded"
-    if any(entry["symlinked"] for entry in tool["configuration"][:3]):
+    if (
+        any(entry["symlinked"] for entry in tool["configuration"][:3])
+        or tool["configuration"][1]["tree_symlinked"]
+    ):
         tool["probes"]["config_check"] = skipped_probe("configuration_symlinked")
         tool["status"] = "degraded"
         return tool

@@ -48,10 +48,10 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],}]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*['\"]?(?:\S*/)?make['\"]?(?:[\s;&|)]|$)"
+    r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
 
 
@@ -134,6 +134,33 @@ def safe_repository_file(path: Path, repository: Path) -> bool:
         if current.is_symlink():
             return False
     return current.is_file()
+
+
+def unsafe_root_authorities(repository: Path) -> list[str]:
+    candidates = [
+        repository / name
+        for name in (
+            "go.mod",
+            "Cargo.toml",
+            "pyproject.toml",
+            "setup.py",
+            "setup.cfg",
+            "pubspec.yaml",
+            "package.json",
+            "bun.lock",
+            "bun.lockb",
+            "TESTING.md",
+            "Makefile",
+        )
+    ]
+    candidates.extend(repository.glob("requirements*.txt"))
+    candidates.extend(repository.glob("tsconfig*.json"))
+    return sorted(
+        str(path.relative_to(repository))
+        for path in candidates
+        if (path.exists() or path.is_symlink())
+        and not safe_repository_file(path, repository)
+    )
 
 
 def lexical_path_symlinked(path: Path) -> bool:
@@ -793,6 +820,7 @@ def inspect_makefile(
     result["includes"] = includes
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
+        or "\\\n" in content
         or re.search(
             r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
             content,
@@ -1157,6 +1185,16 @@ def inspect_repository(repository: Path) -> dict[str, Any]:
     )
     document_result, document_findings = inspect_testing_document(repository, profile)
     findings = make_findings + bun_findings + framework_findings + document_findings
+    unsafe_authorities = unsafe_root_authorities(repository)
+    if unsafe_authorities:
+        findings.append(
+            finding(
+                "root_authority_symlinked",
+                "error",
+                "Root test authorities must be regular non-symlink files: "
+                + ", ".join(unsafe_authorities),
+            )
+        )
     if any(item["severity"] == "error" for item in findings):
         status = "nonconforming"
     elif any(item["severity"] == "unverifiable" for item in findings):

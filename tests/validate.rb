@@ -422,6 +422,7 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("lexical_path_symlinked") &&
        test_setup_script_body.include?("normalize_shell_token_joins") &&
        test_setup_script_body.include?("tomllib.loads") &&
+       test_setup_script_body.include?("unsafe_root_authorities") &&
        test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
@@ -485,7 +486,8 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("initial structured choice binds one canonical provider executable path") &&
+       ROOT.join("PRIVACY.md").read.include?("rejects remote or paired Orca routing and repository-local provider executables") &&
+       ROOT.join("PRIVACY.md").read.include?("verified local runtime identity") &&
        ROOT.join("PRIVACY.md").read.include?("Only the second, final structured tool:model choice authorizes") &&
        ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("every snapshot file, standalone Git metadata, and Aquarium Task byte it will supply") &&
@@ -1640,6 +1642,8 @@ assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is una
        orca_review.include?("Resolve each successful result to one canonical absolute regular executable") &&
        orca_review.include?("canonical provider executable path, executable digest and observed version") &&
        orca_review.include?("Revalidate the provider executable path, digest, and version immediately before terminal creation") &&
+       orca_review.include?("Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`") &&
+       orca_review.include?("outside the original Git root") &&
        orca_review.include?("Do not authenticate, list remote models"),
        "orca-review must show only locally healthy CLI choices without provider probes")
 assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-mode plan") &&

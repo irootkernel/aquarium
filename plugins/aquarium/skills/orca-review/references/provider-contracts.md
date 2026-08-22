@@ -6,7 +6,7 @@ In the examples, `<ORCA>` means the single executable already resolved from `$or
 
 ## Shared Launch Boundary
 
-Use a fresh terminal in the verified immutable `/tmp` snapshot; never launch in or identify the original checkout to a participant. Start it through `<ORCA> terminal create --worktree path:<absoluteSnapshotPath> --command <command> --json` using `<PROVIDER>` as the command's executable, preserve its returned handle, wait with an explicit timeout, and use the live guide's `orchestration dispatch --inject` path. Confirm the snapshot path, canonical provider executable, terminal command, and model from the launch output or transcript before accepting findings.
+Use a fresh terminal in the verified immutable `/tmp` snapshot through the consent-bound local Orca runtime; never launch in or identify the original checkout to a participant. Never pass or inherit an Orca environment or pairing selector. Start it through `<ORCA> terminal create --worktree path:<absoluteSnapshotPath> --command <command> --json` using `<PROVIDER>` as the command's executable, preserve its returned handle, wait with an explicit timeout, and use the live guide's `orchestration dispatch --inject` path. Confirm the local runtime identity, snapshot path, canonical provider executable, terminal command, and model from the launch output or transcript before accepting findings.
 
 If the CLI exits, requests authentication, rejects the model or read-only mode, cannot receive the Dispatch, or cannot send lifecycle messages, report the exact operational failure. Do not remove read-only flags, weaken permissions, switch models, reuse a terminal, or start another provider.
 

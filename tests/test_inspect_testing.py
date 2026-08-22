@@ -816,6 +816,27 @@ class InspectTestingTest(unittest.TestCase):
                 self.assertEqual(result["structural_status"], "nonconforming")
                 self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
 
+    def test_bun_script_extended_make_assignments_are_rejected(self) -> None:
+        for command in (
+            "M=make>/dev/null && $M test-unit",
+            r"M=make\  && $M test-unit",
+            "M=${TOOL:-make} && $M test-unit",
+        ):
+            with self.subTest(command=command):
+                self.write_bun_package()
+                package = json.loads(
+                    self.repository.joinpath("package.json").read_text(encoding="utf-8")
+                )
+                package["scripts"]["test:unit"] += f" && {command}"
+                self.write("package.json", json.dumps(package))
+                self.write_bun_adapter()
+                self.enroll("typescript-bun")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                self.assertEqual(result["structural_status"], "nonconforming")
+                self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+
     def test_vitest_runner_that_swallows_failure_is_not_canonical(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -1141,6 +1162,56 @@ class InspectTestingTest(unittest.TestCase):
                 result = inspect_testing.inspect_repository(self.repository)
 
                 self.assertEqual(result["structural_status"], "unverifiable")
+
+    def test_pytest_control_option_before_shell_operator_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace(
+                "test-unit:\n\t@true",
+                "test-unit:\n\tpython3 -m pytest --collect-only&& true",
+            )
+            .replace(
+                "test-int:\n\t@true", "test-int:\n\tpython3 -m pytest --collect-only"
+            )
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+
+    def test_make_recipe_continuation_is_unverifiable(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text(encoding="utf-8").replace(
+            "test-unit:\n\t@true",
+            "test-unit:\n\tpython3 -m pytest --collect-\\\n\t  only",
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertTrue(result["make"]["global_shell_semantics"])
+
+    def test_symlinked_requirements_authority_is_reported(self) -> None:
+        self.write_make_contract()
+        external = Path(self.temporary_directory.name) / "requirements.txt"
+        external.write_text("pytest==9.1.1\n", encoding="utf-8")
+        self.repository.joinpath("requirements.txt").symlink_to(external)
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "root_authority_symlinked", {item["code"] for item in result["findings"]}
+        )
 
     def test_background_pytest_command_is_not_canonical(self) -> None:
         self.write_make_contract()
