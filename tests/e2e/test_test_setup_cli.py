@@ -145,3 +145,18 @@ def test_cli_rejects_symlinked_repository_ancestor(tmp_path: Path) -> None:
 
     assert completed.returncode == 2
     assert payload["error"]["code"] == "repository_symlinked"
+
+
+def test_cli_rejects_symlink_ancestor_before_dotdot(tmp_path: Path) -> None:
+    external = tmp_path / "external"
+    escaped_repository = external / "escape" / "repository"
+    escaped_repository.mkdir(parents=True)
+    write_conforming_repository(escaped_repository)
+    link = tmp_path / "link"
+    link.symlink_to(external / "child", target_is_directory=True)
+
+    completed = run_inspector(link / ".." / "escape" / "repository")
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 2
+    assert payload["error"]["code"] == "repository_symlinked"

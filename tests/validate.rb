@@ -420,6 +420,8 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("MAKE_ALIAS_PATTERN") &&
        test_setup_script_body.include?("repository_symlinked") &&
        test_setup_script_body.include?("lexical_path_symlinked") &&
+       test_setup_script_body.include?("normalize_shell_token_joins") &&
+       test_setup_script_body.include?("tomllib.loads") &&
        test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&

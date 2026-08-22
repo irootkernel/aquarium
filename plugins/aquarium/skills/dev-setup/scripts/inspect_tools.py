@@ -1323,11 +1323,19 @@ def inspect_mulgae(
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_mulgae_version(tool["version"])
+    project_config, local_config = tool["configuration"][:2]
     unsafe_configuration = any(
-        entry["symlinked"] for entry in tool["configuration"][:2]
+        entry["symlinked"] for entry in (project_config, local_config)
     )
-    if unsafe_configuration:
-        tool["probes"]["doctor"] = skipped_probe("configuration_symlinked")
+    missing_configuration = not all(
+        entry["present"] for entry in (project_config, local_config)
+    )
+    if unsafe_configuration or missing_configuration:
+        tool["probes"]["doctor"] = skipped_probe(
+            "configuration_symlinked"
+            if unsafe_configuration
+            else "configuration_missing"
+        )
         tool["health"]["mulgae_cli_compatibility"] = (
             "compatible"
             if version_probe["ok"]
@@ -1335,7 +1343,14 @@ def inspect_mulgae(
             and tool["platform"]["supported"]
             else "incompatible"
         )
-        tool["status"] = "degraded"
+        both_missing = not project_config["present"] and not local_config["present"]
+        tool["status"] = (
+            "installed"
+            if both_missing
+            and not unsafe_configuration
+            and tool["health"]["mulgae_cli_compatibility"] == "compatible"
+            else "degraded"
+        )
         return tool
     doctor_probe = json_probe(
         [tool["executable"], "doctor", "--output", "json"],
@@ -1345,7 +1360,6 @@ def inspect_mulgae(
     normalized_doctor = normalize_mulgae_doctor(doctor_probe)
     tool["probes"]["doctor"] = normalized_doctor
 
-    project_config, local_config = tool["configuration"][:2]
     both_missing = not project_config["present"] and not local_config["present"]
     doctor_result = normalized_doctor.get("result")
     doctor_payload = (

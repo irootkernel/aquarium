@@ -1214,6 +1214,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(podway["readiness_status"], "ready")
 
     def test_malformed_json_and_timeout_degrade_only_the_affected_probes(self) -> None:
+        self.install_mulgae_config()
         self.install_fake_tools(
             malformed_sanho=True, slow_gaori=True, failing_mulgae_providers=True
         )
@@ -1233,7 +1234,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
             tools["mulgae"]["health"]["config_v3"]["reason_codes"],
-            ["config_missing"],
+            [],
         )
 
     def test_sanho_version_support_and_doctor_warnings_are_explicit(self) -> None:
@@ -1446,13 +1447,8 @@ class InspectToolsTest(unittest.TestCase):
         )
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
         self.assertEqual(mulgae["status"], "degraded")
-        self.assertEqual(mulgae["health"]["config_v3"]["status"], "unverifiable")
-        self.assertEqual(
-            mulgae["health"]["local_configuration"],
-            {"status": "failed", "reason_codes": ["local_config_missing"]},
-        )
-        config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
-        self.assertEqual(config["reason_codes"], ["local_config_missing"])
+        self.assertEqual(mulgae["probes"]["doctor"]["reason"], "configuration_missing")
+        self.assertEqual(mulgae["health"]["doctor_contract"], "not_observed")
 
     def test_mulgae_config_v2_pair_is_rejected(self) -> None:
         self.install_fake_tools()
@@ -1691,6 +1687,7 @@ class InspectToolsTest(unittest.TestCase):
             mulgae["mcp_registration"]["reason"], "project_configuration_missing"
         )
         self.assertIsNone(mulgae["mcp_registration"]["codex_version"])
+        self.assertEqual(mulgae["probes"]["doctor"]["reason"], "configuration_missing")
         if platform.system() == "Darwin" and platform.machine() in {"arm64", "aarch64"}:
             self.assertEqual(mulgae["status"], "installed")
 

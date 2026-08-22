@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import json
-import os
 import re
 import sys
 from pathlib import Path
 from typing import Any
+
+import tomllib
 
 SCHEMA_VERSION = "aquarium-test-setup-inspection.v1"
 ERROR_SCHEMA_VERSION = "aquarium-test-setup-inspection-error.v1"
@@ -135,13 +137,22 @@ def safe_repository_file(path: Path, repository: Path) -> bool:
 
 
 def lexical_path_symlinked(path: Path) -> bool:
-    absolute = Path(os.path.abspath(path))
-    current = Path(absolute.anchor)
-    for part in absolute.parts[1:]:
+    lexical = path if path.is_absolute() else Path.cwd() / path
+    current = Path(lexical.anchor)
+    for part in lexical.parts[1:]:
+        if part == "..":
+            current = current.parent
+            continue
+        if part == ".":
+            continue
         current = current / part
         if current.is_symlink():
             return True
     return False
+
+
+def normalize_shell_token_joins(command: str) -> str:
+    return re.sub(r"(?<=[A-Za-z0-9_-])[\"']+(?=[A-Za-z0-9_-])", "", command)
 
 
 def read_optional_text(path: Path, repository: Path) -> str:
@@ -218,7 +229,7 @@ def command_preserves_failure(command: str) -> bool:
 
 
 def command_executes_tests(command: str) -> bool:
-    return not INFORMATION_ONLY_ARGUMENT.search(command)
+    return not INFORMATION_ONLY_ARGUMENT.search(normalize_shell_token_joins(command))
 
 
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
@@ -267,11 +278,41 @@ def pytest_control_only_configuration(
         for value in make_variables.get("PYTEST_ADDOPTS", set())
     ):
         return True
-    for name in ("pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini"):
-        content = read_optional_text(repository / name, repository)
-        for match in re.finditer(r"(?im)^\s*addopts\s*=\s*(.+)$", content):
-            if INFORMATION_ONLY_ARGUMENT.search(match.group(1)):
+    pyproject_content = read_optional_text(repository / "pyproject.toml", repository)
+    if pyproject_content:
+        try:
+            pyproject = tomllib.loads(pyproject_content)
+            addopts = (
+                pyproject.get("tool", {})
+                .get("pytest", {})
+                .get("ini_options", {})
+                .get("addopts")
+            )
+            values = addopts if isinstance(addopts, list) else [addopts]
+            if any(
+                isinstance(value, str) and INFORMATION_ONLY_ARGUMENT.search(value)
+                for value in values
+            ):
                 return True
+        except (tomllib.TOMLDecodeError, AttributeError):
+            pass
+    for name, sections in (
+        ("pytest.ini", ("pytest",)),
+        ("setup.cfg", ("tool:pytest", "pytest")),
+        ("tox.ini", ("pytest", "tool:pytest")),
+    ):
+        content = read_optional_text(repository / name, repository)
+        parser = configparser.ConfigParser(interpolation=None)
+        try:
+            parser.read_string(content)
+        except configparser.Error:
+            continue
+        if any(
+            parser.has_option(section, "addopts")
+            and INFORMATION_ONLY_ARGUMENT.search(parser.get(section, "addopts"))
+            for section in sections
+        ):
+            return True
     return False
 
 
@@ -907,7 +948,7 @@ def inspect_bun(
     result["aggregate_serial"] = normalized == EXPECTED_BUN_AGGREGATE
 
     def calls_make(value: str) -> bool:
-        normalized_shell_words = re.sub(r"(?<=\w)[\"'](?=\w)", "", value)
+        normalized_shell_words = normalize_shell_token_joins(value)
         return bool(
             re.search(
                 r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
@@ -1145,14 +1186,14 @@ def main(arguments: list[str] | None = None) -> int:
     try:
         options = parse_arguments(arguments if arguments is not None else sys.argv[1:])
         requested_repository = Path(options.repository).expanduser()
-        if not requested_repository.is_dir():
-            raise InspectionError(
-                "repository_not_found", "repository must be an existing directory"
-            )
         if lexical_path_symlinked(requested_repository):
             raise InspectionError(
                 "repository_symlinked",
                 "repository and its lexical ancestors must not be symlinks",
+            )
+        if not requested_repository.is_dir():
+            raise InspectionError(
+                "repository_not_found", "repository must be an existing directory"
             )
         repository = requested_repository.resolve()
         payload = inspect_repository(repository)
