@@ -117,6 +117,6 @@ Do not rerun the full Python unit suite or lint unchanged Python files locally i
 
 #### Publication
 
-After the selected local gate passes, create one `[REL] Release v<version>` commit. Push `main` first and wait for its full GitHub Actions validation to succeed. Only then create and push an annotated `v<version>` tag, wait for the tag validation to succeed, and create the GitHub Release. Finally verify that remote `main`, the tag, and the GitHub Release resolve to the intended release commit.
+After the selected local gate passes, create one `[REL] Release v<version>` commit. Push `main` first, then create and push an annotated `v<version>` tag and create the GitHub Release. Finally verify that remote `main`, the tag, and the GitHub Release resolve to the intended release commit.
 
-If `main` CI fails, do not create or push the tag. If tag CI fails, do not create the GitHub Release and do not rewrite or delete the published tag without explicit authorization from Master. A light release reduces duplicated local execution; it never bypasses the repository's remote full CI.
+The selected local gate is the release validation authority; this repository does not use GitHub Actions. Do not rewrite or delete a published tag without explicit authorization from Master. A light release reduces duplicated local execution but does not weaken its required local checks or publication-order safeguards.

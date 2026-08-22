@@ -1,7 +1,7 @@
 version: 2
 commands:
   unit:
-    command: ["python3", "-m", "unittest", "tests/test_inspect_tools.py", "tests/test_task_commit_gate.py", "tests/test_normalize_manifest.py"]
+    command: ["python3", "-m", "unittest", "tests/test_inspect_tools.py", "tests/test_inspect_testing.py", "tests/test_task_commit_gate.py", "tests/test_normalize_manifest.py"]
     tags: [python, unit]
     parser: generic
     timeout_sec: 1800
@@ -11,7 +11,7 @@ commands:
     parser: generic
     timeout_sec: 1800
   all:
-    command: ["sh", "-c", "python3 -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py && ruby tests/validate.rb"]
+    command: ["sh", "-c", "python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py && ruby tests/validate.rb"]
     tags: [python, ruby, full]
     parser: generic
     timeout_sec: 3600

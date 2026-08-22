@@ -1888,7 +1888,7 @@ end
 assert(!PLUGIN.join("skills/deslop").exist?,
        "Aquarium must not bundle the third-party Deslop skill or license")
 
-%w[LICENSE README.md PRIVACY.md TERMS.md .github/workflows/validate.yml].each do |relative_path|
+%w[LICENSE README.md PRIVACY.md TERMS.md].each do |relative_path|
   assert(ROOT.join(relative_path).file?, "distribution file is missing: #{relative_path}")
 end
 [PLUGIN.join("skills"), PLUGIN.join("hooks"), PLUGIN.join("references"), PLUGIN.join("assets/podway/procedures")].each do |path|
@@ -1915,21 +1915,6 @@ assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust"
        ROOT.join("PRIVACY.md").read.include?("reads up to two million characters") &&
        ROOT.join("TERMS.md").read.include?("not a security boundary or complete enforcement mechanism"),
        "public policies must disclose hook trust, local inspection, and enforcement limits")
-
-workflow = ROOT.join(".github/workflows/validate.yml").read
-assert(workflow.include?("ruby/setup-ruby@v1"), "CI must configure Ruby explicitly")
-assert(workflow.include?("actions/setup-python@v5"), "CI must configure Python explicitly")
-assert(workflow.include?('python -m pip install "PyYAML==6.0.3"'),
-       "CI must install the pinned supported PyYAML version")
-assert(workflow.include?("tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py"),
-       "CI must run inspection, commit-hook, and bundle-normalizer tests")
-assert(workflow.include?("ruby tests/validate.rb"), "CI must run repository validation")
-assert(workflow.include?("astral-sh/ruff-action@v4.1.0") &&
-       workflow.include?("plugins/aquarium/hooks/task_commit_gate.py") &&
-       workflow.include?("plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py") &&
-       workflow.include?("tests/test_normalize_manifest.py"),
-       "CI must lint the roadmap commit hook and bundle normalizer")
-assert(workflow.include?("git diff --check"), "CI must reject whitespace damage")
 
 readme = ROOT.join("README.md").read
 assert(readme.include?("plugins/aquarium/assets/logo-white.png"), "README light-theme logo is missing")
