@@ -144,6 +144,12 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
                     quote = char
         return quote == "'"
 
+    def escaped(source: str, index: int) -> bool:
+        backslashes = 0
+        while index > backslashes and source[index - backslashes - 1] == "\\":
+            backslashes += 1
+        return backslashes % 2 == 1
+
     function_pattern = re.compile(
         r"(?ms)\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*\{(.*?)\}\s*;?"
     )
@@ -178,7 +184,7 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
     substitution_pattern = re.compile(r"`([^`]*)`|\$\(([^()]*)\)", re.DOTALL)
 
     def remove_substitution(match: re.Match[str]) -> str:
-        if single_quoted(remaining, match.start()):
+        if single_quoted(remaining, match.start()) or escaped(remaining, match.start()):
             return match.group(0)
         fragments.append(match.group(1) or match.group(2))
         return " substitution "

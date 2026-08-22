@@ -158,6 +158,7 @@ class TaskCommitGateTests(unittest.TestCase):
             "case x in y) git commit -m work;; esac",
             "commit_now() { git commit -m work; }",
             "echo '`git commit -m work`'",
+            r"echo \`git commit -m work\`",
         ):
             with self.subTest(command=command):
                 self.assertIsNone(self.run_hook(repo, command))

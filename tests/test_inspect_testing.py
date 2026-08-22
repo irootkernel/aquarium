@@ -633,7 +633,10 @@ class TestInspectTesting:
             .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
             encoding="utf-8",
         )
-        self.write("pyproject.toml", "[tool.pytest.ini_options]\naddopts = '-ra'\n")
+        self.write(
+            "pyproject.toml",
+            "[project]\nname = 'pytest'\n[tool.pytest.ini_options]\naddopts = '-ra'\n",
+        )
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
@@ -678,6 +681,8 @@ class TestInspectTesting:
         [
             ("requirements.txt", "# pytest\n"),
             ("setup.py", "# pytest\nfrom setuptools import setup\nsetup()\n"),
+            ("setup.py", "from setuptools import setup\nsetup(name='pytest')\n"),
+            ("setup.cfg", "[metadata]\nname = pytest\n"),
         ],
     )
     def test_pytest_comments_are_not_dependency_authority(

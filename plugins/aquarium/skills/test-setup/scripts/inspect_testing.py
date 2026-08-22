@@ -492,15 +492,37 @@ def pytest_requirement(value: str) -> bool:
     )
 
 
-def structured_pytest_evidence(value: Any, path: tuple[str, ...] = ()) -> bool:
-    if isinstance(value, dict):
-        return any(
-            structured_pytest_evidence(child, (*path, str(key)))
-            for key, child in value.items()
-        )
+def requirement_values(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
     if isinstance(value, list):
-        return any(structured_pytest_evidence(child, path) for child in value)
-    return isinstance(value, str) and pytest_requirement(value)
+        return [item for item in value if isinstance(item, str)]
+    if isinstance(value, dict):
+        return [str(name) for name in value]
+    return []
+
+
+def pyproject_declares_pytest(pyproject: dict[str, Any]) -> bool:
+    candidates: list[str] = []
+    project = pyproject.get("project")
+    if isinstance(project, dict):
+        candidates.extend(requirement_values(project.get("dependencies")))
+        optional = project.get("optional-dependencies")
+        if isinstance(optional, dict):
+            for requirements in optional.values():
+                candidates.extend(requirement_values(requirements))
+
+    tool = pyproject.get("tool")
+    poetry = tool.get("poetry") if isinstance(tool, dict) else None
+    if isinstance(poetry, dict):
+        candidates.extend(requirement_values(poetry.get("dependencies")))
+        candidates.extend(requirement_values(poetry.get("dev-dependencies")))
+        groups = poetry.get("group")
+        if isinstance(groups, dict):
+            for group in groups.values():
+                if isinstance(group, dict):
+                    candidates.extend(requirement_values(group.get("dependencies")))
+    return any(pytest_requirement(value) for value in candidates)
 
 
 def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
@@ -514,20 +536,36 @@ def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
             tree = ast.parse(content, filename="setup.py")
         except SyntaxError:
             return False
-        return any(
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, str)
-            and pytest_requirement(node.value)
-            for node in ast.walk(tree)
-        )
+        candidates: list[str] = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            for keyword in node.keywords:
+                if keyword.arg not in {
+                    "install_requires",
+                    "tests_require",
+                    "extras_require",
+                }:
+                    continue
+                candidates.extend(
+                    child.value
+                    for child in ast.walk(keyword.value)
+                    if isinstance(child, ast.Constant) and isinstance(child.value, str)
+                )
+        return any(pytest_requirement(value) for value in candidates)
     parser = configparser.ConfigParser(interpolation=None)
     try:
         parser.read_string(content)
     except configparser.Error:
         return False
-    return structured_pytest_evidence(
-        {section: dict(parser.items(section)) for section in parser.sections()}
-    )
+    candidates = []
+    for section in parser.sections():
+        for option, value in parser.items(section):
+            if option in {"install_requires", "tests_require"} or section.startswith(
+                "options.extras_require"
+            ):
+                candidates.extend(value.splitlines())
+    return any(pytest_requirement(value) for value in candidates)
 
 
 def command_matches_python_runner(
@@ -696,7 +734,7 @@ def inspect_frameworks(
             *sorted(repository.glob("requirements*.txt")),
         ]
         has_pytest_declaration = (
-            pyproject_valid and structured_pytest_evidence(pyproject)
+            pyproject_valid and pyproject_declares_pytest(pyproject)
         ) or any(
             python_authority_declares_pytest(path, repository)
             for path in authority_paths
