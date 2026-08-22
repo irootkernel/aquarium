@@ -591,14 +591,18 @@ class TestInspectTesting:
         assert framework["unit_int_parser"] == "generic"
 
     def test_invalid_root_package_manifest_is_nonconforming(self) -> None:
-        self.write_make_contract()
-        self.write("package.json", "{")
-        self.enroll("make")
+        for content in ("{", '{"value":1e309}', '{"name":"a","name":"b"}'):
+            with case(content=content):
+                self.write_make_contract()
+                self.write("package.json", content)
+                self.enroll("make")
 
-        result = inspect_testing.inspect_repository(self.repository)
+                result = inspect_testing.inspect_repository(self.repository)
 
-        assert result["structural_status"] == "nonconforming"
-        assert "package_json_invalid" in {item["code"] for item in result["findings"]}
+                assert result["structural_status"] == "nonconforming"
+                assert "package_json_invalid" in {
+                    item["code"] for item in result["findings"]
+                }
 
     def test_invalid_pyproject_cannot_prove_pytest(self) -> None:
         self.write_make_contract()

@@ -87,10 +87,17 @@ def strict_json_loads(content: str) -> Any:
     def reject_constant(_value: str) -> None:
         raise ValueError("invalid JSON constant")
 
+    def finite_float(value: str) -> float:
+        parsed = float(value)
+        if not math.isfinite(parsed):
+            raise ValueError("non-finite JSON number")
+        return parsed
+
     return json.loads(
         content,
         object_pairs_hook=object_from_pairs,
         parse_constant=reject_constant,
+        parse_float=finite_float,
     )
 
 

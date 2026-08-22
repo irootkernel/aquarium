@@ -1685,7 +1685,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn("credential", json.dumps(normalized))
 
     def test_json_probe_rejects_nonfinite_constants(self) -> None:
-        for constant in ("NaN", "Infinity", "-Infinity"):
+        for constant in ("NaN", "Infinity", "-Infinity", "1e309"):
             with self.subTest(constant=constant):
                 probe = inspect_tools.parse_json_probe(
                     {

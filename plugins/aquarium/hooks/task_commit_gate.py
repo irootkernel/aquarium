@@ -129,6 +129,9 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
     segment = list(segment)
     index = 0
     split_expansions = 0
+    shell_prefixes = {"!", "(", "{", "do", "else", "if", "then", "until", "while"}
+    while index < len(segment) and segment[index] in shell_prefixes:
+        index += 1
     assignments: list[str] = []
     while index < len(segment) and ASSIGNMENT_PATTERN.match(segment[index]):
         assignments.append(segment[index])
@@ -157,6 +160,16 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 cwd = candidate if candidate.is_absolute() else cwd / candidate
                 index += 1
                 continue
+            if token.startswith("-C") and len(token) > 2:
+                candidate = Path(token[2:])
+                cwd = candidate if candidate.is_absolute() else cwd / candidate
+                index += 1
+                continue
+            if token.startswith("-iC") and len(token) > 3:
+                candidate = Path(token[3:])
+                cwd = candidate if candidate.is_absolute() else cwd / candidate
+                index += 1
+                continue
             if token in {"-S", "--split-string"}:
                 if index + 1 >= len(segment) or split_expansions >= 16:
                     return None
@@ -177,6 +190,16 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 segment[index : index + 1] = replacement
                 split_expansions += 1
                 continue
+            if token.startswith("-S") and len(token) > 2:
+                if split_expansions >= 16:
+                    return None
+                try:
+                    replacement = shlex.split(token[2:], posix=True)
+                except ValueError:
+                    return None
+                segment[index : index + 1] = replacement
+                split_expansions += 1
+                continue
             if token in {"-u", "--unset", "-P"}:
                 if index + 1 >= len(segment):
                     return None
@@ -190,8 +213,17 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 continue
             break
 
-    if index < len(segment) and segment[index] == "command":
+    if index < len(segment) and segment[index] in {
+        "builtin",
+        "command",
+        "exec",
+        "nohup",
+    }:
         index += 1
+    if index < len(segment) and segment[index] == "time":
+        index += 1
+        while index < len(segment) and segment[index].startswith("-"):
+            index += 1
     if index >= len(segment) or Path(segment[index]).name != "git":
         return None
     index += 1

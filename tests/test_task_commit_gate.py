@@ -135,6 +135,21 @@ class TaskCommitGateTests(unittest.TestCase):
         self.assert_denied(
             self.run_hook(outside, f"env -S 'git -C {repo} commit -m work'")
         )
+        self.assert_denied(self.run_hook(outside, f"env -C{repo} git commit -m work"))
+        self.assert_denied(self.run_hook(outside, f"env -iC{repo} git commit -m work"))
+        self.assert_denied(
+            self.run_hook(outside, f"env '-Sgit -C {repo} commit -m work'")
+        )
+        self.assert_denied(self.run_hook(repo, "exec git commit -m work"))
+        self.assert_denied(self.run_hook(repo, "time git commit -m work"))
+        for command in (
+            "{ git commit -m work; }",
+            "( git commit -m work )",
+            "! git commit -m work",
+            "if true; then git commit -m work; fi",
+        ):
+            with self.subTest(command=command):
+                self.assert_denied(self.run_hook(repo, command))
         self.assert_denied(
             self.run_hook(
                 outside,
