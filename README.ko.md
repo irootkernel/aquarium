@@ -84,7 +84,7 @@ make test
 ## 업그레이드
 
 - 이전 `aquarium` marketplace identity에서 오는 경우: `codex plugin remove aquarium@aquarium`과 `codex plugin marketplace remove aquarium`을 실행한 뒤 위의 설치 명령을 사용합니다.
-- Legacy Root Kernel plugin에서 오는 경우: 진행 중인 legacy Podway session을 먼저 종료하거나 정리(disposition)하고, `codex plugin remove root-kernel`과 `codex plugin marketplace remove root-kernel-dev-skills`를 실행한 뒤 Aquarium을 설치하고, `$aquarium:dev-setup`으로 managed Procedure를 migration합니다.
+- Legacy Root Kernel plugin에서 오는 경우: 진행 중인 legacy Podway session을 먼저 종료하거나 정리(disposition)하고, `codex plugin remove root-kernel@root-kernel-dev-skills`와 `codex plugin marketplace remove root-kernel-dev-skills`를 실행한 뒤 Aquarium을 설치하고, `$aquarium:dev-setup`으로 managed Procedure를 migration합니다.
 
 ## 감사의 말
 

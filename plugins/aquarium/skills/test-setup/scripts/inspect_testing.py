@@ -47,7 +47,7 @@ UNITTEST_COMMAND_PATTERN = re.compile(
     r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest(?=\s|$)"
 )
 LEGACY_PYTHON_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?(?:nose|nose2|nosetests)(?=\s|$)"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?(?:\S*/)?(?:nose|nose2|nosetests)(?=\s|$)"
 )
 SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
@@ -135,6 +135,20 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
     if safe_repository_file(repository / "pubspec.yaml", repository):
         languages.add("dart")
 
+    executable_authority = read_optional_text(repository / "Makefile", repository)
+    if package:
+        scripts = package.get("scripts")
+        if isinstance(scripts, dict):
+            executable_authority += "\n" + "\n".join(
+                value for value in scripts.values() if isinstance(value, str)
+            )
+    if re.search(
+        r"(?:^|[\s;&|])(?:(?:\S*/)?python(?:\d+(?:\.\d+)*)?\s+-m\s+)?"
+        r"(?:pytest|unittest|(?:\S*/)?nose(?:2)?|(?:\S*/)?nosetests)(?:\s|$)",
+        executable_authority,
+    ):
+        languages.add("python")
+
     typescript_manifest = any(
         safe_repository_file(path, repository)
         for path in repository.glob("tsconfig*.json")
@@ -170,6 +184,15 @@ def safe_repository_file(path: Path, repository: Path) -> bool:
         if current.is_symlink():
             return False
     return current.is_file()
+
+
+def nonempty_repository_file(path: Path, repository: Path) -> bool:
+    if not safe_repository_file(path, repository):
+        return False
+    try:
+        return path.stat().st_size > 0
+    except OSError:
+        return False
 
 
 def unsafe_root_authorities(repository: Path) -> list[str]:
@@ -268,7 +291,11 @@ def framework_entry(
 def stage_commands(
     repository: Path, package: dict[str, Any] | None
 ) -> dict[str, list[str]]:
-    commands: dict[str, list[str]] = {"test-unit": [], "test-int": []}
+    commands: dict[str, list[str]] = {
+        "test-unit": [],
+        "test-int": [],
+        "test-e2e": [],
+    }
     make_content = read_optional_text(repository / "Makefile", repository)
     if make_content:
         targets, _, _ = parse_makefile(make_content)
@@ -279,7 +306,11 @@ def stage_commands(
 
     scripts_value = package.get("scripts") if package else None
     scripts = scripts_value if isinstance(scripts_value, dict) else {}
-    for stage, script_name in (("test-unit", "test:unit"), ("test-int", "test:int")):
+    for stage, script_name in (
+        ("test-unit", "test:unit"),
+        ("test-int", "test:int"),
+        ("test-e2e", "test:e2e"),
+    ):
         if commands[stage]:
             continue
         script = scripts.get(script_name)
@@ -429,7 +460,11 @@ def invalid_python_config_authorities(repository: Path) -> set[str]:
         pytest_lines = [
             line.split("#", 1)[0].strip()
             for line in content.splitlines()
-            if line.split("#", 1)[0].strip().lower().startswith("pytest")
+            if re.match(
+                r"^pytest(?:\[|\s*(?:===|==|~=|!=|<=|>=|<|>|@))",
+                line.split("#", 1)[0].strip(),
+                re.IGNORECASE,
+            )
         ]
         if any(
             re.fullmatch(
@@ -458,8 +493,6 @@ def pytest_requirement(value: str) -> bool:
 
 
 def structured_pytest_evidence(value: Any, path: tuple[str, ...] = ()) -> bool:
-    if any(part.lower() in {"pytest", "tool:pytest"} for part in path):
-        return True
     if isinstance(value, dict):
         return any(
             structured_pytest_evidence(child, (*path, str(key)))
@@ -681,14 +714,14 @@ def inspect_frameworks(
             command_matches_python_runner(
                 command, UNITTEST_COMMAND_PATTERN, make_variables
             )
-            for stage in ("test-unit", "test-int")
+            for stage in ("test-unit", "test-int", "test-e2e")
             for command in commands[stage]
         )
         has_legacy_runner = any(
             command_matches_python_runner(
                 command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
             )
-            for stage in ("test-unit", "test-int")
+            for stage in ("test-unit", "test-int", "test-e2e")
             for command in commands[stage]
         )
         has_unittest = has_unittest_command or source_contains(
@@ -1240,8 +1273,8 @@ def inspect_bun(
         isinstance(engines, dict) and isinstance(engines.get("bun"), str)
     )
     result["lockfile"] = {
-        "bun.lock": safe_repository_file(repository / "bun.lock", repository),
-        "bun.lockb": safe_repository_file(repository / "bun.lockb", repository),
+        "bun.lock": nonempty_repository_file(repository / "bun.lock", repository),
+        "bun.lockb": nonempty_repository_file(repository / "bun.lockb", repository),
     }
     result["legacy_package_manager_files"] = [
         name

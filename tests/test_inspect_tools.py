@@ -2328,13 +2328,16 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn(secret, completed.stdout)
 
     def test_non_positive_timeout_is_rejected_before_inspection(self) -> None:
-        for timeout_seconds in (0, float("nan"), float("inf")):
+        for timeout_seconds in (0, float("nan"), float("inf"), 1e308):
             with self.subTest(timeout_seconds=timeout_seconds):
                 completed = self.inspect(timeout_seconds=timeout_seconds)
                 self.assertEqual(completed.returncode, 2)
                 error = json.loads(completed.stdout)["error"]
                 self.assertEqual(error["code"], "invalid_arguments")
-                self.assertIn("greater than zero", error["message"])
+                self.assertIn("greater than zero and at most", error["message"])
+
+    def test_oversized_mcp_timeout_is_not_a_supported_number(self) -> None:
+        self.assertFalse(inspect_tools.finite_number(10**400))
 
     def test_execution_failures_are_reported_without_json_parsing(self) -> None:
         with mock.patch(

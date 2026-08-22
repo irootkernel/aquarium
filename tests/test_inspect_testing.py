@@ -192,11 +192,11 @@ class TestInspectTesting:
                 "test:prepare": "bun run format && bun run lint && bun run typecheck",
                 "test:unit": "bun run vitest run tests/unit",
                 "test:int": "bun run vitest run tests/integration",
-                "test:e2e": "python3 -m unittest discover tests/e2e",
+                "test:e2e": "bun run vitest run tests/e2e",
             },
         }
         self.write("package.json", json.dumps(package))
-        self.write("bun.lock", "")
+        self.write("bun.lock", 'vitest = "4.0.0"\n')
 
     @staticmethod
     def framework(result: dict[str, object], language: str) -> dict[str, object]:
@@ -560,7 +560,15 @@ class TestInspectTesting:
         assert parsers["test-unit"] == "pytest"
         assert parsers["test-int"] == "generic"
 
-    @pytest.mark.parametrize("runner", ["nose", "nose2", "nosetests"])
+    @pytest.mark.parametrize(
+        "runner",
+        [
+            "python3 -m nose",
+            "python3 -m nose2",
+            "python3 -m nosetests",
+            ".venv/bin/nose2",
+        ],
+    )
     def test_pytest_and_legacy_nose_mixture_requires_waiver(self, runner: str) -> None:
         self.write_make_contract()
         makefile = self.repository / "Makefile"
@@ -568,7 +576,7 @@ class TestInspectTesting:
             makefile.read_text(encoding="utf-8")
             .replace(
                 "test-unit:\n\t@true",
-                f"test-unit:\n\tpython3 -m pytest tests/unit\n\tpython3 -m {runner} tests.legacy",
+                f"test-unit:\n\tpython3 -m pytest tests/unit\n\t{runner} tests.legacy",
             )
             .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest tests/int"),
             encoding="utf-8",
@@ -599,6 +607,71 @@ class TestInspectTesting:
 
         assert result["structural_status"] == "conforming"
         assert self.framework(result, "python")["status"] == "canonical"
+
+    def test_pytest_plugin_pin_is_not_malformed_core_authority(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
+            encoding="utf-8",
+        )
+        self.write("requirements.txt", "pytest==9.1.1\npytest-cov==7.0.0\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+
+    def test_pytest_configuration_is_not_dependency_authority(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
+            encoding="utf-8",
+        )
+        self.write("pyproject.toml", "[tool.pytest.ini_options]\naddopts = '-ra'\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["status"] == "waiver_required"
+
+    def test_python_unittest_e2e_requires_waiver(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int")
+            .replace(
+                "test-e2e:\n\t@true",
+                "test-e2e:\n\tpython3 -m unittest discover tests/e2e",
+            ),
+            encoding="utf-8",
+        )
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["status"] == "waiver_required"
+
+    def test_empty_bun_lock_is_not_dependency_evidence(self) -> None:
+        self.write_bun_package()
+        self.write("bun.lock", "")
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "nonconforming"
+        assert "bun_lock_missing" in {item["code"] for item in result["findings"]}
 
     @pytest.mark.parametrize(
         ("name", "content"),

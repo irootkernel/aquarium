@@ -250,10 +250,14 @@ class NormalizeManifestTest(unittest.TestCase):
             """,
         )
         environment = os.environ.copy()
+        invalid_config = self.base / "invalid-git-config"
+        invalid_config.write_text("[invalid\n", encoding="utf-8")
         environment.update(
             {
                 "GIT_CEILING_DIRECTORIES": str(self.repository_a),
                 "GIT_COMMON_DIR": str(self.repository_b / ".git"),
+                "GIT_CONFIG_GLOBAL": str(invalid_config),
+                "GIT_CONFIG_SYSTEM": str(invalid_config),
                 "GIT_DIR": str(self.repository_b / ".git"),
                 "GIT_WORK_TREE": "/",
             }

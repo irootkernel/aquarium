@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import re
@@ -15,7 +16,7 @@ GATE_ASSIGNMENT = "AQUARIUM_COMMIT_GATE=task-commit-v1"
 LIFECYCLE_PATTERN = re.compile(
     r"\b(?:In[ \t]+Progress|In[ \t]+Review|Completed|Blocked|Deferred)\b"
 )
-SEPARATOR_CHARS = frozenset(";&|\n(){}")
+SEPARATOR_CHARS = frozenset(";&|\n")
 ASSIGNMENT_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=.*$", re.DOTALL)
 OPTIONS_WITH_VALUES = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 
@@ -100,7 +101,7 @@ def without_heredoc_bodies(command: str) -> str:
 def shell_segments(command: str) -> list[list[str]]:
     source = without_heredoc_bodies(command)
     source = source.replace("\\\r\n", "").replace("\\\n", "")
-    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n(){}")
+    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n")
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     lexer.commenters = ""
@@ -123,6 +124,67 @@ def shell_segments(command: str) -> list[list[str]]:
     if current:
         segments.append(current)
     return segments
+
+
+def executable_control_fragments(command: str) -> tuple[str, list[str]]:
+    fragments: list[str] = []
+
+    def single_quoted(source: str, stop: int) -> bool:
+        quote: str | None = None
+        escaped = False
+        for char in source[:stop]:
+            if escaped:
+                escaped = False
+            elif char == "\\" and quote != "'":
+                escaped = True
+            elif char in {"'", '"'}:
+                if quote == char:
+                    quote = None
+                elif quote is None:
+                    quote = char
+        return quote == "'"
+
+    function_pattern = re.compile(
+        r"(?ms)\b([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*\{(.*?)\}\s*;?"
+    )
+
+    def remove_function(match: re.Match[str]) -> str:
+        if single_quoted(command, match.start()):
+            return match.group(0)
+        name, body = match.group(1), match.group(2)
+        if re.search(
+            rf"(?:^|[;&|\s]){re.escape(name)}(?:$|[;&|\s])", command[match.end() :]
+        ):
+            fragments.append(body)
+        return " "
+
+    remaining = function_pattern.sub(remove_function, command)
+
+    case_pattern = re.compile(r"(?ms)\bcase\s+(\S+)\s+in\s+(.*?)\s+esac\b")
+
+    def resolve_case(match: re.Match[str]) -> str:
+        if single_quoted(remaining, match.start()):
+            return match.group(0)
+        word = match.group(1).strip("'\"")
+        for arm in re.finditer(r"(?ms)([^)]+)\)(.*?)(?:;;|;&|;;&|$)", match.group(2)):
+            patterns = [value.strip().strip("'\"") for value in arm.group(1).split("|")]
+            if any(fnmatch.fnmatchcase(word, pattern) for pattern in patterns):
+                fragments.append(arm.group(2))
+                break
+        return " "
+
+    remaining = case_pattern.sub(resolve_case, remaining)
+
+    substitution_pattern = re.compile(r"`([^`]*)`|\$\(([^()]*)\)", re.DOTALL)
+
+    def remove_substitution(match: re.Match[str]) -> str:
+        if single_quoted(remaining, match.start()):
+            return match.group(0)
+        fragments.append(match.group(1) or match.group(2))
+        return " substitution "
+
+    remaining = substitution_pattern.sub(remove_substitution, remaining)
+    return remaining, fragments
 
 
 def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | None:
@@ -373,6 +435,13 @@ def should_deny(payload: dict[str, Any]) -> bool:
         return False
     cwd_value = payload.get("cwd")
     cwd = Path(cwd_value) if isinstance(cwd_value, str) else Path.cwd()
+
+    command, fragments = executable_control_fragments(command)
+    if any(
+        should_deny({"tool_input": {"command": fragment}, "cwd": str(cwd)})
+        for fragment in fragments
+    ):
+        return True
 
     probe_base = cwd
     for segment in shell_segments(command):

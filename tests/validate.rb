@@ -1600,7 +1600,7 @@ assert(orca_review.include?("separately installed `$orca-cli` skill") &&
        orca_review.include?("Never substitute a generic subagent") &&
        orca_review.include?("starting the installed Orca runtime when needed") &&
        orca_review.include?("canonical absolute regular file outside the original Git root") &&
-       orca_review.include?("revalidate its path, file identity, digest, and version immediately before every Orca read or mutation") &&
+       orca_review.include?("revalidate its path, file type, file identity, digest, and version immediately before every Orca read or mutation") &&
        orca_review.include?("An operational failure is not an `APPROVE` result"),
        "orca-review must fail closed on missing or unverifiable Orca prerequisites")
 assert(orca_review.include?("git diff --cached --binary") &&
@@ -1643,8 +1643,9 @@ assert(orca_review.include?("every repository, target, supporting-source, instru
   assert(orca_review.include?(label), "orca-review provider label is missing: #{label}")
 end
 assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
-       orca_review.include?("Resolve each successful result to one canonical absolute regular executable") &&
-       orca_review.include?("canonical provider executable path, executable digest and observed version") &&
+       orca_review.include?("Resolve each successful result to one canonical absolute regular platform-native executable") &&
+       orca_review.include?("canonical native provider executable path, executable digest and observed version") &&
+       orca_review.include?("Reject a shebang script, text launcher, shim, or wrapper") &&
        orca_review.include?("Immediately before terminal creation and again immediately before the source-bearing Dispatch") &&
        orca_review.include?("Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`") &&
        orca_review.include?("outside the original Git root") &&
@@ -1658,7 +1659,7 @@ assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-m
        orca_provider_contracts.include?("terminal create --worktree path:<absoluteSnapshotPath>") &&
        orca_provider_contracts.include?("using `<PROVIDER>` as the command's executable") &&
        orca_review.include?("Never expose or identify the original checkout to a participant") &&
-       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute path") &&
+       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute native-executable path") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
        orca_review.include?("read-only `agent-context --json`") &&
        orca_review.include?("query only the exact route with `<ORCA> <route> --help`") &&
@@ -2136,7 +2137,7 @@ assert(readme.include?("codex plugin add aquarium@root-kernel"),
        "README plugin install command is missing")
 assert(readme.include?("By [Root Kernel](https://home.rootkernel.xyz)"),
        "README Root Kernel byline is missing")
-assert(readme.include?("codex plugin remove root-kernel") &&
+assert(readme.include?("codex plugin remove root-kernel@root-kernel-dev-skills") &&
        readme.include?("codex plugin marketplace remove root-kernel-dev-skills") &&
        readme.include?("$aquarium:dev-setup"),
        "README product-rename migration is missing")

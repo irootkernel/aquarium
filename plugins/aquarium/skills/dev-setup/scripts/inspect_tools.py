@@ -21,6 +21,7 @@ MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
+MAX_COMMAND_TIMEOUT_SECONDS = 86_400.0
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 SANHO_SKILL_FILES = (
     "SKILL.md",
@@ -99,6 +100,15 @@ def strict_json_loads(content: str) -> Any:
         parse_constant=reject_constant,
         parse_float=finite_float,
     )
+
+
+def finite_number(value: Any) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def run_command(
@@ -1371,17 +1381,9 @@ def inspect_mulgae_mcp(
         cwd_bound = False
     startup_timeout = result.get("startup_timeout_sec")
     tool_timeout = result.get("tool_timeout_sec")
-    startup_supported = (
-        isinstance(startup_timeout, (int, float))
-        and not isinstance(startup_timeout, bool)
-        and math.isfinite(startup_timeout)
-        and startup_timeout >= 30
-    )
+    startup_supported = finite_number(startup_timeout) and startup_timeout >= 30
     tool_supported = (
-        isinstance(tool_timeout, (int, float))
-        and not isinstance(tool_timeout, bool)
-        and math.isfinite(tool_timeout)
-        and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
+        finite_number(tool_timeout) and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
     )
     binary_matches = bool(
         resolved_command
@@ -1722,10 +1724,7 @@ def inspect_gaori_mcp(
 
     tool_timeout = result.get("tool_timeout_sec")
     timeout_supported = (
-        isinstance(tool_timeout, (int, float))
-        and not isinstance(tool_timeout, bool)
-        and math.isfinite(tool_timeout)
-        and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
+        finite_number(tool_timeout) and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
     )
     binary_matches = bool(
         resolved_command
@@ -2411,9 +2410,14 @@ def parse_arguments() -> argparse.Namespace:
         help="Require an explicitly selected Mulgae MCP registration for status",
     )
     arguments = parser.parse_args()
-    if not math.isfinite(arguments.timeout_seconds) or arguments.timeout_seconds <= 0:
+    if (
+        not math.isfinite(arguments.timeout_seconds)
+        or arguments.timeout_seconds <= 0
+        or arguments.timeout_seconds > MAX_COMMAND_TIMEOUT_SECONDS
+    ):
         raise InspectionError(
-            "invalid_arguments", "--timeout-seconds must be greater than zero"
+            "invalid_arguments",
+            f"--timeout-seconds must be greater than zero and at most {MAX_COMMAND_TIMEOUT_SECONDS:g}",
         )
     return arguments
 

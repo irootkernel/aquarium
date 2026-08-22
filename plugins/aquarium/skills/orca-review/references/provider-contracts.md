@@ -2,7 +2,7 @@
 
 Read only the section for the selected tool:model. The version-matched Orca guides remain authoritative for command grammar, terminal readiness, Dispatch injection, waiting, transcript reads, recovery, and release.
 
-In the examples, `<ORCA>` means the single executable already resolved from `$orca-cli`, and `<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute path. Replace both directly rather than creating a shell variable, resolving a bare command again, or running a placeholder literally. Create the Run and Task before the terminal, wait for that exact terminal to become TUI-idle, then inject the Task as one supervised Dispatch.
+In the examples, `<ORCA>` means the single platform-native executable already resolved from `$orca-cli`, and `<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute native-executable path. A shebang script, text launcher, shim, or wrapper is not eligible because its recorded file can remain unchanged while delegated code changes. Replace both paths directly rather than creating a shell variable, resolving a bare command again, or running a placeholder literally. Create the Run and Task before the terminal, wait for that exact terminal to become TUI-idle, then inject the Task as one supervised Dispatch.
 
 ## Shared Launch Boundary
 

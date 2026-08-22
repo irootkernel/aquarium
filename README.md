@@ -84,7 +84,7 @@ The gate needs Python 3.11 or newer, Ruby 3.3 or newer, and the pinned `requirem
 ## Upgrading
 
 - From the old `aquarium` marketplace identity: run `codex plugin remove aquarium@aquarium` and `codex plugin marketplace remove aquarium`, then use the install commands above.
-- From the legacy Root Kernel plugin: finish or dispose of any active legacy Podway session, run `codex plugin remove root-kernel` and `codex plugin marketplace remove root-kernel-dev-skills`, install Aquarium, then let `$aquarium:dev-setup` migrate the managed Procedures.
+- From the legacy Root Kernel plugin: finish or dispose of any active legacy Podway session, run `codex plugin remove root-kernel@root-kernel-dev-skills` and `codex plugin marketplace remove root-kernel-dev-skills`, install Aquarium, then let `$aquarium:dev-setup` migrate the managed Procedures.
 
 ## Thanks
 

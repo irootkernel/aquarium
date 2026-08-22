@@ -17,7 +17,10 @@ It does not authorize source-checkout edits, tests, builds, generators, formatte
 
 1. Require the separately installed `$orca-cli` skill to be available in the active skill catalog. If its availability cannot be established, stop; do not approximate its contract from this skill.
 2. Resolve the Orca command exactly as `$orca-cli` requires, but before the first invocation parse it as a bounded executable plus fixed arguments. Resolve the executable to one canonical absolute regular file outside the original Git root, record its SHA-256 digest and local version, and reject a relative, ambiguous, repository-owned, or non-regular `ORCA_CLI_COMMAND` or `PATH` result.
-   Pin that exact command for the complete invocation and revalidate its path, file identity, digest, and version immediately before every Orca read or mutation. If any check fails or drifts, report the exact error and stop; do not execute it or try another executable.
+
+   Inspect the file header and require a platform-native executable image. Reject a shebang script, text launcher, shim, or wrapper whose unchanged entrypoint can delegate to mutable code outside the recorded file.
+
+   Pin that exact native command for the complete invocation and revalidate its path, file type, file identity, digest, and version immediately before every Orca read or mutation. If any check fails or drifts, report the exact error and stop; do not execute it or try another executable.
 3. Load the version-matched guides with the selected executable's `skills get orca-cli` and `skills get orchestration` commands before using Orca. Follow those live guides rather than cached command syntax, including the examples in this skill and its reference. Stop when either guide cannot be retrieved.
    When a required local route is omitted from both retrieved guides, query the selected CLI's read-only `agent-context --json` and use only the exact command schema for that route. If that schema is also absent, query only the exact route with `<ORCA> <route> --help`. Treat the selected installed CLI's agent-context or help as grammar authority for that route only; stop if neither exposes every required identity.
 4. Confirm `status --json`. If the CLI exists but the app is stopped, attempt `open --json` once and confirm status again.
@@ -41,7 +44,11 @@ For a staged target, require the reviewer to inspect index blobs and `git diff -
 
 ## Discover and Select the AI
 
-Probe only these executable names with `command -v`: `claude`, `codex`, `cursor-agent`, and `kimi`. Resolve each successful result to one canonical absolute regular executable outside the original Git root, record its SHA-256 digest, and invoke that exact path for its local `--version` command. A command is available only when path resolution, outside-root verification, hashing, and the version probe succeed. Do not authenticate, list remote models, contact a provider, update a CLI, or inspect credentials during discovery.
+Probe only these executable names with `command -v`: `claude`, `codex`, `cursor-agent`, and `kimi`. Resolve each successful result to one canonical absolute regular platform-native executable outside the original Git root, record its SHA-256 digest, and invoke that exact path for its local `--version` command.
+
+Reject shebang scripts, text launchers, shims, and wrappers because an unchanged entrypoint could delegate transmission to mutable unrecorded code. A command is available only when path resolution, native-file verification, outside-root verification, hashing, and the version probe succeed.
+
+Do not authenticate, list remote models, contact a provider, update a CLI, or inspect credentials during discovery.
 
 Require the Orca runtime itself to be local to the coordinator host and current operating-system user. Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`, any `--environment` or `--pairing-code` route, and any agent-context or guide evidence that identifies a remote, paired, or unverifiable runtime.
 
@@ -66,7 +73,7 @@ Require one valid UTF-8 record with no Unicode control or format character and n
 
 Stop on an identity containing any Unicode `Cc`, `Cf`, `Zl`, or `Zp` code point, including `U+0000` through `U+001F`, `U+007F` through `U+009F`, bidirectional marks, embeddings, overrides, and isolates such as `U+202E`, and `U+2028` or `U+2029`; never escape, normalize, or substitute it into consent text, manifest records, or command arguments.
 
-Each preparation choice must identify the exact tool:model, canonical provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
+Each preparation choice must identify the exact tool:model, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
 
 Never auto-select, infer consent from silence, or treat preparation approval or approval for another provider, snapshot, or manifest as transmission consent.
 
@@ -80,7 +87,7 @@ Build the exact Aquarium-supplied Task specification before transmission. In a c
 
 Sort newline-terminated `<sha256>  <provider-visible-identity>` records and hash them as the transmission-manifest digest. Make the complete snapshot read-only, then recompute and require every manifest record to match.
 
-Present a second, final structured choice that identifies the exact tool:model, canonical provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
+Present a second, final structured choice that identifies the exact tool:model, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
 
 Disclose that the selected local CLI runs as the current operating-system user. Aquarium's manifest and read-only instructions constrain what Aquarium supplies and authorizes, but are not an operating-system read sandbox; the CLI may technically access other files already readable by that user. Require explicit acceptance of that local-process capability in the same final choice.
 
@@ -88,7 +95,7 @@ Disclose that Orca's version-matched orchestration layer prepends its own lifecy
 
 A decline deletes only the owned snapshot and coordinator manifest. Any unavailable structured ask/answer surface stops without registration or transmission.
 
-Immediately after final selection and before creating Orca state or transmitting source, revalidate the local Orca runtime identity and recompute the selected provider executable's canonical path, digest, and version, the target, source manifest, every Aquarium-supplied snapshot and Task record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
+Immediately after final selection and before creating Orca state or transmitting source, revalidate the local Orca runtime identity and recompute the selected provider executable's canonical path, native file type, digest, and version, the target, source manifest, every Aquarium-supplied snapshot and Task record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
 
 After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded agent-context and exact-route help fallbacks above.
 
@@ -98,7 +105,7 @@ Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve
 
 On any failure before terminal or worker launch, including registration, path verification, Run creation, or Task creation, inspect the local runtime and every partially created identity once. Remove only the exact owned registration, snapshot, and coordinator manifest when their identities are proven. Remove an exact owned Task or Run only through cleanup grammar established by the live guide; otherwise report that bounded retained lifecycle state for manual recovery, then stop.
 
-Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Immediately before terminal creation and again immediately before the source-bearing Dispatch, revalidate the local runtime, provider executable path, digest and version, exact setup and snapshot-path mapping, every provider-visible snapshot and Aquarium Task byte, and all three consented digests. Any drift stops before Dispatch; do not transmit and do not repair the consented bytes in place.
+Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Immediately before terminal creation and again immediately before the source-bearing Dispatch, revalidate the local runtime, provider executable path, native file type, digest and version, exact setup and snapshot-path mapping, every provider-visible snapshot and Aquarium Task byte, and all three consented digests. Any drift stops before Dispatch; do not transmit and do not repair the consented bytes in place.
 
 Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path, then use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble.
 
