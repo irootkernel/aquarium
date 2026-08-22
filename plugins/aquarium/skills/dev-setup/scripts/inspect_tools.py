@@ -1028,12 +1028,14 @@ def mulgae_configuration_entry(
     entry = configuration_entry(repository, relative_path, timeout_seconds)
     entry["tracked"] = tracked_by_git(repository, relative_path, timeout_seconds)
     if relative_path == ".mulgae/local.yaml":
-        try:
-            entry["mode"] = oct(
-                repository.joinpath(relative_path).stat().st_mode & 0o777
-            )
-        except OSError:
-            entry["mode"] = None
+        entry["mode"] = None
+        if entry["present"]:
+            try:
+                entry["mode"] = oct(
+                    repository.joinpath(relative_path).stat().st_mode & 0o777
+                )
+            except OSError:
+                pass
         entry["mode_0600"] = entry["mode"] == "0o600"
     return entry
 
@@ -1055,8 +1057,8 @@ def project_mcp_origin_verified(
         timeout_seconds,
     )
     if not ambient_raw["ok"]:
-        missing = re.search(
-            rf"No MCP server named ['\"]?{re.escape(name)}['\"]? found\.",
+        missing = re.fullmatch(
+            rf"\s*Error: No MCP server named ['\"]?{re.escape(name)}['\"]? found\.\s*",
             ambient_raw.get("stderr", ""),
         )
         return bool(
@@ -1072,12 +1074,13 @@ def project_mcp_origin_verified(
 def inspect_mulgae_mcp(
     repository: Path, mulgae_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
-    project_config_present, _ = safe_managed_file_state(
+    project_config_present, project_config_symlinked = safe_managed_file_state(
         repository / ".codex" / "config.toml", repository
     )
     registration: dict[str, Any] = {
         "status": "missing",
         "project_config_present": project_config_present,
+        "project_config_symlinked": project_config_symlinked,
         "project_origin_verified": False,
         "enabled": None,
         "stdio": None,
@@ -1094,6 +1097,11 @@ def inspect_mulgae_mcp(
         "startup_timeout_sec": None,
         "tool_timeout_sec": None,
     }
+    if project_config_symlinked:
+        registration.update(
+            {"status": "degraded", "reason": "project_configuration_symlinked"}
+        )
+        return registration
     codex_executable = shutil.which("codex")
     if not codex_executable:
         registration.update(
@@ -1312,6 +1320,20 @@ def inspect_mulgae(
     tool["probes"]["version"] = version_probe
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_mulgae_version(tool["version"])
+    unsafe_configuration = any(
+        entry["symlinked"] for entry in tool["configuration"][:2]
+    )
+    if unsafe_configuration:
+        tool["probes"]["doctor"] = skipped_probe("configuration_symlinked")
+        tool["health"]["mulgae_cli_compatibility"] = (
+            "compatible"
+            if version_probe["ok"]
+            and tool["version_supported"]
+            and tool["platform"]["supported"]
+            else "incompatible"
+        )
+        tool["status"] = "degraded"
+        return tool
     doctor_probe = json_probe(
         [tool["executable"], "doctor", "--output", "json"],
         repository,
@@ -1399,10 +1421,13 @@ def inspect_gaori_mcp(
     repository: Path, gaori_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
     project_config = repository.joinpath(".codex/config.toml")
-    project_config_present, _ = safe_managed_file_state(project_config, repository)
+    project_config_present, project_config_symlinked = safe_managed_file_state(
+        project_config, repository
+    )
     registration: dict[str, Any] = {
         "status": "missing",
         "project_config_present": project_config_present,
+        "project_config_symlinked": project_config_symlinked,
         "project_origin_verified": False,
         "enabled": None,
         "stdio": None,
@@ -1411,6 +1436,11 @@ def inspect_gaori_mcp(
         "binary_matches_selected": None,
         "tool_timeout_sec": None,
     }
+    if project_config_symlinked:
+        registration.update(
+            {"status": "degraded", "reason": "project_configuration_symlinked"}
+        )
+        return registration
     codex_executable = shutil.which("codex")
     if not codex_executable:
         registration["status"] = "unavailable"

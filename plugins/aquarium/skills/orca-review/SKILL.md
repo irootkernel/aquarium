@@ -111,7 +111,9 @@ When the cumulative budget expires without an accepted terminal delivery, inspec
 
 For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict.
 
-When retention was requested, run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker. Otherwise release the settled succeeded or failed worker, verify the release receipt, then acknowledge the delivery. A failed retain or release is an operational gap.
+For every Delivery batch, process every message completely. When retention was requested for an accepted terminal delivery, run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker. Otherwise release the settled succeeded or failed worker and verify the release receipt. A failed retain or release is an operational gap.
+
+After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch with `check --ack <deliveryId> --wait`. This applies to accepted, rejected, and stale completions as well as questions and escalations. Never acknowledge a batch while any message is unresolved or a required retain or release failed; without acknowledgement, FIFO replay intentionally blocks later deliveries.
 
 After successful release, retain the exact temporary registration and owned snapshot through scope revalidation. If retention was requested or the worker remains active, retain both and report their paths and identities. Do not release or clean up after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
 

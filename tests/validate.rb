@@ -227,6 +227,8 @@ assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?("safe_managed_file_state") &&
        dev_setup_script_body.include?("project_mcp_origin_verified") &&
        dev_setup_script_body.include?("project_registration_origin_unverified") &&
+       dev_setup_script_body.include?("project_configuration_symlinked") &&
+       dev_setup_script_body.include?("re.fullmatch") &&
        dev_setup_script_body.include?("No MCP server named") &&
        dev_setup_script_body.include?('args == ["mcp", "serve"]') &&
        dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
@@ -414,6 +416,9 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("sensitive_relative_path") &&
        test_setup_script_body.include?("safe_repository_file") &&
        test_setup_script_body.include?("make_variable_values") &&
+       test_setup_script_body.include?("pytest_control_only_configuration") &&
+       test_setup_script_body.include?("MAKE_ALIAS_PATTERN") &&
+       test_setup_script_body.include?("repository_symlinked") &&
        test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
@@ -441,7 +446,8 @@ assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("Test Frameworks") &&
        test_setup_contract.include?("Gaori Mapping") &&
        test_setup_contract.include?("Approved by Master") &&
-       test_setup_contract.include?("collection-only aliases") &&
+       test_setup_contract.include?("Static pytest `addopts` and `PYTEST_ADDOPTS`") &&
+       test_setup_contract.include?("Make-valued shell aliases") &&
        test_setup_contract.include?("Stale waivers do not authorize a skip"),
        "test contract must define stable rules and bounded legacy waivers")
 assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
@@ -1685,6 +1691,12 @@ assert(orca_review.include?("one cumulative liveness budget") &&
        orca_review.include?("stop waiting, leave any active worker intact") &&
        orca_review.include?("Further waiting or cancellation requires an explicit user request"),
        "orca-review must bound repeated liveness checkpoints without mutating an active worker")
+assert(orca_review.include?("After every message in the batch is processed") &&
+       orca_review.include?("check --ack <deliveryId> --wait") &&
+       orca_review.include?("questions and escalations") &&
+       orca_review.include?("FIFO replay intentionally blocks later deliveries") &&
+       orca_review.include?("Never acknowledge a batch while any message is unresolved"),
+       "orca-review must acknowledge every fully processed Delivery batch without bypassing settlement")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&

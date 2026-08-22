@@ -45,7 +45,10 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--co|--list|--list-tests)(?:\s|$)"
+    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--list|--list-tests)(?:\s|$)"
+)
+MAKE_ALIAS_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*['\"]?(?:\S*/)?make['\"]?(?:\s|$)"
 )
 
 
@@ -245,6 +248,22 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
     }
 
 
+def pytest_control_only_configuration(
+    repository: Path, make_variables: dict[str, set[str]]
+) -> bool:
+    if any(
+        INFORMATION_ONLY_ARGUMENT.search(value)
+        for value in make_variables.get("PYTEST_ADDOPTS", set())
+    ):
+        return True
+    for name in ("pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini"):
+        content = read_optional_text(repository / name, repository)
+        for match in re.finditer(r"(?im)^\s*addopts\s*=\s*(.+)$", content):
+            if INFORMATION_ONLY_ARGUMENT.search(match.group(1)):
+                return True
+    return False
+
+
 def command_matches_python_runner(
     command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
 ) -> bool:
@@ -391,6 +410,8 @@ def inspect_frameworks(
             stage: python_stage_parser(commands[stage], make_variables)
             for stage in ("test-unit", "test-int")
         }
+        if pytest_control_only_configuration(repository, make_variables):
+            stage_parsers = {stage: None for stage in stage_parsers}
         has_pytest_command = "pytest" in stage_parsers.values()
         has_unittest = "generic" in stage_parsers.values() or source_contains(
             repository,
@@ -877,9 +898,12 @@ def inspect_bun(
         name
         for name, value in scripts.items()
         if isinstance(value, str)
-        and re.search(
-            r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
-            value,
+        and (
+            re.search(
+                r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
+                value,
+            )
+            or MAKE_ALIAS_PATTERN.search(value)
         )
     )
     package_manager = package.get("packageManager")
@@ -1105,7 +1129,12 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
 def main(arguments: list[str] | None = None) -> int:
     try:
         options = parse_arguments(arguments if arguments is not None else sys.argv[1:])
-        repository = Path(options.repository).expanduser().resolve()
+        requested_repository = Path(options.repository).expanduser()
+        if requested_repository.is_symlink():
+            raise InspectionError(
+                "repository_symlinked", "repository must not be a symlink"
+            )
+        repository = requested_repository.resolve()
         if not repository.is_dir():
             raise InspectionError(
                 "repository_not_found", "repository must be an existing directory"

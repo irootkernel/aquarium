@@ -138,6 +138,7 @@ class InspectToolsTest(unittest.TestCase):
         gaori_mcp_mode: str | None = None,
         gaori_mcp_global: bool = False,
         mcp_neutral_failure: bool = False,
+        mcp_neutral_mixed_missing: bool = False,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
         podway_version: str = "v0.2.5",
@@ -421,6 +422,10 @@ class InspectToolsTest(unittest.TestCase):
                     else True
                 )
                 if server in {{"mulgae", "gaori"}} and pathlib.Path.cwd().resolve() != pathlib.Path({str(self.repository)!r}).resolve():
+                    if {mcp_neutral_mixed_missing!r}:
+                        print("neutral configuration failed", file=sys.stderr)
+                        print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
+                        raise SystemExit(1)
                     if {mcp_neutral_failure!r}:
                         print("neutral configuration failed", file=sys.stderr)
                         raise SystemExit(1)
@@ -1575,6 +1580,52 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(registration["project_origin_verified"])
         self.assertEqual(
             registration["reason"], "project_registration_origin_unverified"
+        )
+
+    def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
+        self.write_project_mcp_config("mulgae")
+        self.install_fake_tools(
+            mulgae_mcp_mode="configured", mcp_neutral_mixed_missing=True
+        )
+
+        registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+            "mcp_registration"
+        ]
+
+        self.assertEqual(registration["status"], "degraded")
+        self.assertFalse(registration["project_origin_verified"])
+
+    def test_symlinked_mulgae_and_codex_configuration_skip_owning_probes(self) -> None:
+        external = self.base / "external-config"
+        external.mkdir()
+        external.joinpath("config.yaml").write_text("version: 3\n", encoding="utf-8")
+        external.joinpath("local.yaml").write_text("providers: {}\n", encoding="utf-8")
+        external.joinpath("config.toml").write_text(
+            "[mcp_servers.mulgae]\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".mulgae").mkdir()
+        self.repository.joinpath(".mulgae/config.yaml").symlink_to(
+            external / "config.yaml"
+        )
+        self.repository.joinpath(".mulgae/local.yaml").symlink_to(
+            external / "local.yaml"
+        )
+        self.repository.joinpath(".codex").mkdir()
+        self.repository.joinpath(".codex/config.toml").symlink_to(
+            external / "config.toml"
+        )
+        self.install_fake_tools(mulgae_mcp_mode="configured")
+
+        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+
+        self.assertEqual(mulgae["status"], "degraded")
+        self.assertEqual(
+            mulgae["probes"]["doctor"]["reason"], "configuration_symlinked"
+        )
+        self.assertIsNone(mulgae["configuration"][1]["mode"])
+        self.assertEqual(
+            mulgae["mcp_registration"]["reason"],
+            "project_configuration_symlinked",
         )
 
     def test_mulgae_mcp_registration_mismatch_is_degraded(self) -> None:

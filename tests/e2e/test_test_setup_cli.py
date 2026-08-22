@@ -116,3 +116,17 @@ def test_cli_reports_missing_contract_entrypoints_without_mutation(
     assert payload["structural_status"] == "nonconforming"
     assert {"makefile_missing", "testing_document_missing"} <= codes
     assert after == before
+
+
+def test_cli_rejects_symlinked_repository_root(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    write_conforming_repository(repository)
+    linked_repository = tmp_path / "linked-repository"
+    linked_repository.symlink_to(repository, target_is_directory=True)
+
+    completed = run_inspector(linked_repository)
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 2
+    assert payload["error"]["code"] == "repository_symlinked"
