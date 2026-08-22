@@ -762,6 +762,66 @@ class TestInspectTesting:
         assert result["detected_languages"] == ["python", "typescript"]
         assert result["selected_profile"] == "polyglot-make"
 
+    def test_unknown_equals_pytest_option_fails_closed_for_e2e_ownership(
+        self,
+    ) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "python3 -m pytest --plugin-path=e2e e2e"
+        self.write("package.json", json.dumps(package))
+        self.write("e2e/test_cli.py", "def test_cli():\n    assert True\n")
+        self.write_bun_adapter()
+        self.enroll("polyglot-make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["python", "typescript"]
+
+    def test_pytest_option_terminator_preserves_e2e_roots(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "python3 -m pytest -- e2e src"
+        self.write("package.json", json.dumps(package))
+        self.write("e2e/test_cli.py", "def test_cli():\n    assert True\n")
+        self.write("src/test_service.py", "def test_service():\n    assert True\n")
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+
+    def test_pytest_assert_value_is_not_an_e2e_root(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "python3 -m pytest --assert plain e2e"
+        self.write("package.json", json.dumps(package))
+        self.write("e2e/test_cli.py", "def test_cli():\n    assert True\n")
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+
+    def test_node_modules_python_is_not_product_source(self) -> None:
+        self.write_bun_package()
+        self.write(
+            "node_modules/example/tool.py", "def dependency():\n    return True\n"
+        )
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["typescript"]
+
     def test_typescript_profile_requires_waiver_for_python_unittest_e2e(self) -> None:
         self.write_bun_package()
         package = json.loads(

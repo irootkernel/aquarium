@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 GATE_ASSIGNMENT = "AQUARIUM_COMMIT_GATE=task-commit-v1"
+GATE_NAME, GATE_VALUE = GATE_ASSIGNMENT.split("=", 1)
 LIFECYCLE_PATTERN = re.compile(
     r"\b(?:In[ \t]+Progress|In[ \t]+Review|Completed|Blocked|Deferred)\b"
 )
@@ -59,21 +60,54 @@ def heredoc_specs(
 
         delimiter_chars: list[str] = []
         delimiter_quote: str | None = None
+        ansi_c_quote = False
         delimiter_quoted = False
         while cursor < len(line):
             char = line[cursor]
             if delimiter_quote is not None:
                 if char == delimiter_quote:
                     delimiter_quote = None
-                elif char == "\\" and delimiter_quote == '"' and cursor + 1 < len(line):
-                    cursor += 1
-                    delimiter_chars.append(line[cursor])
+                    ansi_c_quote = False
+                elif char == "\\" and cursor + 1 < len(line):
+                    next_char = line[cursor + 1]
+                    if ansi_c_quote:
+                        ansi_escapes = {
+                            "a": "\a",
+                            "b": "\b",
+                            "e": "\x1b",
+                            "f": "\f",
+                            "n": "\n",
+                            "r": "\r",
+                            "t": "\t",
+                            "v": "\v",
+                            "\\": "\\",
+                            "'": "'",
+                            '"': '"',
+                        }
+                        delimiter_chars.append(ansi_escapes.get(next_char, next_char))
+                        cursor += 2
+                        continue
+                    if delimiter_quote == '"' and next_char in {"$", "`", '"', "\\"}:
+                        delimiter_chars.append(next_char)
+                        cursor += 2
+                        continue
+                    delimiter_chars.append(char)
                 else:
                     delimiter_chars.append(char)
                 cursor += 1
                 continue
             if char in " \t\r\n;&|<>()":
                 break
+            if (
+                char == "$"
+                and cursor + 1 < len(line)
+                and line[cursor + 1] in {"'", '"'}
+            ):
+                delimiter_quoted = True
+                delimiter_quote = line[cursor + 1]
+                ansi_c_quote = delimiter_quote == "'"
+                cursor += 2
+                continue
             if char in {"'", '"'}:
                 delimiter_quoted = True
                 delimiter_quote = char
@@ -242,9 +276,10 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
     shell_prefixes = {"!", "(", "{", "do", "else", "if", "then", "until", "while"}
     while index < len(segment) and segment[index] in shell_prefixes:
         index += 1
-    assignments: list[str] = []
+    assignments: dict[str, str] = {}
     while index < len(segment) and ASSIGNMENT_PATTERN.match(segment[index]):
-        assignments.append(segment[index])
+        name, value = segment[index].split("=", 1)
+        assignments[name] = value
         index += 1
 
     wrappers = {"builtin", "command", "exec", "nohup"}
@@ -266,7 +301,12 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 index += 1
                 break
             if ASSIGNMENT_PATTERN.match(token):
-                assignments.append(token)
+                name, value = token.split("=", 1)
+                assignments[name] = value
+                index += 1
+                continue
+            if token in {"-i", "--ignore-environment"}:
+                assignments.clear()
                 index += 1
                 continue
             if token in {"-C", "--chdir"}:
@@ -287,6 +327,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 index += 1
                 continue
             if token.startswith("-iC") and len(token) > 3:
+                assignments.clear()
                 candidate = Path(token[3:])
                 cwd = candidate if candidate.is_absolute() else cwd / candidate
                 index += 1
@@ -321,13 +362,20 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 segment[index : index + 1] = replacement
                 split_expansions += 1
                 continue
-            if token in {"-u", "--unset", "-P"}:
+            if token in {"-u", "--unset"}:
                 if index + 1 >= len(segment):
                     return None
+                assignments.pop(segment[index + 1], None)
                 index += 2
                 continue
             if token.startswith("--unset="):
+                assignments.pop(token.split("=", 1)[1], None)
                 index += 1
+                continue
+            if token == "-P":
+                if index + 1 >= len(segment):
+                    return None
+                index += 2
                 continue
             if token.startswith("-"):
                 index += 1
@@ -344,11 +392,12 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         else:
             index += 1
     if index < len(segment) and segment[index] == "env":
-        nested = git_commit_invocation([*assignments, *segment[index:]], cwd)
+        inherited = [f"{name}={value}" for name, value in assignments.items()]
+        nested = git_commit_invocation([*inherited, *segment[index:]], cwd)
         if nested is None:
             return None
         nested_cwd, nested_gated = nested
-        return nested_cwd, nested_gated or GATE_ASSIGNMENT in assignments
+        return nested_cwd, nested_gated
     if index >= len(segment) or Path(segment[index]).name != "git":
         return None
     index += 1
@@ -356,9 +405,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
     git_path_base = cwd
     probe_cwd = cwd
     git_dir: Path | None = None
-    assignment_values = dict(
-        assignment.split("=", 1) for assignment in assignments if "=" in assignment
-    )
+    assignment_values = assignments
     work_tree_value = assignment_values.get("GIT_WORK_TREE")
     if work_tree_value:
         candidate = Path(work_tree_value)
@@ -377,7 +424,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                     return None
                 if resolved_git_dir.name == ".git":
                     probe_cwd = resolved_git_dir.parent
-            return probe_cwd, GATE_ASSIGNMENT in assignments
+            return probe_cwd, assignments.get(GATE_NAME) == GATE_VALUE
         if token == "--":
             return None
         if token == "-C":

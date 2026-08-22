@@ -128,6 +128,19 @@ class TaskCommitGateTests(unittest.TestCase):
                 command = f"cat <<{marker}\nnot a command\nEOF\ngit commit -m real\n"
                 self.assert_denied(self.run_hook(repo, command))
 
+    def test_commit_after_extended_quoted_heredoc_is_denied(self) -> None:
+        repo = self.make_repo("TASK-1 | Completed\n")
+        for marker, delimiter in (
+            ('"E\\OF"', "E\\OF"),
+            ("$'EOF'", "EOF"),
+            ('$"EOF"', "EOF"),
+        ):
+            with self.subTest(marker=marker):
+                command = (
+                    f"cat <<{marker}\nnot a command\n{delimiter}\ngit commit -m real\n"
+                )
+                self.assert_denied(self.run_hook(repo, command))
+
     def test_commit_after_heredoc_is_denied(self) -> None:
         repo = self.make_repo("TASK-1 | Completed\n")
         command = "cat <<'EOF'\nnot a command\nEOF\ngit commit -m real\n"
@@ -249,6 +262,17 @@ class TaskCommitGateTests(unittest.TestCase):
         repo = self.make_repo("TASK-1 | In Progress\n")
         command = "echo AQUARIUM_COMMIT_GATE=task-commit-v1; git commit -m work"
         self.assert_denied(self.run_hook(repo, command))
+
+    def test_removed_or_overridden_gate_marker_does_not_bypass(self) -> None:
+        repo = self.make_repo("TASK-1 | In Progress\n")
+        for command in (
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 env -i git commit",
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 env -u AQUARIUM_COMMIT_GATE git commit",
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 env AQUARIUM_COMMIT_GATE=wrong git commit",
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 AQUARIUM_COMMIT_GATE=wrong git commit",
+        ):
+            with self.subTest(command=command):
+                self.assert_denied(self.run_hook(repo, command))
 
     def test_tracked_roadmap_symlink_is_not_followed(self) -> None:
         repo = self.make_repo()

@@ -183,6 +183,7 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                 )
                 if pytest_index is not None:
                     pytest_options_with_values = {
+                        "--assert",
                         "--basetemp",
                         "--capture",
                         "--color",
@@ -287,14 +288,13 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                             skip_value = False
                             continue
                         option = token.split("=", 1)[0]
+                        if token == "--":
+                            continue
                         if option in pytest_options_with_values:
                             skip_value = "=" not in token
                             continue
                         if token.startswith("-"):
-                            if (
-                                "=" not in token
-                                and option not in pytest_options_without_values
-                            ):
+                            if option not in pytest_options_without_values:
                                 ambiguous_option = True
                                 break
                             continue
@@ -323,7 +323,10 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
             safe_repository_file(path, repository)
             and not sensitive_relative_path(path, repository)
             for path in repository.rglob("*.py")
-            if not any(part in {".git", ".venv", "vendor"} for part in path.parts)
+            if not any(
+                part in {".git", ".venv", "node_modules", "vendor"}
+                for part in path.parts
+            )
             and not typescript_owned_e2e_source(path)
         )
         if python_runner or python_source:
