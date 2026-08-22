@@ -434,6 +434,8 @@ class TestInspectTesting:
     def test_ginkgo_information_commands_are_not_canonical(self) -> None:
         for subcommand in (
             "--dry-run ./...",
+            "--dry-run=true ./...",
+            "--dryRun ./...",
             "build ./...",
             "help",
             "labels",
@@ -541,6 +543,28 @@ class TestInspectTesting:
         assert parsers["test-unit"] == "pytest"
         assert parsers["test-int"] == "generic"
 
+    def test_pytest_and_nose2_mixture_requires_waiver(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace(
+                "test-unit:\n\t@true",
+                "test-unit:\n\tpython3 -m pytest tests/unit\n\tpython3 -m nose2 tests.legacy",
+            )
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest tests/int"),
+            encoding="utf-8",
+        )
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "python")
+
+        assert result["structural_status"] == "unverifiable"
+        assert framework["detected"] == ["pytest", "legacy-python-runner"]
+        assert framework["unit_int_parser"] == "generic"
+
     def test_requirements_only_python_root_detects_mixed_frameworks(self) -> None:
         self.write(
             "Makefile",
@@ -624,7 +648,9 @@ class TestInspectTesting:
     def test_invalid_python_config_cannot_prove_pytest(self) -> None:
         for name, config in (
             ("pytest.ini", "[pytest\naddopts = -ra\n"),
+            ("requirements.txt", "pytest==\n"),
             ("setup.cfg", "[tool:pytest\naddopts = -ra\n"),
+            ("setup.py", "pytest setup(\n"),
         ):
             with case(name=name):
                 self.write_make_contract()
@@ -639,7 +665,8 @@ class TestInspectTesting:
                     ),
                     encoding="utf-8",
                 )
-                self.write("requirements.txt", "pytest==9.1.1\n")
+                if name != "requirements.txt":
+                    self.write("requirements.txt", "pytest==9.1.1\n")
                 self.write(name, config)
                 self.enroll("make")
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import configparser
 import json
 import math
@@ -45,11 +46,14 @@ PYTEST_COMMAND_PATTERN = re.compile(
 UNITTEST_COMMAND_PATTERN = re.compile(
     r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest(?=\s|$)"
 )
+LEGACY_PYTHON_COMMAND_PATTERN = re.compile(
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?(?:nose2|nosetests)(?=\s|$)"
+)
 SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run(?:=\S+)?|--dryRun(?:=\S+)?)(?:[\s\"'\],};&|()]|$)"
 )
 INFORMATION_ONLY_SUBCOMMAND = re.compile(
     r"^\s*[@+]*\s*ginkgo\s+(?:build|help|labels|outline|version)(?:\s|$)"
@@ -414,6 +418,24 @@ def invalid_python_config_authorities(repository: Path) -> set[str]:
             parser.read_string(content)
         except configparser.Error:
             invalid.add(name)
+    setup_content = read_optional_text(repository / "setup.py", repository)
+    if setup_content:
+        try:
+            ast.parse(setup_content, filename="setup.py")
+        except SyntaxError:
+            invalid.add("setup.py")
+    for path in sorted(repository.glob("requirements*.txt")):
+        content = read_optional_text(path, repository)
+        pytest_lines = [
+            line.strip()
+            for line in content.splitlines()
+            if line.strip().lower().startswith("pytest")
+        ]
+        if any(
+            re.fullmatch(r"pytest==[0-9A-Za-z][0-9A-Za-z.+-]*", line) is None
+            for line in pytest_lines
+        ):
+            invalid.add(path.name)
     return invalid
 
 
@@ -462,9 +484,13 @@ def python_stage_parser(
         command_matches_python_runner(command, UNITTEST_COMMAND_PATTERN, variables)
         for command in commands
     )
-    if has_pytest and not has_unittest:
+    has_legacy = any(
+        command_matches_python_runner(command, LEGACY_PYTHON_COMMAND_PATTERN, variables)
+        for command in commands
+    )
+    if has_pytest and not has_unittest and not has_legacy:
         return "pytest"
-    if has_unittest:
+    if has_unittest or has_legacy:
         return "generic"
     return None
 
@@ -592,7 +618,21 @@ def inspect_frameworks(
         if pytest_control_only_configuration(repository, make_variables):
             stage_parsers = {stage: None for stage in stage_parsers}
         has_pytest_command = "pytest" in stage_parsers.values()
-        has_unittest = "generic" in stage_parsers.values() or source_contains(
+        has_unittest_command = any(
+            command_matches_python_runner(
+                command, UNITTEST_COMMAND_PATTERN, make_variables
+            )
+            for stage in ("test-unit", "test-int")
+            for command in commands[stage]
+        )
+        has_legacy_runner = any(
+            command_matches_python_runner(
+                command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
+            )
+            for stage in ("test-unit", "test-int")
+            for command in commands[stage]
+        )
+        has_unittest = has_unittest_command or source_contains(
             repository,
             ".py",
             (r"(?m)^\s*(?:from\s+unittest\s+import|import\s+unittest\b)",),
@@ -602,6 +642,7 @@ def inspect_frameworks(
             for name, present in (
                 ("pytest", has_pytest_declaration or has_pytest_command),
                 ("unittest", has_unittest),
+                ("legacy-python-runner", has_legacy_runner),
             )
             if present
         ]
@@ -612,6 +653,7 @@ def inspect_frameworks(
             and has_pytest_declaration
             and all(parser == "pytest" for parser in stage_parsers.values())
             and not has_unittest
+            and not has_legacy_runner
             else "waiver_required"
         )
         entries.append(

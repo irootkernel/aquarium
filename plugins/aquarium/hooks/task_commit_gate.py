@@ -137,7 +137,18 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         assignments.append(segment[index])
         index += 1
 
-    if index < len(segment) and segment[index] == "env":
+    wrappers = {"builtin", "command", "exec", "nohup"}
+    while index < len(segment) and (
+        segment[index] in wrappers or segment[index] == "time"
+    ):
+        if segment[index] == "time":
+            index += 1
+            while index < len(segment) and segment[index].startswith("-"):
+                index += 1
+        else:
+            index += 1
+
+    while index < len(segment) and segment[index] == "env":
         index += 1
         while index < len(segment):
             token = segment[index]
@@ -213,17 +224,21 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 continue
             break
 
-    if index < len(segment) and segment[index] in {
-        "builtin",
-        "command",
-        "exec",
-        "nohup",
-    }:
-        index += 1
-    if index < len(segment) and segment[index] == "time":
-        index += 1
-        while index < len(segment) and segment[index].startswith("-"):
+    while index < len(segment) and (
+        segment[index] in wrappers or segment[index] == "time"
+    ):
+        if segment[index] == "time":
             index += 1
+            while index < len(segment) and segment[index].startswith("-"):
+                index += 1
+        else:
+            index += 1
+    if index < len(segment) and segment[index] == "env":
+        nested = git_commit_invocation(segment[index:], cwd)
+        if nested is None:
+            return None
+        nested_cwd, nested_gated = nested
+        return nested_cwd, nested_gated or GATE_ASSIGNMENT in assignments
     if index >= len(segment) or Path(segment[index]).name != "git":
         return None
     index += 1

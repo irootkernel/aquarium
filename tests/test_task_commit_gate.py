@@ -150,6 +150,14 @@ class TaskCommitGateTests(unittest.TestCase):
         ):
             with self.subTest(command=command):
                 self.assert_denied(self.run_hook(repo, command))
+        for command in (
+            f"exec env -C {repo} git commit -m work",
+            f"time env -C {repo} git commit -m work",
+            f"nohup env -C {repo} git commit -m work",
+            f"time command git -C {repo} commit -m work",
+        ):
+            with self.subTest(command=command):
+                self.assert_denied(self.run_hook(outside, command))
         self.assert_denied(
             self.run_hook(
                 outside,
