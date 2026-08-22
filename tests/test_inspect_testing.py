@@ -428,21 +428,23 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(framework["status"], "canonical")
         self.assertEqual(framework["unit_int_parser"], "ginkgo")
 
-    def test_ginkgo_version_command_is_not_canonical(self) -> None:
-        self.write_ginkgo_make_contract()
-        makefile = self.repository / "Makefile"
-        makefile.write_text(
-            makefile.read_text(encoding="utf-8").replace(
-                "ginkgo -race ./...", "ginkgo version"
-            ),
-            encoding="utf-8",
-        )
-        self.write_ginkgo_evidence()
-        self.enroll("make")
+    def test_ginkgo_information_commands_are_not_canonical(self) -> None:
+        for subcommand in ("help", "labels", "outline", "version"):
+            with self.subTest(subcommand=subcommand):
+                self.write_ginkgo_make_contract()
+                makefile = self.repository / "Makefile"
+                makefile.write_text(
+                    makefile.read_text(encoding="utf-8").replace(
+                        "ginkgo -race ./...", f"ginkgo {subcommand}"
+                    ),
+                    encoding="utf-8",
+                )
+                self.write_ginkgo_evidence()
+                self.enroll("make")
 
-        result = inspect_testing.inspect_repository(self.repository)
+                result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
+                self.assertEqual(result["structural_status"], "unverifiable")
 
     def test_go_standard_testing_requires_legacy_waiver_review(self) -> None:
         self.write_make_contract()
@@ -590,6 +592,25 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertIn(
             "package_json_invalid", {item["code"] for item in result["findings"]}
+        )
+
+    def test_invalid_pyproject_cannot_prove_pytest(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
+            encoding="utf-8",
+        )
+        self.write("pyproject.toml", '[project\nname = "pytest-fixture"\n')
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "pyproject_invalid", {item["code"] for item in result["findings"]}
         )
 
     def test_testing_document_profile_must_match_executable_authority(self) -> None:
@@ -1443,6 +1464,7 @@ class InspectTestingTest(unittest.TestCase):
             "MAKE := true\n",
             "export PYTEST_ADDOPTS\n",
             "undefine MAKE\n",
+            "test-unit:\n\t$(eval DYNAMIC := true)\n",
         )
         for addition in additions:
             with self.subTest(addition=addition):
@@ -1596,6 +1618,23 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "conforming")
         self.assertEqual(framework["unit_int_parser"], "cargo-test")
         self.assertFalse(framework["waiver_required"])
+
+    def test_cargo_no_run_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tcargo test --no-run")
+            .replace("test-int:\n\t@true", "test-int:\n\tcargo test --no-run"),
+            encoding="utf-8",
+        )
+        self.write("Cargo.toml", '[package]\nname = "fixture"\nversion = "0.1.0"\n')
+        self.write("Cargo.lock", "# fixture\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
 
     def test_rust_runner_variable_must_resolve_to_cargo(self) -> None:
         self.write_make_contract()

@@ -1,16 +1,18 @@
-VENV_DIR ?= .venv
+override VENV_DIR := .venv
 
 ifneq ($(wildcard $(VENV_DIR)/bin/python),)
-PYTHON ?= $(VENV_DIR)/bin/python
-RUFF ?= $(VENV_DIR)/bin/ruff
+override PYTHON := $(VENV_DIR)/bin/python
+override RUFF := $(VENV_DIR)/bin/ruff
 else
-PYTHON ?= python3
-RUFF ?= ruff
+override PYTHON := python3
+override RUFF := ruff
 endif
 
 export GIT_PAGER := cat
 export PAGER := cat
 export PYTEST_DISABLE_PLUGIN_AUTOLOAD := 1
+override PYTEST_ADDOPTS :=
+export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
 	plugins/aquarium/hooks/task_commit_gate.py \
@@ -49,7 +51,8 @@ test-unit: test-requirements
 	$(PYTHON) -m pytest tests/unit
 
 test-int: test-requirements
-	$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
+	$(PYTHON) -m pytest tests/test_inspect_testing.py
+	$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 
 test-e2e: test-requirements
 	$(PYTHON) -m pytest tests/e2e

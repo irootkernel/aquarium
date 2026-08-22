@@ -12,7 +12,7 @@ This repository is enrolled in `aquarium-test-contract/v1` with the `make` profi
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
 
-The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. An existing `.venv` is selected automatically without requiring shell activation; explicit `PYTHON` and `RUFF` Make overrides take precedence.
+The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository fixes its runners to `.venv/bin/python` and `.venv/bin/ruff` when the enrolled environment exists, otherwise to `python3` and `ruff`; command-line overrides cannot replace those identities.
 
 ## Stage Mapping
 
@@ -20,7 +20,7 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 |---|---|
 | `test-prepare` | Ruff formatting and lint for every maintained Python source and test file; plugin-manifest JSON parsing; Ruby syntax; the local cross-skill, procedure, documentation, and release-contract validator; whitespace validation. |
 | `test-unit` | Native pytest tests for isolated pure functions in the test-setup structural inspector. |
-| `test-int` | The pre-existing Python `unittest` suites exercising executable inspectors, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
+| `test-int` | Pytest execution of the test-setup inspector suite followed by the three pre-existing Python `unittest` suites exercising tool inspection, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
 | `test-e2e` | Python pytest scenarios invoking the shipped test-setup inspector CLI as a black box against isolated temporary repository fixtures. |
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
@@ -29,9 +29,9 @@ Dependency installation is outside every handler. Prepare may rewrite only the P
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |
 |---|---|---|---|---|
-| Python unit | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `python3 -m pytest tests/unit` | None |
-| Python integration | `unittest` | Python standard library and the committed pre-existing suites | `python3 -m unittest tests/test_inspect_tools.py tests/test_inspect_testing.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py` | `AQ-WAIVER-001` |
-| Python E2E | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `python3 -m pytest tests/e2e` | None |
+| Python unit | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `$(PYTHON) -m pytest tests/unit` | None |
+| Python integration | pytest plus waived legacy `unittest` | `requirements.txt`, `pyproject.toml`, Python standard library, and the committed pre-existing suites | `$(PYTHON) -m pytest tests/test_inspect_testing.py`, then `$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py` | `AQ-WAIVER-001` applies only to the three `unittest` suites |
+| Python E2E | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `$(PYTHON) -m pytest tests/e2e` | None |
 | Ruby architecture validation | Standalone deterministic assertion script | User-provided Ruby 3.3 or newer | `ruby tests/validate.rb` inside `test-prepare` | Not a unit or integration test framework layer |
 
 The test environment requires the exact Python development dependencies in `requirements.txt`. Every handler checks the selected environment before executing and fails with an installation command when Python, pytest, PyYAML, Ruff, or an exact dependency version is unavailable. Handlers never install dependencies implicitly.
@@ -45,7 +45,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 | `test` | `make test` | Mixed Python, Ruby, Ruff, Git, and Make | `generic` |
 | `test-prepare` | `make test-prepare` | Mixed static tooling | `generic` |
 | `test-unit` | `make test-unit` | pytest | `pytest` |
-| `test-int` | `make test-int` | Python unittest | `generic` |
+| `test-int` | `make test-int` | Mixed pytest and Python unittest | `generic` |
 | `test-e2e` | `make test-e2e` | pytest | `pytest` |
 
 ## E2E Environment
@@ -66,7 +66,7 @@ Each scenario creates one unique operating-system temporary directory containing
 ### AQ-WAIVER-001
 
 - Rule: `AQTEST-009`
-- Scope: The pre-existing integration suites `tests/test_inspect_tools.py`, `tests/test_inspect_testing.py`, `tests/test_task_commit_gate.py`, and `tests/test_normalize_manifest.py` may retain `unittest`, including subsequent tests in those same established suites.
+- Scope: The pre-existing integration suites `tests/test_inspect_tools.py`, `tests/test_task_commit_gate.py`, and `tests/test_normalize_manifest.py` may retain `unittest`, including subsequent tests in those same established suites. `tests/test_inspect_testing.py` runs through pytest and is outside this waiver.
 - Pre-existing implementation: Each suite existed before Aquarium's first repository self-enrollment proposal on 2026-08-22 and exercises temporary repositories, subprocesses, fixtures, and component boundaries through standard-library `unittest` assertions.
 - Equivalence evidence: The suites fail through ordinary nonzero unittest exits, isolate state with per-test temporary directories, and cover positive, negative, malformed-input, timeout, and boundary scenarios without a separately managed service.
 - Migration risk: A wholesale assertion and fixture rewrite would create broad test-only churn and could alter subprocess, cleanup, and temporary-repository semantics without increasing product coverage.

@@ -1599,6 +1599,8 @@ end
 assert(orca_review.include?("separately installed `$orca-cli` skill") &&
        orca_review.include?("Never substitute a generic subagent") &&
        orca_review.include?("starting the installed Orca runtime when needed") &&
+       orca_review.include?("canonical absolute regular file outside the original Git root") &&
+       orca_review.include?("revalidate its path, file identity, digest, and version immediately before every Orca read or mutation") &&
        orca_review.include?("An operational failure is not an `APPROVE` result"),
        "orca-review must fail closed on missing or unverifiable Orca prerequisites")
 assert(orca_review.include?("git diff --cached --binary") &&
@@ -2044,7 +2046,11 @@ testing_headings = [
 ]
 assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit test-int test-e2e") &&
        %w[test-prepare test-unit test-int test-e2e].all? { |target| makefile.include?("$(MAKE) #{target}") } &&
-       makefile.include?("VENV_DIR ?= .venv") &&
+       makefile.include?("override VENV_DIR := .venv") &&
+       makefile.include?("override PYTHON := $(VENV_DIR)/bin/python") &&
+       makefile.include?("override RUFF := $(VENV_DIR)/bin/ruff") &&
+       makefile.include?("override PYTEST_ADDOPTS :=") &&
+       makefile.include?("export PYTEST_ADDOPTS") &&
        makefile.include?("test-requirements:") &&
        %w[test-prepare test-unit test-int test-e2e].all? { |target| makefile.include?("#{target}: test-requirements") } &&
        makefile.include?("pip install -r requirements.txt") &&

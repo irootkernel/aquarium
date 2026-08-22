@@ -48,9 +48,11 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run)(?:[\s\"'\],};&|()]|$)"
 )
-INFORMATION_ONLY_SUBCOMMAND = re.compile(r"^\s*[@+]*\s*ginkgo\s+version(?:\s|$)")
+INFORMATION_ONLY_SUBCOMMAND = re.compile(
+    r"^\s*[@+]*\s*ginkgo\s+(?:help|labels|outline|version)(?:\s|$)"
+)
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
@@ -524,13 +526,29 @@ def inspect_frameworks(
         )
 
     if "python" in languages:
+        pyproject_path = repository / "pyproject.toml"
+        pyproject_content = read_optional_text(pyproject_path, repository)
+        pyproject_valid = True
+        if pyproject_content:
+            try:
+                tomllib.loads(pyproject_content)
+            except tomllib.TOMLDecodeError:
+                pyproject_valid = False
+                findings.append(
+                    finding(
+                        "pyproject_invalid",
+                        "error",
+                        "pyproject.toml is invalid and cannot prove pytest configuration.",
+                    )
+                )
         authority_paths = [
-            repository / "pyproject.toml",
             repository / "setup.cfg",
             repository / "setup.py",
             *sorted(repository.glob("requirements*.txt")),
         ]
-        has_pytest_declaration = any(
+        has_pytest_declaration = (
+            pyproject_valid and bool(re.search(r"\bpytest\b", pyproject_content))
+        ) or any(
             re.search(r"\bpytest\b", read_optional_text(path, repository))
             for path in authority_paths
             if not sensitive_relative_path(path, repository)
@@ -557,7 +575,8 @@ def inspect_frameworks(
         ]
         status = (
             "canonical"
-            if has_pytest_declaration
+            if pyproject_valid
+            and has_pytest_declaration
             and all(parser == "pytest" for parser in stage_parsers.values())
             and not has_unittest
             else "waiver_required"
@@ -864,6 +883,11 @@ def inspect_makefile(
 
     targets, phony, includes = parse_makefile(content)
     make_variables = make_variable_values(repository)
+    pytest_addopts_bare_export = bool(
+        re.search(
+            r"(?m)^\s*(?:(?:export|unexport|undefine)\s+)+PYTEST_ADDOPTS\s*$", content
+        )
+    ) and make_variables.get("PYTEST_ADDOPTS") != {""}
     result["include_count"] = len(includes)
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
@@ -872,16 +896,17 @@ def inspect_makefile(
             r"(?m)^[^#\t\n][^:\n]*:\s*(?:(?:override|export)\s+)*[A-Za-z_][A-Za-z0-9_]*\s*[:?+]?=",
             content,
         )
-        or re.search(r"(?m)^[^#\t\n]*\$\((?:eval|call|foreach|if)\b", content)
+        or re.search(r"\$\((?:eval|call|foreach|if)\b", content)
         or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
         or re.search(
             r"(?m)^\s*(?:override\s+)?define\s+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\b",
             content,
         )
         or re.search(
-            r"(?m)^\s*(?:(?:export|unexport|undefine)\s+)+(?:PYTEST_ADDOPTS|SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*$",
+            r"(?m)^\s*(?:(?:export|unexport|undefine)\s+)+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*$",
             content,
         )
+        or pytest_addopts_bare_export
         or "\\\n" in content
         or re.search(
             r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",

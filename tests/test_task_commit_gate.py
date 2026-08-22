@@ -121,6 +121,18 @@ class TaskCommitGateTests(unittest.TestCase):
             self.run_hook(parent, f"cd {repo.name} && git commit -m work")
         )
 
+    def test_env_chdir_and_git_worktree_retargeting_are_resolved(self) -> None:
+        repo = self.make_repo("TASK-1 | In Progress\n")
+        outside = repo.parent
+
+        self.assert_denied(self.run_hook(outside, f"env -C {repo} git commit -m work"))
+        self.assert_denied(
+            self.run_hook(
+                outside,
+                f"git --git-dir={repo / '.git'} --work-tree={repo} commit -m work",
+            )
+        )
+
     def test_marker_text_outside_git_environment_does_not_bypass(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")
         command = "echo AQUARIUM_COMMIT_GATE=task-commit-v1; git commit -m work"

@@ -143,6 +143,18 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
                 assignments.append(token)
                 index += 1
                 continue
+            if token in {"-C", "--chdir"}:
+                if index + 1 >= len(segment):
+                    return None
+                candidate = Path(segment[index + 1])
+                cwd = candidate if candidate.is_absolute() else cwd / candidate
+                index += 2
+                continue
+            if token.startswith("--chdir="):
+                candidate = Path(token.split("=", 1)[1])
+                cwd = candidate if candidate.is_absolute() else cwd / candidate
+                index += 1
+                continue
             if token.startswith("-"):
                 index += 1
                 continue
@@ -155,9 +167,12 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
     index += 1
 
     probe_cwd = cwd
+    git_dir: Path | None = None
     while index < len(segment):
         token = segment[index]
         if token == "commit":
+            if git_dir is not None and git_dir.name == ".git":
+                probe_cwd = git_dir.parent
             return probe_cwd, GATE_ASSIGNMENT in assignments
         if token == "--":
             return None
@@ -168,9 +183,28 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
             probe_cwd = candidate if candidate.is_absolute() else probe_cwd / candidate
             index += 2
             continue
-        if token in OPTIONS_WITH_VALUES or token.startswith(
-            ("--git-dir=", "--work-tree=", "--namespace=")
-        ):
+        if token in {"--git-dir", "--work-tree"}:
+            if index + 1 >= len(segment):
+                return None
+            candidate = Path(segment[index + 1])
+            candidate = candidate if candidate.is_absolute() else probe_cwd / candidate
+            if token == "--work-tree":
+                probe_cwd = candidate
+            else:
+                git_dir = candidate
+            index += 2
+            continue
+        if token.startswith("--work-tree="):
+            candidate = Path(token.split("=", 1)[1])
+            probe_cwd = candidate if candidate.is_absolute() else probe_cwd / candidate
+            index += 1
+            continue
+        if token.startswith("--git-dir="):
+            candidate = Path(token.split("=", 1)[1])
+            git_dir = candidate if candidate.is_absolute() else probe_cwd / candidate
+            index += 1
+            continue
+        if token in OPTIONS_WITH_VALUES or token.startswith("--namespace="):
             index += 2 if token in OPTIONS_WITH_VALUES else 1
             continue
         if token.startswith("-"):
