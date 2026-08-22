@@ -1687,6 +1687,10 @@ class InspectToolsTest(unittest.TestCase):
         self.install_fake_tools(mulgae_mcp_mode="missing")
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
         self.assertEqual(mulgae["mcp_registration"]["status"], "missing")
+        self.assertEqual(
+            mulgae["mcp_registration"]["reason"], "project_configuration_missing"
+        )
+        self.assertIsNone(mulgae["mcp_registration"]["codex_version"])
         if platform.system() == "Darwin" and platform.machine() in {"arm64", "aarch64"}:
             self.assertEqual(mulgae["status"], "installed")
 
@@ -1908,6 +1912,9 @@ class InspectToolsTest(unittest.TestCase):
         gaori = json.loads(self.inspect().stdout)["tools"]["gaori"]
         self.assertEqual(gaori["status"], "installed")
         self.assertEqual(gaori["mcp_registration"]["status"], "missing")
+        self.assertEqual(
+            gaori["mcp_registration"]["reason"], "project_configuration_missing"
+        )
 
     def test_worktree_counts_staged_unstaged_and_untracked_files(self) -> None:
         self.repository.joinpath("tracked.txt").write_text("staged\n", encoding="utf-8")

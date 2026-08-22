@@ -130,3 +130,18 @@ def test_cli_rejects_symlinked_repository_root(tmp_path: Path) -> None:
 
     assert completed.returncode == 2
     assert payload["error"]["code"] == "repository_symlinked"
+
+
+def test_cli_rejects_symlinked_repository_ancestor(tmp_path: Path) -> None:
+    parent = tmp_path / "parent"
+    repository = parent / "repository"
+    repository.mkdir(parents=True)
+    write_conforming_repository(repository)
+    linked_parent = tmp_path / "linked-parent"
+    linked_parent.symlink_to(parent, target_is_directory=True)
+
+    completed = run_inspector(linked_parent / "repository")
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 2
+    assert payload["error"]["code"] == "repository_symlinked"

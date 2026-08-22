@@ -1108,6 +1108,9 @@ def inspect_mulgae_mcp(
             {"status": "unavailable", "reason": "codex_executable_missing"}
         )
         return registration
+    if not project_config_present:
+        registration["reason"] = "project_configuration_missing"
+        return registration
     version_probe = run_command(
         [codex_executable, "--version"], repository, timeout_seconds
     )
@@ -1445,6 +1448,9 @@ def inspect_gaori_mcp(
     if not codex_executable:
         registration["status"] = "unavailable"
         registration["reason"] = "codex_executable_missing"
+        return registration
+    if not project_config_present:
+        registration["reason"] = "project_configuration_missing"
         return registration
 
     probe = json_probe(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -45,7 +46,7 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--list|--list-tests)(?:\s|$)"
+    r"(?:^|[\s\"'\[,])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],}]|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*['\"]?(?:\S*/)?make['\"]?(?:\s|$)"
@@ -133,6 +134,16 @@ def safe_repository_file(path: Path, repository: Path) -> bool:
     return current.is_file()
 
 
+def lexical_path_symlinked(path: Path) -> bool:
+    absolute = Path(os.path.abspath(path))
+    current = Path(absolute.anchor)
+    for part in absolute.parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
+
+
 def read_optional_text(path: Path, repository: Path) -> str:
     try:
         return (
@@ -217,7 +228,7 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
         if line.startswith("\t"):
             continue
         match = re.match(
-            r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|:=|=)\s*(.*?)\s*$",
+            r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|\+=|:=|=)\s*(.*?)\s*$",
             line,
         )
         if match:
@@ -894,17 +905,21 @@ def inspect_bun(
     aggregate = scripts.get("test") if isinstance(scripts.get("test"), str) else ""
     normalized = " ".join(aggregate.split())
     result["aggregate_serial"] = normalized == EXPECTED_BUN_AGGREGATE
+
+    def calls_make(value: str) -> bool:
+        normalized_shell_words = re.sub(r"(?<=\w)[\"'](?=\w)", "", value)
+        return bool(
+            re.search(
+                r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
+                normalized_shell_words,
+            )
+            or MAKE_ALIAS_PATTERN.search(normalized_shell_words)
+        )
+
     result["make_cycles"] = sorted(
         name
         for name, value in scripts.items()
-        if isinstance(value, str)
-        and (
-            re.search(
-                r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
-                value,
-            )
-            or MAKE_ALIAS_PATTERN.search(value)
-        )
+        if isinstance(value, str) and calls_make(value)
     )
     package_manager = package.get("packageManager")
     result["package_manager"] = package_manager
@@ -1130,15 +1145,16 @@ def main(arguments: list[str] | None = None) -> int:
     try:
         options = parse_arguments(arguments if arguments is not None else sys.argv[1:])
         requested_repository = Path(options.repository).expanduser()
-        if requested_repository.is_symlink():
-            raise InspectionError(
-                "repository_symlinked", "repository must not be a symlink"
-            )
-        repository = requested_repository.resolve()
-        if not repository.is_dir():
+        if not requested_repository.is_dir():
             raise InspectionError(
                 "repository_not_found", "repository must be an existing directory"
             )
+        if lexical_path_symlinked(requested_repository):
+            raise InspectionError(
+                "repository_symlinked",
+                "repository and its lexical ancestors must not be symlinks",
+            )
+        repository = requested_repository.resolve()
         payload = inspect_repository(repository)
     except InspectionError as error:
         payload = {
