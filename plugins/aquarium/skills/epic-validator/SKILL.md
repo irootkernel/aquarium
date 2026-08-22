@@ -1,15 +1,15 @@
 ---
 name: epic-validator
-description: "Cold-validate one completed roadmap epic, group confirmed gaps into sequential remediation goals, and converge to verified completion through direct Codex audit, Mulgae review, isolated commits, and re-audit. Use when the user explicitly invokes $aquarium:epic-validator with one repository, canonical roadmap path, and exactly one epic ID after its member tasks were completed through $aquarium:task-handler, $aquarium:epic-handler, or another evidence-backed workflow; do not invoke it implicitly."
+description: "Cold-validate one completed roadmap epic through a bounded direct audit, one remediation and confirmation review, severity-based user direction, and isolated commits. Use when the user explicitly invokes $aquarium:epic-validator with one repository, canonical roadmap path, and exactly one epic ID after its member tasks were completed through $aquarium:task-handler, $aquarium:epic-handler, or another evidence-backed workflow; do not invoke it implicitly."
 ---
 
 # Epic Validator
 
-Validate a completed epic independently of how it was delivered. Audit first, remediate confirmed gaps as goal-centered work, and repeat from a fresh snapshot until the epic claim is supported. Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, or `$aquarium:independent-review`.
+Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, or `$aquarium:independent-review`.
 
 Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
-Otherwise read the contract and own one `aquarium-validation-v2` session for this exact cold-validation and convergence lifecycle. Podway records the audit loop; the roadmap and current implementation remain the semantic authority.
+Otherwise read the contract and own one `aquarium-validation-v2` session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority.
 
 ## Establish the Validation Contract
 
@@ -42,7 +42,7 @@ When a selected long or noisy check is routed through Gaori, reference `$use-gao
 
 Before each authorized Mulgae review, reference `$use-mulgae` and follow it when available, preferring its attached MCP workflow. If the skill or project MCP is unavailable and repository policy requires it, stop and route that exact gap to `$aquarium:dev-setup`; otherwise use the supported configured CLI fallback, report the unavailable integration once, and preserve exact preflight, run, publication, and findings evidence. Never start a second MCP server or blindly retry an uncertain review mutation.
 
-For each operationally complete whole-epic root review, record the next positive ordinal for the current validation goal revision, the exact committed run ID, and `remediation-eligible` mode. On resumption, reconstruct the ordinal from verbose validation Procedure history and those exact run IDs; an unprovable ordinal stops before review. Cold validation never selects `confirmation-only` or `hardening-deferral-eligible` mode.
+For each operationally complete whole-epic root review, record the next positive ordinal for the current validation goal revision, the exact committed run ID, and valid Critical, High, Medium, and Low counts plus finding IDs. Round one is `remediation-eligible`; round two and every user-authorized later review are `confirmation-only`. On resumption, reconstruct the ordinal from verbose validation Procedure history and exact run IDs; an unprovable ordinal stops before review. Cold validation never selects `hardening-deferral-eligible` mode.
 
 ## Audit the Epic Directly
 
@@ -72,17 +72,23 @@ If ownership is ambiguous, stop before goal creation and report the missing auth
 For each goal:
 
 1. Implement the smallest complete correction, add or update regression evidence and durable documentation, and run affected authorized checks.
-2. Run Mulgae on the latest complete remediation target, fix every valid in-scope finding, and repeat affected checks and review until complete.
-3. Add a concise roadmap remediation note using repository conventions with owner, summary, planned commit identity, verification evidence, Mulgae result, and audited snapshot; do not create a new task entry.
+2. Fix every valid in-scope finding from the initial audit and root review, then repeat affected checks without starting a per-goal or follow-up review.
+3. Add a concise roadmap remediation note using repository conventions with owner, summary, planned commit identity, verification evidence, source findings, and audited snapshot; do not create a new task entry.
 4. Record resulting remediation commit IDs in the final validation record rather than attempting to predict a commit's own hash.
 
-Confirm the goal-owned diff, including its lifecycle and remediation note, equals the reviewed implementation except for the planned status or validation-record-only roadmap change. Hand that exact scope, its evidence, owning task or epic ID, and approved one-commit authority to `$aquarium:task-commit`; verify its returned commit snapshot, residue, and hook evidence before completing the goal.
+Confirm the goal-owned diff, including its lifecycle and remediation note, equals the verified correction for the recorded source findings except for the planned status or validation-record-only roadmap change. Hand that exact scope, its evidence, owning task or epic ID, and approved one-commit authority to `$aquarium:task-commit`; verify its returned commit snapshot, residue, and hook evidence before completing the goal. The later whole-epic confirmation review, not the source review, owns coverage of those committed bytes.
 
-## Re-audit to Convergence
+## Confirm Once and Stop on New Findings
 
-After all remediation goals complete, discard the prior matrix, findings, checks, and review result. With no active goal, repeat the direct audit and whole-epic Mulgae review from the latest committed snapshot. If new gaps appear, regroup and repeat the goal cycle.
+After all initial remediation goals complete, discard the prior matrix, findings, checks, and review result. With no active goal, repeat the direct audit and run exactly one round-two whole-epic Mulgae confirmation review from the latest committed snapshot. Do not start a third review automatically.
 
-With Podway active, record each remediation group and new audit attempt. Stale or incomplete final evidence reworks to a fresh audit, while newly confirmed gaps follow the audit decision into remediation. Assess criteria and complete the session only after the same latest snapshot satisfies the roadmap closeout conditions.
+If round two is operationally incomplete, stop without retry. If it has no valid finding, continue normal closeout. Critical or High findings block validation and require user direction. One or more Medium findings stop with a recommendation to authorize exactly one correction-and-review budget, explicitly accept the named risk, or stop. When only Low findings remain, recommend either accepting their exact IDs or applying an eligible micro correction, then wait for the user's choice.
+
+A micro correction is eligible only when it needs no product or authority choice, has no security, privacy, public API, schema, migration, persistence, lifecycle, or cross-repository impact, is safely isolated, and has a focused deterministic check. After the user selects the exact correction, implement it once, run affected checks, commit through `$aquarium:task-commit`, and proceed without another Mulgae review. Record `user-authorized-micro-fix` and state that the last root review predates the correction; never describe it as review-covered.
+
+Record ignored Low findings as `accepted-low` with exact IDs and rationale. Record a user-accepted Medium as `accepted-medium-risk`; never call either disposition a clean review. Critical or High findings cannot use a risk-acceptance route. Each user-authorized correction grants one remediation and one next-ordinal confirmation review only. Apply this same severity decision again after that review and ask again rather than restoring an automatic loop.
+
+With Podway active, record each remediation group, fresh audit, severity count, finding ID, and exact user disposition. Leave the decision unset while user direction is required. Assess criteria and complete the session only from the latest evidence plus any explicit accepted-risk or micro-fix record.
 
 When an external blocker is resolved, revalidate its exact committed revision and evidence before restarting the audit. Any code, test, durable documentation, generated, or derived change after verification or final review makes affected evidence stale; the exact planned status or validation-record-only roadmap change is the sole exception.
 

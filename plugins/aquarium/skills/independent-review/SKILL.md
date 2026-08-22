@@ -43,7 +43,11 @@ Require the reviewer to:
 
 ## Supervise and Settle
 
-Use rolling waits for `worker_done`, `escalation`, and `question`, keeping each wait short enough to provide a user update at least once per minute. Treat a timeout or empty delivery as a liveness checkpoint, not a failure. Answer reviewer questions only from established repository facts; ask the user when an answer requires product intent or wider authority.
+Before dispatch, disclose and record one cumulative liveness budget, using 30 minutes unless the user explicitly selected another duration. Use rolling waits for `worker_done`, `escalation`, and `question`, keeping each wait short enough to provide a user update at least once per minute and charging every wait against the same remaining budget.
+
+Treat a timeout or empty delivery inside that budget as a liveness checkpoint, not a failure. Answer reviewer questions only from established repository facts; ask the user when an answer requires product intent or wider authority.
+
+When the cumulative budget expires without an accepted terminal delivery, inspect the authoritative worker and terminal state once through the live guide, stop waiting, leave any active worker intact, and report the review as operationally incomplete with the exact Run, Task, Dispatch, terminal, and lifecycle status. Further waiting or cancellation requires an explicit user request; never release, retry, cancel, or replace the active worker automatically.
 
 For an accepted `worker_done`, retrieve the complete worker transcript, process every delivered message, release the settled worker, and acknowledge the delivery only after the release decision. Release both succeeded and failed settled workers unless the user explicitly requested retention.
 

@@ -940,7 +940,7 @@ assert(epic_validator.include?("one canonical roadmap path inside it") &&
 validator_approval_index = epic_validator.index("Ask once for explicit approval")
 validator_audit_index = epic_validator.index("## Audit the Epic Directly")
 validator_goal_index = epic_validator.index("## Group and Complete Remediation Goals")
-validator_reaudit_index = epic_validator.index("## Re-audit to Convergence")
+validator_reaudit_index = epic_validator.index("## Confirm Once and Stop on New Findings")
 assert(validator_approval_index && validator_audit_index && validator_goal_index && validator_reaudit_index &&
        validator_approval_index < validator_audit_index && validator_audit_index < validator_goal_index &&
        validator_goal_index < validator_reaudit_index,
@@ -962,18 +962,31 @@ assert(epic_validator.include?("If the roadmap defines a reopen state") &&
        epic_validator.include?("do not create a new task entry") &&
        epic_validator.include?("Record resulting remediation commit IDs in the final validation record"),
        "epic-validator must preserve lifecycle vocabulary and remediation notes")
-assert(epic_validator.include?("Mulgae on the latest complete remediation target") &&
-       epic_validator.include?("whole-epic Mulgae review") &&
+assert(epic_validator.include?("without starting a per-goal or follow-up review") &&
+       epic_validator.include?("whole-epic Mulgae confirmation review") &&
        epic_validator.include?("coverage_status=complete") &&
        epic_validator.include?("publication_status=committed") &&
        epic_validator.include?("findings query succeeds"),
-       "epic-validator must require complete per-goal and final Mulgae evidence")
+       "epic-validator must avoid nested reviews and require complete whole-epic Mulgae evidence")
 assert(epic_validator.include?("next positive ordinal for the current validation goal revision") &&
        epic_validator.include?("exact committed run ID") &&
-       epic_validator.include?("`remediation-eligible` mode") &&
        epic_validator.include?("an unprovable ordinal stops before review") &&
-       epic_validator.include?("never selects `confirmation-only` or `hardening-deferral-eligible` mode"),
+       epic_validator.include?("Round one is `remediation-eligible`") &&
+       epic_validator.include?("round two and every user-authorized later review are `confirmation-only`") &&
+       epic_validator.include?("never selects `hardening-deferral-eligible` mode"),
        "epic-validator must durably number cold whole-epic root reviews")
+assert(epic_validator.include?("Do not start a third review automatically") &&
+       epic_validator.include?("Critical or High findings block validation") &&
+       epic_validator.include?("One or more Medium findings stop with a recommendation") &&
+       epic_validator.include?("When only Low findings remain") &&
+       epic_validator.include?("wait for the user's choice") &&
+       epic_validator.include?("user-authorized-micro-fix") &&
+       epic_validator.include?("accepted-low") &&
+       epic_validator.include?("accepted-medium-risk") &&
+       epic_validator.include?("Each user-authorized correction grants one remediation and one next-ordinal confirmation review only") &&
+       !epic_validator.include?("repeat affected checks and review until complete") &&
+       !epic_validator.include?("regroup and repeat the goal cycle"),
+       "epic-validator must enforce one automatic confirmation and severity-based user direction")
 assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
        epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
        "epic-validator must invalidate stale evidence and avoid empty closeout commits")
@@ -1310,12 +1323,15 @@ expected_procedure_graphs = {
   "aquarium-validation-v2.yaml" => {
     "id" => "aquarium-validation-v2",
     "entry" => "capture-baseline",
-    "manual_targets" => %w[audit remediate re-audit final-review],
+    "manual_targets" => %w[audit remediate re-audit final-review micro-remediate],
     "evidence" => {
       "decide-gaps" => required_evidence.call("audit"),
       "decide-re-audit" => required_evidence.call("remediate", "re-audit"),
       "decide-final-review" => required_evidence.call("final-review"),
-      "assess-goal" => required_evidence.call("capture-baseline", "final-review")
+      "await-user-direction" => [["re-audit", false], ["final-review", false]],
+      "assess-goal" => [["capture-baseline", true], ["final-review", false], ["await-user-direction", false],
+                        ["micro-remediate", false], ["record-accepted-low", false],
+                        ["record-accepted-medium-risk", false], ["record-stopped", false], ["record-incomplete", false]]
     },
     "nodes" => {
       "capture-baseline" => { "next" => "audit" },
@@ -1323,9 +1339,15 @@ expected_procedure_graphs = {
       "decide-gaps" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate advance] } },
       "remediate" => { "next" => "re-audit" },
       "re-audit" => { "next" => "decide-re-audit" },
-      "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate rework] } },
+      "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[await-user-direction advance] } },
       "final-review" => { "next" => "decide-final-review" },
-      "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework] } },
+      "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework], "user-direction" => %w[await-user-direction advance], "incomplete" => %w[record-incomplete advance] } },
+      "await-user-direction" => { "routes" => { "fix-and-review" => %w[audit rework], "accept-low" => %w[record-accepted-low advance], "micro-fix" => %w[micro-remediate advance], "accept-medium-risk" => %w[record-accepted-medium-risk advance], "stop" => %w[record-stopped advance] } },
+      "micro-remediate" => { "next" => "assess-goal" },
+      "record-accepted-low" => { "next" => "assess-goal" },
+      "record-accepted-medium-risk" => { "next" => "assess-goal" },
+      "record-stopped" => { "next" => "assess-goal" },
+      "record-incomplete" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
     }
@@ -1390,7 +1412,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = %w[aquarium-task-v2.yaml aquarium-goal-v2.yaml aquarium-validation-v2.yaml].include?(filename) ? "2" : "1"
+  expected_version = filename == "aquarium-validation-v2.yaml" ? "3" : (%w[aquarium-task-v2.yaml aquarium-goal-v2.yaml].include?(filename) ? "2" : "1")
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1414,6 +1436,14 @@ expected_procedure_graphs.each do |filename, expected|
   end.to_h
   assert(actual_evidence == expected.fetch("evidence"),
          "managed procedure evidence bindings drifted: #{filename}")
+end
+
+local_procedures_directory = ROOT.join(".podway/procedures")
+expected_procedure_graphs.each_key do |filename|
+  source = procedures_directory.join(filename)
+  local = local_procedures_directory.join(filename)
+  assert(local.file? && local.binread == source.binread,
+         "repository-local managed procedure must match its plugin source byte-for-byte: #{filename}")
 end
 
 task_procedure_path = procedures_directory.join("aquarium-task-v2.yaml")
@@ -1457,9 +1487,11 @@ validation_review_items = review_item_index.call(validation_procedure, "final-re
 assert(validation_review_items.fetch("review-round").fetch("type") == "integer" &&
        validation_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
        validation_review_items.fetch("review-run-id").fetch("type") == "text" &&
-       validation_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
-       validation_procedure_text.include?("Evidence is stale or incomplete, CI failed"),
-       "validation procedure must record bounded whole-epic review state and its user hold")
+       %w[critical-findings high-findings medium-findings low-findings valid-finding-ids].all? { |id| validation_review_items.key?(id) } &&
+       validation_procedure_text.include?("Leave this decision unset until the user explicitly selects the next action") &&
+       validation_procedure_text.include?("one remediation pass and one next-ordinal whole-epic confirmation review") &&
+       validation_procedure_text.include?("prior review covered its resulting bytes"),
+       "validation procedure must record severity, bounded follow-up, user direction, and honest micro-fix coverage")
 
 goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml").read, aliases: false)
 plan_handoff_item.call(goal_procedure, "work-record")
@@ -1580,6 +1612,13 @@ assert(independent_review.include?("Do not rerun tests") && independent_review.i
        "independent-review must remain review-only")
 assert(independent_review.include?("Keep technical review evidence and Orca lifecycle settlement as separate statuses"),
        "independent-review must separate findings from lifecycle settlement")
+assert(independent_review.include?("one cumulative liveness budget") &&
+       independent_review.include?("using 30 minutes") &&
+       independent_review.include?("charging every wait against the same remaining budget") &&
+       independent_review.include?("stop waiting, leave any active worker intact") &&
+       independent_review.include?("Further waiting or cancellation requires an explicit user request") &&
+       independent_review.include?("never release, retry, cancel, or replace the active worker automatically"),
+       "independent-review must stop after one cumulative wait budget without mutating an active worker")
 assert(independent_review.include?("Valid") && independent_review.include?("Invalid") &&
        independent_review.include?("Needs confirmation"),
        "independent-review must adjudicate reviewer findings")
@@ -1720,6 +1759,12 @@ assert(orca_review.include?("one cumulative liveness budget") &&
        orca_review.include?("stop waiting, leave any active worker intact") &&
        orca_review.include?("Further waiting or cancellation requires an explicit user request"),
        "orca-review must bound repeated liveness checkpoints without mutating an active worker")
+assert(orca_review.include?("one settlement budget of five minutes and at most 16 Delivery batches") &&
+       orca_review.include?("Do not reset either limit") &&
+       orca_review.include?("do not acknowledge the unresolved batch") &&
+       orca_review.include?("Continuing the drain requires an explicit user request") &&
+       orca_review.include?("one new five-minute, 16-batch settlement budget"),
+       "orca-review must bound terminal settlement and require user authority for another drain")
 assert(orca_review.include?("After every message in the batch is processed") &&
        orca_review.include?("check --ack <deliveryId>` without `--wait") &&
        orca_review.include?("repeating non-waiting acknowledgements until the response reports no Delivery") &&

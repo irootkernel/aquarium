@@ -143,9 +143,13 @@ For an accepted `worker_done`, retrieve the complete authoritative worker eviden
 
 For every Delivery batch, process every message completely. Only for an accepted terminal `worker_done`, either run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker when retention was requested, or release the settled succeeded or failed worker and verify the release receipt. Never retain or release a worker merely for a question, escalation, heartbeat, stale completion, or rejected completion. A required retain or release failure is an operational gap.
 
+Acceptance of the terminal Delivery opens one settlement budget of five minutes and at most 16 Delivery batches, including the terminal batch. Apply both limits through terminal settlement and the post-settlement drain; stop when either limit is exhausted. Do not reset either limit for newly queued messages.
+
 After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch. For the accepted terminal `worker_done` of the sole expected Dispatch, use `check --ack <deliveryId>` without `--wait`. Inspect that command's response before revalidation: if it returns another queued Delivery batch, process and acknowledge that batch under these same rules, repeating non-waiting acknowledgements until the response reports no Delivery. Any unresolved returned batch blocks revalidation.
 
 After the expected Dispatch is settled, classify every returned heartbeat, duplicate or stale completion, question, or escalation as a post-settlement queued message. Process it without another retain or release and acknowledge it only with non-waiting `check --ack <deliveryId>`, continuing until no Delivery remains. A genuinely unresolved question or escalation is an operational gap; do not wait on or reopen the settled Dispatch.
+
+When settlement exhausts either limit before the queue reports no Delivery, do not acknowledge the unresolved batch. Preserve FIFO replay, the temporary registration, and the owned snapshot; report the exact pending Delivery and lifecycle state as operationally incomplete. Continuing the drain requires an explicit user request and grants only one new five-minute, 16-batch settlement budget. Never infer that request from the original review approval or successful worker completion.
 
 For a question, escalation, heartbeat, rejected completion, or stale completion while the expected Dispatch remains active, use `check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>`. The timeout must be positive and no larger than the recorded remaining cumulative liveness budget.
 
