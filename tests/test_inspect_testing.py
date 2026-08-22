@@ -428,6 +428,22 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(framework["status"], "canonical")
         self.assertEqual(framework["unit_int_parser"], "ginkgo")
 
+    def test_ginkgo_version_command_is_not_canonical(self) -> None:
+        self.write_ginkgo_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8").replace(
+                "ginkgo -race ./...", "ginkgo version"
+            ),
+            encoding="utf-8",
+        )
+        self.write_ginkgo_evidence()
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+
     def test_go_standard_testing_requires_legacy_waiver_review(self) -> None:
         self.write_make_contract()
         self.write("go.mod", "module example.com/fixture\n\ngo 1.26\n")
@@ -1118,21 +1134,31 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
 
     def test_pytest_collection_alias_is_not_canonical(self) -> None:
-        self.write_make_contract()
-        makefile = self.repository / "Makefile"
-        content = (
-            makefile.read_text(encoding="utf-8")
-            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest --co")
-            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest --co")
-        )
-        makefile.write_text(content, encoding="utf-8")
-        self.write("requirements.txt", "pytest==9.1.1\n")
-        self.enroll("make")
+        for option in ("--co", "--collectonly", "-V"):
+            with self.subTest(option=option):
+                self.write_make_contract()
+                makefile = self.repository / "Makefile"
+                content = (
+                    makefile.read_text(encoding="utf-8")
+                    .replace(
+                        "test-unit:\n\t@true",
+                        f"test-unit:\n\tpython3 -m pytest {option}",
+                    )
+                    .replace(
+                        "test-int:\n\t@true",
+                        f"test-int:\n\tpython3 -m pytest {option}",
+                    )
+                )
+                makefile.write_text(content, encoding="utf-8")
+                self.write("requirements.txt", "pytest==9.1.1\n")
+                self.enroll("make")
 
-        result = inspect_testing.inspect_repository(self.repository)
+                result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(result["structural_status"], "unverifiable")
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+                self.assertEqual(result["structural_status"], "unverifiable")
+                self.assertEqual(
+                    self.framework(result, "python")["unit_int_parser"], "generic"
+                )
 
     def test_pytest_fixtures_command_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1415,6 +1441,8 @@ class InspectTestingTest(unittest.TestCase):
             "ifeq ($(MODE),fast)\ntest-unit: ; @true\nendif\n",
             "define MAKEFLAGS\n-i\nendef\n",
             "MAKE := true\n",
+            "export PYTEST_ADDOPTS\n",
+            "undefine MAKE\n",
         )
         for addition in additions:
             with self.subTest(addition=addition):

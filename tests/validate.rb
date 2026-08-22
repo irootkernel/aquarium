@@ -435,10 +435,11 @@ assert(test_setup.include?("scripts/inspect_testing.py") &&
        test_setup.include?("Apply exactly this diff") &&
        test_setup.include?("configured but unverified"),
        "test-setup must separate structural audit, exact-diff approval, and runtime proof")
-assert(test_setup.include?("Never read credential values or open `.env*`, authentication, key, token, secret, or credential files") &&
+assert(test_setup.include?("Never open `.env*`, authentication, key, token, secret, credential stores, or credential-named paths") &&
+       test_setup.include?("Do not emit raw authority contents or inline credential values") &&
        test_setup.include?("templates proven to contain placeholders") &&
        test_setup.include?("report a gap when values would be required"),
-       "test-setup must never read credential values during repository inspection")
+       "test-setup must preserve credential-path exclusion and non-emission during repository inspection")
 assert(test_setup.include?("does not authorize a test that creates containers") &&
        test_setup.include?("proven non-production") &&
        test_setup.include?("never convert them into a successful skip") &&
@@ -1705,6 +1706,8 @@ assert(orca_review.include?("one cumulative liveness budget") &&
 assert(orca_review.include?("After every message in the batch is processed") &&
        orca_review.include?("check --ack <deliveryId>` without `--wait") &&
        orca_review.include?("repeating non-waiting acknowledgements until the response reports no Delivery") &&
+       orca_review.include?("post-settlement queued message") &&
+       orca_review.include?("do not wait on or reopen the settled Dispatch") &&
        orca_review.include?("check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>") &&
        orca_review.include?("Unicode `Cc`, `Cf`, `Zl`, or `Zp`") &&
        orca_review.include?("U+202E") &&

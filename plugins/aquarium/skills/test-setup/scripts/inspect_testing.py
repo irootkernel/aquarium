@@ -48,8 +48,9 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
 )
+INFORMATION_ONLY_SUBCOMMAND = re.compile(r"^\s*[@+]*\s*ginkgo\s+version(?:\s|$)")
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
@@ -66,6 +67,25 @@ class InspectionError(Exception):
 class JsonArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
         raise InspectionError("invalid_arguments", "invalid command-line arguments")
+
+
+def strict_json_loads(content: str) -> Any:
+    def object_from_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate JSON key")
+            result[key] = value
+        return result
+
+    def reject_constant(_value: str) -> None:
+        raise ValueError("invalid JSON constant")
+
+    return json.loads(
+        content,
+        object_pairs_hook=object_from_pairs,
+        parse_constant=reject_constant,
+    )
 
 
 def finding(code: str, severity: str, message: str) -> dict[str, str]:
@@ -278,9 +298,11 @@ def command_executes_tests(command: str) -> bool:
         normalized,
         count=1,
     )
-    return not INFORMATION_ONLY_ARGUMENT.search(
-        normalized
-    ) and not OPAQUE_SHELL_EXPANSION.search(without_runner)
+    return (
+        not INFORMATION_ONLY_ARGUMENT.search(normalized)
+        and not INFORMATION_ONLY_SUBCOMMAND.search(normalized)
+        and not OPAQUE_SHELL_EXPANSION.search(without_runner)
+    )
 
 
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
@@ -730,12 +752,7 @@ def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any
     if not result["present"]:
         return None, result
     try:
-        value = json.loads(
-            path.read_text(encoding="utf-8"),
-            parse_constant=lambda constant: (_ for _ in ()).throw(
-                ValueError(f"invalid JSON constant: {constant}")
-            ),
-        )
+        value = strict_json_loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
         result["error"] = type(error).__name__
         return None, result
@@ -859,6 +876,10 @@ def inspect_makefile(
         or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
         or re.search(
             r"(?m)^\s*(?:override\s+)?define\s+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\b",
+            content,
+        )
+        or re.search(
+            r"(?m)^\s*(?:(?:export|unexport|undefine)\s+)+(?:PYTEST_ADDOPTS|SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*$",
             content,
         )
         or "\\\n" in content

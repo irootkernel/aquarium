@@ -79,7 +79,7 @@ python3 -m venv .venv
 make test
 ```
 
-The gate needs Python 3.10 or newer, Ruby 3.3 or newer, and the pinned `requirements.txt` versions. This repository is licensed under the [MIT License](LICENSE).
+The gate needs Python 3.11 or newer, Ruby 3.3 or newer, and the pinned `requirements.txt` versions. This repository is licensed under the [MIT License](LICENSE).
 
 ## Upgrading
 

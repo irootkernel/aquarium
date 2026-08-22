@@ -133,6 +133,8 @@ For every Delivery batch, process every message completely. Only for an accepted
 
 After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch. For the accepted terminal `worker_done` of the sole expected Dispatch, use `check --ack <deliveryId>` without `--wait`. Inspect that command's response before revalidation: if it returns another queued Delivery batch, process and acknowledge that batch under these same rules, repeating non-waiting acknowledgements until the response reports no Delivery. Any unresolved returned batch blocks revalidation.
 
+After the expected Dispatch is settled, classify every returned heartbeat, duplicate or stale completion, question, or escalation as a post-settlement queued message. Process it without another retain or release and acknowledge it only with non-waiting `check --ack <deliveryId>`, continuing until no Delivery remains. A genuinely unresolved question or escalation is an operational gap; do not wait on or reopen the settled Dispatch.
+
 For a question, escalation, heartbeat, rejected completion, or stale completion while the expected Dispatch remains active, use `check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>`. The timeout must be positive and no larger than the recorded remaining cumulative liveness budget.
 
 Never acknowledge a batch while any message is unresolved or a required retain or release failed; without acknowledgement, FIFO replay intentionally blocks later deliveries.

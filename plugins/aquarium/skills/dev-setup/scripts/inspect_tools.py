@@ -75,6 +75,25 @@ class JsonArgumentParser(argparse.ArgumentParser):
         raise InspectionError("invalid_arguments", "invalid command-line arguments")
 
 
+def strict_json_loads(content: str) -> Any:
+    def object_from_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate JSON key")
+            result[key] = value
+        return result
+
+    def reject_constant(_value: str) -> None:
+        raise ValueError("invalid JSON constant")
+
+    return json.loads(
+        content,
+        object_pairs_hook=object_from_pairs,
+        parse_constant=reject_constant,
+    )
+
+
 def run_command(
     arguments: list[str], cwd: Path, timeout_seconds: float
 ) -> dict[str, Any]:
@@ -144,12 +163,7 @@ def parse_json_probe(raw_probe: dict[str, Any]) -> dict[str, Any]:
     if not raw_probe["attempted"] or raw_probe["timed_out"]:
         return probe
     try:
-        probe["result"] = json.loads(
-            raw_probe["stdout"],
-            parse_constant=lambda value: (_ for _ in ()).throw(
-                ValueError(f"invalid JSON constant: {value}")
-            ),
-        )
+        probe["result"] = strict_json_loads(raw_probe["stdout"])
     except (json.JSONDecodeError, ValueError):
         probe["ok"] = False
         probe["error_code"] = "invalid_json"
@@ -558,14 +572,25 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     ):
         safe["warnings"] = result["warnings"]
     checks = result.get("checks")
+    checks_valid = False
     if isinstance(checks, list):
-        safe["check_count"] = len(checks)
-        safe["warning_check_count"] = sum(
-            1
+        checks_valid = all(
+            isinstance(check, dict)
+            and isinstance(check.get("name"), str)
+            and bool(check["name"])
+            and check.get("severity") in {"ok", "warning", "error"}
             for check in checks
-            if isinstance(check, dict) and check.get("severity") == "warning"
         )
-    normalized["contract_valid"] = "warnings" in safe and "check_count" in safe
+        if checks_valid:
+            safe["check_count"] = len(checks)
+            safe["warning_check_count"] = sum(
+                1 for check in checks if check.get("severity") == "warning"
+            )
+    normalized["contract_valid"] = (
+        "warnings" in safe
+        and checks_valid
+        and safe["warnings"] == safe.get("warning_check_count")
+    )
     if safe:
         normalized["result"] = safe
     return normalized
@@ -792,6 +817,8 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         "configured"
         if version_probe["ok"]
         and tool["version_supported"]
+        and normalized_status["ok"]
+        and normalized_doctor["ok"]
         and normalized_status.get("contract_valid") is True
         and normalized_doctor.get("contract_valid") is True
         and no_doctor_warnings
@@ -1198,12 +1225,7 @@ def project_mcp_origin_verified(
     if not ambient_raw["ok"]:
         return named_mcp_server_missing(ambient_raw, name)
     try:
-        ambient_result = json.loads(
-            ambient_raw["stdout"],
-            parse_constant=lambda value: (_ for _ in ()).throw(
-                ValueError(f"invalid JSON constant: {value}")
-            ),
-        )
+        ambient_result = strict_json_loads(ambient_raw["stdout"])
     except (json.JSONDecodeError, ValueError):
         return False
     return ambient_result != effective
@@ -1515,6 +1537,7 @@ def inspect_mulgae(
         "compatible" if mulgae_cli_compatible else "incompatible"
     )
     doctor_supported = normalized_doctor.get("doctor_capability") == "supported"
+    doctor_command_ok = normalized_doctor["ok"]
     doctor_capability = normalized_doctor.get("doctor_capability")
     health["doctor_contract"] = (
         doctor_capability
@@ -1565,9 +1588,21 @@ def inspect_mulgae(
     mcp_blocks = mcp_status == "degraded" or (
         require_mcp and mcp_status != "configured"
     )
-    if mulgae_cli_compatible and doctor_supported and offline_ready and not mcp_blocks:
+    if (
+        mulgae_cli_compatible
+        and doctor_supported
+        and doctor_command_ok
+        and offline_ready
+        and not mcp_blocks
+    ):
         tool["status"] = "configured"
-    elif both_missing and mulgae_cli_compatible and doctor_supported and not mcp_blocks:
+    elif (
+        both_missing
+        and mulgae_cli_compatible
+        and doctor_supported
+        and doctor_command_ok
+        and not mcp_blocks
+    ):
         tool["status"] = "installed"
     else:
         tool["status"] = "degraded"
@@ -2184,6 +2219,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             doctor_payload.get("healthy"), bool
         ):
             normalized_doctor["result"] = {"healthy": doctor_payload["healthy"]}
+        session_payload_valid = False
         if isinstance(session_result, dict):
             procedure = session_result.get("procedure")
             session = session_result.get("session")
@@ -2211,12 +2247,32 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 "current_graph_node_present": isinstance(node, dict)
                 and isinstance(node.get("graph_node_id"), str),
             }
+            allowed_procedure_ids = {Path(name).stem for name in PODWAY_PROCEDURES}
+            session_payload_valid = bool(
+                isinstance(procedure, dict)
+                and procedure.get("schema") == "podway.procedure/v2"
+                and procedure.get("id") in allowed_procedure_ids
+                and isinstance(procedure.get("version"), str)
+                and re.fullmatch(r"\d+", procedure["version"])
+                and isinstance(procedure.get("digest"), str)
+                and re.fullmatch(r"sha256:[0-9A-Za-z._-]{1,128}", procedure["digest"])
+                and isinstance(session, dict)
+                and isinstance(session.get("id"), str)
+                and re.fullmatch(
+                    r"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+                    session["id"],
+                    re.IGNORECASE,
+                )
+                and session.get("lifecycle")
+                in {"prepared", "active", "completed", "cancelled", "discarded"}
+                and isinstance(session.get("revision"), int)
+                and not isinstance(session.get("revision"), bool)
+            )
         tool["probes"]["doctor"] = normalized_doctor
         tool["probes"]["session_status"] = normalized_session
         session_contract_ok = (
-            normalized_session["ok"]
-            or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
-        )
+            normalized_session["ok"] and session_payload_valid
+        ) or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
         tool["legacy_state_detected"] = any(
             probe.get("error_code") == "LEGACY_PROCEDURE_STATE_UNSUPPORTED"
             for probe in (normalized_doctor, normalized_session)
@@ -2255,10 +2311,14 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 and payload.get("valid") is True
             )
 
-    doctor_ok = tool["probes"]["doctor"]["ok"] if initialized else True
+    doctor_ok = not initialized
     doctor_payload = tool["probes"]["doctor"].get("result") if initialized else None
-    if isinstance(doctor_payload, dict) and doctor_payload.get("healthy") is False:
-        doctor_ok = False
+    if initialized:
+        doctor_ok = bool(
+            tool["probes"]["doctor"]["ok"]
+            and isinstance(doctor_payload, dict)
+            and doctor_payload.get("healthy") is True
+        )
     healthy = (
         version_probe["ok"]
         and tool["version_supported"]

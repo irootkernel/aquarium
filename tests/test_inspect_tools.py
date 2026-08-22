@@ -1700,6 +1700,19 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertFalse(probe["ok"])
                 self.assertEqual(probe["error_code"], "invalid_json")
 
+        duplicate = inspect_tools.parse_json_probe(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "stdout": '{"version":"0.2.6","version":"0.2.7"}',
+            }
+        )
+
+        self.assertFalse(duplicate["ok"])
+        self.assertEqual(duplicate["error_code"], "invalid_json")
+
     def test_sanho_normalizers_emit_only_typed_aggregate_evidence(self) -> None:
         secret = "QA21_SYNTHETIC_SECRET"
         status = inspect_tools.normalize_sanho_status(
@@ -1731,7 +1744,7 @@ class InspectToolsTest(unittest.TestCase):
         )
 
         self.assertFalse(status["contract_valid"])
-        self.assertTrue(doctor["contract_valid"])
+        self.assertFalse(doctor["contract_valid"])
         self.assertNotIn(secret, json.dumps({"status": status, "doctor": doctor}))
 
     def test_untrusted_mulgae_and_podway_fields_are_not_reflected(self) -> None:

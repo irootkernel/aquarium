@@ -79,7 +79,7 @@ python3 -m venv .venv
 make test
 ```
 
-이 gate는 Python 3.10 이상, Ruby 3.3 이상, 그리고 `requirements.txt`에 고정된 버전이 필요합니다. 이 저장소는 [MIT License](LICENSE)를 따릅니다.
+이 gate는 Python 3.11 이상, Ruby 3.3 이상, 그리고 `requirements.txt`에 고정된 버전이 필요합니다. 이 저장소는 [MIT License](LICENSE)를 따릅니다.
 
 ## 업그레이드
 
