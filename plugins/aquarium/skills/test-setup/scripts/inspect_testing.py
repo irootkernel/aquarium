@@ -148,6 +148,21 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
         typescript_manifest = typescript_manifest or "typescript" in dependencies
     if typescript_manifest:
         languages.add("typescript")
+    if "python" not in languages and "typescript" not in languages:
+        make_content = read_optional_text(repository / "Makefile", repository)
+        python_runner = re.search(
+            r"(?:^|[\s;&|])(?:(?:\S*/)?python(?:\d+(?:\.\d+)*)?\s+-m\s+)?"
+            r"(?:pytest|unittest|(?:\S*/)?nose(?:2)?|(?:\S*/)?nosetests)(?:\s|$)",
+            make_content,
+        )
+        python_source = any(
+            safe_repository_file(path, repository)
+            and not sensitive_relative_path(path, repository)
+            for path in repository.rglob("*.py")
+            if not any(part in {".git", ".venv", "vendor"} for part in path.parts)
+        )
+        if python_runner or python_source:
+            languages.add("python")
     return sorted(languages)
 
 

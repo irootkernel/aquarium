@@ -768,6 +768,36 @@ class TestInspectTesting:
         assert result["structural_status"] == "unverifiable"
         assert self.framework(result, "python")["detected"] == ["pytest", "unittest"]
 
+    def test_manifestless_python_runner_and_source_require_framework_review(
+        self,
+    ) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace(
+                "test-unit:\n\t@true",
+                "test-unit:\n\tpython3 -m unittest tests.test_unit",
+            )
+            .replace(
+                "test-int:\n\t@true",
+                "test-int:\n\tpython3 -m unittest tests.test_integration",
+            )
+            .replace(
+                "test-e2e:\n\t@true",
+                "test-e2e:\n\tpython3 -m unittest tests.test_e2e",
+            ),
+            encoding="utf-8",
+        )
+        self.write("tests/test_unit.py", "import unittest\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["python"]
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["status"] == "waiver_required"
+
     def test_python_dependency_and_opaque_wrapper_are_not_canonical(self) -> None:
         self.write_make_contract()
         makefile = self.repository.joinpath("Makefile")
