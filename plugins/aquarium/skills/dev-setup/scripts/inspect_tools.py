@@ -523,16 +523,18 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
 def skill_root_symlinked(root: Path) -> bool:
     try:
         anchor = Path(os.path.commonpath((Path.home(), root)))
-    except ValueError:
-        anchor = Path(root.anchor)
+        relative = root.relative_to(anchor)
+    except (ValueError, OSError):
+        return True
     current = anchor
     if current.is_symlink():
         return True
-    try:
-        relative = root.relative_to(anchor)
-    except ValueError:
-        return True
     for part in relative.parts:
+        if part == "..":
+            current = current.parent
+            continue
+        if part == ".":
+            continue
         current = current / part
         if current.is_symlink():
             return True
@@ -1607,6 +1609,10 @@ def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["version_supported"] = supported_gaori_version(tool["version"])
     if not version_probe["ok"] or not tool["version_supported"]:
         tool["status"] = "degraded"
+    if any(entry["symlinked"] for entry in tool["configuration"][:3]):
+        tool["probes"]["config_check"] = skipped_probe("configuration_symlinked")
+        tool["status"] = "degraded"
+        return tool
     if not tool["configuration"][0]["present"]:
         tool["probes"]["config_check"] = skipped_probe("configuration_missing")
         return tool
@@ -1634,7 +1640,7 @@ def skill_roots() -> list[Path]:
     )
     roots: list[Path] = []
     for candidate in candidates:
-        lexical = Path(os.path.abspath(candidate))
+        lexical = candidate if candidate.is_absolute() else Path.cwd() / candidate
         if lexical not in roots:
             roots.append(lexical)
     return roots

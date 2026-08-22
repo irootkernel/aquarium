@@ -882,6 +882,23 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(installation["symlinked"])
         self.assertTrue(all(item["sha256"] is None for item in installation["files"]))
 
+    def test_codex_home_symlink_before_dotdot_is_not_normalized_away(self) -> None:
+        external = self.base / "external-codex"
+        (external / "child").mkdir(parents=True)
+        self.install_gaori_skill(root=external / "skills")
+        self.install_gaori_skill(root=self.base / "skills")
+        jump = self.base / "jump"
+        jump.symlink_to(external / "child", target_is_directory=True)
+        self.environment["CODEX_HOME"] = str(jump / "..")
+
+        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+
+        self.assertEqual(skill["status"], "degraded")
+        self.assertTrue(skill["installations"][0]["symlinked"])
+        self.assertTrue(
+            all(item["sha256"] is None for item in skill["installations"][0]["files"])
+        )
+
     def test_matching_managed_procedures_are_ready_only_on_supported_platform(
         self,
     ) -> None:
@@ -1772,6 +1789,46 @@ class InspectToolsTest(unittest.TestCase):
 
         self.assertFalse(configuration["present"])
         self.assertTrue(configuration["symlinked"])
+        self.assertFalse(gaori["probes"]["config_check"]["attempted"])
+        self.assertNotIn("credential-marker", completed.stdout)
+
+    def test_symlinked_gaori_rules_are_not_probed(self) -> None:
+        self.repository.joinpath(".gaori/tester").mkdir(parents=True)
+        self.repository.joinpath(".gaori/tester.yaml").write_text(
+            "version: 2\n", encoding="utf-8"
+        )
+        external = self.base / "external-rules"
+        external.mkdir()
+        external.joinpath("example.yaml").write_text(
+            "credential-marker: secret\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".gaori/tester/rules").symlink_to(
+            external, target_is_directory=True
+        )
+        self.install_fake_tools()
+
+        completed = self.inspect()
+        gaori = json.loads(completed.stdout)["tools"]["gaori"]
+
+        self.assertFalse(gaori["probes"]["config_check"]["attempted"])
+        self.assertEqual(
+            gaori["probes"]["config_check"]["reason"], "configuration_symlinked"
+        )
+        self.assertNotIn("credential-marker", completed.stdout)
+
+    def test_symlinked_gaori_toolchain_is_not_probed(self) -> None:
+        self.repository.joinpath(".gaori").mkdir()
+        self.repository.joinpath(".gaori/tester.yaml").write_text(
+            "version: 2\n", encoding="utf-8"
+        )
+        external = self.base / "external-toolchain.yaml"
+        external.write_text("credential-marker: secret\n", encoding="utf-8")
+        self.repository.joinpath(".gaori/toolchain.yaml").symlink_to(external)
+        self.install_fake_tools()
+
+        completed = self.inspect()
+        gaori = json.loads(completed.stdout)["tools"]["gaori"]
+
         self.assertFalse(gaori["probes"]["config_check"]["attempted"])
         self.assertNotIn("credential-marker", completed.stdout)
 

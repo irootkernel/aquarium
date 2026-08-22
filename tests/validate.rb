@@ -485,10 +485,11 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("initial structured choice authorizes local preparation") &&
+       ROOT.join("PRIVACY.md").read.include?("initial structured choice binds one canonical provider executable path") &&
        ROOT.join("PRIVACY.md").read.include?("Only the second, final structured tool:model choice authorizes") &&
        ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
-       ROOT.join("PRIVACY.md").read.include?("every provider-readable snapshot file") &&
+       ROOT.join("PRIVACY.md").read.include?("every snapshot file, standalone Git metadata, and Aquarium Task byte it will supply") &&
+       ROOT.join("PRIVACY.md").read.include?("do not form an operating-system read sandbox") &&
        ROOT.join("PRIVACY.md").read.include?("removes the exact registration and snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
@@ -1620,7 +1621,7 @@ assert(orca_review.include?("request_user_input") &&
        "orca-review must use explicit structured provider selection without silent defaults")
 assert(orca_review.include?("every repository, target, supporting-source, instruction, and authority file") &&
        orca_review.include?("newline-terminated `<sha256>  <source-identity>` lines") &&
-       orca_review.include?("every provider-readable regular file and symlink identity") &&
+       orca_review.include?("every regular file and symlink identity Aquarium will supply") &&
        orca_review.include?("including standalone `.git` metadata") &&
        orca_review.include?("second, final structured choice") &&
        orca_review.include?("Orca-owned runtime metadata") &&
@@ -1636,18 +1637,20 @@ assert(orca_review.include?("every repository, target, supporting-source, instru
   assert(orca_review.include?(label), "orca-review provider label is missing: #{label}")
 end
 assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
-       orca_review.include?("Probe only these executable names with `command -v` followed by their local version command: `claude --version`, `codex --version`, `cursor-agent --version`, and `kimi --version`") &&
-       orca_review.include?("A command is available only when both probes succeed") &&
+       orca_review.include?("Resolve each successful result to one canonical absolute regular executable") &&
+       orca_review.include?("canonical provider executable path, executable digest and observed version") &&
+       orca_review.include?("Revalidate the provider executable path, digest, and version immediately before terminal creation") &&
        orca_review.include?("Do not authenticate, list remote models"),
        "orca-review must show only locally healthy CLI choices without provider probes")
-assert(orca_provider_contracts.include?("claude --model fable --permission-mode plan") &&
-       orca_provider_contracts.include?("claude --model opus --permission-mode plan") &&
-       orca_provider_contracts.include?("codex --model gpt-5.6-sol --sandbox read-only --ask-for-approval never") &&
-       orca_provider_contracts.include?("cursor-agent --model grok-4.6 --mode plan") &&
-       orca_provider_contracts.include?("kimi --model k3 --plan") &&
+assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-mode plan") &&
+       orca_provider_contracts.include?("<PROVIDER> --model opus --permission-mode plan") &&
+       orca_provider_contracts.include?("<PROVIDER> --model gpt-5.6-sol --sandbox read-only --ask-for-approval never") &&
+       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan") &&
+       orca_provider_contracts.include?("<PROVIDER> --model k3 --plan") &&
        orca_provider_contracts.include?("terminal create --worktree path:<absoluteSnapshotPath>") &&
-       orca_provider_contracts.include?("exact registered path selector") &&
-       orca_review.include?("Never expose the original checkout to a participant") &&
+       orca_provider_contracts.include?("using `<PROVIDER>` as the command's executable") &&
+       orca_review.include?("Never expose or identify the original checkout to a participant") &&
+       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute path") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
        orca_review.include?("read-only `agent-context --json`") &&
        orca_review.include?("query only the exact route with `<ORCA> <route> --help`") &&
@@ -1697,6 +1700,8 @@ assert(orca_review.include?("one cumulative liveness budget") &&
 assert(orca_review.include?("After every message in the batch is processed") &&
        orca_review.include?("check --ack <deliveryId> --wait") &&
        orca_review.include?("questions and escalations") &&
+       orca_review.include?("Only for an accepted terminal `worker_done`") &&
+       orca_review.include?("Never retain or release a worker merely for") &&
        orca_review.include?("FIFO replay intentionally blocks later deliveries") &&
        orca_review.include?("Never acknowledge a batch while any message is unresolved"),
        "orca-review must acknowledge every fully processed Delivery batch without bypassing settlement")

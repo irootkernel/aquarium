@@ -51,7 +51,7 @@ INFORMATION_ONLY_ARGUMENT = re.compile(
     r"(?:^|[\s\"'\[,])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],}]|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*['\"]?(?:\S*/)?make['\"]?(?:\s|$)"
+    r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*['\"]?(?:\S*/)?make['\"]?(?:[\s;&|)]|$)"
 )
 
 
@@ -152,7 +152,7 @@ def lexical_path_symlinked(path: Path) -> bool:
 
 
 def normalize_shell_token_joins(command: str) -> str:
-    return re.sub(r"(?<=[A-Za-z0-9_-])[\"']+(?=[A-Za-z0-9_-])", "", command)
+    return re.sub(r"(?<=[A-Za-z0-9_-])[\"'\\]+(?=[A-Za-z0-9_-])", "", command)
 
 
 def read_optional_text(path: Path, repository: Path) -> str:
@@ -274,7 +274,7 @@ def pytest_control_only_configuration(
     repository: Path, make_variables: dict[str, set[str]]
 ) -> bool:
     if any(
-        INFORMATION_ONLY_ARGUMENT.search(value)
+        INFORMATION_ONLY_ARGUMENT.search(normalize_shell_token_joins(value))
         for value in make_variables.get("PYTEST_ADDOPTS", set())
     ):
         return True
@@ -290,7 +290,8 @@ def pytest_control_only_configuration(
             )
             values = addopts if isinstance(addopts, list) else [addopts]
             if any(
-                isinstance(value, str) and INFORMATION_ONLY_ARGUMENT.search(value)
+                isinstance(value, str)
+                and INFORMATION_ONLY_ARGUMENT.search(normalize_shell_token_joins(value))
                 for value in values
             ):
                 return True
@@ -309,7 +310,9 @@ def pytest_control_only_configuration(
             continue
         if any(
             parser.has_option(section, "addopts")
-            and INFORMATION_ONLY_ARGUMENT.search(parser.get(section, "addopts"))
+            and INFORMATION_ONLY_ARGUMENT.search(
+                normalize_shell_token_joins(parser.get(section, "addopts"))
+            )
             for section in sections
         ):
             return True

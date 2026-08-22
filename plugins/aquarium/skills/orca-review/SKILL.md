@@ -40,7 +40,7 @@ For a staged target, require the reviewer to inspect index blobs and `git diff -
 
 ## Discover and Select the AI
 
-Probe only these executable names with `command -v` followed by their local version command: `claude --version`, `codex --version`, `cursor-agent --version`, and `kimi --version`. A command is available only when both probes succeed. Do not authenticate, list remote models, contact a provider, update a CLI, or inspect credentials during discovery.
+Probe only these executable names with `command -v`: `claude`, `codex`, `cursor-agent`, and `kimi`. Resolve each successful result to one canonical absolute regular executable, record its SHA-256 digest, and invoke that exact path for its local `--version` command. A command is available only when path resolution, hashing, and the version probe succeed. Do not authenticate, list remote models, contact a provider, update a CLI, or inspect credentials during discovery.
 
 Build the selection menu from successful probes only:
 
@@ -55,7 +55,7 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 Before presenting a preparation choice, build and display a source manifest. It must list every repository, target, supporting-source, instruction, and authority file intended for materialization, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the source-manifest digest.
 
-Each preparation choice must identify the exact tool:model, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
+Each preparation choice must identify the exact tool:model, canonical provider executable path, executable digest and observed version, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
 
 Never auto-select, infer consent from silence, or treat preparation approval or approval for another provider, snapshot, or manifest as transmission consent.
 
@@ -65,17 +65,19 @@ Immediately after the preparation choice and before reading provider instruction
 
 After that check succeeds, read [provider-contracts.md](references/provider-contracts.md) and materialize only the verified source bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence. Reject any symlink whose resolved target escapes the snapshot.
 
-Build the exact Aquarium-supplied Task specification before transmission. In a coordinator-only sibling directory outside the provider-visible snapshot, create the complete transmission manifest over every provider-readable regular file and symlink identity in the finished snapshot, including standalone `.git` metadata, plus the exact Aquarium Task specification bytes.
+Build the exact Aquarium-supplied Task specification before transmission. In a coordinator-only sibling directory outside the Aquarium-supplied snapshot, create the complete transmission manifest over every regular file and symlink identity Aquarium will supply in the finished snapshot, including standalone `.git` metadata, plus the exact Aquarium Task specification bytes.
 
 Sort newline-terminated `<sha256>  <provider-visible-identity>` records and hash them as the transmission-manifest digest. Make the complete snapshot read-only, then recompute and require every manifest record to match.
 
-Present a second, final structured choice that identifies the exact tool:model, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
+Present a second, final structured choice that identifies the exact tool:model, canonical provider executable path, executable digest and observed version, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
+
+Disclose that the selected local CLI runs as the current operating-system user. Aquarium's manifest and read-only instructions constrain what Aquarium supplies and authorizes, but are not an operating-system read sandbox; the CLI may technically access other files already readable by that user. Require explicit acceptance of that local-process capability in the same final choice.
 
 Disclose that Orca's version-matched orchestration layer prepends its own lifecycle preamble and identifiers when Dispatch is injected; those are Orca-owned runtime metadata, not Aquarium prompt bytes. State that this final choice alone authorizes registration and transmission of the manifested bytes plus that disclosed metadata category to the selected provider.
 
 A decline deletes only the owned snapshot and coordinator manifest. Any unavailable structured ask/answer surface stops without registration or transmission.
 
-Immediately after final selection and before creating Orca state or transmitting source, recompute the target, source manifest, every provider-visible snapshot and Aquarium Task record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
+Immediately after final selection and before creating Orca state or transmitting source, recompute the selected provider executable's canonical path, digest, and version, the target, source manifest, every Aquarium-supplied snapshot and Task record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
 
 After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded agent-context and exact-route help fallbacks above.
 
@@ -85,11 +87,15 @@ Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve
 
 On a registration or path-verification failure before terminal or worker launch, remove only the exact registration and snapshot when their identities are proven, then stop.
 
-Create or bind one Run, create one review Task with `task-create --spec <exactAquariumTaskSpec>`, start one fresh selected lead through the recorded exact snapshot path selector, and use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
+Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Revalidate the provider executable path, digest, and version immediately before terminal creation. Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path, then use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble.
+
+Never expose or identify the original checkout to a participant, register a linked Git worktree, resolve the provider from terminal `PATH`, or reuse an existing AI terminal.
 
 After any terminal launch, worker-start, or Dispatch attempt, never clean up from a command failure alone. Inspect the authoritative worker and terminal state through the live guide. Retain the registration and snapshot for every active or unproven worker; cleanup is allowed only after the worker is proven settled and successfully released with no retention request.
 
-The Task specification must include the original absolute Git root as report identity only, immutable snapshot root, exact target identity and digest, source-manifest digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema. Do not embed the complete transmission-manifest digest in bytes hashed by that same manifest.
+The Task specification must include a stable repository report label that contains no original-checkout path, immutable snapshot root, exact target identity and digest, source-manifest digest, named requirement authority, included and excluded state, and selected tool:model with its canonical provider executable identity.
+
+It must also include the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema. Do not embed the complete transmission-manifest digest in bytes hashed by that same manifest.
 
 Require every participant to read only the immutable snapshot and bind authoritative worker scope evidence to the exact target and source-manifest digest. Bind the complete transmission-manifest digest separately to the authoritative Run, Task, and Dispatch identities in coordinator evidence. Do not include the coordinator's suspected findings or intended fixes.
 
@@ -111,7 +117,7 @@ When the cumulative budget expires without an accepted terminal delivery, inspec
 
 For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict.
 
-For every Delivery batch, process every message completely. When retention was requested for an accepted terminal delivery, run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker. Otherwise release the settled succeeded or failed worker and verify the release receipt. A failed retain or release is an operational gap.
+For every Delivery batch, process every message completely. Only for an accepted terminal `worker_done`, either run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker when retention was requested, or release the settled succeeded or failed worker and verify the release receipt. Never retain or release a worker merely for a question, escalation, heartbeat, stale completion, or rejected completion. A required retain or release failure is an operational gap.
 
 After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch with `check --ack <deliveryId> --wait`. This applies to accepted, rejected, and stale completions as well as questions and escalations. Never acknowledge a batch while any message is unresolved or a required retain or release failed; without acknowledgement, FIFO replay intentionally blocks later deliveries.
 
