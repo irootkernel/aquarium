@@ -1,6 +1,6 @@
 # Repository Operating Guidance
 
-Use this reference only after the user approves preparation of an AGENTS.md proposal. The proposal creates or reconciles a repository operating contract; it is not limited to tool guidance.
+Use this reference only after the user selects `Show proposal` or `Diagnose only` for repository guidance. Diagnosis uses its structure and evidence rules without drafting; only `Show proposal` authorizes proposal preparation. A proposal creates or reconciles a repository operating contract and is not limited to tool guidance.
 
 The four-part core behavior below is adapted, rather than copied verbatim, from the Karpathy-inspired guidance at `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The bundled structure and this repository's instructions are the proposal authority.
 

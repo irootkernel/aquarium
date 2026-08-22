@@ -280,7 +280,7 @@ assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, or Deslop source
        dev_setup.include?("exact repository, roadmap, and task prompt"),
        "dev-setup must install third-party skills from exact upstream sources")
 proposal_index = dev_setup.index("Ask whether to prepare an evidence-based repository operating-guidance proposal")
-diff_index = dev_setup.index("Display the exact root AGENTS.md and CLAUDE.md paths")
+diff_index = dev_setup.index("display the exact root AGENTS.md and CLAUDE.md paths")
 apply_index = dev_setup.index("Apply exactly this diff")
 assert(proposal_index && diff_index && apply_index && proposal_index < diff_index && diff_index < apply_index,
        "repository-guidance proposal and apply approvals are not ordered")
@@ -298,6 +298,12 @@ assert(dev_setup.include?("Do not use for routine supported Procedure v2 session
        "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
 assert(dev_setup.include?("Do not create or read `.aquarium`"),
        "dev-setup must not create shadow orchestration state")
+assert(dev_setup.include?("Never read credential values in this skill, even after setup approval") &&
+       dev_setup.include?("Do not open `.env*`, authentication, key, token, secret, or credential files") &&
+       dev_setup.include?("For either `Show proposal` or `Diagnose only`") &&
+       dev_setup.include?("Diagnosis reports coverage and conflicts without drafting or mutation") &&
+       agents_reference.include?("Diagnosis uses its structure and evidence rules without drafting"),
+       "dev-setup must keep credential values unread and diagnose-only guidance non-drafting")
 selection_disclosure_index = dev_setup.index("Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices")
 comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
@@ -379,6 +385,9 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("bun_legacy_lock_waiver_required") &&
        test_setup_script_body.include?("typescript_package_manager_waiver_required") &&
        test_setup_script_body.include?("source_contains") &&
+       test_setup_script_body.include?("only_recursive_calls") &&
+       test_setup_script_body.include?("section_content") &&
+       test_setup_script_body.include?("runs_cargo_test") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
        test_setup_script_body.include?("pending-patrol") &&
@@ -1590,8 +1599,11 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_provider_contracts.include?("exact registered path selector") &&
        orca_review.include?("Never expose the original checkout to a participant") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
-       orca_review.include?("existing-folder registration") &&
-       orca_review.include?("remove the exact temporary registration through its recorded setup identity") &&
+       orca_review.include?("query only that exact route with `<ORCA> <route> --help`") &&
+       orca_review.include?("repo add --path <absoluteSnapshotPath> --json") &&
+       orca_review.include?("project setups --json") &&
+       orca_review.include?("project setup-delete --setup <recordedSetupId> --json") &&
+       orca_review.include?("retain the exact temporary registration and owned snapshot through scope revalidation") &&
        orca_review.include?("Require every participant to read only the immutable snapshot"),
        "orca-review must launch every selected model through the consent-bound immutable snapshot")
 assert(orca_provider_contracts.include?("Fable is the master reviewer") &&

@@ -272,6 +272,22 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
         self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
 
+    def test_extra_make_aggregate_command_is_unverifiable(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8").replace(
+                "\t$(MAKE) test-unit", "\tfalse\n\t$(MAKE) test-unit"
+            ),
+            encoding="utf-8",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
+
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
         self.write_bun_adapter()
@@ -379,9 +395,7 @@ class InspectTestingTest(unittest.TestCase):
         result = inspect_testing.inspect_repository(self.repository)
 
         self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
-        self.assertEqual(
-            self.framework(result, "rust")["unit_int_parser"], "cargo-test"
-        )
+        self.assertEqual(self.framework(result, "rust")["unit_int_parser"], "generic")
         self.assertEqual(
             result["frameworks"]["gaori"]["stage_parser_defaults"]["test-int"],
             "generic",
@@ -530,6 +544,26 @@ class InspectTestingTest(unittest.TestCase):
             "testing_sections_missing", {item["code"] for item in result["findings"]}
         )
 
+    def test_contract_marker_outside_contract_section_does_not_enroll(self) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        document = self.repository.joinpath("TESTING.md")
+        content = document.read_text(encoding="utf-8")
+        content = content.replace(
+            "Contract: aquarium-test-contract/v1\nProfile: make",
+            "This repository is not enrolled.\nProfile: make",
+        ).replace("None.\n", "Rejected contract: aquarium-test-contract/v1\n")
+        document.write_text(content, encoding="utf-8")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertFalse(result["testing_document"]["contract_registered"])
+        self.assertIn(
+            "testing_contract_unregistered",
+            {item["code"] for item in result["findings"]},
+        )
+
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -566,6 +600,55 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(framework["unit_int_parser"], "generic")
         self.assertTrue(framework["waiver_required"])
+
+    def test_bun_script_command_make_reverse_edge_is_rejected(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " && command make auxiliary"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+        self.assertIn("bun_make_cycle", {item["code"] for item in result["findings"]})
+
+    def test_rust_without_cargo_test_runner_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        self.write("Cargo.toml", '[package]\nname = "fixture"\nversion = "0.1.0"\n')
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "rust")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["unit_int_parser"], "generic")
+        self.assertTrue(framework["waiver_required"])
+
+    def test_rust_with_cargo_test_runners_is_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        content = makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\tcargo test --lib"
+        )
+        content = content.replace(
+            "test-int:\n\t@true", "test-int:\n\tcargo test --test integration"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("Cargo.toml", '[package]\nname = "fixture"\nversion = "0.1.0"\n')
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "rust")
+
+        self.assertEqual(result["structural_status"], "conforming")
+        self.assertEqual(framework["unit_int_parser"], "cargo-test")
+        self.assertFalse(framework["waiver_required"])
 
     def test_legacy_bun_lock_requires_waiver_even_with_bun_lock(self) -> None:
         self.write_bun_package()

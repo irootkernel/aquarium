@@ -16,6 +16,7 @@ It does not authorize source-checkout edits, tests, builds, generators, formatte
 1. Require the separately installed `$orca-cli` skill to be available in the active skill catalog. If its availability cannot be established, stop; do not approximate its contract from this skill.
 2. Resolve the Orca executable exactly as `$orca-cli` requires and reuse it for the complete invocation. If the selected executable is missing or fails, report the exact error and stop; do not try another executable.
 3. Load the version-matched guides with the selected executable's `skills get orca-cli` and `skills get orchestration` commands before using Orca. Follow those live guides rather than cached command syntax, including the examples in this skill and its reference. Stop when either guide cannot be retrieved.
+   When a required local route is omitted from both retrieved guides, query only that exact route with `<ORCA> <route> --help`. Treat help from the already selected installed CLI as grammar authority for that route only; stop if it is unavailable or does not expose every required identity.
 4. Confirm `status --json`. If the CLI exists but the app is stopped, attempt `open --json` once and confirm status again.
 5. Require a ready runtime and the current orchestration contract. Stop when the selected executable fails, either version-matched guide cannot be retrieved, the runtime cannot start, orchestration is unavailable, or Run, Task, Dispatch, terminal, or lifecycle provenance cannot be verified.
 
@@ -62,7 +63,11 @@ Immediately after selection and before reading provider instructions, creating O
 
 After that check succeeds, materialize only those verified bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence, store the transmission manifest inside it, make the complete snapshot read-only, and recompute every snapshot file digest. Stop unless that snapshot exactly reproduces the consented target and context-manifest digests.
 
-After the immutable snapshot verifies, require the version-matched guide to expose an existing-folder registration, an exact `path:<absoluteSnapshotPath>` worktree selector, and matching removal through a stable returned setup identity. Register only that snapshot through the supported local Orca surface, record every returned project, setup, repository, and worktree identity, and require `worktree show` for the exact path selector to resolve to the snapshot.
+After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded exact-route help fallback above.
+
+Snapshot `project setups --json`, register only the snapshot with `repo add --path <absoluteSnapshotPath> --json`, then query `project setups --json` again. Require exactly one newly created setup whose path equals the snapshot and whose repository identity equals the returned repository identity; record that setup identity and every returned repository and worktree identity.
+
+Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve exactly to the snapshot. Stop instead of supplying an unproven project, host, or setup identity.
 
 On any failure, remove only the exact registration and snapshot when their identities are proven, then stop.
 
@@ -90,7 +95,7 @@ When the cumulative budget expires without an accepted terminal delivery, inspec
 
 For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict. Release a settled succeeded or failed worker unless the user explicitly requested retention, then acknowledge the delivery.
 
-After successful release, remove the exact temporary registration through its recorded setup identity and delete only the owned snapshot. If retention was requested or the worker remains active, retain both and report their paths and identities. Do not release or clean up after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
+After successful release, retain the exact temporary registration and owned snapshot through scope revalidation. If retention was requested or the worker remains active, retain both and report their paths and identities. Do not release or clean up after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
 
 Follow the live guide's exact recovery action for launch, Dispatch, delivery, or release failures. Never retry a provider automatically, switch providers, blindly resend an exactly-once completion, or turn an operational gap into a technical verdict.
 
@@ -111,5 +116,7 @@ Verify every returned finding against the exact authority, index or commit snaps
 - **Needs confirmation**: dependent on missing authority or runtime evidence; report it separately with the exact evidence needed and do not count it as valid.
 
 If the lead returned `APPROVE`, first confirm the intended target, authority, topology, digest stability, and empty modified-file set. Missing output, unverifiable model use, scope drift, lifecycle failure, or incomplete adjudication prevents a clean verdict.
+
+After scope revalidation and local adjudication finish, remove the exact temporary registration with `project setup-delete --setup <recordedSetupId> --json`, confirm that setup identity is absent from `project setups --json`, and delete only the owned snapshot. A cleanup failure is an operational gap and prevents reporting complete cleanup; never delete a pre-existing or ambiguously identified setup.
 
 Return the target and digest, selected tool:model and CLI version, source-transmission consent, review topology, independent reviewer verdict, valid findings, confirmation needs, rejected count, recommended responses, snapshot registration and cleanup status, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Do not expose credentials, private provider payloads, raw transcripts, or subagent reasoning.

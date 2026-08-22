@@ -18,7 +18,8 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
    When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
-5. Discover existing root instruction files, project authorities, tool guidance, commit-message rules, and verification commands from repository files before asking questions. Inspect the remaining state read-only; when a check would require reading credentials, contacting a network, or changing files, defer it to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
+5. Discover existing root instruction files, project authorities, tool guidance, commit-message rules, verification commands, and non-secret environment variable names from repository files before asking questions.
+   Never read credential values in this skill, even after setup approval. Do not open `.env*`, authentication, key, token, secret, or credential files. Use only non-secret documentation and templates proven to contain placeholders, plus redacted readiness from the owning CLI. When a check would require credential values, report the gap. Defer network contact or file changes to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
 6. Do not create or read `.aquarium` or any equivalent central selection file. `$aquarium:dev-setup-bundle` may separately normalize an explicit external manifest, but this skill receives only its bounded normalized handoff and never the manifest path or contents.
 
 ## Use Ask/Answer for Decisions
@@ -160,12 +161,12 @@ After approved mutations, verify `ooo --version`, `ooo codex doctor`, `ooo mcp d
 Handle root AGENTS.md and CLAUDE.md independently from tool setup:
 
 1. Ask whether to prepare an evidence-based repository operating-guidance proposal. Offer `Show proposal`, `Diagnose only`, and `Skip`.
-2. For either `Show proposal` or `Diagnose only`, read [agents-guidance.md](references/agents-guidance.md) and inspect the local sources it identifies. Diagnosis reports coverage and conflicts without drafting or mutation.
+2. For either `Show proposal` or `Diagnose only`, read [agents-guidance.md](references/agents-guidance.md) and inspect the non-secret local sources it identifies. Diagnosis reports coverage and conflicts without drafting or mutation.
 3. For `Show proposal`, resolve every material conflict and the mandatory `Project Configuration` > `Commit Messages` rule before finalizing the proposal. If no authoritative commit header exists, ask the user to choose one; recent Git history is evidence only and never sufficient authority by itself.
-4. Display the exact root AGENTS.md and CLAUDE.md paths and one complete combined diff. Do not edit either file yet. Preserve substantive CLAUDE.md guidance in AGENTS.md before proposing the canonical delegation file.
-5. Ask whether to `Apply exactly this diff`, `Revise proposal`, or `Do not apply`.
-6. Before applying, re-read both files and compare them with the bytes or explicit absence used to produce the proposal. If either changed, discard the approval, regenerate the combined diff, and ask again.
-7. Apply only the approved diff. Then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, repository-specific rules, and unrelated user content.
+4. For `Show proposal` only, display the exact root AGENTS.md and CLAUDE.md paths and one complete combined diff. Do not edit either file yet. Preserve substantive CLAUDE.md guidance in AGENTS.md before proposing the canonical delegation file.
+5. For `Show proposal` only, ask whether to `Apply exactly this diff`, `Revise proposal`, or `Do not apply`.
+6. Before applying a shown proposal, re-read both files and compare them with the bytes or explicit absence used to produce it. If either changed, discard the approval, regenerate the combined diff, and ask again.
+7. Apply only the approved shown diff. Then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, repository-specific rules, and unrelated user content.
 
 The first answer authorizes proposal preparation or diagnosis only. General setup approval, install approval, and the instruction to use this skill never authorize instruction-file mutation. The second approval covers only the exact displayed root AGENTS.md/CLAUDE.md diff; it never authorizes nested instruction files, staging, committing, or publication.
 

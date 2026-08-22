@@ -324,9 +324,25 @@ def inspect_frameworks(
         )
 
     if "rust" in languages:
+        runs_cargo_test = all(
+            commands[stage]
+            and any(
+                re.search(
+                    r"^\s*[@+-]*\s*(?:cargo|\$\(CARGO\)|\$\{CARGO\})(?:\s+\+\S+)?\s+test(?:\s|$)",
+                    command,
+                )
+                for command in commands[stage]
+            )
+            for stage in ("test-unit", "test-int")
+        )
+        status = "canonical" if runs_cargo_test else "waiver_required"
         entries.append(
             framework_entry(
-                "rust", ["cargo-test"], ["cargo-test"], "canonical", "cargo-test"
+                "rust",
+                ["cargo-test"],
+                ["cargo-test"] if runs_cargo_test else [],
+                status,
+                "cargo-test" if status == "canonical" else "generic",
             )
         )
 
@@ -586,6 +602,7 @@ def inspect_makefile(
                 for match in [RECURSIVE_MAKE_PATTERN.match(command)]
                 if match is not None
             ]
+            only_recursive_calls = len(aggregate["recipe"]) == len(recursive_calls)
             result["aggregate_recursive_calls"] = recursive_calls
             if aggregate["prerequisites"]:
                 result["aggregate_mode"] = "prerequisites"
@@ -596,7 +613,7 @@ def inspect_makefile(
                         "test uses prerequisites, which do not preserve stage order under make -j.",
                     )
                 )
-            elif recursive_calls == list(MAKE_STAGES):
+            elif only_recursive_calls and recursive_calls == list(MAKE_STAGES):
                 result["aggregate_mode"] = "recursive_recipe"
             else:
                 result["aggregate_mode"] = "unverifiable"
@@ -655,7 +672,10 @@ def inspect_bun(
         name
         for name, value in scripts.items()
         if isinstance(value, str)
-        and re.search(r"(?:^|[;&|]\s*)make\s+test(?:\s|$|:|-)", value)
+        and re.search(
+            r"(?:^|(?:&&|\|\||[;|])\s*)(?:command\s+)?(?:make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
+            value,
+        )
     )
     package_manager = package.get("packageManager")
     result["package_manager"] = package_manager
@@ -759,24 +779,38 @@ def inspect_testing_document(
         return result, findings
     try:
         content = path.read_text(encoding="utf-8")
-        result["contract_registered"] = CONTRACT_MARKER in content
-        explicit_profile = re.search(
-            r"(?im)^\s*(?:[-*]\s*)?Profile:\s*`?(make|typescript-bun|polyglot-make)`?\s*$",
-            content,
-        )
-        prose_profile = re.search(
-            r"(?i)`(make|typescript-bun|polyglot-make)`\s+profile\b", content
-        )
-        profile_match = explicit_profile or prose_profile
-        if profile_match:
-            result["profile"] = profile_match.group(1)
+        section_content: dict[str, str] = {}
         result["sections"] = {}
         for heading in TESTING_HEADINGS:
             section = re.search(
                 rf"(?ms)^##\s+{re.escape(heading)}\s*$\n(.*?)(?=^##\s+|\Z)",
                 content,
             )
-            result["sections"][heading] = bool(section and section.group(1).strip())
+            body = section.group(1).strip() if section else ""
+            section_content[heading] = body
+            result["sections"][heading] = bool(body)
+        contract_content = section_content["Contract"]
+        result["contract_registered"] = bool(
+            re.search(
+                rf"(?im)^\s*(?:[-*]\s*)?Contract:\s*`?{re.escape(CONTRACT_MARKER)}`?\s*$",
+                contract_content,
+            )
+            or re.search(
+                rf"(?i)\bis enrolled in\s+`{re.escape(CONTRACT_MARKER)}`",
+                contract_content,
+            )
+        )
+        explicit_profile = re.search(
+            r"(?im)^\s*(?:[-*]\s*)?Profile:\s*`?(make|typescript-bun|polyglot-make)`?\s*$",
+            contract_content,
+        )
+        prose_profile = re.search(
+            r"(?i)`(make|typescript-bun|polyglot-make)`\s+profile\b",
+            contract_content,
+        )
+        profile_match = explicit_profile or prose_profile
+        if profile_match:
+            result["profile"] = profile_match.group(1)
     except (OSError, UnicodeError):
         findings.append(
             finding(
