@@ -436,7 +436,7 @@ class InspectToolsTest(unittest.TestCase):
                     "enabled": mode != "disabled",
                     "transport": {{
                         "type": "http" if mode == "non-stdio" else "stdio",
-                        "command": "/tmp/missing-gaori" if mode == "missing-command" else {str(self.bin_directory / "gaori")!r},
+                        "command": "/tmp/missing-gaori" if mode == "missing-command" else {str(self.bin_directory / "wrong-gaori")!r} if mode == "wrong-command" else {str(self.bin_directory / "gaori")!r},
                         "args": ["--repo", repository, "mcp"],
                         "env": {{"SECRET_TOKEN": "must-not-leak"}},
                         "env_vars": [],
@@ -502,6 +502,8 @@ class InspectToolsTest(unittest.TestCase):
             or ouroboros_mcp_mode is not None
         ):
             names.append("codex")
+        if gaori_mcp_mode == "wrong-command":
+            names.append("wrong-gaori")
         for name in names:
             executable = self.bin_directory / name
             executable.write_text(source, encoding="utf-8")
@@ -1638,6 +1640,7 @@ class InspectToolsTest(unittest.TestCase):
             "disabled",
             "non-stdio",
             "missing-command",
+            "wrong-command",
             "tool-timeout",
             "timeout-absent",
             "timeout-invalid",
@@ -1651,6 +1654,9 @@ class InspectToolsTest(unittest.TestCase):
                 ]
                 self.assertEqual(registration["status"], "degraded")
                 self.assertEqual(registration["reason"], "registration_mismatch")
+                if mode == "wrong-command":
+                    self.assertTrue(registration["command_resolvable"])
+                    self.assertFalse(registration["binary_matches_selected"])
 
     def test_gaori_mcp_absence_is_not_cli_degradation(self) -> None:
         self.install_fake_tools(gaori_mcp_mode="missing")

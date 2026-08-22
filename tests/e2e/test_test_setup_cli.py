@@ -33,7 +33,42 @@ test-prepare test-unit test-int test-e2e:
         encoding="utf-8",
     )
     repository.joinpath("TESTING.md").write_text(
-        "Contract: aquarium-test-contract/v1\nProfile: make\n",
+        """\
+# Testing
+
+## Contract
+
+Contract: aquarium-test-contract/v1
+Profile: make
+
+## Canonical Commands
+
+Fixture commands.
+
+## Stage Mapping
+
+Fixture stages.
+
+## Test Frameworks
+
+Fixture frameworks.
+
+## Gaori Mapping
+
+Not configured.
+
+## E2E Environment
+
+Disposable fixture.
+
+## Language Diagnostics
+
+Not applicable.
+
+## Legacy Waivers
+
+None.
+""",
         encoding="utf-8",
     )
     repository.joinpath("pyproject.toml").write_text(

@@ -48,11 +48,15 @@ Fail closed when no supported CLI is available. Do not infer model availability 
 
 Use the host's structured ask/answer tool, normally `request_user_input`, whenever available. Present no more than three choices in one call; when more are available, paginate with one navigation choice such as `More installed AIs` and then show only the remaining exact tool:model labels. Keep navigation choices separate from final provider consent. Even when one choice is available, require the user to select it.
 
-Each final choice must identify the exact tool:model, review target, digest, and that selecting it authorizes transmission of that disclosed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source. Never auto-select, infer consent from silence, or treat approval for another provider or snapshot as consent.
+Before presenting a final choice, display the included Git target and digest, every instruction and authority file path with its SHA-256 digest, the explicitly excluded state, and a context-manifest digest. Build that manifest from the displayed instruction and authority records sorted by path as newline-terminated `<sha256>  <absolute-path>` lines, then hash those exact UTF-8 bytes.
+
+Each final choice must identify the exact tool:model, review target and digest, context-manifest digest, and that selecting it authorizes transmission of only that displayed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source.
+
+Never auto-select, infer consent from silence, or treat approval for another provider, snapshot, or context manifest as consent.
 
 ## Dispatch the Reviewer
 
-Immediately after selection and before reading provider instructions, creating Orca state, or transmitting source, recompute the recorded target, instruction, and authority digests. If any digest or recorded target identity differs, do not transmit; establish the changed target again and require a new final provider selection for its disclosed digest.
+Immediately after selection and before reading provider instructions, creating Orca state, or transmitting source, recompute the recorded target, instruction, and authority digests and the context-manifest digest. If any digest or recorded target identity differs, do not transmit; establish the changed target again and require a new final provider selection for both disclosed digests.
 
 After that check succeeds, read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead in the current worktree, and inject one supervised Dispatch through the live orchestration contract. Do not create another Git worktree or reuse an existing AI terminal.
 
@@ -70,7 +74,9 @@ Require the lead to:
 
 ## Supervise and Settle
 
-Use event-driven rolling waits for `worker_done`, `escalation`, and `question`, providing user updates at least once per minute. A timeout or empty delivery is a liveness checkpoint, not a failure. Answer worker questions only from established repository facts; ask the user when an answer requires product intent or wider authority.
+Use event-driven rolling waits for `worker_done`, `escalation`, and `question`, providing user updates at least once per minute. Before dispatch, disclose and record one cumulative liveness budget, using 30 minutes unless the user explicitly selected another duration. A timeout or empty delivery inside that budget is a liveness checkpoint, not a failure. Answer worker questions only from established repository facts; ask the user when an answer requires product intent or wider authority.
+
+When the cumulative budget expires without an accepted terminal delivery, inspect the authoritative worker and terminal state once through the live guide, stop waiting, leave any active worker intact, and report the review as operationally incomplete with the exact Run, Task, Dispatch, terminal, and lifecycle status. Further waiting or cancellation requires an explicit user request; never release, retry, or cancel the active worker automatically.
 
 For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict. Release a settled succeeded or failed worker unless the user explicitly requested retention, then acknowledge the delivery. Do not release an active worker after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
 

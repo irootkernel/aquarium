@@ -1346,7 +1346,7 @@ def inspect_gaori_mcp(
         and stdio
         and repository_bound
         and server_mode
-        and resolved_command is not None
+        and binary_matches
         and timeout_supported
     ):
         registration["status"] = "configured"

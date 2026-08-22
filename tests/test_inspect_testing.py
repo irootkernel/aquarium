@@ -36,8 +36,38 @@ class InspectTestingTest(unittest.TestCase):
             f"""\
             # Testing
 
+            ## Contract
+
             Contract: aquarium-test-contract/v1
             Profile: {profile}
+
+            ## Canonical Commands
+
+            Fixture commands.
+
+            ## Stage Mapping
+
+            Fixture stages.
+
+            ## Test Frameworks
+
+            Fixture frameworks.
+
+            ## Gaori Mapping
+
+            Not configured.
+
+            ## E2E Environment
+
+            Disposable fixture.
+
+            ## Language Diagnostics
+
+            Not applicable.
+
+            ## Legacy Waivers
+
+            None.
             """,
         )
 
@@ -314,6 +344,48 @@ class InspectTestingTest(unittest.TestCase):
         self.assertTrue(framework["waiver_required"])
         self.assertEqual(parsers["test-unit"], "pytest")
         self.assertEqual(parsers["test-int"], "generic")
+
+    def test_requirements_only_python_root_detects_mixed_frameworks(self) -> None:
+        self.write(
+            "Makefile",
+            """\
+            .PHONY: test test-prepare test-unit test-int test-e2e
+            test:
+            \t$(MAKE) test-prepare
+            \t$(MAKE) test-unit
+            \t$(MAKE) test-int
+            \t$(MAKE) test-e2e
+            test-prepare:
+            \t@true
+            test-unit:
+            \tpython3 -m pytest tests/unit
+            test-int:
+            \tpython3 -m unittest tests/test_integration.py
+            test-e2e:
+            \tpython3 -m pytest tests/e2e
+            """,
+        )
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["detected_languages"], ["python"])
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(
+            self.framework(result, "python")["detected"], ["pytest", "unittest"]
+        )
+
+    def test_testing_document_requires_every_contract_section(self) -> None:
+        self.write_make_contract()
+        self.write("TESTING.md", "Contract: aquarium-test-contract/v1\n")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "testing_sections_missing", {item["code"] for item in result["findings"]}
+        )
 
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()

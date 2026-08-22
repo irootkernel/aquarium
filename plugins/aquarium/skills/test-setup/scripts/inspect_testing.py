@@ -12,6 +12,16 @@ from typing import Any
 SCHEMA_VERSION = "aquarium-test-setup-inspection.v1"
 ERROR_SCHEMA_VERSION = "aquarium-test-setup-inspection-error.v1"
 CONTRACT_MARKER = "aquarium-test-contract/v1"
+TESTING_HEADINGS = (
+    "Contract",
+    "Canonical Commands",
+    "Stage Mapping",
+    "Test Frameworks",
+    "Gaori Mapping",
+    "E2E Environment",
+    "Language Diagnostics",
+    "Legacy Waivers",
+)
 MAKE_TARGETS = ("test", "test-prepare", "test-unit", "test-int", "test-e2e")
 MAKE_STAGES = MAKE_TARGETS[1:]
 BUN_SCRIPTS = ("test", "test:prepare", "test:unit", "test:int", "test:e2e")
@@ -57,7 +67,7 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
     if any(
         (repository / name).is_file()
         for name in ("pyproject.toml", "setup.py", "setup.cfg")
-    ):
+    ) or any(repository.glob("requirements*.txt")):
         languages.add("python")
     if (repository / "pubspec.yaml").is_file():
         languages.add("dart")
@@ -627,6 +637,7 @@ def inspect_testing_document(
         "path": str(path),
         "present": path.is_file(),
         "contract_registered": False,
+        "sections": {heading: False for heading in TESTING_HEADINGS},
     }
     findings: list[dict[str, str]] = []
     if not path.is_file():
@@ -635,9 +646,12 @@ def inspect_testing_document(
         )
         return result, findings
     try:
-        result["contract_registered"] = CONTRACT_MARKER in path.read_text(
-            encoding="utf-8"
-        )
+        content = path.read_text(encoding="utf-8")
+        result["contract_registered"] = CONTRACT_MARKER in content
+        result["sections"] = {
+            heading: bool(re.search(rf"(?m)^##\s+{re.escape(heading)}\s*$", content))
+            for heading in TESTING_HEADINGS
+        }
     except (OSError, UnicodeError):
         findings.append(
             finding(
@@ -651,6 +665,17 @@ def inspect_testing_document(
                 "testing_contract_unregistered",
                 "error",
                 f"TESTING.md lacks {CONTRACT_MARKER}.",
+            )
+        )
+    missing_sections = [
+        heading for heading, present in result["sections"].items() if not present
+    ]
+    if missing_sections:
+        findings.append(
+            finding(
+                "testing_sections_missing",
+                "error",
+                f"TESTING.md lacks required sections: {', '.join(missing_sections)}.",
             )
         )
     return result, findings

@@ -1553,6 +1553,11 @@ assert(orca_review.include?("request_user_input") &&
        orca_review.include?("stop without selecting a provider or transmitting source") &&
        orca_review.include?("Never auto-select"),
        "orca-review must use explicit structured provider selection without silent defaults")
+assert(orca_review.include?("every instruction and authority file path with its SHA-256 digest") &&
+       orca_review.include?("newline-terminated `<sha256>  <absolute-path>` lines") &&
+       orca_review.include?("context-manifest digest") &&
+       orca_review.include?("require a new final provider selection for both disclosed digests"),
+       "orca-review provider consent must bind the complete transmitted context manifest")
 %w[
   claude:fable\ with\ opus/sonnet
   claude:opus
@@ -1602,6 +1607,11 @@ assert(orca_review.include?("return `APPROVE` as the verdict") &&
        orca_review.include?("include a bounded topology record") &&
        !orca_review.include?("return exactly `APPROVE`"),
        "orca-review clean verdict must coexist with its required evidence envelope")
+assert(orca_review.include?("one cumulative liveness budget") &&
+       orca_review.include?("using 30 minutes") &&
+       orca_review.include?("stop waiting, leave any active worker intact") &&
+       orca_review.include?("Further waiting or cancellation requires an explicit user request"),
+       "orca-review must bound repeated liveness checkpoints without mutating an active worker")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -1944,6 +1954,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        testing_headings.all? { |heading| testing_document.include?("## #{heading}") } &&
        testing_document.include?("AQ-WAIVER-001") &&
        testing_document.include?("Approved by Master: 2026-08-22") &&
+       testing_document.include?("Last revalidated: 2026-08-22") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),
