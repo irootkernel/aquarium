@@ -57,25 +57,43 @@ def heredoc_specs(
             index += 2
             continue
 
-        delimiter_quote = line[cursor] if line[cursor] in {"'", '"'} else None
-        if delimiter_quote is not None:
-            cursor += 1
-            end = cursor
-            while end < len(line) and line[end] != delimiter_quote:
-                end += 1
-            if end >= len(line):
-                index += 2
+        delimiter_chars: list[str] = []
+        delimiter_quote: str | None = None
+        delimiter_quoted = False
+        while cursor < len(line):
+            char = line[cursor]
+            if delimiter_quote is not None:
+                if char == delimiter_quote:
+                    delimiter_quote = None
+                elif char == "\\" and delimiter_quote == '"' and cursor + 1 < len(line):
+                    cursor += 1
+                    delimiter_chars.append(line[cursor])
+                else:
+                    delimiter_chars.append(char)
+                cursor += 1
                 continue
-            delimiter = line[cursor:end]
-            index = end + 1
-        else:
-            end = cursor
-            while end < len(line) and line[end] not in " \t\r\n;&|<>()":
-                end += 1
-            delimiter = line[cursor:end].replace("\\", "")
-            index = end
+            if char in " \t\r\n;&|<>()":
+                break
+            if char in {"'", '"'}:
+                delimiter_quoted = True
+                delimiter_quote = char
+                cursor += 1
+                continue
+            if char == "\\" and cursor + 1 < len(line):
+                delimiter_quoted = True
+                cursor += 1
+                delimiter_chars.append(line[cursor])
+                cursor += 1
+                continue
+            delimiter_chars.append(char)
+            cursor += 1
+        if delimiter_quote is not None:
+            index += 2
+            continue
+        delimiter = "".join(delimiter_chars)
+        index = cursor
         if delimiter:
-            specs.append((delimiter, strip_tabs, delimiter_quote is None))
+            specs.append((delimiter, strip_tabs, not delimiter_quoted))
     return specs, quote
 
 

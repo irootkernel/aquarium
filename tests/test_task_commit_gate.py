@@ -114,6 +114,20 @@ class TaskCommitGateTests(unittest.TestCase):
         command = "cat <<EOF\n$(git commit -m real)\nEOF\n"
         self.assert_denied(self.run_hook(repo, command))
 
+    def test_command_substitution_inside_backslash_quoted_heredoc_is_ignored(
+        self,
+    ) -> None:
+        repo = self.make_repo("TASK-1 | Completed\n")
+        command = "cat <<\\EOF\n$(git commit -m not-real)\nEOF\n"
+        self.assertIsNone(self.run_hook(repo, command))
+
+    def test_commit_after_mixed_quoted_heredoc_is_denied(self) -> None:
+        repo = self.make_repo("TASK-1 | Completed\n")
+        for marker in ('E"OF"', "'E'OF"):
+            with self.subTest(marker=marker):
+                command = f"cat <<{marker}\nnot a command\nEOF\ngit commit -m real\n"
+                self.assert_denied(self.run_hook(repo, command))
+
     def test_commit_after_heredoc_is_denied(self) -> None:
         repo = self.make_repo("TASK-1 | Completed\n")
         command = "cat <<'EOF'\nnot a command\nEOF\ngit commit -m real\n"

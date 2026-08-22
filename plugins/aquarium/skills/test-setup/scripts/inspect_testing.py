@@ -184,19 +184,102 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                 if pytest_index is not None:
                     pytest_options_with_values = {
                         "--basetemp",
+                        "--capture",
+                        "--color",
                         "--confcutdir",
+                        "--debug",
                         "--deselect",
+                        "--doctest-glob",
+                        "--doctest-report",
+                        "--durations",
+                        "--durations-min",
                         "--import-mode",
+                        "--ignore",
+                        "--ignore-glob",
                         "--junitxml",
+                        "--junit-xml",
+                        "--junitprefix",
+                        "--junit-prefix",
+                        "--lfnf",
+                        "--last-failed-no-failures",
+                        "--log-auto-indent",
+                        "--log-cli-date-format",
+                        "--log-cli-format",
+                        "--log-cli-level",
+                        "--log-date-format",
+                        "--log-disable",
+                        "--log-file",
+                        "--log-file-date-format",
+                        "--log-file-format",
+                        "--log-file-level",
+                        "--log-file-mode",
+                        "--log-format",
+                        "--log-level",
+                        "--max-warnings",
+                        "--maxfail",
                         "--override-ini",
+                        "--pastebin",
+                        "--pdbcls",
+                        "--pythonwarnings",
+                        "--report-chars",
                         "--rootdir",
+                        "--show-capture",
+                        "--tb",
+                        "--verbosity",
                         "-c",
                         "-k",
                         "-m",
                         "-o",
                         "-p",
+                        "-r",
+                        "-W",
+                    }
+                    pytest_options_without_values = {
+                        "--cache-clear",
+                        "--collect-in-virtualenv",
+                        "--continue-on-collection-errors",
+                        "--disable-plugin-autoload",
+                        "--disable-warnings",
+                        "--doctest-continue-on-failure",
+                        "--doctest-ignore-import-errors",
+                        "--doctest-modules",
+                        "--failed-first",
+                        "--ff",
+                        "--full-trace",
+                        "--keep-duplicates",
+                        "--last-failed",
+                        "--lf",
+                        "--new-first",
+                        "--nf",
+                        "--no-fold-skipped",
+                        "--no-header",
+                        "--no-showlocals",
+                        "--no-summary",
+                        "--noconftest",
+                        "--pdb",
+                        "--pyargs",
+                        "--quiet",
+                        "--runxfail",
+                        "--setup-show",
+                        "--showlocals",
+                        "--stepwise",
+                        "--stepwise-reset",
+                        "--stepwise-skip",
+                        "--strict",
+                        "--strict-config",
+                        "--strict-markers",
+                        "--trace",
+                        "--trace-config",
+                        "--verbose",
+                        "--xfail-tb",
+                        "-l",
+                        "-q",
+                        "-s",
+                        "-v",
+                        "-x",
                     }
                     skip_value = False
+                    ambiguous_option = False
                     for token in tokens[pytest_index + 1 :]:
                         if token in {"&&", "||", ";", "|"}:
                             break
@@ -207,7 +290,15 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                         if option in pytest_options_with_values:
                             skip_value = "=" not in token
                             continue
-                        if token.startswith("-") or "$" in token:
+                        if token.startswith("-"):
+                            if (
+                                "=" not in token
+                                and option not in pytest_options_without_values
+                            ):
+                                ambiguous_option = True
+                                break
+                            continue
+                        if "$" in token:
                             continue
                         candidate = Path(token.split("::", 1)[0])
                         if (
@@ -216,6 +307,8 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                             and candidate.parts[0] not in {".", ".."}
                         ):
                             owned_python_e2e_roots.append(candidate)
+                    if ambiguous_option:
+                        owned_python_e2e_roots.clear()
 
         def typescript_owned_e2e_source(path: Path) -> bool:
             if "typescript" not in languages:
