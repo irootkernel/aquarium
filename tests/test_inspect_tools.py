@@ -137,6 +137,7 @@ class InspectToolsTest(unittest.TestCase):
         slow_gaori_config: bool = False,
         gaori_mcp_mode: str | None = None,
         gaori_mcp_global: bool = False,
+        mcp_neutral_failure: bool = False,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
         podway_version: str = "v0.2.5",
@@ -419,9 +420,13 @@ class InspectToolsTest(unittest.TestCase):
                     if server == "gaori"
                     else True
                 )
-                if server in {{"mulgae", "gaori"}} and pathlib.Path.cwd().resolve() != pathlib.Path({str(self.repository)!r}).resolve() and not global_registration:
-                    print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
-                    raise SystemExit(1)
+                if server in {{"mulgae", "gaori"}} and pathlib.Path.cwd().resolve() != pathlib.Path({str(self.repository)!r}).resolve():
+                    if {mcp_neutral_failure!r}:
+                        print("neutral configuration failed", file=sys.stderr)
+                        raise SystemExit(1)
+                    if not global_registration:
+                        print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
+                        raise SystemExit(1)
                 if mode == "missing":
                     print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
                     raise SystemExit(1)
@@ -856,6 +861,20 @@ class InspectToolsTest(unittest.TestCase):
         installation = skill["installations"][0]
         self.assertTrue(installation["symlinked"])
         self.assertFalse(installation["frontmatter_valid"])
+        self.assertTrue(all(item["sha256"] is None for item in installation["files"]))
+
+    def test_deep_symlinked_codex_home_ancestor_is_not_traversed(self) -> None:
+        external_home = self.base / "external-codex"
+        self.install_gaori_skill(root=external_home / "nested/skills")
+        linked_parent = self.base / "linked-parent"
+        linked_parent.symlink_to(external_home, target_is_directory=True)
+        self.environment["CODEX_HOME"] = str(linked_parent / "nested")
+
+        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+
+        self.assertEqual(skill["status"], "degraded")
+        installation = skill["installations"][0]
+        self.assertTrue(installation["symlinked"])
         self.assertTrue(all(item["sha256"] is None for item in installation["files"]))
 
     def test_matching_managed_procedures_are_ready_only_on_supported_platform(
@@ -1544,6 +1563,20 @@ class InspectToolsTest(unittest.TestCase):
                 registration["reason"], "project_registration_origin_unverified"
             )
 
+    def test_project_mcp_origin_rejects_ambiguous_neutral_failure(self) -> None:
+        self.write_project_mcp_config("mulgae")
+        self.install_fake_tools(mulgae_mcp_mode="configured", mcp_neutral_failure=True)
+
+        registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+            "mcp_registration"
+        ]
+
+        self.assertEqual(registration["status"], "degraded")
+        self.assertFalse(registration["project_origin_verified"])
+        self.assertEqual(
+            registration["reason"], "project_registration_origin_unverified"
+        )
+
     def test_mulgae_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
         self.repository.joinpath(".codex/config.toml").write_text(
@@ -1673,6 +1706,22 @@ class InspectToolsTest(unittest.TestCase):
         gaori = json.loads(self.inspect(timeout_seconds=0.5).stdout)["tools"]["gaori"]
         self.assertTrue(gaori["probes"]["config_check"]["timed_out"])
         self.assertEqual(gaori["status"], "degraded")
+
+    def test_symlinked_gaori_configuration_is_not_probed(self) -> None:
+        self.repository.joinpath(".gaori").mkdir()
+        external = self.base / "credentials.yaml"
+        external.write_text("credential-marker: secret\n", encoding="utf-8")
+        self.repository.joinpath(".gaori/tester.yaml").symlink_to(external)
+        self.install_fake_tools()
+
+        completed = self.inspect()
+        gaori = json.loads(completed.stdout)["tools"]["gaori"]
+        configuration = gaori["configuration"][0]
+
+        self.assertFalse(configuration["present"])
+        self.assertTrue(configuration["symlinked"])
+        self.assertFalse(gaori["probes"]["config_check"]["attempted"])
+        self.assertNotIn("credential-marker", completed.stdout)
 
     def test_gaori_skill_is_independent_from_cli_and_mcp_health(self) -> None:
         self.install_gaori_skill()

@@ -214,6 +214,18 @@ class InspectTestingTest(unittest.TestCase):
             list(inspect_testing.MAKE_STAGES),
         )
 
+    def test_symlinked_root_makefile_is_not_read(self) -> None:
+        external = Path(self.temporary_directory.name) / "credentials.make"
+        external.write_text("credential-marker: secret\n", encoding="utf-8")
+        (self.repository / "Makefile").symlink_to(external)
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertFalse(result["make"]["present"])
+        self.assertNotIn("credential-marker", json.dumps(result))
+
     def test_prerequisite_aggregate_is_parallel_unsafe(self) -> None:
         self.write(
             "Makefile",
@@ -723,6 +735,21 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "nonconforming")
         self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
 
+    def test_bun_script_quoted_make_reverse_edge_is_rejected(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += " && sh -c 'make test-unit'"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+
     def test_vitest_runner_that_swallows_failure_is_not_canonical(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -779,6 +806,24 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
 
+    def test_override_python_make_variable_is_resolved(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = "PYTHON := python3\noverride PYTHON := echo\n" + makefile.read_text(
+            encoding="utf-8"
+        )
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\t$(PYTHON) -m pytest unit"
+        ).replace("test-int:\n\t@true", "test-int:\n\t$(PYTHON) -m pytest int")
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
     def test_sensitive_python_file_is_not_read_for_framework_detection(self) -> None:
         self.write_make_contract()
         makefile = self.repository / "Makefile"
@@ -823,6 +868,40 @@ class InspectTestingTest(unittest.TestCase):
             makefile.read_text(encoding="utf-8")
             .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest --help")
             .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest --help")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_pytest_collection_alias_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest --co")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest --co")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_background_pytest_command_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit &")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int &")
         )
         makefile.write_text(content, encoding="utf-8")
         self.write("requirements.txt", "pytest==9.1.1\n")

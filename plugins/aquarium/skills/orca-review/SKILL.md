@@ -18,7 +18,7 @@ It does not authorize source-checkout edits, tests, builds, generators, formatte
 1. Require the separately installed `$orca-cli` skill to be available in the active skill catalog. If its availability cannot be established, stop; do not approximate its contract from this skill.
 2. Resolve the Orca executable exactly as `$orca-cli` requires and reuse it for the complete invocation. If the selected executable is missing or fails, report the exact error and stop; do not try another executable.
 3. Load the version-matched guides with the selected executable's `skills get orca-cli` and `skills get orchestration` commands before using Orca. Follow those live guides rather than cached command syntax, including the examples in this skill and its reference. Stop when either guide cannot be retrieved.
-   When a required local route is omitted from both retrieved guides, query only that exact route with `<ORCA> <route> --help`. Treat help from the already selected installed CLI as grammar authority for that route only; stop if it is unavailable or does not expose every required identity.
+   When a required local route is omitted from both retrieved guides, query the selected CLI's read-only `agent-context --json` and use only the exact command schema for that route. If that schema is also absent, query only the exact route with `<ORCA> <route> --help`. Treat the selected installed CLI's agent-context or help as grammar authority for that route only; stop if neither exposes every required identity.
 4. Confirm `status --json`. If the CLI exists but the app is stopped, attempt `open --json` once and confirm status again.
 5. Require a ready runtime and the current orchestration contract. Stop when the selected executable fails, either version-matched guide cannot be retrieved, the runtime cannot start, orchestration is unavailable, or Run, Task, Dispatch, terminal, or lifecycle provenance cannot be verified.
 
@@ -77,7 +77,7 @@ A decline deletes only the owned snapshot and coordinator manifest. Any unavaila
 
 Immediately after final selection and before creating Orca state or transmitting source, recompute the target, source manifest, every provider-visible snapshot and Aquarium Task record, and the complete transmission-manifest digest. Any change invalidates final consent; delete only the owned local preparation and restart from target establishment.
 
-After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded exact-route help fallback above.
+After the immutable snapshot verifies, obtain exact grammar for `repo add`, `project setups`, `project setup-delete`, and the `path:<absoluteSnapshotPath>` worktree selector from the retrieved guides or the bounded agent-context and exact-route help fallbacks above.
 
 Snapshot `project setups --json`, register only the snapshot with `repo add --path <absoluteSnapshotPath> --json`, then query `project setups --json` again. Require exactly one newly created setup whose path equals the snapshot and whose repository identity equals the returned repository identity; record that setup identity and every returned repository and worktree identity.
 

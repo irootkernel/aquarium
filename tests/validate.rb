@@ -227,6 +227,7 @@ assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?("safe_managed_file_state") &&
        dev_setup_script_body.include?("project_mcp_origin_verified") &&
        dev_setup_script_body.include?("project_registration_origin_unverified") &&
+       dev_setup_script_body.include?("No MCP server named") &&
        dev_setup_script_body.include?('args == ["mcp", "serve"]') &&
        dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
        "dev-setup inspector must reject non-exact Gaori arguments and symlinked paired skills")
@@ -411,6 +412,7 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("runner_variable_is") &&
        test_setup_script_body.include?("runs_dart_test") &&
        test_setup_script_body.include?("sensitive_relative_path") &&
+       test_setup_script_body.include?("safe_repository_file") &&
        test_setup_script_body.include?("make_variable_values") &&
        test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
@@ -439,7 +441,7 @@ assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("Test Frameworks") &&
        test_setup_contract.include?("Gaori Mapping") &&
        test_setup_contract.include?("Approved by Master") &&
-       test_setup_contract.include?("help, version, collection-only, or list-only") &&
+       test_setup_contract.include?("collection-only aliases") &&
        test_setup_contract.include?("Stale waivers do not authorize a skip"),
        "test contract must define stable rules and bounded legacy waivers")
 assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
@@ -1638,7 +1640,8 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_provider_contracts.include?("exact registered path selector") &&
        orca_review.include?("Never expose the original checkout to a participant") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
-       orca_review.include?("query only that exact route with `<ORCA> <route> --help`") &&
+       orca_review.include?("read-only `agent-context --json`") &&
+       orca_review.include?("query only the exact route with `<ORCA> <route> --help`") &&
        orca_review.include?("repo add --path <absoluteSnapshotPath> --json") &&
        orca_review.include?("project setups --json") &&
        orca_review.include?("project setup-delete --setup <recordedSetupId> --json") &&

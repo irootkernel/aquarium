@@ -45,7 +45,7 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--list|--list-tests)(?:\s|$)"
+    r"(?:^|\s)(?:--help|-h|--version|--collect-only|--co|--list|--list-tests)(?:\s|$)"
 )
 
 
@@ -77,22 +77,26 @@ def sensitive_relative_path(path: Path, repository: Path) -> bool:
 
 def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[str]:
     languages: set[str] = set()
-    if (repository / "go.mod").is_file():
+    if safe_repository_file(repository / "go.mod", repository):
         languages.add("go")
-    if (repository / "Cargo.toml").is_file():
+    if safe_repository_file(repository / "Cargo.toml", repository):
         languages.add("rust")
     if any(
-        (repository / name).is_file()
+        safe_repository_file(repository / name, repository)
         for name in ("pyproject.toml", "setup.py", "setup.cfg")
     ) or any(
         not sensitive_relative_path(path, repository)
+        and safe_repository_file(path, repository)
         for path in repository.glob("requirements*.txt")
     ):
         languages.add("python")
-    if (repository / "pubspec.yaml").is_file():
+    if safe_repository_file(repository / "pubspec.yaml", repository):
         languages.add("dart")
 
-    typescript_manifest = any(repository.glob("tsconfig*.json"))
+    typescript_manifest = any(
+        safe_repository_file(path, repository)
+        for path in repository.glob("tsconfig*.json")
+    )
     if package:
         dependencies: dict[str, Any] = {}
         for key in ("dependencies", "devDependencies", "peerDependencies"):
@@ -113,9 +117,26 @@ def selected_profile(languages: list[str]) -> str:
     return "make"
 
 
-def read_optional_text(path: Path) -> str:
+def safe_repository_file(path: Path, repository: Path) -> bool:
     try:
-        return path.read_text(encoding="utf-8") if path.is_file() else ""
+        relative = path.relative_to(repository)
+    except ValueError:
+        return False
+    current = repository
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return False
+    return current.is_file()
+
+
+def read_optional_text(path: Path, repository: Path) -> str:
+    try:
+        return (
+            path.read_text(encoding="utf-8")
+            if safe_repository_file(path, repository)
+            else ""
+        )
     except (OSError, UnicodeError):
         return ""
 
@@ -154,7 +175,7 @@ def stage_commands(
     repository: Path, package: dict[str, Any] | None
 ) -> dict[str, list[str]]:
     commands: dict[str, list[str]] = {"test-unit": [], "test-int": []}
-    make_content = read_optional_text(repository / "Makefile")
+    make_content = read_optional_text(repository / "Makefile", repository)
     if make_content:
         targets, _, _ = parse_makefile(make_content)
         for stage in commands:
@@ -178,7 +199,8 @@ def command_preserves_failure(command: str) -> bool:
     prefix = re.match(r"^[@+-]*", stripped)
     if prefix and "-" in prefix.group(0):
         return False
-    return "|" not in command and ";" not in command
+    backgrounded = re.search(r"(?<!&)&(?!&)", command)
+    return "|" not in command and ";" not in command and backgrounded is None
 
 
 def command_executes_tests(command: str) -> bool:
@@ -187,11 +209,14 @@ def command_executes_tests(command: str) -> bool:
 
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
     definitions: dict[str, list[str]] = {}
-    content = read_optional_text(repository / "Makefile")
+    content = read_optional_text(repository / "Makefile", repository)
     for line in content.splitlines():
         if line.startswith("\t"):
             continue
-        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|:=|=)\s*(.*?)\s*$", line)
+        match = re.match(
+            r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|:=|=)\s*(.*?)\s*$",
+            line,
+        )
         if match:
             definitions.setdefault(match.group(1), []).append(match.group(2))
 
@@ -280,11 +305,14 @@ def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) ->
         if sensitive_relative_path(path, repository):
             continue
         try:
-            if path.is_symlink() or path.stat().st_size > 1_000_000:
+            if (
+                not safe_repository_file(path, repository)
+                or path.stat().st_size > 1_000_000
+            ):
                 continue
         except OSError:
             continue
-        content = read_optional_text(path)
+        content = read_optional_text(path, repository)
         if any(re.search(pattern, content) for pattern in patterns):
             return True
     return False
@@ -299,8 +327,8 @@ def inspect_frameworks(
     make_variables = make_variable_values(repository)
 
     if "go" in languages:
-        go_mod = read_optional_text(repository / "go.mod")
-        go_sum = read_optional_text(repository / "go.sum")
+        go_mod = read_optional_text(repository / "go.mod", repository)
+        go_sum = read_optional_text(repository / "go.sum", repository)
         go_commands = "\n".join(
             command
             for stage in ("test-unit", "test-int")
@@ -355,7 +383,7 @@ def inspect_frameworks(
             *sorted(repository.glob("requirements*.txt")),
         ]
         has_pytest_declaration = any(
-            re.search(r"\bpytest\b", read_optional_text(path))
+            re.search(r"\bpytest\b", read_optional_text(path, repository))
             for path in authority_paths
             if not sensitive_relative_path(path, repository)
         )
@@ -469,7 +497,7 @@ def inspect_frameworks(
         )
 
     if "dart" in languages:
-        pubspec = read_optional_text(repository / "pubspec.yaml")
+        pubspec = read_optional_text(repository / "pubspec.yaml", repository)
         is_flutter = (
             bool(re.search(r"(?m)^\s*flutter:\s*$", pubspec))
             or "sdk: flutter" in pubspec
@@ -555,7 +583,9 @@ def inspect_frameworks(
                 stage_parser_defaults[stage] = detected_parser
     gaori = {
         "config_path": str(repository / ".gaori/tester.yaml"),
-        "config_present": (repository / ".gaori/tester.yaml").is_file(),
+        "config_present": safe_repository_file(
+            repository / ".gaori/tester.yaml", repository
+        ),
         "parser_availability": "not_evaluated",
         "stage_parser_defaults": stage_parser_defaults,
     }
@@ -566,10 +596,10 @@ def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any
     path = repository / "package.json"
     result: dict[str, Any] = {
         "path": str(path),
-        "present": path.is_file(),
+        "present": safe_repository_file(path, repository),
         "valid": False,
     }
-    if not path.is_file():
+    if not result["present"]:
         return None, result
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -663,9 +693,12 @@ def inspect_makefile(
     repository: Path, profile: str
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     path = repository / "Makefile"
-    result: dict[str, Any] = {"path": str(path), "present": path.is_file()}
+    result: dict[str, Any] = {
+        "path": str(path),
+        "present": safe_repository_file(path, repository),
+    }
     findings: list[dict[str, str]] = []
-    if not path.is_file():
+    if not result["present"]:
         findings.append(
             finding("makefile_missing", "error", "Root Makefile is missing.")
         )
@@ -845,7 +878,7 @@ def inspect_bun(
         for name, value in scripts.items()
         if isinstance(value, str)
         and re.search(
-            r"(?:^|[\s;&|()])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|$)",
+            r"(?:^|[\s;&|()\"'])(?:(?:\S*/)?make|\$\(MAKE\)|\$\{MAKE\})(?:\s|[\"']|$)",
             value,
         )
     )
@@ -857,8 +890,8 @@ def inspect_bun(
     engines = package.get("engines")
     result["bun_engine"] = engines.get("bun") if isinstance(engines, dict) else None
     result["lockfile"] = {
-        "bun.lock": (repository / "bun.lock").is_file(),
-        "bun.lockb": (repository / "bun.lockb").is_file(),
+        "bun.lock": safe_repository_file(repository / "bun.lock", repository),
+        "bun.lockb": safe_repository_file(repository / "bun.lockb", repository),
     }
     result["legacy_package_manager_files"] = [
         name
@@ -868,7 +901,7 @@ def inspect_bun(
             "pnpm-lock.yaml",
             "yarn.lock",
         )
-        if (repository / name).is_file()
+        if safe_repository_file(repository / name, repository)
     ]
 
     if required:
@@ -938,13 +971,13 @@ def inspect_testing_document(
     path = repository / "TESTING.md"
     result = {
         "path": str(path),
-        "present": path.is_file(),
+        "present": safe_repository_file(path, repository),
         "contract_registered": False,
         "profile": None,
         "sections": {heading: False for heading in TESTING_HEADINGS},
     }
     findings: list[dict[str, str]] = []
-    if not path.is_file():
+    if not result["present"]:
         findings.append(
             finding("testing_document_missing", "error", "Root TESTING.md is missing.")
         )

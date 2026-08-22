@@ -16,7 +16,7 @@
 | `AQTEST-008` | The repository uses the selected Make or TypeScript/Bun runner profile and the profile's preferred E2E implementation. | Legacy equivalent only |
 | `AQTEST-009` | New projects and newly established test layers use the canonical framework for each implementation language and product surface. | Pre-existing equivalent framework only |
 
-Additional named gates remain valid, but the aggregate must place them inside the closest common stage. Make control flags that can alter error handling, opaque runner variables, reverse runner edges hidden behind shell wrappers, and help, version, collection-only, or list-only commands cannot prove this contract and must fail closed. A target that has no applicable subject may succeed with a clear message only when `TESTING.md` gives objective evidence for `not applicable`; it must not hide missing coverage.
+Additional named gates remain valid, but the aggregate must place them inside the closest common stage. Symlinked authorities, Make control flags that can alter error handling, background commands, opaque or overridden runner variables, reverse runner edges hidden behind quoted shell wrappers, and help, version, collection-only aliases, or list-only commands cannot prove this contract and must fail closed. A target that has no applicable subject may succeed with a clear message only when `TESTING.md` gives objective evidence for `not applicable`; it must not hide missing coverage.
 
 ## Stage Semantics
 

@@ -333,9 +333,14 @@ def configuration_entry(
     timeout_seconds: float,
     ignore_probe_path: str | None = None,
 ) -> dict[str, Any]:
+    path = repository.joinpath(relative_path)
+    present, symlinked = safe_managed_file_state(path, repository)
+    if relative_path.endswith("/") and not symlinked:
+        present = path.is_dir()
     return {
         "path": relative_path,
-        "present": repository.joinpath(relative_path).exists(),
+        "present": present,
+        "symlinked": symlinked,
         "ignored": ignored_by_git(
             repository, ignore_probe_path or relative_path, timeout_seconds
         ),
@@ -516,7 +521,22 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def skill_root_symlinked(root: Path) -> bool:
-    return root.is_symlink() or root.parent.is_symlink()
+    try:
+        anchor = Path(os.path.commonpath((Path.home(), root)))
+    except ValueError:
+        anchor = Path(root.anchor)
+    current = anchor
+    if current.is_symlink():
+        return True
+    try:
+        relative = root.relative_to(anchor)
+    except ValueError:
+        return True
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def safe_skill_file_state(directory: Path, relative_path: str) -> tuple[bool, bool]:
@@ -1029,14 +1049,24 @@ def project_mcp_origin_verified(
     present, symlinked = safe_managed_file_state(config_path, repository)
     if not present or symlinked:
         return False
-    ambient_probe = json_probe(
+    ambient_raw = run_command(
         [codex_executable, "mcp", "get", name, "--json"],
         Path(config_path.anchor),
         timeout_seconds,
     )
-    if not ambient_probe["ok"]:
-        return ambient_probe["exit_code"] == 1 and not ambient_probe["timed_out"]
-    return ambient_probe.get("result") != effective
+    if not ambient_raw["ok"]:
+        missing = re.search(
+            rf"No MCP server named ['\"]?{re.escape(name)}['\"]? found\.",
+            ambient_raw.get("stderr", ""),
+        )
+        return bool(
+            ambient_raw["exit_code"] == 1 and not ambient_raw["timed_out"] and missing
+        )
+    try:
+        ambient_result = json.loads(ambient_raw["stdout"])
+    except json.JSONDecodeError:
+        return False
+    return ambient_result != effective
 
 
 def inspect_mulgae_mcp(
