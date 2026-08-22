@@ -1661,7 +1661,12 @@ assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-m
        orca_provider_contracts.include?("without re-parsing it through a shell or dropping its fixed arguments") &&
        orca_provider_contracts.include?("using `<PROVIDER>` as the command's executable") &&
        orca_provider_contracts.include?("Before `orchestration dispatch --inject`") &&
-       orca_provider_contracts.include?("exact consented effective model") &&
+       orca_provider_contracts.include?("exact consent-bound expected native lead model identity") &&
+       orca_review.include?("expected native lead model identity") &&
+       orca_review.include?("`claude:fable with opus/sonnet` to `fable`") &&
+       orca_review.include?("`codex:gpt-5.6-sol` to `gpt-5.6-sol`") &&
+       orca_review.include?("`cursor:grok-4.6` to `grok-4.6`") &&
+       orca_review.include?("`kimi:k3` to `k3`") &&
        orca_review.include?("Before any source-bearing Dispatch") &&
        orca_review.include?("never transmit source merely to probe the model") &&
        orca_review.include?("Never expose or identify the original checkout to a participant") &&

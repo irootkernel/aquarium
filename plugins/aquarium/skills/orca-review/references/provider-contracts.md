@@ -10,7 +10,7 @@ A shebang script, text launcher, shim, or wrapper is not eligible because its re
 
 Use a fresh terminal in the verified immutable `/tmp` snapshot through the consent-bound local Orca runtime; never launch in or identify the original checkout to a participant. Never pass or inherit an Orca environment or pairing selector. Start it through `<ORCA> terminal create --worktree path:<absoluteSnapshotPath> --command <command> --json` using `<PROVIDER>` as the command's executable, preserve its returned handle, and wait with an explicit timeout.
 
-Before `orchestration dispatch --inject`, confirm the local runtime identity, snapshot path, canonical provider executable, terminal command, and exact consented effective model from the launch output and bounded readiness transcript. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; source must never be sent to discover the model.
+Before `orchestration dispatch --inject`, confirm the local runtime identity, snapshot path, canonical provider executable, terminal command, and exact consent-bound expected native lead model identity from the launch output and bounded readiness transcript. Verify provider-specific subagent topology separately after Dispatch. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; source must never be sent to discover the model.
 
 If the CLI exits, requests authentication, rejects the model or read-only mode, cannot receive the Dispatch, or cannot send lifecycle messages, report the exact operational failure. Do not remove read-only flags, weaken permissions, switch models, reuse a terminal, or start another provider.
 

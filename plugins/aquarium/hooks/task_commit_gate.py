@@ -23,8 +23,8 @@ OPTIONS_WITH_VALUES = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 
 def heredoc_specs(
     line: str, initial_quote: str | None
-) -> tuple[list[tuple[str, bool]], str | None]:
-    specs: list[tuple[str, bool]] = []
+) -> tuple[list[tuple[str, bool, bool]], str | None]:
+    specs: list[tuple[str, bool, bool]] = []
     index = 0
     quote = initial_quote
     while index < len(line):
@@ -75,17 +75,17 @@ def heredoc_specs(
             delimiter = line[cursor:end].replace("\\", "")
             index = end
         if delimiter:
-            specs.append((delimiter, strip_tabs))
+            specs.append((delimiter, strip_tabs, delimiter_quote is None))
     return specs, quote
 
 
 def without_heredoc_bodies(command: str) -> str:
     output: list[str] = []
-    pending: list[tuple[str, bool]] = []
+    pending: list[tuple[str, bool, bool]] = []
     quote: str | None = None
     for line in command.splitlines(keepends=True):
         if pending:
-            delimiter, strip_tabs = pending[0]
+            delimiter, strip_tabs, _expands = pending[0]
             body_line = line.rstrip("\r\n")
             comparison = body_line.lstrip("\t") if strip_tabs else body_line
             output.append("\n" if line.endswith(("\n", "\r")) else "")
@@ -191,6 +191,30 @@ def executable_control_fragments(command: str) -> tuple[str, list[str]]:
 
     remaining = substitution_pattern.sub(remove_substitution, remaining)
     return remaining, fragments
+
+
+def heredoc_substitution_fragments(command: str) -> list[str]:
+    fragments: list[str] = []
+    pending: list[tuple[str, bool, bool, list[str]]] = []
+    quote: str | None = None
+    for line in command.splitlines(keepends=True):
+        if pending:
+            delimiter, strip_tabs, expands, body = pending[0]
+            body_line = line.rstrip("\r\n")
+            comparison = body_line.lstrip("\t") if strip_tabs else body_line
+            if comparison == delimiter:
+                if expands:
+                    _remaining, substitutions = executable_control_fragments(
+                        "".join(body)
+                    )
+                    fragments.extend(substitutions)
+                pending.pop(0)
+            else:
+                body.append(line)
+            continue
+        specs, quote = heredoc_specs(line, quote)
+        pending.extend((*spec, []) for spec in specs)
+    return fragments
 
 
 def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | None:
@@ -302,7 +326,7 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
         else:
             index += 1
     if index < len(segment) and segment[index] == "env":
-        nested = git_commit_invocation(segment[index:], cwd)
+        nested = git_commit_invocation([*assignments, *segment[index:]], cwd)
         if nested is None:
             return None
         nested_cwd, nested_gated = nested
@@ -453,7 +477,9 @@ def should_deny(payload: dict[str, Any]) -> bool:
     cwd_value = payload.get("cwd")
     cwd = Path(cwd_value) if isinstance(cwd_value, str) else Path.cwd()
 
+    heredoc_fragments = heredoc_substitution_fragments(command)
     command, fragments = executable_control_fragments(without_heredoc_bodies(command))
+    fragments = heredoc_fragments + fragments
     if any(
         should_deny({"tool_input": {"command": fragment}, "cwd": str(cwd)})
         for fragment in fragments
@@ -461,10 +487,15 @@ def should_deny(payload: dict[str, Any]) -> bool:
         return True
 
     probe_base = cwd
-    skip_next = False
+    previous_separator: str | None = None
+    last_status: bool | None = None
     for segment, separator in shell_segments(command):
-        if skip_next:
-            skip_next = False
+        should_execute = not (
+            (previous_separator == "&&" and last_status is False)
+            or (previous_separator == "||" and last_status is True)
+        )
+        if not should_execute:
+            previous_separator = separator
             continue
         if segment and segment[0] == "cd" and len(segment) == 2:
             candidate = Path(segment[1])
@@ -474,13 +505,18 @@ def should_deny(payload: dict[str, Any]) -> bool:
             succeeded = destination.is_dir()
             if succeeded:
                 probe_base = destination
-            if (separator == "&&" and not succeeded) or (
-                separator == "||" and succeeded
-            ):
-                skip_next = True
+            last_status = succeeded
+            previous_separator = separator
             continue
         invocation = git_commit_invocation(segment, probe_base)
         if invocation is None:
+            if segment and segment[0] in {"true", ":", "echo"}:
+                last_status = True
+            elif segment and segment[0] == "false":
+                last_status = False
+            else:
+                last_status = None
+            previous_separator = separator
             continue
         probe_cwd, gated = invocation
         if gated:
@@ -488,6 +524,8 @@ def should_deny(payload: dict[str, Any]) -> bool:
         root = repository_root(probe_cwd)
         if root is not None and is_roadmap_repository(root):
             return True
+        last_status = None
+        previous_separator = separator
     return False
 
 

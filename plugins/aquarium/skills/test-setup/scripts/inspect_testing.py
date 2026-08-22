@@ -182,12 +182,34 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
                     None,
                 )
                 if pytest_index is not None:
+                    pytest_options_with_values = {
+                        "--basetemp",
+                        "--confcutdir",
+                        "--deselect",
+                        "--import-mode",
+                        "--junitxml",
+                        "--override-ini",
+                        "--rootdir",
+                        "-c",
+                        "-k",
+                        "-m",
+                        "-o",
+                        "-p",
+                    }
+                    skip_value = False
                     for token in tokens[pytest_index + 1 :]:
                         if token in {"&&", "||", ";", "|"}:
                             break
+                        if skip_value:
+                            skip_value = False
+                            continue
+                        option = token.split("=", 1)[0]
+                        if option in pytest_options_with_values:
+                            skip_value = "=" not in token
+                            continue
                         if token.startswith("-") or "$" in token:
                             continue
-                        candidate = Path(token)
+                        candidate = Path(token.split("::", 1)[0])
                         if (
                             not candidate.is_absolute()
                             and candidate.parts

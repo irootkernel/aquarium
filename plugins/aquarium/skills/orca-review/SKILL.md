@@ -61,6 +61,8 @@ Build the selection menu from successful probes only:
 - `cursor-agent` exposes `cursor:grok-4.6`; omit every Cursor choice when `cursor-agent` is unavailable.
 - `kimi` exposes `kimi:k3`.
 
+Bind each label to its expected native lead model identity: `claude:fable with opus/sonnet` to `fable`, `claude:opus` to `opus`, `codex:gpt-5.6-sol` to `gpt-5.6-sol`, `cursor:grok-4.6` to `grok-4.6`, and `kimi:k3` to `k3`. Keep this mapping and the provider-specific subagent topology separately consent-bound.
+
 Fail closed when no supported CLI is available. Do not infer model availability from installation; the selected launch verifies it.
 
 Use the host's structured ask/answer tool, normally `request_user_input`, whenever available. Present no more than three choices in one call; when more are available, paginate with one navigation choice such as `More installed AIs` and then show only the remaining exact tool:model labels. Even when one choice is available, require the user to select which exact tool:model snapshot to prepare.
@@ -73,7 +75,7 @@ Require one valid UTF-8 record with no Unicode control or format character and n
 
 Stop on an identity containing any Unicode `Cc`, `Cf`, `Zl`, or `Zp` code point, including `U+0000` through `U+001F`, `U+007F` through `U+009F`, bidirectional marks, embeddings, overrides, and isolates such as `U+202E`, and `U+2028` or `U+2029`; never escape, normalize, or substitute it into consent text, manifest records, or command arguments.
 
-Each preparation choice must identify the exact tool:model, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
+Each preparation choice must identify the exact tool:model, expected native lead model identity, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
 
 Never auto-select, infer consent from silence, or treat preparation approval or approval for another provider, snapshot, or manifest as transmission consent.
 
@@ -87,7 +89,7 @@ Build the exact Aquarium-supplied Task specification before transmission. In a c
 
 Sort newline-terminated `<sha256>  <provider-visible-identity>` records and hash them as the transmission-manifest digest. Make the complete snapshot read-only, then recompute and require every manifest record to match.
 
-Present a second, final structured choice that identifies the exact tool:model, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
+Present a second, final structured choice that identifies the exact tool:model, expected native lead model identity, canonical native provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, complete transmission-manifest digest, temporary registration and cleanup, and exact snapshot and Task scope.
 
 Disclose that the selected local CLI runs as the current operating-system user. Aquarium's manifest and read-only instructions constrain what Aquarium supplies and authorizes, but are not an operating-system read sandbox; the CLI may technically access other files already readable by that user. Require explicit acceptance of that local-process capability in the same final choice.
 
@@ -109,7 +111,7 @@ Create or bind one Run and create one review Task with `task-create --spec <exac
 
 Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path.
 
-Before any source-bearing Dispatch, inspect the terminal creation result and bounded readiness transcript and require an exact effective-model identity equal to the consented tool:model. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; never transmit source merely to probe the model. Only after that confirmation may `dispatch --inject` send the Task with its disclosed lifecycle preamble.
+Before any source-bearing Dispatch, inspect the terminal creation result and bounded readiness transcript and require an exact effective-model identity equal to the consent-bound expected native lead model identity for the selected tool:model mapping. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; never transmit source merely to probe the model. Only after that confirmation may `dispatch --inject` send the Task with its disclosed lifecycle preamble.
 
 Never expose or identify the original checkout to a participant, register a linked Git worktree, resolve the provider from terminal `PATH`, or reuse an existing AI terminal.
 
