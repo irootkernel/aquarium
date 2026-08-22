@@ -42,7 +42,9 @@ For a staged target, require the reviewer to inspect index blobs and `git diff -
 
 Probe only these executable names with `command -v`: `claude`, `codex`, `cursor-agent`, and `kimi`. Resolve each successful result to one canonical absolute regular executable outside the original Git root, record its SHA-256 digest, and invoke that exact path for its local `--version` command. A command is available only when path resolution, outside-root verification, hashing, and the version probe succeed. Do not authenticate, list remote models, contact a provider, update a CLI, or inspect credentials during discovery.
 
-Require the Orca runtime itself to be local to the coordinator host and current operating-system user. Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`, any `--environment` or `--pairing-code` route, and any agent-context or guide evidence that identifies a remote, paired, or unverifiable runtime. Record the verified local runtime identity before selection, revalidate it before both structured choices and immediately before every registration, terminal, worker, or Dispatch action, and stop on drift.
+Require the Orca runtime itself to be local to the coordinator host and current operating-system user. Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`, any `--environment` or `--pairing-code` route, and any agent-context or guide evidence that identifies a remote, paired, or unverifiable runtime.
+
+Record the verified local runtime identity before selection. Revalidate it before both structured choices and immediately before every lifecycle read or mutation, including registration, Run or Task creation, terminal creation, worker start, Dispatch, retain or release, and cleanup, and stop on drift.
 
 Build the selection menu from successful probes only:
 
@@ -93,7 +95,9 @@ Require `worktree show --worktree path:<absoluteSnapshotPath> --json` to resolve
 
 On a registration or path-verification failure before terminal or worker launch, remove only the exact registration and snapshot when their identities are proven, then stop.
 
-Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Revalidate the provider executable path, digest, and version immediately before terminal creation. Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path, then use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble.
+Create or bind one Run and create one review Task with `task-create --spec <exactAquariumTaskSpec>`. Immediately before terminal creation and again immediately before the source-bearing Dispatch, revalidate the local runtime, provider executable path, digest and version, exact setup and snapshot-path mapping, every provider-visible snapshot and Aquarium Task byte, and all three consented digests. Any drift stops before Dispatch; do not transmit and do not repair the consented bytes in place.
+
+Start one fresh selected lead through the recorded exact snapshot path selector and the consent-bound canonical provider executable path, then use `dispatch --inject` so Orca sends that Task with its disclosed lifecycle preamble.
 
 Never expose or identify the original checkout to a participant, register a linked Git worktree, resolve the provider from terminal `PATH`, or reuse an existing AI terminal.
 
@@ -153,7 +157,9 @@ Verify every returned finding against the exact authority, index or commit snaps
 
 If the lead returned `APPROVE`, first confirm the intended target, authority, topology, digest stability, and empty modified-file set. Missing output, unverifiable model use, scope drift, lifecycle failure, or incomplete adjudication prevents a clean verdict.
 
-After scope revalidation and local adjudication finish, clean up only when the worker was settled and successfully released and no retention was requested. Remove the exact temporary registration with `project setup-delete --setup <recordedSetupId> --json`, confirm that setup identity is absent from `project setups --json`, and delete only the owned snapshot and coordinator manifest.
+After scope revalidation and local adjudication finish, clean up only when the worker was settled and successfully released and no retention was requested. First revalidate the exact local runtime identity and query setups; require the recorded setup ID still to be the sole registration created by this workflow and still map to the recorded repository identity and exact snapshot path.
+
+Only then remove it with `project setup-delete --setup <recordedSetupId> --json`, confirm that setup identity is absent from `project setups --json`, and delete only the owned snapshot and coordinator manifest.
 
 Retained or active workers keep both until an explicitly requested later settlement. A cleanup failure is an operational gap and prevents reporting complete cleanup; never delete a pre-existing or ambiguously identified setup.
 

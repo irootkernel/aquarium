@@ -1642,7 +1642,7 @@ end
 assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
        orca_review.include?("Resolve each successful result to one canonical absolute regular executable") &&
        orca_review.include?("canonical provider executable path, executable digest and observed version") &&
-       orca_review.include?("Revalidate the provider executable path, digest, and version immediately before terminal creation") &&
+       orca_review.include?("Immediately before terminal creation and again immediately before the source-bearing Dispatch") &&
        orca_review.include?("Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`") &&
        orca_review.include?("outside the original Git root") &&
        orca_review.include?("Do not authenticate, list remote models"),
@@ -1714,6 +1714,11 @@ assert(orca_review.include?("After every message in the batch is processed") &&
        orca_review.include?("FIFO replay intentionally blocks later deliveries") &&
        orca_review.include?("Never acknowledge a batch while any message is unresolved"),
        "orca-review must acknowledge every fully processed Delivery batch without bypassing settlement")
+assert(orca_review.include?("immediately before the source-bearing Dispatch") &&
+       orca_review.include?("every provider-visible snapshot and Aquarium Task byte") &&
+       orca_review.include?("immediately before every lifecycle read or mutation") &&
+       orca_review.include?("still map to the recorded repository identity and exact snapshot path"),
+       "orca-review must revalidate consented bytes, runtime, and setup ownership before transmission or cleanup")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&

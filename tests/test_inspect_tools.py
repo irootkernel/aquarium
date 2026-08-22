@@ -1647,6 +1647,48 @@ class InspectToolsTest(unittest.TestCase):
             )
         )
 
+    def test_ouroboros_absence_requires_exact_named_server_diagnostic(self) -> None:
+        base = {
+            "attempted": True,
+            "ok": False,
+            "exit_code": 1,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": "Error: No MCP server named 'ouroboros' found.\n",
+        }
+
+        self.assertEqual(
+            inspect_tools.classify_ouroboros_registration(base, None)["status"],
+            "missing",
+        )
+        for raw in (
+            {**base, "stdout": '{"unexpected":true}\n'},
+            {**base, "exit_code": 2},
+            {**base, "stderr": "No MCP server named ouroboros found\n"},
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(
+                    inspect_tools.classify_ouroboros_registration(raw, None)["status"],
+                    "degraded",
+                )
+
+    def test_normalized_probe_drops_untrusted_json_fields(self) -> None:
+        raw = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+            "result": {
+                "version": "0.2.7",
+                "credential": "AQUARIUM_QA_SYNTHETIC_SECRET",
+            },
+        }
+
+        normalized = inspect_tools.normalized_probe(raw)
+
+        self.assertNotIn("result", normalized)
+        self.assertNotIn("credential", json.dumps(normalized))
+
     def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
         self.write_project_mcp_config("mulgae")
         self.install_fake_tools(

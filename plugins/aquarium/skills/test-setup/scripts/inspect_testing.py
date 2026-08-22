@@ -39,10 +39,10 @@ PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
 PYTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest(?=\s|$)"
 )
 UNITTEST_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest(?=\s|$)"
 )
 SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
@@ -54,9 +54,7 @@ MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
 OPAQUE_PARAMETER_DEFAULT = re.compile(r"\$\{[^}]*:-[^}]*\}")
-OPAQUE_SHELL_EXPANSION = re.compile(
-    r"`[^`]*`|\$\(|\$\{[^}]*(?::-|:=|[-=+?])[^}]*\}|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})"
-)
+OPAQUE_SHELL_EXPANSION = re.compile(r"`[^`]*`|\$\(|\$\{|\$[A-Za-z_]")
 
 
 class InspectionError(Exception):
@@ -269,7 +267,16 @@ def command_preserves_failure(command: str) -> bool:
 
 
 def command_executes_tests(command: str) -> bool:
-    return not INFORMATION_ONLY_ARGUMENT.search(normalize_shell_token_joins(command))
+    normalized = normalize_shell_token_joins(command)
+    without_runner = re.sub(
+        r"^\s*[@+]*\s*\$[({][A-Za-z_][A-Za-z0-9_]*[)}]\s+",
+        "",
+        normalized,
+        count=1,
+    )
+    return not INFORMATION_ONLY_ARGUMENT.search(
+        normalized
+    ) and not OPAQUE_SHELL_EXPANSION.search(without_runner)
 
 
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
@@ -291,7 +298,7 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
             return {value}
         name = reference.group(1) or reference.group(2)
         if name in seen or name not in definitions:
-            return set()
+            return {value}
         resolved: set[str] = set()
         for replacement in definitions[name]:
             expanded = (
@@ -1017,12 +1024,14 @@ def inspect_bun(
         if isinstance(value, str) and calls_make(value)
     )
     package_manager = package.get("packageManager")
-    result["package_manager"] = package_manager
+    result["package_manager_present"] = isinstance(package_manager, str)
     result["bun_version_pinned"] = isinstance(package_manager, str) and bool(
         PINNED_BUN_PATTERN.fullmatch(package_manager)
     )
     engines = package.get("engines")
-    result["bun_engine"] = engines.get("bun") if isinstance(engines, dict) else None
+    result["bun_engine_present"] = bool(
+        isinstance(engines, dict) and isinstance(engines.get("bun"), str)
+    )
     result["lockfile"] = {
         "bun.lock": safe_repository_file(repository / "bun.lock", repository),
         "bun.lockb": safe_repository_file(repository / "bun.lockb", repository),

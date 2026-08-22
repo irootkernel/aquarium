@@ -408,12 +408,8 @@ def classify_ouroboros_registration(
         probe["reason"] = "registration_probe_failed"
         return {"status": "degraded", "probe": probe}
 
-    stderr = raw_probe.get("stderr", "").strip()
     if not raw_probe["ok"]:
-        not_found = re.fullmatch(
-            r"(?:Error:\s*)?No MCP server named ['\"]?ouroboros['\"]? found\.?",
-            stderr,
-        )
+        not_found = named_mcp_server_missing(raw_probe, "ouroboros")
         probe["reason"] = (
             "registration_not_found" if not_found else "registration_probe_failed"
         )
@@ -723,7 +719,7 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
-    tool["probes"]["version"] = version_probe
+    tool["probes"]["version"] = normalized_probe(version_probe)
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_sanho_version(tool["version"])
     if not version_probe["ok"] or not tool["version_supported"]:
@@ -1347,7 +1343,7 @@ def inspect_mulgae(
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
-    tool["probes"]["version"] = version_probe
+    tool["probes"]["version"] = normalized_probe(version_probe)
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_mulgae_version(tool["version"])
     project_config, local_config = tool["configuration"][:2]
@@ -1636,7 +1632,7 @@ def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
-    tool["probes"]["version"] = version_probe
+    tool["probes"]["version"] = normalized_probe(version_probe)
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_gaori_version(tool["version"])
     if not version_probe["ok"] or not tool["version_supported"]:
@@ -1656,7 +1652,7 @@ def inspect_gaori(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         repository,
         timeout_seconds,
     )
-    tool["probes"]["config_check"] = config_probe
+    tool["probes"]["config_check"] = normalized_probe(config_probe)
     tool["status"] = (
         "configured"
         if version_probe["ok"] and tool["version_supported"] and config_probe["ok"]
@@ -1998,7 +1994,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     version_probe = json_probe(
         [tool["executable"], "version", "--json"], repository, timeout_seconds
     )
-    tool["probes"]["version"] = version_probe
+    tool["probes"]["version"] = normalized_probe(version_probe)
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_podway_version(tool["version"])
 

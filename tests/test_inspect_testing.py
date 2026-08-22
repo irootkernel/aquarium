@@ -712,6 +712,8 @@ class InspectTestingTest(unittest.TestCase):
             '"$RUNNER" test-e2e',
             "${RUNNER-make} test-e2e",
             "${RUNNER:=make} test-e2e",
+            "${RUNNER%foo} test-e2e",
+            "${RUNNER#prefix} test-e2e",
         )
         for command in commands:
             with self.subTest(command=command):
@@ -1030,6 +1032,8 @@ class InspectTestingTest(unittest.TestCase):
             self.repository.joinpath("package.json").read_text(encoding="utf-8")
         )
         package["scripts"]["test:unit"] += f" --token={secret}"
+        package["packageManager"] = secret
+        package["engines"] = {"bun": secret}
         self.write("package.json", json.dumps(package))
         self.write_bun_adapter()
         makefile = self.repository / "Makefile"
@@ -1070,6 +1074,45 @@ class InspectTestingTest(unittest.TestCase):
         self.assertIn(
             "root_authority_symlinked", {item["code"] for item in result["findings"]}
         )
+
+    def test_pytest_prefixed_module_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest-fake unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest.fake int")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_opaque_pytest_shell_expansion_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            "PYTEST_ADDOPTS := $(shell printf --collect-only)\n"
+            + makefile.read_text(encoding="utf-8")
+        )
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit"
+        ).replace(
+            "test-int:\n\t@true",
+            "test-int:\n\tpython3 -m pytest $$(printf --collect$${EMPTY}-only)",
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
 
     def test_pytest_collection_alias_is_not_canonical(self) -> None:
         self.write_make_contract()
