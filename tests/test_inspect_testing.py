@@ -120,6 +120,60 @@ class InspectTestingTest(unittest.TestCase):
             """,
         )
 
+    def write_ginkgo_make_contract(self) -> None:
+        self.write(
+            "Makefile",
+            """\
+            .PHONY: test test-prepare test-unit test-int test-e2e
+            test:
+            \t$(MAKE) test-prepare
+            \t$(MAKE) test-unit
+            \t$(MAKE) test-int
+            \t$(MAKE) test-e2e
+            test-prepare:
+            \t@true
+            test-unit:
+            \tginkgo -race ./...
+            test-int:
+            \tginkgo -race ./...
+            test-e2e:
+            \t@true
+            """,
+        )
+
+    def write_ginkgo_evidence(self) -> None:
+        self.write(
+            "go.mod",
+            """\
+            module example.com/fixture
+
+            go 1.26
+
+            require (
+                github.com/onsi/ginkgo/v2 v2.27.2
+                github.com/onsi/gomega v1.38.2
+            )
+            """,
+        )
+        self.write(
+            "go.sum",
+            """\
+            github.com/onsi/ginkgo/v2 v2.27.2 h1:fixture
+            github.com/onsi/gomega v1.38.2 h1:fixture
+            """,
+        )
+        self.write(
+            "fixture_test.go",
+            """\
+            package fixture_test
+
+            import (
+                . "github.com/onsi/ginkgo/v2"
+                . "github.com/onsi/gomega"
+            )
+            """,
+        )
+
     def write_bun_package(self, test_command: str | None = None) -> None:
         package = {
             "name": "fixture",
@@ -181,6 +235,28 @@ class InspectTestingTest(unittest.TestCase):
             {item["code"] for item in result["findings"]},
         )
 
+    def test_quoted_recursive_make_text_is_not_an_executable_stage(self) -> None:
+        self.write(
+            "Makefile",
+            """\
+            .PHONY: test test-prepare test-unit test-int test-e2e
+            test:
+            \t@echo '$(MAKE) test-prepare'
+            \t@echo '$(MAKE) test-unit'
+            \t@echo '$(MAKE) test-int'
+            \t@echo '$(MAKE) test-e2e'
+            test-prepare test-unit test-int test-e2e:
+            \t@true
+            """,
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
+        self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
+
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
         self.write_bun_adapter()
@@ -220,21 +296,9 @@ class InspectTestingTest(unittest.TestCase):
         self.assertIn("bun_version_unpinned", codes)
 
     def test_polyglot_root_keeps_make_authority(self) -> None:
-        self.write_make_contract()
+        self.write_ginkgo_make_contract()
         self.write_bun_package()
-        self.write(
-            "go.mod",
-            """\
-            module example.com/fixture
-
-            go 1.26
-
-            require (
-                github.com/onsi/ginkgo/v2 v2.27.2
-                github.com/onsi/gomega v1.38.2
-            )
-            """,
-        )
+        self.write_ginkgo_evidence()
         self.enroll("polyglot-make")
 
         result = inspect_testing.inspect_repository(self.repository)
@@ -249,20 +313,8 @@ class InspectTestingTest(unittest.TestCase):
         )
 
     def test_go_ginkgo_and_gomega_are_canonical(self) -> None:
-        self.write_make_contract()
-        self.write(
-            "go.mod",
-            """\
-            module example.com/fixture
-
-            go 1.26
-
-            require (
-                github.com/onsi/ginkgo/v2 v2.27.2
-                github.com/onsi/gomega v1.38.2
-            )
-            """,
-        )
+        self.write_ginkgo_make_contract()
+        self.write_ginkgo_evidence()
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
@@ -287,7 +339,21 @@ class InspectTestingTest(unittest.TestCase):
             "framework_waiver_required", {item["code"] for item in result["findings"]}
         )
 
-    def test_python_pytest_and_rust_use_supported_parsers(self) -> None:
+    def test_stale_go_dependencies_do_not_select_ginkgo_parser(self) -> None:
+        self.write_make_contract()
+        self.write_ginkgo_evidence()
+        self.repository.joinpath("go.sum").unlink()
+        self.write("fixture_test.go", 'package fixture\n\nimport "testing"\n')
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "go")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["unit_int_parser"], "generic")
+        self.assertTrue(framework["waiver_required"])
+
+    def test_dependency_only_python_does_not_select_pytest_parser(self) -> None:
         self.write_make_contract()
         self.write(
             "pyproject.toml", '[project.optional-dependencies]\ntest = ["pytest>=8"]\n'
@@ -297,7 +363,7 @@ class InspectTestingTest(unittest.TestCase):
 
         result = inspect_testing.inspect_repository(self.repository)
 
-        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "pytest")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
         self.assertEqual(
             self.framework(result, "rust")["unit_int_parser"], "cargo-test"
         )
@@ -376,6 +442,50 @@ class InspectTestingTest(unittest.TestCase):
             self.framework(result, "python")["detected"], ["pytest", "unittest"]
         )
 
+    def test_python_dependency_and_opaque_wrapper_are_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("\t@true\n\ntest-int:", "\t./run-unit\n\ntest-int:")
+            .replace("\t@true\n\ntest-e2e:", "\t./run-int\n\ntest-e2e:"),
+            encoding="utf-8",
+        )
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write("tests/test_legacy.py", "import unittest\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "python")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["detected"], ["pytest", "unittest"])
+        self.assertEqual(framework["unit_int_parser"], "generic")
+
+    def test_invalid_root_package_manifest_is_nonconforming(self) -> None:
+        self.write_make_contract()
+        self.write("package.json", "{")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "package_json_invalid", {item["code"] for item in result["findings"]}
+        )
+
+    def test_testing_document_profile_must_match_executable_authority(self) -> None:
+        self.write_make_contract()
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "testing_profile_mismatch", {item["code"] for item in result["findings"]}
+        )
+
     def test_testing_document_requires_every_contract_section(self) -> None:
         self.write_make_contract()
         self.write("TESTING.md", "Contract: aquarium-test-contract/v1\n")
@@ -405,6 +515,20 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(framework["detected"], ["bun-test"])
         self.assertTrue(framework["waiver_required"])
+
+    def test_legacy_bun_lock_requires_waiver_even_with_bun_lock(self) -> None:
+        self.write_bun_package()
+        self.write_bun_adapter()
+        self.write("bun.lockb", "legacy")
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertIn(
+            "bun_legacy_lock_waiver_required",
+            {item["code"] for item in result["findings"]},
+        )
 
     def test_dart_and_flutter_pending_gaori_parsers_are_explicit(self) -> None:
         self.write_make_contract()

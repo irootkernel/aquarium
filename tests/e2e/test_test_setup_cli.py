@@ -27,8 +27,14 @@ test:
 \t$(MAKE) test-unit
 \t$(MAKE) test-int
 \t$(MAKE) test-e2e
-test-prepare test-unit test-int test-e2e:
+test-prepare:
 \t@true
+test-unit:
+\tpython3 -m pytest tests/unit
+test-int:
+\tpython3 -m pytest tests/integration
+test-e2e:
+\tpython3 -m pytest tests/e2e
 """,
         encoding="utf-8",
     )

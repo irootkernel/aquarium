@@ -375,6 +375,11 @@ assert(test_setup_script.file?, "test-setup structural inspector is missing")
 assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?('"semantic_scope": "not_evaluated"') &&
        test_setup_script_body.include?("framework_waiver_required") &&
+       test_setup_script_body.include?("testing_profile_mismatch") &&
+       test_setup_script_body.include?("bun_legacy_lock_waiver_required") &&
+       test_setup_script_body.include?("typescript_package_manager_waiver_required") &&
+       test_setup_script_body.include?("source_contains") &&
+       test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
        test_setup_script_body.include?("pending-patrol") &&
        !test_setup_script_body.include?("import subprocess"),
@@ -429,7 +434,8 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only that disclosed source") &&
+       ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only those disclosed bytes") &&
+       ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
        ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
@@ -598,7 +604,8 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
        dev_setup.include?("--require-mulgae-mcp"),
        "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
 assert(ROOT.join("README.md").read.include?("durable local execution memory") &&
-       ROOT.join("README.md").read.include?("selected by default for Git-backed Aquarium workflows") &&
+       ROOT.join("README.md").read.include?("selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`") &&
+       ROOT.join("README.ko.md").read.include?("`task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용") &&
        ROOT.join("README.md").read.include?("opted out before the first managed-session mutation") &&
        ROOT.join("README.md").read.include?("standalone `use-podway` skill"),
        "public Podway guidance must explain its role and workflow boundary concisely")
@@ -1535,15 +1542,15 @@ assert(orca_review.include?("git diff --cached --binary") &&
        orca_review.include?("`git diff --binary`") &&
        orca_review.include?("without `git write-tree`") &&
        orca_review.include?("path and SHA-256 digest of every applicable instruction file and named requirement authority") &&
-       orca_review.include?("recompute the recorded target, instruction, and authority digests") &&
-       orca_review.include?("recompute the target and every instruction and authority digest") &&
+       orca_review.include?("recompute the recorded target and every transmission-manifest file digest") &&
+       orca_review.include?("recompute every immutable snapshot file digest and both consented digests") &&
        orca_review.include?("require a new final provider selection") &&
        orca_review.include?("index blobs") &&
        orca_review.include?("resolved endpoint commits, not working-tree copies") &&
        orca_review.include?("authoritative worker evidence that the reviewer read index blobs") &&
        orca_review.include?("authoritative worker evidence that the reviewer read the resolved endpoint blobs") &&
-       orca_review.include?("target, an instruction file, or authority changed") &&
-       orca_review.include?("exact scope cannot be verified") &&
+       orca_review.include?("immutable snapshot or either consented digest changed") &&
+       orca_review.include?("authoritative worker evidence does not bind every participant to that snapshot") &&
        orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
        "orca-review must bind and revalidate an exact non-mutating review snapshot")
 assert(orca_review.include?("request_user_input") &&
@@ -1553,8 +1560,8 @@ assert(orca_review.include?("request_user_input") &&
        orca_review.include?("stop without selecting a provider or transmitting source") &&
        orca_review.include?("Never auto-select"),
        "orca-review must use explicit structured provider selection without silent defaults")
-assert(orca_review.include?("every instruction and authority file path with its SHA-256 digest") &&
-       orca_review.include?("newline-terminated `<sha256>  <absolute-path>` lines") &&
+assert(orca_review.include?("every repository, target, supporting-source, instruction, and authority file") &&
+       orca_review.include?("newline-terminated `<sha256>  <source-identity>` lines") &&
        orca_review.include?("context-manifest digest") &&
        orca_review.include?("require a new final provider selection for both disclosed digests"),
        "orca-review provider consent must bind the complete transmitted context manifest")
@@ -1578,8 +1585,11 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_provider_contracts.include?("cursor-agent --model grok-4.6 --mode plan") &&
        orca_provider_contracts.include?("kimi --model k3 --plan") &&
        orca_provider_contracts.include?("terminal create --worktree current") &&
-       orca_review.include?("Do not create another Git worktree or reuse an existing AI terminal"),
-       "orca-review must launch every selected model through a read-only current-worktree terminal")
+       orca_provider_contracts.include?("immutable `/tmp` snapshot as the current worktree") &&
+       orca_review.include?("Never expose the original checkout to a participant") &&
+       orca_review.include?("Give it no remote, credential material, object alternates") &&
+       orca_review.include?("Require every participant to read only the immutable snapshot"),
+       "orca-review must launch every selected model through the consent-bound immutable snapshot")
 assert(orca_provider_contracts.include?("Fable is the master reviewer") &&
        orca_provider_contracts.include?("explicit per-invocation `opus` or `sonnet` model") &&
        orca_provider_contracts.include?("model: inherit") &&

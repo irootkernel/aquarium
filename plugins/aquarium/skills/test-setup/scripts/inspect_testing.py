@@ -29,17 +29,17 @@ BUN_STAGES = BUN_SCRIPTS[1:]
 EXPECTED_BUN_AGGREGATE = " && ".join(f"bun run {name}" for name in BUN_STAGES)
 TARGET_PATTERN = re.compile(r"^([^\s:#=][^:=]*?):(?![=])(.*)$")
 RECURSIVE_MAKE_PATTERN = re.compile(
-    r"(?:\$\(MAKE\)|\$\{MAKE\})(?:\s+--no-print-directory)?\s+"
+    r"^\s*[@+-]*\s*(?:\$\(MAKE\)|\$\{MAKE\})(?:\s+--no-print-directory)?\s+"
     r"(test(?:-[A-Za-z0-9_-]+)?)\b"
 )
 PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
 PYTEST_COMMAND_PATTERN = re.compile(
-    r"(?:^|\s)(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
+    r"^\s*[@+-]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
 )
 UNITTEST_COMMAND_PATTERN = re.compile(
-    r"(?:^|\s)(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+    r"^\s*[@+-]*\s*(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
 )
 
 
@@ -164,6 +164,22 @@ def python_stage_parser(commands: list[str]) -> str | None:
     return None
 
 
+def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) -> bool:
+    ignored = {".git", ".venv", "node_modules", "vendor"}
+    for path in repository.rglob(f"*{suffix}"):
+        if any(part in ignored for part in path.parts):
+            continue
+        try:
+            if path.is_symlink() or path.stat().st_size > 1_000_000:
+                continue
+        except OSError:
+            continue
+        content = read_optional_text(path)
+        if any(re.search(pattern, content) for pattern in patterns):
+            return True
+    return False
+
+
 def inspect_frameworks(
     repository: Path, languages: list[str], package: dict[str, Any] | None
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
@@ -173,12 +189,49 @@ def inspect_frameworks(
 
     if "go" in languages:
         go_mod = read_optional_text(repository / "go.mod")
+        go_sum = read_optional_text(repository / "go.sum")
+        go_commands = "\n".join(
+            command
+            for stage in ("test-unit", "test-int")
+            for command in commands[stage]
+        )
+        has_ginkgo_command = all(
+            commands[stage]
+            and any(
+                re.search(r"^\s*[@+-]*\s*ginkgo(?:\s|$)", command)
+                for command in commands[stage]
+            )
+            for stage in ("test-unit", "test-int")
+        )
+        has_ginkgo_sources = all(
+            source_contains(repository, "_test.go", (re.escape(name),))
+            for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
+        )
         detected = [
-            name for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE) if name in go_mod
+            name
+            for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
+            if name in go_mod
+            or name in go_sum
+            or name in go_commands
+            or has_ginkgo_sources
         ]
-        status = "canonical" if len(detected) == 2 else "waiver_required"
+        dependencies_pinned = all(
+            name in go_mod and name in go_sum
+            for name in (GO_GINKGO_MODULE, GO_GOMEGA_MODULE)
+        )
+        status = (
+            "canonical"
+            if dependencies_pinned and has_ginkgo_command and has_ginkgo_sources
+            else "waiver_required"
+        )
         entries.append(
-            framework_entry("go", ["ginkgo-v2", "gomega"], detected, status, "ginkgo")
+            framework_entry(
+                "go",
+                ["ginkgo-v2", "gomega"],
+                detected,
+                status,
+                "ginkgo" if status == "canonical" else "generic",
+            )
         )
 
     if "python" in languages:
@@ -188,21 +241,35 @@ def inspect_frameworks(
             repository / "setup.py",
             *sorted(repository.glob("requirements*.txt")),
         ]
-        has_pytest = any(
+        has_pytest_declaration = any(
             re.search(r"\bpytest\b", read_optional_text(path))
             for path in authority_paths
         )
-        has_unittest = any(
-            UNITTEST_COMMAND_PATTERN.search(command)
+        stage_parsers = {
+            stage: python_stage_parser(commands[stage])
             for stage in ("test-unit", "test-int")
-            for command in commands[stage]
+        }
+        has_pytest_command = "pytest" in stage_parsers.values()
+        has_unittest = "generic" in stage_parsers.values() or source_contains(
+            repository,
+            ".py",
+            (r"(?m)^\s*(?:from\s+unittest\s+import|import\s+unittest\b)",),
         )
         detected = [
             name
-            for name, present in (("pytest", has_pytest), ("unittest", has_unittest))
+            for name, present in (
+                ("pytest", has_pytest_declaration or has_pytest_command),
+                ("unittest", has_unittest),
+            )
             if present
         ]
-        status = "canonical" if detected == ["pytest"] else "waiver_required"
+        status = (
+            "canonical"
+            if has_pytest_declaration
+            and all(parser == "pytest" for parser in stage_parsers.values())
+            and not has_unittest
+            else "waiver_required"
+        )
         entries.append(
             framework_entry(
                 "python",
@@ -501,7 +568,8 @@ def inspect_makefile(
             recursive_calls = [
                 match.group(1)
                 for command in aggregate["recipe"]
-                for match in RECURSIVE_MAKE_PATTERN.finditer(command)
+                for match in [RECURSIVE_MAKE_PATTERN.match(command)]
+                if match is not None
             ]
             result["aggregate_recursive_calls"] = recursive_calls
             if aggregate["prerequisites"]:
@@ -546,10 +614,9 @@ def inspect_bun(
             )
         return result, findings
     if package is None:
-        if required:
-            findings.append(
-                finding("package_json_invalid", "error", "package.json is invalid.")
-            )
+        findings.append(
+            finding("package_json_invalid", "error", "package.json is invalid.")
+        )
         return result, findings
 
     scripts_value = package.get("scripts")
@@ -586,6 +653,16 @@ def inspect_bun(
         "bun.lock": (repository / "bun.lock").is_file(),
         "bun.lockb": (repository / "bun.lockb").is_file(),
     }
+    result["legacy_package_manager_files"] = [
+        name
+        for name in (
+            "package-lock.json",
+            "npm-shrinkwrap.json",
+            "pnpm-lock.yaml",
+            "yarn.lock",
+        )
+        if (repository / name).is_file()
+    ]
 
     if required:
         if missing:
@@ -626,17 +703,37 @@ def inspect_bun(
                     "bun_lock_missing", "error", "Tracked-format bun.lock is missing."
                 )
             )
+        if result["lockfile"]["bun.lockb"]:
+            findings.append(
+                finding(
+                    "bun_legacy_lock_waiver_required",
+                    "unverifiable",
+                    "bun.lockb requires an approved AQTEST-008 legacy waiver.",
+                )
+            )
+        if result["legacy_package_manager_files"]:
+            findings.append(
+                finding(
+                    "typescript_package_manager_waiver_required",
+                    "unverifiable",
+                    "Legacy package-manager files require an approved AQTEST-008 waiver: "
+                    + ", ".join(result["legacy_package_manager_files"])
+                    + ".",
+                )
+            )
     return result, findings
 
 
 def inspect_testing_document(
     repository: Path,
+    expected_profile: str,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     path = repository / "TESTING.md"
     result = {
         "path": str(path),
         "present": path.is_file(),
         "contract_registered": False,
+        "profile": None,
         "sections": {heading: False for heading in TESTING_HEADINGS},
     }
     findings: list[dict[str, str]] = []
@@ -648,6 +745,16 @@ def inspect_testing_document(
     try:
         content = path.read_text(encoding="utf-8")
         result["contract_registered"] = CONTRACT_MARKER in content
+        explicit_profile = re.search(
+            r"(?im)^\s*(?:[-*]\s*)?Profile:\s*`?(make|typescript-bun|polyglot-make)`?\s*$",
+            content,
+        )
+        prose_profile = re.search(
+            r"(?i)`(make|typescript-bun|polyglot-make)`\s+profile\b", content
+        )
+        profile_match = explicit_profile or prose_profile
+        if profile_match:
+            result["profile"] = profile_match.group(1)
         result["sections"] = {
             heading: bool(re.search(rf"(?m)^##\s+{re.escape(heading)}\s*$", content))
             for heading in TESTING_HEADINGS
@@ -665,6 +772,22 @@ def inspect_testing_document(
                 "testing_contract_unregistered",
                 "error",
                 f"TESTING.md lacks {CONTRACT_MARKER}.",
+            )
+        )
+    if result["profile"] is None:
+        findings.append(
+            finding(
+                "testing_profile_missing",
+                "error",
+                "TESTING.md does not declare a supported selected profile.",
+            )
+        )
+    elif result["profile"] != expected_profile:
+        findings.append(
+            finding(
+                "testing_profile_mismatch",
+                "error",
+                f"TESTING.md declares {result['profile']} but executable authorities select {expected_profile}.",
             )
         )
     missing_sections = [
@@ -692,7 +815,7 @@ def inspect_repository(repository: Path) -> dict[str, Any]:
     framework_result, framework_findings = inspect_frameworks(
         repository, languages, package
     )
-    document_result, document_findings = inspect_testing_document(repository)
+    document_result, document_findings = inspect_testing_document(repository, profile)
     findings = make_findings + bun_findings + framework_findings + document_findings
     if any(item["severity"] == "error" for item in findings):
         status = "nonconforming"

@@ -48,7 +48,7 @@ Foundations: `$aquarium:test-setup` enrolls a repository in the common test cont
 
 ## How the Ecosystem Connects
 
-- [Podway](https://github.com/irootkernel/podway) provides durable local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for Git-backed Aquarium workflows and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
+- [Podway](https://github.com/irootkernel/podway) provides durable local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
 - [Gaori](https://github.com/irootkernel/gaori) runs your existing checks, keeps the raw logs, and returns a bounded summary as evidence. Gaori integration is optional, and the command's exit code stays the pass/fail authority.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics an advisory multi-provider review. Aquarium verifies each finding locally and sets explicit limits on remediation.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise an explicitly selected AI CLI reviewing one disclosed repository snapshot. Aquarium binds provider consent to that snapshot and independently adjudicates the result.

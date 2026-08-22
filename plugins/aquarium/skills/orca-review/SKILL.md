@@ -48,7 +48,7 @@ Fail closed when no supported CLI is available. Do not infer model availability 
 
 Use the host's structured ask/answer tool, normally `request_user_input`, whenever available. Present no more than three choices in one call; when more are available, paginate with one navigation choice such as `More installed AIs` and then show only the remaining exact tool:model labels. Keep navigation choices separate from final provider consent. Even when one choice is available, require the user to select it.
 
-Before presenting a final choice, display the included Git target and digest, every instruction and authority file path with its SHA-256 digest, the explicitly excluded state, and a context-manifest digest. Build that manifest from the displayed instruction and authority records sorted by path as newline-terminated `<sha256>  <absolute-path>` lines, then hash those exact UTF-8 bytes.
+Before presenting a final choice, build and display a complete transmission manifest. It must list every repository, target, supporting-source, instruction, and authority file whose bytes the reviewer may receive, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the context-manifest digest.
 
 Each final choice must identify the exact tool:model, review target and digest, context-manifest digest, and that selecting it authorizes transmission of only that displayed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source.
 
@@ -56,11 +56,15 @@ Never auto-select, infer consent from silence, or treat approval for another pro
 
 ## Dispatch the Reviewer
 
-Immediately after selection and before reading provider instructions, creating Orca state, or transmitting source, recompute the recorded target, instruction, and authority digests and the context-manifest digest. If any digest or recorded target identity differs, do not transmit; establish the changed target again and require a new final provider selection for both disclosed digests.
+Immediately after selection and before reading provider instructions, creating Orca state, or transmitting source, recompute the recorded target and every transmission-manifest file digest plus the context-manifest digest. If any digest or recorded target identity differs, do not transmit; establish the changed target again and require a new final provider selection for both disclosed digests.
 
-After that check succeeds, read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead in the current worktree, and inject one supervised Dispatch through the live orchestration contract. Do not create another Git worktree or reuse an existing AI terminal.
+After that check succeeds, materialize only those verified bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence, store the transmission manifest inside it, make the complete snapshot read-only, and recompute every snapshot file digest. Stop unless that snapshot exactly reproduces the consented target and context-manifest digests.
 
-The Task specification must include the absolute Git root, exact target and digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema. Do not include the coordinator's suspected findings or intended fixes.
+After the immutable snapshot verifies, read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead with the snapshot as its current worktree, and inject one supervised Dispatch through the live orchestration contract. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
+
+The Task specification must include the original absolute Git root as report identity only, immutable snapshot root, exact target and digest, complete context-manifest digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema.
+
+Require every participant to read only the immutable snapshot and bind authoritative worker scope evidence to both consented digests. Do not include the coordinator's suspected findings or intended fixes.
 
 Require the lead to:
 
@@ -84,13 +88,13 @@ Follow the live guide's exact recovery action for launch, Dispatch, delivery, or
 
 ## Revalidate and Report
 
-Immediately after completion, recompute the target and every instruction and authority digest and inspect Git state.
+Immediately after completion, recompute every immutable snapshot file digest and both consented digests, then inspect the original Git state separately.
 
 For a staged target, verify from the authoritative worker evidence that the reviewer read index blobs and `git diff --cached`, not working-tree copies.
 
 For a commit or range target, verify from the authoritative worker evidence that the reviewer read the resolved endpoint blobs and diffs rather than working-tree copies.
 
-Invalidate the review when the target, an instruction file, or authority changed, the worker modified files, the reviewer examined the wrong scope or exact scope cannot be verified, or the selected provider's required subagent topology and effective models cannot be verified.
+Invalidate the review when the immutable snapshot or either consented digest changed, the worker modified files, authoritative worker evidence does not bind every participant to that snapshot, the reviewer examined the original checkout or another scope, or the selected provider's required subagent topology and effective models cannot be verified. Report later original-checkout drift separately and never reinterpret the review as covering those newer bytes.
 
 Verify every returned finding against the exact authority, index or commit snapshot, production callers, persistence and race boundaries, and existing tests without changing files or running checks. Classify each item as:
 
