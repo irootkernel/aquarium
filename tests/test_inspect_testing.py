@@ -1403,6 +1403,84 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertTrue(result["make"]["global_shell_semantics"])
 
+    def test_dynamic_make_authorities_are_unverifiable(self) -> None:
+        additions = (
+            ".RECIPEPREFIX := >\n",
+            "test-%: BUN = true\n",
+            "$(eval test-unit: ; @true)\n",
+            "ifeq ($(MODE),fast)\ntest-unit: ; @true\nendif\n",
+        )
+        for addition in additions:
+            with self.subTest(addition=addition):
+                self.write_make_contract()
+                makefile = self.repository / "Makefile"
+                makefile.write_text(
+                    addition + makefile.read_text(encoding="utf-8"),
+                    encoding="utf-8",
+                )
+                self.enroll("make")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                self.assertEqual(result["structural_status"], "unverifiable")
+                self.assertTrue(result["make"]["global_shell_semantics"])
+
+    def test_symlinked_legacy_lock_authority_is_rejected(self) -> None:
+        self.write_bun_package()
+        self.write_bun_adapter()
+        self.write("bun.lock", "lockfileVersion = 1\n")
+        external = Path(self.temporary_directory.name) / "external-pnpm-lock.yaml"
+        external.write_text("lockfileVersion: 9\n", encoding="utf-8")
+        self.repository.joinpath("pnpm-lock.yaml").symlink_to(external)
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertIn(
+            "root_authority_symlinked", {item["code"] for item in result["findings"]}
+        )
+
+    def test_ansi_quoted_pytest_option_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace(
+                "test-unit:\n\t@true",
+                "test-unit:\n\tpython3 -m pytest $'--collect\\x2donly'",
+            )
+            .replace(
+                "test-int:\n\t@true",
+                'test-int:\n\tpython3 -m pytest $"--collect-only"',
+            )
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_unresolved_pytest_addopts_expansion_is_not_canonical(self) -> None:
+        for value in ("--collect$()-only", "--collect$(UNDEFINED)-only"):
+            with self.subTest(value=value):
+                self.write_make_contract()
+                makefile = self.repository / "Makefile"
+                makefile.write_text(
+                    f"export PYTEST_ADDOPTS := {value}\n"
+                    + makefile.read_text(encoding="utf-8"),
+                    encoding="utf-8",
+                )
+                self.write("requirements.txt", "pytest==9.1.1\n")
+                self.enroll("make")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                self.assertEqual(result["structural_status"], "unverifiable")
+
     def test_symlinked_requirements_authority_is_reported(self) -> None:
         self.write_make_contract()
         external = Path(self.temporary_directory.name) / "requirements.txt"
@@ -1629,6 +1707,19 @@ class InspectTestingTest(unittest.TestCase):
             payload["schema_version"], "aquarium-test-setup-inspection-error.v1"
         )
         self.assertEqual(payload["error"]["code"], "repository_not_found")
+
+    def test_cli_does_not_reflect_unknown_argument_values(self) -> None:
+        secret = "QA20_SYNTHETIC_SECRET"
+
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "--repository", ".", f"--api-token={secret}"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(completed.returncode, 2)
+        self.assertNotIn(secret, completed.stdout)
 
 
 if __name__ == "__main__":

@@ -59,7 +59,9 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 Before presenting a preparation choice, build and display a source manifest. It must list every repository, target, supporting-source, instruction, and authority file intended for materialization, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the source-manifest digest.
 
-Before displaying, hashing, materializing, or passing any provider executable path, repository label, source identity, snapshot identity, or Task field, require valid UTF-8 with no Unicode control or format character and no line or paragraph separator.
+Before displaying, hashing, materializing, command-routing, or reusing any externally derived identity or consent-visible value, parse it to the exact bounded field required by its owning schema. This includes provider version output, local runtime identity, repository and setup identity, worktree and snapshot identity, lifecycle identifiers, paths, labels, source identities, and every Task field.
+
+Require one valid UTF-8 record with no Unicode control or format character and no line or paragraph separator. Reject extra lines, surrounding payload, missing fields, and malformed values.
 
 Stop on an identity containing any Unicode `Cc`, `Cf`, `Zl`, or `Zp` code point, including `U+0000` through `U+001F`, `U+007F` through `U+009F`, bidirectional marks, embeddings, overrides, and isolates such as `U+202E`, and `U+2028` or `U+2029`; never escape, normalize, or substitute it into consent text, manifest records, or command arguments.
 

@@ -2208,7 +2208,31 @@ class InspectToolsTest(unittest.TestCase):
         payload = json.loads(completed.stdout)
         self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v6")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
-        self.assertIn("--repository", payload["error"]["message"])
+        self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
+
+    def test_unknown_argument_value_is_not_reflected(self) -> None:
+        secret = "QA20_SYNTHETIC_SECRET"
+
+        completed = self.run_script(
+            "--repository", str(self.repository), f"--api-token={secret}"
+        )
+
+        self.assertEqual(completed.returncode, 2)
+        self.assertNotIn(secret, completed.stdout)
+
+    def test_untrusted_version_and_go_fields_are_omitted(self) -> None:
+        secret = "QA20_SYNTHETIC_SECRET"
+        self.install_fake_tools(
+            sanho_version=secret,
+            mulgae_version=secret,
+            gaori_version=secret,
+            go_version=secret,
+        )
+
+        completed = self.inspect()
+
+        self.assertEqual(completed.returncode, 0)
+        self.assertNotIn(secret, completed.stdout)
 
     def test_non_positive_timeout_is_rejected_before_inspection(self) -> None:
         completed = self.inspect(timeout_seconds=0)

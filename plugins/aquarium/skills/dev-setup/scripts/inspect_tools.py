@@ -71,7 +71,7 @@ class InspectionError(Exception):
 
 class JsonArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
-        raise InspectionError("invalid_arguments", message)
+        raise InspectionError("invalid_arguments", "invalid command-line arguments")
 
 
 def run_command(
@@ -170,8 +170,11 @@ def named_mcp_server_missing(raw_probe: dict[str, Any], name: str) -> bool:
 
 def version_from_probe(probe: dict[str, Any]) -> str | None:
     result = probe.get("result")
-    if isinstance(result, dict) and isinstance(result.get("version"), str):
-        return result["version"]
+    version = result.get("version") if isinstance(result, dict) else None
+    if isinstance(version, str) and re.fullmatch(
+        r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version
+    ):
+        return version
     return None
 
 
@@ -382,11 +385,6 @@ def normalized_probe(probe: dict[str, Any]) -> dict[str, Any]:
     normalized = {
         key: probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
     }
-    result = probe.get("result")
-    if isinstance(result, dict):
-        error = result.get("error")
-        if isinstance(error, dict) and isinstance(error.get("code"), str):
-            normalized["error_code"] = error["code"]
     if probe.get("error_code"):
         normalized["error_code"] = probe["error_code"]
     if probe.get("reason"):
@@ -724,6 +722,11 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["version_supported"] = supported_sanho_version(tool["version"])
     if not version_probe["ok"] or not tool["version_supported"]:
         tool["status"] = "degraded"
+    if any(entry["symlinked"] for entry in tool["configuration"]):
+        tool["probes"]["status"] = skipped_probe("configuration_symlinked")
+        tool["probes"]["doctor"] = skipped_probe("configuration_symlinked")
+        tool["status"] = "degraded"
+        return tool
     if not tool["configuration"][0]["present"]:
         tool["probes"]["status"] = skipped_probe("configuration_missing")
         tool["probes"]["doctor"] = skipped_probe("configuration_missing")
@@ -1043,10 +1046,51 @@ def inspect_mulgae_installation_prerequisites(
     result = probe.get("result")
     if isinstance(result, dict):
         version = result.get("GOVERSION")
-        if isinstance(version, str):
+        safe_result: dict[str, str] = {}
+        if isinstance(version, str) and re.fullmatch(
+            r"go\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?", version
+        ):
             prerequisite["go"]["version"] = version
             prerequisite["go"]["supported"] = supported_mulgae_go_version(version)
-        normalized["result"] = selected_fields(result, ("GOVERSION", "GOOS", "GOARCH"))
+            safe_result["GOVERSION"] = version
+        goos = result.get("GOOS")
+        if goos in {
+            "aix",
+            "android",
+            "darwin",
+            "dragonfly",
+            "freebsd",
+            "illumos",
+            "ios",
+            "js",
+            "linux",
+            "netbsd",
+            "openbsd",
+            "plan9",
+            "solaris",
+            "wasip1",
+            "windows",
+        }:
+            safe_result["GOOS"] = goos
+        goarch = result.get("GOARCH")
+        if goarch in {
+            "386",
+            "amd64",
+            "arm",
+            "arm64",
+            "loong64",
+            "mips",
+            "mips64",
+            "mips64le",
+            "mipsle",
+            "ppc64",
+            "ppc64le",
+            "riscv64",
+            "s390x",
+            "wasm",
+        }:
+            safe_result["GOARCH"] = goarch
+        normalized["result"] = safe_result
     prerequisite["go"]["probe"] = normalized
     return prerequisite
 

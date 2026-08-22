@@ -54,7 +54,7 @@ MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
 OPAQUE_PARAMETER_DEFAULT = re.compile(r"\$\{[^}]*:-[^}]*\}")
-OPAQUE_SHELL_EXPANSION = re.compile(r"`[^`]*`|\$\(|\$\{|\$[A-Za-z_]")
+OPAQUE_SHELL_EXPANSION = re.compile(r"`[^`]*`|\$\(|\$\{|\$[A-Za-z_]|\$[\"']")
 
 
 class InspectionError(Exception):
@@ -65,7 +65,7 @@ class InspectionError(Exception):
 
 class JsonArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
-        raise InspectionError("invalid_arguments", message)
+        raise InspectionError("invalid_arguments", "invalid command-line arguments")
 
 
 def finding(code: str, severity: str, message: str) -> dict[str, str]:
@@ -153,6 +153,10 @@ def unsafe_root_authorities(repository: Path) -> list[str]:
             "package.json",
             "bun.lock",
             "bun.lockb",
+            "package-lock.json",
+            "npm-shrinkwrap.json",
+            "pnpm-lock.yaml",
+            "yarn.lock",
             "TESTING.md",
             "Makefile",
         )
@@ -322,6 +326,7 @@ def pytest_control_only_configuration(
 ) -> bool:
     if any(
         INFORMATION_ONLY_ARGUMENT.search(normalize_shell_token_joins(value))
+        or OPAQUE_SHELL_EXPANSION.search(value)
         for value in make_variables.get("PYTEST_ADDOPTS", set())
     ):
         return True
@@ -840,6 +845,13 @@ def inspect_makefile(
     result["include_count"] = len(includes)
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
+        or re.search(r"(?m)^\s*\.RECIPEPREFIX\s*[:?+]?=", content)
+        or re.search(
+            r"(?m)^[^#\t\n][^:\n]*:\s*(?:(?:override|export)\s+)*[A-Za-z_][A-Za-z0-9_]*\s*[:?+]?=",
+            content,
+        )
+        or re.search(r"(?m)^\s*\$\((?:eval|call|foreach|if)\b", content)
+        or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
         or "\\\n" in content
         or re.search(
             r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
@@ -1018,11 +1030,13 @@ def inspect_bun(
             or OPAQUE_SHELL_EXPANSION.search(normalized_shell_words)
         )
 
-    result["make_cycles"] = sorted(
+    make_cycles = sorted(
         name
         for name, value in scripts.items()
         if isinstance(value, str) and calls_make(value)
     )
+    result["make_cycles"] = [name for name in make_cycles if name in BUN_SCRIPTS]
+    result["make_cycle_count"] = len(make_cycles)
     package_manager = package.get("packageManager")
     result["package_manager_present"] = isinstance(package_manager, str)
     result["bun_version_pinned"] = isinstance(package_manager, str) and bool(
@@ -1064,7 +1078,7 @@ def inspect_bun(
                     "test must call the four Bun stage scripts once with serial && operators.",
                 )
             )
-        if result["make_cycles"]:
+        if make_cycles:
             findings.append(
                 finding(
                     "bun_make_cycle",
