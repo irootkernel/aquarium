@@ -179,7 +179,7 @@ class InspectToolsTest(unittest.TestCase):
         }
         mulgae_mcp_result = (
             self.mulgae_mcp_fixture(mulgae_mcp_fixture_names[mulgae_mcp_mode])
-            if mulgae_mcp_mode not in {None, "missing"}
+            if mulgae_mcp_mode not in {None, "missing", "silent-failure"}
             else None
         )
         source = textwrap.dedent(
@@ -434,6 +434,8 @@ class InspectToolsTest(unittest.TestCase):
                         raise SystemExit(1)
                 if mode == "missing":
                     print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
+                    raise SystemExit(1)
+                if mode == "silent-failure":
                     raise SystemExit(1)
                 if mode == "timeout":
                     time.sleep(4)
@@ -1594,6 +1596,35 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(
             registration["reason"], "project_registration_origin_unverified"
         )
+
+    def test_repository_resolution_ignores_ambient_git_redirection(self) -> None:
+        other = self.base / "other-repository"
+        other.mkdir()
+        subprocess.run(
+            ["git", "init", "--quiet"],
+            cwd=other,
+            env=self.environment,
+            check=True,
+        )
+        self.environment["GIT_DIR"] = str(other / ".git")
+        self.environment["GIT_WORK_TREE"] = str(other)
+
+        completed = self.inspect()
+        result = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(Path(result["repository"]["root"]), self.repository.resolve())
+
+    def test_mulgae_mcp_arbitrary_exit_one_is_degraded(self) -> None:
+        self.write_project_mcp_config("mulgae")
+        self.install_fake_tools(mulgae_mcp_mode="silent-failure")
+
+        registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+            "mcp_registration"
+        ]
+
+        self.assertEqual(registration["status"], "degraded")
+        self.assertEqual(registration["reason"], "registration_probe_failed")
 
     def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
         self.write_project_mcp_config("mulgae")

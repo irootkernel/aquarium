@@ -57,7 +57,9 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 Before presenting a preparation choice, build and display a source manifest. It must list every repository, target, supporting-source, instruction, and authority file intended for materialization, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the source-manifest digest.
 
-Before displaying, hashing, materializing, or passing any provider executable path, repository label, source identity, snapshot identity, or Task field, require valid UTF-8 with no ASCII control character, DEL, NEL, or Unicode line/paragraph separator. Stop on an identity containing `U+0000` through `U+001F`, `U+007F`, `U+0085`, `U+2028`, or `U+2029`; never escape, normalize, or substitute it into consent text, manifest records, or command arguments.
+Before displaying, hashing, materializing, or passing any provider executable path, repository label, source identity, snapshot identity, or Task field, require valid UTF-8 with no Unicode control or format character and no line or paragraph separator.
+
+Stop on an identity containing any Unicode `Cc`, `Cf`, `Zl`, or `Zp` code point, including `U+0000` through `U+001F`, `U+007F` through `U+009F`, bidirectional marks, embeddings, overrides, and isolates such as `U+202E`, and `U+2028` or `U+2029`; never escape, normalize, or substitute it into consent text, manifest records, or command arguments.
 
 Each preparation choice must identify the exact tool:model, canonical provider executable path, executable digest and observed version, verified local Orca runtime identity, review target and digest, source-manifest digest, private snapshot path policy, and that selecting it authorizes local preparation only. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without preparing a snapshot or transmitting source.
 
@@ -123,7 +125,7 @@ For an accepted `worker_done`, retrieve the complete authoritative worker eviden
 
 For every Delivery batch, process every message completely. Only for an accepted terminal `worker_done`, either run `worker-retain --dispatch <dispatchId> --json`, verify its durable receipt, and keep the worker when retention was requested, or release the settled succeeded or failed worker and verify the release receipt. Never retain or release a worker merely for a question, escalation, heartbeat, stale completion, or rejected completion. A required retain or release failure is an operational gap.
 
-After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch. For the accepted terminal `worker_done` of the sole expected Dispatch, use `check --ack <deliveryId>` without `--wait`, then proceed to revalidation.
+After every message in the batch is processed and every required retain or release succeeds, acknowledge that exact batch. For the accepted terminal `worker_done` of the sole expected Dispatch, use `check --ack <deliveryId>` without `--wait`. Inspect that command's response before revalidation: if it returns another queued Delivery batch, process and acknowledge that batch under these same rules, repeating non-waiting acknowledgements until the response reports no Delivery. Any unresolved returned batch blocks revalidation.
 
 For a question, escalation, heartbeat, rejected completion, or stale completion while the expected Dispatch remains active, use `check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>`. The timeout must be positive and no larger than the recorded remaining cumulative liveness budget.
 

@@ -48,7 +48,7 @@ SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|--collect-only|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests)(?:[\s\"'\],};&|()]|$)"
 )
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
@@ -840,10 +840,18 @@ def inspect_makefile(
     duplicates = []
     for name in MAKE_TARGETS:
         definitions = targets.get(name, [])
+        public_definitions = [
+            {
+                "line": definition["line"],
+                "prerequisites": definition["prerequisites"],
+                "recipe_command_count": len(definition["recipe"]),
+            }
+            for definition in definitions
+        ]
         result["targets"][name] = {
             "present": bool(definitions),
             "phony": name in phony,
-            "definitions": definitions,
+            "definitions": public_definitions,
         }
         if not definitions:
             missing.append(name)
@@ -977,7 +985,7 @@ def inspect_bun(
         present = isinstance(value, str) and bool(value.strip())
         script_status[name] = {
             "present": present,
-            "command": value if present else None,
+            "command_redacted": present,
         }
         if not present:
             missing.append(name)
@@ -995,6 +1003,7 @@ def inspect_bun(
             )
             or MAKE_ALIAS_PATTERN.search(normalized_shell_words)
             or OPAQUE_PARAMETER_DEFAULT.search(normalized_shell_words)
+            or re.search(r"\$\(", normalized_shell_words)
         )
 
     result["make_cycles"] = sorted(

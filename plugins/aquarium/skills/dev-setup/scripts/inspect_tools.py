@@ -78,6 +78,9 @@ def run_command(
     arguments: list[str], cwd: Path, timeout_seconds: float
 ) -> dict[str, Any]:
     environment = os.environ.copy()
+    for name in tuple(environment):
+        if name.startswith("GIT_"):
+            del environment[name]
     environment["LANG"] = "C"
     environment["LC_ALL"] = "C"
     try:
@@ -151,6 +154,17 @@ def json_probe(
     arguments: list[str], repository: Path, timeout_seconds: float
 ) -> dict[str, Any]:
     return parse_json_probe(run_command(arguments, repository, timeout_seconds))
+
+
+def named_mcp_server_missing(raw_probe: dict[str, Any], name: str) -> bool:
+    return bool(
+        raw_probe["exit_code"] == 1
+        and not raw_probe["timed_out"]
+        and re.fullmatch(
+            rf"\s*Error: No MCP server named ['\"]?{re.escape(name)}['\"]? found\.\s*",
+            raw_probe.get("stderr", ""),
+        )
+    )
 
 
 def version_from_probe(probe: dict[str, Any]) -> str | None:
@@ -1136,18 +1150,18 @@ def inspect_mulgae_mcp(
         registration["codex_version"] = codex_version_from_output(
             version_probe["stdout"]
         )
-    probe = json_probe(
+    raw_probe = run_command(
         [codex_executable, "mcp", "get", "mulgae", "--json"],
         repository,
         timeout_seconds,
     )
+    probe = parse_json_probe(raw_probe)
     if not probe["ok"]:
-        if probe["exit_code"] == 1 and not probe["timed_out"]:
+        if named_mcp_server_missing(raw_probe, "mulgae"):
             return registration
-        if probe["timed_out"] or probe.get("error_code"):
-            registration.update(
-                {"status": "degraded", "reason": "registration_probe_failed"}
-            )
+        registration.update(
+            {"status": "degraded", "reason": "registration_probe_failed"}
+        )
         return registration
     result = probe.get("result")
     transport = result.get("transport") if isinstance(result, dict) else None
@@ -1485,19 +1499,23 @@ def inspect_gaori_mcp(
         registration["reason"] = "project_configuration_missing"
         return registration
 
-    probe = json_probe(
+    raw_probe = run_command(
         [codex_executable, "mcp", "get", "gaori", "--json"],
         repository,
         timeout_seconds,
     )
+    probe = parse_json_probe(raw_probe)
     if not probe["ok"]:
-        if project_config_present:
-            registration["status"] = "degraded"
-            registration["reason"] = (
-                "registration_probe_timed_out"
-                if probe["timed_out"]
-                else "project_registration_inactive_or_invalid"
-            )
+        registration["status"] = (
+            "missing" if named_mcp_server_missing(raw_probe, "gaori") else "degraded"
+        )
+        registration["reason"] = (
+            "registration_not_found"
+            if registration["status"] == "missing"
+            else "registration_probe_timed_out"
+            if probe["timed_out"]
+            else "project_registration_inactive_or_invalid"
+        )
         return registration
 
     result = probe.get("result")

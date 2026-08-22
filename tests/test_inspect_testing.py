@@ -690,6 +690,21 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
         self.assertIn("bun_make_cycle", {item["code"] for item in result["findings"]})
 
+    def test_bun_script_command_substitution_is_fail_closed(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:e2e"] = "$(printf make) test-e2e"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:e2e"])
+
     def test_bun_script_env_make_reverse_edge_is_rejected(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -964,6 +979,49 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_pytest_funcargs_alias_is_not_canonical(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace(
+                "test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest --funcargs"
+            )
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest --funcargs")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(self.framework(result, "python")["unit_int_parser"], "generic")
+
+    def test_inspection_output_redacts_make_recipes_and_bun_commands(self) -> None:
+        secret = "AQUARIUM_QA_SYNTHETIC_PROOF"
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += f" --token={secret}"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8").replace(
+                "test-e2e:\n\tbun run test:e2e",
+                f"test-e2e:\n\tAPI_TOKEN={secret} bun run test:e2e",
+            ),
+            encoding="utf-8",
+        )
+        self.enroll("typescript-bun")
+
+        serialized = json.dumps(inspect_testing.inspect_repository(self.repository))
+
+        self.assertNotIn(secret, serialized)
+        self.assertNotIn("recipe", serialized.replace("recipe_command_count", ""))
 
     def test_pytest_collection_alias_is_not_canonical(self) -> None:
         self.write_make_contract()

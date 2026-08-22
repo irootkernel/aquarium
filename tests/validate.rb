@@ -1704,8 +1704,10 @@ assert(orca_review.include?("one cumulative liveness budget") &&
        "orca-review must bound repeated liveness checkpoints without mutating an active worker")
 assert(orca_review.include?("After every message in the batch is processed") &&
        orca_review.include?("check --ack <deliveryId>` without `--wait") &&
+       orca_review.include?("repeating non-waiting acknowledgements until the response reports no Delivery") &&
        orca_review.include?("check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>") &&
-       orca_review.include?("U+0000` through `U+001F") &&
+       orca_review.include?("Unicode `Cc`, `Cf`, `Zl`, or `Zp`") &&
+       orca_review.include?("U+202E") &&
        orca_review.include?("For a question, escalation, heartbeat") &&
        orca_review.include?("Only for an accepted terminal `worker_done`") &&
        orca_review.include?("Never retain or release a worker merely for") &&
