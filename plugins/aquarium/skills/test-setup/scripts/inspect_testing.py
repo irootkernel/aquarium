@@ -47,13 +47,13 @@ UNITTEST_COMMAND_PATTERN = re.compile(
     r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest(?=\s|$)"
 )
 LEGACY_PYTHON_COMMAND_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?(?:nose2|nosetests)(?=\s|$)"
+    r"^\s*[@+]*\s*(?:(?P<runner>\$\([^)]+\)|\$\{[^}]+\}|(?:\S*/)?python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?(?:nose|nose2|nosetests)(?=\s|$)"
 )
 SENSITIVE_PATH_COMPONENT = re.compile(
     r"(?i)(?:^|[._-])(?:auth(?:entication)?|credentials?|keys?|secrets?|tokens?)(?:[._-]|$)"
 )
 INFORMATION_ONLY_ARGUMENT = re.compile(
-    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run(?:=\S+)?|--dryRun(?:=\S+)?)(?:[\s\"'\],};&|()]|$)"
+    r"(?:^|[\s\"'\[,;&|()])(?:--help|-h|--version|-V|--collect-only|--collectonly|--co|--fixtures(?:-per-test)?|--funcargs|--markers|--cache-show(?:=\S+)?|--setup-plan|--setup-only|--list|--list-tests|--no-run|--dry-run(?:=true)?|--dryRun(?:=true)?)(?:[\s\"'\],};&|()]|$)"
 )
 INFORMATION_ONLY_SUBCOMMAND = re.compile(
     r"^\s*[@+]*\s*ginkgo\s+(?:build|help|labels|outline|version)(?:\s|$)"
@@ -427,16 +427,74 @@ def invalid_python_config_authorities(repository: Path) -> set[str]:
     for path in sorted(repository.glob("requirements*.txt")):
         content = read_optional_text(path, repository)
         pytest_lines = [
-            line.strip()
+            line.split("#", 1)[0].strip()
             for line in content.splitlines()
-            if line.strip().lower().startswith("pytest")
+            if line.split("#", 1)[0].strip().lower().startswith("pytest")
         ]
         if any(
-            re.fullmatch(r"pytest==[0-9A-Za-z][0-9A-Za-z.+-]*", line) is None
+            re.fullmatch(
+                r"pytest(?:\[[0-9A-Za-z_.-]+(?:,[0-9A-Za-z_.-]+)*\])?"
+                r"==[0-9A-Za-z][0-9A-Za-z.+-]*",
+                line,
+                re.IGNORECASE,
+            )
+            is None
             for line in pytest_lines
         ):
             invalid.add(path.name)
     return invalid
+
+
+def pytest_requirement(value: str) -> bool:
+    return (
+        re.match(
+            r"^pytest(?:\[[0-9A-Za-z_.-]+(?:,[0-9A-Za-z_.-]+)*\])?"
+            r"(?:\s*(?:===|==|~=|!=|<=|>=|<|>|@)\s*|$)",
+            value.strip(),
+            re.IGNORECASE,
+        )
+        is not None
+    )
+
+
+def structured_pytest_evidence(value: Any, path: tuple[str, ...] = ()) -> bool:
+    if any(part.lower() in {"pytest", "tool:pytest"} for part in path):
+        return True
+    if isinstance(value, dict):
+        return any(
+            structured_pytest_evidence(child, (*path, str(key)))
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(structured_pytest_evidence(child, path) for child in value)
+    return isinstance(value, str) and pytest_requirement(value)
+
+
+def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
+    content = read_optional_text(path, repository)
+    if path.name.startswith("requirements") and path.suffix == ".txt":
+        return any(
+            pytest_requirement(line.split("#", 1)[0]) for line in content.splitlines()
+        )
+    if path.name == "setup.py":
+        try:
+            tree = ast.parse(content, filename="setup.py")
+        except SyntaxError:
+            return False
+        return any(
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and pytest_requirement(node.value)
+            for node in ast.walk(tree)
+        )
+    parser = configparser.ConfigParser(interpolation=None)
+    try:
+        parser.read_string(content)
+    except configparser.Error:
+        return False
+    return structured_pytest_evidence(
+        {section: dict(parser.items(section)) for section in parser.sections()}
+    )
 
 
 def command_matches_python_runner(
@@ -586,9 +644,10 @@ def inspect_frameworks(
         pyproject_path = repository / "pyproject.toml"
         pyproject_content = read_optional_text(pyproject_path, repository)
         pyproject_valid = True
+        pyproject: dict[str, Any] = {}
         if pyproject_content:
             try:
-                tomllib.loads(pyproject_content)
+                pyproject = tomllib.loads(pyproject_content)
             except tomllib.TOMLDecodeError:
                 pyproject_valid = False
                 findings.append(
@@ -604,9 +663,9 @@ def inspect_frameworks(
             *sorted(repository.glob("requirements*.txt")),
         ]
         has_pytest_declaration = (
-            pyproject_valid and bool(re.search(r"\bpytest\b", pyproject_content))
+            pyproject_valid and structured_pytest_evidence(pyproject)
         ) or any(
-            re.search(r"\bpytest\b", read_optional_text(path, repository))
+            python_authority_declares_pytest(path, repository)
             for path in authority_paths
             if path.name not in invalid_configs
             and not sensitive_relative_path(path, repository)

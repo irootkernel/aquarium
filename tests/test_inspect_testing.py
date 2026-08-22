@@ -458,6 +458,23 @@ class TestInspectTesting:
 
                 assert result["structural_status"] == "unverifiable"
 
+    def test_ginkgo_explicit_false_dry_run_executes_tests(self) -> None:
+        self.write_ginkgo_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8").replace(
+                "ginkgo -race ./...", "ginkgo --dry-run=false -race ./..."
+            ),
+            encoding="utf-8",
+        )
+        self.write_ginkgo_evidence()
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert self.framework(result, "go")["status"] == "canonical"
+
     def test_go_standard_testing_requires_legacy_waiver_review(self) -> None:
         self.write_make_contract()
         self.write("go.mod", "module example.com/fixture\n\ngo 1.26\n")
@@ -543,14 +560,15 @@ class TestInspectTesting:
         assert parsers["test-unit"] == "pytest"
         assert parsers["test-int"] == "generic"
 
-    def test_pytest_and_nose2_mixture_requires_waiver(self) -> None:
+    @pytest.mark.parametrize("runner", ["nose", "nose2", "nosetests"])
+    def test_pytest_and_legacy_nose_mixture_requires_waiver(self, runner: str) -> None:
         self.write_make_contract()
         makefile = self.repository / "Makefile"
         makefile.write_text(
             makefile.read_text(encoding="utf-8")
             .replace(
                 "test-unit:\n\t@true",
-                "test-unit:\n\tpython3 -m pytest tests/unit\n\tpython3 -m nose2 tests.legacy",
+                f"test-unit:\n\tpython3 -m pytest tests/unit\n\tpython3 -m {runner} tests.legacy",
             )
             .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest tests/int"),
             encoding="utf-8",
@@ -564,6 +582,49 @@ class TestInspectTesting:
         assert result["structural_status"] == "unverifiable"
         assert framework["detected"] == ["pytest", "legacy-python-runner"]
         assert framework["unit_int_parser"] == "generic"
+
+    def test_pytest_requirement_with_extras_is_valid_authority(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
+            encoding="utf-8",
+        )
+        self.write("requirements.txt", "pytest[testing]==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert self.framework(result, "python")["status"] == "canonical"
+
+    @pytest.mark.parametrize(
+        ("name", "content"),
+        [
+            ("requirements.txt", "# pytest\n"),
+            ("setup.py", "# pytest\nfrom setuptools import setup\nsetup()\n"),
+        ],
+    )
+    def test_pytest_comments_are_not_dependency_authority(
+        self, name: str, content: str
+    ) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", "test-unit:\n\tpython3 -m pytest unit")
+            .replace("test-int:\n\t@true", "test-int:\n\tpython3 -m pytest int"),
+            encoding="utf-8",
+        )
+        self.write(name, content)
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["status"] == "waiver_required"
 
     def test_requirements_only_python_root_detects_mixed_frameworks(self) -> None:
         self.write(

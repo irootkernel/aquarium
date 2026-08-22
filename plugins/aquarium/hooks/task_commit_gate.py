@@ -15,7 +15,7 @@ GATE_ASSIGNMENT = "AQUARIUM_COMMIT_GATE=task-commit-v1"
 LIFECYCLE_PATTERN = re.compile(
     r"\b(?:In[ \t]+Progress|In[ \t]+Review|Completed|Blocked|Deferred)\b"
 )
-SEPARATOR_CHARS = frozenset(";&|\n")
+SEPARATOR_CHARS = frozenset(";&|\n(){}")
 ASSIGNMENT_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=.*$", re.DOTALL)
 OPTIONS_WITH_VALUES = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 
@@ -100,7 +100,7 @@ def without_heredoc_bodies(command: str) -> str:
 def shell_segments(command: str) -> list[list[str]]:
     source = without_heredoc_bodies(command)
     source = source.replace("\\\r\n", "").replace("\\\n", "")
-    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n")
+    lexer = shlex.shlex(source, posix=True, punctuation_chars=";&|\n(){}")
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     lexer.commenters = ""

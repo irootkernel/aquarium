@@ -147,6 +147,8 @@ class TaskCommitGateTests(unittest.TestCase):
             "( git commit -m work )",
             "! git commit -m work",
             "if true; then git commit -m work; fi",
+            "case x in x) git commit -m work;; esac",
+            "commit_now() { git commit -m work; }; commit_now",
         ):
             with self.subTest(command=command):
                 self.assert_denied(self.run_hook(repo, command))
