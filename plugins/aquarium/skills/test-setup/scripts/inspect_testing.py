@@ -25,6 +25,12 @@ RECURSIVE_MAKE_PATTERN = re.compile(
 PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
+PYTEST_COMMAND_PATTERN = re.compile(
+    r"(?:^|\s)(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?pytest\b"
+)
+UNITTEST_COMMAND_PATTERN = re.compile(
+    r"(?:^|\s)(?:(?:\$\([^)]+\)|\$\{[^}]+\}|python(?:\d+(?:\.\d+)*)?)\s+-m\s+)?unittest\b"
+)
 
 
 class InspectionError(Exception):
@@ -114,11 +120,46 @@ def framework_entry(
     }
 
 
+def stage_commands(
+    repository: Path, package: dict[str, Any] | None
+) -> dict[str, list[str]]:
+    commands: dict[str, list[str]] = {"test-unit": [], "test-int": []}
+    make_content = read_optional_text(repository / "Makefile")
+    if make_content:
+        targets, _, _ = parse_makefile(make_content)
+        for stage in commands:
+            definitions = targets.get(stage, [])
+            if len(definitions) == 1:
+                commands[stage] = definitions[0]["recipe"]
+
+    scripts_value = package.get("scripts") if package else None
+    scripts = scripts_value if isinstance(scripts_value, dict) else {}
+    for stage, script_name in (("test-unit", "test:unit"), ("test-int", "test:int")):
+        if commands[stage]:
+            continue
+        script = scripts.get(script_name)
+        if isinstance(script, str) and script.strip():
+            commands[stage] = [script]
+    return commands
+
+
+def python_stage_parser(commands: list[str]) -> str | None:
+    command_text = "\n".join(commands)
+    has_pytest = bool(PYTEST_COMMAND_PATTERN.search(command_text))
+    has_unittest = bool(UNITTEST_COMMAND_PATTERN.search(command_text))
+    if has_pytest and not has_unittest:
+        return "pytest"
+    if has_unittest:
+        return "generic"
+    return None
+
+
 def inspect_frameworks(
     repository: Path, languages: list[str], package: dict[str, Any] | None
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     entries: list[dict[str, Any]] = []
     findings: list[dict[str, str]] = []
+    commands = stage_commands(repository, package)
 
     if "go" in languages:
         go_mod = read_optional_text(repository / "go.mod")
@@ -141,13 +182,24 @@ def inspect_frameworks(
             re.search(r"\bpytest\b", read_optional_text(path))
             for path in authority_paths
         )
+        has_unittest = any(
+            UNITTEST_COMMAND_PATTERN.search(command)
+            for stage in ("test-unit", "test-int")
+            for command in commands[stage]
+        )
+        detected = [
+            name
+            for name, present in (("pytest", has_pytest), ("unittest", has_unittest))
+            if present
+        ]
+        status = "canonical" if detected == ["pytest"] else "waiver_required"
         entries.append(
             framework_entry(
                 "python",
                 ["pytest"],
-                ["pytest"] if has_pytest else [],
-                "canonical" if has_pytest else "waiver_required",
-                "pytest",
+                detected,
+                status,
+                "pytest" if status == "canonical" else "generic",
             )
         )
 
@@ -234,17 +286,23 @@ def inspect_frameworks(
 
     specialized = [entry["unit_int_parser"] for entry in entries]
     unit_int_parser = specialized[0] if len(specialized) == 1 else "generic"
+    stage_parser_defaults = {
+        "test": "generic",
+        "test-prepare": "generic",
+        "test-unit": unit_int_parser,
+        "test-int": unit_int_parser,
+        "test-e2e": "inspect_e2e_runner",
+    }
+    if len(entries) == 1 and entries[0]["language"] == "python":
+        for stage in ("test-unit", "test-int"):
+            detected_parser = python_stage_parser(commands[stage])
+            if detected_parser is not None:
+                stage_parser_defaults[stage] = detected_parser
     gaori = {
         "config_path": str(repository / ".gaori/tester.yaml"),
         "config_present": (repository / ".gaori/tester.yaml").is_file(),
         "parser_availability": "not_evaluated",
-        "stage_parser_defaults": {
-            "test": "generic",
-            "test-prepare": "generic",
-            "test-unit": unit_int_parser,
-            "test-int": unit_int_parser,
-            "test-e2e": "inspect_e2e_runner",
-        },
+        "stage_parser_defaults": stage_parser_defaults,
     }
     return {"entries": entries, "gaori": gaori}, findings
 

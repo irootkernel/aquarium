@@ -2,7 +2,7 @@
 
 Aquarium contains instructions for Codex. The plugin does not operate a hosted service or collect telemetry itself.
 
-Some instructed workflows can invoke local or third-party tools after explicit user approval. Two bounded read-only network operations are authorized by an explicit tool selection or skill invocation without a second network prompt.
+Some instructed workflows can invoke local or third-party tools after explicit user approval. Bounded read-only network operations may be authorized by an explicit tool selection or skill invocation without a second network prompt.
 
 `dev-setup-bundle` reads only the explicitly supplied local YAML manifest and the listed Git repositories needed for setup preflight. It keeps the manifest path and digest only for the active request, does not discover sibling repositories, persist the manifest, or transmit its contents, and delegates every selected tool action to the same disclosure and approval boundaries as `dev-setup`.
 

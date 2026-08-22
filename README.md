@@ -24,7 +24,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
 - **Work can pause, resume, and hand off.** `task-handler` and `epic-handler` support plan-only runs, explicit plan handoff to another agent, and resuming a matching session. A plan by itself creates no runtime state.
 
-Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
+Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
 
 ## Install
 
@@ -41,7 +41,7 @@ Aquarium does not vendor third-party skill or documentation sources. `$aquarium:
 
 1. **Shape** — `$aquarium:new-project` turns a goal into an approved PRD and a first roadmap. `$aquarium:new-feature` and `$aquarium:refactor` create or revise one epic. `$aquarium:war-room` diagnoses a hard bug and proposes the next work unit, or reports the investigation as incomplete, without writing the fix. `$aquarium:design-qa` creates, changes, or retires Design Gates.
 2. **Deliver** — `$aquarium:task-handler` runs one roadmap task through the stages above. `$aquarium:epic-handler` runs an epic's tasks in order and then hardens the whole epic. Commits stay separate and go through `$aquarium:task-commit` with your approval.
-3. **Validate** — `$aquarium:epic-validator` re-checks a completed epic from a clean start and fixes the gaps it confirms. `$aquarium:independent-review` asks a separate Codex session for a read-only review of requirements and code, then checks each finding locally.
+3. **Validate** — `$aquarium:epic-validator` re-checks a completed epic from a clean start and fixes the gaps it confirms. `$aquarium:independent-review` asks a separate Codex session for a read-only review of requirements and code, while `$aquarium:orca-review` runs a provider-selected review of an exact snapshot through Orca. Aquarium checks every returned finding locally.
 4. **Release** — `$aquarium:release-qa` exercises the release delta and every active Design Gate in isolated scenarios before a version ships.
 
 Foundations: `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup` checks and configures the toolchain and the repository's agent guidance. `$aquarium:dev-setup-bundle` applies that setup to several repositories from one manifest.
@@ -51,6 +51,7 @@ Foundations: `$aquarium:test-setup` enrolls a repository in the common test cont
 - [Podway](https://github.com/irootkernel/podway) provides durable local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for Git-backed Aquarium workflows and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
 - [Gaori](https://github.com/irootkernel/gaori) runs your existing checks, keeps the raw logs, and returns a bounded summary as evidence. Gaori integration is optional, and the command's exit code stays the pass/fail authority.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics an advisory multi-provider review. Aquarium verifies each finding locally and sets explicit limits on remediation.
+- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise an explicitly selected AI CLI reviewing one disclosed repository snapshot. Aquarium binds provider consent to that snapshot and independently adjudicates the result.
 - [Sanho](https://github.com/irootkernel/sanho) syncs project documentation to its canonical documentation repository once Aquarium has settled what is ready to hand off.
 - [Lora](https://github.com/tmdgusya/lora) keeps decision context in Git trailers, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) supplies the upstream `deslop` cleanup skill used during task refinement.
 - [Ouroboros](https://github.com/Q00/ouroboros) contributes discovery, PM, Seed, and QA only inside the five explicitly invoked design workflows. Aquarium keeps document application, approval, and repository authority.

@@ -276,6 +276,45 @@ class InspectTestingTest(unittest.TestCase):
             "generic",
         )
 
+    def test_python_mixed_frameworks_require_waiver_and_map_stage_parsers(self) -> None:
+        self.write(
+            "Makefile",
+            """\
+            .PHONY: test test-prepare test-unit test-int test-e2e
+
+            test:
+            \t$(MAKE) test-prepare
+            \t$(MAKE) test-unit
+            \t$(MAKE) test-int
+            \t$(MAKE) test-e2e
+
+            test-prepare:
+            \t@true
+
+            test-unit:
+            \tpython3 -m pytest tests/unit
+
+            test-int:
+            \tpython3 -m unittest tests/test_integration.py
+
+            test-e2e:
+            \tpython3 -m pytest tests/e2e
+            """,
+        )
+        self.write("pyproject.toml", "[tool.pytest.ini_options]\n")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "python")
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["detected"], ["pytest", "unittest"])
+        self.assertTrue(framework["waiver_required"])
+        self.assertEqual(parsers["test-unit"], "pytest")
+        self.assertEqual(parsers["test-int"], "generic")
+
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()
         package = json.loads(

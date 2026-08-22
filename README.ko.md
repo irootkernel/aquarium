@@ -24,7 +24,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop 사이의 계약은 Aquarium이 소유하며, 각 계약은 도구를 언제 실행하고 무엇을 결정하게 하며 그 출력을 다음 단계의 증거로 어떻게 쓰는지를 정합니다.
+Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop 사이의 계약은 Aquarium이 소유하며, 각 계약은 도구를 언제 실행하고 무엇을 결정하게 하며 그 출력을 다음 단계의 증거로 어떻게 쓰는지를 정합니다.
 
 ## 설치
 
@@ -41,7 +41,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다. `$aquarium:design-qa`는 Design Gate를 만들고, 바꾸고, 퇴역시킵니다.
 2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 epic의 task를 순서대로 수행한 뒤 epic 전체를 hardening합니다. Commit은 별도로 `$aquarium:task-commit`을 거치며 사용자가 승인합니다.
-3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 별도의 Codex session에 요구사항과 코드의 read-only review를 맡기고, finding을 하나씩 로컬에서 확인합니다.
+3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 별도의 Codex session에 요구사항과 코드의 read-only review를 맡기며, `$aquarium:orca-review`는 공개된 exact snapshot을 사용자가 고른 provider로 Orca에서 review합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
 4. **Release** — `$aquarium:release-qa`는 버전을 내보내기 전에 release delta와 모든 active Design Gate를 격리된 scenario로 검증합니다.
 
 기반 구성: `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
@@ -51,6 +51,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 영속적인 local execution memory를 제공합니다. Git 기반 Aquarium workflow는 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
+- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 사용자가 명시적으로 선택한 AI CLI가 공개된 repository snapshot 하나를 review하도록 감독합니다. Aquarium은 provider 동의를 그 snapshot에 결합하고 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
 - [Ouroboros](https://github.com/Q00/ouroboros)는 명시적으로 호출한 다섯 가지 design workflow 안에서만 discovery, PM, Seed, QA를 제공합니다. 문서 적용, 승인, 저장소 authority는 Aquarium이 가집니다.

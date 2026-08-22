@@ -129,7 +129,7 @@ assert(readme_introduction.include?("engineering reliable software with AI Fleet
        readme_introduction.include?("not separate products or a rigid maturity model") &&
        readme_introduction.include?("Codex is Aquarium's primary agent runtime") &&
        readme_introduction.include?("rather than promising provider or framework neutrality") &&
-       readme_introduction.include?("Codex, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
+       readme_introduction.include?("Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
        "README introduction must lead with Aquarium's AI Fleet engineering identity")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
@@ -362,7 +362,7 @@ assert(ROOT.join("README.md").read.include?("automatically query their official 
        ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
        ROOT.join("README.ko.md").read.include?("official GitHub Releases metadata를 자동으로 조회") &&
        ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다") &&
-       ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
+       ROOT.join("PRIVACY.md").read.include?("Bounded read-only network operations may be authorized") &&
        ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
@@ -431,6 +431,7 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
        ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only that disclosed source") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
+       !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
        ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
        ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code"),
        "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
@@ -1597,6 +1598,10 @@ assert(orca_review.include?("run no tests, builds, generators, formatters, linte
        orca_review.include?("Never retry a provider automatically, switch providers") &&
        orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
        "orca-review must remain read-only and locally adjudicate bounded results")
+assert(orca_review.include?("return `APPROVE` as the verdict") &&
+       orca_review.include?("include a bounded topology record") &&
+       !orca_review.include?("return exactly `APPROVE`"),
+       "orca-review clean verdict must coexist with its required evidence envelope")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -1923,11 +1928,18 @@ assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit 
        makefile.include?("test-requirements:") &&
        %w[test-prepare test-unit test-int test-e2e].all? { |target| makefile.include?("#{target}: test-requirements") } &&
        makefile.include?("pip install -r requirements.txt") &&
+       makefile.include?("open(\"requirements.txt\"") &&
+       makefile.include?("subprocess.run([\"$(RUFF)\", \"--version\"]") &&
        makefile.include?("export GIT_PAGER := cat") &&
        makefile.include?("export PAGER := cat") &&
        makefile.include?("export PYTEST_DISABLE_PLUGIN_AUTOLOAD := 1") &&
        makefile.include?("git --no-pager diff --check"),
        "root Makefile must expose the serial common test contract")
+assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
+       ROOT.join("README.md").read.include?("[Orca Review]") &&
+       ROOT.join("README.ko.md").read.include?("$aquarium:orca-review") &&
+       ROOT.join("README.ko.md").read.include?("[Orca Review]"),
+       "public workflow and toolchain documentation must include Orca Review")
 assert(testing_document.include?("aquarium-test-contract/v1") &&
        testing_headings.all? { |heading| testing_document.include?("## #{heading}") } &&
        testing_document.include?("AQ-WAIVER-001") &&

@@ -65,7 +65,7 @@ Require the lead to:
 - apply the provider-specific hierarchy included in the Task, verify every effective model, and inspect subagent evidence before adopting it;
 - report only verified actionable findings, omitting praise, style preferences, speculation, and duplicate findings;
 - give every finding a severity, exact `path:line`, triggering scenario, violated authority, impact, and smallest remediation;
-- return exactly `APPROVE` when no actionable finding remains;
+- return `APPROVE` as the verdict when no actionable finding remains;
 - include a bounded topology record with each participant role, effective model, and disposition, report no modified files, and send `worker_done` exactly once through the injected Orca lifecycle. Subagents return evidence only to the lead and never report directly to the Aquarium coordinator or send lifecycle completion.
 
 ## Supervise and Settle
