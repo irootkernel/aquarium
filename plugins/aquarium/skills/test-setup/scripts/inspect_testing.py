@@ -148,18 +148,30 @@ def detect_languages(repository: Path, package: dict[str, Any] | None) -> list[s
         typescript_manifest = typescript_manifest or "typescript" in dependencies
     if typescript_manifest:
         languages.add("typescript")
-    if "python" not in languages and "typescript" not in languages:
-        make_content = read_optional_text(repository / "Makefile", repository)
+    if "python" not in languages:
+        executable_authority = read_optional_text(repository / "Makefile", repository)
+        if package and "typescript" in languages:
+            scripts = package.get("scripts")
+            if isinstance(scripts, dict):
+                executable_authority += "\n" + "\n".join(
+                    value
+                    for name, value in scripts.items()
+                    if name in {"test:unit", "test:int"} and isinstance(value, str)
+                )
         python_runner = re.search(
             r"(?:^|[\s;&|])(?:(?:\S*/)?python(?:\d+(?:\.\d+)*)?\s+-m\s+)?"
             r"(?:pytest|unittest|(?:\S*/)?nose(?:2)?|(?:\S*/)?nosetests)(?:\s|$)",
-            make_content,
+            executable_authority,
         )
         python_source = any(
             safe_repository_file(path, repository)
             and not sensitive_relative_path(path, repository)
             for path in repository.rglob("*.py")
             if not any(part in {".git", ".venv", "vendor"} for part in path.parts)
+            and not (
+                "typescript" in languages
+                and path.relative_to(repository).parts[:2] == ("tests", "e2e")
+            )
         )
         if python_runner or python_source:
             languages.add("python")
@@ -603,6 +615,15 @@ def command_matches_python_runner(
     )
 
 
+def command_contains_python_runner(
+    command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
+) -> bool:
+    return any(
+        command_matches_python_runner(fragment.strip(), pattern, variables)
+        for fragment in re.split(r"&&", command)
+    )
+
+
 def runner_variable_is(
     command: str,
     variable_name: str,
@@ -621,15 +642,17 @@ def python_stage_parser(
     commands: list[str], variables: dict[str, set[str]]
 ) -> str | None:
     has_pytest = any(
-        command_matches_python_runner(command, PYTEST_COMMAND_PATTERN, variables)
+        command_contains_python_runner(command, PYTEST_COMMAND_PATTERN, variables)
         for command in commands
     )
     has_unittest = any(
-        command_matches_python_runner(command, UNITTEST_COMMAND_PATTERN, variables)
+        command_contains_python_runner(command, UNITTEST_COMMAND_PATTERN, variables)
         for command in commands
     )
     has_legacy = any(
-        command_matches_python_runner(command, LEGACY_PYTHON_COMMAND_PATTERN, variables)
+        command_contains_python_runner(
+            command, LEGACY_PYTHON_COMMAND_PATTERN, variables
+        )
         for command in commands
     )
     if has_pytest and not has_unittest and not has_legacy:
@@ -764,14 +787,14 @@ def inspect_frameworks(
             stage_parsers = {stage: None for stage in stage_parsers}
         has_pytest_command = "pytest" in stage_parsers.values()
         has_unittest_command = any(
-            command_matches_python_runner(
+            command_contains_python_runner(
                 command, UNITTEST_COMMAND_PATTERN, make_variables
             )
             for stage in ("test-unit", "test-int", "test-e2e")
             for command in commands[stage]
         )
         has_legacy_runner = any(
-            command_matches_python_runner(
+            command_contains_python_runner(
                 command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
             )
             for stage in ("test-unit", "test-int", "test-e2e")
@@ -844,12 +867,24 @@ def inspect_frameworks(
             and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
             for command in unit_int_scripts
         )
+        unsupported_python_unit_int = any(
+            isinstance(command, str)
+            and (
+                command_contains_python_runner(
+                    command, UNITTEST_COMMAND_PATTERN, make_variables
+                )
+                or command_contains_python_runner(
+                    command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
+                )
+            )
+            for command in unit_int_scripts
+        )
         e2e_command = scripts.get("test:e2e")
         unsupported_python_e2e = isinstance(e2e_command, str) and (
-            command_matches_python_runner(
+            command_contains_python_runner(
                 e2e_command, UNITTEST_COMMAND_PATTERN, make_variables
             )
-            or command_matches_python_runner(
+            or command_contains_python_runner(
                 e2e_command, LEGACY_PYTHON_COMMAND_PATTERN, make_variables
             )
         )
@@ -858,6 +893,7 @@ def inspect_frameworks(
             if detected == ["vitest"]
             and "vitest" in dependencies
             and runs_vitest
+            and not unsupported_python_unit_int
             and not unsupported_python_e2e
             else "waiver_required"
         )

@@ -182,6 +182,18 @@ class TaskCommitGateTests(unittest.TestCase):
                 f"git --work-tree={repo.name} --git-dir={repo.name}/.git commit -m work",
             )
         )
+        self.assert_denied(
+            self.run_hook(
+                outside,
+                f"GIT_DIR={repo / '.git'} GIT_WORK_TREE={repo} git commit -m work",
+            )
+        )
+        self.assert_denied(
+            self.run_hook(
+                outside,
+                f"env GIT_DIR={repo / '.git'} GIT_WORK_TREE={repo} git commit -m work",
+            )
+        )
         git_link = outside / "roadmap-git-link"
         git_link.symlink_to(repo / ".git")
         self.addCleanup(git_link.unlink)

@@ -707,6 +707,27 @@ class TestInspectTesting:
         assert result["structural_status"] == "unverifiable"
         assert self.framework(result, "typescript")["status"] == "waiver_required"
 
+    def test_typescript_and_manifestless_python_unit_layers_are_polyglot(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        for name in ("test:unit", "test:int"):
+            package["scripts"][name] += " && python3 -m unittest tests.legacy"
+        package["scripts"]["test:e2e"] = "python3 -m pytest tests/e2e"
+        self.write("package.json", json.dumps(package))
+        self.write("src/service.py", "def run():\n    return True\n")
+        self.write_bun_adapter()
+        self.enroll("polyglot-make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["detected_languages"] == ["python", "typescript"]
+        assert result["selected_profile"] == "polyglot-make"
+        assert result["structural_status"] == "unverifiable"
+        assert self.framework(result, "python")["status"] == "waiver_required"
+        assert self.framework(result, "typescript")["status"] == "waiver_required"
+
     @pytest.mark.parametrize(
         ("name", "content"),
         [

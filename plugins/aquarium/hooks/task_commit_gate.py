@@ -314,6 +314,17 @@ def git_commit_invocation(segment: list[str], cwd: Path) -> tuple[Path, bool] | 
     git_path_base = cwd
     probe_cwd = cwd
     git_dir: Path | None = None
+    assignment_values = dict(
+        assignment.split("=", 1) for assignment in assignments if "=" in assignment
+    )
+    work_tree_value = assignment_values.get("GIT_WORK_TREE")
+    if work_tree_value:
+        candidate = Path(work_tree_value)
+        probe_cwd = candidate if candidate.is_absolute() else git_path_base / candidate
+    git_dir_value = assignment_values.get("GIT_DIR")
+    if git_dir_value:
+        candidate = Path(git_dir_value)
+        git_dir = candidate if candidate.is_absolute() else git_path_base / candidate
     while index < len(segment):
         token = segment[index]
         if token == "commit":
