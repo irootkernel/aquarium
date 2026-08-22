@@ -1184,6 +1184,61 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "unverifiable")
 
+    def test_pytest_redirection_is_not_execution_proof(self) -> None:
+        for command in (
+            "python3 -m pytest tests >/dev/null",
+            "python3 -m pytest --collect-only>/dev/null",
+        ):
+            with self.subTest(command=command):
+                self.write_make_contract()
+                makefile = self.repository / "Makefile"
+                content = (
+                    makefile.read_text(encoding="utf-8")
+                    .replace("test-unit:\n\t@true", f"test-unit:\n\t{command}")
+                    .replace("test-int:\n\t@true", f"test-int:\n\t{command}")
+                )
+                makefile.write_text(content, encoding="utf-8")
+                self.write("requirements.txt", "pytest==9.1.1\n")
+                self.enroll("make")
+
+                result = inspect_testing.inspect_repository(self.repository)
+
+                self.assertEqual(result["structural_status"], "unverifiable")
+
+    def test_pytest_parameter_default_is_not_execution_proof(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        command = "python3 -m pytest ${OPTS:---collect-only} tests"
+        content = (
+            makefile.read_text(encoding="utf-8")
+            .replace("test-unit:\n\t@true", f"test-unit:\n\t{command}")
+            .replace("test-int:\n\t@true", f"test-int:\n\t{command}")
+        )
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+
+    def test_bun_parameter_default_script_is_fail_closed(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] += (
+            " && MAKE_CMD=m${X:-a}ke sh -c '$MAKE_CMD test-unit'"
+        )
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertEqual(result["bun"]["make_cycles"], ["test:unit"])
+
     def test_make_recipe_continuation_is_unverifiable(self) -> None:
         self.write_make_contract()
         makefile = self.repository / "Makefile"

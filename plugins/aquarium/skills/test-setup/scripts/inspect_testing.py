@@ -53,6 +53,7 @@ INFORMATION_ONLY_ARGUMENT = re.compile(
 MAKE_ALIAS_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^\s;&|]*make"
 )
+OPAQUE_PARAMETER_DEFAULT = re.compile(r"\$\{[^}]*:-[^}]*\}")
 
 
 class InspectionError(Exception):
@@ -252,7 +253,14 @@ def command_preserves_failure(command: str) -> bool:
     if prefix and "-" in prefix.group(0):
         return False
     backgrounded = re.search(r"(?<!&)&(?!&)", command)
-    return "|" not in command and ";" not in command and backgrounded is None
+    return (
+        "|" not in command
+        and ";" not in command
+        and "<" not in command
+        and ">" not in command
+        and backgrounded is None
+        and not OPAQUE_PARAMETER_DEFAULT.search(command)
+    )
 
 
 def command_executes_tests(command: str) -> bool:
@@ -986,6 +994,7 @@ def inspect_bun(
                 normalized_shell_words,
             )
             or MAKE_ALIAS_PATTERN.search(normalized_shell_words)
+            or OPAQUE_PARAMETER_DEFAULT.search(normalized_shell_words)
         )
 
     result["make_cycles"] = sorted(

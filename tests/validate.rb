@@ -423,6 +423,7 @@ assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?("normalize_shell_token_joins") &&
        test_setup_script_body.include?("tomllib.loads") &&
        test_setup_script_body.include?("unsafe_root_authorities") &&
+       test_setup_script_body.include?("OPAQUE_PARAMETER_DEFAULT") &&
        test_setup_script_body.include?("authority_includes_unresolved") &&
        test_setup_script_body.include?("repository / \"go.sum\"") &&
        test_setup_script_body.include?("pending-dart-test") &&
@@ -1702,8 +1703,10 @@ assert(orca_review.include?("one cumulative liveness budget") &&
        orca_review.include?("Further waiting or cancellation requires an explicit user request"),
        "orca-review must bound repeated liveness checkpoints without mutating an active worker")
 assert(orca_review.include?("After every message in the batch is processed") &&
-       orca_review.include?("check --ack <deliveryId> --wait") &&
-       orca_review.include?("questions and escalations") &&
+       orca_review.include?("check --ack <deliveryId>` without `--wait") &&
+       orca_review.include?("check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>") &&
+       orca_review.include?("U+0000` through `U+001F") &&
+       orca_review.include?("For a question, escalation, heartbeat") &&
        orca_review.include?("Only for an accepted terminal `worker_done`") &&
        orca_review.include?("Never retain or release a worker merely for") &&
        orca_review.include?("FIFO replay intentionally blocks later deliveries") &&
