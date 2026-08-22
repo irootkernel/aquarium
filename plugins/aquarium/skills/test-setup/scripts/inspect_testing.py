@@ -29,8 +29,8 @@ BUN_STAGES = BUN_SCRIPTS[1:]
 EXPECTED_BUN_AGGREGATE = " && ".join(f"bun run {name}" for name in BUN_STAGES)
 TARGET_PATTERN = re.compile(r"^([^\s:#=][^:=]*?):(?![=])(.*)$")
 RECURSIVE_MAKE_PATTERN = re.compile(
-    r"^\s*[@+-]*\s*(?:\$\(MAKE\)|\$\{MAKE\})(?:\s+--no-print-directory)?\s+"
-    r"(test(?:-[A-Za-z0-9_-]+)?)\b"
+    r"^\s*[@+]*\s*(?:\$\(MAKE\)|\$\{MAKE\})(?:\s+--no-print-directory)?\s+"
+    r"(test(?:-[A-Za-z0-9_-]+)?)\s*$"
 )
 PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
@@ -283,14 +283,16 @@ def inspect_frameworks(
     if "typescript" in languages:
         scripts_value = package.get("scripts") if package else None
         scripts = scripts_value if isinstance(scripts_value, dict) else {}
+        unit_int_scripts = [scripts.get(key) for key in ("test:unit", "test:int")]
         unit_int_commands = "\n".join(
-            value
-            for key in ("test:unit", "test:int")
-            if isinstance((value := scripts.get(key)), str)
+            value for value in unit_int_scripts if isinstance(value, str)
         )
         dependencies = package_dependencies(package)
         detected: list[str] = []
-        if re.search(r"(?:^|\s)bun\s+test(?:\s|$)", unit_int_commands):
+        if any(
+            isinstance(command, str) and re.search(r"^\s*bun\s+test(?:\s|$)", command)
+            for command in unit_int_scripts
+        ):
             detected.append("bun-test")
         for dependency, label in (
             ("vitest", "vitest"),
@@ -301,10 +303,23 @@ def inspect_frameworks(
                 rf"(?:^|\s){re.escape(dependency)}(?:\s|$)", unit_int_commands
             ):
                 detected.append(label)
-        status = "canonical" if detected == ["vitest"] else "waiver_required"
+        runs_vitest = all(
+            isinstance(command, str)
+            and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
+            for command in unit_int_scripts
+        )
+        status = (
+            "canonical"
+            if detected == ["vitest"] and "vitest" in dependencies and runs_vitest
+            else "waiver_required"
+        )
         entries.append(
             framework_entry(
-                "typescript", ["vitest"], sorted(set(detected)), status, "vitest"
+                "typescript",
+                ["vitest"],
+                sorted(set(detected)),
+                status,
+                "vitest" if status == "canonical" else "generic",
             )
         )
 
@@ -755,10 +770,13 @@ def inspect_testing_document(
         profile_match = explicit_profile or prose_profile
         if profile_match:
             result["profile"] = profile_match.group(1)
-        result["sections"] = {
-            heading: bool(re.search(rf"(?m)^##\s+{re.escape(heading)}\s*$", content))
-            for heading in TESTING_HEADINGS
-        }
+        result["sections"] = {}
+        for heading in TESTING_HEADINGS:
+            section = re.search(
+                rf"(?ms)^##\s+{re.escape(heading)}\s*$\n(.*?)(?=^##\s+|\Z)",
+                content,
+            )
+            result["sections"][heading] = bool(section and section.group(1).strip())
     except (OSError, UnicodeError):
         findings.append(
             finding(
@@ -798,7 +816,7 @@ def inspect_testing_document(
             finding(
                 "testing_sections_missing",
                 "error",
-                f"TESTING.md lacks required sections: {', '.join(missing_sections)}.",
+                f"TESTING.md lacks required non-empty sections: {', '.join(missing_sections)}.",
             )
         )
     return result, findings

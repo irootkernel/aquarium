@@ -7,7 +7,9 @@ description: "Run one supervised, read-only review of an exact repository snapsh
 
 Review one exact repository snapshot through one user-selected AI CLI while preserving the checkout, supervising the worker through Orca, and independently verifying the returned findings. This is a standalone utility; it does not replace `$aquarium:independent-review` or the Mulgae phase owned by `$aquarium:task-review`.
 
-Explicit invocation authorizes read-only local discovery, starting the installed Orca runtime when needed, and the structured provider-selection question. Selecting an option authorizes transmission of only the disclosed review snapshot and authority context to that provider. It does not authorize edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request.
+Explicit invocation authorizes read-only local discovery, starting the installed Orca runtime when needed, and the structured provider-selection question. Selecting an option authorizes transmission of only the disclosed review snapshot and authority context to that provider, plus creation and cleanup of one disclosed private snapshot and its temporary Orca existing-folder registration.
+
+It does not authorize source-checkout edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request.
 
 ## Fail Closed on Orca
 
@@ -50,7 +52,7 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 Before presenting a final choice, build and display a complete transmission manifest. It must list every repository, target, supporting-source, instruction, and authority file whose bytes the reviewer may receive, with its source identity and SHA-256 digest, plus the explicitly excluded state. Sort the records by source identity as newline-terminated `<sha256>  <source-identity>` lines and hash those exact UTF-8 bytes as the context-manifest digest.
 
-Each final choice must identify the exact tool:model, review target and digest, context-manifest digest, and that selecting it authorizes transmission of only that displayed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source.
+Each final choice must identify the exact tool:model, review target and digest, context-manifest digest, temporary private-snapshot registration and cleanup, and that selecting it authorizes transmission of only that displayed scope to the provider. If structured ask/answer is unavailable, report that exact prerequisite failure and stop without selecting a provider or transmitting source.
 
 Never auto-select, infer consent from silence, or treat approval for another provider, snapshot, or context manifest as consent.
 
@@ -60,7 +62,11 @@ Immediately after selection and before reading provider instructions, creating O
 
 After that check succeeds, materialize only those verified bytes into one private standalone Git snapshot under a fresh `/tmp` directory. Give it no remote, credential material, object alternates, or link to the source repository's Git metadata. Preserve the disclosed target form and necessary baseline evidence, store the transmission manifest inside it, make the complete snapshot read-only, and recompute every snapshot file digest. Stop unless that snapshot exactly reproduces the consented target and context-manifest digests.
 
-After the immutable snapshot verifies, read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead with the snapshot as its current worktree, and inject one supervised Dispatch through the live orchestration contract. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
+After the immutable snapshot verifies, require the version-matched guide to expose an existing-folder registration, an exact `path:<absoluteSnapshotPath>` worktree selector, and matching removal through a stable returned setup identity. Register only that snapshot through the supported local Orca surface, record every returned project, setup, repository, and worktree identity, and require `worktree show` for the exact path selector to resolve to the snapshot.
+
+On any failure, remove only the exact registration and snapshot when their identities are proven, then stop.
+
+Read [provider-contracts.md](references/provider-contracts.md). Create or bind one Run, create one review Task, start one fresh selected lead through the recorded exact snapshot path selector, and inject one supervised Dispatch through the live orchestration contract. Never expose the original checkout to a participant, register a linked Git worktree, or reuse an existing AI terminal.
 
 The Task specification must include the original absolute Git root as report identity only, immutable snapshot root, exact target and digest, complete context-manifest digest, named requirement authority, included and excluded state, selected tool:model, the selected provider's required subagent topology and effective-model verification duties copied from the reference, participant-wide read-only restrictions, and required report schema.
 
@@ -82,7 +88,9 @@ Use event-driven rolling waits for `worker_done`, `escalation`, and `question`, 
 
 When the cumulative budget expires without an accepted terminal delivery, inspect the authoritative worker and terminal state once through the live guide, stop waiting, leave any active worker intact, and report the review as operationally incomplete with the exact Run, Task, Dispatch, terminal, and lifecycle status. Further waiting or cancellation requires an explicit user request; never release, retry, or cancel the active worker automatically.
 
-For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict. Release a settled succeeded or failed worker unless the user explicitly requested retention, then acknowledge the delivery. Do not release an active worker after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
+For an accepted `worker_done`, retrieve the complete authoritative worker evidence through `worker-read`, process every delivered message and transcript record, and verify the reported topology. If authoritative transcript or scope evidence is unavailable, it prevents a clean verdict. Release a settled succeeded or failed worker unless the user explicitly requested retention, then acknowledge the delivery.
+
+After successful release, remove the exact temporary registration through its recorded setup identity and delete only the owned snapshot. If retention was requested or the worker remains active, retain both and report their paths and identities. Do not release or clean up after a timeout, question, escalation, heartbeat, stale completion, or rejected completion.
 
 Follow the live guide's exact recovery action for launch, Dispatch, delivery, or release failures. Never retry a provider automatically, switch providers, blindly resend an exactly-once completion, or turn an operational gap into a technical verdict.
 
@@ -104,4 +112,4 @@ Verify every returned finding against the exact authority, index or commit snaps
 
 If the lead returned `APPROVE`, first confirm the intended target, authority, topology, digest stability, and empty modified-file set. Missing output, unverifiable model use, scope drift, lifecycle failure, or incomplete adjudication prevents a clean verdict.
 
-Return the target and digest, selected tool:model and CLI version, source-transmission consent, review topology, independent reviewer verdict, valid findings, confirmation needs, rejected count, recommended responses, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Do not expose credentials, private provider payloads, raw transcripts, or subagent reasoning.
+Return the target and digest, selected tool:model and CLI version, source-transmission consent, review topology, independent reviewer verdict, valid findings, confirmation needs, rejected count, recommended responses, snapshot registration and cleanup status, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Do not expose credentials, private provider payloads, raw transcripts, or subagent reasoning.

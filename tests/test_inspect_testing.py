@@ -257,6 +257,21 @@ class InspectTestingTest(unittest.TestCase):
         self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
         self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
 
+    def test_error_ignoring_recursive_make_calls_are_not_fail_fast(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository.joinpath("Makefile")
+        makefile.write_text(
+            makefile.read_text(encoding="utf-8").replace("\t$(MAKE)", "\t-$(MAKE)"),
+            encoding="utf-8",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(result["make"]["aggregate_mode"], "unverifiable")
+        self.assertEqual(result["make"]["aggregate_recursive_calls"], [])
+
     def test_conforming_typescript_bun_profile_and_make_adapter(self) -> None:
         self.write_bun_package()
         self.write_bun_adapter()
@@ -497,6 +512,24 @@ class InspectTestingTest(unittest.TestCase):
             "testing_sections_missing", {item["code"] for item in result["findings"]}
         )
 
+    def test_testing_document_requires_nonempty_contract_sections(self) -> None:
+        self.write_make_contract()
+        headings = "\n\n".join(
+            f"## {heading}" for heading in inspect_testing.TESTING_HEADINGS
+        )
+        self.write(
+            "TESTING.md",
+            f"# Testing\n\n{headings}\n\nContract: aquarium-test-contract/v1\nProfile: make\n",
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        self.assertEqual(result["structural_status"], "nonconforming")
+        self.assertFalse(result["testing_document"]["sections"]["Canonical Commands"])
+        self.assertIn(
+            "testing_sections_missing", {item["code"] for item in result["findings"]}
+        )
+
     def test_bun_test_requires_typescript_framework_waiver(self) -> None:
         self.write_bun_package()
         package = json.loads(
@@ -514,6 +547,24 @@ class InspectTestingTest(unittest.TestCase):
 
         self.assertEqual(result["structural_status"], "unverifiable")
         self.assertEqual(framework["detected"], ["bun-test"])
+        self.assertTrue(framework["waiver_required"])
+
+    def test_vitest_dependency_without_vitest_runners_is_not_canonical(self) -> None:
+        self.write_bun_package()
+        package = json.loads(
+            self.repository.joinpath("package.json").read_text(encoding="utf-8")
+        )
+        package["scripts"]["test:unit"] = "echo unit"
+        package["scripts"]["test:int"] = "echo integration"
+        self.write("package.json", json.dumps(package))
+        self.write_bun_adapter()
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "typescript")
+
+        self.assertEqual(result["structural_status"], "unverifiable")
+        self.assertEqual(framework["unit_int_parser"], "generic")
         self.assertTrue(framework["waiver_required"])
 
     def test_legacy_bun_lock_requires_waiver_even_with_bun_lock(self) -> None:

@@ -436,6 +436,8 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
        ROOT.join("PRIVACY.md").read.include?("authorizes transmission of only those disclosed bytes") &&
        ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
+       ROOT.join("PRIVACY.md").read.include?("temporarily registers that exact folder with local Orca") &&
+       ROOT.join("PRIVACY.md").read.include?("removes the exact registration and snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
        ROOT.join("TERMS.md").read.include?("only the final structured tool:model selection grants authority") &&
@@ -1584,10 +1586,12 @@ assert(orca_provider_contracts.include?("claude --model fable --permission-mode 
        orca_provider_contracts.include?("codex --model gpt-5.6-sol --sandbox read-only --ask-for-approval never") &&
        orca_provider_contracts.include?("cursor-agent --model grok-4.6 --mode plan") &&
        orca_provider_contracts.include?("kimi --model k3 --plan") &&
-       orca_provider_contracts.include?("terminal create --worktree current") &&
-       orca_provider_contracts.include?("immutable `/tmp` snapshot as the current worktree") &&
+       orca_provider_contracts.include?("terminal create --worktree path:<absoluteSnapshotPath>") &&
+       orca_provider_contracts.include?("exact registered path selector") &&
        orca_review.include?("Never expose the original checkout to a participant") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
+       orca_review.include?("existing-folder registration") &&
+       orca_review.include?("remove the exact temporary registration through its recorded setup identity") &&
        orca_review.include?("Require every participant to read only the immutable snapshot"),
        "orca-review must launch every selected model through the consent-bound immutable snapshot")
 assert(orca_provider_contracts.include?("Fable is the master reviewer") &&
@@ -1605,7 +1609,7 @@ assert(orca_provider_contracts.include?("Fable is the master reviewer") &&
        orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
        "orca-review must preserve provider-specific orchestration and effective-model verification")
 assert(orca_review.include?("run no tests, builds, generators, formatters, linters") &&
-       orca_review.include?("It does not authorize edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request") &&
+       orca_review.include?("It does not authorize source-checkout edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request") &&
        orca_review.include?("report no modified files") &&
        orca_review.include?("Valid") &&
        orca_review.include?("Invalid") &&
