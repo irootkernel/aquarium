@@ -135,7 +135,18 @@ Propose these root-anchored Git ignore rules through an exact reviewed diff:
 
 Verify that only `.mulgae/config.yaml` is trackable and that `.mulgae/local.yaml` and all runtime state remain untracked and ignored. Propose `.mulgaeignore` entries from the repository's secrets, generated output, large artifacts, agent instructions, and non-reviewable paths. A `.mulgaeignore` intended as shared capture policy may be tracked only with explicit approval.
 
-Treat MCP as an optional, separately approved project-local component. For a trusted project, merge this machine-specific entry into `.codex/config.toml` while preserving unrelated configuration:
+Treat MCP as an optional, separately approved component and prefer one user-global registration in the active Codex home (`$CODEX_HOME/config.toml`, default `~/.codex/config.toml`). A global registration inherits the active Codex session's working directory, so do not pin a repository path or `cwd`:
+
+```toml
+[mcp_servers.mulgae]
+command = "<absolute-selected-mulgae-path>"
+args = ["mcp"]
+required = true
+startup_timeout_sec = 30
+tool_timeout_sec = 7501
+```
+
+When the user explicitly chooses repository-local scope, merge this machine-specific alternative into `<absolute-git-root>/.codex/config.toml` while preserving unrelated configuration:
 
 ```toml
 [mcp_servers.mulgae]
@@ -147,9 +158,11 @@ startup_timeout_sec = 30
 tool_timeout_sec = 7501
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Verify the effective registration with `codex mcp get mulgae --json`, then repeat that read-only query from the filesystem root as a neutral non-project cwd. The project result must differ from, or be absent in, the neutral query; do not read `.codex/config.toml` contents to establish origin. A same-named user-global entry plus an absent, unrelated, incomplete, duplicate, or symlinked project configuration is `project_registration_origin_unverified`, never configured. The effective entry must be enabled STDIO, resolve to the selected binary, bind its exact `mcp --project-root <canonical-root>` arguments and cwd to the canonical repository, be required, and use startup and tool timeouts at least as large as the proposed defaults. The 7501-second tool timeout covers the admitted two-hour review deadline plus retry and finalization margin; preserve any larger existing value. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
+Show the complete diff and target scope before approval; for a local target also show whether `.codex/config.toml` is tracked. Verify three views independently without starting the server: query the global registration from a neutral filesystem-root cwd with the active Codex home, query the local registration from the same neutral cwd with `CODEX_HOME=<absolute-git-root>/.codex`, and query the effective registration from the repository with the active Codex home. Treat a named server as absent only when its entire stderr is Codex's exact named-server-not-found diagnostic. Timeout, mixed diagnostics, malformed output, and every other nonzero result are degraded or unverifiable, never proof of absence.
 
-Treat the neutral entry as absent only when its entire stderr is Codex's exact named-server-not-found diagnostic. Timeout, mixed diagnostics, malformed output, and every other nonzero result leave project origin unverifiable. Repository configuration paths must be present regular non-symlink paths before `mulgae doctor` or any owning Codex CLI probe may read them; an absent path stops that probe rather than consulting ambient state.
+The effective entry must be enabled STDIO, resolve to the selected binary, be required, and use startup and tool timeouts at least as large as the proposed defaults. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `mcp --project-root <canonical-root>` arguments and repository-bound `cwd`. The 7501-second tool timeout covers the admitted two-hour review deadline plus retry and finalization margin; preserve any larger existing value. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
+
+Whenever an isolated local Mulgae registration exists, ask whether that scope is intentional. If confirmed, preserve it even when global is preferred. If not, show and separately approve removal of only the local `mulgae` table, using `CODEX_HOME=<absolute-git-root>/.codex codex mcp remove mulgae` or an equivalent exact TOML edit. Reinspect the file afterward. Delete `.codex/config.toml` only when parsed TOML has no remaining semantic content, and delete `.codex/` only when the directory is then empty; preserve comments with retained settings, every unrelated table, and every nonempty directory. Apply the shared backup policy before removal, never remove the global registration as part of local cleanup, and never stage the file during setup. Repository configuration paths must be regular non-symlink paths before `mulgae doctor` or any owning Codex CLI probe may read them.
 
 Never stage it during setup. Tell the user to restart Codex so a new session can expose `preflight_review`, `start_review`, `await_review`, `cancel_review`, the foreground-compatible `run_review`, `list_runs`, `get_run`, `list_findings`, and verified report and finding resources. The v0.1.17 lifecycle starts exactly once and awaits the same process-local invocation without transferring observer cancellation to provider execution; use the foreground path atomically when any lifecycle tool is absent. The attached MCP surface remains versioned independently; CLI fallback preflight must identify `mulgae-review-preflight.v3`.
 
@@ -167,7 +180,7 @@ Install an approved tag:
 go install github.com/irootkernel/gaori@<tag>
 ```
 
-The binary does not install the agent skill. Diagnose the CLI and repository with `command -v gaori`, `gaori version --json`, and, when `.gaori/tester.yaml` exists, `gaori --json config check`. Diagnose `use-gaori` and project-local MCP registration independently. Config check validates schema-v2 config and all stored rules without resolving executables, running commands, or creating evidence.
+The binary does not install the agent skill. Diagnose the CLI and repository with `command -v gaori`, `gaori version --json`, and, when `.gaori/tester.yaml` exists, `gaori --json config check`. Diagnose `use-gaori` and global, local, and effective MCP registration independently. Config check validates schema-v2 config and all stored rules without resolving executables, running commands, or creating evidence.
 
 For a new Codex user-scoped skill installation, use only these files from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/` payload: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-gaori` frontmatter before atomically moving it to `~/.agents/skills/use-gaori`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
 
@@ -191,7 +204,16 @@ This keeps `.gaori/toolchain.yaml`, `.gaori/rule-proposals/`, `.gaori/runs/`, an
 
 Leave completed evidence and proposal reconciliation to the matching `use-gaori` skill. Its `gaori --json runs list`, `gaori --json rules proposals`, and `gaori rules show --proposal <name>` paths are read-only discovery, not repair, activation, command reruns, or durable job recovery. Never inspect prior run contents or raw logs automatically during setup.
 
-Treat MCP as an optional, separately approved project-local component. For a trusted project, merge this machine-specific entry into `.codex/config.toml` while preserving unrelated configuration:
+Treat MCP as an optional, separately approved component and prefer one user-global registration in the active Codex home (`$CODEX_HOME/config.toml`, default `~/.codex/config.toml`). A global registration inherits the active Codex session's working directory, so do not pin a repository path or `cwd`:
+
+```toml
+[mcp_servers.gaori]
+command = "<absolute-selected-gaori-path>"
+args = ["mcp"]
+tool_timeout_sec = 3601
+```
+
+When the user explicitly chooses repository-local scope, merge this machine-specific alternative into `<absolute-git-root>/.codex/config.toml` while preserving unrelated configuration:
 
 ```toml
 [mcp_servers.gaori]
@@ -200,9 +222,11 @@ args = ["--repo", "<absolute-git-root>", "mcp"]
 tool_timeout_sec = 3601
 ```
 
-Show the complete diff and whether `.codex/config.toml` is tracked before approval. Never stage it during setup. Verify the effective registration with `codex mcp get gaori --json`, then repeat that read-only query from the filesystem root as a neutral non-project cwd. The project result must differ from, or be absent in, the neutral query; do not read `.codex/config.toml` contents to establish origin. A same-named user-global entry plus an absent, unrelated, incomplete, duplicate, or symlinked project configuration is `project_registration_origin_unverified`, never configured. Do not start the server or a test. Require a numeric, non-boolean `tool_timeout_sec` of at least 3601 seconds so the host deadline exceeds a one-hour command and evidence finalization, while preserving any larger existing value. Report missing or inadequate timeout, disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted project entries as degraded. Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, terminal-only `await_run`, `cancel_run`, `get_excerpt`, and the read-only `list_runs` completed-evidence inventory. `await_run` observes one process-local invocation without cancelling execution when that observer ends; use `get_run` or bounded `wait_run` when the host deadline cannot safely cover terminal completion. `list_runs` is stateless and cannot recover an invocation ID or reattach a disconnected run.
+Show the complete diff and target scope before approval; for a local target also show whether `.codex/config.toml` is tracked. Never stage it during setup. Verify global, isolated local, and effective registrations with the same three-view procedure used for Mulgae. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `--repo <canonical-root> mcp` arguments and no fixed `cwd`. Do not start the server or a test. Require a numeric, non-boolean `tool_timeout_sec` of at least 3601 seconds so the host deadline exceeds a one-hour command and evidence finalization, while preserving any larger existing value. Report missing or inadequate timeout, disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted entries as degraded. Treat only Codex's exact named-server-not-found diagnostic as absence.
 
-Treat the neutral entry as absent only when its entire stderr is Codex's exact named-server-not-found diagnostic. Timeout, mixed diagnostics, malformed output, and every other nonzero result leave project origin unverifiable. Every present repository configuration path that Gaori may inspect, including `.gaori/tester.yaml`, every descendant of `.gaori/tester/rules/`, and `.gaori/toolchain.yaml`, must have regular non-symlink lexical ancestry before any owning CLI probe may read it; an absent primary path stops that probe rather than consulting ambient state.
+Whenever an isolated local Gaori registration exists, ask whether that scope is intentional. If not, show and separately approve removal of only the local `gaori` table, using `CODEX_HOME=<absolute-git-root>/.codex codex mcp remove gaori` or an equivalent exact TOML edit. Apply the same backup, semantic-empty-file, empty-directory, unrelated-setting preservation, and no-staging rules as Mulgae local cleanup. Never remove the global registration as part of local cleanup.
+
+Tell the user to restart Codex so a new session can expose `start_configured_run`, `start_ad_hoc_run`, `get_run`, `wait_run`, terminal-only `await_run`, `cancel_run`, `get_excerpt`, and the read-only `list_runs` completed-evidence inventory. `await_run` observes one process-local invocation without cancelling execution when that observer ends; use `get_run` or bounded `wait_run` when the host deadline cannot safely cover terminal completion. `list_runs` is stateless and cannot recover an invocation ID or reattach a disconnected run. Every present repository configuration path that Gaori may inspect, including `.gaori/tester.yaml`, every descendant of `.gaori/tester/rules/`, and `.gaori/toolchain.yaml`, must have regular non-symlink lexical ancestry before any owning CLI probe may read it; an absent primary path stops that probe rather than consulting ambient state.
 
 ## Lora / Lore
 

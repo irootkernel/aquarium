@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v6"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v7"
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
@@ -112,7 +112,10 @@ def finite_number(value: Any) -> bool:
 
 
 def run_command(
-    arguments: list[str], cwd: Path, timeout_seconds: float
+    arguments: list[str],
+    cwd: Path,
+    timeout_seconds: float,
+    environment_overrides: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     environment = os.environ.copy()
     for name in tuple(environment):
@@ -120,6 +123,8 @@ def run_command(
             del environment[name]
     environment["LANG"] = "C"
     environment["LC_ALL"] = "C"
+    if environment_overrides:
+        environment.update(environment_overrides)
     try:
         completed = subprocess.run(
             arguments,
@@ -188,9 +193,21 @@ def parse_json_probe(raw_probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def json_probe(
-    arguments: list[str], repository: Path, timeout_seconds: float
+    arguments: list[str],
+    repository: Path,
+    timeout_seconds: float,
+    environment_overrides: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    return parse_json_probe(run_command(arguments, repository, timeout_seconds))
+    if environment_overrides is None:
+        return parse_json_probe(run_command(arguments, repository, timeout_seconds))
+    return parse_json_probe(
+        run_command(
+            arguments,
+            repository,
+            timeout_seconds,
+            environment_overrides,
+        )
+    )
 
 
 def named_mcp_server_missing(raw_probe: dict[str, Any], name: str) -> bool:
@@ -1223,102 +1240,71 @@ def mulgae_configuration_entry(
     return entry
 
 
-def project_mcp_origin_verified(
+def mcp_registration_probe(
     codex_executable: str,
-    repository: Path,
     name: str,
-    effective: dict[str, Any],
+    cwd: Path,
     timeout_seconds: float,
-) -> bool:
-    config_path = repository / ".codex" / "config.toml"
-    present, symlinked = safe_managed_file_state(config_path, repository)
-    if not present or symlinked:
-        return False
-    ambient_raw = run_command(
+    environment_overrides: dict[str, str] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    raw = run_command(
         [codex_executable, "mcp", "get", name, "--json"],
-        Path(config_path.anchor),
+        cwd,
         timeout_seconds,
+        environment_overrides,
     )
-    if not ambient_raw["ok"]:
-        return named_mcp_server_missing(ambient_raw, name)
-    try:
-        ambient_result = strict_json_loads(ambient_raw["stdout"])
-    except (json.JSONDecodeError, ValueError):
-        return False
-    return ambient_result != effective
+    return raw, parse_json_probe(raw)
 
 
-def inspect_mulgae_mcp(
-    repository: Path, mulgae_executable: str | None, timeout_seconds: float
+def resolve_mcp_command(command: Any) -> Path | None:
+    if not isinstance(command, str) or not command:
+        return None
+    candidate = Path(command).expanduser()
+    if (
+        candidate.is_absolute()
+        and candidate.is_file()
+        and os.access(candidate, os.X_OK)
+    ):
+        return candidate.resolve()
+    if not candidate.is_absolute():
+        discovered = shutil.which(command)
+        if discovered:
+            return Path(discovered).resolve()
+    return None
+
+
+def missing_mcp_scope(reason: str = "registration_not_found") -> dict[str, Any]:
+    return {"status": "missing", "reason": reason}
+
+
+def failed_mcp_scope(
+    raw_probe: dict[str, Any], probe: dict[str, Any], name: str
 ) -> dict[str, Any]:
-    project_config_present, project_config_symlinked = safe_managed_file_state(
-        repository / ".codex" / "config.toml", repository
-    )
-    registration: dict[str, Any] = {
-        "status": "missing",
-        "project_config_present": project_config_present,
-        "project_config_symlinked": project_config_symlinked,
-        "project_origin_verified": False,
-        "enabled": None,
-        "stdio": None,
-        "repository_bound": None,
-        "arguments_match": None,
-        "cwd_bound": None,
-        "required": None,
-        "required_verification": "unverifiable",
-        "required_output_capability": "unknown",
-        "compatibility_reason": None,
-        "codex_version": None,
-        "command_resolvable": None,
-        "binary_matches_selected": None,
-        "startup_timeout_sec": None,
-        "tool_timeout_sec": None,
+    if named_mcp_server_missing(raw_probe, name):
+        return missing_mcp_scope()
+    return {
+        "status": "degraded",
+        "reason": (
+            "registration_probe_timed_out"
+            if probe["timed_out"]
+            else "registration_probe_failed"
+        ),
     }
-    if project_config_symlinked:
-        registration.update(
-            {"status": "degraded", "reason": "project_configuration_symlinked"}
-        )
-        return registration
-    codex_executable = shutil.which("codex")
-    if not codex_executable:
-        registration.update(
-            {"status": "unavailable", "reason": "codex_executable_missing"}
-        )
-        return registration
-    if not project_config_present:
-        registration["reason"] = "project_configuration_missing"
-        return registration
-    version_probe = run_command(
-        [codex_executable, "--version"], repository, timeout_seconds
-    )
-    if version_probe["ok"]:
-        registration["codex_version"] = codex_version_from_output(
-            version_probe["stdout"]
-        )
-    raw_probe = run_command(
-        [codex_executable, "mcp", "get", "mulgae", "--json"],
-        repository,
-        timeout_seconds,
-    )
-    probe = parse_json_probe(raw_probe)
+
+
+def classify_mulgae_mcp_scope(
+    raw_probe: dict[str, Any],
+    probe: dict[str, Any],
+    mulgae_executable: str | None,
+    repository: Path,
+    scope: str,
+) -> dict[str, Any]:
     if not probe["ok"]:
-        if named_mcp_server_missing(raw_probe, "mulgae"):
-            return registration
-        registration.update(
-            {"status": "degraded", "reason": "registration_probe_failed"}
-        )
-        return registration
+        return failed_mcp_scope(raw_probe, probe, "mulgae")
     result = probe.get("result")
     transport = result.get("transport") if isinstance(result, dict) else None
     if not isinstance(result, dict) or not isinstance(transport, dict):
-        registration.update(
-            {"status": "degraded", "reason": "invalid_registration_result"}
-        )
-        return registration
-    project_origin_verified = project_mcp_origin_verified(
-        codex_executable, repository, "mulgae", result, timeout_seconds
-    )
-    registration["project_origin_verified"] = project_origin_verified
+        return {"status": "degraded", "reason": "invalid_registration_result"}
 
     if "required" not in result:
         required = None
@@ -1331,106 +1317,234 @@ def inspect_mulgae_mcp(
         required_output_capability = "reported"
         compatibility_reason = None
     else:
-        registration.update(
-            {
-                "status": "degraded",
-                "reason": "invalid_registration_result",
-                "required_output_capability": "invalid",
-            }
-        )
-        return registration
+        return {
+            "status": "degraded",
+            "reason": "invalid_registration_result",
+            "required_output_capability": "invalid",
+        }
 
-    command = transport.get("command")
-    resolved_command: Path | None = None
-    if isinstance(command, str) and command:
-        candidate = Path(command).expanduser()
-        if (
-            candidate.is_absolute()
-            and candidate.is_file()
-            and os.access(candidate, os.X_OK)
-        ):
-            resolved_command = candidate.resolve()
-        elif not candidate.is_absolute():
-            discovered = shutil.which(command)
-            if discovered:
-                resolved_command = Path(discovered).resolve()
-
+    resolved_command = resolve_mcp_command(transport.get("command"))
     args = transport.get("args")
-    repository_bound = False
     arguments_match = False
+    repository_bound = scope == "global"
     if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
-        try:
-            configured_root = Path(args[2]).expanduser().resolve()
-            repository_bound = configured_root == repository
-            arguments_match = (
-                len(args) == 3
-                and args[0] == "mcp"
-                and args[1] == "--project-root"
-                and repository_bound
-            )
-        except (IndexError, OSError):
-            repository_bound = False
+        if scope == "global":
+            arguments_match = args == ["mcp"]
+        elif len(args) == 3 and args[:2] == ["mcp", "--project-root"]:
+            try:
+                repository_bound = Path(args[2]).expanduser().resolve() == repository
+            except OSError:
+                repository_bound = False
+            arguments_match = repository_bound
 
     raw_cwd = transport.get("cwd", result.get("cwd"))
-    try:
-        cwd_bound = (
-            isinstance(raw_cwd, str)
-            and Path(raw_cwd).expanduser().resolve() == repository
-        )
-    except OSError:
-        cwd_bound = False
+    if scope == "global":
+        cwd_bound = raw_cwd in {None, ""}
+    else:
+        try:
+            cwd_bound = (
+                isinstance(raw_cwd, str)
+                and Path(raw_cwd).expanduser().resolve() == repository
+            )
+        except OSError:
+            cwd_bound = False
     startup_timeout = result.get("startup_timeout_sec")
     tool_timeout = result.get("tool_timeout_sec")
-    startup_supported = finite_number(startup_timeout) and startup_timeout >= 30
-    tool_supported = (
-        finite_number(tool_timeout) and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
-    )
     binary_matches = bool(
         resolved_command
         and mulgae_executable
         and resolved_command == Path(mulgae_executable).resolve()
     )
-    registration.update(
-        {
-            "enabled": result.get("enabled") is True,
-            "stdio": transport.get("type") == "stdio",
-            "repository_bound": repository_bound,
-            "arguments_match": arguments_match,
-            "cwd_bound": cwd_bound,
-            "required": required,
-            "required_verification": required_verification,
-            "required_output_capability": required_output_capability,
-            "compatibility_reason": compatibility_reason,
-            "command_resolvable": resolved_command is not None,
-            "binary_matches_selected": binary_matches,
-            "startup_timeout_sec": startup_timeout,
-            "tool_timeout_sec": tool_timeout,
-        }
-    )
+    registration = {
+        "status": "degraded",
+        "enabled": result.get("enabled") is True,
+        "stdio": transport.get("type") == "stdio",
+        "repository_bound": repository_bound,
+        "arguments_match": arguments_match,
+        "cwd_bound": cwd_bound,
+        "required": required,
+        "required_verification": required_verification,
+        "required_output_capability": required_output_capability,
+        "compatibility_reason": compatibility_reason,
+        "command_resolvable": resolved_command is not None,
+        "binary_matches_selected": binary_matches,
+        "startup_timeout_sec": startup_timeout,
+        "tool_timeout_sec": tool_timeout,
+    }
     if (
-        registration["project_config_present"]
-        and project_origin_verified
-        and registration["enabled"]
+        registration["enabled"]
         and registration["stdio"]
         and arguments_match
         and cwd_bound
         and required_verification in {"verified", "unverifiable"}
         and binary_matches
-        and startup_supported
-        and tool_supported
+        and finite_number(startup_timeout)
+        and startup_timeout >= 30
+        and finite_number(tool_timeout)
+        and tool_timeout >= MULGAE_MCP_TOOL_TIMEOUT_SEC
     ):
         registration["status"] = "configured"
     else:
+        registration["reason"] = "registration_mismatch"
+    return registration
+
+
+def mcp_recommendation(global_status: str, local_present: bool) -> str:
+    if local_present:
+        if global_status == "configured":
+            return "confirm_or_remove_local_registration"
+        return "confirm_local_intent_or_migrate_to_global"
+    if global_status == "configured":
+        return "none"
+    if global_status == "missing":
+        return "install_global_registration"
+    return "repair_global_registration"
+
+
+def effective_mcp_registration(
+    name: str,
+    global_registration: dict[str, Any],
+    local_registration: dict[str, Any],
+    local_symlinked: bool,
+    effective_raw: dict[str, Any],
+    effective_probe: dict[str, Any],
+) -> tuple[str, str, str | None]:
+    if local_symlinked:
+        return "unverifiable", "unverifiable", "project_configuration_symlinked"
+    selected_scope = (
+        "local"
+        if local_registration["status"] != "missing"
+        else "global"
+        if global_registration["status"] != "missing"
+        else "none"
+    )
+    if selected_scope == "none":
+        if named_mcp_server_missing(effective_raw, name):
+            return "missing", "none", "registration_not_found"
+        if not effective_probe["ok"]:
+            return "degraded", "unverifiable", "effective_registration_probe_failed"
+        return "degraded", "unverifiable", "unexpected_effective_registration"
+
+    selected = local_registration if selected_scope == "local" else global_registration
+    if selected["status"] != "configured":
+        return selected["status"], selected_scope, selected.get("reason")
+    if not effective_probe["ok"] or effective_probe.get("result") != selected.get(
+        "_result"
+    ):
+        return "degraded", selected_scope, "effective_registration_mismatch"
+    return selected["status"], selected_scope, selected.get("reason")
+
+
+def inspect_mulgae_mcp(
+    repository: Path, mulgae_executable: str | None, timeout_seconds: float
+) -> dict[str, Any]:
+    project_config_present, project_config_symlinked = safe_managed_file_state(
+        repository / ".codex" / "config.toml", repository
+    )
+    registration: dict[str, Any] = {
+        "status": "missing",
+        "preferred_scope": "global",
+        "effective_scope": "none",
+        "local_confirmation_required": None,
+        "codex_version": None,
+    }
+    codex_executable = shutil.which("codex")
+    if not codex_executable:
         registration.update(
             {
-                "status": "degraded",
-                "reason": (
-                    "project_registration_origin_unverified"
-                    if not project_origin_verified
-                    else "registration_mismatch"
-                ),
+                "status": "unavailable",
+                "effective_scope": "unverifiable",
+                "reason": "codex_executable_missing",
+                "global": {"status": "unavailable"},
+                "local": {
+                    "status": "unverifiable"
+                    if project_config_symlinked
+                    else "unavailable",
+                    "project_config_present": project_config_present,
+                    "project_config_symlinked": project_config_symlinked,
+                },
             }
         )
+        return registration
+    version_probe = run_command(
+        [codex_executable, "--version"], repository, timeout_seconds
+    )
+    if version_probe["ok"]:
+        registration["codex_version"] = codex_version_from_output(
+            version_probe["stdout"]
+        )
+    neutral_cwd = Path(repository.anchor)
+    global_raw, global_probe = mcp_registration_probe(
+        codex_executable, "mulgae", neutral_cwd, timeout_seconds
+    )
+    global_registration = classify_mulgae_mcp_scope(
+        global_raw, global_probe, mulgae_executable, repository, "global"
+    )
+    if global_probe["ok"]:
+        global_registration["_result"] = global_probe.get("result")
+
+    if project_config_symlinked:
+        local_registration = {
+            "status": "unverifiable",
+            "reason": "project_configuration_symlinked",
+        }
+    elif not project_config_present:
+        local_registration = missing_mcp_scope("project_configuration_missing")
+    else:
+        local_raw, local_probe = mcp_registration_probe(
+            codex_executable,
+            "mulgae",
+            neutral_cwd,
+            timeout_seconds,
+            {"CODEX_HOME": str(repository / ".codex")},
+        )
+        local_registration = classify_mulgae_mcp_scope(
+            local_raw, local_probe, mulgae_executable, repository, "local"
+        )
+        if local_probe["ok"]:
+            local_registration["_result"] = local_probe.get("result")
+    local_registration.update(
+        {
+            "project_config_present": project_config_present,
+            "project_config_symlinked": project_config_symlinked,
+        }
+    )
+
+    effective_raw, effective_probe = mcp_registration_probe(
+        codex_executable, "mulgae", repository, timeout_seconds
+    )
+    status, effective_scope, reason = effective_mcp_registration(
+        "mulgae",
+        global_registration,
+        local_registration,
+        project_config_symlinked,
+        effective_raw,
+        effective_probe,
+    )
+    global_registration.pop("_result", None)
+    local_registration.pop("_result", None)
+    local_confirmable = (
+        None if project_config_symlinked else local_registration["status"] != "missing"
+    )
+    registration.update(
+        {
+            "status": status,
+            "effective_scope": effective_scope,
+            "local_confirmation_required": local_confirmable,
+            "global": global_registration,
+            "local": local_registration,
+            "recommendation": (
+                "resolve_symlinked_local_configuration"
+                if project_config_symlinked
+                else mcp_recommendation(
+                    global_registration["status"],
+                    bool(local_confirmable),
+                )
+            ),
+        }
+    )
+    if reason:
+        registration["reason"] = reason
     return registration
 
 
@@ -1618,148 +1732,170 @@ def inspect_mulgae(
     return tool
 
 
-def inspect_gaori_mcp(
-    repository: Path, gaori_executable: str | None, timeout_seconds: float
+def classify_gaori_mcp_scope(
+    raw_probe: dict[str, Any],
+    probe: dict[str, Any],
+    gaori_executable: str | None,
+    repository: Path,
+    scope: str,
 ) -> dict[str, Any]:
-    project_config = repository.joinpath(".codex/config.toml")
-    project_config_present, project_config_symlinked = safe_managed_file_state(
-        project_config, repository
-    )
-    registration: dict[str, Any] = {
-        "status": "missing",
-        "project_config_present": project_config_present,
-        "project_config_symlinked": project_config_symlinked,
-        "project_origin_verified": False,
-        "enabled": None,
-        "stdio": None,
-        "repository_bound": None,
-        "command_resolvable": None,
-        "binary_matches_selected": None,
-        "tool_timeout_sec": None,
-    }
-    if project_config_symlinked:
-        registration.update(
-            {"status": "degraded", "reason": "project_configuration_symlinked"}
-        )
-        return registration
-    codex_executable = shutil.which("codex")
-    if not codex_executable:
-        registration["status"] = "unavailable"
-        registration["reason"] = "codex_executable_missing"
-        return registration
-    if not project_config_present:
-        registration["reason"] = "project_configuration_missing"
-        return registration
-
-    raw_probe = run_command(
-        [codex_executable, "mcp", "get", "gaori", "--json"],
-        repository,
-        timeout_seconds,
-    )
-    probe = parse_json_probe(raw_probe)
     if not probe["ok"]:
-        registration["status"] = (
-            "missing" if named_mcp_server_missing(raw_probe, "gaori") else "degraded"
-        )
-        registration["reason"] = (
-            "registration_not_found"
-            if registration["status"] == "missing"
-            else "registration_probe_timed_out"
-            if probe["timed_out"]
-            else "project_registration_inactive_or_invalid"
-        )
-        return registration
-
+        return failed_mcp_scope(raw_probe, probe, "gaori")
     result = probe.get("result")
-    if not isinstance(result, dict):
-        registration.update(
-            {"status": "degraded", "reason": "invalid_registration_result"}
-        )
-        return registration
-    project_origin_verified = project_mcp_origin_verified(
-        codex_executable, repository, "gaori", result, timeout_seconds
-    )
-    registration["project_origin_verified"] = project_origin_verified
+    transport = result.get("transport") if isinstance(result, dict) else None
+    if not isinstance(result, dict) or not isinstance(transport, dict):
+        return {"status": "degraded", "reason": "invalid_registration_result"}
 
-    transport = result.get("transport")
-    if not isinstance(transport, dict):
-        registration.update(
-            {"status": "degraded", "reason": "missing_registration_transport"}
-        )
-        return registration
-
-    enabled = result.get("enabled") is True
-    stdio = transport.get("type") == "stdio"
-    command = transport.get("command")
     args = transport.get("args")
-    resolved_command: Path | None = None
-    if isinstance(command, str) and command:
-        candidate = Path(command).expanduser()
-        if (
-            candidate.is_absolute()
-            and candidate.is_file()
-            and os.access(candidate, os.X_OK)
-        ):
-            resolved_command = candidate.resolve()
-        elif not candidate.is_absolute():
-            discovered = shutil.which(command)
-            if discovered:
-                resolved_command = Path(discovered).resolve()
-
-    repository_bound = False
+    repository_bound = scope == "global"
     arguments_match = False
-    if (
-        isinstance(args, list)
-        and all(isinstance(argument, str) for argument in args)
-        and len(args) == 3
-        and args[0] == "--repo"
-        and args[2] == "mcp"
-    ):
-        try:
-            configured_repository = Path(args[1]).expanduser().resolve()
-        except OSError:
-            configured_repository = None
-        repository_bound = configured_repository == repository
-        arguments_match = repository_bound
-
+    if isinstance(args, list) and all(isinstance(argument, str) for argument in args):
+        if scope == "global":
+            arguments_match = args == ["mcp"]
+        elif len(args) == 3 and args[0] == "--repo" and args[2] == "mcp":
+            try:
+                repository_bound = Path(args[1]).expanduser().resolve() == repository
+            except OSError:
+                repository_bound = False
+            arguments_match = repository_bound
+    raw_cwd = transport.get("cwd", result.get("cwd"))
+    cwd_unbound = raw_cwd in {None, ""}
+    resolved_command = resolve_mcp_command(transport.get("command"))
     tool_timeout = result.get("tool_timeout_sec")
-    timeout_supported = (
-        finite_number(tool_timeout) and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
-    )
     binary_matches = bool(
         resolved_command
         and gaori_executable
         and resolved_command == Path(gaori_executable).resolve()
     )
-    registration.update(
-        {
-            "enabled": enabled,
-            "stdio": stdio,
-            "repository_bound": repository_bound,
-            "arguments_match": arguments_match,
-            "command_resolvable": resolved_command is not None,
-            "binary_matches_selected": binary_matches,
-            "tool_timeout_sec": tool_timeout,
-        }
-    )
+    registration = {
+        "status": "degraded",
+        "enabled": result.get("enabled") is True,
+        "stdio": transport.get("type") == "stdio",
+        "repository_bound": repository_bound,
+        "arguments_match": arguments_match,
+        "cwd_unbound": cwd_unbound,
+        "command_resolvable": resolved_command is not None,
+        "binary_matches_selected": binary_matches,
+        "tool_timeout_sec": tool_timeout,
+    }
     if (
-        project_config_present
-        and project_origin_verified
-        and enabled
-        and stdio
-        and repository_bound
+        registration["enabled"]
+        and registration["stdio"]
         and arguments_match
+        and cwd_unbound
         and binary_matches
-        and timeout_supported
+        and finite_number(tool_timeout)
+        and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
     ):
         registration["status"] = "configured"
     else:
-        registration["status"] = "degraded"
-        registration["reason"] = (
-            "project_registration_origin_unverified"
-            if not project_origin_verified
-            else "registration_mismatch"
+        registration["reason"] = "registration_mismatch"
+    return registration
+
+
+def inspect_gaori_mcp(
+    repository: Path, gaori_executable: str | None, timeout_seconds: float
+) -> dict[str, Any]:
+    project_config_present, project_config_symlinked = safe_managed_file_state(
+        repository / ".codex" / "config.toml", repository
+    )
+    registration: dict[str, Any] = {
+        "status": "missing",
+        "preferred_scope": "global",
+        "effective_scope": "none",
+        "local_confirmation_required": None,
+    }
+    codex_executable = shutil.which("codex")
+    if not codex_executable:
+        registration.update(
+            {
+                "status": "unavailable",
+                "effective_scope": "unverifiable",
+                "reason": "codex_executable_missing",
+                "global": {"status": "unavailable"},
+                "local": {
+                    "status": "unverifiable"
+                    if project_config_symlinked
+                    else "unavailable",
+                    "project_config_present": project_config_present,
+                    "project_config_symlinked": project_config_symlinked,
+                },
+            }
         )
+        return registration
+
+    neutral_cwd = Path(repository.anchor)
+    global_raw, global_probe = mcp_registration_probe(
+        codex_executable, "gaori", neutral_cwd, timeout_seconds
+    )
+    global_registration = classify_gaori_mcp_scope(
+        global_raw, global_probe, gaori_executable, repository, "global"
+    )
+    if global_probe["ok"]:
+        global_registration["_result"] = global_probe.get("result")
+
+    if project_config_symlinked:
+        local_registration = {
+            "status": "unverifiable",
+            "reason": "project_configuration_symlinked",
+        }
+    elif not project_config_present:
+        local_registration = missing_mcp_scope("project_configuration_missing")
+    else:
+        local_raw, local_probe = mcp_registration_probe(
+            codex_executable,
+            "gaori",
+            neutral_cwd,
+            timeout_seconds,
+            {"CODEX_HOME": str(repository / ".codex")},
+        )
+        local_registration = classify_gaori_mcp_scope(
+            local_raw, local_probe, gaori_executable, repository, "local"
+        )
+        if local_probe["ok"]:
+            local_registration["_result"] = local_probe.get("result")
+    local_registration.update(
+        {
+            "project_config_present": project_config_present,
+            "project_config_symlinked": project_config_symlinked,
+        }
+    )
+
+    effective_raw, effective_probe = mcp_registration_probe(
+        codex_executable, "gaori", repository, timeout_seconds
+    )
+    status, effective_scope, reason = effective_mcp_registration(
+        "gaori",
+        global_registration,
+        local_registration,
+        project_config_symlinked,
+        effective_raw,
+        effective_probe,
+    )
+    global_registration.pop("_result", None)
+    local_registration.pop("_result", None)
+    local_confirmable = (
+        None if project_config_symlinked else local_registration["status"] != "missing"
+    )
+    registration.update(
+        {
+            "status": status,
+            "effective_scope": effective_scope,
+            "local_confirmation_required": local_confirmable,
+            "global": global_registration,
+            "local": local_registration,
+            "recommendation": (
+                "resolve_symlinked_local_configuration"
+                if project_config_symlinked
+                else mcp_recommendation(
+                    global_registration["status"],
+                    bool(local_confirmable),
+                )
+            ),
+        }
+    )
+    if reason:
+        registration["reason"] = reason
     return registration
 
 

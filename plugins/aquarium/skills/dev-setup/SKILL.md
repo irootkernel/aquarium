@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit supported tools, paired skills, project MCP state, or an evidence-based AGENTS.md operating contract with CLAUDE.md delegation. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
+description: "Diagnose and configure Aquarium repository tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to install, initialize, repair, or audit supported tools, paired skills, global or project MCP state, or an evidence-based AGENTS.md operating contract with CLAUDE.md delegation. Do not use for routine supported Procedure v2 session observation, cancellation, discard, or reset; use $use-podway."
 ---
 
 # Development Setup
@@ -16,7 +16,7 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 1. Resolve the requested working directory to one Git root.
 2. Read applicable instruction files and inspect the branch, upstream, staged, unstaged, and untracked state.
 3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
-   When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects project-local Mulgae MCP, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
+   When the current request explicitly selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects Mulgae MCP in either scope, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
 5. Discover existing root instruction files, project authorities, tool guidance, commit-message rules, verification commands, and non-secret environment variable names from repository files before asking questions.
    Never read credential values in this skill, even after setup approval. Do not open `.env*`, authentication, key, token, secret, or credential files. Use only non-secret documentation and templates proven to contain placeholders, plus redacted readiness from the owning CLI. When a check would require credential values, report the gap. Defer network contact or file changes to a separately authorized step except for the exact selected-skill freshness comparison authorized below.
@@ -42,11 +42,13 @@ After read-only discovery, use these batches and component boundaries:
 
 Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
 
-When Mulgae or Gaori is selected, ask separately whether to configure that tool's project-local MCP; offer `Configure project MCP`, `Diagnose only`, and `Skip` and recommend configuration only for a trusted project.
+When Mulgae or Gaori is selected, inspect its active user-global and isolated project-local MCP registrations independently. If neither is configured, offer `Configure global MCP` (recommended), `Configure project MCP`, and `Skip`. If a project-local registration exists, ask whether it is intentional; preserve it only when the user confirms local scope. Otherwise propose removal of only that named local registration. Never infer local intent from the presence of `.codex/config.toml` or another local MCP entry.
 
-A `dev-setup-bundle` handoff is a preselected multi-tool setup request, not a scoped repair continuation. Require the requesting skill, manifest digest, target index, canonical Git root, effective tools, project MCP selection, and repository-guidance policy.
+A `dev-setup-bundle` handoff is a preselected multi-tool setup request, not a scoped repair continuation. Require the requesting skill, manifest digest, target index, canonical Git root, effective tools, explicit local MCP overrides, and repository-guidance policy.
 
-Reinspect that repository, use the normalized tools as `Install and configure` selections, use the MCP and repository-guidance values as their preselected choices, and retain every exact mutation, backup, approval, and stale-target boundary below. Reject a handoff that includes an unsupported tool, selects project MCP outside Mulgae or Gaori, selects MCP for an absent effective tool, or asks this skill to read the manifest.
+Reinspect that repository, use the normalized tools as `Install and configure` selections, use explicit local MCP overrides and repository-guidance values as their preselected choices, and retain every exact mutation, backup, approval, and stale-target boundary below. Treat selected Mulgae or Gaori MCP as user-global by default and use an override only for its named target.
+
+Reject a handoff that includes an unsupported tool, selects a local MCP override outside Mulgae or Gaori, selects an override for an absent effective tool, or asks this skill to read the manifest.
 
 When another Aquarium skill routes a continuation request, treat it as scoped intake: the request must name the requesting skill, repository, exact failing tool or check, and evidence gap. Reject a handoff whose only requested action is routine supported Procedure v2 session observation, cancellation, discard, or reset, and return the exact `$use-podway` lifecycle request without starting broad setup discovery.
 
@@ -102,13 +104,13 @@ For Sanho, support only stable `v0.2.7` through `v0.2.x`. Resolve one exact tag 
 
 For Mulgae, support only stable `v0.1.17` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-mulgae` source. Require Go `1.26.6` or newer for installation, without treating an older Go toolchain as a runtime failure of an already healthy binary.
 
-Keep CLI installation or upgrade, user-scoped skill installation or replacement, project Config v3 and ignore changes, local bootstrap or refresh, Codex credential-profile mapping, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI and configuration health.
+Keep CLI installation or upgrade, user-scoped skill installation or replacement, project Config v3 and ignore changes, local bootstrap or refresh, Codex credential-profile mapping, and global or project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI and configuration health.
 
 Report Mulgae CLI compatibility, Doctor v2 contract support, Config v3, local configuration, provider identity, configured readiness, role-route readiness, each configured provider's binary availability and CLI compatibility, and MCP registration separately. Do not expose static admission, heartbeat, historical review, or `review_qualified` as setup dimensions.
 
 Never authenticate a provider, inspect a prior run, or start a Mulgae heartbeat, review, qualification, preflight capture, live provider request, source transmission, or MCP server during setup. Doctor v2 may run only Mulgae's adapter-owned local version commands in its offline boundary.
 
-For Gaori, support only stable `v0.1.14` through `v0.1.x`. Resolve one exact tag and use it for both the CLI and `use-gaori` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, repository config and ignore changes, and project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI health. Never start a Gaori run or MCP test command during setup.
+For Gaori, support only stable `v0.1.14` through `v0.1.x`. Resolve one exact tag and use it for both the CLI and `use-gaori` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, repository config and ignore changes, and global or project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI health. Never start a Gaori run or MCP test command during setup.
 
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
@@ -182,8 +184,8 @@ Report:
 - each selected paired skill's comparison tag, exact `~/.agents/skills` target, `current`, `missing`, `different`, or `freshness_unverifiable` result, temporary-payload cleanup, and any installation or replacement decision;
 - selected backup policy, existing state backed up or deliberately left without a backup, backup verification and restoration paths when applicable, and the disclosed recovery boundary;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
-- Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and project MCP state separately;
-- Gaori CLI, repository config, `use-gaori` skill, and project MCP state separately;
+- Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and global, local, and effective MCP scope separately;
+- Gaori CLI, repository config, `use-gaori` skill, and global, local, and effective MCP scope separately;
 - Podway CLI, daemon, workspace, Aquarium readiness, legacy-state detection, and `use-podway` skill state separately;
 - Ouroboros CLI and version support, Codex rules and skills, MCP runtime, effective registration, and live exposure separately;
 - commands run and their exit status;

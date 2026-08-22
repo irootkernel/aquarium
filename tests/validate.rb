@@ -225,8 +225,10 @@ assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?('entry["symlinked"]') &&
        dev_setup_script_body.include?("safe_skill_file_state") &&
        dev_setup_script_body.include?("safe_managed_file_state") &&
-       dev_setup_script_body.include?("project_mcp_origin_verified") &&
-       dev_setup_script_body.include?("project_registration_origin_unverified") &&
+       dev_setup_script_body.include?("mcp_registration_probe") &&
+       dev_setup_script_body.include?('"preferred_scope": "global"') &&
+       dev_setup_script_body.include?('"effective_scope"') &&
+       dev_setup_script_body.include?('{"CODEX_HOME": str(repository / ".codex")}') &&
        dev_setup_script_body.include?("project_configuration_symlinked") &&
        dev_setup_script_body.include?("re.fullmatch") &&
        dev_setup_script_body.include?("No MCP server named") &&
@@ -256,7 +258,8 @@ assert(dev_setup_bundle.include?("python3 <skill-directory>/scripts/normalize_ma
        "dev-setup-bundle workflow must preserve manifest, continuation, and partial-failure boundaries")
 assert(dev_setup_bundle_manifest.include?("schema: aquarium.dev-setup-bundle/v1") &&
        dev_setup_bundle_manifest.include?("defaults.tools` plus `include` minus `exclude`") &&
-       dev_setup_bundle_manifest.include?("project MCP supports only `mulgae` and `gaori`") &&
+       dev_setup_bundle_manifest.include?("retained v1 `project_mcp` field is an explicit local-scope override") &&
+       dev_setup_bundle_manifest.include?("project_mcp: []") &&
        dev_setup_bundle_manifest.include?("same canonical Git root or shared Git common directory") &&
        dev_setup_bundle_manifest.include?("YAML merge key") &&
        dev_setup_bundle_manifest.include?("Do not put credentials"),
@@ -696,14 +699,16 @@ assert(gaori_catalog.include?("gaori --json runs list") &&
        gaori_catalog.include?("gaori rules show --proposal <name>"),
        "Gaori read-only evidence and proposal discovery guidance is incomplete")
 assert(gaori_catalog.include?("[mcp_servers.gaori]") &&
+       gaori_catalog.include?('args = ["mcp"]') &&
        gaori_catalog.include?("tool_timeout_sec = 3601") &&
-       gaori_catalog.include?("codex mcp get gaori --json") &&
-       gaori_catalog.include?("project_registration_origin_unverified") &&
+       gaori_catalog.include?("prefer one user-global registration") &&
+       gaori_catalog.include?("CODEX_HOME=<absolute-git-root>/.codex codex mcp remove gaori") &&
+       gaori_catalog.include?("semantic-empty-file") &&
        gaori_catalog.include?("terminal-only `await_run`") &&
        gaori_catalog.include?("at least 3601 seconds") &&
        gaori_catalog.include?("read-only `list_runs`") &&
        gaori_catalog.include?("cannot recover an invocation ID or reattach"),
-       "Gaori project-local MCP setup and verification guidance is incomplete")
+       "Gaori global-first MCP setup and local cleanup guidance is incomplete")
 assert(sanho_catalog, "Sanho tool catalog section is missing")
 assert(sanho_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
        sanho_catalog.include?("same exact tag") &&
@@ -734,7 +739,7 @@ assert(dev_setup.include?("CLI installation or upgrade") &&
        dev_setup.include?("separate approval boundaries"),
        "dev-setup must separate Sanho CLI, skill, workspace, and repair approvals")
 assert(dev_setup.include?("use-gaori") &&
-       dev_setup.include?("project-local MCP configuration") &&
+       dev_setup.include?("global or project-local MCP configuration") &&
        dev_setup.include?("Never start a Gaori run or MCP test command during setup"),
        "dev-setup must separate Gaori CLI, skill, config, and MCP boundaries")
 assert(agents_reference.include?("$use-gaori") &&
@@ -796,14 +801,16 @@ assert(mulgae_catalog.include?("mode-`0700` backup directory") &&
        mulgae_catalog.include?("If Config v3 initialization fails"),
        "Mulgae legacy-config backup choice and rollback guidance is incomplete")
 assert(mulgae_catalog.include?("[mcp_servers.mulgae]") &&
+       mulgae_catalog.include?('args = ["mcp"]') &&
        mulgae_catalog.include?("required = true") &&
        mulgae_catalog.include?("startup_timeout_sec = 30") &&
        mulgae_catalog.include?("tool_timeout_sec = 7501") &&
-       mulgae_catalog.include?("codex mcp get mulgae --json") &&
-       mulgae_catalog.include?("project_registration_origin_unverified") &&
+       mulgae_catalog.include?("prefer one user-global registration") &&
+       mulgae_catalog.include?("CODEX_HOME=<absolute-git-root>/.codex codex mcp remove mulgae") &&
+       mulgae_catalog.include?("Delete `.codex/config.toml` only when parsed TOML has no remaining semantic content") &&
        mulgae_catalog.include?("`start_review`, `await_review`, `cancel_review`") &&
        mulgae_catalog.include?("preserve any larger existing value"),
-       "Mulgae project-local MCP setup and verification guidance is incomplete")
+       "Mulgae global-first MCP setup and local cleanup guidance is incomplete")
 assert(dev_setup.include?("use-mulgae") &&
        dev_setup.include?("project Config v3 and ignore changes") &&
        dev_setup.include?("Codex credential-profile mapping") &&

@@ -11,7 +11,7 @@ schema: aquarium.dev-setup-bundle/v1
 
 defaults:
   tools: [mulgae, gaori, podway, ouroboros, lora, deslop]
-  project_mcp: [mulgae, gaori]
+  project_mcp: []
   agents_guidance: skip
 
 targets:
@@ -29,7 +29,7 @@ The top-level mapping accepts exactly `schema`, `defaults`, and `targets`. `sche
 
 Supported tools are `sanho`, `mulgae`, `gaori`, `podway`, `ouroboros`, `lora`, and `deslop`. `defaults.tools` may be empty only when every target gains at least one effective tool through `include`. A target accepts exactly `path`, `include`, `exclude`, `project_mcp_include`, `project_mcp_exclude`, and `agents_guidance`; only `path` is required, and omitted list overrides are empty.
 
-For each target, effective tools are `defaults.tools` plus `include` minus `exclude`. Effective project MCP selections are `defaults.project_mcp` plus `project_mcp_include` minus `project_mcp_exclude`. The same value may not appear in both sides of one override, project MCP supports only `mulgae` and `gaori`, and every effective MCP selection must also be an effective tool. Each list must contain unique strings.
+For each target, effective tools are `defaults.tools` plus `include` minus `exclude`. Selected Mulgae and Gaori MCP registrations are user-global by default and are prepared once as shared components. The retained v1 `project_mcp` field is an explicit local-scope override: effective local overrides are `defaults.project_mcp` plus `project_mcp_include` minus `project_mcp_exclude`. Keep the default empty unless repositories intentionally require root-bound MCP registrations. The same value may not appear in both sides of one override, local MCP overrides support only `mulgae` and `gaori`, and every effective override must also be an effective tool. Each list must contain unique strings.
 
 `agents_guidance` must be `skip` or `propose`. A target value overrides the default. `propose` preselects preparation of the complete `dev-setup` repository operating-guidance proposal: the root AGENTS.md structure, mandatory project-specific commit-message rule, evidence-based project index, applicable Aquarium references, and root CLAUDE.md delegation. It does not supply a missing commit-header convention or resolve conflicting existing guidance; `dev-setup` asks for those decisions before finalizing the proposal. Applying the complete displayed diff remains separately approved.
 

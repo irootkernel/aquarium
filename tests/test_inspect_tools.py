@@ -186,6 +186,7 @@ class InspectToolsTest(unittest.TestCase):
             f"""\
             #!{sys.executable}
             import json
+            import os
             import pathlib
             import subprocess
             import sys
@@ -421,7 +422,15 @@ class InspectToolsTest(unittest.TestCase):
                     if server == "gaori"
                     else True
                 )
-                if server in {{"mulgae", "gaori"}} and pathlib.Path.cwd().resolve() != pathlib.Path({str(self.repository)!r}).resolve():
+                repository_path = pathlib.Path({str(self.repository)!r}).resolve()
+                local_codex_home = repository_path / ".codex"
+                active_codex_home = pathlib.Path(os.environ.get("CODEX_HOME", "")).resolve()
+                isolated_local = active_codex_home == local_codex_home
+                effective_lookup = pathlib.Path.cwd().resolve() == repository_path and not isolated_local
+                local_config = local_codex_home / "config.toml"
+                local_registration = local_config.is_file() and f"[mcp_servers.{{server}}]" in local_config.read_text(encoding="utf-8")
+                use_global_registration = not isolated_local and not (effective_lookup and local_registration)
+                if server in {{"mulgae", "gaori"}}:
                     if {mcp_neutral_mixed_missing!r}:
                         print("neutral configuration failed", file=sys.stderr)
                         print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
@@ -429,7 +438,10 @@ class InspectToolsTest(unittest.TestCase):
                     if {mcp_neutral_failure!r}:
                         print("neutral configuration failed", file=sys.stderr)
                         raise SystemExit(1)
-                    if not global_registration:
+                    if isolated_local and not local_registration:
+                        print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
+                        raise SystemExit(1)
+                    if use_global_registration and not global_registration:
                         print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
                         raise SystemExit(1)
                 if mode == "missing":
@@ -444,7 +456,11 @@ class InspectToolsTest(unittest.TestCase):
                     raise SystemExit(2)
                 repository = {str(self.repository)!r} if mode != "wrong-repo" else "/tmp/wrong-repo"
                 if server == "mulgae":
-                    print(json.dumps({mulgae_mcp_result!r}))
+                    result = {mulgae_mcp_result!r}
+                    if use_global_registration:
+                        result["transport"]["args"] = ["mcp"]
+                        result["transport"]["cwd"] = None
+                    print(json.dumps(result))
                     raise SystemExit(0)
                 if server == "ouroboros":
                     if mode == "malformed":
@@ -474,6 +490,8 @@ class InspectToolsTest(unittest.TestCase):
                         "cwd": None,
                     }},
                 }}
+                if use_global_registration:
+                    result["transport"]["args"] = ["mcp"]
                 if mode != "timeout-absent":
                     result["tool_timeout_sec"] = (
                         "3601"
@@ -687,7 +705,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v6")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v7")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -1532,19 +1550,28 @@ class InspectToolsTest(unittest.TestCase):
             "mcp_registration"
         ]
         self.assertEqual(registration["status"], "configured")
-        self.assertTrue(registration["enabled"])
-        self.assertTrue(registration["stdio"])
-        self.assertTrue(registration["repository_bound"])
-        self.assertTrue(registration["arguments_match"])
-        self.assertTrue(registration["cwd_bound"])
-        self.assertTrue(registration["required"])
-        self.assertEqual(registration["required_verification"], "verified")
-        self.assertEqual(registration["required_output_capability"], "reported")
-        self.assertIsNone(registration["compatibility_reason"])
+        self.assertEqual(registration["preferred_scope"], "global")
+        self.assertEqual(registration["effective_scope"], "local")
+        self.assertTrue(registration["local_confirmation_required"])
+        self.assertEqual(
+            registration["recommendation"],
+            "confirm_local_intent_or_migrate_to_global",
+        )
+        local = registration["local"]
+        self.assertEqual(registration["global"]["status"], "missing")
+        self.assertTrue(local["enabled"])
+        self.assertTrue(local["stdio"])
+        self.assertTrue(local["repository_bound"])
+        self.assertTrue(local["arguments_match"])
+        self.assertTrue(local["cwd_bound"])
+        self.assertTrue(local["required"])
+        self.assertEqual(local["required_verification"], "verified")
+        self.assertEqual(local["required_output_capability"], "reported")
+        self.assertIsNone(local["compatibility_reason"])
         self.assertEqual(registration["codex_version"], "0.147.0")
-        self.assertTrue(registration["binary_matches_selected"])
-        self.assertEqual(registration["startup_timeout_sec"], 30)
-        self.assertEqual(registration["tool_timeout_sec"], 7501)
+        self.assertTrue(local["binary_matches_selected"])
+        self.assertEqual(local["startup_timeout_sec"], 30)
+        self.assertEqual(local["tool_timeout_sec"], 7501)
 
     def test_mulgae_mcp_registration_accepts_larger_timeouts(self) -> None:
         self.write_project_mcp_config("mulgae", startup=31, timeout=7502)
@@ -1553,10 +1580,10 @@ class InspectToolsTest(unittest.TestCase):
             "mcp_registration"
         ]
         self.assertEqual(registration["status"], "configured")
-        self.assertEqual(registration["startup_timeout_sec"], 31)
-        self.assertEqual(registration["tool_timeout_sec"], 7502)
+        self.assertEqual(registration["local"]["startup_timeout_sec"], 31)
+        self.assertEqual(registration["local"]["tool_timeout_sec"], 7502)
 
-    def test_project_mcp_origin_requires_matching_local_entry(self) -> None:
+    def test_global_mcp_registration_is_preferred_without_local_entry(self) -> None:
         self.repository.joinpath(".codex").mkdir()
         self.repository.joinpath(".codex/config.toml").write_text(
             '[mcp_servers.other]\ncommand = "other"\nargs = []\n',
@@ -1572,13 +1599,63 @@ class InspectToolsTest(unittest.TestCase):
         tools = json.loads(self.inspect().stdout)["tools"]
         for name in ("mulgae", "gaori"):
             registration = tools[name]["mcp_registration"]
-            self.assertEqual(registration["status"], "degraded")
-            self.assertFalse(registration["project_origin_verified"])
-            self.assertEqual(
-                registration["reason"], "project_registration_origin_unverified"
-            )
+            self.assertEqual(registration["status"], "configured")
+            self.assertEqual(registration["preferred_scope"], "global")
+            self.assertEqual(registration["effective_scope"], "global")
+            self.assertEqual(registration["global"]["status"], "configured")
+            self.assertEqual(registration["local"]["status"], "missing")
+            self.assertFalse(registration["local_confirmation_required"])
+            self.assertEqual(registration["recommendation"], "none")
 
-    def test_project_mcp_origin_rejects_ambiguous_neutral_failure(self) -> None:
+    def test_local_mcp_overrides_global_and_requires_confirmation(self) -> None:
+        for name in ("mulgae", "gaori"):
+            with self.subTest(name=name):
+                shutil.rmtree(self.repository / ".codex", ignore_errors=True)
+                for executable in self.bin_directory.iterdir():
+                    executable.unlink()
+                self.write_project_mcp_config(name)
+                self.install_fake_tools(
+                    mulgae_mcp_mode="configured" if name == "mulgae" else None,
+                    mulgae_mcp_global=name == "mulgae",
+                    gaori_mcp_mode="configured" if name == "gaori" else None,
+                    gaori_mcp_global=name == "gaori",
+                )
+
+                registration = json.loads(self.inspect().stdout)["tools"][name][
+                    "mcp_registration"
+                ]
+
+                self.assertEqual(registration["status"], "configured")
+                self.assertEqual(registration["effective_scope"], "local")
+                self.assertEqual(registration["global"]["status"], "configured")
+                self.assertEqual(registration["local"]["status"], "configured")
+                self.assertTrue(registration["local_confirmation_required"])
+                self.assertEqual(
+                    registration["recommendation"],
+                    "confirm_or_remove_local_registration",
+                )
+
+    def test_invalid_global_mcp_registration_is_degraded(self) -> None:
+        self.install_fake_tools(
+            mulgae_mcp_mode="disabled",
+            mulgae_mcp_global=True,
+            gaori_mcp_mode="disabled",
+            gaori_mcp_global=True,
+        )
+
+        tools = json.loads(self.inspect().stdout)["tools"]
+
+        for name in ("mulgae", "gaori"):
+            with self.subTest(name=name):
+                registration = tools[name]["mcp_registration"]
+                self.assertEqual(registration["status"], "degraded")
+                self.assertEqual(registration["effective_scope"], "global")
+                self.assertEqual(registration["global"]["status"], "degraded")
+                self.assertEqual(
+                    registration["recommendation"], "repair_global_registration"
+                )
+
+    def test_global_mcp_probe_failure_is_not_treated_as_local_proof(self) -> None:
         self.write_project_mcp_config("mulgae")
         self.install_fake_tools(mulgae_mcp_mode="configured", mcp_neutral_failure=True)
 
@@ -1587,10 +1664,7 @@ class InspectToolsTest(unittest.TestCase):
         ]
 
         self.assertEqual(registration["status"], "degraded")
-        self.assertFalse(registration["project_origin_verified"])
-        self.assertEqual(
-            registration["reason"], "project_registration_origin_unverified"
-        )
+        self.assertEqual(registration["global"]["status"], "degraded")
 
     def test_repository_resolution_ignores_ambient_git_redirection(self) -> None:
         other = self.base / "other-repository"
@@ -1782,7 +1856,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn(secret, json.dumps({"mulgae": mulgae, "podway": podway}))
         self.assertEqual(podway["error_code"], "unrecognized_podway_error")
 
-    def test_project_mcp_origin_rejects_mixed_named_missing_diagnostic(self) -> None:
+    def test_global_mcp_probe_rejects_mixed_named_missing_diagnostic(self) -> None:
         self.write_project_mcp_config("mulgae")
         self.install_fake_tools(
             mulgae_mcp_mode="configured", mcp_neutral_mixed_missing=True
@@ -1793,7 +1867,7 @@ class InspectToolsTest(unittest.TestCase):
         ]
 
         self.assertEqual(registration["status"], "degraded")
-        self.assertFalse(registration["project_origin_verified"])
+        self.assertEqual(registration["global"]["status"], "degraded")
 
     def test_symlinked_mulgae_and_codex_configuration_skip_owning_probes(self) -> None:
         external = self.base / "external-config"
@@ -1852,9 +1926,8 @@ class InspectToolsTest(unittest.TestCase):
                     self.inspect(timeout_seconds=NORMAL_PROBE_TIMEOUT_SECONDS).stdout
                 )["tools"]["mulgae"]["mcp_registration"]
                 self.assertEqual(registration["status"], "degraded")
-                self.assertIn(
-                    registration["reason"],
-                    {"registration_mismatch", "project_registration_origin_unverified"},
+                self.assertEqual(
+                    registration["local"]["reason"], "registration_mismatch"
                 )
 
     def test_mulgae_mcp_absent_required_is_compatible_but_unverifiable(self) -> None:
@@ -1864,11 +1937,12 @@ class InspectToolsTest(unittest.TestCase):
             "mcp_registration"
         ]
         self.assertEqual(registration["status"], "configured")
-        self.assertIsNone(registration["required"])
-        self.assertEqual(registration["required_verification"], "unverifiable")
-        self.assertEqual(registration["required_output_capability"], "not_reported")
-        self.assertEqual(registration["compatibility_reason"], "required_unverifiable")
-        self.assertNotIn("reason", registration)
+        local = registration["local"]
+        self.assertIsNone(local["required"])
+        self.assertEqual(local["required_verification"], "unverifiable")
+        self.assertEqual(local["required_output_capability"], "not_reported")
+        self.assertEqual(local["compatibility_reason"], "required_unverifiable")
+        self.assertNotIn("reason", local)
 
     def test_mulgae_mcp_invalid_required_type_fails_closed(self) -> None:
         self.repository.joinpath(".codex").mkdir()
@@ -1881,16 +1955,18 @@ class InspectToolsTest(unittest.TestCase):
         ]
         self.assertEqual(registration["status"], "degraded")
         self.assertEqual(registration["reason"], "invalid_registration_result")
-        self.assertEqual(registration["required_output_capability"], "invalid")
+        self.assertEqual(registration["local"]["required_output_capability"], "invalid")
 
     def test_mulgae_mcp_absence_is_not_cli_degradation(self) -> None:
         self.install_fake_tools(mulgae_mcp_mode="missing")
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
         self.assertEqual(mulgae["mcp_registration"]["status"], "missing")
+        self.assertEqual(mulgae["mcp_registration"]["reason"], "registration_not_found")
+        self.assertEqual(mulgae["mcp_registration"]["codex_version"], "0.147.0")
         self.assertEqual(
-            mulgae["mcp_registration"]["reason"], "project_configuration_missing"
+            mulgae["mcp_registration"]["recommendation"],
+            "install_global_registration",
         )
-        self.assertIsNone(mulgae["mcp_registration"]["codex_version"])
         self.assertEqual(mulgae["probes"]["doctor"]["reason"], "configuration_missing")
         if platform.system() == "Darwin" and platform.machine() in {"arm64", "aarch64"}:
             self.assertEqual(mulgae["status"], "installed")
@@ -2075,12 +2151,15 @@ class InspectToolsTest(unittest.TestCase):
             "mcp_registration"
         ]
         self.assertEqual(registration["status"], "configured")
-        self.assertTrue(registration["enabled"])
-        self.assertTrue(registration["stdio"])
-        self.assertTrue(registration["repository_bound"])
-        self.assertTrue(registration["command_resolvable"])
-        self.assertTrue(registration["binary_matches_selected"])
-        self.assertEqual(registration["tool_timeout_sec"], 3601)
+        self.assertEqual(registration["preferred_scope"], "global")
+        self.assertEqual(registration["effective_scope"], "local")
+        local = registration["local"]
+        self.assertTrue(local["enabled"])
+        self.assertTrue(local["stdio"])
+        self.assertTrue(local["repository_bound"])
+        self.assertTrue(local["command_resolvable"])
+        self.assertTrue(local["binary_matches_selected"])
+        self.assertEqual(local["tool_timeout_sec"], 3601)
 
     def test_gaori_mcp_registration_accepts_larger_timeout(self) -> None:
         self.write_project_mcp_config("gaori", timeout=3602)
@@ -2089,7 +2168,7 @@ class InspectToolsTest(unittest.TestCase):
             "mcp_registration"
         ]
         self.assertEqual(registration["status"], "configured")
-        self.assertEqual(registration["tool_timeout_sec"], 3602)
+        self.assertEqual(registration["local"]["tool_timeout_sec"], 3602)
 
     def test_gaori_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
@@ -2115,15 +2194,13 @@ class InspectToolsTest(unittest.TestCase):
                     "mcp_registration"
                 ]
                 self.assertEqual(registration["status"], "degraded")
-                self.assertIn(
-                    registration["reason"],
-                    {"registration_mismatch", "project_registration_origin_unverified"},
-                )
+                local = registration["local"]
+                self.assertEqual(local["reason"], "registration_mismatch")
                 if mode == "wrong-command":
-                    self.assertTrue(registration["command_resolvable"])
-                    self.assertFalse(registration["binary_matches_selected"])
+                    self.assertTrue(local["command_resolvable"])
+                    self.assertFalse(local["binary_matches_selected"])
                 if mode == "extra-arg":
-                    self.assertFalse(registration["arguments_match"])
+                    self.assertFalse(local["arguments_match"])
 
     def test_symlinked_paired_skill_is_degraded(self) -> None:
         source = self.base / "source-skill"
@@ -2171,8 +2248,10 @@ class InspectToolsTest(unittest.TestCase):
         gaori = json.loads(self.inspect().stdout)["tools"]["gaori"]
         self.assertEqual(gaori["status"], "installed")
         self.assertEqual(gaori["mcp_registration"]["status"], "missing")
+        self.assertEqual(gaori["mcp_registration"]["reason"], "registration_not_found")
         self.assertEqual(
-            gaori["mcp_registration"]["reason"], "project_configuration_missing"
+            gaori["mcp_registration"]["recommendation"],
+            "install_global_registration",
         )
 
     def test_worktree_counts_staged_unstaged_and_untracked_files(self) -> None:
@@ -2299,7 +2378,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v6")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v7")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 
