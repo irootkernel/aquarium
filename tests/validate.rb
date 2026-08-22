@@ -454,6 +454,9 @@ assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("Approved by Master") &&
        test_setup_contract.include?("Static pytest `addopts` and `PYTEST_ADDOPTS`") &&
        test_setup_contract.include?("Make-valued shell aliases") &&
+       test_setup_contract.include?("Approval timing and execution evidence belong in Git history or the owning workflow report") &&
+       test_setup_contract.include?("A waiver becomes stale only when a change affects a fact supporting that waiver") &&
+       test_setup_contract.include?("Adding or changing test cases inside the same waived layer does not by itself stale the waiver") &&
        test_setup_contract.include?("Stale waivers do not authorize a skip"),
        "test contract must define stable rules and bounded legacy waivers")
 assert(test_setup_profiles.include?("$(MAKE) test-prepare") &&
@@ -2087,8 +2090,11 @@ assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
 assert(testing_document.include?("aquarium-test-contract/v1") &&
        testing_headings.all? { |heading| testing_document.include?("## #{heading}") } &&
        testing_document.include?("AQ-WAIVER-001") &&
-       testing_document.include?("Approved by Master: 2026-08-22") &&
-       testing_document.include?("Last revalidated: 2026-08-22") &&
+       testing_document.include?("Approved by Master") &&
+       testing_document.include?("Routine additions or edits to test cases inside the same waived suites do not by themselves stale the waiver") &&
+       !testing_document.match?(/\b20\d{2}-\d{2}-\d{2}\b/) &&
+       !testing_document.include?("Last revalidated") &&
+       !testing_document.include?("against functional candidate") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),
