@@ -47,6 +47,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:war-room` for difficult-bug diagnosis and `$aquarium:design-qa` for local Design Gate lifecycle work.
 - Use `$aquarium:release-qa` for exact release-candidate verification and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
+- Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$use-sanho`, `$use-mulgae`, `$use-gaori`, and `$use-podway` for their respective local tool operations. Aquarium workflow skills retain their stricter roadmap, ownership, and approval rules.
 - Treat `.podway/procedures/aquarium-*-v2.yaml` as the repository-local workflow evidence and routing authority.

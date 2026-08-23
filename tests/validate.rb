@@ -57,6 +57,7 @@ expected_skill_names = %w[
   design-qa
   dev-setup-bundle
   dev-setup
+  docs-setup
   epic-handler
   epic-validator
   independent-review
@@ -104,7 +105,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[ai-fleet agentic design deslop graph loop lora lore multi-agent orchestration ouroboros podway release qa workflow] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[ai-fleet agentic design documentation deslop graph loop lora lore multi-agent orchestration ouroboros podway release qa workflow] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.10", "plugin version must be 0.1.10")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -139,6 +140,8 @@ assert(prompts.any? { |prompt| prompt.include?("$aquarium:dev-setup") },
        "plugin defaultPrompt must retain development-tool discovery")
 assert(prompts.any? { |prompt| prompt.include?("$aquarium:test-setup") },
        "plugin defaultPrompt must expose test setup")
+assert(prompts.any? { |prompt| prompt.include?("$aquarium:docs-setup") },
+       "plugin defaultPrompt must expose documentation setup")
 %w[websiteURL privacyPolicyURL termsOfServiceURL].each do |key|
   assert(manifest.fetch("interface").fetch(key).start_with?("https://"), "missing interface #{key}")
 end
@@ -205,6 +208,11 @@ test_setup_contract = PLUGIN.join("skills/test-setup/references/contract.md").re
 test_setup_profiles = PLUGIN.join("skills/test-setup/references/profiles.md").read
 test_setup_script = PLUGIN.join("skills/test-setup/scripts/inspect_testing.py")
 test_setup_script_body = test_setup_script.read
+docs_setup = PLUGIN.join("skills/docs-setup/SKILL.md").read
+docs_setup_profiles = PLUGIN.join("skills/docs-setup/references/profiles.md").read
+docs_setup_migration = PLUGIN.join("skills/docs-setup/references/migration.md").read
+docs_setup_script = PLUGIN.join("skills/docs-setup/scripts/inspect_docs.py")
+docs_setup_script_body = docs_setup_script.read
 design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
 new_project = PLUGIN.join("skills/new-project/SKILL.md").read
 new_feature = PLUGIN.join("skills/new-feature/SKILL.md").read
@@ -212,6 +220,7 @@ refactor = PLUGIN.join("skills/refactor/SKILL.md").read
 war_room = PLUGIN.join("skills/war-room/SKILL.md").read
 ouroboros_contract = PLUGIN.join("references/ouroboros-integration.md").read
 design_gate_contract = PLUGIN.join("references/design-gates.md").read
+documentation_contract = PLUGIN.join("references/documentation-governance.md").read
 plan_handoff_path = PLUGIN.join("references/plan-handoff.md")
 assert(plan_handoff_path.file?, "shared plan-handoff contract is missing")
 plan_handoff_contract = plan_handoff_path.read
@@ -452,6 +461,55 @@ assert(test_setup.include?("does not authorize a test that creates containers") 
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `test-setup`") &&
        ROOT.join("PRIVACY.md").read.include?("obtains separate approval before execution"),
        "test-setup and public privacy guidance must preserve effectful E2E approval and production safety")
+assert(docs_setup_script.file?, "docs-setup structural inspector is missing")
+assert(docs_setup_script_body.include?("aquarium-docs-inspection/v1") &&
+       docs_setup_script_body.include?("--literal-pathspecs") &&
+       docs_setup_script_body.include?("planned_epic_and_all_child_tasks_only") &&
+       docs_setup_script_body.include?("legacy-adopt") &&
+       docs_setup_script_body.include?("sensitive_path") &&
+       docs_setup_script_body.include?("safe_regular_file") &&
+       docs_setup_script_body.include?("tracked_symlink_excluded") &&
+       docs_setup_script_body.include?("canonical_untracked_text_files") &&
+       docs_setup_script_body.include?("ambiguous_cross_scope_identifier_reference") &&
+       docs_setup_script_body.include?("preserved_historical_paths") &&
+       docs_setup_script_body.include?("content_semantics") &&
+       docs_setup_script_body.include?("runtime_truth") &&
+       docs_setup_script_body.include?("GIT_OPTIONAL_LOCKS") &&
+       docs_setup_script_body.include?("core.fsmonitor=false"),
+       "docs-setup inspector must remain bounded, local, and structurally conservative")
+assert(docs_setup.include?("scripts/inspect_docs.py") &&
+       docs_setup.include?("conservative structural evidence only") &&
+       docs_setup.include?("Apply exactly this diff") &&
+       docs_setup.include?("never stages, commits, pushes, publishes") &&
+       docs_setup.include?("does not become repository-native CI"),
+       "docs-setup must separate audit, exact-diff approval, and repository-native proof")
+assert(docs_setup.include?("Never open `.env*`, authentication, credential, key, secret, or token paths") &&
+       docs_setup.include?("Do not read ignored runtime evidence") &&
+       ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `docs-setup`") &&
+       ROOT.join("PRIVACY.md").read.include?("without executing project code or contacting a network"),
+       "docs-setup and public privacy guidance must preserve local inspection boundaries")
+assert(documentation_contract.include?("## Semantic Roles") &&
+       documentation_contract.include?("## Profiles") &&
+       documentation_contract.include?("## New Roadmap Identity") &&
+       documentation_contract.include?("EPIC-[0-9]{3,}") &&
+       documentation_contract.include?("TASK-[0-9]{3,}") &&
+       documentation_contract.include?("The canonical roadmap path is the namespace") &&
+       documentation_contract.include?("scope:ID") &&
+       documentation_contract.include?("for that ID kind") &&
+       documentation_contract.include?("roadmap identity contract") &&
+       documentation_contract.include?("Do not create `.aquarium`") &&
+       docs_setup_profiles.include?("single-scope") &&
+       docs_setup_profiles.include?("multi-scope") &&
+       docs_setup_profiles.include?("legacy-adopt"),
+       "documentation governance must define roles, profiles, and roadmap-local numeric IDs")
+assert(docs_setup_migration.include?("status is exactly `Planned`") &&
+       docs_setup_migration.include?("every child task is exactly `Planned`") &&
+       docs_setup_migration.include?("id-migrations/YYYY-MM-DD.md") &&
+       docs_setup_migration.include?("Preserved Historical Paths") &&
+       docs_setup_migration.include?("## Path and Profile Migration") &&
+       docs_setup_migration.include?("Never move a task across epic boundaries") &&
+       docs_setup_migration.include?("Do not update only the roadmap"),
+       "documentation migration must preserve history and rewrite the complete tracked reference set")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
@@ -1125,13 +1183,22 @@ assert(ROOT.join("README.md").read.include?("explicit plan handoff to another ag
   assert(body.include?("exact") && body.match?(/explicit approval/i),
          "#{name} must gate durable document changes on exact-diff approval")
 end
-assert(new_project.include?("PRD and an initial roadmap") &&
+assert(new_project.include?("PRD and one initial roadmap per delivery scope") &&
        new_project.include?("non-Git project") &&
        new_project.include?("skip Podway completely") &&
        new_project.include?("gate creation requires a later explicit"),
        "new-project must stop at PRD and roadmap and keep non-Git work Podway-free")
+assert(new_project.include?("documentation-governance.md") &&
+       new_project.include?("`single-scope`") &&
+       new_project.include?("`multi-scope`") &&
+       new_project.include?("`EPIC-NNN`") &&
+       new_project.include?("per-roadmap `TASK-NNN`") &&
+       new_project.include?("Do not add a repository-local Aquarium state file or documentation validator"),
+       "new-project must establish the shared documentation and roadmap identity contract")
 assert(new_feature.include?("exactly one feature epic") &&
+       new_feature.include?("documentation-governance.md") &&
        refactor.include?("exactly one refactor epic") &&
+       refactor.include?("documentation-governance.md") &&
        refactor.include?("compatibility") && refactor.include?("rollback"),
        "feature and refactor skills must produce one bounded epic")
 assert(war_room.include?("Do not implement a fix") &&
@@ -1315,6 +1382,9 @@ assert(agents_reference.include?("use Podway by default") &&
        agents_reference.include?("$aquarium:design-qa") &&
        agents_reference.include?("workflow skills retain their stricter roadmap, ownership, and approval rules"),
        "AGENTS guidance must preserve default use and workflow-local opt-out")
+assert(agents_reference.include?("$aquarium:docs-setup") &&
+       root_agents.include?("$aquarium:docs-setup"),
+       "repository guidance must route documentation governance through docs-setup")
 
 required_evidence = ->(*nodes) { nodes.map { |node| [node, true] } }
 expected_procedure_graphs = {
@@ -2326,6 +2396,8 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.match?(/\b20\d{2}-\d{2}-\d{2}\b/) &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
+       testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
+       testing_document.include?("docs-setup structural inspectors") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),
@@ -2354,6 +2426,7 @@ readme_skill_names = %w[
   design-qa
   dev-setup-bundle
   dev-setup
+  docs-setup
   epic-handler
   epic-validator
   independent-review

@@ -51,7 +51,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 별도의 Codex session에 요구사항과 코드의 read-only review를 맡기며, `$aquarium:orca-review`는 공개된 exact snapshot을 사용자가 고른 provider로 Orca에서 review합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
 4. **Release** — `$aquarium:release-qa`는 버전을 내보내기 전에 release delta와 모든 active Design Gate를 격리된 scenario로 검증합니다.
 
-기반 구성: `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
+기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
 
 ## 생태계가 연결되는 방식
 
@@ -77,6 +77,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 ## 참고 문서
 
 - [TESTING.md](TESTING.md)는 이 저장소의 test authority와 `aquarium-test-contract/v1` evidence mapping을 정의합니다.
+- [Documentation governance](plugins/aquarium/references/documentation-governance.md)는 Aquarium의 문서 역할, profile, 기본 roadmap identity를 정의합니다.
 - [Bundle manifest reference](plugins/aquarium/skills/dev-setup-bundle/references/manifest.md)는 여러 저장소를 한 번에 설정하는 manifest 형식을 정의합니다.
 - 각 skill의 `SKILL.md`가 trigger, effect, approval boundary, failure behavior의 authority입니다.
 
