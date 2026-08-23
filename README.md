@@ -4,13 +4,19 @@
 
 **Software engineering with AI Fleets, not vibe coding.**
 
-English · [한국어](README.ko.md) · Using Claude Code instead of Codex? See [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude).
+English · [한국어](README.ko.md)
 
 By [Root Kernel](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
 Aquarium is a Codex plugin for engineering reliable software with AI Fleets. It connects specialized agents, models, and development tools into workflows with three rules: every task has a tracked state, completion needs verified evidence, and consequential actions wait for your approval.
 
 Aquarium is growing beyond vibe coding toward Agentic Engineering, Loop Engineering, Graph Engineering, and the practices that come next. These are not separate products or a rigid maturity model. They name a direction: AI work that is more specialized, more iterative, more connected, and more accountable.
+
+## Aquarium Editions
+
+- [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)
+- [Aquarium for Kimi](https://github.com/irootkernel/aquarium-kimi)
+- [Aquarium for GLM](https://github.com/irootkernel/aquarium-glm)
 
 ## Why Aquarium
 
