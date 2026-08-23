@@ -5,7 +5,7 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 # Task Verify
 
-Verify the implemented task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff.
+Verify the implemented task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff. Read [evidence-residency.md](../../references/evidence-residency.md) before consuming or returning runtime evidence.
 
 Read [design-gates.md](../../references/design-gates.md). Resolve the effective Design Gate impact from the task first and then its parent epic, applying the documented legacy-only `Not required` rule when neither marker exists. Stop when the effective marker is missing in an enrolled repository or is `Pending`.
 
@@ -46,7 +46,7 @@ When a selected long or noisy check is routed through Gaori, reference `$use-gao
 
 If the skill is unavailable and repository guidance requires it, return an exact `$aquarium:dev-setup` continuation request. Otherwise run the repository's original documented test command directly and report that Gaori evidence compression was unavailable; if the original command cannot be established from repository authority, leave an evidence gap instead of inferring it from conversation memory.
 
-Keep the executed command result separate from Gaori artifact `status`, `extractor_status`, and truncation. Gaori evidence never selects a required gate or establishes acceptance. Include the Gaori invocation, process exit, evidence-quality fields, relevant summary paths, whether raw evidence was opened, and skipped checks in the handoff.
+Keep the executed command result separate from Gaori artifact `status`, `extractor_status`, and truncation. Gaori evidence never selects a required gate or establishes acceptance. Include the Gaori invocation, process exit, evidence-quality fields, relevant summary paths, whether raw evidence was opened, and skipped checks in the orchestration handoff, marking every `.gaori/runs/**` path as local runtime evidence that must not be copied into tracked documentation.
 
 Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase.
 

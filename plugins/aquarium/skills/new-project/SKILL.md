@@ -7,7 +7,7 @@ description: "Shape a greenfield project into an approved PRD and initial roadma
 
 Create a PRD and initial roadmap for one new project. Do not implement code, initialize Git, create Design Gates, stage, commit, or publish.
 
-Read [ouroboros-integration.md](../../references/ouroboros-integration.md) and [design-gates.md](../../references/design-gates.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely.
+Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md) and [design-gates.md](../../references/design-gates.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely without skipping the evidence-residency contract.
 
 Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, and acceptance evidence. Use installed upstream `$interview` and `$pm` only after the approved execution envelope. Produce a PRD and an initial roadmap with explicit epics and ordered work units.
 

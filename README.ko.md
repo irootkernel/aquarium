@@ -25,6 +25,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **작업에는 identity가 있습니다.** 수행 대상 task나 epic은 roadmap 안에서 ID와 lifecycle 상태를 가집니다. Commit은 `task-commit`을 거치며, 사용자가 확인한 lifecycle 변경을 건너뛰지 않고 함께 기록합니다.
 - **수행은 단계와 gate로 나뉩니다.** `task-handler`는 task 하나를 plan부터 close까지 7단계로 진행합니다. Plan을 승인하기 전에는 아무것도 바꾸지 않습니다. 해당하는 모든 roadmap 요구사항은 현재 증거와 대응되어야 합니다. Closeout은 사용자의 명시적 승인을 기다립니다.
 - **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 roadmap, 코드, 테스트에 대해 로컬에서 검증하기 전까지 참고 의견(advisory)으로만 취급합니다.
+- **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
 - **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review와 remediation round는 정해진 예산 안에서만 돌고, cold validation은 새 gap이 더 발견되지 않으면 멈춥니다.
 - **불변식과 테스트는 계약입니다.** Design Gate는 offline에서 객관적으로 검증 가능한 규칙입니다. Gate impact가 아직 pending인 task는 구현할 수 없고, release QA는 모든 active gate를 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
@@ -54,7 +55,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 ## 생태계가 연결되는 방식
 
-- [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 영속적인 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
+- [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 사용자가 명시적으로 선택한 AI CLI가 공개된 repository snapshot 하나를 review하도록 감독합니다. Aquarium은 provider 동의를 그 snapshot에 결합하고 결과를 독립적으로 판정합니다.
@@ -63,6 +64,8 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Ouroboros](https://github.com/Q00/ouroboros)는 명시적으로 호출한 다섯 가지 design workflow 안에서만 discovery, PM, Seed, QA를 제공합니다. 문서 적용, 승인, 저장소 authority는 Aquarium이 가집니다.
 
 이 도구들은 작업 구체화부터 문서 동기화까지 하나의 통제된 경로를 이룹니다. Aquarium은 그 사이를 연결해, 도구 하나의 성공이 프로젝트 완료로 오인되지 않게 합니다.
+
+`.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, disposable root의 runtime evidence는 local이며 삭제될 수 있습니다. Aquarium은 해당 경로나 identity를 tracked roadmap, repository handoff, commit message에서 evidence로 인용하지 않습니다. 영속적인 예외가 꼭 필요하면 검토된 bounded non-sensitive structured evidence만 repository evidence root, 기본값 `evidence/aquarium/`, 아래의 `aquarium.promoted-evidence/v1` package로 복사합니다.
 
 ## 운영 경계
 

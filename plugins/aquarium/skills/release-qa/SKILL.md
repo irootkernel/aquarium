@@ -7,7 +7,7 @@ description: "Run one full scenario-based QA pass for an exact main release cand
 
 Assess one exact committed `main` candidate in either `full` or `confirmation` mode. A first pass is always `full` and uses two independent matrices: every active Design Gate and every material release-delta change. A later pass may use `confirmation` only under the bounded contract below.
 
-Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. One invocation owns exactly one QA pass and, when a full pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
+Always read [evidence-residency.md](../../references/evidence-residency.md). Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. Every `/tmp` path and worker identity remains local orchestration evidence and never enters tracked documentation. One invocation owns exactly one QA pass and, when a full pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material.
 

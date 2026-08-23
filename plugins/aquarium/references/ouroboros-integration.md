@@ -1,6 +1,6 @@
 # Ouroboros Integration Contract
 
-Read this reference whenever `new-project`, `new-feature`, `refactor`, `war-room`, or `design-qa` is explicitly invoked. Aquarium owns repository authority, approvals, exact diffs, Podway orchestration, and final artifact application. Installed upstream Ouroboros skills and MCP tools are leaf capabilities: use them for requirements discovery, PM shaping, and QA, but do not copy, emulate, or silently replace them.
+Read this reference and [evidence-residency.md](evidence-residency.md) whenever `new-project`, `new-feature`, `refactor`, `war-room`, or `design-qa` is explicitly invoked, including when Podway is opted out or unavailable. Aquarium owns repository authority, approvals, exact diffs, Podway orchestration, and final artifact application. Installed upstream Ouroboros skills and MCP tools are leaf capabilities: use them for requirements discovery, PM shaping, and QA, but do not copy, emulate, or silently replace them.
 
 Support only Ouroboros `>=0.51.1,<0.52.0`. Before the first provider-backed operation, establish the installed CLI version, Codex skill health, MCP registration, and runtime readiness independently. A missing or degraded component blocks these Ouroboros-assisted workflows: record the evidence gap and offer repair through `$aquarium:dev-setup` or end the workflow. Do not continue without Ouroboros, install it, or refresh it from this workflow.
 

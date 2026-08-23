@@ -215,6 +215,9 @@ design_gate_contract = PLUGIN.join("references/design-gates.md").read
 plan_handoff_path = PLUGIN.join("references/plan-handoff.md")
 assert(plan_handoff_path.file?, "shared plan-handoff contract is missing")
 plan_handoff_contract = plan_handoff_path.read
+evidence_residency_path = PLUGIN.join("references/evidence-residency.md")
+assert(evidence_residency_path.file?, "shared evidence-residency contract is missing")
+evidence_residency = evidence_residency_path.read
 
 assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
@@ -670,7 +673,9 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
        dev_setup.include?("Never authenticate a provider, inspect a prior run") &&
        dev_setup.include?("--require-mulgae-mcp"),
        "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
-assert(ROOT.join("README.md").read.include?("durable local execution memory") &&
+assert(ROOT.join("README.md").read.include?("provides local execution memory") &&
+       !ROOT.join("README.md").read.include?("durable local execution memory") &&
+       !ROOT.join("README.ko.md").read.include?("영속적인 local execution memory") &&
        ROOT.join("README.md").read.include?("selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`") &&
        ROOT.join("README.ko.md").read.include?("`task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용") &&
        ROOT.join("README.md").read.include?("opted out before the first managed-session mutation") &&
@@ -679,6 +684,21 @@ assert(ROOT.join("README.md").read.include?("durable local execution memory") &&
 assert(ROOT.join("PRIVACY.md").read.include?("use-podway") &&
        ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-podway"),
        "privacy policy must disclose Podway skill installation")
+assert(ROOT.join("README.md").read.include?("Evidence has a residence") &&
+       ROOT.join("README.md").read.include?("aquarium.promoted-evidence/v1") &&
+       ROOT.join("README.md").read.include?("tracked roadmaps, repository handoffs, or commit messages") &&
+       ROOT.join("README.ko.md").read.include?("증거에는 보존 위치가 있습니다") &&
+       ROOT.join("README.ko.md").read.include?("aquarium.promoted-evidence/v1") &&
+       ROOT.join("README.ko.md").read.include?("tracked roadmap, repository handoff, commit message") &&
+       ROOT.join("PRIVACY.md").read.include?("must not be copied into tracked documentation as execution logs") &&
+       ROOT.join("PRIVACY.md").read.include?("Standard promotion excludes raw logs") &&
+       ROOT.join("PRIVACY.md").read.include?("accepted reports") &&
+       ROOT.join("PRIVACY.md").read.include?("applicable repository `AGENTS.md` Project Configuration") &&
+       agents_reference.include?("Do not cite their paths or identities as durable evidence") &&
+       agents_reference.include?("Aquarium evidence root: <repository-relative-path>") &&
+       root_agents.include?("never tracked documentation authority") &&
+       root_agents.include?("Aquarium evidence root: <repository-relative-path>"),
+       "public privacy and agent guidance must preserve evidence residency and promotion boundaries")
 assert(gaori_catalog, "Gaori tool catalog section is missing")
 assert(gaori_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
 assert(gaori_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
@@ -937,7 +957,9 @@ assert(epic_handler.include?("coverage_status=complete") && epic_handler.include
        epic_handler.include?("findings query succeeds") && epic_handler.include?("untracked, generated, and derived files"),
        "epic-handler must require complete Mulgae evidence")
 assert(epic_handler.include?("Commit and upstream publication are separate states") &&
-       epic_handler.include?("status-only roadmap transition is the sole exception"),
+       epic_handler.include?("change after verification or review makes affected evidence stale") &&
+       epic_handler.include?("approved post-review promoted-evidence projection are the sole exceptions") &&
+       epic_handler.include?("projection remains outside the review target"),
        "epic-handler must separate lifecycle evidence and invalidate stale review")
 assert(epic_handler.lines.length < 120, "epic-handler must remain orchestration-focused")
 
@@ -966,9 +988,9 @@ assert(epic_validator.include?("gap owned by one existing task") &&
        "epic-validator must route and serialize remediation by canonical owner")
 assert(epic_validator.include?("If the roadmap defines a reopen state") &&
        epic_validator.include?("otherwise preserve the successful state") &&
-       epic_validator.include?("do not create a new task entry") &&
-       epic_validator.include?("Record resulting remediation commit IDs in the final validation record"),
-       "epic-validator must preserve lifecycle vocabulary and remediation notes")
+       epic_validator.include?("without adding remediation history to the roadmap") &&
+       epic_validator.include?("Record resulting remediation commit IDs in Podway and the orchestration report"),
+       "epic-validator must preserve lifecycle vocabulary without adding remediation history")
 assert(epic_validator.include?("without starting a per-goal or follow-up review") &&
        epic_validator.include?("whole-epic Mulgae confirmation review") &&
        epic_validator.include?("coverage_status=complete") &&
@@ -994,11 +1016,12 @@ assert(epic_validator.include?("Do not start a third review automatically") &&
        !epic_validator.include?("repeat affected checks and review until complete") &&
        !epic_validator.include?("regroup and repeat the goal cycle"),
        "epic-validator must enforce one automatic confirmation and severity-based user direction")
-assert(epic_validator.include?("status or validation-record-only roadmap change is the sole exception") &&
+assert(epic_validator.include?("planned lifecycle or accepted-risk-only roadmap change and an approved post-review promoted-evidence projection are the sole exceptions") &&
+       epic_validator.include?("projection remains outside the review target") &&
        epic_validator.include?("Treat a Mulgae review as operationally complete") &&
        epic_validator.include?("Classify that complete review as clean only when zero unresolved valid findings remain") &&
        epic_validator.include?("An incomplete review or `stop` disposition never supports completion") &&
-       epic_validator.include?("never duplicate an equivalent record or create an empty commit"),
+       epic_validator.include?("never create a validation record or empty commit"),
        "epic-validator must separate review completion from clean or accepted closeout and avoid empty commits")
 assert(epic_validator.include?("$aquarium:task-commit") &&
        epic_validator.include?("Never commit independently"),
@@ -1042,7 +1065,7 @@ assert(task_handler.include?("Do not create or read `.aquarium`"),
 assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
        task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
-assert(task_handler.lines.length < 110, "task-handler must remain orchestration-focused")
+assert(task_handler.lines.length < 111, "task-handler must remain orchestration-focused")
 
 assert(task_handler.include?("`execute` by default") &&
        task_handler.include?("`plan-only`") &&
@@ -1183,18 +1206,25 @@ assert(podway_contract.include?("podway.observation-result/v2") &&
 assert(podway_contract.include?("## Record Terminal Ownership Conservatively") &&
        podway_contract.include?("Use `handed_off` only when an exact authoritative external result already exists") &&
        podway_contract.include?("exact commit SHA") &&
-       podway_contract.include?("Use `not_required` only for a disclosed internal Aquarium boundary") &&
+       podway_contract.include?("Use `not_required` only when no final external handoff or repository result is required") &&
+       podway_contract.include?("epic-handler closeout with no final repository diff") &&
+       podway_contract.include?("Earlier task or remediation commits do not prevent this disposition") &&
        podway_contract.include?("leave the terminal revision undisposed") &&
        podway_contract.include?("never choose force reset or force replacement automatically") &&
        podway_contract.include?("start --replace-eligible"),
        "Podway terminal disposition and eligible replacement policy is incomplete")
 assert(podway_contract.include?("## Hand Off Across Workflow Owners") &&
        podway_contract.include?("replace-after-disposition, never automatic resume") &&
-       podway_contract.include?("stable artifact reference") &&
+       podway_contract.include?("stable non-runtime artifact reference") &&
        podway_contract.include?("successor includes replacement") &&
        podway_contract.include?("current eligible `session.start_replace` template") &&
        podway_contract.include?("never force replacement"),
        "Podway cross-owner handoff must be explicit, verified, and fenced")
+assert(podway_contract.include?("[evidence-residency.md](evidence-residency.md)") &&
+       podway_contract.include?("These records are local runtime and orchestration evidence") &&
+       podway_contract.include?("Podway's recorded claim is not a promotion source") &&
+       podway_contract.include?("tracked promoted manifest and digest"),
+       "Podway must keep runtime evidence separate from promoted repository authority")
 assert(podway_contract.include?("Only `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa` may own or advance") &&
        podway_contract.include?("standalone user request that explicitly invokes `$use-podway`") &&
        podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis") &&
@@ -1267,13 +1297,13 @@ assert(task_handler.include?("exact required commit SHA") &&
 assert(epic_handler.include?("Record `handed_off` with the exact task commit SHA") &&
        epic_handler.include?("fresh eligible replacement template") &&
        epic_handler.include?("record `not_required` only after verifying") &&
-       epic_handler.include?("leave the final terminal session intact"),
+       epic_handler.include?("Leave the final terminal session intact"),
        "epic-handler must sequence v0.2.5 dispositions and eligible replacements")
-assert(epic_validator.include?("validation-record commit") &&
-       epic_validator.include?("record `handed_off` with that exact commit SHA") &&
-       epic_validator.include?("leave the final terminal session intact") &&
-       epic_validator.include?("leave it undisposed rather than inventing a reference"),
-       "epic-validator must hand off only a verified durable validation result")
+assert(epic_validator.include?("A clean validation with no canonical change creates no repository diff or validation-record commit") &&
+       epic_validator.include?("record `not_required` with the verified reason even if earlier task or remediation commits exist") &&
+       epic_validator.include?("Record `handed_off` with the exact final validation-owned repository result") &&
+       epic_validator.include?("Leave the final terminal session intact"),
+       "epic-validator must distinguish committed canonical results from clean no-change validation")
 assert(agents_reference.include?("$use-podway") &&
        agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-podway")
@@ -1420,7 +1450,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = filename == "aquarium-validation-v2.yaml" ? "3" : (%w[aquarium-task-v2.yaml aquarium-goal-v2.yaml].include?(filename) ? "2" : "1")
+  expected_version = { "aquarium-validation-v2.yaml" => "5", "aquarium-goal-v2.yaml" => "4", "aquarium-task-v2.yaml" => "3" }.fetch(filename, "1")
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1478,6 +1508,7 @@ plan_handoff_item = lambda do |procedure, definition|
 end
 plan_handoff_item.call(task_procedure, "plan-record")
 task_review_items = review_item_index.call(task_procedure, "review-record")
+task_closeout_items = review_item_index.call(task_procedure, "closeout-record")
 assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
        task_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
        task_review_items.fetch("review-run-id").fetch("type") == "text",
@@ -1487,6 +1518,14 @@ assert(task_procedure_text.include?("leave a confirmation-only review with valid
        "task procedure must represent the confirmation-only user hold")
 assert(task_procedure_text.include?("Review is incomplete, CI failed, or a remediation-eligible valid finding"),
        "task procedure must route a failing-CI review to rework even with zero findings")
+assert(task_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("required") == false &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("min_items") == 0 &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("max_items") == 50 &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("max_item_length") == 1200 &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("max_total_length") == 1_000_000 &&
+       task_closeout_items.fetch("promoted-evidence-references").fetch("unique") == true,
+       "task procedure must record optional committed promoted evidence at closeout")
 
 validation_procedure_text = procedures_directory.join("aquarium-validation-v2.yaml").read
 validation_procedure = YAML.safe_load(validation_procedure_text, aliases: false)
@@ -1507,6 +1546,18 @@ assert(validation_goal_options.fetch("achieved").include?("reached from validate
        validation_goal_options.fetch("not-achieved").include?("record-stopped or record-incomplete") &&
        validation_goal_options.fetch("not-achieved").include?("can never select achieved"),
        "validation procedure must forbid achieved closeout from incomplete or stopped dispositions")
+validation_closeout_items = review_item_index.call(validation_procedure, "closeout-record")
+assert(validation_procedure.fetch("version") == "5" &&
+       validation_procedure.dig("node_definitions", "closeout-record", "intent").include?("explicit no-change result") &&
+       validation_closeout_items.fetch("closeout-summary").fetch("prompt").include?("verified reason no repository record is required") &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("required") == false &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("unique") == true &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("min_items") == 0 &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("max_items") == 50 &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("max_item_length") == 1200 &&
+       validation_closeout_items.fetch("promoted-evidence-references").fetch("max_total_length") == 1_000_000,
+       "validation procedure must support clean no-record closeout and optional promoted evidence")
 
 goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml").read, aliases: false)
 plan_handoff_item.call(goal_procedure, "work-record")
@@ -1523,8 +1574,16 @@ goal_deferral_items = review_item_index.call(goal_procedure, "hardening-deferral
 assert(goal_deferral_items.fetch("hardening-deferral-run-id").fetch("type") == "text" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("type") == "list" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("unique") == true &&
-       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200,
-       "goal procedure must separate the exact deferred Mulgae run and finding identities")
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200 &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("required") == true &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("max_length") == 1024 &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("required") == true &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("min_length") == 71 &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("max_length") == 71 &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("multiline") == false &&
+       goal_procedure_text.include?("verified staged aquarium.promoted-evidence/v1 manifest") &&
+       goal_procedure_text.include?("linked before this decision"),
+       "goal procedure must retain local Mulgae identities and require durable promoted deferral evidence")
 goal_procedure_nodes = goal_procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
 goal_assess_evidence = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map do |entry|
   [entry.fetch("node"), entry.fetch("required")]
@@ -1966,20 +2025,84 @@ assert(task_document.include?("required for downstream correctness, compatibilit
 assert(task_document.include?("This phase report is orchestration evidence, not a repository handoff") &&
        task_document.include?("Do not copy it into durable documentation unless an item independently passes the downstream usefulness test"),
        "task-document must keep its complete phase report separate from durable handoffs")
+assert(task_document.include?("Never copy ignored runtime paths or identities") &&
+       task_document.include?("Do not create routine `Validation remediation` or `Validation record` sections") &&
+       task_handler.include?("routine validation record") &&
+       task_verify.include?("local runtime evidence that must not be copied into tracked documentation") &&
+       task_close.include?("never treat an ignored runtime path or run ID as durable documentation"),
+       "task workflow must keep runtime and validation logs out of canonical documentation")
 assert(task_handler.include?("every repository handoff is actionable for a named future consumer") &&
        task_handler.include?("clear Internal or External lifecycle") &&
-       task_handler.include?("completion evidence is not duplicated as handoff prose") &&
+       task_handler.include?("completion or runtime evidence is not duplicated as handoff prose") &&
        task_handler.include?("consumed or stale Internal entries are removed or updated") &&
        task_handler.include?("documentation validation has current evidence"),
        "task-handler must enforce the durable repository handoff postcondition")
-assert(task_handler.include?("a leaf skill's phase handoff summary to the orchestrator") &&
-       task_handler.include?("Podway evidence recorded for session recovery") &&
-       task_handler.include?("a durable repository handoff for future development agents") &&
+assert(task_handler.include?("Distinguish a leaf phase summary, Podway recovery evidence, and a durable repository handoff") &&
        task_handler.include?("Only the last belongs in project documentation"),
        "task-handler must separate orchestration, Podway, and repository handoff evidence")
-assert(task_handler.include?("Reject or rework documentation") &&
-       task_handler.include?("primarily an audit log, completion summary, or collection of evidence"),
+assert(task_handler.include?("Reject audit logs, completion summaries, evidence collections, routine validation records, and ignored runtime references"),
        "task-handler must return evidence-log documentation for rework")
+{
+  "task-handler" => task_handler,
+  "task-verify" => task_verify,
+  "task-document" => task_document,
+  "task-close" => task_close,
+  "task-commit" => task_commit,
+  "task-review" => task_review,
+  "epic-handler" => epic_handler,
+  "epic-validator" => epic_validator,
+  "release-qa" => release_qa,
+  "war-room" => war_room,
+  "design-qa" => design_qa,
+  "new-project" => new_project,
+  "new-feature" => new_feature,
+  "refactor" => refactor
+}.each do |name, body|
+  assert(body.include?("evidence-residency.md"), "#{name} must use the shared evidence-residency contract")
+end
+{
+  "war-room" => war_room,
+  "design-qa" => design_qa,
+  "new-project" => new_project,
+  "new-feature" => new_feature,
+  "refactor" => refactor
+}.each do |name, body|
+  assert(body.include?("Always read [evidence-residency.md]") &&
+         body.index("evidence-residency.md") < body.index("Podway"),
+         "#{name} must apply evidence residency before any Podway opt-out")
+end
+assert(ouroboros_contract.include?("including when Podway is opted out or unavailable") &&
+       release_qa.include?("Every `/tmp` path and worker identity remains local orchestration evidence"),
+       "opted-out design and release workflows must preserve runtime evidence residency")
+assert(evidence_residency.include?("aquarium.promoted-evidence/v1") &&
+       evidence_residency.include?("evidence/aquarium/<work-unit-id>/<purpose>/<target-content-sha256>/") &&
+       evidence_residency.include?("Aquarium-Evidence: <repository-relative-manifest-path> sha256:<64-hex-manifest-digest>") &&
+       evidence_residency.include?("Never promote raw logs, excerpts, reports containing provider prose") &&
+       evidence_residency.include?("Mulgae may contribute only a bounded structured JSON projection") &&
+       evidence_residency.include?("contains no runtime, invocation, session, provider, or model identity") &&
+       evidence_residency.include?("excluded from the Mulgae review target") &&
+       evidence_residency.include?("does not make that review stale") &&
+       evidence_residency.include?("Never stage a modification, replacement, move, or deletion of an existing tracked package") &&
+       evidence_residency.include?("Aquarium evidence root: <repository-relative-path>") &&
+       evidence_residency.include?("No other evidence-path mention is a declaration") &&
+       evidence_residency.include?("At most one package may exist for the same work unit, purpose, and target digest") &&
+       evidence_residency.include?("`work_unit.kind` is `task` or `epic`") &&
+       evidence_residency.include?("never derive either value from a runtime or session identity") &&
+       evidence_residency.include?("`target.content_sha256` in the final artifact") &&
+       evidence_residency.include?("owning workflow verifies the live native evidence") &&
+       evidence_residency.include?("producer does not expose an authoritative target SHA-256") &&
+       evidence_residency.include?("no documentation diff and no validation-record commit") &&
+       evidence_residency.include?("do not attempt to promote the missing run") &&
+       evidence_residency.include?("This restriction does not affect an independently approved `accepted-risk`, `external-handoff`, or `repository-required` package"),
+       "shared evidence residency must define general promotion, privacy, staleness, root, no-record, and legacy behavior")
+forbidden_manifest_identity_keys = %w[runtime_id run_id invocation_id session_id provider model]
+assert(forbidden_manifest_identity_keys.none? { |key| evidence_residency.include?(%Q{"#{key}"}) },
+       "shared evidence residency examples must not normalize runtime identities")
+assert(!epic_validator.include?("Record the final audited snapshot and evidence in the roadmap") &&
+       !epic_validator.include?("Add a concise roadmap remediation note") &&
+       epic_validator.include?("Never add a routine `Validation remediation`, `Validation record`") &&
+       epic_validator.include?("Record resulting remediation commit IDs in Podway and the orchestration report"),
+       "epic-validator must not turn validation execution into roadmap history")
 assert(task_review.include?("Select exactly one target that contains the complete task diff"),
        "task-review must isolate one complete Mulgae target")
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),
@@ -2027,8 +2150,21 @@ assert(task_close.include?("Only `Approve and commit` and `Approve and close wit
        "task-close must enumerate the affirmative implementation answers")
 assert(task_close.include?("Never select a terminal state") &&
        task_close.include?("When only one terminal state exists, ask for confirmation") &&
+       task_close.include?("zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence") &&
        task_close.include?("Do not stage or commit independently"),
        "task-close must leave lifecycle choice to the user and commit execution to task-commit")
+
+promotion_index = epic_handler.index("Create and stage the smallest safe structured projection")
+deferral_decision_index = epic_handler.index("then select the deferral decision", promotion_index)
+podway_deferral_index = epic_handler.index("record the exact run and finding IDs", deferral_decision_index)
+assert(promotion_index && deferral_decision_index && podway_deferral_index &&
+       promotion_index < deferral_decision_index && deferral_decision_index < podway_deferral_index,
+       "epic-handler must promote and verify evidence before selecting and recording a hardening deferral")
+assert(epic_validator.include?("zero or more promoted manifest path and digest pairs or their explicit absence") &&
+       epic_validator.include?("named consumer that requires durable accepted-risk evidence") &&
+       epic_validator.include?("this owning workflow verifies live native evidence") &&
+       epic_handler.include?("zero or more promoted manifest path and digest pairs or their explicit absence"),
+       "handler commit handoffs must support every approved promoted-evidence purpose")
 
 assert(task_commit.include?("always ask whether the commit belongs to one exact task") &&
        task_commit.include?("Never infer the relationship") &&
@@ -2045,13 +2181,24 @@ assert(task_commit.include?("active matching `task-handler`, `epic-handler`, `ep
        task_commit.include?("review run when applicable") &&
        task_commit.include?("Do not offer an independent path"),
        "task-commit must not bypass an active managed workflow")
-assert(task_commit.include?("Mulgae-Deferred-Run: r_...") &&
-       task_commit.include?("Mulgae-Deferred-Finding: F...") &&
-       task_commit.include?("one repeated `Mulgae-Deferred-Finding: F...` trailer per unique finding") &&
-       task_commit.include?("Do not copy finding descriptions, severity, paths, reports, or private Mulgae artifacts") &&
-       task_commit.include?("verify any expected deferral trailers from the committed message") &&
-       epic_handler.include?("enumerate `Mulgae-Deferred-Run` and every repeated `Mulgae-Deferred-Finding` trailer"),
-       "epic deferrals must use exact Mulgae identities in bounded custom commit trailers")
+assert(task_commit.include?("When a handler handoff includes one or more promoted-evidence packages") &&
+       task_commit.include?("zero or more staged promoted-evidence manifest paths") &&
+       task_commit.include?("Aquarium-Evidence: <repository-relative-manifest-path> sha256:<64-hex-manifest-digest>") &&
+       task_commit.include?("one repeatable `Aquarium-Evidence") &&
+       task_commit.include?("Never add new `Mulgae-Deferred-Run` or `Mulgae-Deferred-Finding` trailers") &&
+       !task_commit.include?("Mulgae-Deferred-Run: r_") &&
+       !task_commit.include?("Mulgae-Deferred-Finding: F") &&
+       !task_commit.include?("When an epic-handler handoff includes a hardening deferral:") &&
+       task_commit.include?("Do not copy finding descriptions, recommendations, severities, paths, reports") &&
+       task_commit.include?("Reject any staged modification, replacement, move, or deletion of an existing tracked package") &&
+       task_commit.include?("approved post-review promoted-evidence packages equal the staged diff") &&
+       task_commit.include?("committed manifest/payload digest") &&
+       epic_handler.include?("verify every member-task `Aquarium-Evidence` manifest and payload") &&
+       epic_handler.include?("Load findings only for `hardening-deferral`") &&
+       epic_handler.include?("Use an available exact run for legacy `Mulgae-Deferred-Run` and `Mulgae-Deferred-Finding` trailers") &&
+       epic_handler.include?("When that run is gone, do not promote it") &&
+       epic_handler.include?("without local runtime"),
+       "all promoted evidence must use the common commit boundary with hardening-only live verification and legacy compatibility")
 assert(task_commit.include?("AQUARIUM_COMMIT_GATE=task-commit-v1 git commit") &&
        task_commit.include?("Never export it globally") &&
        task_commit.include?("indirect commits performed by other tools may not pass"),

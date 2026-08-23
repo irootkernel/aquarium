@@ -80,6 +80,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.
 - Preserve approval boundaries between diagnosis, network lookup, installation, native configuration, repository guidance, staging, commits, and publication.
 - Green phrase or schema validators prove only their bounded contracts. Add scenario-focused coverage when changing cross-skill handoffs or approval behavior.
+- Treat ignored Mulgae, Gaori, Podway, and disposable runtime artifacts as local workflow evidence, never tracked documentation authority. Promote only reviewed bounded non-sensitive structured evidence under the shared Aquarium evidence-residency contract when a durable downstream reference is necessary. Declare a custom root only with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`.
 - Preserve unrelated staged, unstaged, and untracked work. Do not include local runtime state or setup manifests in a task unless Master explicitly puts them in scope.
 
 ### Release Policy

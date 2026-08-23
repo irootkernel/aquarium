@@ -99,6 +99,8 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$use-podway` directly for an explicitly requested Procedure v2 lifecycle, authoring, diagnosis, recovery, cancellation, or discard operation.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Use the separately installed upstream `$deslop` skill for task-owned cleanup when an Aquarium workflow requests it.
+- Keep `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and disposable roots as local runtime evidence. Do not cite their paths or identities as durable evidence in tracked documentation or commit messages; use an approved tracked `aquarium.promoted-evidence/v1` package only when a downstream consumer genuinely requires retained evidence.
+  Declare at most one custom root with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`. Promotion accepts only reviewed bounded non-sensitive structured evidence and never accepted reports, raw logs, excerpts, provider prose, runtime identities, or machine-specific paths.
 - Repository-specific rules in `Project Configuration` override these defaults.
 
 Omit `$use-*`, Lore, Deslop, or Aquarium workflow references whose corresponding skills are unavailable. A CLI alone does not justify a paired-skill reference. Put exact repository commands and stricter exceptions in `Project Configuration`; do not duplicate generic tool manuals, lifecycle procedures, recovery instructions, or Lore trailer vocabularies.

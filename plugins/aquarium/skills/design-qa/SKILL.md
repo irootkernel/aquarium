@@ -7,7 +7,7 @@ description: "Design or update durable local Design Gates with Ouroboros QA and 
 
 Create, change, reactivate, or retire Design Gates for one approved design scope. Do not implement product code, stage, commit, publish, or register networked, provider-backed, credentialed, live-service, or subjective gates.
 
-Read [ouroboros-integration.md](../../references/ouroboros-integration.md) and [design-gates.md](../../references/design-gates.md), then use the default `aquarium-design-v2` Podway path. Resolve and record the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults.
+Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md) and [design-gates.md](../../references/design-gates.md) and use the default `aquarium-design-v2` Podway path. Resolve and record the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults.
 
 Read the design artifacts, roadmap work units, architecture authority, resolved current registry, resolved retired registry when present, and local verification entrypoints. If the current registry never existed, propose its initial structure; if it existed in history but is missing, treat restoration as a contract issue rather than fresh enrollment.
 

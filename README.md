@@ -25,6 +25,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **Work has identity.** A delivery task or epic lives in your roadmap with an ID and a lifecycle state. Commits go through `task-commit`, which records the lifecycle change you confirm instead of skipping it.
 - **Delivery is phased and gated.** `task-handler` moves one task through seven stages, from plan to close. Nothing changes before you approve the plan. Every applicable roadmap requirement must map to current evidence. Closeout waits for your explicit approval.
 - **Evidence is verified.** A command's exit code decides pass or fail. Review findings stay advisory until they are checked locally against the roadmap, the code, and the tests.
+- **Evidence has a residence.** Ignored Mulgae, Gaori, and Podway runtime artifacts support the active workflow but never become roadmap history or durable repository authority. When downstream correctness truly requires retained evidence, Aquarium promotes only reviewed bounded artifacts into a tracked package outside canonical documentation.
 - **Loops are bounded.** A clean review ends the loop at once. Review and remediation rounds run inside explicit budgets, and cold validation stops when no new gaps appear.
 - **Invariants and tests are contracts.** Design Gates are offline, objectively checkable rules. A task whose gate impact is still pending cannot be implemented, and release QA re-runs every active gate. The test contract runs prepare, unit, integration, and E2E in order, fails on a missing prerequisite instead of skipping it, and gives a new project no waivers.
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
@@ -54,7 +55,7 @@ Foundations: `$aquarium:test-setup` enrolls a repository in the common test cont
 
 ## How the Ecosystem Connects
 
-- [Podway](https://github.com/irootkernel/podway) provides durable local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
+- [Podway](https://github.com/irootkernel/podway) provides local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
 - [Gaori](https://github.com/irootkernel/gaori) runs your existing checks, keeps the raw logs, and returns a bounded summary as evidence. Gaori integration is optional, and the command's exit code stays the pass/fail authority.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics an advisory multi-provider review. Aquarium verifies each finding locally and sets explicit limits on remediation.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise an explicitly selected AI CLI reviewing one disclosed repository snapshot. Aquarium binds provider consent to that snapshot and independently adjudicates the result.
@@ -63,6 +64,8 @@ Foundations: `$aquarium:test-setup` enrolls a repository in the common test cont
 - [Ouroboros](https://github.com/Q00/ouroboros) contributes discovery, PM, Seed, and QA only inside the five explicitly invoked design workflows. Aquarium keeps document application, approval, and repository authority.
 
 Together they form one governed path from scoping to documentation sync, so one tool's success is never mistaken for project completion.
+
+Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and disposable roots is local and expected to expire. Aquarium does not cite those paths or identities as evidence in tracked roadmaps, repository handoffs, or commit messages. A necessary durable exception uses only reviewed bounded non-sensitive structured evidence copied into an `aquarium.promoted-evidence/v1` package under the repository's evidence root, `evidence/aquarium/` by default.
 
 ## Operating Boundaries
 

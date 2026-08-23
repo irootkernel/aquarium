@@ -7,7 +7,7 @@ description: "Update durable documentation and review status for one refined roa
 
 Document only the refined task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
-Read [design-gates.md](../../references/design-gates.md) and resolve the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults. This skill may update a work unit's existing Design Gate impact reference as directed by authoritative task scope, but it must not create, change, reactivate, retire, or otherwise edit either resolved registry. Return an explicit `$aquarium:design-qa` handoff for any registry change.
+Read [design-gates.md](../../references/design-gates.md) and [evidence-residency.md](../../references/evidence-residency.md). Resolve the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults. This skill may update a work unit's existing Design Gate impact reference as directed by authoritative task scope, but it must not create, change, reactivate, retire, or otherwise edit either resolved registry. Return an explicit `$aquarium:design-qa` handoff for any registry change.
 
 ## Update Durable Documentation
 
@@ -34,6 +34,8 @@ Before retaining each item, ask: "Will this instruction materially reduce the ne
 - Revalidate when this changes
 
 Do not use a repository handoff as a task completion report, Git log substitute, managed-session export, test report, or list of files or commands changed by the completed task. Do not duplicate information already discoverable from Git, session evidence, test artifacts, or canonical documentation; prefer a link to the authoritative source.
+
+Never copy ignored runtime paths or identities governed by the shared residency contract into tracked documentation as evidence. Do not create routine `Validation remediation` or `Validation record` sections. A stable promoted package may be referenced only when it independently satisfies the shared promotion contract and the reference is necessary for a named downstream consumer.
 
 Include an exact revision, hash, command, or test result only when the exact value is required for downstream correctness, compatibility, or reproducibility and no clearer canonical reference exists. Explain why the next task needs it, when it becomes stale, and what must be revalidated after it changes. Avoid "we implemented," "we verified," and "the task completed" prose unless that fact directly changes what a future task must do.
 

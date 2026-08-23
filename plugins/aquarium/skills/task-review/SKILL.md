@@ -5,7 +5,7 @@ description: "Run and resolve Mulgae review for one complete roadmap task diff. 
 
 # Task Review
 
-Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. Require the handler-provided positive review ordinal, current goal revision, and `remediation-eligible` or `confirmation-only` mode when delegated; a direct invocation is one isolated remediation-eligible round with ordinal one and grants no later-round budget.
+Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. Always read [evidence-residency.md](../../references/evidence-residency.md). Require the handler-provided positive review ordinal, current goal revision, and `remediation-eligible` or `confirmation-only` mode when delegated; a direct invocation is one isolated remediation-eligible round with ordinal one and grants no later-round budget.
 
 One invocation consumes one round only after one root `review` run reaches committed publication with complete coverage and a successful findings query, including a `request_changes` policy outcome or failing CI decision. Preflight, status, findings and excerpt reads, and Mulgae-internal retry or extraction do not consume another round.
 
