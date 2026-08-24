@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.12 - Unreleased
 
+### Fixed
+
+- Fix the Kimi and GLM edition links in the English and Korean project READMEs.
+
 ## v0.1.11 - 2026-08-25
 
 ### Added

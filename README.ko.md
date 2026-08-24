@@ -15,8 +15,8 @@ Aquarium은 vibe coding을 넘어 Agentic Engineering, Loop Engineering, Graph E
 ## Aquarium Editions
 
 - [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)
-- [Aquarium for Kimi](https://github.com/irootkernel/aquarium-kimi)
-- [Aquarium for GLM](https://github.com/irootkernel/aquarium-glm)
+- [Aquarium for Kimi](https://github.com/irootkernel/aquarium-for-kimi)
+- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm)
 
 ## 왜 Aquarium인가
 

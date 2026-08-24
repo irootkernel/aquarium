@@ -15,8 +15,8 @@ Aquarium is growing beyond vibe coding toward Agentic Engineering, Loop Engineer
 ## Aquarium Editions
 
 - [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)
-- [Aquarium for Kimi](https://github.com/irootkernel/aquarium-kimi)
-- [Aquarium for GLM](https://github.com/irootkernel/aquarium-glm)
+- [Aquarium for Kimi](https://github.com/irootkernel/aquarium-for-kimi)
+- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm)
 
 ## Why Aquarium
 
