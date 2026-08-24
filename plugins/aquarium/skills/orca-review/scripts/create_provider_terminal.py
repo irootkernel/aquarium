@@ -175,7 +175,7 @@ def create_terminal(payload: object) -> dict[str, object]:
             "remote or paired Orca routing is forbidden for review",
         )
     provider_argv = [
-        str(request["provider_entrypoint"]),
+        str(request["provider_target"]),
         *request["arguments"],
     ]
     command = shlex.join(provider_argv)

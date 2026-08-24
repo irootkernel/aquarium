@@ -83,6 +83,43 @@ def test_identifier_patterns_preserve_legacy_shapes() -> None:
     }
 
 
+def test_semantic_epic_and_compact_completed_task_are_preserved() -> None:
+    text = """\
+## WIKRET: Preserve identity
+
+**Status:** `Planned`
+
+| Task ID | Status |
+| --- | --- |
+| CTASK204 | Completed |
+"""
+    path = Path("docs/ROADMAP.md")
+
+    assert inspect_docs.definition_ids(text) == [
+        ("WIKRET", 1, "heading"),
+        ("CTASK204", 7, "table"),
+    ]
+    result = inspect_docs.migration_analysis([path], {path: text})
+    assert result[0]["tasks"] == [{"id": "CTASK204", "status": "Completed"}]
+    assert result[0]["planned_only_eligible"] is False
+
+
+def test_unrecognized_task_row_blocks_planned_only_prefilter() -> None:
+    text = """\
+## EPIC-001: Preserve unknown child
+
+**Status:** `Planned`
+
+| Task ID | Status |
+| --- | --- |
+| ??? | Planned |
+"""
+    path = Path("docs/roadmap/README.md")
+
+    result = inspect_docs.migration_analysis([path], {path: text})
+    assert result[0]["planned_only_eligible"] is False
+
+
 def test_definition_ids_uses_epic_containment_and_ignores_numeric_prose_headings() -> (
     None
 ):

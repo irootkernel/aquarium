@@ -1333,6 +1333,8 @@ class InspectToolsTest(unittest.TestCase):
             ("v0.1.16", False, "degraded"),
             ("v0.1.17", False, "degraded"),
             ("v0.1.18", True, "installed"),
+            ("v0.1.018", False, "degraded"),
+            ("v0.1.0018", False, "degraded"),
             ("v0.1.18-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
@@ -1353,10 +1355,12 @@ class InspectToolsTest(unittest.TestCase):
                 self.assertEqual(mulgae["version_supported"], supported)
                 self.assertEqual(mulgae["status"], status)
 
-        for version, supported in (
-            ("go1.26.5", False),
-            ("go1.26.6", True),
-            ("go1.27.0", True),
+        for version, observed_version, supported in (
+            ("go1.26.5", "go1.26.5", False),
+            ("go1.26.6", "go1.26.6", True),
+            ("go1.26.06", None, False),
+            ("go01.26.6", None, False),
+            ("go1.27.0", "go1.27.0", True),
         ):
             with self.subTest(go_version=version):
                 for executable in self.bin_directory.iterdir():
@@ -1364,7 +1368,7 @@ class InspectToolsTest(unittest.TestCase):
                 self.install_fake_tools(go_version=version)
                 mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
                 go = mulgae["installation_prerequisites"]["go"]
-                self.assertEqual(go["version"], version)
+                self.assertEqual(go["version"], observed_version)
                 self.assertEqual(go["supported"], supported)
 
     def test_mulgae_config_v3_pair_and_private_policy_are_verified(self) -> None:

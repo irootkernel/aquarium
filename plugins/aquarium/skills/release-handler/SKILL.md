@@ -34,7 +34,9 @@ When remediation changes a shipped outcome, update the open changelog entry in t
 
 After QA passes, re-inspect the exact candidate and confirm that changelog entries are byte-identical to the passing candidate. Apply only repository-authorized release metadata: the published version, pinned validation expectation, the changelog heading's `Unreleased` to publication-date transition, and deterministic release links when the repository uses them. Any entry-text change invalidates QA and returns to candidate settlement.
 
-Run the selected repository release gate and all required mismatch checks. Do not commit or publish when a required check fails or is missing. After explicit commit approval, create exactly one repository-conforming release commit through `$aquarium:task-commit` with `intentional no-note`. Preserve the exact QA candidate SHA, release commit and parent, QA result, and release-gate result in the active handler report, then obtain separate push and publication authority.
+Before running the selected repository release gate, show its exact commands and obtain separate explicit authority to execute them; selecting `full` or `light` does not itself authorize tests or other gate commands. If authority is withheld, leave the gate unrun and stop as incomplete.
+
+Run only the approved gate commands and all required mismatch checks. Do not commit or publish when a required check fails or is missing. After explicit commit approval, create exactly one repository-conforming release commit through `$aquarium:task-commit` with `intentional no-note`. Preserve the exact QA candidate SHA, release commit and parent, QA result, and release-gate result in the active handler report, then obtain separate push and publication authority.
 
 Publish in this order unless stricter repository policy overrides it:
 

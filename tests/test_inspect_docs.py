@@ -148,7 +148,11 @@ def test_multi_scope_allows_same_numeric_ids_in_distinct_roadmaps(
 
 @pytest.mark.parametrize(
     ("epic", "task"),
-    [("CEPIC-27", "CTASK-204"), ("V2GRD", "V2GRD-001")],
+    [
+        ("CEPIC-27", "CTASK-204"),
+        ("V2GRD", "V2GRD-001"),
+        ("WIKRET", "CTASK204"),
+    ],
 )
 def test_legacy_identifiers_are_adopted_without_numeric_rewrite(
     tmp_path: Path, epic: str, task: str

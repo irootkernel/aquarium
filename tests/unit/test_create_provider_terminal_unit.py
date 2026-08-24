@@ -106,3 +106,17 @@ def test_provider_digest_drift_stops_before_orca(tmp_path: Path) -> None:
         create_provider_terminal.create_terminal(payload)
 
     assert error.value.code == "provider_identity_changed"
+
+
+def test_provider_command_uses_verified_canonical_target(tmp_path: Path) -> None:
+    payload, _ = request(tmp_path)
+    provider_target = Path(payload["provider"]["canonical_target"])
+    provider_entrypoint = tmp_path / "installed-provider"
+    provider_entrypoint.symlink_to(provider_target)
+    payload["provider"]["entrypoint"] = str(provider_entrypoint)
+
+    result = create_provider_terminal.create_terminal(payload)
+
+    orca_argv = result["orca_result"]["argv"]
+    command = orca_argv[orca_argv.index("--command") + 1]
+    assert shlex.split(command) == [str(provider_target), *payload["arguments"]]

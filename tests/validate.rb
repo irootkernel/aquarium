@@ -1961,6 +1961,9 @@ assert(release_qa.include?("## Establish Design Gate Enrollment") &&
 assert(release_handler.include?("Explicit invocation authorizes read-only release discovery") &&
        release_handler.include?("Compare every commit and material changed surface") &&
        release_handler.include?("entries are byte-identical") &&
+       release_handler.include?("show its exact commands and obtain separate explicit authority") &&
+       release_handler.include?("selecting `full` or `light` does not itself authorize tests") &&
+       release_handler.include?("leave the gate unrun and stop as incomplete") &&
        release_handler.include?("push `main`") &&
        release_handler.include?("annotated target-version tag") &&
        release_handler.include?("Show the exact new empty `Unreleased` section and request separate commit authority") &&

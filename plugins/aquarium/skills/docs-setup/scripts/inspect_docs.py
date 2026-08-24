@@ -56,7 +56,7 @@ STATUS_LINE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 LEVEL_TWO_HEADING = re.compile(r"(?m)^##\s+.*$")
-LEGACY_EPIC_CODE = re.compile(r"^(?=.*[0-9])[A-Z][A-Z0-9]{2,}$")
+LEGACY_IDENTIFIER = re.compile(r"^[A-Z][A-Z0-9]{2,}$")
 ALLOWED_STATUSES = {
     "Planned",
     "In Progress",
@@ -440,7 +440,7 @@ def epic_blocks(text: str) -> list[tuple[str, int, str]]:
         parsed = HEADING_ID.match(heading.group(0))
         if parsed is None or not (
             ID_TOKEN.fullmatch(parsed.group(2))
-            or LEGACY_EPIC_CODE.fullmatch(parsed.group(2))
+            or LEGACY_IDENTIFIER.fullmatch(parsed.group(2))
         ):
             continue
         end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
@@ -453,7 +453,9 @@ def table_cells(line: str) -> list[str]:
     return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
 
 
-def task_rows_with_lines(block: str, start_line: int = 1) -> list[tuple[str, str, int]]:
+def task_table_rows_with_lines(
+    block: str, start_line: int = 1
+) -> list[tuple[str, str, int]]:
     rows: list[tuple[str, str, int]] = []
     in_task_table = False
     for offset, line in enumerate(block.splitlines()):
@@ -467,13 +469,23 @@ def task_rows_with_lines(block: str, start_line: int = 1) -> list[tuple[str, str
             continue
         if not in_task_table or set(first) <= {"-", ":"}:
             continue
-        if ID_TOKEN.fullmatch(first) is None:
-            continue
         status = next(
             (cell for cell in cells[1:] if cell in ALLOWED_STATUSES), "unknown"
         )
         rows.append((first, status, start_line + offset))
     return rows
+
+
+def recognized_roadmap_identifier(value: str) -> bool:
+    return bool(ID_TOKEN.fullmatch(value) or LEGACY_IDENTIFIER.fullmatch(value))
+
+
+def task_rows_with_lines(block: str, start_line: int = 1) -> list[tuple[str, str, int]]:
+    return [
+        row
+        for row in task_table_rows_with_lines(block, start_line)
+        if recognized_roadmap_identifier(row[0])
+    ]
 
 
 def definition_ids(text: str) -> list[tuple[str, int, str]]:
@@ -496,10 +508,7 @@ def identifier_kind(identifier: str, source: str) -> str:
 
 
 def looks_like_roadmap_id(value: str) -> bool:
-    return bool(
-        re.fullmatch(r"[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*", value)
-        and re.search(r"[0-9]", value)
-    )
+    return recognized_roadmap_identifier(value)
 
 
 def preserved_paths(value: str) -> tuple[list[str], list[str]]:
@@ -604,6 +613,7 @@ def inspect_identifiers(
 ]:
     definitions: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     kinds: dict[tuple[str, str], set[str]] = defaultdict(set)
+    findings: list[dict[str, str]] = []
     for relative in roadmap_files:
         if "id-migrations" in relative.parts:
             continue
@@ -618,6 +628,18 @@ def inspect_identifiers(
                 {"path": relative.as_posix(), "line": line, "source": source}
             )
             kinds[key].add(kind)
+        for _, epic_line, block in epic_blocks(text):
+            for identifier, _, line in task_table_rows_with_lines(block, epic_line):
+                if recognized_roadmap_identifier(identifier):
+                    continue
+                findings.append(
+                    finding(
+                        "task_identifier_unrecognized",
+                        "unverifiable",
+                        f"Task table row at line {line} has an unrecognized identifier.",
+                        relative.as_posix(),
+                    )
+                )
 
     records = migration_records(roadmap_files, texts, structure)
     known_ids = {identifier for _, identifier in definitions}
@@ -701,7 +723,6 @@ def inspect_identifiers(
             }
         )
 
-    findings: list[dict[str, str]] = []
     for identifier, values in sorted(ambiguous_references.items()):
         for reference in values:
             findings.append(
@@ -793,9 +814,20 @@ def migration_analysis(
             continue
         for identifier, _, block in epic_blocks(text):
             status = epic_status(block)
-            tasks = task_rows(block)
-            eligible = status == "Planned" and all(
-                task_status == "Planned" for _, task_status in tasks
+            all_task_rows = task_table_rows_with_lines(block)
+            tasks = [
+                (identifier, task_status)
+                for identifier, task_status, _ in all_task_rows
+                if recognized_roadmap_identifier(identifier)
+            ]
+            unrecognized_task = any(
+                not recognized_roadmap_identifier(identifier)
+                for identifier, _, _ in all_task_rows
+            )
+            eligible = (
+                status == "Planned"
+                and not unrecognized_task
+                and all(task_status == "Planned" for _, task_status in tasks)
             )
             result.append(
                 {
