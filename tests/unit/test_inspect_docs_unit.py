@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 
 SCRIPT = (
@@ -154,7 +155,7 @@ def test_planned_epic_without_tasks_is_epic_only_migration_eligible() -> None:
 def test_preserved_paths_accepts_only_exact_repository_relative_paths() -> None:
     accepted, rejected = inspect_docs.preserved_paths(
         "`docs/architecture-decisions/0001.md`<br>`../outside.md`<br>`/tmp/file`"
-        "<br>`docs/*.md`<br>`docs\\legacy.md`"
+        "<br>`docs/*.md`<br>`docs\\legacy.md`<br>docs/unquoted.md"
     )
 
     assert accepted == ["docs/architecture-decisions/0001.md"]
@@ -162,7 +163,27 @@ def test_preserved_paths_accepts_only_exact_repository_relative_paths() -> None:
         "../outside.md",
         "/tmp/file",
         "docs/*.md",
+        "docs/unquoted.md",
         "docs\\legacy.md",
+    ]
+
+
+def test_role_candidates_deduplicate_aliases_for_one_filesystem_object(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    roadmap = docs / "ROADMAP.md"
+    roadmap.write_text("# Roadmap\n", encoding="utf-8")
+    os.link(roadmap, docs / "roadmap-alias.md")
+    monkeypatch.setitem(
+        inspect_docs.ROLE_ALIASES,
+        "roadmap",
+        ("ROADMAP.md", "roadmap-alias.md"),
+    )
+
+    assert inspect_docs.path_role_candidates(tmp_path, Path("docs"), "roadmap") == [
+        "docs/ROADMAP.md"
     ]
 
 

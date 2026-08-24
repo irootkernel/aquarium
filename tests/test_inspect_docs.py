@@ -226,6 +226,36 @@ def test_migration_record_reports_stale_old_id_references(tmp_path: Path) -> Non
     )
 
 
+def test_migration_record_rejects_unquoted_preserved_path(tmp_path: Path) -> None:
+    repository = tmp_path / "migration-unquoted"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/id-migrations/2026-08-24.md",
+        """\
+# ID Migration
+
+| Old ID | New ID | Kind | Title | Preserved Historical Paths |
+| --- | --- | --- | --- | --- |
+| OLD-001 | TASK-001 | Task | Foundation | docs/specs/legacy.md |
+""",
+    )
+    write(repository / "docs/specs/legacy.md", "OLD-001 remains stale.\n")
+    commit_all(repository)
+
+    result, payload = inspect(repository)
+
+    assert result.returncode == 0
+    assert payload["structural_status"] == "nonconforming"
+    assert payload["migration"]["records"][0]["stale_references"] == [
+        {"path": "docs/specs/legacy.md", "line": 1, "namespace": "default"}
+    ]
+    assert {finding["code"] for finding in payload["findings"]} >= {
+        "invalid_preserved_historical_path",
+        "stale_migrated_id_reference",
+    }
+
+
 def test_rejects_non_root_and_symlinked_repository_paths(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     initialize(repository)

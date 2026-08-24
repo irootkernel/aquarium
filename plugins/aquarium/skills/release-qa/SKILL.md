@@ -94,7 +94,7 @@ Do not run existing automated tests, `make test`, test runners, test scripts, li
 
 ## Exercise Disposable Projects
 
-1. Create one evidence root with `mktemp -d /tmp/release-qa.XXXXXX` and a separate fixture directory for each scenario. Record the root and retain it for user inspection.
+1. Create one evidence root with `mktemp -d /tmp/release-qa.XXXXXX`, immediately resolve that directory with `pwd -P`, and use only the resulting physical absolute path for fixtures and candidate commands. Create a separate fixture directory for each scenario, record the physical root, and retain it for user inspection.
 2. Use the current repository's candidate binaries, source entrypoints, scripts, skills, documentation, and other resources by exact path. Do not clone or execute the previous release. Keep the source repository read-only and confirm its Git status is unchanged after every scenario group.
 3. Redirect `HOME`, XDG directories, temporary state, build outputs, and language or tool caches into the evidence root wherever applicable. Never write user-global state or rely on ambient credentials.
 4. Prefer an existing candidate artifact. When execution requires a build, run only the smallest non-test build whose outputs and caches can be isolated under `/tmp`; do not permit network access or global installation. Record an evidence gap when a safe isolated build is impossible.

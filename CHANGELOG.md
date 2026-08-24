@@ -18,6 +18,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Fix macOS release QA fixture isolation and docs-setup roadmap-alias and preserved-path validation.
 - Allow Orca Review to use verified installed launchers safely.
 - Allow review target and provider selection to fall back to an explicit conversation when structured UI is unavailable.
 

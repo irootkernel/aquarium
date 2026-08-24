@@ -1905,6 +1905,8 @@ assert(release_qa.include?("A dirty worktree still prevents an exact committed c
        "release-qa must distinguish version timing from candidate identity and re-QA remediated candidates")
 assert(release_qa.include?("Do not run existing automated tests") &&
        release_qa.include?("mktemp -d /tmp/release-qa.XXXXXX") &&
+       release_qa.include?("resolve that directory with `pwd -P`") &&
+       release_qa.include?("physical absolute path") &&
        release_qa.include?("fresh subagents"),
        "release-qa must use isolated scenarios without duplicating existing tests")
 assert(release_qa.include?("already-configured ambient authentication") &&

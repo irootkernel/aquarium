@@ -238,15 +238,29 @@ def read_repository_text(
 
 def path_role_candidates(repository: Path, base: Path, role: str) -> list[str]:
     candidates: list[str] = []
+    seen_authorities: set[tuple[int, int]] = set()
     for alias in ROLE_ALIASES[role]:
         relative = base / alias
         path = repository / relative
         if path.is_dir() and not lexical_path_symlinked(path):
             index = path / "README.md"
             if index.is_file() and not lexical_path_symlinked(index):
-                candidates.append(relative.as_posix())
+                authority = path
+            else:
+                continue
         elif path.is_file() and not lexical_path_symlinked(path):
-            candidates.append(relative.as_posix())
+            authority = path
+        else:
+            continue
+        try:
+            metadata = authority.stat()
+        except OSError:
+            continue
+        identity = (metadata.st_dev, metadata.st_ino)
+        if identity in seen_authorities:
+            continue
+        seen_authorities.add(identity)
+        candidates.append(relative.as_posix())
     return candidates
 
 
@@ -494,7 +508,12 @@ def preserved_paths(value: str) -> tuple[list[str], list[str]]:
     accepted: list[str] = []
     rejected: list[str] = []
     for raw in re.split(r"(?i)<br\s*/?>", value):
-        candidate = raw.strip().strip("`")
+        raw = raw.strip()
+        match = re.fullmatch(r"`([^`]+)`", raw)
+        if match is None:
+            rejected.append(raw.strip("`"))
+            continue
+        candidate = match.group(1)
         path = Path(candidate)
         if (
             not candidate
@@ -523,14 +542,15 @@ def migration_records(
         for number, line in enumerate(text.splitlines(), start=1):
             if not line.startswith("|"):
                 continue
-            cells = [
-                cell.strip().strip("`") for cell in line.strip().strip("|").split("|")
-            ]
+            raw_cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            cells = [cell.strip("`") for cell in raw_cells]
             if len(cells) < 2 or not all(
                 looks_like_roadmap_id(value) for value in cells[:2]
             ):
                 continue
-            accepted, rejected = preserved_paths(cells[4] if len(cells) > 4 else "")
+            accepted, rejected = preserved_paths(
+                raw_cells[4] if len(raw_cells) > 4 else ""
+            )
             records.append(
                 {
                     "namespace": namespace,
