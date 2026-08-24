@@ -2,15 +2,17 @@
 
 Read only the section for the selected tool:model. The version-matched Orca guides remain authoritative for command grammar, terminal readiness, Dispatch injection, waiting, transcript reads, recovery, and release.
 
-In the examples, `<ORCA>` means the complete pinned command vector already resolved from `$orca-cli`: the single platform-native executable followed by every fixed argument in its recorded order. Expand that vector directly for every example without re-parsing it through a shell or dropping its fixed arguments. `<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute native-executable path.
+In the examples, `<ORCA>` means the complete pinned command vector already resolved from `$orca-cli`: the selected absolute entrypoint path followed by every fixed argument in its recorded order. Expand that vector directly for every example without re-parsing it through a shell or dropping its fixed arguments. `<PROVIDER>` means the selected provider CLI's consent-bound absolute entrypoint path.
 
-A shebang script, text launcher, shim, or wrapper is not eligible because its recorded file can remain unchanged while delegated code changes. Replace the pinned vector and provider path directly rather than creating a shell variable, resolving a bare command again, or running a placeholder literally. Create the Run and Task before the terminal, wait for that exact terminal to become TUI-idle, verify the exact consented model, then inject the Task as one supervised Dispatch.
+An entrypoint may be a platform-native image or an executable shebang script, text launcher, shim, or wrapper installed on the user's system. Its recorded digest identifies only the canonical entrypoint target, not its interpreter or delegated supporting code.
+
+Replace the pinned vector and provider path directly rather than creating a shell variable, resolving a bare command again, or running a placeholder literally. Create the Run and Task before the terminal, wait for that exact terminal to become TUI-idle, verify the exact consented model, then inject the Task as one supervised Dispatch.
 
 ## Shared Launch Boundary
 
 Use a fresh terminal in the verified immutable `/tmp` snapshot through the consent-bound local Orca runtime; never launch in or identify the original checkout to a participant. Never pass or inherit an Orca environment or pairing selector. Start it through `<ORCA> terminal create --worktree path:<absoluteSnapshotPath> --command <command> --json` using `<PROVIDER>` as the command's executable, preserve its returned handle, and wait with an explicit timeout.
 
-Before `orchestration dispatch --inject`, confirm the local runtime identity, snapshot path, canonical provider executable, terminal command, and exact consent-bound expected native lead model identity from the launch output and bounded readiness transcript. Verify provider-specific subagent topology separately after Dispatch. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; source must never be sent to discover the model.
+Before `orchestration dispatch --inject`, confirm the local runtime identity, snapshot path, selected provider entrypoint and canonical target, terminal command, and exact consent-bound expected native lead model identity from the launch output and bounded readiness transcript. Verify provider-specific subagent topology separately after Dispatch. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; source must never be sent to discover the model.
 
 If the CLI exits, requests authentication, rejects the model or read-only mode, cannot receive the Dispatch, or cannot send lifecycle messages, report the exact operational failure. Do not remove read-only flags, weaken permissions, switch models, reuse a terminal, or start another provider.
 

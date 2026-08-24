@@ -555,8 +555,10 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("rejects remote or paired Orca routing and repository-local provider executables") &&
+       ROOT.join("PRIVACY.md").read.include?("rejects remote or paired Orca routing and repository-local provider entrypoints") &&
        ROOT.join("PRIVACY.md").read.include?("verified local runtime identity") &&
+       ROOT.join("PRIVACY.md").read.include?("native executable, script, launcher, shim, or wrapper installed on the user's system") &&
+       ROOT.join("PRIVACY.md").read.include?("does not attest its interpreter, libraries, frameworks, configuration, or delegated supporting code") &&
        ROOT.join("PRIVACY.md").read.include?("Only the second, final structured tool:model choice authorizes") &&
        ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
        ROOT.join("PRIVACY.md").read.include?("every snapshot file, standalone Git metadata, and Aquarium Task byte it will supply") &&
@@ -1791,7 +1793,8 @@ assert(orca_review.include?("separately installed `$orca-cli` skill") &&
        orca_review.include?("Never substitute a generic subagent") &&
        orca_review.include?("starting the installed Orca runtime when needed") &&
        orca_review.include?("canonical absolute regular file outside the original Git root") &&
-       orca_review.include?("revalidate its path, file type, file identity, digest, and version immediately before every Orca read or mutation") &&
+       orca_review.include?("complete symlink chain") &&
+       orca_review.include?("revalidate its path, symlink chain, canonical target, file type, file identity, digest, and fixed arguments immediately before every Orca read or mutation") &&
        orca_review.include?("An operational failure is not an `APPROVE` result"),
        "orca-review must fail closed on missing or unverifiable Orca prerequisites")
 assert(orca_review.include?("git diff --cached --binary") &&
@@ -1834,9 +1837,12 @@ assert(orca_review.include?("every repository, target, supporting-source, instru
   assert(orca_review.include?(label), "orca-review provider label is missing: #{label}")
 end
 assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
-       orca_review.include?("Resolve each successful result to one canonical absolute regular platform-native executable") &&
-       orca_review.include?("canonical native provider executable path, executable digest and observed version") &&
-       orca_review.include?("Reject a shebang script, text launcher, shim, or wrapper") &&
+       orca_review.include?("Resolve each successful result once to one absolute entrypoint path") &&
+       orca_review.include?("Allow platform-native images and executable shebang scripts, text launchers, shims, and wrappers") &&
+       orca_review.include?("File type is disclosed evidence, not an availability gate") &&
+       orca_review.include?("The entrypoint digest does not cover its interpreter or delegated supporting code") &&
+       orca_review.include?("selected provider entrypoint path, canonical target, file type, entrypoint digest and observed version, fixed arguments") &&
+       !orca_review.include?("Reject a shebang script, text launcher, shim, or wrapper") &&
        orca_review.include?("Immediately before terminal creation and again immediately before the source-bearing Dispatch") &&
        orca_review.include?("Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`") &&
        orca_review.include?("outside the original Git root") &&
@@ -1861,7 +1867,9 @@ assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-m
        orca_review.include?("Before any source-bearing Dispatch") &&
        orca_review.include?("never transmit source merely to probe the model") &&
        orca_review.include?("Never expose or identify the original checkout to a participant") &&
-       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound canonical absolute native-executable path") &&
+       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound absolute entrypoint path") &&
+       orca_provider_contracts.include?("may be a platform-native image or an executable shebang script, text launcher, shim, or wrapper") &&
+       orca_provider_contracts.include?("digest identifies only the canonical entrypoint target, not its interpreter or delegated supporting code") &&
        orca_review.include?("Give it no remote, credential material, object alternates") &&
        orca_review.include?("read-only `agent-context --json`") &&
        orca_review.include?("query only the exact route with `<ORCA> <route> --help`") &&
