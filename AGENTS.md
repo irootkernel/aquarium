@@ -19,14 +19,22 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Do not add speculative features, configurability, compatibility layers, or error handling for states repository invariants make impossible.
 - If the implementation is substantially larger or more complex than its behavior warrants, simplify it before reporting completion.
 
-### 3. Make Surgical Changes
+### 3. Prefer Durable Root-Cause Solutions
+
+- For fixes and solution proposals, prefer the smallest complete approach that addresses the verified root cause, weighing correctness, performance, maintainability, and structural fit instead of optimizing for the smallest diff.
+- Prefer durable designs over symptomatic patches while keeping the current work proportional to the verified requirement and repository authority.
+- When a broader ideal design exceeds the current scope, implement a bounded durable step that fully satisfies current success criteria and preserves a clear path forward.
+- Record only remaining independent actionable work in the repository's canonical `deferred-feedback` owner. If no owner exists, report the proposed entry and obtain approval before creating one.
+- Promote epic-sized work to a TODO candidate or roadmap work unit. Do not defer work required for current correctness or acceptance.
+
+### 4. Make Surgical Changes
 
 - Touch only what the requested outcome and its verification require.
 - Do not refactor, reformat, rename, or clean up adjacent code unless the task requires it.
 - Match local style and preserve unrelated user work in a dirty worktree.
 - Remove imports, files, references, or documentation made obsolete by the current change, but leave pre-existing unrelated cleanup alone.
 
-### 4. Work Toward Verifiable Goals
+### 5. Work Toward Verifiable Goals
 
 - Translate the request into explicit success checks before implementation.
 - Match verification strength to the behavior being claimed, including relevant failure paths.

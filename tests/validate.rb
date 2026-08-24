@@ -618,6 +618,17 @@ assert(agents_reference.include?("substantive CLAUDE.md") &&
 assert(agents_reference.include?("2c606141936f1eeef17fa3043a72095b4765b9c2") &&
        agents_reference.include?("Do not contact that repository or fetch its text while preparing a proposal"),
        "the core behavior attribution must be pinned and runtime-offline")
+durable_solution_contract = [
+  "### 3. Prefer Durable Root-Cause Solutions",
+  "addresses the verified root cause",
+  "correctness, performance, maintainability, and structural fit",
+  "canonical `deferred-feedback` owner",
+  "TODO candidate or roadmap work unit",
+  "Do not defer work required for current correctness or acceptance."
+]
+assert(durable_solution_contract.all? { |phrase| agents_reference.include?(phrase) } &&
+       durable_solution_contract.all? { |phrase| root_agents.include?(phrase) },
+       "root and reusable AGENTS guidance must prefer bounded durable root-cause solutions")
 
 root_guidance_sections = [
   "## Core Behavior",

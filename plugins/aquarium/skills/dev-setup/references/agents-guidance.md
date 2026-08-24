@@ -2,7 +2,7 @@
 
 Use this reference only after the user selects `Show proposal` or `Diagnose only` for repository guidance. Diagnosis uses its structure and evidence rules without drafting; only `Show proposal` authorizes proposal preparation. A proposal creates or reconciles a repository operating contract and is not limited to tool guidance.
 
-The four-part core behavior below is adapted, rather than copied verbatim, from the Karpathy-inspired guidance at `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The bundled structure and this repository's instructions are the proposal authority.
+The five-part core behavior below is adapted, rather than copied verbatim, from the Karpathy-inspired guidance at `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The bundled structure and this repository's instructions are the proposal authority.
 
 ## Required Structure
 
@@ -27,13 +27,21 @@ Use this order for a new file and reconcile an existing file toward it when cont
 - Avoid speculative features, abstractions, configurability, and compatibility layers.
 - Simplify an implementation whose size or complexity is not justified by its behavior.
 
-### 3. Make Surgical Changes
+### 3. Prefer Durable Root-Cause Solutions
+
+- For fixes and solution proposals, prefer the smallest complete approach that addresses the verified root cause, weighing correctness, performance, maintainability, and structural fit instead of optimizing for the smallest diff.
+- Prefer durable designs over symptomatic patches while keeping the current work proportional to the verified requirement and repository authority.
+- When a broader ideal design exceeds the current scope, implement a bounded durable step that fully satisfies current success criteria and preserves a clear path forward.
+- Record only remaining independent actionable work in the repository's canonical `deferred-feedback` owner. If no owner exists, report the proposed entry and obtain approval before creating one.
+- Promote epic-sized work to a TODO candidate or roadmap work unit. Do not defer work required for current correctness or acceptance.
+
+### 4. Make Surgical Changes
 
 - Touch only what the requested outcome and its verification require.
 - Preserve unrelated work and match local style.
 - Remove only artifacts made obsolete by the current change.
 
-### 4. Work Toward Verifiable Goals
+### 5. Work Toward Verifiable Goals
 
 - Define success checks before implementation.
 - Match verification strength to the claimed behavior and relevant failure paths.

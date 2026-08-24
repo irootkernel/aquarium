@@ -13,6 +13,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add Aquarium edition links and keep runtime evidence outside canonical documentation.
 - Align development setup with Mulgae v0.1.18.
+- Make repository guidance prefer durable root-cause solutions and route deferred work through canonical documentation owners.
 - Unify independent review targets across staged changes, commits, ranges, roadmap work, and special investigations.
 
 ### Fixed
