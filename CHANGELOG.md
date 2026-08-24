@@ -13,10 +13,12 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add Aquarium edition links and keep runtime evidence outside canonical documentation.
 - Align development setup with Mulgae v0.1.18.
+- Unify independent review targets across staged changes, commits, ranges, roadmap work, and special investigations.
 
 ### Fixed
 
 - Allow Orca Review to use verified installed launchers safely.
+- Allow review target and provider selection to fall back to an explicit conversation when structured UI is unavailable.
 
 ## v0.1.10 - 2026-08-23
 

@@ -48,8 +48,8 @@ Aquarium does not vendor third-party skill or documentation sources. `$aquarium:
 
 1. **Shape** — `$aquarium:new-project` turns a goal into an approved PRD and a first roadmap. `$aquarium:new-feature` and `$aquarium:refactor` create or revise one epic. `$aquarium:war-room` diagnoses a hard bug and proposes the next work unit, or reports the investigation as incomplete, without writing the fix. `$aquarium:design-qa` creates, changes, or retires Design Gates.
 2. **Deliver** — `$aquarium:task-handler` runs one roadmap task through the stages above. `$aquarium:epic-handler` runs an epic's tasks in order and then hardens the whole epic. Commits stay separate and go through `$aquarium:task-commit` with your approval.
-3. **Validate** — `$aquarium:epic-validator` re-checks a completed epic from a clean start and fixes the gaps it confirms. `$aquarium:independent-review` asks a separate Codex session for a read-only review of requirements and code, while `$aquarium:orca-review` runs a provider-selected review of an exact snapshot through Orca. Aquarium checks every returned finding locally.
-4. **Release** — `$aquarium:release-qa` exercises the release delta and every active Design Gate in isolated scenarios before a version ships.
+3. **Validate** — `$aquarium:epic-validator` re-checks a completed epic from a clean start and fixes the gaps it confirms. `$aquarium:independent-review` gives staged changes, commits, ranges, tasks, epics, and special investigations one canonical static Codex review contract. `$aquarium:orca-review` applies the same contract to a selected non-Codex provider. Aquarium checks every returned finding locally.
+4. **Release** — `$aquarium:release-handler` settles cumulative notes, delegates exact-candidate scenarios to `$aquarium:release-qa`, runs the repository gate, publishes with separate approval, and opens the next planned version.
 
 Foundations: `$aquarium:docs-setup` governs canonical documentation structure and roadmap IDs. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup` checks and configures the toolchain and the repository's agent guidance. `$aquarium:dev-setup-bundle` applies that setup to several repositories from one manifest.
 
@@ -58,7 +58,7 @@ Foundations: `$aquarium:docs-setup` governs canonical documentation structure an
 - [Podway](https://github.com/irootkernel/podway) provides local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
 - [Gaori](https://github.com/irootkernel/gaori) runs your existing checks, keeps the raw logs, and returns a bounded summary as evidence. Gaori integration is optional, and the command's exit code stays the pass/fail authority.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics an advisory multi-provider review. Aquarium verifies each finding locally and sets explicit limits on remediation.
-- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise an explicitly selected AI CLI reviewing one disclosed repository snapshot. Aquarium binds provider consent to that snapshot and independently adjudicates the result.
+- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise Claude Fable, Kimi, Agy, or Cursor Agent against one exact Git target. Dirty working-tree content is excluded or staged only with explicit path approval, and Aquarium independently adjudicates the result.
 - [Sanho](https://github.com/irootkernel/sanho) syncs project documentation to its canonical documentation repository once Aquarium has settled what is ready to hand off.
 - [Lora](https://github.com/tmdgusya/lora) keeps decision context in Git trailers, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) supplies the upstream `deslop` cleanup skill used during task refinement.
 - [Ouroboros](https://github.com/Q00/ouroboros) contributes discovery, PM, Seed, and QA only inside the five explicitly invoked design workflows. Aquarium keeps document application, approval, and repository authority.
@@ -70,13 +70,14 @@ Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and
 ## Operating Boundaries
 
 - Invoking a workflow grants only the effects its skill documents. Installation, authentication, source transmission, tests, staging, commits, pushes, publication, and destructive lifecycle actions each need separate authority.
-- Invoking `release-qa` authorizes one QA pass, read-only queries to the configured Git remote and its hosted release metadata using existing ambient authentication for private repositories, and bounded local remediation of verified findings. After remediation it stops for explicit confirmation before any new QA pass; it never uploads source or handles credentials.
+- Invoking `release-handler` authorizes read-only release discovery and orchestration only; commits, pushes, tags, hosted Releases, destructive replacement, and the post-release next-cycle commit remain separate approvals. Its delegated `release-qa` pass may use existing ambient authentication for private repositories, remediate verified findings locally once, and never upload source or handle credentials.
 - When selected for setup or diagnosis, Sanho, Mulgae, Gaori, and Podway automatically query their official GitHub Releases metadata and download four public skill files from `raw.githubusercontent.com` into ephemeral storage to compare with the installed `use-*` skill. Unselected tools and other network operations are not covered, and setup never calls an AI provider.
 - Aquarium creates no central project-state file. [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md) hold the complete data and authority contracts.
 
 ## References
 
 - [TESTING.md](TESTING.md) defines this repository's test authority and the `aquarium-test-contract/v1` evidence mapping.
+- [CHANGELOG.md](CHANGELOG.md) records concise release outcomes and the planned next stable version.
 - [Documentation governance](plugins/aquarium/references/documentation-governance.md) defines Aquarium's documentation roles, profiles, and default roadmap identity.
 - [Bundle manifest reference](plugins/aquarium/skills/dev-setup-bundle/references/manifest.md) defines the manifest for setting up several repositories at once.
 - Each skill's `SKILL.md` is authoritative for its triggers, effects, approval boundaries, and failure behavior.

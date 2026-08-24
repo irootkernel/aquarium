@@ -65,6 +65,7 @@ expected_skill_names = %w[
   new-project
   orca-review
   refactor
+  release-handler
   release-qa
   task-close
   task-commit
@@ -192,9 +193,21 @@ epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
 task_handler = PLUGIN.join("skills/task-handler/SKILL.md").read
 independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
+independent_review_script = PLUGIN.join("skills/independent-review/scripts/inspect_review_target.py")
+independent_review_script_body = independent_review_script.read
 orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
 orca_provider_contracts = PLUGIN.join("skills/orca-review/references/provider-contracts.md").read
+orca_terminal_helper = PLUGIN.join("skills/orca-review/scripts/create_provider_terminal.py")
+orca_terminal_helper_body = orca_terminal_helper.read
+review_contract = PLUGIN.join("references/review-contract.md").read
+orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
+release_handler = PLUGIN.join("skills/release-handler/SKILL.md").read
+release_recovery = PLUGIN.join("skills/release-handler/references/publication-recovery.md").read
+release_publication_script = PLUGIN.join("skills/release-handler/scripts/inspect_publication_state.py")
+release_publication_script_body = release_publication_script.read
+release_handler_script = PLUGIN.join("skills/release-handler/scripts/inspect_release_notes.py")
+release_handler_script_body = release_handler_script.read
 task_plan = PLUGIN.join("skills/task-plan/SKILL.md").read
 task_implement = PLUGIN.join("skills/task-implement/SKILL.md").read
 task_verify = PLUGIN.join("skills/task-verify/SKILL.md").read
@@ -221,6 +234,7 @@ war_room = PLUGIN.join("skills/war-room/SKILL.md").read
 ouroboros_contract = PLUGIN.join("references/ouroboros-integration.md").read
 design_gate_contract = PLUGIN.join("references/design-gates.md").read
 documentation_contract = PLUGIN.join("references/documentation-governance.md").read
+release_notes_contract = PLUGIN.join("references/release-notes.md").read
 plan_handoff_path = PLUGIN.join("references/plan-handoff.md")
 assert(plan_handoff_path.file?, "shared plan-handoff contract is missing")
 plan_handoff_contract = plan_handoff_path.read
@@ -406,11 +420,14 @@ assert(ROOT.join("README.md").read.include?("automatically query their official 
        ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
-assert(ROOT.join("README.md").read.include?("Invoking `release-qa` authorizes one QA pass") &&
+assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authorizes read-only release discovery") &&
        ROOT.join("README.md").read.include?("existing ambient authentication for private repositories") &&
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
+       ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-handler` performs the same bounded read-only release discovery") &&
+       ROOT.join("PRIVACY.md").read.include?("material release-delta source and documentation surfaces") &&
+       ROOT.join("PRIVACY.md").read.include?("creates no tracked or temporary resume manifest") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
-       "public documentation must disclose release-qa network and private-repository authentication boundaries")
+       "public documentation must disclose release-handler and release-qa network boundaries")
 assert(test_setup_script.file?, "test-setup structural inspector is missing")
 assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?('"semantic_scope": "not_evaluated"') &&
@@ -554,20 +571,17 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        ROOT.join("TERMS.md").read.include?("users install approved upstream copies under their original license terms") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
-assert(ROOT.join("PRIVACY.md").read.include?("may start the installed Orca runtime before selection") &&
-       ROOT.join("PRIVACY.md").read.include?("rejects remote or paired Orca routing and repository-local provider entrypoints") &&
-       ROOT.join("PRIVACY.md").read.include?("verified local runtime identity") &&
-       ROOT.join("PRIVACY.md").read.include?("native executable, script, launcher, shim, or wrapper installed on the user's system") &&
-       ROOT.join("PRIVACY.md").read.include?("does not attest its interpreter, libraries, frameworks, configuration, or delegated supporting code") &&
-       ROOT.join("PRIVACY.md").read.include?("Only the second, final structured tool:model choice authorizes") &&
-       ROOT.join("PRIVACY.md").read.include?("private read-only `/tmp` snapshot") &&
-       ROOT.join("PRIVACY.md").read.include?("every snapshot file, standalone Git metadata, and Aquarium Task byte it will supply") &&
-       ROOT.join("PRIVACY.md").read.include?("do not form an operating-system read sandbox") &&
-       ROOT.join("PRIVACY.md").read.include?("removes the exact registration and snapshot") &&
+assert(ROOT.join("PRIVACY.md").read.include?("may start the installed local Orca runtime") &&
+       ROOT.join("PRIVACY.md").read.include?("Dirty working-tree content is never a review target") &&
+       ROOT.join("PRIVACY.md").read.include?("may stage only exact paths the user approves") &&
+       ROOT.join("PRIVACY.md").read.include?("current checkout as same-user processes") &&
+       ROOT.join("PRIVACY.md").read.include?("rather than an operating-system read sandbox") &&
+       ROOT.join("PRIVACY.md").read.include?("without a second preparation approval") &&
+       ROOT.join("PRIVACY.md").read.include?("Reviews remain static") &&
        ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
-       ROOT.join("TERMS.md").read.include?("Only the second, final structured tool:model selection grants authority") &&
-       ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code"),
+       ROOT.join("TERMS.md").read.include?("exact Git target and reviewer authorizes only the bounded static review transmission") &&
+       ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code, Agy"),
        "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
   "## Core Behavior",
@@ -1726,7 +1740,7 @@ assert(task_handler.include?("A session created from an earlier version of this 
 
 podway_blind_skills = %w[
   task-plan task-implement task-verify task-refine task-document task-review task-close
-  independent-review orca-review release-qa
+  independent-review orca-review release-handler release-qa
 ]
 podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
@@ -1734,7 +1748,8 @@ podway_blind_skills.each do |name|
 end
 assert(!orca_provider_contracts.match?(/podway/i),
        "orca-review provider contracts must remain Podway-blind")
-assert(independent_review.include?("Return the target and snapshot, independent reviewer verdict") &&
+
+assert(independent_review.include?("Return the complete shared result envelope") &&
        task_refine.include?("Return deslop actions, optimization reasoning") &&
        task_close.include?("Return the three answers, final roadmap state"),
        "Podway-blind review, refinement, and closeout must return native evidence")
@@ -1748,199 +1763,119 @@ assert(task_handler.include?("Immediately before each phase delegation") &&
 assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        independent_review.include?("user explicitly invokes"),
        "independent-review must remain user-invoked only")
-assert(independent_review.include?("skills get orca-cli") && independent_review.include?("skills get orchestration"),
-       "independent-review must load version-matched Orca guides")
-assert(independent_review.include?("--worktree current --agent codex"),
-       "independent-review must use a fresh Codex in the current worktree")
-assert(independent_review.include?("Never substitute a generic subagent"),
-       "independent-review must fail closed when Orca is unavailable")
-assert(independent_review.include?("Do not rerun tests") && independent_review.include?("Do not implement a proposed response"),
-       "independent-review must remain review-only")
-assert(independent_review.include?("Keep technical review evidence and Orca lifecycle settlement as separate statuses"),
-       "independent-review must separate findings from lifecycle settlement")
-assert(independent_review.include?("five-minute settlement budget of at most 16 Delivery batches") &&
-       independent_review.include?("inspect the acknowledgement response") &&
-       independent_review.include?("until no Delivery remains") &&
-       independent_review.include?("Leave its Delivery unacknowledged for FIFO replay"),
-       "independent-review must drain post-terminal Delivery batches within one bounded settlement budget")
-assert(independent_review.include?("one cumulative liveness budget") &&
-       independent_review.include?("using 30 minutes") &&
-       independent_review.include?("charging every wait against the same remaining budget") &&
-       independent_review.include?("stop waiting, leave any active worker intact") &&
-       independent_review.include?("Further waiting or cancellation requires an explicit user request") &&
-       independent_review.include?("never release, retry, cancel, or replace the active worker automatically"),
-       "independent-review must stop after one cumulative wait budget without mutating an active worker")
-assert(independent_review.include?("Valid") && independent_review.include?("Invalid") &&
-       independent_review.include?("Needs confirmation"),
-       "independent-review must adjudicate reviewer findings")
-assert(!independent_review.include?("owning Aquarium workflow requested"),
-       "independent-review must not reintroduce the removed owning-workflow qualifier")
+assert(independent_review.include?("[review-contract.md](../../references/review-contract.md)") &&
+       independent_review.include?("[orca-supervision.md](../../references/orca-supervision.md)") &&
+       independent_review.include?("scripts/inspect_review_target.py"),
+       "independent-review must load the shared target and backend contracts")
+assert(independent_review.include?("`staged`, `commit`, `range`, `task`, `epic`, or `special request`") &&
+       independent_review.include?("always ask the user to confirm staged, `HEAD`") &&
+       independent_review.include?("authority identifies one unambiguous staged candidate, commit, or range"),
+       "independent-review must resolve every supported target without silently broadening it")
+assert(independent_review.include?("--worktree current --agent codex") &&
+       independent_review.include?("one fresh reviewer") &&
+       independent_review.include?("Wrong scope, modified files, missing output"),
+       "independent-review must use one fresh Codex and fail closed on incomplete review evidence")
+assert(independent_review.include?("authorizes no source edits, tests, builds") &&
+       independent_review.include?("Do not seed the reviewer with suspected findings") &&
+       independent_review.include?("Valid, Invalid, or Needs confirmation"),
+       "independent-review must remain static, read-only, and independently adjudicated")
 
-assert(orca_review.include?("user explicitly invokes") &&
-       orca_review.include?("does not replace `$aquarium:independent-review`") &&
-       orca_review.include?("skills get orca-cli") &&
-       orca_review.include?("skills get orchestration"),
-       "orca-review must remain explicit, separate, and load version-matched Orca guides")
-other_skill_behavior_paths = (expected_skill_names - ["orca-review"]).flat_map do |name|
-  Dir[PLUGIN.join("skills/#{name}/**/*.md")].map { |path| Pathname.new(path) }
+%w[staged commit range task epic].each do |target|
+  assert(review_contract.include?("`#{target}`"),
+         "shared review contract target is missing: #{target}")
 end
-shared_workflow_reference_paths = Dir[PLUGIN.join("references/**/*.md")].map { |path| Pathname.new(path) }
-(other_skill_behavior_paths + shared_workflow_reference_paths).sort.each do |path|
-  assert(!path.read.include?("$aquarium:orca-review"),
-         "another Aquarium workflow source must not invoke orca-review: #{path.relative_path_from(PLUGIN)}")
-end
-assert(orca_review.include?("separately installed `$orca-cli` skill") &&
-       orca_review.include?("Never substitute a generic subagent") &&
-       orca_review.include?("starting the installed Orca runtime when needed") &&
-       orca_review.include?("canonical absolute regular file outside the original Git root") &&
-       orca_review.include?("complete symlink chain") &&
-       orca_review.include?("revalidate its path, symlink chain, canonical target, file type, file identity, digest, and fixed arguments immediately before every Orca read or mutation") &&
-       orca_review.include?("An operational failure is not an `APPROVE` result"),
-       "orca-review must fail closed on missing or unverifiable Orca prerequisites")
-assert(orca_review.include?("git diff --cached --binary") &&
-       orca_review.include?("`git diff --binary`") &&
-       orca_review.include?("without `git write-tree`") &&
-       orca_review.include?("path and SHA-256 digest of every applicable instruction file and named requirement authority") &&
-       orca_review.include?("recompute the recorded target and every source-manifest file digest") &&
-       orca_review.include?("recompute every provider-visible snapshot and Aquarium Task record plus all three consented digests") &&
-       orca_review.include?("Any change invalidates final consent") &&
-       orca_review.include?("index blobs") &&
-       orca_review.include?("resolved endpoint commits, not working-tree copies") &&
-       orca_review.include?("authoritative worker evidence that the reviewer read index blobs") &&
-       orca_review.include?("authoritative worker evidence that the reviewer read the resolved endpoint blobs") &&
-       orca_review.include?("immutable snapshot, exact Aquarium Task, or any consented digest changed") &&
-       orca_review.include?("authoritative worker evidence does not bind every participant to that snapshot") &&
-       orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
-       "orca-review must bind and revalidate an exact non-mutating review snapshot")
-assert(orca_review.include?("request_user_input") &&
-       orca_review.include?("Present no more than three choices") &&
-       orca_review.include?("Even when one choice is available") &&
-       orca_review.include?("structured ask/answer is unavailable") &&
-       orca_review.include?("stop without preparing a snapshot or transmitting source") &&
-       orca_review.include?("Never auto-select"),
-       "orca-review must use explicit structured provider selection without silent defaults")
-assert(orca_review.include?("every repository, target, supporting-source, instruction, and authority file") &&
-       orca_review.include?("newline-terminated `<sha256>  <source-identity>` lines") &&
-       orca_review.include?("every regular file and symlink identity Aquarium will supply") &&
-       orca_review.include?("including standalone `.git` metadata") &&
-       orca_review.include?("second, final structured choice") &&
-       orca_review.include?("Orca-owned runtime metadata") &&
-       orca_review.include?("this final choice alone authorizes registration and transmission"),
-       "orca-review provider consent must bind the complete transmitted context manifest")
-%w[
-  claude:fable\ with\ opus/sonnet
-  claude:opus
-  codex:gpt-5.6-sol
-  cursor:grok-4.6
-  kimi:k3
-].each do |label|
-  assert(orca_review.include?(label), "orca-review provider label is missing: #{label}")
-end
-assert(orca_review.include?("omit every Cursor choice when `cursor-agent` is unavailable") &&
-       orca_review.include?("Resolve each successful result once to one absolute entrypoint path") &&
-       orca_review.include?("Allow platform-native images and executable shebang scripts, text launchers, shims, and wrappers") &&
-       orca_review.include?("File type is disclosed evidence, not an availability gate") &&
-       orca_review.include?("The entrypoint digest does not cover its interpreter or delegated supporting code") &&
-       orca_review.include?("selected provider entrypoint path, canonical target, file type, entrypoint digest and observed version, fixed arguments") &&
-       !orca_review.include?("Reject a shebang script, text launcher, shim, or wrapper") &&
-       orca_review.include?("Immediately before terminal creation and again immediately before the source-bearing Dispatch") &&
-       orca_review.include?("Reject nonempty `ORCA_ENVIRONMENT` or `ORCA_PAIRING_CODE`") &&
-       orca_review.include?("outside the original Git root") &&
-       orca_review.include?("Do not authenticate, list remote models"),
-       "orca-review must show only locally healthy CLI choices without provider probes")
-assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-mode plan") &&
-       orca_provider_contracts.include?("<PROVIDER> --model opus --permission-mode plan") &&
-       orca_provider_contracts.include?("<PROVIDER> --model gpt-5.6-sol --sandbox read-only --ask-for-approval never") &&
-       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan") &&
-       orca_provider_contracts.include?("<PROVIDER> --model k3 --plan") &&
-       orca_provider_contracts.include?("terminal create --worktree path:<absoluteSnapshotPath>") &&
-       orca_provider_contracts.include?("complete pinned command vector") &&
-       orca_provider_contracts.include?("without re-parsing it through a shell or dropping its fixed arguments") &&
-       orca_provider_contracts.include?("using `<PROVIDER>` as the command's executable") &&
-       orca_provider_contracts.include?("Before `orchestration dispatch --inject`") &&
-       orca_provider_contracts.include?("exact consent-bound expected native lead model identity") &&
-       orca_review.include?("expected native lead model identity") &&
-       orca_review.include?("`claude:fable with opus/sonnet` to `fable`") &&
-       orca_review.include?("`codex:gpt-5.6-sol` to `gpt-5.6-sol`") &&
-       orca_review.include?("`cursor:grok-4.6` to `grok-4.6`") &&
-       orca_review.include?("`kimi:k3` to `k3`") &&
-       orca_review.include?("Before any source-bearing Dispatch") &&
-       orca_review.include?("never transmit source merely to probe the model") &&
-       orca_review.include?("Never expose or identify the original checkout to a participant") &&
-       orca_provider_contracts.include?("`<PROVIDER>` means the selected provider CLI's consent-bound absolute entrypoint path") &&
-       orca_provider_contracts.include?("may be a platform-native image or an executable shebang script, text launcher, shim, or wrapper") &&
-       orca_provider_contracts.include?("digest identifies only the canonical entrypoint target, not its interpreter or delegated supporting code") &&
-       orca_review.include?("Give it no remote, credential material, object alternates") &&
-       orca_review.include?("read-only `agent-context --json`") &&
-       orca_review.include?("query only the exact route with `<ORCA> <route> --help`") &&
-       orca_review.include?("repo add --path <absoluteSnapshotPath> --json") &&
-       orca_review.include?("project setups --json") &&
-       orca_review.include?("project setup-delete --setup <recordedSetupId> --json") &&
-       orca_review.include?("task-create --spec <exactAquariumTaskSpec>") &&
-       orca_review.include?("worker-retain --dispatch <dispatchId> --json") &&
-       orca_review.include?("After any terminal launch, worker-start, or Dispatch attempt") &&
-       orca_review.include?("retain the exact temporary registration and owned snapshot through scope revalidation") &&
-       orca_review.include?("only when the worker was settled and successfully released and no retention was requested") &&
-       orca_review.include?("Retained or active workers keep both") &&
-       orca_review.include?("Require every participant to read only the immutable snapshot"),
-       "orca-review must launch every selected model through the consent-bound immutable snapshot")
-assert(orca_provider_contracts.include?("Fable is the master reviewer") &&
-       orca_provider_contracts.include?("explicit per-invocation `opus` or `sonnet` model") &&
-       orca_provider_contracts.include?("model: inherit") &&
-       orca_provider_contracts.scan("records the requested model and verifies the effective model from native Agent task or session metadata or an explicit runtime model identity").length == 2 &&
-       orca_provider_contracts.scan("A missing, ambiguous, or mismatched effective model makes the topology unverifiable and prevents a clean verdict").length == 2 &&
-       orca_provider_contracts.include?("primary model explicitly selected") &&
-       orca_review.include?("required subagent topology and effective-model verification duties copied from the reference") &&
-       orca_review.include?("participant-wide read-only restrictions") &&
-       orca_review.include?("Require the lead to:") &&
-       orca_review.include?("Subagents return evidence only to the lead") &&
-       orca_review.include?("retrieve the complete authoritative worker evidence through `worker-read`") &&
-       orca_review.include?("authoritative transcript or scope evidence is unavailable") &&
-       orca_review.include?("selected provider's required subagent topology and effective models cannot be verified"),
-       "orca-review must preserve provider-specific orchestration and effective-model verification")
-assert(orca_review.include?("run no tests, builds, generators, formatters, linters") &&
-       orca_review.include?("It does not authorize source-checkout edits, tests, builds, generators, formatters, staging, commits, pushes, publication, authentication changes, software installation, or another provider request") &&
-       orca_review.include?("report no modified files") &&
-       orca_review.include?("Valid") &&
-       orca_review.include?("Invalid") &&
-       orca_review.include?("Needs confirmation") &&
-       orca_review.include?("Never retry a provider automatically, switch providers") &&
+assert(review_contract.include?("Dirty working-tree content is never a target") &&
+       review_contract.include?("stage all displayed paths or an explicitly named subset") &&
+       review_contract.include?("git add -- <paths>") &&
+       review_contract.include?("Leave the approved index changes staged") &&
+       review_contract.include?("For commit, range, and confirmed `HEAD` targets, exclude dirty content automatically") &&
+       review_contract.include?("same-user reviewer can technically read excluded working-tree bytes"),
+       "shared review contract must preserve exact dirty-state authority boundaries")
+assert(review_contract.include?("always ask the user to confirm staged, `HEAD`") &&
+       review_contract.include?("explicit invocation that names an exact target and reviewer authorizes transmitting") &&
+       review_contract.include?("Do not require separate preparation and transmission approvals") &&
+       review_contract.include?("A staged review uses the live index") &&
+       review_contract.include?("do not detect drift or invalidate the result") &&
+       review_contract.include?("`runtime unverified`") &&
+       review_contract.include?("A lifecycle failure or wrong scope is operationally incomplete"),
+       "shared review contract must bind special requests, consent, static proof, and lifecycle status")
+
+assert(independent_review_script.file? &&
+       independent_review_script_body.include?("aquarium-independent-review-target/v1") &&
+       independent_review_script_body.include?("aquarium-independent-review-target-error/v1") &&
+       independent_review_script_body.include?('"--staged"') &&
+       independent_review_script_body.include?('"--head"') &&
+       independent_review_script_body.include?('"--commit"') &&
+       independent_review_script_body.include?('"--range"') &&
+       independent_review_script_body.include?('"semantic_scope": "not_evaluated"'),
+       "independent-review target inspector must expose one bounded JSON interface")
+assert(independent_review_script_body.include?('"status"') &&
+       independent_review_script_body.include?('"--porcelain=v1"') &&
+       independent_review_script_body.include?('"-z"') &&
+       independent_review_script_body.include?('"--ignored=matching"') &&
+       independent_review_script_body.include?('"diff", "--cached", "--binary"') &&
+       independent_review_script_body.include?('"diff-tree"') &&
+       independent_review_script_body.include?('"--root"') &&
+       independent_review_script_body.include?('"--binary"') &&
+       independent_review_script_body.scan('"--no-textconv"').length == 3 &&
+       independent_review_script_body.include?('"merge-base"') &&
+       independent_review_script_body.include?('"staged_target_empty"') &&
+       independent_review_script_body.include?('"range_invalid"'),
+       "independent-review target inspector must prove status, staged, commit, and range structure without mutation")
+
+assert(orca_review.include?("removable non-Codex provider layer") &&
+       orca_review.include?("user explicitly invokes") &&
+       orca_review.include?("use its `scripts/inspect_review_target.py`") &&
+       orca_review.include?("current checkout, not a private snapshot"),
+       "orca-review must remain an explicit provider extension of the canonical target contract")
+assert(orca_review.include?("Probe only `claude`, `kimi`, `agy`, and `cursor-agent`") &&
+       orca_review.include?("Claude with a Fable lead") &&
+       orca_review.include?("Kimi with K3") &&
+       orca_review.include?("Agy with installed defaults") &&
+       orca_review.include?("Cursor Agent with Grok 4.6") &&
+       !orca_review.include?("codex:gpt"),
+       "orca-review must offer only the supported non-Codex providers")
+assert(orca_review.include?("prefer structured ask/answer") &&
+       orca_review.include?("ask one focused question in ordinary conversation") &&
+       orca_review.include?("Do not require separate preparation and transmission approvals") &&
+       orca_review.include?("same operating-system user"),
+       "orca-review must preserve structured selection, conversational fallback, and one consent boundary")
+assert(orca_review.include?("run no tests or builds") &&
+       orca_review.include?("`runtime unverified`") &&
+       orca_review.include?("Valid, Invalid, or Needs confirmation") &&
+       orca_review.include?("Never retry automatically, switch providers") &&
        orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
-       "orca-review must remain read-only and locally adjudicate bounded results")
-assert(orca_review.include?("return `APPROVE` as the verdict") &&
-       orca_review.include?("include a bounded topology record") &&
-       !orca_review.include?("return exactly `APPROVE`"),
-       "orca-review clean verdict must coexist with its required evidence envelope")
-assert(orca_review.include?("one cumulative liveness budget") &&
-       orca_review.include?("using 30 minutes") &&
-       orca_review.include?("stop waiting, leave any active worker intact") &&
-       orca_review.include?("Further waiting or cancellation requires an explicit user request"),
-       "orca-review must bound repeated liveness checkpoints without mutating an active worker")
-assert(orca_review.include?("one settlement budget of five minutes and at most 16 Delivery batches") &&
-       orca_review.include?("Do not reset either limit") &&
-       orca_review.include?("do not acknowledge the unresolved batch") &&
-       orca_review.include?("Continuing the drain requires an explicit user request") &&
-       orca_review.include?("one new five-minute, 16-batch settlement budget"),
-       "orca-review must bound terminal settlement and require user authority for another drain")
-assert(orca_review.include?("After every message in the batch is processed") &&
-       orca_review.include?("check --ack <deliveryId>` without `--wait") &&
-       orca_review.include?("repeating non-waiting acknowledgements until the response reports no Delivery") &&
-       orca_review.include?("post-settlement queued message") &&
-       orca_review.include?("do not wait on or reopen the settled Dispatch") &&
-       orca_review.include?("check --ack <deliveryId> --wait --timeout-ms <remainingBudgetMs>") &&
-       orca_review.include?("Unicode `Cc`, `Cf`, `Zl`, or `Zp`") &&
-       orca_review.include?("U+202E") &&
-       orca_review.include?("For a question, escalation, heartbeat") &&
-       orca_review.include?("Only for an accepted terminal `worker_done`") &&
-       orca_review.include?("Never retain or release a worker merely for") &&
-       orca_review.include?("FIFO replay intentionally blocks later deliveries") &&
-       orca_review.include?("Never acknowledge a batch while any message is unresolved"),
-       "orca-review must acknowledge every fully processed Delivery batch without bypassing settlement")
-assert(orca_review.include?("immediately before the source-bearing Dispatch") &&
-       orca_review.include?("every provider-visible snapshot and Aquarium Task byte") &&
-       orca_review.include?("immediately before every lifecycle read or mutation") &&
-       orca_review.include?("still map to the recorded repository identity and exact snapshot path"),
-       "orca-review must revalidate consented bytes, runtime, and setup ownership before transmission or cleanup")
+       "orca-review must remain static, adjudicated, and operationally bounded")
+
+assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-mode plan") &&
+       orca_provider_contracts.include?("may create Opus or Sonnet subagents when") &&
+       orca_provider_contracts.include?("A small review may remain Fable-only") &&
+       orca_provider_contracts.include?("<PROVIDER> --model k3 --plan") &&
+       orca_provider_contracts.include?("<PROVIDER> --mode plan --sandbox") &&
+       orca_provider_contracts.include?("--agent <agent> --model <model> --effort <effort>") &&
+       orca_provider_contracts.include?("Do not run `agy agent`, `agy models`") &&
+       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan"),
+       "orca-review provider contracts must preserve exact launches and optional provider-native delegation")
+assert(orca_review.include?("scripts/create_provider_terminal.py") &&
+       orca_provider_contracts.include?("non-expanding stdin") &&
+       orca_provider_contracts.include?("never put provider paths or arguments in a shell command") &&
+       orca_supervision.include?("deterministic terminal-creation helper"),
+       "orca-review must route provider argv through the deterministic terminal helper")
+assert(orca_terminal_helper.file? &&
+       orca_terminal_helper_body.include?("aquarium-orca-provider-terminal-request/v1") &&
+       orca_terminal_helper_body.include?("shlex.join(provider_argv)") &&
+       orca_terminal_helper_body.include?(%q["terminal",]) &&
+       orca_terminal_helper_body.include?(%q["create",]) &&
+       orca_terminal_helper_body.include?("remote_routing_forbidden") &&
+       orca_terminal_helper_body.include?('f"{label}_identity_changed"'),
+       "provider terminal helper must bind identity and avoid coordinator shell interpolation")
+assert(orca_supervision.include?("current execution backend") &&
+       orca_supervision.include?("original registered checkout") &&
+       orca_supervision.include?("Do not create or register a temporary repository snapshot") &&
+       orca_supervision.include?("--worktree current --agent codex") &&
+       orca_supervision.include?("cumulative 30-minute default liveness budget") &&
+       orca_supervision.include?("current recovery and FIFO rules"),
+       "shared Orca supervision must bind current-worktree execution and live lifecycle authority")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -2009,6 +1944,69 @@ assert(release_qa.include?("## Establish Design Gate Enrollment") &&
        release_qa.include?("sole exception is an exact local offline procedure") &&
        release_qa.include?("both applicable matrices"),
        "release-qa must combine gradual Design Gate enrollment with a separate release-delta matrix")
+
+assert(release_handler.include?("Explicit invocation authorizes read-only release discovery") &&
+       release_handler.include?("Compare every commit and material changed surface") &&
+       release_handler.include?("entries are byte-identical") &&
+       release_handler.include?("push `main`") &&
+       release_handler.include?("annotated target-version tag") &&
+       release_handler.include?("Show the exact new empty `Unreleased` section and request separate commit authority") &&
+       release_handler.include?("Never rewrite or delete a published tag or Release"),
+       "release-handler must preserve candidate, publication, and next-cycle boundaries")
+assert(release_handler.include?("references/publication-recovery.md") &&
+       release_handler.include?("scripts/inspect_publication_state.py") &&
+       release_handler.include?("--first-release") &&
+       release_qa.include?("confirmed first release") &&
+       release_qa.include?("--first-release"),
+       "release workflows must support first releases and deterministic publication recovery")
+assert(release_recovery.include?("Recovery is stateless") &&
+       release_recovery.include?("push_main") &&
+       release_recovery.include?("create_and_push_tag") &&
+       release_recovery.include?("create_hosted_release") &&
+       release_recovery.include?("verify_complete") &&
+       release_recovery.include?("earlier authority does not survive a new invocation"),
+       "publication recovery must reconcile matching state without persisting hidden authority")
+assert(release_publication_script.file? &&
+       release_publication_script_body.include?("aquarium-release-publication-observation/v1") &&
+       release_publication_script_body.include?("aquarium-release-publication-state/v1") &&
+       release_publication_script_body.include?(%q[next_action = "push_main"]) &&
+       release_publication_script_body.include?(%q[next_action = "create_and_push_tag"]) &&
+       release_publication_script_body.include?(%q[next_action = "create_hosted_release"]) &&
+       release_publication_script_body.include?(%q[next_action = "verify_complete"]) &&
+       release_publication_script_body.include?(%q[next_action = "stop"]),
+       "publication-state helper must return one ordered resumable action or stop")
+assert(release_handler_script.file? && release_handler_script_body.include?("aquarium-release-notes-inspection/v1") &&
+       release_handler_script_body.include?(%q["semantic_scope": "not_evaluated"]) &&
+       release_handler_script_body.include?("open_release_count_invalid") &&
+       release_handler_script_body.include?("authority_untracked") &&
+       release_handler_script_body.include?("PROJECT_CONFIGURATION_HEADING") &&
+       release_handler_script_body.include?("release_heading_invalid") &&
+       release_handler_script_body.include?("release_date_invalid") &&
+       release_handler_script_body.include?("release_category_invalid") &&
+       release_handler_script_body.include?("release_category_duplicate") &&
+       release_handler_script_body.include?("release_category_empty") &&
+       release_handler_script_body.include?("release_entry_outside_category") &&
+       release_handler_script_body.include?("first_release_has_completed_release") &&
+       release_handler_script_body.include?("expected_version_mismatch") &&
+       release_handler_script_body.include?("expected_version_not_newer") &&
+       release_handler_script_body.include?("previous_release_missing"),
+       "release-handler must ship the structural release-notes inspector")
+assert(release_notes_contract.include?("Aquarium release notes: <repository-relative-path>") &&
+       release_notes_contract.include?("`entry`") &&
+       release_notes_contract.include?("`intentional no-note`") &&
+       release_notes_contract.include?("`not-enrolled`") &&
+       release_notes_contract.include?("at most two Markdown source lines") &&
+       release_notes_contract.include?("substantive entry change creates a new candidate"),
+       "shared release-notes contract must define enrollment, commit decisions, and QA stability")
+assert(release_qa.include?("release-handler inspector") &&
+       release_qa.include?("Do not edit the changelog during QA") &&
+       task_document.include?("settle exactly one release-note decision before review") &&
+       task_close.include?("release-note decision") &&
+       task_commit.include?("Require the release-note decision to match the final diff") &&
+       task_commit.include?("A release-handler commit handoff must name") &&
+       epic_handler.include?("release-note target and decision") &&
+       epic_validator.include?("release-note target and decision"),
+       "release-note decisions must flow from documentation through QA and commit")
 
 assert(task_plan.include?("decision-complete plan"), "task-plan must own decision-complete planning")
 assert(task_plan.include?("Do not create a goal"), "task-plan must remain mutation-free")
@@ -2129,6 +2127,7 @@ assert(task_handler.include?("Reject audit logs, completion summaries, evidence 
   "task-review" => task_review,
   "epic-handler" => epic_handler,
   "epic-validator" => epic_validator,
+  "release-handler" => release_handler,
   "release-qa" => release_qa,
   "war-room" => war_room,
   "design-qa" => design_qa,
@@ -2391,6 +2390,17 @@ assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit 
        makefile.include?("export PYTEST_DISABLE_PLUGIN_AUTOLOAD := 1") &&
        makefile.include?("git --no-pager diff --check"),
        "root Makefile must expose the serial common test contract")
+assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py") &&
+       makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py") &&
+       makefile.include?("plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py") &&
+       makefile.include?("tests/unit/test_inspect_release_notes_unit.py") &&
+       makefile.include?("tests/unit/test_inspect_publication_state_unit.py") &&
+       makefile.include?("tests/unit/test_create_provider_terminal_unit.py") &&
+       makefile.include?("plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py") &&
+       makefile.include?("tests/unit/test_inspect_review_target_unit.py") &&
+       testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers") &&
+       testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target helpers' bounded structural states"),
+       "release and review helpers and tests must remain in the common test contract")
 assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
        ROOT.join("README.md").read.include?("[Orca Review]") &&
        ROOT.join("README.ko.md").read.include?("$aquarium:orca-review") &&
@@ -2405,7 +2415,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
        testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
-       testing_document.include?("docs-setup structural inspectors") &&
+       testing_document.include?("docs-setup, release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),
@@ -2441,6 +2451,7 @@ readme_skill_names = %w[
   new-feature
   new-project
   refactor
+  release-handler
   release-qa
   task-commit
   task-handler

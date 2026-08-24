@@ -19,7 +19,7 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 | Stage | Checks |
 |---|---|
 | `test-prepare` | Ruff formatting and lint for every maintained Python source and test file; plugin-manifest JSON parsing; Ruby syntax; the local cross-skill, procedure, documentation, and release-contract validator; whitespace validation. |
-| `test-unit` | Native pytest tests for isolated pure functions in the test-setup and docs-setup structural inspectors. |
+| `test-unit` | Native pytest tests for isolated pure functions in the test-setup, docs-setup, release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers. |
 | `test-int` | The native pytest docs-setup and test-setup inspector suites followed by the three pre-existing Python `unittest` suites exercising tool inspection, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
 | `test-e2e` | Python pytest scenarios invoking the shipped test-setup inspector CLI as a black box against isolated temporary repository fixtures. |
 
@@ -50,7 +50,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 
 ## E2E Environment
 
-The E2E production-equivalent artifact is the shipped `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py` CLI. E2E invokes only its documented `--repository` public interface in a child process and treats its JSON and exit status as black-box output. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`, where temporary Git fixtures cover its documentation and migration contracts.
+The E2E production-equivalent artifact is the shipped `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py` CLI. E2E invokes only its documented `--repository` public interface in a child process and treats its JSON and exit status as black-box output. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, provider-terminal, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables.
 
 Each scenario creates one unique operating-system temporary directory containing only test-owned repository fixtures. It uses no credential, account, network, port, database, container, volume, provider, or production environment. `pytest` owns teardown through `tmp_path`; the test never deletes a path it did not create. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
 

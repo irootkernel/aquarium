@@ -41,9 +41,7 @@ class JsonArgumentParser(argparse.ArgumentParser):
 
 
 def semver_key(version: str) -> tuple[int, int, int]:
-    major, minor, patch = (
-        int(part) for part in version.removeprefix("v").split(".")
-    )
+    major, minor, patch = (int(part) for part in version.removeprefix("v").split("."))
     return major, minor, patch
 
 

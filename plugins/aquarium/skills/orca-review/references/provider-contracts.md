@@ -1,79 +1,59 @@
 # Provider Contracts
 
-Read only the section for the selected tool:model. The version-matched Orca guides remain authoritative for command grammar, terminal readiness, Dispatch injection, waiting, transcript reads, recovery, and release.
+Read only the selected provider section after loading the shared review and Orca supervision contracts. The version-matched Orca guides remain authoritative for terminal creation, readiness, Dispatch injection, lifecycle messages, settlement, and recovery.
 
-In the examples, `<ORCA>` means the complete pinned command vector already resolved from `$orca-cli`: the selected absolute entrypoint path followed by every fixed argument in its recorded order. Expand that vector directly for every example without re-parsing it through a shell or dropping its fixed arguments. `<PROVIDER>` means the selected provider CLI's consent-bound absolute entrypoint path.
+`<PROVIDER>` is the consent-bound absolute provider entrypoint. The provider sections below define logical argument vectors, not shell command fragments. Resolve this skill directory and use `scripts/create_provider_terminal.py` for the only provider-terminal creation path. Send its `aquarium-orca-provider-terminal-request/v1` JSON through non-expanding stdin; never put provider paths or arguments in a shell command, heredoc with expansion, environment assignment, or string concatenation.
 
-An entrypoint may be a platform-native image or an executable shebang script, text launcher, shim, or wrapper installed on the user's system. Its recorded digest identifies only the canonical entrypoint target, not its interpreter or delegated supporting code.
+The helper revalidates the consent-bound Orca and provider canonical targets and digests, serializes the provider argv once, and invokes Orca through a native subprocess argument vector. If non-expanding stdin is unavailable, stop before terminal creation.
 
-Replace the pinned vector and provider path directly rather than creating a shell variable, resolving a bare command again, or running a placeholder literally. Create the Run and Task before the terminal, wait for that exact terminal to become TUI-idle, verify the exact consented model, then inject the Task as one supervised Dispatch.
+Launch one fresh terminal in the current worktree and keep it in the provider's read-only or plan mode. Authentication prompts, model rejection, premature exit, missing Dispatch support, helper rejection, or any request to weaken permissions stop the review.
 
-## Shared Launch Boundary
+The lead owns the final verdict. Optional native subagents gather bounded evidence for the lead; they do not report directly to Aquarium. Record their requested and effective identities when the provider exposes that information. Never claim a model identity that the provider does not expose.
 
-Use a fresh terminal in the verified immutable `/tmp` snapshot through the consent-bound local Orca runtime; never launch in or identify the original checkout to a participant. Never pass or inherit an Orca environment or pairing selector. Start it through `<ORCA> terminal create --worktree path:<absoluteSnapshotPath> --command <command> --json` using `<PROVIDER>` as the command's executable, preserve its returned handle, and wait with an explicit timeout.
+## Claude Fable
 
-Before `orchestration dispatch --inject`, confirm the local runtime identity, snapshot path, selected provider entrypoint and canonical target, terminal command, and exact consent-bound expected native lead model identity from the launch output and bounded readiness transcript. Verify provider-specific subagent topology separately after Dispatch. A fallback, alias, missing identity, or unverifiable model stops without Dispatch; source must never be sent to discover the model.
-
-If the CLI exits, requests authentication, rejects the model or read-only mode, cannot receive the Dispatch, or cannot send lifecycle messages, report the exact operational failure. Do not remove read-only flags, weaken permissions, switch models, reuse a terminal, or start another provider.
-
-The lead owns final synthesis. Subagents return evidence to the lead and never report directly to the Aquarium coordinator. The lead must inspect cited code and authority itself before accepting a subagent claim.
-
-## `claude:fable with opus/sonnet`
-
-Launch command:
+Provider arguments:
 
 ```text
 <PROVIDER> --model fable --permission-mode plan
 ```
 
-Fable is the master reviewer. It concentrates on decomposition, orchestration, evidence review, validation, requirement-goal assessment, decisions, deduplication, and final reporting rather than performing every first-pass investigation itself.
+Fable manages decomposition, evidence review, requirement-goal assessment, decisions, deduplication, and final synthesis. It may create Opus or Sonnet subagents when the target benefits from deeper or broader investigation. Use Opus for difficult architecture, concurrency, or correctness reasoning and Sonnet for broad caller, test, or documentation tracing. A small review may remain Fable-only.
 
-For every nonempty review, Fable delegates at least one bounded investigation or analysis task to a Claude subagent with an explicit per-invocation `opus` or `sonnet` model. Use Opus for deep requirement, architecture, concurrency, or correctness reasoning and Sonnet for broad code, caller, test, and documentation tracing; use both when the target materially benefits from independent coverage. Project defaults or inherited aliases must not silently replace the explicit subagent model.
+Record which Opus or Sonnet work was actually used and whether Fable accepted, rejected, or qualified each result. Optional subagent absence is not an error.
 
-For every subagent, Fable records the requested model and verifies the effective model from native Agent task or session metadata or an explicit runtime model identity reported by that subagent. A missing, ambiguous, or mismatched effective model makes the topology unverifiable and prevents a clean verdict.
+## Kimi K3
 
-Fable accepts only claims it can trace to exact repository evidence. Its topology record lists the Opus and Sonnet work actually used, their roles, and whether each result was accepted, rejected, or still needs confirmation.
-
-## `claude:opus`
-
-Launch command:
-
-```text
-<PROVIDER> --model opus --permission-mode plan
-```
-
-The Opus lead delegates at least two independent review slices to Claude subagents using `model: inherit` or an explicit `opus` override. Assign non-overlapping concerns derived from the target, such as requirement traceability, runtime and persistence behavior, or regression-test coverage. The lead verifies and deduplicates their conclusions before reporting.
-
-For every subagent, the Opus lead records the requested model and verifies the effective model from native Agent task or session metadata or an explicit runtime model identity reported by that subagent. A missing, ambiguous, or mismatched effective model makes the topology unverifiable and prevents a clean verdict.
-
-## `codex:gpt-5.6-sol`
-
-Launch command:
-
-```text
-<PROVIDER> --model gpt-5.6-sol --sandbox read-only --ask-for-approval never
-```
-
-The Codex lead delegates at least two independent review slices through its native subagent tools. Do not set a model override on a subagent; every subagent must inherit `gpt-5.6-sol`. The lead verifies the effective model from available session or tool metadata, reviews the evidence, and deduplicates the results before reporting.
-
-## `cursor:grok-4.6`
-
-Launch command:
-
-```text
-<PROVIDER> --model grok-4.6 --mode plan
-```
-
-The Cursor lead delegates at least two independent review slices to native subagents configured with `model: inherit`. Do not use project or user subagents that force another model. The lead verifies available task metadata, reviews cited evidence, and deduplicates the results before reporting.
-
-## `kimi:k3`
-
-Launch command:
+Provider arguments:
 
 ```text
 <PROVIDER> --model k3 --plan
 ```
 
-The Kimi lead delegates at least two independent review slices through `Agent` or `AgentSwarm` with the primary model explicitly selected. Do not accept a configured secondary model or an agent profile that overrides K3. If the installed Kimi version cannot request or verify the primary model for subagents, report topology as unverifiable and do not return a clean verdict.
+Kimi may use its native review or exploration agents when useful. Do not select a configured secondary model silently. Record the effective lead or subagent identity when exposed; otherwise report it as unknown without turning that absence alone into a failed review.
 
-Prefer read-only `explore` or equivalent custom review agents. The lead verifies their evidence and deduplicates the results before reporting.
+## Agy
+
+Default provider arguments:
+
+```text
+<PROVIDER> --mode plan --sandbox
+```
+
+Use the installed Agy defaults unless the user supplied an exact override. Append only the supplied values as native arguments:
+
+```text
+--agent <agent> --model <model> --effort <effort>
+```
+
+Do not run `agy agent`, `agy models`, or another discovery command. Record the effective agent and model if the launched session exposes them; otherwise report the identity as unknown. Unknown default identity is disclosed evidence, not permission to probe a provider service.
+
+## Cursor Agent Grok 4.6
+
+Provider arguments:
+
+```text
+<PROVIDER> --model grok-4.6 --mode plan
+```
+
+Cursor Agent may use native inherited-model subagents when useful. Do not use a project or user agent definition that forces another model. Record available task and model metadata and let the lead verify and deduplicate all subagent evidence.

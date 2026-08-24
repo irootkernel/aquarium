@@ -1,70 +1,47 @@
 ---
 name: independent-review
-description: "Run one supervised, read-only requirements and code review with a fresh Codex in the current Orca worktree, then adjudicate its findings and propose responses without making changes. Use when the user explicitly invokes $aquarium:independent-review with exactly one epic or task and asks to receive the independent review result."
+description: "Run one supervised static review with a fresh Codex against staged changes, a commit or range, one task or epic, or a roadmap-independent investigation. Use when the user explicitly invokes $aquarium:independent-review and asks for an independent verdict without remediation."
 ---
 
 # Independent Review
 
-Coordinate exactly one fresh Codex reviewer through Orca, preserve the current checkout, and independently verify the returned findings before recommending any response. This is a standalone review workflow, not the Mulgae phase owned by `$aquarium:task-review`.
+Run the canonical Aquarium review contract with one fresh Codex reviewer. The current execution backend is Orca, but target selection and review semantics are backend-independent. Use `$aquarium:orca-review` only when the user wants a supported non-Codex provider.
 
-## Establish the Review Contract
+## Load the Contracts
 
-1. Require exactly one epic or task identifier and one current Git repository. Resolve the repository root, applicable instruction files, and the authoritative roadmap, requirements, specifications, decisions, and contracts for that identifier.
-2. Inspect HEAD, branch, upstream, staged, unstaged, untracked, and conflicted state. Define the exact review snapshot and distinguish target-owned changes from unrelated work. Include committed, staged, and unstaged target code when applicable; never expose unrelated untracked content merely because it is present.
-3. Treat the user's statement that tests passed as context. Do not rerun tests, generators, formatters, linters, provider reviews, or other validation commands in either the coordinator or reviewer.
-4. If the target authority or review boundary cannot be established safely, ask one focused question and do not start a worker until the ambiguity is resolved.
+1. Read [review-contract.md](../../references/review-contract.md) completely. It owns target selection, dirty-state handling, consent, static-review limits, and the result envelope.
+2. Read [orca-supervision.md](../../references/orca-supervision.md) completely. It owns the current backend lifecycle.
+3. Resolve this skill directory and use `scripts/inspect_review_target.py` from it. Do not copy or approximate the inspector contract.
 
-Explicit invocation authorizes starting Orca when installed and launching one supervised Codex reviewer in the current worktree. It does not authorize source edits, staging, commits, pushes, worktree creation, destructive actions, Mulgae, or remediation.
+## Establish the Request
 
-## Fail Closed on Orca
+1. Resolve one current Git root and classify the request as `staged`, `commit`, `range`, `task`, `epic`, or `special request`.
+2. For a task or epic, inspect its roadmap and linked authority first. Select a Git target automatically only when the authority identifies one unambiguous staged candidate, commit, or range; otherwise ask the user to choose among the concrete candidates.
+3. For a special request, establish the exact question, then always ask the user to confirm staged, `HEAD`, one commit, or one explicit two-dot or three-dot range.
+4. Inspect HEAD, branch, upstream, staged, unstaged, untracked, ignored, and conflicted state. Resolve any staged-target dirty decision exactly as the shared contract requires. Never review dirty working-tree content as a target.
+5. Run the target inspector after all required choices or staging operations. Bind its complete JSON result and the resolved authority paths to the Task.
 
-1. Resolve the Orca executable exactly as the installed `$orca-cli` skill requires and reuse that selection. Do not fall through to another executable when the selected command is missing or fails.
-2. Load the version-matched guides with the selected executable's `skills get orca-cli` and `skills get orchestration` commands before using Orca. Follow those live guides rather than cached command syntax.
-3. Confirm the runtime with `status --json`. When the CLI exists but the app is stopped, attempt `open --json` once and confirm status again.
-4. Stop with the exact error and recovery requirement when the CLI is unavailable, the selected executable fails, the runtime cannot start, orchestration is disabled, or Run, Task, or Dispatch provenance cannot be verified.
+Explicit invocation with an exact target and Codex reviewer authorizes the source transmission needed for this review. Do not ask for duplicate approval unless the target, included paths, reviewer, or execution scope changes. The workflow authorizes no source edits, tests, builds, generators, formatters, linters, provider reviews, commits, pushes, publication, or remediation. The only permitted mutation is exact-path staging that the user separately approved under the dirty decision.
 
-Never substitute a generic subagent, chat delegation, ad hoc PTY, raw agent CLI, another Orca executable, or the coordinator's own review. An operational failure is not an `APPROVE` result.
+## Dispatch One Fresh Codex
 
-## Dispatch One Fresh Reviewer
+Resolve the installed Orca command and live guides exactly as the Orca supervision contract requires. Create one Run and one review Task, then start one fresh reviewer with the live guide's supervised `worker-start --worktree current --agent codex` path. Do not reuse an existing worker or create another worktree.
 
-Create or bind one Run, create one review Task, and use the live guide's supervised `worker-start` path with `--worktree current --agent codex`. Do not reuse an existing terminal and do not create another Git worktree. Honor an explicitly requested Codex model and effort when supported; otherwise use Orca's defaults.
+The Task must include:
 
-Build the Task specification from source evidence, including the absolute repository, target identifier, authority paths, exact review snapshot or range, relevant staged and unstaged state, and the fact that tests already passed. Do not include the coordinator's suspected findings or intended fixes.
+- the absolute repository root, target-inspector result, review focus, and authority paths;
+- exact included and excluded state, including the same-user visibility disclosure when dirty content is excluded;
+- instructions to use index blobs for staged targets and resolved commit blobs for commit, range, or `HEAD` targets rather than later working-tree copies;
+- the static-only restrictions and `runtime unverified` requirement from the shared contract;
+- the required finding fields and exact `APPROVE` condition;
+- the user's test-status statement only as context, never as independently verified evidence.
 
-Require the reviewer to:
+Do not seed the reviewer with suspected findings or intended fixes. Require it to modify no files, leave its complete review in the final response, and send `worker_done` exactly once through the injected Orca lifecycle.
 
-- read applicable instructions, requirements, contracts, code, and relevant existing tests;
-- remain strictly read-only and run no tests, generators, formatters, linters, or provider reviews;
-- report only verified, actionable findings and omit style preferences, speculation, and praise;
-- separate production defects from required test, specification, or current-documentation gaps;
-- give each finding a severity, exact `path:line`, triggering scenario, violated requirement, impact, and smallest remediation;
-- return exactly `APPROVE` when no actionable finding remains;
-- leave the detailed review in its final response, report no modified files, and send `worker_done` exactly once through the injected Orca lifecycle.
+## Supervise and Adjudicate
 
-## Supervise and Settle
+Follow the live Orca guides and [orca-supervision.md](../../references/orca-supervision.md) for waiting, questions, completion, settlement, acknowledgement, and recovery. Keep technical review status separate from backend lifecycle status.
 
-Before dispatch, disclose and record one cumulative liveness budget, using 30 minutes unless the user explicitly selected another duration. Use rolling waits for `worker_done`, `escalation`, and `question`, keeping each wait short enough to provide a user update at least once per minute and charging every wait against the same remaining budget.
+After accepted completion, independently check every finding against the exact target, authority, production callers, persistence and concurrency boundaries, and existing tests without running checks or changing files. Classify findings as Valid, Invalid, or Needs confirmation under the shared result contract. A functionality claim that still requires execution remains `runtime unverified`.
 
-Treat a timeout or empty delivery inside that budget as a liveness checkpoint, not a failure. Answer reviewer questions only from established repository facts; ask the user when an answer requires product intent or wider authority.
-
-When the cumulative budget expires without an accepted terminal delivery, inspect the authoritative worker and terminal state once through the live guide, stop waiting, leave any active worker intact, and report the review as operationally incomplete with the exact Run, Task, Dispatch, terminal, and lifecycle status. Further waiting or cancellation requires an explicit user request; never release, retry, cancel, or replace the active worker automatically.
-
-For an accepted `worker_done`, retrieve the complete worker transcript, process every delivered message, release the settled worker, and acknowledge the delivery only after the release decision. Release both succeeded and failed settled workers unless the user explicitly requested retention.
-
-Acceptance opens one five-minute settlement budget of at most 16 Delivery batches, including the terminal batch. After processing every message and completing the required release, acknowledge that exact batch without waiting and inspect the acknowledgement response.
-
-Process and acknowledge every returned heartbeat, duplicate or stale completion, question, or escalation under the same budget until no Delivery remains; do not release the already settled worker again. An unresolved question or escalation, release failure, or exhausted budget is an operational gap. Leave its Delivery unacknowledged for FIFO replay, preserve the lifecycle state, and require explicit user direction before any further drain.
-
-Do not release an active worker after a timeout, question, escalation, heartbeat, or rejected or stale completion. Follow the live guide's exact recovery action and never blindly resend an exactly-once `worker_done`. Keep technical review evidence and Orca lifecycle settlement as separate statuses.
-
-## Adjudicate the Result
-
-Verify every reviewer finding against the current authority, code, callers, persistence boundaries, and existing tests without changing files or running checks. Classify each item as:
-
-- **Valid**: confirmed and actionable; propose the smallest implementation and regression-coverage response.
-- **Invalid**: contradicted by exact evidence; explain the contradiction briefly.
-- **Needs confirmation**: plausible but dependent on missing authority or runtime evidence; state the precise evidence needed.
-
-Do not implement a proposed response. If the reviewer returned `APPROVE`, first confirm that it examined the intended snapshot and authority, then report that no actionable feedback was found. If output is missing, scope is wrong, or orchestration failed, report the operational gap without a clean verdict.
-
-Return the target and snapshot, independent reviewer verdict, adjudicated findings, recommended responses, and separate Orca Run, Task, Dispatch, and lifecycle status.
+Return the complete shared result envelope, identify Codex as the reviewer and Orca as the current backend, and report separate Run, Task, Dispatch, worker, and lifecycle status. Wrong scope, modified files, missing output, or an incomplete lifecycle prevents a clean verdict.

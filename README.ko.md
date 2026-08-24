@@ -48,8 +48,8 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다. `$aquarium:design-qa`는 Design Gate를 만들고, 바꾸고, 퇴역시킵니다.
 2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 epic의 task를 순서대로 수행한 뒤 epic 전체를 hardening합니다. Commit은 별도로 `$aquarium:task-commit`을 거치며 사용자가 승인합니다.
-3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 별도의 Codex session에 요구사항과 코드의 read-only review를 맡기며, `$aquarium:orca-review`는 공개된 exact snapshot을 사용자가 고른 provider로 Orca에서 review합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
-4. **Release** — `$aquarium:release-qa`는 버전을 내보내기 전에 release delta와 모든 active Design Gate를 격리된 scenario로 검증합니다.
+3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 staged change, commit, range, task, epic, 특별 조사에 하나의 canonical static Codex review 계약을 적용합니다. `$aquarium:orca-review`는 같은 계약을 사용자가 선택한 non-Codex provider에 적용합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
+4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
 
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
 
@@ -58,7 +58,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
-- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 사용자가 명시적으로 선택한 AI CLI가 공개된 repository snapshot 하나를 review하도록 감독합니다. Aquarium은 provider 동의를 그 snapshot에 결합하고 결과를 독립적으로 판정합니다.
+- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 Claude Fable, Kimi, Agy, Cursor Agent 중 하나가 exact Git target을 review하도록 감독합니다. Dirty working-tree 내용은 제외하거나, 사용자가 승인한 exact path만 staging하며, Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
 - [Ouroboros](https://github.com/Q00/ouroboros)는 명시적으로 호출한 다섯 가지 design workflow 안에서만 discovery, PM, Seed, QA를 제공합니다. 문서 적용, 승인, 저장소 authority는 Aquarium이 가집니다.
@@ -70,13 +70,14 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 ## 운영 경계
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
-- `release-qa` 호출은 QA 1회, private repository에 대한 기존 ambient authentication을 사용하는 구성된 Git remote와 hosting의 release metadata read-only 조회, 검증된 finding의 제한된 local 수정을 허용합니다. 수정 후에는 새 QA 전에 명시적 확인을 받기 위해 멈추며, source upload나 credential 처리는 하지 않습니다.
+- `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
 - Setup이나 진단 대상으로 선택한 Sanho, Mulgae, Gaori, Podway는 설치된 `use-*` skill과 비교하기 위해 official GitHub Releases metadata를 자동으로 조회하고 `raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다. 선택하지 않은 도구와 그 밖의 network 작업은 포함되지 않으며, setup은 AI provider를 호출하지 않습니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서
 
 - [TESTING.md](TESTING.md)는 이 저장소의 test authority와 `aquarium-test-contract/v1` evidence mapping을 정의합니다.
+- [CHANGELOG.md](CHANGELOG.md)는 간결한 release outcome과 계획된 다음 stable version을 기록합니다.
 - [Documentation governance](plugins/aquarium/references/documentation-governance.md)는 Aquarium의 문서 역할, profile, 기본 roadmap identity를 정의합니다.
 - [Bundle manifest reference](plugins/aquarium/skills/dev-setup-bundle/references/manifest.md)는 여러 저장소를 한 번에 설정하는 manifest 형식을 정의합니다.
 - 각 skill의 `SKILL.md`가 trigger, effect, approval boundary, failure behavior의 authority입니다.

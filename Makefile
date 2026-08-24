@@ -19,6 +19,10 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
+	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
+	plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py \
+	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
+	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
 	plugins/aquarium/skills/test-setup/scripts/inspect_testing.py \
 	tests/test_inspect_docs.py \
 	tests/test_inspect_tools.py \
@@ -26,6 +30,10 @@ PYTHON_FILES := \
 	tests/test_normalize_manifest.py \
 	tests/test_task_commit_gate.py \
 	tests/unit/test_inspect_docs_unit.py \
+	tests/unit/test_create_provider_terminal_unit.py \
+	tests/unit/test_inspect_publication_state_unit.py \
+	tests/unit/test_inspect_review_target_unit.py \
+	tests/unit/test_inspect_release_notes_unit.py \
 	tests/unit/test_inspect_testing_unit.py \
 	tests/e2e/test_test_setup_cli.py
 
