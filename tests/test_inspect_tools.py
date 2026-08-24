@@ -124,7 +124,7 @@ class InspectToolsTest(unittest.TestCase):
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.7",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.17",
+        mulgae_version: str = "v0.1.18",
         mulgae_output_schema: str = "mulgae-command-result.v5",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
@@ -252,8 +252,8 @@ class InspectToolsTest(unittest.TestCase):
                         "observed_version": version,
                         "eligibility": eligibility,
                         "compatibility": compatibility,
-                        "minimum_version": "0.15.2",
-                        "verified_latest": "0.16.1",
+                        "minimum_version": "0.16.3",
+                        "verified_latest": "0.16.3",
                         "reason_code": reason,
                     }}
                     not_applicable_cli = compatible("not_applicable", "not_evaluated", "not_observed", "")
@@ -305,7 +305,7 @@ class InspectToolsTest(unittest.TestCase):
 
                     provider_issue = doctor_case if config_ready and not invalid_identity else ""
                     binary = diagnostic("verified")
-                    cli = compatible("verified", "eligible", "verified", "provider_cli_version_supported", "0.16.1")
+                    cli = compatible("verified", "eligible", "verified", "provider_cli_version_supported", "0.16.3")
                     provider_state = "eligible"
                     provider_reason = "provider_cli_version_supported"
                     if provider_issue in {{"binary_missing", "binary_nonexecutable"}}:
@@ -403,7 +403,7 @@ class InspectToolsTest(unittest.TestCase):
                 raise SystemExit(2)
             if name == "codex":
                 if arguments == ["--version"]:
-                    print("codex-cli 0.147.0")
+                    print("codex-cli 0.149.0")
                     raise SystemExit(0)
                 if len(arguments) != 4 or arguments[:2] != ["mcp", "get"] or arguments[3] != "--json":
                     raise SystemExit(2)
@@ -783,7 +783,7 @@ class InspectToolsTest(unittest.TestCase):
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.17")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.18")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -1261,7 +1261,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.17")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.18")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -1331,8 +1331,9 @@ class InspectToolsTest(unittest.TestCase):
             ("v0.1.14", False, "degraded"),
             ("v0.1.15", False, "degraded"),
             ("v0.1.16", False, "degraded"),
-            ("v0.1.17", True, "installed"),
-            ("v0.1.17-rc.1", False, "degraded"),
+            ("v0.1.17", False, "degraded"),
+            ("v0.1.18", True, "installed"),
+            ("v0.1.18-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -1568,7 +1569,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(local["required_verification"], "verified")
         self.assertEqual(local["required_output_capability"], "reported")
         self.assertIsNone(local["compatibility_reason"])
-        self.assertEqual(registration["codex_version"], "0.147.0")
+        self.assertEqual(registration["codex_version"], "0.149.0")
         self.assertTrue(local["binary_matches_selected"])
         self.assertEqual(local["startup_timeout_sec"], 30)
         self.assertEqual(local["tool_timeout_sec"], 7501)
@@ -1962,7 +1963,7 @@ class InspectToolsTest(unittest.TestCase):
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
         self.assertEqual(mulgae["mcp_registration"]["status"], "missing")
         self.assertEqual(mulgae["mcp_registration"]["reason"], "registration_not_found")
-        self.assertEqual(mulgae["mcp_registration"]["codex_version"], "0.147.0")
+        self.assertEqual(mulgae["mcp_registration"]["codex_version"], "0.149.0")
         self.assertEqual(
             mulgae["mcp_registration"]["recommendation"],
             "install_global_registration",

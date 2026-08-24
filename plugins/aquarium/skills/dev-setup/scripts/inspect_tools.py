@@ -271,7 +271,7 @@ def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(r"v?0\.1\.(\d+)", version)
-    return bool(match and int(match.group(1)) >= 17)
+    return bool(match and int(match.group(1)) >= 18)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:

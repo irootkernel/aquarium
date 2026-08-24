@@ -827,12 +827,12 @@ assert(agents_reference.include?("$use-gaori") &&
        "AGENTS guidance must conditionally reference use-gaori")
 
 assert(mulgae_catalog, "Mulgae tool catalog section is missing")
-assert(mulgae_catalog.include?("stable `v0.1.17` through `v0.1.x`") &&
+assert(mulgae_catalog.include?("stable `v0.1.18` through `v0.1.x`") &&
        mulgae_catalog.include?("Go `1.26.6` or newer") &&
        mulgae_catalog.include?("same exact tag") &&
        mulgae_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
        mulgae_catalog.include?("~/.agents/skills/use-mulgae") &&
-       dev_setup.include?("stable `v0.1.17` through `v0.1.x`"),
+       dev_setup.include?("stable `v0.1.18` through `v0.1.x`"),
        "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
 assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
        mulgae_catalog.include?("mode-`0600`") &&
@@ -848,7 +848,7 @@ assert(mulgae_catalog.include?("mulgae-command-result.v5") &&
        mulgae_catalog.include?("mulgae-review-preflight.v3") &&
        mulgae_catalog.include?("Config v1 and v2 are unsupported") &&
        mulgae_catalog.include?("no automatic migration"),
-       "Mulgae v0.1.17 contracts and legacy-config guidance are incomplete")
+       "Mulgae v0.1.18 contracts and legacy-config guidance are incomplete")
 assert(mulgae_catalog.include?("validation.extraction.enabled: true") &&
        mulgae_catalog.include?("disabled/defaulted") &&
        mulgae_catalog.include?("changes shared project policy") &&
@@ -866,7 +866,7 @@ assert(mulgae_catalog.include?("accepted Markdown report byte-for-byte") &&
        mulgae_catalog.include?("`reports_only`") &&
        mulgae_catalog.include?("not itself a failure"),
        "Mulgae structured-extraction evidence contract is incomplete")
-assert(mulgae_catalog.include?("Codex CLI `0.147.0` or newer") &&
+assert(mulgae_catalog.include?("Codex CLI `0.149.0` or newer") &&
        mulgae_catalog.include?("default_credential_profile") &&
        mulgae_catalog.include?("credential_homes") &&
        mulgae_catalog.include?("auth.json") &&

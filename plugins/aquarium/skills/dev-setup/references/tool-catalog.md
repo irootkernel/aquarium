@@ -56,7 +56,7 @@ For an explicitly requested repair, load and follow the installed `$use-sanho` l
 
 Official source: `https://github.com/irootkernel/mulgae`
 
-Supported release line: stable `v0.1.17` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.16 lacks the v5 CLI envelope and event-driven MCP review lifecycle required by Aquarium, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
+Supported release line: stable `v0.1.18` through `v0.1.x`, native Apple Silicon macOS only. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-mulgae` skill; v0.1.17 lacks the current provider certification floors and literal-packet AGY qualification authority required by Aquarium, and do not automatically cross into `v0.2+`. Installation requires Go `1.26.6` or newer.
 
 Install an approved tag:
 
@@ -90,7 +90,7 @@ Under the no-backup policy, disclose that legacy project policy, private paths, 
 
 If Config v3 initialization fails, preserve the failure and do not partially edit either authority. Offer the disclosed restoration only when a verified backup exists; otherwise report that no rollback copy is available. Never reinterpret legacy provider policy or private paths automatically.
 
-When the user selects Codex, require a real Codex CLI `0.147.0` or newer and let Mulgae diagnose its authenticated readiness; never sign in, read `auth.json`, or accept an API-key environment variable on the user's behalf. A single-profile configuration uses the selected native Codex login with `mulgae init --providers codex --roles <roles> --output json`. Optional model and reasoning-effort values are shared project policy; omission preserves Codex CLI defaults.
+When the user selects Codex, require a real Codex CLI `0.149.0` or newer and let Mulgae diagnose its authenticated readiness; never sign in, read `auth.json`, or accept an API-key environment variable on the user's behalf. A single-profile configuration uses the selected native Codex login with `mulgae init --providers codex --roles <roles> --output json`. Optional model and reasoning-effort values are shared project policy; omission preserves Codex CLI defaults.
 
 For several Codex identities, keep the two authorities separate using this Config v3 shape; it is sufficient for the active setup session even when a newly replaced `$use-mulgae` skill will not load until Codex restarts:
 
