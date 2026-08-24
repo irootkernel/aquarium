@@ -11,14 +11,19 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
-- Add Aquarium edition links and keep runtime evidence outside canonical documentation.
+- Add Aquarium edition links to the English and Korean project READMEs.
+- Keep runtime evidence outside canonical documentation and tracked workflow records.
 - Align development setup with Mulgae v0.1.18.
 - Make repository guidance prefer durable root-cause solutions and route deferred work through canonical documentation owners.
 - Unify independent review targets across staged changes, commits, ranges, roadmap work, and special investigations.
 
 ### Fixed
 
-- Fix release QA isolation, docs-setup legacy ID and path validation, Orca launcher pinning, release-gate approvals, and dev-setup version parsing.
+- Fix macOS release QA fixture isolation.
+- Fix docs-setup roadmap alias, legacy ID, task status, cross-scope reference, migration record, and preserved-path validation.
+- Revalidate Orca provider identity at process start and enforce the exact Git-root boundary.
+- Require separate approval before executing release gates.
+- Reject noncanonical Mulgae and Go version strings during dev-setup inspection.
 - Allow Orca Review to use verified installed launchers safely.
 - Allow review target and provider selection to fall back to an explicit conversation when structured UI is unavailable.
 

@@ -32,6 +32,7 @@ def digest(path: Path) -> str:
 def request(tmp_path: Path) -> tuple[dict[str, object], list[Path]]:
     repository = tmp_path / "repository"
     repository.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
     sentinel = tmp_path / "unexpected-command"
     semicolon_sentinel = tmp_path / "unexpected-semicolon-command"
     provider = tmp_path / "provider with quote' and space"
@@ -85,8 +86,14 @@ def test_provider_argv_is_shell_safe_and_exact(tmp_path: Path) -> None:
 
     orca_argv = result["orca_result"]["argv"]
     command = orca_argv[orca_argv.index("--command") + 1]
-    expected = [payload["provider"]["entrypoint"], *payload["arguments"]]
-    assert shlex.split(command) == expected
+    command_argv = shlex.split(command)
+    assert command_argv[:3] == [str(Path(sys.executable).resolve()), "-I", "-c"]
+    assert command_argv[4:] == [
+        payload["provider"]["canonical_target"],
+        payload["provider"]["sha256"],
+        payload["repository"],
+        *payload["arguments"],
+    ]
     executed = subprocess.run(
         ["/bin/sh", "-c", command],
         check=True,
@@ -119,4 +126,60 @@ def test_provider_command_uses_verified_canonical_target(tmp_path: Path) -> None
 
     orca_argv = result["orca_result"]["argv"]
     command = orca_argv[orca_argv.index("--command") + 1]
-    assert shlex.split(command) == [str(provider_target), *payload["arguments"]]
+    command_argv = shlex.split(command)
+    assert command_argv[4:] == [
+        str(provider_target),
+        payload["provider"]["sha256"],
+        payload["repository"],
+        *payload["arguments"],
+    ]
+
+
+def test_repository_must_be_exact_git_root(tmp_path: Path) -> None:
+    payload, _ = request(tmp_path)
+    nested = Path(payload["repository"]) / "nested"
+    nested.mkdir()
+    payload["repository"] = str(nested)
+
+    with pytest.raises(create_provider_terminal.RequestError) as error:
+        create_provider_terminal.parse_request(payload)
+
+    assert error.value.code == "repository_not_root"
+
+
+def test_provider_is_revalidated_in_spawned_command(tmp_path: Path) -> None:
+    payload, _ = request(tmp_path)
+    provider = Path(payload["provider"]["canonical_target"])
+    orca = Path(payload["orca"]["canonical_target"])
+    marker = tmp_path / "replacement-executed"
+    original = provider.read_text(encoding="utf-8")
+    replacement = (
+        "#!/usr/bin/env python3\n"
+        "from pathlib import Path\n"
+        f"Path({str(marker)!r}).write_text('executed', encoding='utf-8')\n"
+    )
+    executable(
+        orca,
+        "#!/usr/bin/env python3\n"
+        "import json, shlex, subprocess, sys\n"
+        "from pathlib import Path\n"
+        f"provider = Path({str(provider)!r})\n"
+        f"provider.write_text({replacement!r}, encoding='utf-8')\n"
+        "provider.chmod(provider.stat().st_mode | 0o111)\n"
+        "arguments = sys.argv[1:]\n"
+        "command = arguments[arguments.index('--command') + 1]\n"
+        "child = subprocess.run(shlex.split(command), capture_output=True, text=True)\n"
+        f"provider.write_text({original!r}, encoding='utf-8')\n"
+        "provider.chmod(provider.stat().st_mode | 0o111)\n"
+        "print(json.dumps({'argv': arguments, 'child_exit': child.returncode, 'child_stderr': child.stderr}))\n",
+    )
+    payload["orca"]["sha256"] = digest(orca)
+
+    result = create_provider_terminal.create_terminal(payload)
+
+    assert result["orca_result"]["child_exit"] == 126
+    assert (
+        "provider identity changed before execution"
+        in result["orca_result"]["child_stderr"]
+    )
+    assert not marker.exists()

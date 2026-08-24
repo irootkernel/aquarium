@@ -522,6 +522,8 @@ assert(documentation_contract.include?("## Semantic Roles") &&
 assert(docs_setup_migration.include?("status is exactly `Planned`") &&
        docs_setup_migration.include?("every child task is exactly `Planned`") &&
        docs_setup_migration.include?("id-migrations/YYYY-MM-DD.md") &&
+       docs_setup_migration.include?("**Canonical roadmap:**") &&
+       docs_setup_migration.include?("every new ID is a current same-kind definition") &&
        docs_setup_migration.include?("Preserved Historical Paths") &&
        docs_setup_migration.include?("## Path and Profile Migration") &&
        docs_setup_migration.include?("Never move a task across epic boundaries") &&
@@ -1868,7 +1870,9 @@ assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-m
        orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan"),
        "orca-review provider contracts must preserve exact launches and optional provider-native delegation")
 assert(orca_review.include?("scripts/create_provider_terminal.py") &&
+       orca_review.include?("exact Git worktree root") &&
        orca_provider_contracts.include?("non-expanding stdin") &&
+       orca_provider_contracts.include?("provider-process start") &&
        orca_provider_contracts.include?("never put provider paths or arguments in a shell command") &&
        orca_supervision.include?("deterministic terminal-creation helper"),
        "orca-review must route provider argv through the deterministic terminal helper")
@@ -1878,6 +1882,8 @@ assert(orca_terminal_helper.file? &&
        orca_terminal_helper_body.include?(%q["terminal",]) &&
        orca_terminal_helper_body.include?(%q["create",]) &&
        orca_terminal_helper_body.include?("remote_routing_forbidden") &&
+       orca_terminal_helper_body.include?("repository_not_root") &&
+       orca_terminal_helper_body.include?("PROVIDER_EXEC_GUARD") &&
        orca_terminal_helper_body.include?('f"{label}_identity_changed"'),
        "provider terminal helper must bind identity and avoid coordinator shell interpolation")
 assert(orca_supervision.include?("current execution backend") &&

@@ -18,6 +18,46 @@ RESULT_SCHEMA_VERSION = "aquarium-orca-provider-terminal-result/v1"
 ERROR_SCHEMA_VERSION = "aquarium-orca-provider-terminal-error/v1"
 MAX_REQUEST_BYTES = 64 * 1024
 SHA256 = frozenset("0123456789abcdef")
+PROVIDER_EXEC_GUARD = r"""
+import hashlib
+import os
+import pathlib
+import stat
+import sys
+
+target = pathlib.Path(sys.argv[1])
+expected_digest = sys.argv[2]
+repository = pathlib.Path(sys.argv[3])
+
+def reject():
+    print("provider identity changed before execution", file=sys.stderr)
+    raise SystemExit(126)
+
+try:
+    observed = target.resolve(strict=True)
+    if observed != target or observed.is_relative_to(repository):
+        reject()
+    before = observed.stat()
+    if not stat.S_ISREG(before.st_mode):
+        reject()
+    digest = hashlib.sha256()
+    with observed.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    after = observed.stat()
+    identity = lambda value: (
+        value.st_dev,
+        value.st_ino,
+        value.st_mode,
+        value.st_size,
+        value.st_mtime_ns,
+    )
+    if digest.hexdigest() != expected_digest or identity(before) != identity(after):
+        reject()
+    os.execv(observed, [str(observed), *sys.argv[4:]])
+except (OSError, RuntimeError):
+    reject()
+""".strip()
 
 
 class RequestError(Exception):
@@ -38,6 +78,41 @@ def require_string(value: object, code: str, message: str) -> str:
     if not isinstance(value, str) or "\0" in value:
         raise RequestError(code, message)
     return value
+
+
+def require_git_root(repository: Path) -> None:
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+        }
+    )
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=repository,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise RequestError(
+            "repository_unverifiable", "repository root is unverifiable"
+        ) from error
+    if result.returncode != 0:
+        raise RequestError("repository_not_git", "repository is not a Git worktree")
+    try:
+        observed = Path(result.stdout.strip()).resolve(strict=True)
+    except OSError as error:
+        raise RequestError(
+            "repository_unverifiable", "repository root is unverifiable"
+        ) from error
+    if observed != repository:
+        raise RequestError("repository_not_root", "repository path is not the Git root")
 
 
 def canonical_entrypoint(
@@ -136,6 +211,7 @@ def parse_request(payload: object) -> dict[str, Any]:
         ) from error
     if not repository.is_absolute() or not repository.is_dir():
         raise RequestError("repository_invalid", "repository path is invalid")
+    require_git_root(repository)
     worktree = require_string(
         payload["worktree"], "worktree_invalid", "worktree selector is invalid"
     )
@@ -155,6 +231,16 @@ def parse_request(payload: object) -> dict[str, Any]:
     provider_entrypoint, provider_target, provider_digest = canonical_entrypoint(
         payload["provider"], repository, "provider"
     )
+    guard_interpreter = Path(sys.executable).resolve(strict=True)
+    try:
+        guard_interpreter.relative_to(repository)
+    except ValueError:
+        pass
+    else:
+        raise RequestError(
+            "guard_interpreter_inside_repository",
+            "provider guard interpreter must be outside the repository",
+        )
     return {
         "repository": repository,
         "worktree": worktree,
@@ -164,6 +250,7 @@ def parse_request(payload: object) -> dict[str, Any]:
         "provider_entrypoint": provider_entrypoint,
         "provider_target": provider_target,
         "provider_digest": provider_digest,
+        "guard_interpreter": guard_interpreter,
     }
 
 
@@ -175,7 +262,13 @@ def create_terminal(payload: object) -> dict[str, object]:
             "remote or paired Orca routing is forbidden for review",
         )
     provider_argv = [
+        str(request["guard_interpreter"]),
+        "-I",
+        "-c",
+        PROVIDER_EXEC_GUARD,
         str(request["provider_target"]),
+        request["provider_digest"],
+        str(request["repository"]),
         *request["arguments"],
     ]
     command = shlex.join(provider_argv)

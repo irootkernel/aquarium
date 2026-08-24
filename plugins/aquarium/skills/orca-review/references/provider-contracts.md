@@ -4,7 +4,7 @@ Read only the selected provider section after loading the shared review and Orca
 
 `<PROVIDER>` is the consent-bound absolute provider entrypoint. The provider sections below define logical argument vectors, not shell command fragments. Resolve this skill directory and use `scripts/create_provider_terminal.py` for the only provider-terminal creation path. Send its `aquarium-orca-provider-terminal-request/v1` JSON through non-expanding stdin; never put provider paths or arguments in a shell command, heredoc with expansion, environment assignment, or string concatenation.
 
-The helper revalidates the consent-bound Orca and provider canonical targets and digests, serializes the provider argv once, and invokes Orca through a native subprocess argument vector. If non-expanding stdin is unavailable, stop before terminal creation.
+The helper requires the supplied repository to be the exact Git worktree root, revalidates the consent-bound Orca and provider canonical targets and digests, serializes the provider argv once, and invokes Orca through a native subprocess argument vector. The generated provider command revalidates the provider target, digest, and file identity again at provider-process start before executing it. If non-expanding stdin is unavailable, stop before terminal creation.
 
 Launch one fresh terminal in the current worktree and keep it in the provider's read-only or plan mode. Authentication prompts, model rejection, premature exit, missing Dispatch support, helper rejection, or any request to weaken permissions stop the review.
 

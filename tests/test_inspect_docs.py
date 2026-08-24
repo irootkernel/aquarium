@@ -209,6 +209,10 @@ def test_migration_record_reports_stale_old_id_references(tmp_path: Path) -> Non
         """\
 # ID Migration
 
+**Canonical roadmap:** `docs/roadmap/README.md`
+**Migration date:** `2026-08-24`
+**Scope:** `default`
+
 | Old ID | New ID | Kind | Title |
 | --- | --- | --- | --- |
 | OLD-001 | TASK-001 | Task | Foundation |
@@ -238,6 +242,10 @@ def test_migration_record_rejects_unquoted_preserved_path(tmp_path: Path) -> Non
         repository / "docs/roadmap/id-migrations/2026-08-24.md",
         """\
 # ID Migration
+
+**Canonical roadmap:** `docs/roadmap/README.md`
+**Migration date:** `2026-08-24`
+**Scope:** `default`
 
 | Old ID | New ID | Kind | Title | Preserved Historical Paths |
 | --- | --- | --- | --- | --- |
@@ -294,6 +302,10 @@ def test_multi_scope_migration_does_not_rewrite_another_scope_same_id(
         """\
 # ID Migration
 
+**Canonical roadmap:** `docs/server/roadmap/README.md`
+**Migration date:** `2026-08-24`
+**Scope:** `server`
+
 | Old ID | New ID | Kind | Title | Preserved Historical Paths |
 | --- | --- | --- | --- | --- |
 | TASK-001 | TASK-101 | Task | Foundation | - |
@@ -318,6 +330,65 @@ def test_multi_scope_migration_does_not_rewrite_another_scope_same_id(
         and reference["namespace"] == "app"
         for reference in app_identifier["references"]
     )
+
+
+def test_multi_scope_requires_qualification_for_another_scope_id(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "cross-scope-reference"
+    initialize(repository)
+    write(repository / "docs/README.md", "# Documentation\n")
+    make_delivery_scope(repository, "app")
+    make_delivery_scope(repository, "server")
+    write(repository / "docs/server/roadmap/README.md", roadmap(task="TASK-900"))
+    write(repository / "docs/app/specs/reference.md", "TASK-900 is required.\n")
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "nonconforming"
+    assert any(
+        finding["code"] == "unqualified_cross_scope_identifier_reference"
+        and finding["path"] == "docs/app/specs/reference.md"
+        for finding in payload["findings"]
+    )
+    server_task = next(
+        item
+        for item in payload["identifiers"]
+        if item["namespace"] == "server" and item["id"] == "TASK-900"
+    )
+    assert any(
+        reference["path"] == "docs/app/specs/reference.md"
+        for reference in server_task["references"]
+    )
+
+
+def test_migration_record_requires_canonical_shape_and_current_target(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "malformed-migration"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/id-migrations/not-a-date.md",
+        """\
+# ID Migration
+
+| Old ID | New ID |
+| --- | --- |
+| OLD-001 | TASK-999 |
+""",
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "nonconforming"
+    assert {finding["code"] for finding in payload["findings"]} >= {
+        "migration_record_path_invalid",
+        "migration_record_metadata_invalid",
+        "migration_record_table_invalid",
+    }
 
 
 def test_multi_scope_bare_shared_reference_is_unverifiable(tmp_path: Path) -> None:
@@ -423,6 +494,10 @@ def test_file_roadmap_discovers_sibling_migration_records(tmp_path: Path) -> Non
         """\
 # ID Migration
 
+**Canonical roadmap:** `docs/ROADMAP.md`
+**Migration date:** `2026-08-24`
+**Scope:** `default`
+
 | Old ID | New ID | Kind | Title | Preserved Historical Paths |
 | --- | --- | --- | --- | --- |
 | TASK-001 | TASK-101 | Task | Foundation | - |
@@ -464,6 +539,10 @@ def test_historical_paths_are_scoped_to_the_owning_roadmap(tmp_path: Path) -> No
         repository / "docs/roadmap/id-migrations/2026-08-24.md",
         """\
 # ID Migration
+
+**Canonical roadmap:** `docs/roadmap/README.md`
+**Migration date:** `2026-08-24`
+**Scope:** `default`
 
 | Old ID | New ID | Kind | Title | Preserved Historical Paths |
 | --- | --- | --- | --- | --- |

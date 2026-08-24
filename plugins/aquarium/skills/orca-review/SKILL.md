@@ -39,7 +39,7 @@ The selection record must disclose the exact provider command, requested lead id
 
 Resolve the installed Orca command and live guides exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run and Task, then create one fresh provider terminal in the current worktree only through `scripts/create_provider_terminal.py` with the selected logical argv from [provider-contracts.md](references/provider-contracts.md).
 
-Feed the helper request through non-expanding stdin and verify its returned Orca terminal result and argv digest before continuing. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
+Feed the helper request through non-expanding stdin with the exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing. The helper-generated command must revalidate provider identity at provider-process start. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
 
 Inject one Dispatch containing the canonical Task. Require the lead to remain read-only, run no tests or builds, inspect exact target blobs instead of excluded working-tree copies, report only verified actionable findings, label execution-dependent claims `runtime unverified`, modify no files, and complete the injected lifecycle exactly once.
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import re
@@ -65,6 +66,10 @@ ALLOWED_STATUSES = {
     "Deferred",
     "Blocked",
 }
+TASK_STATUS_HEADERS = {"status", "상태"}
+MIGRATION_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+MIGRATION_REQUIRED_HEADERS = ("Old ID", "New ID", "Kind", "Title")
+MIGRATION_OPTIONAL_HEADER = "Preserved Historical Paths"
 
 
 class InspectionError(Exception):
@@ -458,20 +463,32 @@ def task_table_rows_with_lines(
 ) -> list[tuple[str, str, int]]:
     rows: list[tuple[str, str, int]] = []
     in_task_table = False
+    status_index: int | None = None
     for offset, line in enumerate(block.splitlines()):
         if not line.startswith("|"):
             in_task_table = False
+            status_index = None
             continue
         cells = table_cells(line)
         first = cells[0] if cells else ""
         if first.lower() in {"task", "task id"}:
             in_task_table = True
+            indexes = [
+                index
+                for index, cell in enumerate(cells)
+                if cell.lower() in TASK_STATUS_HEADERS
+            ]
+            status_index = indexes[0] if len(indexes) == 1 else None
             continue
         if not in_task_table or set(first) <= {"-", ":"}:
             continue
-        status = next(
-            (cell for cell in cells[1:] if cell in ALLOWED_STATUSES), "unknown"
+        status = (
+            cells[status_index]
+            if status_index is not None and status_index < len(cells)
+            else "unknown"
         )
+        if status not in ALLOWED_STATUSES:
+            status = "unknown"
         rows.append((first, status, start_line + offset))
     return rows
 
@@ -537,36 +554,147 @@ def preserved_paths(value: str) -> tuple[list[str], list[str]]:
     return sorted(set(accepted)), sorted(set(rejected))
 
 
+def migration_field(text: str, label: str) -> list[str]:
+    pattern = re.compile(rf"(?mi)^\*\*{re.escape(label)}:\*\*\s*`([^`]+)`\s*$")
+    return pattern.findall(text)
+
+
+def migration_record_owner(
+    relative: Path, structure: dict[str, Any]
+) -> tuple[str, Path] | None:
+    matches = [
+        (namespace, root)
+        for namespace, root in roadmap_roots(structure)
+        if path_belongs_to_roadmap(relative, root)
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def migration_records(
     roadmap_files: list[Path], texts: dict[Path, str], structure: dict[str, Any]
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     records: list[dict[str, Any]] = []
+    findings: list[dict[str, str]] = []
     for relative in roadmap_files:
         if "id-migrations" not in relative.parts:
             continue
         text = texts.get(relative)
         if text is None:
             continue
-        namespace = roadmap_namespace(relative, structure)
-        for number, line in enumerate(text.splitlines(), start=1):
+        path = relative.as_posix()
+        owner = migration_record_owner(relative, structure)
+        namespace = owner[0] if owner is not None else "unknown"
+        roadmap = None
+        if owner is not None:
+            root = owner[1]
+            roadmap = root if root.suffix.lower() == ".md" else root / "README.md"
+
+        date = relative.stem
+        try:
+            date_valid = bool(MIGRATION_DATE.fullmatch(date)) and bool(
+                dt.date.fromisoformat(date)
+            )
+        except ValueError:
+            date_valid = False
+        if not date_valid:
+            findings.append(
+                finding(
+                    "migration_record_path_invalid",
+                    "error",
+                    "Migration records must use id-migrations/YYYY-MM-DD.md.",
+                    path,
+                )
+            )
+
+        expected_metadata = {
+            "Canonical roadmap": roadmap.as_posix() if roadmap is not None else None,
+            "Migration date": date if date_valid else None,
+            "Scope": namespace if namespace != "unknown" else None,
+        }
+        for label, expected in expected_metadata.items():
+            values = migration_field(text, label)
+            if expected is None or values != [expected]:
+                findings.append(
+                    finding(
+                        "migration_record_metadata_invalid",
+                        "error",
+                        f"{label} must appear exactly once with the canonical value.",
+                        path,
+                    )
+                )
+
+        lines = text.splitlines()
+        header_index: int | None = None
+        has_invalid_header = False
+        for index, line in enumerate(lines):
             if not line.startswith("|"):
                 continue
+            cells = table_cells(line)
+            if not cells or cells[0] != "Old ID":
+                continue
+            valid_headers = cells[:4] == list(MIGRATION_REQUIRED_HEADERS) and (
+                len(cells) == 4
+                or (len(cells) == 5 and cells[4] == MIGRATION_OPTIONAL_HEADER)
+            )
+            if valid_headers and header_index is None:
+                header_index = index
+            else:
+                has_invalid_header = True
+        if header_index is None or has_invalid_header:
+            findings.append(
+                finding(
+                    "migration_record_table_invalid",
+                    "error",
+                    "Migration mapping table headers are missing, duplicated, or invalid.",
+                    path,
+                )
+            )
+            continue
+
+        expected_width = len(table_cells(lines[header_index]))
+        for index, line in enumerate(lines[header_index + 1 :], start=header_index + 2):
+            if not line.startswith("|"):
+                break
             raw_cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             cells = [cell.strip("`") for cell in raw_cells]
-            if len(cells) < 2 or not all(
+            if cells and set(cells[0]) <= {"-", ":"}:
+                continue
+            if len(cells) != expected_width or not all(
                 looks_like_roadmap_id(value) for value in cells[:2]
             ):
+                findings.append(
+                    finding(
+                        "migration_record_row_invalid",
+                        "error",
+                        f"Migration mapping row at line {index} is malformed.",
+                        path,
+                    )
+                )
+                continue
+            kind = cells[2]
+            title = cells[3]
+            if kind not in {"Epic", "Task"} or not title:
+                findings.append(
+                    finding(
+                        "migration_record_row_invalid",
+                        "error",
+                        f"Migration mapping row at line {index} has invalid Kind or Title.",
+                        path,
+                    )
+                )
                 continue
             accepted, rejected = preserved_paths(
-                raw_cells[4] if len(raw_cells) > 4 else ""
+                raw_cells[4] if expected_width == 5 else ""
             )
             records.append(
                 {
                     "namespace": namespace,
                     "old_id": cells[0],
                     "new_id": cells[1],
-                    "path": relative.as_posix(),
-                    "line": number,
+                    "kind": kind.lower(),
+                    "title": title,
+                    "path": path,
+                    "line": index,
                     "preserved_historical_paths": accepted,
                     "invalid_preserved_historical_paths": rejected,
                 }
@@ -580,7 +708,7 @@ def migration_records(
             item["path"],
             item["line"],
         ),
-    )
+    ), findings
 
 
 def preserved_historical_reference(
@@ -641,7 +769,8 @@ def inspect_identifiers(
                     )
                 )
 
-    records = migration_records(roadmap_files, texts, structure)
+    records, migration_findings = migration_records(roadmap_files, texts, structure)
+    findings.extend(migration_findings)
     known_ids = {identifier for _, identifier in definitions}
     known_ids.update(record["old_id"] for record in records)
     known_ids.update(record["new_id"] for record in records)
@@ -668,6 +797,7 @@ def inspect_identifiers(
 
     references: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     ambiguous_references: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    unqualified_cross_scope: dict[str, list[dict[str, Any]]] = defaultdict(list)
     scope_names = {
         scope["name"] for scope in structure["scopes"] if scope["kind"] == "delivery"
     }
@@ -678,14 +808,25 @@ def inspect_identifiers(
             for match in reference_pattern.finditer(line):
                 identifier = match.group(0)
                 namespace = path_namespace(relative, structure)
+                qualified = False
                 for scope_name in scope_names:
                     if line[
                         max(0, match.start() - len(scope_name) - 1) : match.start()
                     ] == (scope_name + ":"):
                         namespace = scope_name
+                        qualified = True
                         break
-                if namespace == "unknown" and len(id_namespaces[identifier]) == 1:
-                    namespace = next(iter(id_namespaces[identifier]))
+                identifier_namespaces = id_namespaces[identifier]
+                if not qualified and len(identifier_namespaces) == 1:
+                    owning_namespace = next(iter(identifier_namespaces))
+                    if namespace not in {"unknown", owning_namespace}:
+                        reference = {
+                            "path": relative.as_posix(),
+                            "line": number,
+                            "namespace": namespace,
+                        }
+                        unqualified_cross_scope[identifier].append(reference)
+                    namespace = owning_namespace
                 reference = {
                     "path": relative.as_posix(),
                     "line": number,
@@ -733,6 +874,16 @@ def inspect_identifiers(
                     reference["path"],
                 )
             )
+    for identifier, values in sorted(unqualified_cross_scope.items()):
+        for reference in values:
+            findings.append(
+                finding(
+                    "unqualified_cross_scope_identifier_reference",
+                    "error",
+                    f"{identifier} belongs to another scope; qualify it as scope:{identifier}.",
+                    reference["path"],
+                )
+            )
     for namespace, identifier in sorted(definitions):
         key = (namespace, identifier)
         locations = definitions[key]
@@ -754,6 +905,25 @@ def inspect_identifiers(
             )
 
     for record in records:
+        key = (record["namespace"], record["new_id"])
+        if key not in definitions or record["kind"] not in kinds.get(key, set()):
+            findings.append(
+                finding(
+                    "migration_record_target_missing",
+                    "error",
+                    f"{record['new_id']} is not a current {record['kind']} definition in scope {record['namespace']}.",
+                    record["path"],
+                )
+            )
+        if (record["namespace"], record["old_id"]) in definitions:
+            findings.append(
+                finding(
+                    "migration_record_old_id_current",
+                    "error",
+                    f"{record['old_id']} remains a current definition in scope {record['namespace']}.",
+                    record["path"],
+                )
+            )
         for invalid in record.pop("invalid_preserved_historical_paths"):
             findings.append(
                 finding(

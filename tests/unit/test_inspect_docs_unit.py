@@ -120,6 +120,24 @@ def test_unrecognized_task_row_blocks_planned_only_prefilter() -> None:
     assert result[0]["planned_only_eligible"] is False
 
 
+def test_task_status_comes_only_from_declared_status_column() -> None:
+    text = """\
+## EPIC-001: Active task
+
+**Status:** `Planned`
+
+| Task ID | Title | Status |
+| --- | --- | --- |
+| TASK-001 | Planned | In Progress |
+"""
+    path = Path("docs/roadmap/README.md")
+
+    rows = inspect_docs.task_rows_with_lines(text)
+    assert rows == [("TASK-001", "In Progress", 7)]
+    result = inspect_docs.migration_analysis([path], {path: text})
+    assert result[0]["planned_only_eligible"] is False
+
+
 def test_definition_ids_uses_epic_containment_and_ignores_numeric_prose_headings() -> (
     None
 ):
