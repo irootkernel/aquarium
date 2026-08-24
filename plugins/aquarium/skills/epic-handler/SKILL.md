@@ -7,7 +7,7 @@ description: "Deliver or resume one named roadmap epic through sequential goal-c
 
 Deliver one roadmap epic as a sequence of goal-centered task executions. Own its outcome, order, evidence, and commit boundaries. Select `execute` by default, `plan-only` for a non-mutating plan, `plan-handoff` only when another agent will continue, and `resume` for continuation. Treat "plan only" as `plan-only`; for `plan-handoff` or its resume, read [plan-handoff.md](../../references/plan-handoff.md) and follow it.
 
-Do not invoke `$aquarium:task-handler` or its phase skills; they separately strengthen the procedure around one user-guided task goal. Always read [evidence-residency.md](../../references/evidence-residency.md).
+Do not invoke `$aquarium:task-handler` or its phase skills; they separately strengthen the procedure around one user-guided task goal. Always read [evidence-residency.md](../../references/evidence-residency.md) and [release-notes.md](../../references/release-notes.md).
 
 Use Podway by default. Exclude it only when the current user explicitly opts this epic out before its first managed session starts or a higher-priority instruction prohibits it. For an opted-out epic, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
@@ -57,7 +57,7 @@ For each non-terminal task in order:
 
 1. Reconfirm every member-task predecessor is successfully terminal with its required commit and evidence, and recheck any pre-epic or external prerequisite at its exact revision. Stop on a gap; otherwise create or resume exactly one goal containing the task ID and required outcome. Omit a token budget unless the user supplied one.
 2. Work from current authority and code toward the task goal. Choose the implementation, investigation, documentation, and verification sequence that best fits the repository and task; do not manufacture phase artifacts or pause for routine choices already inside the approved envelope.
-3. Implement the complete task outcome, including runtime wiring, tests, generated or derived artifacts, durable documentation, and roadmap state that the authority requires. Preserve unrelated work.
+3. Implement the complete task outcome, including runtime wiring, tests, generated or derived artifacts, durable documentation, and roadmap state that the authority requires. In an enrolled repository, include one concise release-note `entry` for a shipped outcome or record `intentional no-note` before review; otherwise record `not-enrolled`. Preserve unrelated work.
 4. Run proportionate repository-authorized checks. Focused green checks prove only mapped requirements; forbidden or unavailable database, E2E, live, or broad gates remain explicit evidence gaps and are never run merely because another workflow normally would.
 5. Run at most two operationally complete Mulgae review rounds on the latest complete task target, including task-owned staged, unstaged, untracked, generated, and derived files. Give each preflight and review a bounded objective containing the epic, member task, current goal revision, ordinal, and review mode. Round one is `remediation-eligible`; round two is `hardening-deferral-eligible`.
    - Stop immediately when any round has `ci_decision=pass` and zero unresolved valid findings.
@@ -67,7 +67,7 @@ For each non-terminal task in order:
 6. Treat the member task as review-approved only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, the findings query succeeds, and zero unresolved valid findings remain. Provider success or exit status alone is insufficient.
    Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
    - The sole member-task exception is a complete second review whose remaining valid findings take the Procedure's explicit `deferred-for-hardening` route. Do not call that task review Mulgae-complete or allow the exception at final epic validation.
-7. Move the task to its defined successful state and hand the exact isolated task-owned diff, lifecycle evidence, task ID, approved commit authority, and either the live deferral IDs plus promoted manifest path and digest or an explicit absence to `$aquarium:task-commit`. Complete the goal only after its commit exists, its evidence trailer and package match the handoff when applicable, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
+7. Move the task to its defined successful state and hand the exact isolated task-owned diff, lifecycle evidence, task ID, release-note target and decision, approved commit authority, and either the live deferral IDs plus promoted manifest path and digest or an explicit absence to `$aquarium:task-commit`. Complete the goal only after its commit exists, its evidence trailer and package match the handoff when applicable, no task-owned residue remains, and unrelated work is unchanged; then re-read roadmap, DAG, Git state, and evidence before advancing.
 
 With Podway active, run `podway observe --json --wait-for-idle` before each bounded work delegation and verify the expected Procedure ID, canonical goal identity, session, lifecycle, revision, and, when running, its attempt, goal revision, and current node. A plan-handoff goal additionally requires the shared artifact verification before any work delegation.
 
@@ -110,7 +110,7 @@ Only after a clean latest-snapshot audit and complete Mulgae evidence may one fi
 
 ## Hand Off Commits and Report
 
-For each approved commit, invoke `$aquarium:task-commit` with repository, roadmap, work-unit ID, exact lifecycle and record decisions or their absence, isolated scope, current evidence, zero or more promoted manifest path and digest pairs or their explicit absence, hardening-only live IDs or their absence, and one-commit authority. That skill owns staging, Lore and Sanho checks, commit execution, hook reconciliation, and snapshot verification. Never commit independently, amend, or infer push authority.
+Each approved `$aquarium:task-commit` handoff includes repository, roadmap, work-unit ID, lifecycle and record decisions, release-note decision, isolated scope, current evidence, zero or more promoted manifest path and digest pairs or their explicit absence, hardening live IDs or their absence, and one-commit authority. That skill owns staging, Lore and Sanho checks, commit execution, hook reconciliation, and snapshot verification. Never commit independently, amend, or infer push authority.
 
 Use `$use-sanho` directly only for separately authorized synchronization outside the commit boundary. Use its refreshed push workflow only for a separately authorized push. Commit and upstream publication remain separate states.
 

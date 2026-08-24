@@ -7,11 +7,17 @@ description: "Update durable documentation and review status for one refined roa
 
 Document only the refined task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
-Read [design-gates.md](../../references/design-gates.md) and [evidence-residency.md](../../references/evidence-residency.md). Resolve the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults. This skill may update a work unit's existing Design Gate impact reference as directed by authoritative task scope, but it must not create, change, reactivate, retire, or otherwise edit either resolved registry. Return an explicit `$aquarium:design-qa` handoff for any registry change.
+Read [design-gates.md](../../references/design-gates.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md). Resolve the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults.
+
+This skill may update a work unit's existing Design Gate impact reference as directed by authoritative task scope, but it must not create, change, reactivate, retire, or otherwise edit either resolved registry. Return an explicit `$aquarium:design-qa` handoff for any registry change.
 
 ## Update Durable Documentation
 
 Determine documentation impact from final behavior. Update only affected durable specifications, architecture decisions, contracts, operational guidance, generated-document sources, and roadmap entries.
+
+Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. For an enrolled repository, settle exactly one release-note decision before review: add one concise `entry` for a user-visible, compatibility, security, privacy, or operational outcome, or record `intentional no-note` for an internal-only change.
+
+Include an approved entry in the task-owned diff and validate the open target; never infer omission from the commit prefix. For an unenrolled repository return `not-enrolled` without creating a changelog or configuration.
 
 Read the roadmap's allowed status vocabulary. Move the task to its existing review state, preferring `In Review` only when that value is defined. Do not invent lifecycle states.
 
@@ -49,4 +55,4 @@ Run applicable documentation validation after the update. Separate task-caused f
 
 ## Report Orchestration Evidence
 
-Return changed documentation paths, roadmap state, synchronization and validation commands with exit codes, staged and unstaged documentation state, and remaining gaps to the orchestrator. This phase report is orchestration evidence, not a repository handoff. Do not copy it into durable documentation unless an item independently passes the downstream usefulness test.
+Return changed documentation paths, the exact `entry`, `intentional no-note`, or `not-enrolled` release-note decision, roadmap state, synchronization and validation commands with exit codes, staged and unstaged documentation state, and remaining gaps to the orchestrator. This phase report is orchestration evidence, not a repository handoff. Do not copy it into durable documentation unless an item independently passes the downstream usefulness test.

@@ -5,7 +5,7 @@ description: "Prepare and create one authorized Git commit while reconciling roa
 
 # Task Commit
 
-Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md). This skill owns commit preparation and execution, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
+Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md) and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one explicitly approved release-note hunk when needed, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
 
 ## Establish the Commit Boundary
 
@@ -13,6 +13,7 @@ Create one authorized commit through a shared roadmap-aware boundary. Read [evid
 2. Identify tracked roadmap candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
 3. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to determine whether an Aquarium handler owns the work; never advance, decide, cancel, discard, reset, or otherwise mutate Podway here.
 4. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
+5. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
 
 When an active matching `task-handler`, `epic-handler`, `epic-validator`, or Podway-managed Aquarium session owns the work, accept a commit only from that owner's explicit commit handoff. Otherwise stop and tell the user to resume the matching handler. Do not offer an independent path around an active managed workflow.
 
@@ -33,14 +34,25 @@ A handler commit handoff must include:
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, reviewed snapshot, verdict, and review run when applicable, with inapplicable fields marked explicitly.
+- the release-note decision as exact `entry` text already present in the approved diff, `intentional no-note`, or `not-enrolled`;
 - zero or more staged promoted-evidence manifest paths paired with exact `sha256:<64-hex>` manifest digests and the owning workflow's current native-evidence, native-target-digest, and copied-projection validation result, or an explicit statement that no promoted evidence applies;
 - for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs used only for pre-commit verification, or an explicit statement that no hardening deferral applies.
 
 Reject a stale, ambiguous, or incomplete handoff rather than reconstructing approval.
 
+A release-handler commit handoff must name the repository, intended and previous versions, exact operation (`settlement`, `retarget`, `release`, or `next-cycle`), changelog path and approved hunk, exact commit scope, `intentional no-note`, applicable QA and release-gate evidence or their explicit inapplicability, and the user's one-commit authorization. It grants no push, tag, hosted Release, destructive replacement, or later commit authority.
+
+For a direct commit without a managed-workflow handoff, inspect the complete intended diff and require the user to approve one exact concise entry or `intentional no-note` when release notes are enrolled. If an entry is needed but absent, show one proposed changelog hunk and obtain approval before applying it.
+
+Apply no other documentation change, re-run the release-notes inspector and applicable documentation check, and treat the resulting hunk as part of the final commit scope. Any earlier commit approval that did not include those bytes is stale. For an unenrolled repository record `not-enrolled` and do not create or infer an authority.
+
 ## Prepare the Exact Commit
 
 Apply only the lifecycle or record edit explicitly selected by the user or supplied by a valid handler handoff. Preserve the selected task's exact current state for an approved checkpoint. Any other code, test, documentation, or roadmap change after approval makes that approval stale.
+
+Require the release-note decision to match the final diff. An `entry` must appear exactly once under the current open target in the authorized changelog path. `intentional no-note` normally permits no changelog edit, and `not-enrolled` is valid only when no authority is declared.
+
+With an exact `$aquarium:release-handler` handoff, `intentional no-note` may include only the approved settlement, open-target retarget, release heading transition with unchanged entry bytes, or empty next-cycle section. Reject a stale target, missing decision, mismatched entry, self-referential settlement entry, unapproved note edit, or rewrite of completed release history.
 
 Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged work; stop if the commit scope cannot be isolated safely. Immediately before committing, re-read the staged roadmap entry, `git diff --cached`, staged tree and blob identities, and full Git status. Confirm that:
 
@@ -76,6 +88,8 @@ AQUARIUM_COMMIT_GATE=task-commit-v1 git commit ...
 
 The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push.
 
-After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte, verify every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status. Report the commit ID, task relationship, final roadmap state, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
+After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte, verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
+
+Report the commit ID, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
 
 The bundled hook is a local guardrail, not complete enforcement: it detects direct shell `git commit` invocations in roadmap repositories, while indirect commits performed by other tools may not pass through that boundary.

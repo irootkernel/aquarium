@@ -43,6 +43,8 @@ Only after all three answers are affirmative, apply the exact approved status ed
 
 For `Approve and close without commit`, do not stage or commit anything. Verify the task is terminal while the complete task-owned diff remains uncommitted. This path is unavailable when repository authority requires a commit for completion.
 
-For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, exact commit scope, verification and Mulgae evidence, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization. Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
+For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, exact commit scope, the documented `entry`, `intentional no-note`, or `not-enrolled` release-note decision, verification and Mulgae evidence, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization.
 
-Return the three answers, final roadmap state, selected terminal status, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.
+Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
+
+Return the three answers, final roadmap state, selected terminal status, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.

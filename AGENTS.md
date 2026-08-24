@@ -45,7 +45,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:task-handler` for one named roadmap task, `$aquarium:epic-handler` for one roadmap epic, and `$aquarium:epic-validator` to cold-validate a completed epic.
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for explicitly requested Ouroboros-assisted design workflows.
 - Use `$aquarium:war-room` for difficult-bug diagnosis and `$aquarium:design-qa` for local Design Gate lifecycle work.
-- Use `$aquarium:release-qa` for exact release-candidate verification and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
+- Use `$aquarium:release-handler` for one stable release lifecycle, `$aquarium:release-qa` for its exact release-candidate verification, and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
@@ -59,6 +59,8 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 ### Repository Index and Authorities
 
 - `plugins/aquarium/.codex-plugin/plugin.json` owns published plugin metadata and the release version.
+- `CHANGELOG.md` owns cumulative release notes and the planned next version.
+- Aquarium release notes: CHANGELOG.md
 - `plugins/aquarium/skills/*/SKILL.md` and their linked references own workflow behavior; keep conditional detail in references instead of expanding every entrypoint.
 - `plugins/aquarium/assets/podway/procedures/` owns the Procedure sources installed into target repositories.
 - `Makefile` is the executable test authority, and `TESTING.md` owns the enrolled `aquarium-test-contract/v1` stage, framework, environment, diagnostic, and waiver mapping.
@@ -86,13 +88,15 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 
 ### Release Policy
 
-When Master asks to release `main`, establish the release mode before making release changes. Ask whether to use `full` or `light` unless Master already selected one explicitly. If Master did not provide a version, propose the next patch version and obtain confirmation before changing version metadata.
+When Master asks to release `main`, use `$aquarium:release-handler` and establish the release mode before making release changes. Ask whether to use `full` or `light` unless Master already selected one explicitly. If Master did not provide a version, propose the open CHANGELOG version and obtain confirmation before changing version metadata.
+
+Before release QA, reconcile every material change after the previous release with the open CHANGELOG section and obtain approval for any entry addition, merge, edit, or removal. Commit that exact preparation through `$aquarium:task-commit`, then run a new release-qa pass against the resulting clean exact candidate. After release QA passes, preserve entry text byte-for-byte; a substantive note edit creates a new candidate and requires release QA again.
 
 Before either mode, inspect the worktree, the local and remote `main` commits, the exact release-candidate SHA, and existing tags and GitHub Releases. Stop on unrelated worktree changes, an ambiguous release target, or a conflicting tag or release rather than including or overwriting it.
 
 #### Full Release
 
-Update the plugin manifest version and its pinned validation expectation, then run the complete applicable local release gate:
+Update the plugin manifest version, its pinned validation expectation, and only the CHANGELOG heading from `Unreleased` to the publication date, then run the complete applicable local release gate:
 
 ```bash
 RELEASE_TAG=v<version> make test
@@ -105,7 +109,7 @@ Also verify that a deliberately mismatched `RELEASE_TAG` is rejected, and run an
 
 Before changing version metadata, show the exact current release-candidate HEAD SHA and ask whether Master has confirmed the required test results for that SHA. Proceed only after an explicit positive answer. If HEAD or functional code changes after that confirmation, obtain confirmation again or switch to a full release.
 
-A light release may change only release metadata: the plugin manifest version and its pinned validation expectation. Validate only that release delta locally:
+A light release may change only release metadata: the plugin manifest version, its pinned validation expectation, and the CHANGELOG heading's publication state without changing entry text. Validate only that release delta locally:
 
 ```bash
 python3 -m json.tool plugins/aquarium/.codex-plugin/plugin.json >/dev/null
@@ -118,6 +122,8 @@ Do not rerun the full Python unit suite or lint unchanged Python files locally i
 
 #### Publication
 
-After the selected local gate passes, create one `[REL] Release v<version>` commit. Push `main` first, then create and push an annotated `v<version>` tag and create the GitHub Release. Finally verify that remote `main`, the tag, and the GitHub Release resolve to the intended release commit.
+After the selected local gate passes, create one `[REL] Release v<version>` commit. Push `main` first, then create and push an annotated `v<version>` tag and create the GitHub Release from the settled CHANGELOG entries plus a separate validation section. Finally verify that remote `main`, the peeled tag, and the GitHub Release resolve to the intended release commit.
+
+After publication is verified, ask Master for the next planned stable version. Opening its empty `Unreleased` section is a separate non-release commit and push with separate approval. If approval is withheld, leave the published release complete and stop later enrolled commits until one open target exists.
 
 The selected local gate is the release validation authority; this repository does not use GitHub Actions. Do not rewrite or delete a published tag without explicit authorization from Master. A light release reduces duplicated local execution but does not weaken its required local checks or publication-order safeguards.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Release Handler"
+  short_description: "Settle, validate, and publish one release"
+  default_prompt: "Use $aquarium:release-handler to prepare and publish one stable release safely."
+policy:
+  allow_implicit_invocation: false

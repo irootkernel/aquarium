@@ -1,7 +1,7 @@
 {
   "name": "aquarium",
   "version": "0.1.10",
-  "description": "AI Fleet engineering workflows for governed design, documentation, delivery, review, validation, testing, and release.",
+  "description": "AI Fleet engineering workflows for governed design, documentation, delivery, review, validation, testing, and release lifecycle management.",
   "author": {
     "name": "Root Kernel",
     "email": "cs@rootkernel.xyz",
@@ -41,7 +41,7 @@
   "interface": {
     "displayName": "Aquarium",
     "shortDescription": "Engineer reliable software with AI Fleets.",
-    "longDescription": "Aquarium turns fleets of AI agents and development tools into governed, evidence-backed workflows for design, documentation governance, task and epic delivery, bounded review and remediation loops, durable Design Gates, common test setup, release-candidate QA, and optional graph-backed execution memory.",
+    "longDescription": "Aquarium turns fleets of AI agents and development tools into governed, evidence-backed workflows for design, documentation governance, task and epic delivery, bounded review and remediation loops, durable Design Gates, common test setup, release-candidate QA with cumulative lifecycle management, and optional graph-backed execution memory.",
     "developerName": "Root Kernel",
     "category": "Developer Tools",
     "capabilities": [
@@ -53,7 +53,7 @@
     "termsOfServiceURL": "https://github.com/irootkernel/aquarium/blob/main/TERMS.md",
     "defaultPrompt": [
       "Use $aquarium:new-project, $aquarium:new-feature, $aquarium:refactor, $aquarium:war-room, or $aquarium:design-qa for explicit design work.",
-      "Use $aquarium:task-handler or $aquarium:epic-handler for delivery, $aquarium:release-qa for releases, and $aquarium:dev-setup, $aquarium:docs-setup, or $aquarium:test-setup for setup."
+      "Use $aquarium:task-handler or $aquarium:epic-handler for delivery, $aquarium:release-handler for releases, and $aquarium:dev-setup, $aquarium:docs-setup, or $aquarium:test-setup for setup."
     ],
     "brandColor": "#10C4BE"
   }

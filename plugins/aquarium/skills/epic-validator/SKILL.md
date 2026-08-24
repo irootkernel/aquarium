@@ -5,7 +5,7 @@ description: "Cold-validate one completed roadmap epic through a bounded direct 
 
 # Epic Validator
 
-Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, or `$aquarium:independent-review`.
+Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Read [release-notes.md](../../references/release-notes.md). Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, or `$aquarium:independent-review`.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md). Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
@@ -73,12 +73,12 @@ If ownership is ambiguous, stop before goal creation and report the missing auth
 
 For each goal:
 
-1. Implement the smallest complete correction, add or update regression coverage and any durable specification required by changed current behavior, and run affected authorized checks.
+1. Implement the smallest complete correction, add or update regression coverage and any durable specification required by changed current behavior, and run affected authorized checks. In an enrolled repository, include one concise release-note `entry` for a changed shipped outcome or record `intentional no-note`; otherwise record `not-enrolled`.
 2. Fix every valid in-scope finding from the initial audit and root review, then repeat affected checks without starting a per-goal or follow-up review.
 3. Update the roadmap only for an actual lifecycle change, current accepted risk, or actionable downstream handoff. Never add a routine `Validation remediation`, `Validation record`, command log, tested snapshot, runtime path, run ID, or commit list.
 4. Record resulting remediation commit IDs in Podway and the orchestration report, not in canonical documentation.
 
-Confirm the goal-owned diff, including any necessary lifecycle or current-semantics documentation, equals the verified correction for the recorded source findings. Hand that exact scope, its evidence, owning task or epic ID, zero or more approved promoted manifest path and digest pairs or their explicit absence, and approved one-commit authority to `$aquarium:task-commit`.
+Confirm the goal-owned diff, including any necessary lifecycle or current-semantics documentation, equals the verified correction for the recorded source findings. Hand that exact scope, its evidence, owning task or epic ID, release-note target and decision, zero or more approved promoted manifest path and digest pairs or their explicit absence, and approved one-commit authority to `$aquarium:task-commit`.
 
 Verify the returned commit snapshot, residue, and hook evidence before completing the goal. The later whole-epic confirmation review, not the source review, owns coverage of those committed bytes.
 
@@ -110,7 +110,7 @@ With Podway active, complete the validation session only after any required cano
 
 ## Hand Off Commits and Report Safely
 
-Every actual remediation, lifecycle, accepted-risk, or actionable-handoff commit goes through `$aquarium:task-commit` with the repository, canonical roadmap, exact task or epic ID, the approved lifecycle decision as an exact edit or explicit absence, the approved record decision as an exact current-semantics edit or explicit absence, exact isolated scope, current verification and Mulgae evidence, zero or more promoted manifest path and digest pairs or their explicit absence, and one-commit authority.
+Every actual remediation, lifecycle, accepted-risk, or actionable-handoff commit goes through `$aquarium:task-commit`. Include repository, roadmap, task or epic ID, lifecycle and record decisions, release-note decision, isolated scope, verification and Mulgae evidence, zero or more promoted manifest path and digest pairs or their explicit absence, and one-commit authority.
 
 That skill owns staging, Lore and Sanho commit-boundary checks, the direct commit, hook reconciliation, and byte-for-byte snapshot verification. Never commit independently.
 

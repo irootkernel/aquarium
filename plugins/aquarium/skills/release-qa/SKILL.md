@@ -1,15 +1,15 @@
 ---
 name: release-qa
-description: "Run one full scenario-based QA pass for an exact main release candidate, or one bounded confirmation pass after that full pass produces remediated findings. Use when the user explicitly invokes $aquarium:release-qa with an intended release version or asks it to propose and confirm one."
+description: "Run one full scenario-based QA pass for an exact main release candidate, or one bounded confirmation pass after remediated findings. Use when the user explicitly invokes $aquarium:release-qa or $aquarium:release-handler delegates one intended version and candidate."
 ---
 
 # Release QA
 
 Assess one exact committed `main` candidate in either `full` or `confirmation` mode. A first pass is always `full` and uses two independent matrices: every active Design Gate and every material release-delta change. A later pass may use `confirmation` only under the bounded contract below.
 
-Always read [evidence-residency.md](../../references/evidence-residency.md). Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. Every `/tmp` path and worker identity remains local orchestration evidence and never enters tracked documentation. One invocation owns exactly one QA pass and, when a full pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
+Always read [evidence-residency.md](../../references/evidence-residency.md) and [release-notes.md](../../references/release-notes.md). Treat existing automated checks as already successful and mutate only disposable fixtures under `/tmp` during the QA pass. Every `/tmp` path and worker identity remains local orchestration evidence and never enters tracked documentation. One invocation owns exactly one QA pass and, when a full pass has verified findings, at most one bounded remediation phase. It never starts a second QA pass by itself.
 
-Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material.
+Explicit invocation by the user, or an exact candidate handoff from an explicitly invoked `$aquarium:release-handler`, authorizes read-only release discovery against the configured Git remote and hosting Releases, including use by those clients of already-configured ambient authentication without exposing credential material.
 
 It also authorizes creation and mutation of bounded `/tmp` fixtures, fresh subagents for local QA, and the smallest local source, test, or documentation remediation directly required by verified findings after the QA pass completes. Run only focused checks needed to verify that remediation; the repository release policy remains authoritative for any later full gate.
 
@@ -28,6 +28,8 @@ It does not authorize staging, commits, pushes, tags, releases, networked or liv
 4. Resolve the previous release from the latest non-draft, non-prerelease published Release reachable from the candidate, or from an exact tag explicitly confirmed by the user. Stop on conflicting tags or Releases, an existing target-version tag or Release, or a baseline not contained in the candidate.
 5. When no release tag exists, ask whether this is the first release and confirm its intended version. After confirmation, use the full reachable history and current public surface as new-release scope, with no regression baseline. Without confirmation return `INCOMPLETE`.
 6. Define the delta solely from Git history as every commit after the previous release through the candidate, independent of the version currently recorded in candidate files. For example, with previous release `v0.2.3`, ten later candidate commits, and intended version `v0.2.4`, cover all ten commits whether the files still say `v0.2.3` or already say `v0.2.4`. When that range is empty, report that there is no release delta and return `INCOMPLETE` rather than `PASS`.
+7. When Project Configuration declares `Aquarium release notes: <repository-relative-path>`, require one regular non-symlink tracked Markdown authority with exactly one open section matching the intended version. Require a completed section for the previous release only when step 4 established one; a confirmed first release instead requires no completed release section and invokes the release-handler inspector with `--first-release`.
+   - Run the inspector when available and treat its JSON as structural evidence only. A missing, unsafe, ambiguous, or structurally invalid enrolled authority makes the result `INCOMPLETE`; semantic omissions or incorrect shipped claims are findings.
 
 The previous release is assumed to work. Inspect its committed code, documentation, and tests only to reconstruct established behavior; do not check it out or execute it.
 
@@ -83,6 +85,10 @@ Map every commit and material changed surface to one or more release-delta scena
 - a documentation, example, link, installation, or cross-file consistency inspection.
 
 Give every user-visible or operationally risky change at least one executable scenario. Static inspection is sufficient only when the changed contract has no executable behavior. Record exclusions with exact evidence instead of silently sampling them away.
+
+When release notes are enrolled, map every changelog entry to the exact delta surface it describes and every material user-visible, compatibility, security, privacy, or operational delta to one concise entry. Confirm that intentional omissions are actually internal-only, completed release text is unchanged, and the open section contains no claim outside the candidate delta.
+
+Do not edit the changelog during QA. A substantive note edit after `PASS` creates a new candidate; only the enclosing release workflow may later change the open heading to the publication date without changing entry bytes.
 
 Do not run existing automated tests, `make test`, test runners, test scripts, linters, formatters, validators, generators, snapshot updates, CI commands, Gaori, Mulgae, or provider reviews as release-delta scenarios. Existing tests may be read as specifications, but their presence or prior success does not prove the release scenarios. The sole exception is an exact local offline procedure registered by an active Design Gate; execute it only in the Design Gate matrix and do not count the same run as release-delta scenario coverage.
 
