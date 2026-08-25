@@ -19,7 +19,7 @@ For an opted-out workflow, do not load or reference `$use-podway`, run a Podway 
 
 ## Check Readiness on the Default Path
 
-Unless the workflow is already opted out, verify that Podway is ready for Aquarium use before requesting plan or execution-envelope approval. Readiness requires the supported stable `v0.2.5` through `v0.2.x` CLI and matching daemon on native Apple Silicon macOS, reachable healthy workspace state, `.podway/config.yaml`, `.podway/.gitignore`, and all five tracked managed files byte-identical to the plugin sources and valid under `podway procedure check --warnings-as-errors`:
+Unless the workflow is already opted out, verify that Podway is ready for Aquarium use before requesting plan or execution-envelope approval. Readiness requires the supported stable `v0.2.6` through `v0.2.x` CLI and matching daemon on native Apple Silicon macOS, reachable healthy workspace state, `.podway/config.yaml`, `.podway/.gitignore`, and all five tracked managed files byte-identical to the plugin sources and valid under `podway procedure check --warnings-as-errors`:
 
 - `.podway/procedures/aquarium-task-v2.yaml`;
 - `.podway/procedures/aquarium-goal-v2.yaml`;

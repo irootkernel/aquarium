@@ -704,7 +704,7 @@ assert(deslop_catalog &&
        deslop_catalog.include?("byte-identical") &&
        deslop_catalog.include?("no duplicate or symlink installation"),
        "Deslop must install with its license from one exact Cursor upstream commit")
-assert(tool_catalog.include?("stable `v0.2.5` through `v0.2.x`") &&
+assert(tool_catalog.include?("stable `v0.2.6` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
        "Podway CLI, daemon, and use-podway must share the supported approved release")
@@ -2404,7 +2404,7 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.5` through `v0.2.x`"),
+  assert(body.include?("stable `v0.2.6` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
 end
 

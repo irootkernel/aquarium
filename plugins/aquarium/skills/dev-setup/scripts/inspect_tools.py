@@ -281,7 +281,7 @@ def supported_podway_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 5)
+    return bool(match and int(match.group(1)) >= 6)
 
 
 def supported_sanho_version(version: str | None) -> bool:

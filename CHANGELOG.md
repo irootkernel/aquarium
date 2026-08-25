@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Replace hardcoded Aquarium-specific release QA confirmation clusters with project-derived matrices.
 - Allow release QA for clean local main candidates ahead of remote main without requiring a pre-QA push.
 - Avoid a redundant Ouroboros Codex artifact refresh before full runtime setup.
+- Require Podway v0.2.6 for Aquarium development setup.
 
 ## v0.1.11 - 2026-08-25
 
