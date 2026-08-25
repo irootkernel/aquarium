@@ -317,6 +317,10 @@ assert(ouroboros_catalog &&
        ouroboros_catalog.include?("canonical isolated Codex launcher") &&
        ouroboros_catalog.include?("PATH-selected `uvx`") &&
        ouroboros_catalog.include?("optional supported exact release pin") &&
+       ouroboros_catalog.include?("`OUROBOROS_AGENT_RUNTIME=codex`") &&
+       ouroboros_catalog.include?("`OUROBOROS_LLM_BACKEND=codex`") &&
+       ouroboros_catalog.include?("`--runtime codex --llm-backend codex`") &&
+       ouroboros_catalog.include?("registration environment keys outside those three selectors") &&
        ouroboros_catalog.include?("live tool exposure remains separate host evidence") &&
        ouroboros_catalog.include?("`missing` only for Codex's definite named-server-not-found response") &&
        ouroboros_catalog.include?("never expose raw registration stderr") &&

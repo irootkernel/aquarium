@@ -510,7 +510,7 @@ def ouroboros_direct_launcher_matches(
 
 
 def ouroboros_isolated_launcher_matches(transport: Any) -> bool:
-    if not isinstance(transport, dict):
+    if not isinstance(transport, dict) or transport.get("type") != "stdio":
         return False
     resolved_command = resolved_executable(transport.get("command"))
     selected_uvx = shutil.which("uvx")
@@ -539,6 +539,8 @@ def ouroboros_isolated_launcher_matches(transport: Any) -> bool:
     ):
         return False
     if "_OUROBOROS_NESTED" in env:
+        return False
+    if set(env) - OUROBOROS_RUNTIME_SELECTOR_KEYS:
         return False
     if any(
         env.get(key) not in {None, "codex"} for key in OUROBOROS_RUNTIME_SELECTOR_KEYS
@@ -595,8 +597,6 @@ def classify_ouroboros_registration(
     isolated_registration_matches = bool(
         result.get("name") == "ouroboros"
         and result.get("enabled") is True
-        and isinstance(transport, dict)
-        and transport.get("type") == "stdio"
         and ouroboros_isolated_launcher_matches(transport)
     )
     if direct_registration_matches or isolated_registration_matches:
@@ -2320,9 +2320,15 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             "probe": normalized_probe(mcp_doctor),
         }
     else:
+        registration_reason = tool["mcp_registration"].get("probe", {}).get("reason")
+        runtime_reason = (
+            "registration_not_supported_launcher"
+            if registration_reason in {None, "registration_mismatch"}
+            else registration_reason
+        )
         tool["mcp_runtime"] = {
             "status": "unverifiable",
-            "probe": skipped_probe("registration_not_supported_launcher"),
+            "probe": skipped_probe(runtime_reason),
         }
 
     components_ready = (

@@ -474,6 +474,8 @@ class InspectToolsTest(unittest.TestCase):
                         elif mode == "isolated-suffix":
                             args.extend(["--runtime", "codex", "--llm-backend", "codex"])
                             env = {{}}
+                        elif mode == "isolated-legacy-selector":
+                            env["OUROBOROS_RUNTIME"] = "codex"
                         elif mode == "isolated-missing-flag":
                             args.pop(0)
                         elif mode == "isolated-wrong-python":
@@ -492,11 +494,13 @@ class InspectToolsTest(unittest.TestCase):
                             env["OUROBOROS_LLM_BACKEND"] = "claude"
                         elif mode == "isolated-nested-env":
                             env["_OUROBOROS_NESTED"] = "1"
+                        elif mode == "isolated-extra-env":
+                            env["UV_INDEX_URL"] = "https://example.invalid/simple"
                         result = {{
                             "name": "ouroboros",
                             "enabled": True,
                             "transport": {{
-                                "type": "stdio",
+                                "type": "http" if mode == "isolated-non-stdio" else "stdio",
                                 "command": "missing-uvx" if mode == "isolated-wrong-command" else "ooo" if mode == "isolated-imposter-command" else "uvx",
                                 "args": args,
                                 "env": env,
@@ -2669,7 +2673,12 @@ class InspectToolsTest(unittest.TestCase):
         self.assertNotIn("name", ouroboros)
 
     def test_ouroboros_accepts_canonical_isolated_launchers(self) -> None:
-        for mode in ("isolated", "isolated-pinned", "isolated-suffix"):
+        for mode in (
+            "isolated",
+            "isolated-pinned",
+            "isolated-suffix",
+            "isolated-legacy-selector",
+        ):
             with self.subTest(mode=mode):
                 self.install_fake_tools(
                     ouroboros_version="0.51.15",
@@ -2714,6 +2723,8 @@ class InspectToolsTest(unittest.TestCase):
             "isolated-missing-env",
             "isolated-conflicting-env",
             "isolated-nested-env",
+            "isolated-extra-env",
+            "isolated-non-stdio",
         )
         for mode in modes:
             with self.subTest(mode=mode):
@@ -2854,11 +2865,12 @@ class InspectToolsTest(unittest.TestCase):
                 )
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 self.assertNotIn("secret registration failure", completed.stdout)
-                registration = json.loads(completed.stdout)["tools"]["ouroboros"][
-                    "mcp_registration"
-                ]
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                registration = ouroboros["mcp_registration"]
                 self.assertEqual(registration["status"], status)
                 self.assertEqual(registration["probe"]["reason"], reason)
+                self.assertEqual(ouroboros["mcp_runtime"]["status"], "unverifiable")
+                self.assertEqual(ouroboros["mcp_runtime"]["probe"]["reason"], reason)
 
     def test_missing_ouroboros_still_inspects_codex_registration(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="configured")
@@ -2880,6 +2892,11 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
         self.assertEqual(
             ouroboros["mcp_registration"]["probe"]["reason"],
+            "codex_executable_missing",
+        )
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "unverifiable")
+        self.assertEqual(
+            ouroboros["mcp_runtime"]["probe"]["reason"],
             "codex_executable_missing",
         )
         self.assertEqual(ouroboros["status"], "degraded")
