@@ -11,6 +11,7 @@ This repository is enrolled in `aquarium-test-contract/v1` with the `make` profi
 - Unit tests: `make test-unit`
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
+- Exact Podway v0.2.6 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
 
 The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository fixes its runners to `.venv/bin/python` and `.venv/bin/ruff` when the enrolled environment exists, otherwise to `python3` and `ruff`; command-line overrides cannot replace those identities.
 
@@ -24,6 +25,10 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 | `test-e2e` | Python pytest scenarios invoking the shipped test-setup inspector CLI as a black box against isolated temporary repository fixtures. |
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
+
+`test-podway-compat` is an external-artifact gate and is intentionally not part of the ordinary `make test` aggregate. It requires one absolute, executable, nonsymlink Podway binary path and records that artifact's SHA-256. It requires exact v0.2.6 identity, accepts all five canonical Aquarium Procedures with warnings as errors, and proves that declaration values above `max_item_length: 8192` and `max_total_length: 1000000` are rejected. These checks cover Procedure declaration compatibility, not runtime record-value enforcement.
+
+A local development binary provides development-contract evidence only. For distribution readiness, first verify the official v0.2.6 Apple Silicon archive against its published checksum, then run the same target against the extracted exact binary. Podway's own exact release-candidate gate remains authoritative for runtime enforcement and its distribution.
 
 ## Test Frameworks
 

@@ -29,15 +29,17 @@ PYTHON_FILES := \
 	tests/test_inspect_testing.py \
 	tests/test_normalize_manifest.py \
 	tests/test_task_commit_gate.py \
+	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_create_provider_terminal_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \
 	tests/unit/test_inspect_testing_unit.py \
+	tests/unit/test_verify_podway_compatibility_unit.py \
 	tests/e2e/test_test_setup_cli.py
 
-.PHONY: test test-requirements test-prepare test-unit test-int test-e2e
+.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat
 
 test:
 	$(MAKE) test-prepare
@@ -67,3 +69,6 @@ test-int: test-requirements
 
 test-e2e: test-requirements
 	$(PYTHON) -m pytest tests/e2e
+
+test-podway-compat: test-requirements
+	PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py

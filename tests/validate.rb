@@ -2493,6 +2493,15 @@ assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspec
        testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers") &&
        testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target helpers' bounded structural states"),
        "release and review helpers and tests must remain in the common test contract")
+assert(makefile.include?("test-podway-compat: test-requirements") &&
+       makefile.include?('PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py') &&
+       makefile.include?("tests/unit/test_verify_podway_compatibility_unit.py") &&
+       testing_document.include?("external-artifact gate") &&
+       testing_document.include?("development-contract evidence only") &&
+       testing_document.include?("not runtime record-value enforcement") &&
+       root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.6-podway> make test-podway-compat") &&
+       root_agents.include?("cannot satisfy this distribution gate"),
+       "Podway v0.2.6 compatibility must remain an exact-artifact release gate")
 assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
        ROOT.join("README.md").read.include?("[Orca Review]") &&
        ROOT.join("README.ko.md").read.include?("$aquarium:orca-review") &&
