@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Recognize Ouroboros's canonical isolated Codex MCP launcher without mistaking the base MCP 1.x profile for its MCP 2 runtime.
 - Replace hardcoded Aquarium-specific release QA confirmation clusters with project-derived matrices.
 - Allow release QA for clean local main candidates ahead of remote main without requiring a pre-QA push.
+- Avoid a redundant Ouroboros Codex artifact refresh before full runtime setup.
 
 ## v0.1.11 - 2026-08-25
 

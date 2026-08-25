@@ -304,9 +304,14 @@ assert(dev_setup.include?(">=0.51.1,<0.52.0") &&
        dev_setup.include?("uv tool install ouroboros-ai==<exact-version>") &&
        dev_setup.include?("ooo codex refresh") &&
        dev_setup.include?("ooo setup --runtime codex --non-interactive --mcp-mode auto") &&
-       dev_setup.include?("three separate persistent mutations") &&
+       dev_setup.include?("do not run `ooo codex refresh` first") &&
+       dev_setup.include?("refresh without full setup") &&
        dev_setup.include?("must not call an Ouroboros provider"),
-       "dev-setup must separate pinned Ouroboros installation, Codex refresh, runtime setup, and provider authority")
+       "dev-setup must separate pinned Ouroboros installation, mutually exclusive configuration paths, and provider authority")
+assert(ouroboros_catalog &&
+       ouroboros_catalog.include?("Do not run `ooo codex refresh` before full setup") &&
+       ouroboros_catalog.include?("rules-and-skills repair alternative"),
+       "Ouroboros catalog must avoid redundant refresh before full setup")
 assert(ouroboros_catalog &&
        ouroboros_catalog.include?("ooo --version") &&
        ouroboros_catalog.include?("ooo codex doctor") &&

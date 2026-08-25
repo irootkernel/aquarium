@@ -151,13 +151,11 @@ Support only Ouroboros `>=0.51.1,<0.52.0`. Read [tool-catalog.md](references/too
 
 Installation requires an already installed `uv`; never install a package manager as a side effect. Resolve one exact `ouroboros-ai` version inside the supported range, disclose the Python package index request and package target, show `uv tool install ouroboros-ai==<exact-version>` or the exact approved upgrade form, and obtain a dedicated approval before running it. Do not install from an unpinned range.
 
-Treat the following as three separate persistent mutations, each with its own displayed command, changed paths, and explicit approval:
+Treat exact package installation or upgrade through `uv` and the selected configuration action as separate persistent mutations. Display each command and its changed paths, obtain explicit approval, re-read targets immediately before mutation, and invalidate stale approval.
 
-1. Exact package installation or upgrade through `uv`.
-2. `ooo codex refresh`, which installs or refreshes packaged Codex rules and upstream Ouroboros skills in the active Codex home.
-3. `ooo setup --runtime codex --non-interactive --mcp-mode auto`, which may update Codex MCP configuration and Ouroboros runtime state.
+For full configuration, run only `ooo setup --runtime codex --non-interactive --mcp-mode auto`. Full setup installs and prunes packaged Codex rules and upstream Ouroboros skills while it may also update Codex MCP configuration and Ouroboros runtime state; do not run `ooo codex refresh` first. Offer `ooo codex refresh` as a separate repair alternative only when the user selects rules-and-skills refresh without full setup.
 
-Approval for one never authorizes another. Re-read targets immediately before each mutation and invalidate stale approval. Setup must not call an Ouroboros provider, authenticate, run `auto`, `run`, `ralph`, or `evolve`, transmit repository source, create a Seed, or start an Aquarium design workflow.
+Approval for package mutation never authorizes configuration, and approval for one configuration path never authorizes the other. Setup and refresh must not call an Ouroboros provider, authenticate, run `auto`, `run`, `ralph`, or `evolve`, transmit repository source, create a Seed, or start an Aquarium design workflow.
 
 After approved mutations, verify `ooo --version`, `ooo codex doctor`, and `codex mcp get ouroboros --json`.
 
