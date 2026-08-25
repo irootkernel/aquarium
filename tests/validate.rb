@@ -1938,21 +1938,45 @@ assert(release_qa.include?("Do not replace an unavailable, failed, or timed-out 
        "release-qa must fail incomplete instead of weakening isolation")
 assert(release_qa.include?("A first pass is always `full`") &&
        release_qa.include?("confirmation_attempt: 1") &&
-       release_qa.include?("previous five-cluster matrix") &&
+       release_qa.include?("frozen cluster and scenario matrix from the previous full pass") &&
+       release_qa.include?("Design Gate or release-delta source") &&
+       release_qa.include?("authoritative frozen confirmation record") &&
+       release_qa.include?("exact cluster decomposition") &&
        release_qa.include?("remediation commit range ending at the current candidate") &&
        release_qa.include?("Confirmation may run exactly once"),
        "release-qa confirmation must require exact prior evidence, candidate identity, and one bounded attempt")
-assert(release_qa.include?("commit-hook behavior") &&
-       release_qa.include?("test-inspector environment") &&
-       release_qa.include?("dev-setup malformed output") &&
-       release_qa.include?("review-workflow validation graph and Delivery settlement") &&
-       release_qa.include?("shipped package, public documentation, and Procedure parity") &&
+assert(release_qa.include?("project-derived cluster boundaries and scenario inventory") &&
+       release_qa.include?("fresh workers for every retained cluster") &&
+       release_qa.include?("rerun every retained scenario and every verified finding reproduction") &&
+       release_qa.include?("every remediation-changed surface to map") &&
+       release_qa.include?("confirmation cannot add new coverage") &&
        release_qa.include?("Existing tests and validators remain prohibited as QA scenario evidence"),
-       "release-qa confirmation must preserve the fixed five-cluster scenario matrix")
-assert(release_qa.include?("Do not invent additional Bash syntax variants") &&
-       release_qa.include?("Do not turn a hook boundary that the candidate publicly documents as incomplete into a release blocker") &&
+       "release-qa confirmation must preserve the complete project-derived scenario matrix")
+assert(release_qa.include?("reconcile the manifest's complete frozen inventory") &&
+       release_qa.include?("exact same set of cluster and scenario identifiers") &&
+       release_qa.include?("missing, extra, reassigned, or altered entry") &&
+       release_qa.include?("never accept a manifest reconstructed") &&
+       release_qa.include?("inventory authority for any permitted confirmation pass"),
+       "release-qa confirmation must reconcile exactly against the retained full-pass record")
+aquarium_specific_confirmation_phrases = [
+  "previous five-cluster matrix",
+  "commit-hook behavior",
+  "test-inspector environment",
+  "dev-setup malformed output",
+  "review-workflow validation graph and Delivery settlement",
+  "shipped package, public documentation, and Procedure parity",
+  "additional Bash syntax variants",
+  "same-family parser hardening",
+  "hook boundary",
+  "fuzz parser inputs",
+  "probe new generated-directory names"
+]
+assert(aquarium_specific_confirmation_phrases.none? { |phrase| release_qa.include?(phrase) },
+       "release-qa confirmation must not hardcode Aquarium-specific scenario clusters")
+assert(release_qa.include?("Do not invent additional inputs, variants, paths, or scenarios") &&
+       release_qa.include?("Do not turn a limitation that the candidate publicly documents") &&
        release_qa.include?("stop the release without remediation, another confirmation, or another automatic full pass") &&
-       release_qa.include?("same-family parser hardening") &&
+       release_qa.include?("additional same-family hardening or newly discovered edge case") &&
        release_qa.include?("do not run another release-qa pass"),
        "release-qa confirmation must forbid scope expansion and automatic re-review")
 assert(release_qa.include?("`PASS`") && release_qa.include?("`FINDINGS`") &&
@@ -1986,6 +2010,13 @@ assert(release_handler.include?("Explicit invocation authorizes read-only releas
        release_handler.include?("Show the exact new empty `Unreleased` section and request separate commit authority") &&
        release_handler.include?("Never rewrite or delete a published tag or Release"),
        "release-handler must preserve candidate, publication, and next-cycle boundaries")
+assert(release_handler.include?("Preserve the full pass's authoritative frozen confirmation record") &&
+       release_handler.include?("copying its complete cluster and scenario inventory and entry facts") &&
+       release_handler.include?("without re-deriving, regrouping, or sampling") &&
+       release_handler.include?("changed-surface mappings") &&
+       release_handler.include?("reconciled exactly against it") &&
+       release_handler.include?("stop as `INCOMPLETE` before invoking confirmation"),
+       "release-handler must hand off the complete retained full-pass record to confirmation")
 assert(release_handler.include?("references/publication-recovery.md") &&
        release_handler.include?("scripts/inspect_publication_state.py") &&
        release_handler.include?("--first-release") &&

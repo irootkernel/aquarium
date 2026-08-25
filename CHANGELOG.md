@@ -8,6 +8,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Fix the Kimi and GLM edition links in the English and Korean project READMEs.
 - Recognize Ouroboros's canonical isolated Codex MCP launcher without mistaking the base MCP 1.x profile for its MCP 2 runtime.
+- Replace hardcoded Aquarium-specific release QA confirmation clusters with project-derived matrices.
 
 ## v0.1.11 - 2026-08-25
 

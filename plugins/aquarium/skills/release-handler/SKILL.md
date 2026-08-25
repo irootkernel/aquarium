@@ -28,7 +28,11 @@ When the committed candidate is ahead of remote `main`, show its exact SHA and o
 
 Require a clean committed `main` candidate where local, upstream, and remote refs agree before invoking `$aquarium:release-qa`. The handler's explicit release request is an authorized handoff for exactly one release-qa pass against the disclosed version and candidate. Preserve every release-qa convergence and confirmation boundary; never reinterpret a finding fix or focused check as a passing candidate.
 
-When remediation changes a shipped outcome, update the open changelog entry in the same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Stop when QA is incomplete, findings remain, or the permitted confirmation does not pass.
+When remediation changes a shipped outcome, update the open changelog entry in the same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Preserve the full pass's authoritative frozen confirmation record and retained evidence root.
+
+Build the confirmation manifest by copying its complete cluster and scenario inventory and entry facts without re-deriving, regrouping, or sampling them. Append only the current candidate, remediation range, changed-surface mappings, finding reproductions, and one-attempt facts required by release QA.
+
+If the retained record is unavailable or the manifest cannot be reconciled exactly against it, stop as `INCOMPLETE` before invoking confirmation. Stop when QA is incomplete, findings remain, or the permitted confirmation does not pass.
 
 ## Create and Publish the Release
 

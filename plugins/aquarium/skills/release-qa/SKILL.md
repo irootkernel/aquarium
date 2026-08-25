@@ -39,26 +39,27 @@ Use `full` mode unless the enclosing release workflow supplies a confirmation ma
 
 - the intended version, previous release, current candidate SHA, and previous full-pass candidate SHA;
 - the retained previous evidence root and the non-empty remediation commit range ending at the current candidate;
-- the previous five-cluster matrix, every verified finding reproduction scenario, and every source surface changed by remediation;
+- the frozen cluster and scenario matrix from the previous full pass, including every stable cluster and scenario identifier, its Design Gate or release-delta source, command or inspection procedure, controlled environment, expected and previous observed outcomes, and retained evidence location;
+- every verified finding reproduction scenario, every source surface changed by remediation, and the mapping from each changed surface to one or more retained scenarios or finding reproductions;
 - `confirmation_attempt: 1`, with evidence that no earlier confirmation pass was started for this full-pass candidate and remediation range.
 
-Reject `confirmation` as `INCOMPLETE` if the manifest, retained evidence, exact Git objects, ancestry, remediation range, or one-attempt fact cannot be established. The confirmation candidate must still satisfy the clean and unambiguous committed-`main` rules above. A confirmation manifest is disposable workflow evidence, never repository authority; do not copy its date, intermediate candidate SHA, or evidence path into repository documentation.
+Before accepting `confirmation`, reconcile the manifest's complete frozen inventory against the authoritative full-pass confirmation record retained beneath the previous evidence root. Require the exact same set of cluster and scenario identifiers, cluster assignments, sources, procedures, controlled environments, expected and previous observed outcomes, and retained evidence locations.
 
-In `full` mode, follow every section below and explore the complete Design Gate and release-delta matrices. In `confirmation` mode, do not rebuild or broaden those matrices. Dispatch fresh workers only for these five fixed clusters from the previous matrix:
+A missing, extra, reassigned, or altered entry makes the result `INCOMPLETE`; never accept a manifest reconstructed from only the remediation diff, findings, or selected scenarios.
 
-1. commit-hook behavior, covering the previous matrix and the confirmed bypass and false-positive scenarios;
-2. test-inspector environment, command, and framework scenarios;
-3. dev-setup malformed output plus the previous MCP and manifest baseline matrix;
-4. review-workflow validation graph and Delivery settlement;
-5. shipped package, public documentation, and Procedure parity.
+Reject `confirmation` as `INCOMPLETE` if that exact reconciliation, the manifest, retained evidence, exact Git objects, ancestry, remediation range, or one-attempt fact cannot be established. The confirmation candidate must still satisfy the clean and unambiguous committed-`main` rules above. A confirmation manifest is disposable workflow evidence, never repository authority; do not copy its date, intermediate candidate SHA, or evidence path into repository documentation.
 
-For each cluster, rerun every scenario recorded in its previous matrix, every confirmed finding reproduction, and every scenario whose exercised surface changed in the remediation range. Existing tests and validators remain prohibited as QA scenario evidence. Capture the same command, controlled environment, outcome, resulting files, worker identity, and source-repository status required for a full pass, but write all new evidence beneath a fresh confirmation evidence root.
+In `full` mode, follow every section below and explore the complete Design Gate and release-delta matrices. In `confirmation` mode, do not rebuild or broaden those matrices. Preserve the project-derived cluster boundaries and scenario inventory from the frozen previous full-pass matrix, and dispatch fresh workers for every retained cluster.
 
-Confirmation is a fixed verification pass, not a new edge-case search. Do not invent additional Bash syntax variants, fuzz parser inputs, or probe new generated-directory names. Do not turn a hook boundary that the candidate publicly documents as incomplete into a release blocker. A directly observed failure of a fixed scenario remains a finding; this restriction only forbids expanding the scenario inventory.
+For each cluster, rerun every retained scenario and every verified finding reproduction. Require every remediation-changed surface to map to at least one retained scenario or finding reproduction, and return `INCOMPLETE` when that mapping or its evidence is missing because confirmation cannot add new coverage.
 
-Confirmation may run exactly once after one full pass and its bounded remediation. It returns `PASS` only when every fixed scenario succeeds and no evidence gap remains. On `FINDINGS` or `INCOMPLETE`, stop the release without remediation, another confirmation, or another automatic full pass.
+Existing tests and validators remain prohibited as QA scenario evidence. Capture the same command, controlled environment, outcome, resulting files, worker identity, and source-repository status required for a full pass, but write all new evidence beneath a fresh confirmation evidence root.
 
-Route any same-family parser hardening to a separately authorized change, or require an explicit user risk-acceptance decision outside release QA. A confirmation `PASS` ends release QA for that candidate; do not run another release-qa pass before the already-authorized release gate.
+Confirmation is a fixed verification pass, not a new edge-case search. Do not invent additional inputs, variants, paths, or scenarios beyond the frozen matrix and verified finding reproductions. Do not turn a limitation that the candidate publicly documents and the previous full pass accepted into a release blocker. A directly observed failure of a retained scenario remains a finding; this restriction only forbids expanding the scenario inventory.
+
+Confirmation may run exactly once after one full pass and its bounded remediation. It returns `PASS` only when every retained scenario succeeds and no evidence gap remains. On `FINDINGS` or `INCOMPLETE`, stop the release without remediation, another confirmation, or another automatic full pass.
+
+Route any additional same-family hardening or newly discovered edge case to a separately authorized change, or require an explicit user risk-acceptance decision outside release QA. A confirmation `PASS` ends release QA for that candidate; do not run another release-qa pass before the already-authorized release gate.
 
 ## Establish Design Gate Enrollment
 
@@ -119,7 +120,9 @@ Choose one overall result in this order across both matrices:
 2. `FINDINGS` when both applicable matrices are complete and at least one verified active-gate or release-delta defect remains.
 3. `PASS` only when the active Design Gate matrix, when enrolled, and the release-delta matrix are both complete and no verified defect remains.
 
-Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
+In `full` mode, store beneath the retained evidence root and return an authoritative frozen confirmation record containing the exact cluster decomposition and every stable cluster and scenario identifier, source matrix, procedure, controlled environment, expected and observed outcomes, and retained evidence location. This record, not a later reconstruction, is the inventory authority for any permitted confirmation pass.
+
+Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, authoritative frozen confirmation record, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
 
 Classify verified findings as:
 
