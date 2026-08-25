@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.12 - Unreleased
 
+### Added
+
+- Add maintainer documentation for Aquarium's implemented capabilities, architecture, decisions, and implementation guidance.
+
 ### Fixed
 
 - Fix the Kimi and GLM edition links in the English and Korean project READMEs.

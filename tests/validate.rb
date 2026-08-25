@@ -226,6 +226,47 @@ docs_setup_profiles = PLUGIN.join("skills/docs-setup/references/profiles.md").re
 docs_setup_migration = PLUGIN.join("skills/docs-setup/references/migration.md").read
 docs_setup_script = PLUGIN.join("skills/docs-setup/scripts/inspect_docs.py")
 docs_setup_script_body = docs_setup_script.read
+documentation_index_path = ROOT.join("docs/README.md")
+documentation_role_paths = %w[
+  architecture
+  architecture-decision-records
+  deferred-feedback
+  implementation-tips
+  roadmap
+  specs
+  todo
+].to_h { |role| [role, ROOT.join("docs", role, "README.md")] }
+documentation_detail_paths = {
+  "capabilities" => ROOT.join("docs/specs/capabilities.md"),
+  "workflow-contracts" => ROOT.join("docs/specs/workflow-contracts.md"),
+  "tool-integrations" => ROOT.join("docs/specs/tool-integrations.md"),
+  "local-interfaces" => ROOT.join("docs/specs/local-interfaces.md"),
+  "safety-and-evidence" => ROOT.join("docs/specs/safety-and-evidence.md"),
+  "components" => ROOT.join("docs/architecture/components.md"),
+  "workflow-runtime" => ROOT.join("docs/architecture/workflow-runtime.md"),
+  "state-and-evidence" => ROOT.join("docs/architecture/state-and-evidence.md"),
+  "verification" => ROOT.join("docs/architecture/verification.md"),
+  "changing-skills" => ROOT.join("docs/implementation-tips/changing-skills.md"),
+  "changing-procedures" => ROOT.join("docs/implementation-tips/changing-procedures.md"),
+  "changing-inspectors" => ROOT.join("docs/implementation-tips/changing-inspectors.md"),
+  "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md")
+}
+documentation_adr_paths = (1..6).map do |number|
+  Dir[ROOT.join("docs/architecture-decision-records/%04d-*.md" % number)].map { |path| Pathname.new(path) }
+end
+assert(documentation_index_path.file?, "canonical documentation index is missing")
+documentation_role_paths.each_value do |path|
+  assert(path.file?, "canonical documentation role index is missing: #{path.relative_path_from(ROOT)}")
+end
+documentation_detail_paths.each_value do |path|
+  assert(path.file?, "canonical documentation detail is missing: #{path.relative_path_from(ROOT)}")
+end
+assert(documentation_adr_paths.all? { |matches| matches.length == 1 },
+       "canonical ADR sequence must contain exactly ADR-0001 through ADR-0006")
+documentation_index = documentation_index_path.read
+canonical_roadmap = documentation_role_paths.fetch("roadmap").read
+documentation_details = documentation_detail_paths.transform_values(&:read)
+documentation_adrs = documentation_adr_paths.flatten.to_h { |path| [path, path.read] }
 design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
 new_project = PLUGIN.join("skills/new-project/SKILL.md").read
 new_feature = PLUGIN.join("skills/new-feature/SKILL.md").read
@@ -545,6 +586,105 @@ assert(docs_setup_migration.include?("status is exactly `Planned`") &&
        docs_setup_migration.include?("Never move a task across epic boundaries") &&
        docs_setup_migration.include?("Do not update only the roadmap"),
        "documentation migration must preserve history and rewrite the complete tracked reference set")
+documentation_roles = documentation_role_paths.keys
+assert(documentation_index.include?("`single-scope`") &&
+       documentation_index.include?("`Aquarium`") &&
+       documentation_roles.all? { |role| documentation_index.include?("`docs/#{role}/README.md`") } &&
+       documentation_index.include?("`docs/roadmap/README.md` is the namespace") &&
+       documentation_index.include?("EPIC-[0-9]{3,}") &&
+       documentation_index.include?("TASK-[0-9]{3,}") &&
+       documentation_index.include?("English is canonical") &&
+       documentation_index.include?("Aquarium maintainers and workflow authors") &&
+       documentation_index.include?("current stable package as `v0.1.11`") &&
+       documentation_index.include?("open `v0.1.12` release candidate") &&
+       documentation_index.include?("ruby tests/validate.rb"),
+       "Aquarium documentation index must define its profile, roles, roadmap identity, language, and checks")
+
+capability_catalog = documentation_details.fetch("capabilities")
+assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
+       expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
+       capability_catalog.include?("open v0.1.12 candidate") &&
+       capability_catalog.include?("not shipped as v0.1.11 behavior"),
+       "capability catalog must inventory all Aquarium skills and separate stable from candidate behavior")
+
+tool_integrations_doc = documentation_details.fetch("tool-integrations")
+supported_tool_versions = [
+  "Stable `v0.2.7` through `v0.2.x`",
+  "Stable `v0.1.18` through `v0.1.x`",
+  "Stable `v0.1.14` through `v0.1.x`",
+  "Stable `v0.2.6` through `v0.2.x`",
+  "`>=0.51.1,<0.52.0`"
+]
+assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(version) } &&
+       tool_integrations_doc.include?("Go `1.26.6+` only for installation") &&
+       tool_integrations_doc.include?("No Aquarium release floor declared") &&
+       tool_integrations_doc.include?("No release line; disclosed full current upstream SHA"),
+       "tool integration documentation must preserve supported versions and upstream boundaries")
+
+local_interfaces_doc = documentation_details.fetch("local-interfaces")
+procedure_declarations = {
+  "aquarium-task-v2" => "3",
+  "aquarium-goal-v2" => "4",
+  "aquarium-validation-v2" => "5",
+  "aquarium-design-v2" => "1",
+  "aquarium-war-room-v2" => "1"
+}
+assert(procedure_declarations.all? do |procedure_id, version|
+         local_interfaces_doc.include?("| `#{procedure_id}` | `#{version}` |")
+       end,
+       "local interface documentation must preserve every managed Procedure ID and version")
+documented_schema_ids = %w[
+  aquarium-dev-setup-inspection.v8
+  aquarium-docs-inspection/v1
+  aquarium-test-setup-inspection.v1
+  aquarium.dev-setup-bundle/v1
+  aquarium-dev-setup-bundle-plan.v1
+  aquarium-independent-review-target/v1
+  aquarium-orca-provider-terminal-request/v1
+  aquarium-orca-provider-terminal-result/v1
+  aquarium-release-notes-inspection/v1
+  aquarium-release-publication-observation/v2
+  aquarium-release-publication-state/v2
+  aquarium-podway-compatibility.v1
+]
+assert(documented_schema_ids.all? { |schema_id| local_interfaces_doc.include?("`#{schema_id}`") },
+       "local interface documentation must preserve the major JSON schema identifiers")
+
+adr_index = documentation_role_paths.fetch("architecture-decision-records").read
+required_adr_sections = %w[Context Decision Consequences Rejected\ Alternatives References]
+documentation_adrs.each do |path, body|
+  number = path.basename.to_s[/\A(\d{4})-/, 1]
+  assert(body.start_with?("# ADR-#{number}: ") &&
+         body.include?("**Status:** `Accepted`") &&
+         body.include?("**Recorded:** `2026-08-25`") &&
+         body.include?("retrospective record of current repository authority") &&
+         required_adr_sections.all? { |section| body.include?("## #{section.tr('\\', ' ')}") } &&
+         adr_index.include?(path.basename.to_s),
+         "ADR-#{number} must be accepted, complete, retrospective, and indexed")
+end
+
+canonical_documentation_paths = [documentation_index_path] +
+                                documentation_role_paths.values +
+                                documentation_detail_paths.values +
+                                documentation_adrs.keys
+canonical_documentation = canonical_documentation_paths.map(&:read).join("\n")
+assert(!canonical_documentation.include?("/Users/") &&
+       !canonical_documentation.include?("file://") &&
+       !canonical_documentation.match?(/(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*\S+/i),
+       "canonical documentation must not contain absolute workspace paths or apparent credential values")
+
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 1 &&
+       canonical_roadmap.include?("## EPIC-001: Release Aquarium v0.1.12") &&
+       canonical_roadmap.include?("**Status:** `Planned`") &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] } ==
+         %w[TASK-001 TASK-002 TASK-003 TASK-004] &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 4 &&
+       canonical_roadmap.include?("project-owned Procedure") &&
+       canonical_roadmap.include?("exact Podway release commit") &&
+       canonical_roadmap.include?("make test-podway-compat") &&
+       canonical_roadmap.include?("$aquarium:release-handler") &&
+       !canonical_roadmap.include?("/Users/"),
+       "Aquarium roadmap must preserve the approved v0.1.12 epic, task identities, dependencies, and ownership boundaries")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
@@ -671,6 +811,8 @@ assert(!root_agents.match?(/^## Commit Messages$/) &&
 assert(root_agents.include?("use exactly `Master`") &&
        root_agents.include?("$aquarium:dev-setup-bundle") &&
        root_agents.include?(".podway/procedures/aquarium-*-v2.yaml") &&
+       root_agents.include?("`docs/README.md` owns the single-scope documentation profile") &&
+       root_agents.include?("`docs/roadmap/README.md` alone owns Aquarium epic and task identity") &&
        root_agents.include?("RELEASE_TAG=v<version> ruby tests/validate.rb"),
        "Aquarium's applied guidance must preserve preferences, workflow references, and release policy")
 expected_claude_delegation = <<~MARKDOWN
@@ -2576,6 +2718,9 @@ assert(korean_readme.include?("AI Fleet") &&
        readme_skill_names.all? { |name| korean_readme.include?("$aquarium:#{name}") },
        "Korean README must retain the product identity, core sections, and main workflows")
 assert(readme.include?("https://home.rootkernel.xyz"), "README homepage is missing")
+assert(readme.include?("[Canonical documentation](docs/README.md)") &&
+       korean_readme.include?("[Canonical documentation](docs/README.md)"),
+       "README files must link to the canonical documentation index")
 assert(readme.include?("mailto:cs@rootkernel.xyz"), "README support email is missing")
 assert(readme.include?("codex plugin marketplace add irootkernel/aquarium --ref main"),
        "README marketplace install command is missing")
