@@ -1,6 +1,6 @@
 # Aquarium Roadmap
 
-This file alone owns Aquarium's adopted epic and task identity, ordering, dependencies, lifecycle vocabulary, and current delivery status.
+This file alone owns Aquarium's adopted epic and task identity, ordering, dependencies, lifecycle vocabulary, and current delivery status. Linked work dossiers own detailed scope and acceptance criteria without becoming a second lifecycle authority.
 
 ## Identity Contract
 
@@ -28,6 +28,8 @@ Epic status is independent of child task status. Completing every child does not
 | Epic | Title | Status |
 | --- | --- | --- |
 | EPIC-001 | Release Aquarium v0.1.12 | Planned |
+| EPIC-002 | Build the Aquarium development environment | Planned |
+| EPIC-003 | Introduce Dolgorae | Planned |
 
 ## EPIC-001: Release Aquarium v0.1.12
 
@@ -37,39 +39,43 @@ Deliver Aquarium v0.1.12 with explicit project-owned Procedure support, independ
 
 Podway owns its v0.2.6 implementation, release QA, distribution gate, and publication. Aquarium may consume that result only after it obtains the exact Podway release commit and independently verifies the official artifact; an Aquarium consumer claim alone cannot complete the dependency.
 
-| Task | Title | Status | Depends On |
-| --- | --- | --- | --- |
-| TASK-001 | Support project-owned Procedure customization | Planned | None |
-| TASK-002 | Qualify the official Podway v0.2.6 release | Planned | External Podway v0.2.6 release |
-| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Planned | TASK-001, TASK-002 |
-| TASK-004 | Release Aquarium v0.1.12 | Planned | TASK-003 |
+**Detailed SOT:** [`TODO-RELEASE-v0-1-12.md`](../todo/TODO-RELEASE-v0-1-12.md)
 
-### TASK-001 Acceptance
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-001 | Support project-owned Procedure customization | Add an explicit, validated ownership transition without overwriting project-owned Procedures. | Planned | None |
+| TASK-002 | Qualify the official Podway v0.2.6 release | Independently verify the exact released Podway artifact and Aquarium compatibility. | Planned | External Podway v0.2.6 release |
+| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Reconcile integration requirements and prove the final exact development candidate. | Planned | TASK-001, TASK-002 |
+| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Planned | TASK-003 |
 
-- Provide an explicit, separately approved transition from Aquarium-managed canonical mode to project-owned Procedure mode; never infer ownership from an arbitrary byte mismatch.
-- Record non-secret source provenance and current digest, validate the selected Aquarium workflow's required nodes, items, types, routes, evidence handoffs, lifecycle ownership, and terminal behavior, and permit compatible project-specific changes outside that interface.
-- Keep exact byte equality for Aquarium-managed canonical files, never overwrite project-owned files, and present reviewable base/current/incoming evidence before an approved upstream merge or replacement.
-- Cover canonical, unexplained mismatch, compatible customization, incompatible workflow, direct-Podway-only validity, no-overwrite, and upstream-update scenarios with focused tests and repository-standard verification.
+## EPIC-002: Build the Aquarium Development Environment
 
-### TASK-002 Acceptance
+**Status:** `Planned`
 
-- Obtain the exact Podway release commit and independent evidence that its complete release/distribution gate passed for v0.2.6; development-branch tests alone are insufficient.
-- Verify the official Apple Silicon archive against its published checksum and run `PODWAY_BIN=<absolute-path> make test-podway-compat` against the extracted exact binary.
-- Confirm the released list-scale declaration and runtime enforcement, strict unknown-field rejection, phase-aware daemon installation readiness, explicit verified-readiness state, and state-preserving retry behavior required by Aquarium's integration.
-- Keep all Podway source changes, release QA, tags, assets, and publication in the Podway repository's ownership boundary.
+Build the `dev-aquarium` development channel planned for v0.1.13 so Aquarium, Podway, Mulgae, Gaori, and Sanho can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and preserve stable global tools when no project is enrolled.
 
-### TASK-003 Acceptance
+This epic begins after the v0.1.12 publication task. It does not open the v0.1.13 CHANGELOG cycle or present the planned behavior as shipped.
 
-- Map every Aquarium-owned requirement from the two Sudal integration requests to current code, tests, and exact external-release evidence, distinguishing already satisfied behavior from remaining gaps without creating retroactive Completed tasks.
-- Require stable Podway v0.2.6 through v0.2.x, canonical Procedure validation with the exact released binary, supported project-owned Procedure behavior, the canonical Ouroboros 0.51.x isolated Codex launcher, and a single full-setup Codex artifact mutation.
-- Correct every confirmed Aquarium-owned release blocker, update the exact owning specification and release-note surfaces, and run focused checks plus the complete applicable Aquarium development gate.
-- Require the latest exact Aquarium candidate after all accepted changes; stale request analysis or cross-repository claims cannot satisfy acceptance.
+**Detailed SOT:** [`TODO-DEV-AQUARIUM.md`](../todo/TODO-DEV-AQUARIUM.md)
 
-### TASK-004 Acceptance
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and isolated Codex operation before implementation. | Planned | TASK-004 |
+| TASK-006 | Define the shared development contract | Freeze producer, artifact, enrollment, resolver, version, and failure contracts. | Planned | TASK-005 |
+| TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Planned | TASK-006 |
+| TASK-008 | Implement build scheduling and publication | Build exact local-main candidates, serialize publishers, and atomically advance the current artifact. | Planned | TASK-006 |
+| TASK-009 | Implement resolution, leases, and cleanup | Resolve development versus stable tools, pin invocations, protect active artifacts, and remove superseded binaries. | Planned | TASK-006, TASK-008 |
+| TASK-010 | Isolate Aquarium and Codex development runtime | Install the development plugin, paired skills, MCP configuration, and separate Codex home under the shared contract. | Planned | TASK-007, TASK-008, TASK-009 |
+| TASK-011 | Integrate Podway | Add and verify Podway's shared producer contract and development resolution. | Planned | TASK-010 |
+| TASK-012 | Integrate Mulgae | Add and verify Mulgae's shared producer contract and development resolution. | Planned | TASK-010 |
+| TASK-013 | Integrate Gaori | Add and verify Gaori's shared producer contract and development resolution. | Planned | TASK-010 |
+| TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
+| TASK-015 | Cold-validate the integrated environment | Prove setup, update, fallback, failure, concurrency, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014 |
 
-- Use `$aquarium:release-handler` and select `full` or `light` under the repository release policy when execution begins; preserve every separate approval boundary.
-- Reconcile all material changes with the open v0.1.12 CHANGELOG section, commit the exact preparation, and run a fresh release QA pass against the resulting clean candidate.
-- Create the exact `[REL] Release v0.1.12` commit, push `main`, create and push the annotated tag, publish the GitHub Release, and verify remote main, the peeled tag, and the Release all resolve to the intended commit.
-- Treat opening the next Unreleased cycle as a separate non-release action after publication.
+## EPIC-003: Introduce Dolgorae
 
-The epic is accepted only after all four tasks are `Completed` and an explicit epic-level review confirms the published v0.1.12 outcome. Child completion alone does not change the epic status.
+**Status:** `Planned`
+
+Introduce Dolgorae as the second v0.1.13 development epic and the next Aquarium-managed package and handler after the shared development environment is established. This placeholder reserves the epic identity and dependency only; detailed scope, SOT, task IDs, and acceptance criteria have not yet been adopted.
+
+EPIC-003 depends on EPIC-002. No child task identity or implementation authority is allocated by this placeholder.

@@ -249,7 +249,9 @@ documentation_detail_paths = {
   "changing-skills" => ROOT.join("docs/implementation-tips/changing-skills.md"),
   "changing-procedures" => ROOT.join("docs/implementation-tips/changing-procedures.md"),
   "changing-inspectors" => ROOT.join("docs/implementation-tips/changing-inspectors.md"),
-  "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md")
+  "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md"),
+  "release-v0.1.12-dossier" => ROOT.join("docs/todo/TODO-RELEASE-v0-1-12.md"),
+  "dev-aquarium-dossier" => ROOT.join("docs/todo/TODO-DEV-AQUARIUM.md")
 }
 documentation_adr_paths = (1..6).map do |number|
   Dir[ROOT.join("docs/architecture-decision-records/%04d-*.md" % number)].map { |path| Pathname.new(path) }
@@ -265,6 +267,7 @@ assert(documentation_adr_paths.all? { |matches| matches.length == 1 },
        "canonical ADR sequence must contain exactly ADR-0001 through ADR-0006")
 documentation_index = documentation_index_path.read
 canonical_roadmap = documentation_role_paths.fetch("roadmap").read
+todo_index = documentation_role_paths.fetch("todo").read
 documentation_details = documentation_detail_paths.transform_values(&:read)
 documentation_adrs = documentation_adr_paths.flatten.to_h { |path| [path, path.read] }
 design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
@@ -597,6 +600,8 @@ assert(documentation_index.include?("`single-scope`") &&
        documentation_index.include?("Aquarium maintainers and workflow authors") &&
        documentation_index.include?("current stable package as `v0.1.11`") &&
        documentation_index.include?("open `v0.1.12` release candidate") &&
+       documentation_index.include?("TODO and work dossiers") &&
+       documentation_index.include?("never owns its ID, ordering, dependencies, or lifecycle status") &&
        documentation_index.include?("ruby tests/validate.rb"),
        "Aquarium documentation index must define its profile, roles, roadmap identity, language, and checks")
 
@@ -673,18 +678,40 @@ assert(!canonical_documentation.include?("/Users/") &&
        !canonical_documentation.match?(/(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*\S+/i),
        "canonical documentation must not contain absolute workspace paths or apparent credential values")
 
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 1 &&
+release_012_dossier = documentation_details.fetch("release-v0.1.12-dossier")
+dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 3 &&
        canonical_roadmap.include?("## EPIC-001: Release Aquarium v0.1.12") &&
+       canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
+       canonical_roadmap.include?("## EPIC-003: Introduce Dolgorae") &&
        canonical_roadmap.include?("**Status:** `Planned`") &&
        canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] } ==
-         %w[TASK-001 TASK-002 TASK-003 TASK-004] &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 4 &&
-       canonical_roadmap.include?("project-owned Procedure") &&
-       canonical_roadmap.include?("exact Podway release commit") &&
-       canonical_roadmap.include?("make test-podway-compat") &&
-       canonical_roadmap.include?("$aquarium:release-handler") &&
+         (1..15).map { |number| "TASK-%03d" % number } &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 15 &&
+       canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
+       canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
+       canonical_roadmap.include?("No child task identity or implementation authority is allocated") &&
+       !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must preserve the approved v0.1.12 epic, task identities, dependencies, and ownership boundaries")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-003 and TASK-001 through TASK-015")
+assert(todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
+       todo_index.include?("TODO-DEV-AQUARIUM.md") &&
+       todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
+       release_012_dossier.include?("detailed scope and acceptance source of truth for `EPIC-001`") &&
+       release_012_dossier.include?("## TASK-001: Support Project-Owned Procedure Customization") &&
+       release_012_dossier.include?("## TASK-004: Release Aquarium v0.1.12") &&
+       release_012_dossier.include?("make test-podway-compat") &&
+       release_012_dossier.include?("$aquarium:release-handler") &&
+       dev_aquarium_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
+       dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 11 &&
+       (5..15).all? { |number| dev_aquarium_dossier.include?("## TASK-%03d:" % number) } &&
+       dev_aquarium_dossier.include?("$aquarium:dev-aquarium") &&
+       dev_aquarium_dossier.include?("make aquarium-dev-describe") &&
+       dev_aquarium_dossier.include?("make aquarium-dev-build") &&
+       dev_aquarium_dossier.include?("There is no top-level `~/.aquarium/bin/`") &&
+       dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
+       dev_aquarium_dossier.include?("This epic does not introduce Dolgorae"),
+       "roadmap work dossiers must own the detailed release and development-environment acceptance contracts")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&

@@ -6,7 +6,7 @@ This index adopts one canonical documentation model for the Aquarium repository 
 
 This tree is written for Aquarium maintainers and workflow authors. The root [`README.md`](../README.md) remains the user-facing product overview, while [`README.ko.md`](../README.ko.md) remains its maintained Korean translation.
 
-The plugin manifest identifies the current stable package as `v0.1.11`. The root CHANGELOG owns the open `v0.1.12` release candidate. Maintainer documents describe the current checkout and label candidate-only behavior instead of presenting it as already released.
+The plugin manifest identifies the current stable package as `v0.1.11`. The root CHANGELOG owns the open `v0.1.12` release candidate, while the roadmap records `v0.1.13` as a later planned release rather than an open candidate. Maintainer documents describe the current checkout and label candidate-only or planned behavior instead of presenting it as already released.
 
 ## Profile and Scope
 
@@ -24,7 +24,7 @@ The plugin manifest identifies the current stable package as `v0.1.11`. The root
 | Architecture decision records | `docs/architecture-decision-records/README.md` | Accepted, superseded, deprecated, and rejected decisions with rationale |
 | Implementation tips | `docs/implementation-tips/README.md` | Non-normative development, verification, operation, and release guidance |
 | Roadmap | `docs/roadmap/README.md` | Adopted epic and task identity, ordering, dependencies, lifecycle vocabulary, and status |
-| TODO | `docs/todo/README.md` | Future epic-sized candidates not yet adopted into the roadmap |
+| TODO and work dossiers | `docs/todo/README.md` | Future epic-sized candidates plus detailed scope and acceptance dossiers referenced by adopted roadmap work |
 | Deferred feedback | `docs/deferred-feedback/README.md` | Small actionable findings intentionally postponed from current work |
 
 ## Maintainer Navigation
@@ -33,11 +33,12 @@ The plugin manifest identifies the current stable package as `v0.1.11`. The root
 - Use the [architecture map](architecture/README.md) to trace components, workflow runtime, state, evidence, and verification.
 - Read the [accepted decisions](architecture-decision-records/README.md) for durable rationale behind current boundaries.
 - Follow the [implementation tips](implementation-tips/README.md) when changing skills, Procedures, inspectors, tests, or releases.
-- Use the [roadmap](roadmap/README.md), [TODO](todo/README.md), and [deferred-feedback](deferred-feedback/README.md) indexes for delivery state rather than adding future behavior to current specifications.
+- Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
 ## Source-of-Truth Precedence
 
 - `docs/roadmap/README.md` alone owns delivery identity and lifecycle state; TODO and deferred feedback never act as competing status authorities.
+- A `docs/todo/TODO-*.md` file referenced by an adopted roadmap epic owns that work's detailed goal, scope, approach, and acceptance checklist, but never owns its ID, ordering, dependencies, or lifecycle status.
 - `docs/specs/README.md` owns the specification catalog and declares the exact repository files that own each detailed product contract; the index does not restate those contracts.
 - `docs/architecture/README.md` and architecture decision records own current structure and durable design rationale without overriding executable behavior.
 - The plugin manifest owns the published version, skill entrypoints and linked references own workflow behavior, bundled Procedure files own installed Procedure source bytes, and `Makefile` with `TESTING.md` owns executable test behavior and its meaning.
