@@ -144,6 +144,10 @@ class InspectToolsTest(unittest.TestCase):
         podway_version: str = "v0.2.6",
         podway_daemon_version: str = "0.2.6",
         podway_daemon_reachable: bool = True,
+        podway_daemon_status_schema: str = "podway.daemon-status-result/v1",
+        podway_readiness_state: str = "ready",
+        podway_readiness_stage: str | None = "ready",
+        podway_worktree_recovery: tuple[int, int, int] | None = (1, 1, 0),
         podway_doctor_ok: bool = True,
         podway_active_session: bool = False,
         podway_prepared_session: bool = False,
@@ -550,7 +554,11 @@ class InspectToolsTest(unittest.TestCase):
                     print(json.dumps({{"name": "podway", "version": {podway_version!r}}}))
                     raise SystemExit(0)
                 if arguments == ["daemon", "status", "--json"]:
-                    print(json.dumps({{"schema": {podway_output_schema!r}, "command": "daemon.status", "result": {{"schema": "podway.daemon-status-result/v1", "installed": True, "loaded": True, "reachable": {podway_daemon_reachable!r}, "status": "running", "daemon_version": {podway_daemon_version!r}, "target": "aarch64-apple-darwin", "contract_manifest_schema": "podway.contract-manifest/v1", "contract_manifest_digest": "sha256:test"}}}}))
+                    daemon_status = {{"schema": {podway_daemon_status_schema!r}, "installed": True, "loaded": True, "reachable": {podway_daemon_reachable!r}, "status": "running", "daemon_version": {podway_daemon_version!r}, "target": "aarch64-apple-darwin", "contract_manifest_schema": "podway.contract-manifest/v1", "contract_manifest_digest": "sha256:test"}}
+                    if {podway_daemon_status_schema!r} == "podway.daemon-status-result/v2":
+                        recovery = {podway_worktree_recovery!r}
+                        daemon_status.update(readiness_state={podway_readiness_state!r}, readiness_stage={podway_readiness_stage!r}, readiness_elapsed_ms=5, worktree_recovery=None if recovery is None else dict(zip(("total", "completed", "failed"), recovery)))
+                    print(json.dumps({{"schema": {podway_output_schema!r}, "command": "daemon.status", "result": daemon_status}}))
                     raise SystemExit(0 if {podway_daemon_reachable!r} else 1)
                 if arguments == ["doctor", "--json"]:
                     if {podway_legacy_state!r}:
@@ -740,6 +748,34 @@ class InspectToolsTest(unittest.TestCase):
                 ".podway/procedures",
             )
 
+    def install_podway_v025_workarounds(self) -> None:
+        self.install_managed_podway_procedures(tracked=False)
+        procedures = self.repository / ".podway/procedures"
+        goal = procedures / "aquarium-goal-v2.yaml"
+        goal.write_text(
+            goal.read_text(encoding="utf-8").replace(
+                "        max_total_length: 1000000\n", "", 1
+            ),
+            encoding="utf-8",
+        )
+        for name in ("aquarium-task-v2.yaml", "aquarium-validation-v2.yaml"):
+            procedure = procedures / name
+            procedure.write_text(
+                procedure.read_text(encoding="utf-8").replace(
+                    "        max_item_length: 1200\n"
+                    "        max_total_length: 1000000\n",
+                    "        max_item_length: 1000\n",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+        self.git(
+            "add",
+            ".podway/config.yaml",
+            ".podway/.gitignore",
+            ".podway/procedures",
+        )
+
     def test_missing_tools_are_a_successful_inventory_and_do_not_mutate_repository(
         self,
     ) -> None:
@@ -750,7 +786,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v7")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v8")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -979,6 +1015,16 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(
             all(item["matches_source"] for item in podway["managed_procedures"])
         )
+        self.assertTrue(
+            all(
+                item["source_state"] == "canonical"
+                for item in podway["managed_procedures"]
+            )
+        )
+        self.assertEqual(
+            podway["migration_kinds"],
+            {"product_rename": False, "podway_v0.2.5_workaround": False},
+        )
         self.assertEqual(
             podway["readiness_status"],
             "ready" if platform_supported else "degraded",
@@ -1066,6 +1112,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertTrue(entry["symlinked"])
         self.assertFalse(entry["present"])
+        self.assertEqual(entry["source_state"], "unsafe")
         self.assertIsNone(entry["installed_sha256"])
         self.assertNotIn("check", entry)
 
@@ -1081,6 +1128,43 @@ class InspectToolsTest(unittest.TestCase):
         podway = json.loads(completed.stdout)["tools"]["podway"]
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
+        states = {entry["path"]: entry for entry in podway["managed_procedures"]}
+        self.assertEqual(
+            states[".podway/procedures/aquarium-task-v2.yaml"]["source_state"],
+            "diverged",
+        )
+        self.assertIn("check", states[".podway/procedures/aquarium-task-v2.yaml"])
+        self.assertEqual(
+            states[".podway/procedures/aquarium-goal-v2.yaml"]["source_state"],
+            "missing",
+        )
+        self.assertFalse(podway["migration_required"])
+
+    def test_exact_podway_v025_workarounds_are_migration_eligible(self) -> None:
+        self.install_fake_tools(podway_version="v0.2.5", podway_daemon_version="0.2.5")
+        self.install_podway_v025_workarounds()
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+
+        states = {
+            Path(entry["path"]).name: entry for entry in podway["managed_procedures"]
+        }
+        for name in (
+            "aquarium-task-v2.yaml",
+            "aquarium-goal-v2.yaml",
+            "aquarium-validation-v2.yaml",
+        ):
+            self.assertEqual(states[name]["source_state"], "podway_v0.2.5_workaround")
+            self.assertFalse(states[name]["matches_source"])
+            self.assertIn("check", states[name])
+        for name in ("aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"):
+            self.assertEqual(states[name]["source_state"], "canonical")
+        self.assertEqual(
+            podway["migration_kinds"],
+            {"product_rename": False, "podway_v0.2.5_workaround": True},
+        )
+        self.assertTrue(podway["migration_required"])
+        self.assertEqual(podway["readiness_status"], "degraded")
 
     def test_renamed_managed_procedures_require_explicit_migration(self) -> None:
         self.install_fake_tools()
@@ -1091,6 +1175,10 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         podway = json.loads(completed.stdout)["tools"]["podway"]
         self.assertTrue(podway["migration_required"])
+        self.assertEqual(
+            podway["migration_kinds"],
+            {"product_rename": True, "podway_v0.2.5_workaround": False},
+        )
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
         self.assertEqual(
@@ -1255,6 +1343,71 @@ class InspectToolsTest(unittest.TestCase):
                 podway = json.loads(completed.stdout)["tools"]["podway"]
                 self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(podway["status"], "degraded")
+
+    def test_daemon_status_v2_requires_completed_ready_recovery(self) -> None:
+        cases = (
+            ({}, "ready", True, None),
+            (
+                {
+                    "podway_readiness_state": "recovering",
+                    "podway_readiness_stage": "workspaces",
+                    "podway_worktree_recovery": (2, 1, 0),
+                },
+                "degraded",
+                True,
+                None,
+            ),
+            (
+                {"podway_worktree_recovery": (1, 1, 1)},
+                "degraded",
+                True,
+                None,
+            ),
+            (
+                {"podway_worktree_recovery": None},
+                "degraded",
+                False,
+                "invalid_daemon_readiness",
+            ),
+        )
+        for options, readiness, probe_ok, error_code in cases:
+            with self.subTest(options=options):
+                for executable in self.bin_directory.iterdir():
+                    executable.unlink()
+                self.install_fake_tools(
+                    podway_daemon_status_schema="podway.daemon-status-result/v2",
+                    **options,
+                )
+                self.install_managed_podway_procedures()
+                with (
+                    mock.patch.dict(os.environ, self.environment),
+                    mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+                    mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+                ):
+                    podway = inspect_tools.inspect_podway(
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+                    )
+                daemon = podway["probes"]["daemon_status"]
+                self.assertEqual(podway["readiness_status"], readiness)
+                self.assertEqual(daemon["ok"], probe_ok)
+                self.assertEqual(daemon.get("error_code"), error_code)
+
+    def test_daemon_status_v1_remains_compatible(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        daemon = podway["probes"]["daemon_status"]
+        self.assertEqual(daemon["result_schema"], "podway.daemon-status-result/v1")
+        self.assertTrue(daemon["result"]["ready"])
+        self.assertEqual(podway["readiness_status"], "ready")
 
     def test_active_session_inventory_exposes_state_without_identity(self) -> None:
         self.install_fake_tools(podway_active_session=True)
@@ -2429,7 +2582,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v7")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v8")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 

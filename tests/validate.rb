@@ -710,6 +710,10 @@ assert(tool_catalog.include?("stable `v0.2.6` through `v0.2.x`") &&
        "Podway CLI, daemon, and use-podway must share the supported approved release")
 assert(tool_catalog.include?("shasum -a 256 -c"), "Podway checksum verification is missing")
 assert(tool_catalog.include?("podway.output/v3") &&
+       tool_catalog.include?("podway.daemon-status-result/v2") &&
+       tool_catalog.include?("readiness_state=ready") &&
+       tool_catalog.include?("readiness_stage=ready") &&
+       tool_catalog.include?("none failed") &&
        tool_catalog.include?("podway.status-result/v3") &&
        tool_catalog.include?("podway.compact-status-result/v3") &&
        tool_catalog.include?("podway.observation-result/v2") &&
@@ -719,7 +723,7 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.session-reset-result/v1") &&
        tool_catalog.include?("podway.job-result/v4") &&
        tool_catalog.include?("podway.job-lookup-result/v4"),
-       "Podway v0.2.5 JSON contracts are missing")
+       "Podway v0.2.6 JSON contracts are missing")
 assert(tool_catalog.include?("prepared revision-0 session") &&
        tool_catalog.include?("session.begin") &&
        tool_catalog.include?("Terminal sessions expose a disposition template") &&
@@ -753,12 +757,16 @@ assert(tool_catalog.include?("aquarium-task-v2") &&
        tool_catalog.include?("aquarium-validation-v2"),
        "Podway managed procedures are missing")
 assert(tool_catalog.include?("migration_required=true") &&
+       tool_catalog.include?("migration_kinds.product_rename") &&
+       tool_catalog.include?("migration_kinds.podway_v0.2.5_workaround") &&
+       tool_catalog.include?("classifies every other mismatch as `diverged`") &&
        tool_catalog.include?("root-kernel-task-v2.yaml") &&
        tool_catalog.include?("root-kernel-goal-v2.yaml") &&
        tool_catalog.include?("root-kernel-validation-v2.yaml"),
-       "Podway product-rename migration contract is missing")
+       "Podway migration classification contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
+       tool_catalog.include?("v8 inspection") &&
        tool_catalog.include?("--include-podway") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")

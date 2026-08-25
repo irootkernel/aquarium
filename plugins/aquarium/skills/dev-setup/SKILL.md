@@ -126,6 +126,10 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
+Use the v8 inspector's `migration_kinds` to distinguish that product rename from the exact `podway_v0.2.5_workaround`. The workaround classification is valid only when a safe installed managed file is byte-identical to the one deterministic compatibility transform derived from the current plugin source; any other difference is `diverged`, not migration proof.
+
+Check every safe present managed Procedure independently, even when it differs from the source. A workaround remains degraded until a separately approved replacement restores the canonical plugin bytes; never recreate, extend, or install the workaround.
+
 Aquarium Podway readiness configuration has four disclosed parts:
 
 - Copy all five plugin-owned procedure sources from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/` and check each with `podway procedure check --warnings-as-errors`.

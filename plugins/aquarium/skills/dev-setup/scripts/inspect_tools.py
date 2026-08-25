@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v7"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v8"
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
@@ -284,6 +284,22 @@ def supported_podway_version(version: str | None) -> bool:
     return bool(match and int(match.group(1)) >= 6)
 
 
+def podway_v025_workaround_bytes(name: str, source: bytes) -> bytes | None:
+    if name == "aquarium-goal-v2.yaml":
+        declaration = b"        max_total_length: 1000000\n"
+        if source.count(declaration) != 1:
+            return None
+        return source.replace(declaration, b"", 1)
+    if name in {"aquarium-task-v2.yaml", "aquarium-validation-v2.yaml"}:
+        declaration = (
+            b"        max_item_length: 1200\n        max_total_length: 1000000\n"
+        )
+        if source.count(declaration) != 1:
+            return None
+        return source.replace(declaration, b"        max_item_length: 1000\n", 1)
+    return None
+
+
 def supported_sanho_version(version: str | None) -> bool:
     if not version:
         return False
@@ -337,6 +353,13 @@ def ouroboros_version_from_output(output: str) -> str | None:
 def file_sha256(path: Path) -> str | None:
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def file_bytes(path: Path) -> bytes | None:
+    try:
+        return path.read_bytes()
     except OSError:
         return None
 
@@ -2355,6 +2378,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     present_count = 0
     legacy_present_count = 0
     matching_count = 0
+    workaround_count = 0
     tracked_count = 0
     for name in PODWAY_PROCEDURES:
         source = PODWAY_SOURCE_DIRECTORY / name
@@ -2366,6 +2390,8 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         present, symlinked = safe_managed_file_state(target, repository)
         source_digest = file_sha256(source) if source_present else None
         target_digest = file_sha256(target) if present else None
+        source_bytes = file_bytes(source) if source_present else None
+        target_bytes = file_bytes(target) if present else None
         matching = (
             present
             and not symlinked
@@ -2374,9 +2400,27 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             and source_digest is not None
             and target_digest == source_digest
         )
+        workaround = (
+            podway_v025_workaround_bytes(name, source_bytes)
+            if source_bytes is not None
+            else None
+        )
+        if symlinked or source_symlinked:
+            source_state = "unsafe"
+        elif not present:
+            source_state = "missing"
+        elif not source_present:
+            source_state = "unsafe"
+        elif matching:
+            source_state = "canonical"
+        elif workaround is not None and target_bytes == workaround:
+            source_state = "podway_v0.2.5_workaround"
+        else:
+            source_state = "diverged"
         tracked = present and tracked_by_git(repository, relative_path, timeout_seconds)
         present_count += int(present or symlinked)
         matching_count += int(matching)
+        workaround_count += int(source_state == "podway_v0.2.5_workaround")
         tracked_count += int(tracked)
         managed.append(
             {
@@ -2387,6 +2431,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 "source_sha256": source_digest,
                 "installed_sha256": target_digest,
                 "matches_source": matching,
+                "source_state": source_state,
             }
         )
     for name in LEGACY_PODWAY_PROCEDURES:
@@ -2410,7 +2455,11 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     ]
     tool["managed_procedures"] = managed
     tool["legacy_managed_procedures"] = legacy_managed
-    tool["migration_required"] = legacy_present_count > 0
+    tool["migration_kinds"] = {
+        "product_rename": legacy_present_count > 0,
+        "podway_v0.2.5_workaround": workaround_count > 0,
+    }
+    tool["migration_required"] = any(tool["migration_kinds"].values())
     tool["readiness_status"] = (
         "not_configured"
         if present_count == 0 and legacy_present_count == 0
@@ -2444,12 +2493,14 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     normalized_daemon, daemon_payload = normalize_podway_envelope(
         daemon_probe,
         "daemon.status",
-        ("podway.daemon-status-result/v1",),
+        ("podway.daemon-status-result/v1", "podway.daemon-status-result/v2"),
     )
     daemon_version = None
     daemon_reachable = False
+    daemon_ready = False
     daemon_target = None
     if isinstance(daemon_payload, dict):
+        daemon_schema = daemon_payload.get("schema")
         observed_daemon_version = daemon_payload.get("daemon_version")
         daemon_version = (
             observed_daemon_version
@@ -2467,6 +2518,82 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             if observed_target in {"aarch64-apple-darwin", "x86_64-apple-darwin"}
             else None
         )
+        readiness_state = None
+        readiness_stage = None
+        readiness_elapsed_ms = None
+        worktree_recovery = None
+        if daemon_schema == "podway.daemon-status-result/v2":
+            observed_state = daemon_payload.get("readiness_state")
+            observed_stage = daemon_payload.get("readiness_stage")
+            observed_elapsed = daemon_payload.get("readiness_elapsed_ms")
+            observed_recovery = daemon_payload.get("worktree_recovery")
+            readiness_state = (
+                observed_state
+                if observed_state
+                in {
+                    "not_running",
+                    "unreachable",
+                    "starting",
+                    "recovering",
+                    "ready",
+                    "failed",
+                }
+                else None
+            )
+            readiness_stage = (
+                observed_stage
+                if observed_stage
+                in {"endpoint", "registry", "workspaces", "jobs", "ready", "failed"}
+                else None
+            )
+            readiness_elapsed_ms = (
+                observed_elapsed
+                if isinstance(observed_elapsed, int)
+                and not isinstance(observed_elapsed, bool)
+                and observed_elapsed >= 0
+                else None
+            )
+            if isinstance(observed_recovery, dict):
+                recovery_counts = {
+                    key: observed_recovery.get(key)
+                    for key in ("total", "completed", "failed")
+                }
+                if all(
+                    isinstance(value, int)
+                    and not isinstance(value, bool)
+                    and 0 <= value <= 10_000
+                    for value in recovery_counts.values()
+                ):
+                    worktree_recovery = recovery_counts
+            if readiness_state in {"not_running", "unreachable"}:
+                v2_contract_valid = bool(
+                    observed_stage is None
+                    and observed_elapsed is None
+                    and observed_recovery is None
+                )
+            else:
+                v2_contract_valid = bool(
+                    readiness_state is not None
+                    and readiness_stage is not None
+                    and readiness_elapsed_ms is not None
+                    and worktree_recovery is not None
+                )
+            if not v2_contract_valid:
+                normalized_daemon["ok"] = False
+                normalized_daemon["error_code"] = "invalid_daemon_readiness"
+            daemon_ready = bool(
+                v2_contract_valid
+                and daemon_reachable
+                and daemon_payload.get("status") == "running"
+                and readiness_state == "ready"
+                and readiness_stage == "ready"
+                and worktree_recovery["completed"] == worktree_recovery["total"]
+                and worktree_recovery["failed"] == 0
+            )
+        else:
+            daemon_ready = bool(
+                daemon_reachable and daemon_payload.get("status") == "running"
+            )
         normalized_daemon["result"] = {
             "installed": daemon_payload.get("installed") is True,
             "loaded": daemon_payload.get("loaded") is True,
@@ -2474,6 +2601,11 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
             "running": daemon_payload.get("status") == "running",
             "version_valid": daemon_version is not None,
             "target_supported": daemon_target is not None,
+            "ready": daemon_ready,
+            "readiness_state": readiness_state,
+            "readiness_stage": readiness_stage,
+            "readiness_elapsed_ms": readiness_elapsed_ms,
+            "worktree_recovery": worktree_recovery,
         }
     tool["probes"]["daemon_status"] = normalized_daemon
     tool["daemon_version"] = daemon_version
@@ -2567,34 +2699,35 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         tool["probes"]["session_status"] = skipped_probe("workspace_not_initialized")
 
     procedure_checks_ok = True
-    if matching_count == len(PODWAY_PROCEDURES):
-        for entry in managed:
-            check = json_probe(
-                [
-                    tool["executable"],
-                    "--json",
-                    "procedure",
-                    "check",
-                    "--warnings-as-errors",
-                    entry["path"],
-                ],
-                repository,
-                timeout_seconds,
-            )
-            normalized_check, payload = normalize_podway_envelope(
-                check,
-                "procedure.check",
-                ("podway.procedure-diagnostics-result/v1",),
-            )
-            entry["check"] = normalized_check
-            if isinstance(payload, dict):
-                entry["check"]["valid"] = payload.get("valid") is True
-            procedure_checks_ok = (
-                procedure_checks_ok
-                and normalized_check["ok"]
-                and isinstance(payload, dict)
-                and payload.get("valid") is True
-            )
+    for entry in managed:
+        if not entry["present"] or entry["symlinked"]:
+            continue
+        check = json_probe(
+            [
+                tool["executable"],
+                "--json",
+                "procedure",
+                "check",
+                "--warnings-as-errors",
+                entry["path"],
+            ],
+            repository,
+            timeout_seconds,
+        )
+        normalized_check, payload = normalize_podway_envelope(
+            check,
+            "procedure.check",
+            ("podway.procedure-diagnostics-result/v1",),
+        )
+        entry["check"] = normalized_check
+        if isinstance(payload, dict):
+            entry["check"]["valid"] = payload.get("valid") is True
+        procedure_checks_ok = (
+            procedure_checks_ok
+            and normalized_check["ok"]
+            and isinstance(payload, dict)
+            and payload.get("valid") is True
+        )
 
     doctor_ok = not initialized
     doctor_payload = tool["probes"]["doctor"].get("result") if initialized else None
@@ -2609,7 +2742,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         and tool["version_supported"]
         and tool["platform"]["supported"]
         and normalized_daemon["ok"]
-        and daemon_reachable
+        and daemon_ready
         and daemon_target == "aarch64-apple-darwin"
         and tool["versions_match"]
         and doctor_ok
