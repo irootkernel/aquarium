@@ -24,9 +24,11 @@ Compare every commit and material changed surface after the previous stable rele
 
 Obtain approval before applying it. When this creates a change, validate it and commit the exact approved preparation through `$aquarium:task-commit` with `intentional no-note`; the settlement commit must not add an entry about itself.
 
-When the committed candidate is ahead of remote `main`, show its exact SHA and obtain separate pre-QA push authority. Push only `main`, verify that local, upstream, and remote refs agree, and otherwise stop before release QA. Every remediation candidate must pass the same authorized alignment before confirmation QA.
+Do not push a candidate before release QA. Query live remote `main` and proceed only when it equals the clean committed local `main` candidate or is a verified ancestor of it. Require the configured upstream to identify the publication remote's `main` branch, but do not require its cached tracking SHA to equal the candidate.
 
-Require a clean committed `main` candidate where local, upstream, and remote refs agree before invoking `$aquarium:release-qa`. The handler's explicit release request is an authorized handoff for exactly one release-qa pass against the disclosed version and candidate. Preserve every release-qa convergence and confirmation boundary; never reinterpret a finding fix or focused check as a passing candidate.
+Record the candidate SHA, live remote SHA, and `equal` or `ancestor` relationship. Stop as `INCOMPLETE` when remote access, the remote object, or ancestry cannot be established without fetching, or when the candidate is behind or diverged. Every remediation candidate must satisfy the same relationship before confirmation QA.
+
+The handler's explicit release request is an authorized handoff for exactly one release-qa pass against the disclosed version and candidate. Preserve every release-qa convergence and confirmation boundary; never reinterpret a finding fix or focused check as a passing candidate.
 
 When remediation changes a shipped outcome, update the open changelog entry in the same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Preserve the full pass's authoritative frozen confirmation record and retained evidence root.
 
@@ -49,7 +51,9 @@ Publish in this order unless stricter repository policy overrides it:
 3. create the hosted Release using the settled changelog entries as highlights and current gate evidence as a separate validation section;
 4. verify remote `main`, the peeled tag, and hosted Release target the intended release commit.
 
-Before every publication mutation and after every successful step, run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v1` JSON observation. Perform only its one returned next action after obtaining that action's authority. A `matching` step is skipped, while `conflict` or `unproven` stops as `INCOMPLETE`. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
+Before every publication mutation and after every successful step, re-query live remote `main`, recompute its ancestry relationship to the QA candidate without fetching, and run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v2` JSON observation.
+
+Perform only its one returned next action after obtaining that action's authority. A remote `main` that still equals or is an ancestor of the QA candidate permits the single fast-forward `push_main`; a different descendant, divergence, unavailable relationship, `conflict`, or `unproven` state stops as `INCOMPLETE`. A `matching` step is skipped. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
 
 ## Open the Next Cycle
 

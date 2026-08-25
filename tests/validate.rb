@@ -1920,6 +1920,13 @@ assert(release_qa.include?("A dirty worktree still prevents an exact committed c
        release_qa.include?("one new release-qa invocation with the required confirmation manifest") &&
        release_qa.include?("timing never narrows the original full-pass delta"),
        "release-qa must distinguish version timing from candidate identity and re-QA remediated candidates")
+assert(release_qa.include?("`HEAD` equal to local `main`") &&
+       release_qa.include?("do not use the cached upstream-tracking SHA as candidate identity") &&
+       release_qa.include?("live remote `main` equals the candidate or is a verified ancestor") &&
+       release_qa.include?("A locally ahead candidate remains unpublished release state") &&
+       release_qa.include?("candidate is behind remote `main`") &&
+       release_qa.include?("refs have diverged"),
+       "release-qa must admit a locally ahead exact candidate without accepting stale or divergent main")
 assert(release_qa.include?("Do not run existing automated tests") &&
        release_qa.include?("mktemp -d /tmp/release-qa.XXXXXX") &&
        release_qa.include?("resolve that directory with `pwd -P`") &&
@@ -2017,6 +2024,12 @@ assert(release_handler.include?("Preserve the full pass's authoritative frozen c
        release_handler.include?("reconciled exactly against it") &&
        release_handler.include?("stop as `INCOMPLETE` before invoking confirmation"),
        "release-handler must hand off the complete retained full-pass record to confirmation")
+assert(release_handler.include?("Do not push a candidate before release QA") &&
+       release_handler.include?("equals the clean committed local `main` candidate or is a verified ancestor") &&
+       release_handler.include?("candidate SHA, live remote SHA, and `equal` or `ancestor` relationship") &&
+       release_handler.include?("recompute its ancestry relationship to the QA candidate") &&
+       release_handler.include?("single fast-forward `push_main`"),
+       "release-handler must defer publication and preserve ancestor-safe release pushes")
 assert(release_handler.include?("references/publication-recovery.md") &&
        release_handler.include?("scripts/inspect_publication_state.py") &&
        release_handler.include?("--first-release") &&
@@ -2031,8 +2044,10 @@ assert(release_recovery.include?("Recovery is stateless") &&
        release_recovery.include?("earlier authority does not survive a new invocation"),
        "publication recovery must reconcile matching state without persisting hidden authority")
 assert(release_publication_script.file? &&
-       release_publication_script_body.include?("aquarium-release-publication-observation/v1") &&
-       release_publication_script_body.include?("aquarium-release-publication-state/v1") &&
+       release_publication_script_body.include?("aquarium-release-publication-observation/v2") &&
+       release_publication_script_body.include?("aquarium-release-publication-state/v2") &&
+       release_publication_script_body.include?("remote_main_relation_to_qa_candidate") &&
+       release_publication_script_body.include?(%q[remote_relation in {"equal", "ancestor"}]) &&
        release_publication_script_body.include?(%q[next_action = "push_main"]) &&
        release_publication_script_body.include?(%q[next_action = "create_and_push_tag"]) &&
        release_publication_script_body.include?(%q[next_action = "create_hosted_release"]) &&
