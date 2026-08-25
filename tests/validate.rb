@@ -258,9 +258,13 @@ assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?("project_configuration_symlinked") &&
        dev_setup_script_body.include?("re.fullmatch") &&
        dev_setup_script_body.include?("No MCP server named") &&
-       dev_setup_script_body.include?('args == ["mcp", "serve"]') &&
+       dev_setup_script_body.include?("ouroboros_direct_launcher_matches") &&
+       dev_setup_script_body.include?('transport.get("args") == ["mcp", "serve"]') &&
+       dev_setup_script_body.include?("ouroboros_isolated_launcher_matches") &&
+       dev_setup_script_body.include?("isolated_launcher_configured") &&
+       dev_setup_script_body.include?("registration_not_supported_launcher") &&
        dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
-       "dev-setup inspector must reject non-exact Gaori arguments and symlinked paired skills")
+       "dev-setup inspector must preserve exact tool arguments, isolated launchers, and paired-skill paths")
 assert(dev_setup.include?("default inspection omits Podway and Ouroboros completely") &&
        dev_setup.include?("--include-podway") &&
        dev_setup.include?("--include-ouroboros"),
@@ -310,11 +314,14 @@ assert(ouroboros_catalog &&
        ouroboros_catalog.include?("codex mcp get ouroboros --json") &&
        ouroboros_catalog.include?("Registration is `configured` only") &&
        ouroboros_catalog.include?('args = ["mcp", "serve"]') &&
-       ouroboros_catalog.include?("resolves its command to the selected `ooo` executable") &&
+       ouroboros_catalog.include?("canonical isolated Codex launcher") &&
+       ouroboros_catalog.include?("PATH-selected `uvx`") &&
+       ouroboros_catalog.include?("optional supported exact release pin") &&
+       ouroboros_catalog.include?("live tool exposure remains separate host evidence") &&
        ouroboros_catalog.include?("`missing` only for Codex's definite named-server-not-found response") &&
        ouroboros_catalog.include?("never expose raw registration stderr") &&
        ouroboros_catalog.include?("local and read-only") &&
-       ouroboros_catalog.include?("do not contact a provider, initiate authentication, or make a network request"),
+       ouroboros_catalog.include?("do not contact a provider, initiate authentication, make a network request, or start an MCP server"),
        "Ouroboros catalog must diagnose CLI, Codex integration, runtime, and registration independently")
 assert(dev_setup.include?("Sanho, Mulgae, Gaori, and Podway selection choices") &&
        dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),

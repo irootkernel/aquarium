@@ -466,14 +466,51 @@ class InspectToolsTest(unittest.TestCase):
                     if mode == "malformed":
                         print("not-json")
                         raise SystemExit(0)
-                    result = {{
-                        "name": "wrong-name" if mode == "wrong-name" else "ouroboros",
-                        "transport": {{
-                            "type": "http" if mode == "non-stdio" else "stdio",
-                            "command": "wrong-ooo" if mode == "wrong-command" else "ooo",
-                            "args": ["serve"] if mode == "wrong-args" else ["mcp", "serve"],
-                        }},
-                    }}
+                    if isinstance(mode, str) and mode.startswith("isolated"):
+                        args = ["--isolated", "--python", ">=3.12", "--from", "ouroboros-ai[mcp]", "ouroboros", "mcp", "serve"]
+                        env = {{"OUROBOROS_AGENT_RUNTIME": "codex", "OUROBOROS_LLM_BACKEND": "codex"}}
+                        if mode == "isolated-pinned":
+                            args[4] = "ouroboros-ai[mcp]==0.51.15"
+                        elif mode == "isolated-suffix":
+                            args.extend(["--runtime", "codex", "--llm-backend", "codex"])
+                            env = {{}}
+                        elif mode == "isolated-missing-flag":
+                            args.pop(0)
+                        elif mode == "isolated-wrong-python":
+                            args[2] = ">=3.11"
+                        elif mode == "isolated-wrong-package":
+                            args[4] = "ouroboros-ai"
+                        elif mode == "isolated-unsupported-pin":
+                            args[4] = "ouroboros-ai[mcp]==0.52.0"
+                        elif mode == "isolated-old-pin":
+                            args[4] = "ouroboros-ai[mcp]==0.51.0"
+                        elif mode == "isolated-extra-arg":
+                            args.append("--unexpected")
+                        elif mode == "isolated-missing-env":
+                            env = {{}}
+                        elif mode == "isolated-conflicting-env":
+                            env["OUROBOROS_LLM_BACKEND"] = "claude"
+                        elif mode == "isolated-nested-env":
+                            env["_OUROBOROS_NESTED"] = "1"
+                        result = {{
+                            "name": "ouroboros",
+                            "enabled": True,
+                            "transport": {{
+                                "type": "stdio",
+                                "command": "missing-uvx" if mode == "isolated-wrong-command" else "ooo" if mode == "isolated-imposter-command" else "uvx",
+                                "args": args,
+                                "env": env,
+                            }},
+                        }}
+                    else:
+                        result = {{
+                            "name": "wrong-name" if mode == "wrong-name" else "ouroboros",
+                            "transport": {{
+                                "type": "http" if mode == "non-stdio" else "stdio",
+                                "command": "wrong-ooo" if mode == "wrong-command" else "ooo",
+                                "args": ["serve"] if mode == "wrong-args" else ["mcp", "serve"],
+                            }},
+                        }}
                     if mode != "enabled-absent":
                         result["enabled"] = "yes" if mode == "enabled-invalid" else mode != "disabled"
                     print(json.dumps(result))
@@ -555,6 +592,10 @@ class InspectToolsTest(unittest.TestCase):
             names.append("wrong-gaori")
         if ouroboros_mcp_mode == "wrong-command":
             names.append("wrong-ooo")
+        if isinstance(ouroboros_mcp_mode, str) and ouroboros_mcp_mode.startswith(
+            "isolated"
+        ):
+            names.append("uvx")
         for name in names:
             executable = self.bin_directory / name
             executable.write_text(source, encoding="utf-8")
@@ -2626,6 +2667,85 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
         self.assertEqual(ouroboros["status"], "configured")
         self.assertNotIn("name", ouroboros)
+
+    def test_ouroboros_accepts_canonical_isolated_launchers(self) -> None:
+        for mode in ("isolated", "isolated-pinned", "isolated-suffix"):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.15",
+                    ouroboros_mcp_doctor_ok=False,
+                    ouroboros_mcp_mode=mode,
+                )
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
+                self.assertEqual(ouroboros["mcp_runtime"]["status"], "configured")
+                self.assertEqual(
+                    ouroboros["mcp_runtime"]["probe"]["reason"],
+                    "isolated_launcher_configured",
+                )
+                self.assertEqual(ouroboros["status"], "configured")
+
+    def test_ouroboros_accepts_isolated_launcher_without_base_cli(self) -> None:
+        self.install_fake_tools(ouroboros_mcp_mode="isolated")
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertFalse(ouroboros["installed"])
+        self.assertEqual(ouroboros["status"], "missing")
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "configured")
+        self.assertEqual(
+            ouroboros["mcp_runtime"]["probe"]["reason"],
+            "isolated_launcher_configured",
+        )
+
+    def test_ouroboros_rejects_noncanonical_isolated_launchers(self) -> None:
+        modes = (
+            "isolated-missing-flag",
+            "isolated-wrong-command",
+            "isolated-imposter-command",
+            "isolated-wrong-python",
+            "isolated-wrong-package",
+            "isolated-unsupported-pin",
+            "isolated-old-pin",
+            "isolated-extra-arg",
+            "isolated-missing-env",
+            "isolated-conflicting-env",
+            "isolated-nested-env",
+        )
+        for mode in modes:
+            with self.subTest(mode=mode):
+                self.install_fake_tools(
+                    ouroboros_version="0.51.15", ouroboros_mcp_mode=mode
+                )
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
+                self.assertEqual(
+                    ouroboros["mcp_registration"]["probe"]["reason"],
+                    "registration_mismatch",
+                )
+                self.assertEqual(ouroboros["status"], "degraded")
+
+    def test_ouroboros_skips_base_runtime_probe_for_launcher_mismatch(self) -> None:
+        self.install_fake_tools(
+            ouroboros_version="0.51.15",
+            ouroboros_mcp_doctor_malformed=True,
+            ouroboros_mcp_mode="isolated-wrong-package",
+        )
+        completed = self.inspect(include_ouroboros=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "unverifiable")
+        self.assertFalse(ouroboros["mcp_runtime"]["probe"]["attempted"])
+        self.assertEqual(
+            ouroboros["mcp_runtime"]["probe"]["reason"],
+            "registration_not_supported_launcher",
+        )
 
     def test_installed_ouroboros_keeps_component_failures_independent(self) -> None:
         cases = (

@@ -147,7 +147,7 @@ Keep source lookup, existing-target backup policy, installation or replacement, 
 
 ## Configure Ouroboros With Separate Approvals
 
-Support only Ouroboros `>=0.51.1,<0.52.0`. Read [tool-catalog.md](references/tool-catalog.md), then diagnose with `--include-ouroboros`. Keep these four states independent: the `ooo` CLI and version, installed Codex rules and skills, Ouroboros MCP runtime health, and effective Codex MCP registration. Do not infer readiness from one passing component.
+Support only Ouroboros `>=0.51.1,<0.52.0`. Read [tool-catalog.md](references/tool-catalog.md), then diagnose with `--include-ouroboros`. Keep these four states independent: the `ooo` CLI and version, installed Codex rules and skills, Ouroboros MCP runtime configuration, and effective Codex MCP registration. Do not infer readiness from one passing component.
 
 Installation requires an already installed `uv`; never install a package manager as a side effect. Resolve one exact `ouroboros-ai` version inside the supported range, disclose the Python package index request and package target, show `uv tool install ouroboros-ai==<exact-version>` or the exact approved upgrade form, and obtain a dedicated approval before running it. Do not install from an unpinned range.
 
@@ -159,7 +159,15 @@ Treat the following as three separate persistent mutations, each with its own di
 
 Approval for one never authorizes another. Re-read targets immediately before each mutation and invalidate stale approval. Setup must not call an Ouroboros provider, authenticate, run `auto`, `run`, `ralph`, or `evolve`, transmit repository source, create a Seed, or start an Aquarium design workflow.
 
-After approved mutations, verify `ooo --version`, `ooo codex doctor`, `ooo mcp doctor --json`, and `codex mcp get ouroboros --json`. When the active host can expose MCP tools safely, verify live exposure separately without invoking a provider. Report missing skills, rules, registration, runtime health, and live exposure as distinct gaps, and tell the user when a Codex restart is required.
+After approved mutations, verify `ooo --version`, `ooo codex doctor`, and `codex mcp get ouroboros --json`.
+
+Run `ooo mcp doctor --json` only when Codex directly launches the selected `ooo` executable; it inspects that package environment and is not evidence about a separate `uvx --isolated` MCP environment.
+
+For the canonical isolated launcher, validate its exact executable, arguments, supported package requirement, and Codex runtime selectors without starting it or contacting the network.
+
+When the active host can expose MCP tools safely, verify live exposure separately without invoking a provider.
+
+Report missing skills, rules, registration, runtime configuration, and live exposure as distinct gaps, and tell the user when a Codex restart is required.
 
 ## Gate Repository Guidance With Two Approvals
 

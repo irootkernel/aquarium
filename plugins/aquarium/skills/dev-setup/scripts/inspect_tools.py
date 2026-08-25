@@ -68,6 +68,33 @@ LEGACY_PODWAY_PROCEDURES = (
 PODWAY_SOURCE_DIRECTORY = (
     Path(__file__).resolve().parents[3] / "assets" / "podway" / "procedures"
 )
+OUROBOROS_UVX_MCP_ARGS = (
+    "--isolated",
+    "--python",
+    ">=3.12",
+    "--from",
+    "ouroboros-ai[mcp]",
+    "ouroboros",
+    "mcp",
+    "serve",
+)
+OUROBOROS_CODEX_MCP_SUFFIX = (
+    "--runtime",
+    "codex",
+    "--llm-backend",
+    "codex",
+)
+OUROBOROS_CODEX_MCP_ENV = {
+    "OUROBOROS_AGENT_RUNTIME": "codex",
+    "OUROBOROS_LLM_BACKEND": "codex",
+}
+OUROBOROS_RUNTIME_SELECTOR_KEYS = {
+    *OUROBOROS_CODEX_MCP_ENV,
+    "OUROBOROS_RUNTIME",
+}
+OUROBOROS_MCP_PACKAGE = re.compile(
+    rf"ouroboros-ai\[mcp\](?:==(0\.51\.{CANONICAL_NUMERIC_COMPONENT}))?"
+)
 
 
 class InspectionError(Exception):
@@ -456,6 +483,76 @@ def normalized_probe(probe: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def resolved_executable(command: Any) -> Path | None:
+    if not isinstance(command, str) or not command:
+        return None
+    candidate = Path(command).expanduser()
+    if candidate.is_absolute():
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate.resolve()
+        return None
+    discovered = shutil.which(command)
+    return Path(discovered).resolve() if discovered else None
+
+
+def ouroboros_direct_launcher_matches(
+    transport: Any, ouroboros_executable: str | None
+) -> bool:
+    if not isinstance(transport, dict) or not ouroboros_executable:
+        return False
+    resolved_command = resolved_executable(transport.get("command"))
+    return bool(
+        transport.get("type") == "stdio"
+        and transport.get("args") == ["mcp", "serve"]
+        and resolved_command
+        and resolved_command == Path(ouroboros_executable).resolve()
+    )
+
+
+def ouroboros_isolated_launcher_matches(transport: Any) -> bool:
+    if not isinstance(transport, dict):
+        return False
+    resolved_command = resolved_executable(transport.get("command"))
+    selected_uvx = shutil.which("uvx")
+    if not resolved_command or not selected_uvx:
+        return False
+    if resolved_command != Path(selected_uvx).resolve():
+        return False
+
+    args = transport.get("args")
+    if not isinstance(args, list) or not all(isinstance(arg, str) for arg in args):
+        return False
+    normalized_args = list(args)
+    if len(normalized_args) < 5:
+        return False
+    package_match = OUROBOROS_MCP_PACKAGE.fullmatch(normalized_args[4])
+    if not package_match:
+        return False
+    pinned_version = package_match.group(1)
+    if pinned_version and not supported_ouroboros_version(pinned_version):
+        return False
+    normalized_args[4] = "ouroboros-ai[mcp]"
+
+    env = transport.get("env", {})
+    if not isinstance(env, dict) or not all(
+        isinstance(key, str) and isinstance(value, str) for key, value in env.items()
+    ):
+        return False
+    if "_OUROBOROS_NESTED" in env:
+        return False
+    if any(
+        env.get(key) not in {None, "codex"} for key in OUROBOROS_RUNTIME_SELECTOR_KEYS
+    ):
+        return False
+
+    normalized = tuple(normalized_args)
+    if normalized == OUROBOROS_UVX_MCP_ARGS:
+        return all(
+            env.get(key) == value for key, value in OUROBOROS_CODEX_MCP_ENV.items()
+        )
+    return normalized == (*OUROBOROS_UVX_MCP_ARGS, *OUROBOROS_CODEX_MCP_SUFFIX)
+
+
 def classify_ouroboros_registration(
     raw_probe: dict[str, Any], ouroboros_executable: str | None
 ) -> dict[str, Any]:
@@ -490,32 +587,19 @@ def classify_ouroboros_registration(
         probe["reason"] = "registration_result_invalid"
         return {"status": "degraded", "probe": probe}
     transport = result.get("transport")
-    command = transport.get("command") if isinstance(transport, dict) else None
-    args = transport.get("args") if isinstance(transport, dict) else None
-    resolved_command: Path | None = None
-    if isinstance(command, str) and command:
-        candidate = Path(command).expanduser()
-        if (
-            candidate.is_absolute()
-            and candidate.is_file()
-            and os.access(candidate, os.X_OK)
-        ):
-            resolved_command = candidate.resolve()
-        elif not candidate.is_absolute():
-            discovered = shutil.which(command)
-            if discovered:
-                resolved_command = Path(discovered).resolve()
-    registration_matches = bool(
+    direct_registration_matches = bool(
+        result.get("name") == "ouroboros"
+        and result.get("enabled") is True
+        and ouroboros_direct_launcher_matches(transport, ouroboros_executable)
+    )
+    isolated_registration_matches = bool(
         result.get("name") == "ouroboros"
         and result.get("enabled") is True
         and isinstance(transport, dict)
         and transport.get("type") == "stdio"
-        and args == ["mcp", "serve"]
-        and resolved_command
-        and ouroboros_executable
-        and resolved_command == Path(ouroboros_executable).resolve()
+        and ouroboros_isolated_launcher_matches(transport)
     )
-    if registration_matches:
+    if direct_registration_matches or isolated_registration_matches:
         return {"status": "configured", "probe": probe}
     if result.get("enabled") is True:
         probe["reason"] = "registration_mismatch"
@@ -2133,6 +2217,8 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
     tool = base_tool("ooo")
     tool["supported_range"] = ">=0.51.1,<0.52.0"
     codex = shutil.which("codex")
+    direct_runtime_configured = False
+    isolated_runtime_configured = False
     if codex:
         registration_raw = run_command(
             [
@@ -2148,6 +2234,23 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
         tool["mcp_registration"] = classify_ouroboros_registration(
             registration_raw, tool["executable"]
         )
+        parsed_registration = parse_json_probe(registration_raw)
+        registration_result = parsed_registration.get("result")
+        registration_transport = (
+            registration_result.get("transport")
+            if isinstance(registration_result, dict)
+            else None
+        )
+        direct_runtime_configured = tool["mcp_registration"][
+            "status"
+        ] == "configured" and ouroboros_direct_launcher_matches(
+            registration_transport, tool["executable"]
+        )
+        isolated_runtime_configured = tool["mcp_registration"][
+            "status"
+        ] == "configured" and ouroboros_isolated_launcher_matches(
+            registration_transport
+        )
     else:
         tool["mcp_registration"] = {
             "status": "unverifiable",
@@ -2161,10 +2264,18 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             "status": "missing",
             "probe": skipped_probe("executable_missing"),
         }
-        tool["mcp_runtime"] = {
-            "status": "missing",
-            "probe": skipped_probe("executable_missing"),
-        }
+        if isolated_runtime_configured:
+            runtime_probe = normalized_probe(registration_raw)
+            runtime_probe["reason"] = "isolated_launcher_configured"
+            tool["mcp_runtime"] = {
+                "status": "configured",
+                "probe": runtime_probe,
+            }
+        else:
+            tool["mcp_runtime"] = {
+                "status": "missing",
+                "probe": skipped_probe("executable_missing"),
+            }
         return tool
 
     version_raw = run_command(
@@ -2191,15 +2302,28 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
         },
     }
 
-    mcp_doctor = json_probe(
-        [tool["executable"], "mcp", "doctor", "--json"],
-        repository,
-        timeout_seconds,
-    )
-    tool["mcp_runtime"] = {
-        "status": "configured" if mcp_doctor["ok"] else "degraded",
-        "probe": normalized_probe(mcp_doctor),
-    }
+    if isolated_runtime_configured:
+        runtime_probe = normalized_probe(registration_raw)
+        runtime_probe["reason"] = "isolated_launcher_configured"
+        tool["mcp_runtime"] = {
+            "status": "configured",
+            "probe": runtime_probe,
+        }
+    elif direct_runtime_configured:
+        mcp_doctor = json_probe(
+            [tool["executable"], "mcp", "doctor", "--json"],
+            repository,
+            timeout_seconds,
+        )
+        tool["mcp_runtime"] = {
+            "status": "configured" if mcp_doctor["ok"] else "degraded",
+            "probe": normalized_probe(mcp_doctor),
+        }
+    else:
+        tool["mcp_runtime"] = {
+            "status": "unverifiable",
+            "probe": skipped_probe("registration_not_supported_launcher"),
+        }
 
     components_ready = (
         tool["version_supported"]

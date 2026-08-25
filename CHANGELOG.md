@@ -7,6 +7,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Fixed
 
 - Fix the Kimi and GLM edition links in the English and Korean project READMEs.
+- Recognize Ouroboros's canonical isolated Codex MCP launcher without mistaking the base MCP 1.x profile for its MCP 2 runtime.
 
 ## v0.1.11 - 2026-08-25
 
