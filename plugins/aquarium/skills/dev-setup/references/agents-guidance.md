@@ -105,7 +105,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$use-sanho` at an authorized commit or push boundary in a Sanho-managed repository, or for an explicitly requested Sanho operation.
 - Use `$use-mulgae` for an authorized Mulgae review, run inspection, finding follow-up, configuration diagnosis, cleanup plan, or recovery.
 - Use `$use-gaori` when a selected long or noisy check is routed through Gaori or existing Gaori evidence must be inspected.
-- Let Aquarium workflow owners use Podway by default for Git-backed workflows unless the current user opts out before the first managed-session mutation; Aquarium workflow skills retain their stricter roadmap, ownership, and approval rules.
+- Let Aquarium workflows use Podway by default for Git-backed work unless the current user opts out before the first managed-session mutation. No Aquarium skill owns a Podway session; only when starting a different session should the workflow ask whether to preserve, finish, delete, or replace the existing one.
 - Use `$use-podway` directly for an explicitly requested Procedure v2 lifecycle, authoring, diagnosis, recovery, cancellation, or discard operation.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Use the separately installed upstream `$deslop` skill for task-owned cleanup when an Aquarium workflow requests it.

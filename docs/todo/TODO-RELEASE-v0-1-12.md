@@ -91,7 +91,7 @@ Rebuild the design and war-room Procedures from the released `analysis-v2` and a
 - [ ] Reauthor `aquarium-war-room-v2` around baseline or reproduction, investigation, semantic cause and scope decisions, task or epic or incomplete proposal, quality rework, explicit approval, documentation, assessment, and closeout; increase its version from `1` to `2`.
 - [ ] Use structurally bound quality results and conditional findings while leaving root-cause, scope, and user decisions unguarded.
 - [ ] Select the minimum fresh evidence each consumer needs and keep provider outputs, source contents, transcripts, and generated documents outside Podway.
-- [ ] Preserve `new-project`, `new-feature`, `refactor`, `design-qa`, and `war-room` as the sole workflow owners of these sessions.
+- [ ] Let `new-project`, `new-feature`, `refactor`, `design-qa`, and `war-room` use these sessions without assigning exclusive Podway ownership to any skill.
 
 ### Do Not
 

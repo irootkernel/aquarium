@@ -9,7 +9,7 @@ Validate a completed epic independently of how it was delivered. Audit first, re
 
 Always read [evidence-residency.md](../../references/evidence-residency.md) and [documentation-governance.md](../../references/documentation-governance.md). Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
-Otherwise read the Podway contract and own one `aquarium-validation-v2` session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority.
+Otherwise read the Podway contract and use one `aquarium-validation-v2` session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority.
 
 ## Establish the Validation Contract
 
@@ -27,7 +27,7 @@ Before requesting approval:
 4. Discover repository-native verification, Gaori, `$use-gaori`, documentation synchronization, Mulgae, `$use-mulgae`, Sanho, `$use-sanho`, lifecycle, and commit guidance. Treat each CLI, repository configuration, project MCP, and agent skill as independent state. Inspect explicit external dependencies read-only and record repository, canonical identity, exact revision, lifecycle, dirty state, evidence, and owner.
 5. Inspect the current goal and stop rather than replace a different unfinished goal.
 6. Honor an explicit pre-session opt-out without Podway discovery and ignore every Podway readiness or session state. Otherwise apply the shared contract's readiness and session checks. On degraded readiness, stop and ask the user to choose `$aquarium:dev-setup` repair or an explicit opt-out for this validation.
-   - Resume only a managed validation session matching this epic and baseline. A nonmatching prepared, running, incomplete, or undisposed terminal session uses the shared lifecycle-conflict route: resume it through its matching owner, leave it untouched through validation opt-out, or hand explicit cancellation or deletion to `$use-podway`. Never describe that conflict as setup repair.
+   - Resume a managed validation session matching this epic and baseline. Only when starting a different session, present the existing session and obtain the shared contract's explicit preserve, lifecycle, delete, or eligible-replace choice. Never route by skill owner or describe the choice as setup repair.
    - A disposed terminal session with verified handoff evidence and a current `session.start_replace` template becomes an exact successor candidate. Include its fenced eligible replacement in the validation envelope and, after approval, use `start --replace-eligible` without a separate reset before re-observing and beginning the prepared validation session.
 
 Present one bounded validation envelope covering direct audit, authorized checks, disclosed Mulgae source transmission, remediation of confirmed gaps required by existing epic authority, canonical documentation only when current semantics change, conditionally required evidence promotion, isolated staging, and one commit per actual remediation or lifecycle diff. Ask once for explicit approval. A clean validation with no canonical change creates no repository diff or validation-record commit.

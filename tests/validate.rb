@@ -1447,7 +1447,8 @@ assert(design_qa.include?("docs/gating-rules.md") &&
        "design-qa must own executable current gates and retired bodies")
 assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") &&
        ouroboros_contract.include?("blocks these Ouroboros-assisted workflows") &&
-       ouroboros_contract.include?("<owner-skill>:<canonical-identity>") &&
+       ouroboros_contract.include?("Use the canonical work identity directly without a skill-name prefix") &&
+       ouroboros_contract.include?("No Aquarium skill owns the session") &&
        ouroboros_contract.include?("Do not let Ouroboros create or edit repository files directly") &&
        ouroboros_contract.include?("`auto`, `run`, `ralph`, or `evolve`") &&
        ouroboros_contract.include?("Podway-blind") &&
@@ -1499,37 +1500,36 @@ assert(podway_contract.include?("podway.observation-result/v2") &&
        podway_contract.include?("Do not record evidence") &&
        podway_contract.include?("matching prepared session is recoverable workflow state"),
        "Podway v0.2.5 prepared-session contract is missing")
-assert(podway_contract.include?("## Record Terminal Ownership Conservatively") &&
+assert(podway_contract.include?("## Record Terminal Disposition Conservatively") &&
        podway_contract.include?("Use `handed_off` only when an exact authoritative external result already exists") &&
        podway_contract.include?("exact commit SHA") &&
        podway_contract.include?("Use `not_required` only when no final external handoff or repository result is required") &&
-       podway_contract.include?("epic-handler closeout with no final repository diff") &&
+       podway_contract.include?("epic closeout with no final repository diff") &&
        podway_contract.include?("Earlier task or remediation commits do not prevent this disposition") &&
        podway_contract.include?("leave the terminal revision undisposed") &&
        podway_contract.include?("never choose force reset or force replacement automatically") &&
        podway_contract.include?("start --replace-eligible"),
        "Podway terminal disposition and eligible replacement policy is incomplete")
-assert(podway_contract.include?("## Hand Off Across Workflow Owners") &&
-       podway_contract.include?("replace-after-disposition, never automatic resume") &&
-       podway_contract.include?("stable non-runtime artifact reference") &&
-       podway_contract.include?("successor includes replacement") &&
-       podway_contract.include?("current eligible `session.start_replace` template") &&
-       podway_contract.include?("never force replacement"),
-       "Podway cross-owner handoff must be explicit, verified, and fenced")
+assert(podway_contract.include?("## Reconcile an Existing Session Only When Starting Another") &&
+       podway_contract.include?("If the current session's Procedure and canonical identity match the requested work, resume it normally") &&
+       podway_contract.include?("**Preserve:**") &&
+       podway_contract.include?("**Finish or cancel while preserving history:**") &&
+       podway_contract.include?("**Delete:**") &&
+       podway_contract.include?("**Replace an eligible terminal session:**"),
+       "Podway existing-session handling must be explicit only when another session would start")
 assert(podway_contract.include?("[evidence-residency.md](evidence-residency.md)") &&
        podway_contract.include?("These records are local runtime and orchestration evidence") &&
        podway_contract.include?("Podway's recorded claim is not a promotion source") &&
        podway_contract.include?("tracked promoted manifest and digest"),
        "Podway must keep runtime evidence separate from promoted repository authority")
-assert(podway_contract.include?("Only `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa` may own or advance") &&
-       podway_contract.include?("standalone user request that explicitly invokes `$use-podway`") &&
-       podway_contract.include?("may inspect only the bounded session facts needed for readiness diagnosis") &&
-       podway_contract.include?("`$aquarium:task-commit` may inspect only bounded read-only current-session facts") &&
-       podway_contract.include?("must never advance or mutate Podway"),
-       "Podway workflow ownership and standalone lifecycle authority are not separated")
+assert(podway_contract.include?("Aquarium does not own Podway sessions") &&
+       podway_contract.include?("descriptive metadata, not an access-control principal") &&
+       podway_contract.include?("Do not route the user to a matching owner") &&
+       !podway_contract.include?("Only `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa` may own or advance"),
+       "Aquarium must not impose skill ownership on Podway sessions")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
-       podway_contract.include?("Aquarium roadmap authority"),
+       podway_contract.include?("Aquarium defines when its workflows request a Podway session"),
        "Podway optional-skill precedence and fallback are missing")
 assert(podway_contract.include?("readiness_status=not_configured") &&
        podway_contract.include?("LEGACY_PROCEDURE_STATE_UNSUPPORTED"),
@@ -1538,20 +1538,17 @@ assert(podway_contract.include?("Select Podway by default for every Git-backed i
        podway_contract.include?("before its managed session starts") &&
        podway_contract.include?("never carry an opt-out forward implicitly"),
        "Podway must be default-selected with a workflow-local pre-session opt-out")
-assert(podway_contract.include?("owning Aquarium invocation selects Podway by default") &&
+assert(podway_contract.include?("current Aquarium invocation selects Podway by default") &&
        podway_contract.include?("invisible to that workflow"),
        "Podway availability must remain separate from handler selection")
 assert(podway_contract.include?("choose between repair") &&
        podway_contract.include?("Do not silently fall back"),
        "Podway readiness failures must require a repair-or-opt-out decision")
-assert(podway_contract.include?("prepared, running, incomplete, or undisposed terminal session is a blocking lifecycle conflict") &&
-       podway_contract.include?("disposed terminal session is an eligible successor candidate") &&
-       podway_contract.include?("Never route it to `$aquarium:dev-setup` repair") &&
-       podway_contract.include?("Resume unfinished work through its matching owner") &&
-       podway_contract.include?("standalone explicit `$use-podway` request") &&
-       podway_contract.include?("without a separate reset") &&
+assert(podway_contract.include?("only when the current Aquarium invocation is about to start a different Podway session") &&
+       podway_contract.include?("obtain an explicit user choice before changing it") &&
+       podway_contract.include?("not a reason to route to `$aquarium:dev-setup`") &&
        podway_contract.include?("Reset is deletion, not preparation for a successor workflow"),
-       "healthy Podway session conflicts must route to lifecycle ownership, not setup repair")
+       "healthy Podway sessions must require a user lifecycle choice only before another session starts")
 assert(podway_contract.include?("current-session discard flow") &&
        podway_contract.include?("After the session starts, do not abandon it") &&
        podway_contract.include?("Never cancel, reset, force-replace, reopen, or reinterpret a blocking lifecycle conflict automatically"),
@@ -1575,11 +1572,12 @@ assert(podway_contract.include?("None of these dispositions commits work, change
          body.include?("explicit pre-session opt-out") &&
          body.include?("On degraded readiness") &&
          body.include?("`$aquarium:dev-setup` repair") &&
-         body.include?("shared lifecycle-conflict route") &&
-         body.include?("explicit cancellation or deletion to `$use-podway`") &&
+         body.include?("Only when starting a different session") &&
+         body.include?("explicit preserve, lifecycle, delete, or eligible-replace choice") &&
+         body.include?("Never route by skill owner") &&
          body.include?("disposed terminal session with verified handoff evidence") &&
          body.include?("use `start --replace-eligible` without a separate reset") &&
-         body.include?("Never describe that conflict as setup repair") &&
+         body.include?("describe the choice as setup repair") &&
          !body.include?("on degraded readiness or") &&
          body.include?("shared `Handle In-Progress Stop Requests` flow") &&
          body.include?("never assume pause, cancel, reset") &&
@@ -1609,7 +1607,8 @@ assert(agents_reference.include?("use Podway by default") &&
        agents_reference.include?("$aquarium:new-project") &&
        agents_reference.include?("$aquarium:war-room") &&
        agents_reference.include?("$aquarium:design-qa") &&
-       agents_reference.include?("workflow skills retain their stricter roadmap, ownership, and approval rules"),
+       agents_reference.include?("No Aquarium skill owns a Podway session") &&
+       agents_reference.include?("only when starting a different session"),
        "AGENTS guidance must preserve default use and workflow-local opt-out")
 assert(agents_reference.include?("$aquarium:docs-setup") &&
        root_agents.include?("$aquarium:docs-setup"),
@@ -1891,7 +1890,7 @@ assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", tru
        "goal procedure must include optional hardening-deferral evidence in assessment")
 
 procedure_nodes = expected_procedure_graphs.transform_values { |spec| spec.fetch("nodes").keys }
-skill_procedure_owners = {
+skill_procedure_routes = {
   "task-handler" => %w[aquarium-task-v2.yaml],
   "task-plan" => %w[aquarium-task-v2.yaml],
   "task-implement" => %w[aquarium-task-v2.yaml],
@@ -1908,12 +1907,12 @@ skill_procedure_owners = {
   "design-qa" => %w[aquarium-design-v2.yaml],
   "war-room" => %w[aquarium-war-room-v2.yaml]
 }
-skill_procedure_owners.each do |skill_name, owners|
+skill_procedure_routes.each do |skill_name, procedures|
   assert(expected_skill_names.include?(skill_name),
-         "Procedure ownership names an unknown skill: #{skill_name}")
-  owners.each do |owner|
-    assert(procedure_nodes.key?(owner),
-           "Procedure ownership names an unknown Procedure: #{skill_name} -> #{owner}")
+         "Procedure routing names an unknown skill: #{skill_name}")
+  procedures.each do |procedure|
+    assert(procedure_nodes.key?(procedure),
+           "Procedure routing names an unknown Procedure: #{skill_name} -> #{procedure}")
   end
 end
 skill_paths.each do |path|
@@ -1922,11 +1921,11 @@ skill_paths.each do |path|
   next if node_ids.empty?
 
   skill_name = path.dirname.basename.to_s
-  owners = skill_procedure_owners[skill_name]
-  assert(owners, "skill with Podway node references has no Procedure ownership: #{path}")
+  procedures = skill_procedure_routes[skill_name]
+  assert(procedures, "skill with Podway node references has no Procedure route: #{path}")
   node_ids.each do |node_id|
-    assert(owners.any? { |owner| procedure_nodes.fetch(owner).include?(node_id) },
-           "skill references a node outside its owned Procedures #{owners.join(', ')}: #{path} -> #{node_id}")
+    assert(procedures.any? { |procedure| procedure_nodes.fetch(procedure).include?(node_id) },
+           "skill references a node outside its routed Procedures #{procedures.join(', ')}: #{path} -> #{node_id}")
   end
 end
 
@@ -1971,7 +1970,7 @@ assert(epic_validator.include?("ignore every Podway readiness or session state")
 assert(task_handler.include?("Immediately before each phase delegation") &&
        epic_handler.include?("before each bounded work delegation") &&
        epic_validator.include?("before each bounded audit or remediation delegation"),
-       "Podway owners must validate expected state before delegation and record verified native evidence afterward")
+       "Podway callers must validate expected state before delegation and record verified native evidence afterward")
 
 assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        independent_review.include?("user explicitly invokes"),
@@ -2591,8 +2590,9 @@ assert(task_commit.include?("always ask whether the commit belongs to one exact 
        task_commit.include?("explicitly authorize a checkpoint commit") &&
        task_commit.include?("reconcile lifecycle state again on every later commit request"),
        "task-commit must require explicit task relationship and lifecycle decisions")
-assert(task_commit.include?("active matching `task-handler`, `epic-handler`, `epic-validator`") &&
-       task_commit.include?("only from that owner's explicit commit handoff") &&
+assert(task_commit.include?("explicit commit handoff from the current Aquarium execution context") &&
+       task_commit.include?("regardless of which Aquarium skill started or advanced the session") &&
+       task_commit.include?("never require returning to a prior skill") &&
        task_commit.include?("lifecycle decision as either an exact approved edit or an explicit statement") &&
        task_commit.include?("record decision as either an exact approved edit or an explicit statement") &&
        task_commit.include?("review run when applicable") &&

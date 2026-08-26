@@ -11,7 +11,7 @@ Do not invoke `$aquarium:task-handler` or its phase skills; they separately stre
 
 Use Podway by default. Exclude it only when the current user explicitly opts this epic out before its first managed session starts or a higher-priority instruction prohibits it. For an opted-out epic, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
-Otherwise read the Podway contract, then own one `aquarium-goal-v2` session per member-task, pre-validation remediation, or closeout goal and one `aquarium-validation-v2` session for the final epic audit and its audit-owned remediation. In `plan-only`, create neither goal nor session; in `plan-handoff`, create the first goal only after approval, attach the plan, and stop before work. Podway strengthens local execution memory but does not prescribe a phase workflow or replace the roadmap DAG.
+Otherwise read the Podway contract, then use one `aquarium-goal-v2` session per member-task, pre-validation remediation, or closeout goal and one `aquarium-validation-v2` session for the final epic audit and its audit-scoped remediation. In `plan-only`, create neither goal nor session; in `plan-handoff`, create the first goal only after approval, attach the plan, and stop before work. Podway strengthens local execution memory but does not prescribe a phase workflow or replace the roadmap DAG.
 
 ## Establish and Approve the Epic
 
@@ -30,7 +30,7 @@ Before requesting approval:
 5. Order tasks by dependencies and then roadmap order. Split a cycle only when authority defines pre-validation and finalization; otherwise stop and report its nodes, owners, and missing authority.
 6. Preserve successfully terminal tasks, start at the earliest non-terminal task, and retain every task for the final audit. Stop rather than replace a different active goal.
 7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. On degraded readiness, stop and ask the user to choose `$aquarium:dev-setup` repair or an explicit opt-out for this epic.
-   - A matching recoverable Aquarium session becomes part of the plan. A nonmatching prepared, running, incomplete, or undisposed terminal session uses the shared lifecycle-conflict route: resume it through its matching owner, leave it untouched through epic opt-out, or hand explicit cancellation or deletion to `$use-podway`. Never describe that conflict as setup repair.
+   - A matching recoverable Aquarium session becomes part of the plan. Only when starting a different session, present the existing session and obtain the shared contract's explicit preserve, lifecycle, delete, or eligible-replace choice. Never route by skill owner or describe the choice as setup repair.
    - A disposed terminal session with verified handoff evidence and a current `session.start_replace` template becomes an exact successor candidate. Include its fenced eligible replacement in the epic envelope and, after approval, use `start --replace-eligible` without a separate reset before re-observing and beginning the prepared epic session.
 
 Produce one concise, decision-complete epic plan: goal and non-goals, dependency DAG, task order, requirement owners, expected outcomes and commit boundaries, per-task documentation promotion, checks, review targets, lifecycle changes, external handoffs, the exact active dossier and its planned closeout deletion, replacement `Canonical Outcomes`, and known gaps. Avoid unnecessary phase or file mechanics. Preserve the selected mode in every continuation.
@@ -95,7 +95,7 @@ After third-round fixes, run one fourth `confirmation-only` review. If locally v
 
 With Podway active, atomically replace the disposed last-task session with a prepared `aquarium-validation-v2` session, then re-observe and `begin` the final audit. For a plan handoff, attach and verify the same artifact at the validation baseline before audit work. Record each fresh audit, route confirmed gaps through remediation and re-audit, and assess the epic goal only from the latest complete evidence. Remediation goals inside the active validation session are Codex goals recorded at its `remediate` node, never nested Podway sessions.
 
-After the validation session succeeds, use `handed_off` only when an exact authoritative external result already exists. Otherwise record `not_required` only after verifying that this same approved handler retains ownership and the closeout session requires the slot. Atomically replace the disposed validation session with the prepared closeout goal and `begin` it.
+After the validation session succeeds, use `handed_off` only when an exact authoritative external result already exists. Otherwise record `not_required` only after verifying that the same approved epic execution continues and the closeout session requires the slot. Atomically replace the disposed validation session with the prepared closeout goal and `begin` it.
 
 Classify each verified gap by canonical requirement owner, not file count or edit location:
 

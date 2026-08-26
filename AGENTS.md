@@ -57,7 +57,10 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
-- Use `$use-sanho`, `$use-mulgae`, `$use-gaori`, and `$use-podway` for their respective local tool operations. Aquarium workflow skills retain their stricter roadmap, ownership, and approval rules.
+- Use each installed paired `$use-*` skill for its corresponding local tool operations and keep tool-specific lifecycle rules in that integration's canonical contract.
+- Aquarium is an orchestration plugin that helps integrated tools work together and makes their supported native capabilities readily usable. It is not a policy layer for weakening, second-guessing, or artificially constraining those tools.
+- Prefer each tool's current native contract and paired skill. Use the supported capabilities needed for the approved goal; do not invent Aquarium-only owners, quotas, retry caps, evidence caps, lifecycle restrictions, or extra approval gates.
+- A tool limitation must come from a higher-priority instruction, Master's explicit choice, repository authority, the tool's native contract, or a concrete safety, destructive-action, privacy, or external-mutation boundary. Otherwise remove the Aquarium-only restriction at its canonical contract instead of working around or disabling the native capability.
 - Treat `.podway/procedures/aquarium-*-v2.yaml` as the repository-local workflow evidence and routing authority.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Use the separately installed upstream `$deslop` skill for task-owned cleanup when an Aquarium workflow requests it.

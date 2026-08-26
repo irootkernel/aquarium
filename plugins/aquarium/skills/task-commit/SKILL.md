@@ -11,15 +11,15 @@ Create one authorized commit through a shared roadmap-aware boundary. Read [evid
 
 1. Resolve the Git root and read all applicable instructions, commit conventions, branch and upstream state, staged, unstaged, untracked, and conflicted changes.
 2. Identify tracked roadmap candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
-3. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to determine whether an Aquarium handler owns the work; never advance, decide, cancel, discard, reset, or otherwise mutate Podway here.
+3. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to reconcile the commit with active Aquarium work. The commit boundary itself does not mutate Podway, but the same Aquarium caller may record the verified post-commit disposition immediately afterward.
 4. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
 5. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
 
-When an active matching `task-handler`, `epic-handler`, `epic-validator`, or Podway-managed Aquarium session owns the work, accept a commit only from that owner's explicit commit handoff. Otherwise stop and tell the user to resume the matching handler. Do not offer an independent path around an active managed workflow.
+When a commit belongs to active Podway-managed Aquarium work, require an explicit commit handoff from the current Aquarium execution context. Accept it regardless of which Aquarium skill started or advanced the session; never require returning to a prior skill. Do not offer an independent path around the managed workflow's approvals and evidence.
 
-## Reconcile Roadmap Ownership
+## Reconcile Roadmap Context
 
-When no managed workflow owns the work:
+When the commit is outside managed workflow work:
 
 - If no roadmap candidate exists, follow repository commit rules without inventing a task relationship or lifecycle edit.
 - If no `In Progress` or `In Review` task exists, do not invent one. Preserve existing terminal states and proceed only with the user's commit scope.

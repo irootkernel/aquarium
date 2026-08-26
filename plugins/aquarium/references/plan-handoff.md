@@ -28,7 +28,7 @@ After approval in an execution-capable turn:
 5. Never overwrite different bytes. An existing regular file at the exact path is idempotent only when its complete SHA-256 and byte size match the approved plan; otherwise stop with the conflicting path and digests.
 6. Attach the file to the current Procedure's `plan-handoff-artifact` item as a worktree-relative local artifact with media type `text/markdown`. Re-observe, read the recorded metadata, and require path, SHA-256, and byte size to match the file before moving or stopping.
 
-For `task-handler`, record the approved plan node, advance to `implement`, verify the running node, and stop before loading `$aquarium:task-implement`. For `epic-handler`, attach the plan at the active `complete-work` node and leave its required work evidence unrecorded. Every later member-task, validation, remediation, and closeout session owned by that same `epic-handler` must attach and verify the same initial plan path and digest before work so the current session remains independently resumable.
+For `task-handler`, record the approved plan node, advance to `implement`, verify the running node, and stop before loading `$aquarium:task-implement`. For `epic-handler`, attach the plan at the active `complete-work` node and leave its required work evidence unrecorded. Every later member-task, validation, remediation, and closeout session in that epic execution must attach and verify the same initial plan path and digest before work so the current session remains independently resumable.
 
 The handoff file is temporary Aquarium execution context, not roadmap authority, project documentation, Podway evidence bytes, a Git artifact, or proof that any work is complete. Keep it untracked and never stage or commit it.
 

@@ -12,7 +12,7 @@ Use the smallest installed upstream capability that fits the phase: `$interview`
 
 ## Use Podway as the Outer Workflow
 
-For a Git-backed invocation, use Podway by default through [podway-integration.md](podway-integration.md). `new-project`, `new-feature`, `refactor`, and `design-qa` own one `aquarium-design-v2` session; `war-room` owns one `aquarium-war-room-v2` session. Prefix the canonical session identity with its owner as `<owner-skill>:<canonical-identity>` so two owners cannot resume each other's session even when their work-unit IDs match. The Aquarium skill observes and advances the session. Ouroboros remains Podway-blind and returns only leaf evidence to its caller.
+For a Git-backed invocation, use Podway by default through [podway-integration.md](podway-integration.md). `new-project`, `new-feature`, `refactor`, and `design-qa` use `aquarium-design-v2`; `war-room` uses `aquarium-war-room-v2`. Use the canonical work identity directly without a skill-name prefix. No Aquarium skill owns the session. The current Aquarium invocation observes and advances it while Ouroboros remains Podway-blind and returns only leaf evidence to its caller.
 
 A non-Git `new-project` invocation must not inspect, initialize, or mutate Podway and must not create a Git repository merely to enable Podway. It still follows the same approval and exact-diff rules for its requested output files.
 
@@ -20,7 +20,7 @@ Before the first provider call, show one execution envelope containing canonical
 
 Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podway, not full provider prompts, transcripts, source payloads, or generated documents. Verify every provider result locally before recording it. Complete and disposition a session as `handed_off` only after the exact approved repository artifacts, their digests, current Design Gate state, repository status, and any authoritative commit required by repository policy are verified. Name the next explicit Aquarium skill and include the exact session ID, revision, and stable artifact reference in that handoff. Otherwise leave the terminal session undisposed.
 
-A later `design-qa`, task, epic, or validation owner must not resume the predecessor's owner-prefixed session. It follows the cross-owner protocol in [podway-integration.md](podway-integration.md): disclose replacement in its own envelope, verify the disposed predecessor artifacts again, and use only the fresh eligible replacement template after approval.
+When a later `design-qa`, task, epic, or validation workflow needs a different Podway session, follow the existing-session choice in [podway-integration.md](podway-integration.md). Preserve the current session unless the user explicitly authorizes its lifecycle action, deletion, or eligible replacement; never route by prior skill ownership.
 
 ## Propose Before Applying
 
