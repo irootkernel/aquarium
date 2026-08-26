@@ -203,6 +203,7 @@ review_contract = PLUGIN.join("references/review-contract.md").read
 orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
 release_handler = PLUGIN.join("skills/release-handler/SKILL.md").read
+release_gate_convergence = PLUGIN.join("skills/release-handler/references/gate-convergence.md").read
 release_recovery = PLUGIN.join("skills/release-handler/references/publication-recovery.md").read
 release_publication_script = PLUGIN.join("skills/release-handler/scripts/inspect_publication_state.py")
 release_publication_script_body = release_publication_script.read
@@ -611,6 +612,7 @@ assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
        capability_catalog.include?("not shipped as v0.1.11 behavior"),
        "capability catalog must inventory all Aquarium skills and separate stable from candidate behavior")
 
+workflow_contracts_doc = documentation_details.fetch("workflow-contracts")
 tool_integrations_doc = documentation_details.fetch("tool-integrations")
 supported_tool_versions = [
   "Stable `v0.2.7` through `v0.2.x`",
@@ -647,8 +649,8 @@ documented_schema_ids = %w[
   aquarium-orca-provider-terminal-request/v1
   aquarium-orca-provider-terminal-result/v1
   aquarium-release-notes-inspection/v1
-  aquarium-release-publication-observation/v2
-  aquarium-release-publication-state/v2
+  aquarium-release-publication-observation/v3
+  aquarium-release-publication-state/v3
   aquarium-podway-compatibility.v1
 ]
 assert(documented_schema_ids.all? { |schema_id| local_interfaces_doc.include?("`#{schema_id}`") },
@@ -2207,9 +2209,36 @@ assert(release_handler.include?("Preserve the full pass's authoritative frozen c
 assert(release_handler.include?("Do not push a candidate before release QA") &&
        release_handler.include?("equals the clean committed local `main` candidate or is a verified ancestor") &&
        release_handler.include?("candidate SHA, live remote SHA, and `equal` or `ancestor` relationship") &&
-       release_handler.include?("recompute its ancestry relationship to the QA candidate") &&
+       release_handler.include?("recompute its ancestry relationship to the release-basis candidate") &&
        release_handler.include?("single fast-forward `push_main`"),
        "release-handler must defer publication and preserve ancestor-safe release pushes")
+assert(release_handler.include?("references/gate-convergence.md") &&
+       release_handler.include?("freeze its authoritative public checkpoints") &&
+       release_handler.include?("Never split recipe lines") &&
+       release_handler.include?("Suffix completion is never release-gate `PASS`") &&
+       release_handler.include?("QA-neutral direct child") &&
+       release_handler.include?("direct-QA candidate SHA") &&
+       release_handler.include?("release-basis candidate SHA") &&
+       release_handler.include?("every candidate and release commit SHA") &&
+       release_handler.include?("exact reuse-attempt fact and approval"),
+       "release-handler must use bounded public-stage convergence and distinguish QA evidence from release basis")
+assert(release_gate_convergence.include?("independently invocable stage declared by repository authority") &&
+       release_gate_convergence.include?("Never split recipe lines") &&
+       release_gate_convergence.include?("A failed final aggregate ends the authorized cycle") &&
+       release_gate_convergence.include?("obtain fresh explicit authority for the new bounded cycle") &&
+       release_gate_convergence.include?("A completed suffix is diagnostic evidence") &&
+       release_gate_convergence.include?("complete authoritative release gate from its first command") &&
+       release_gate_convergence.include?("restore only the applied release metadata") &&
+       release_gate_convergence.include?("open `Unreleased` heading") &&
+       release_gate_convergence.include?("one exact reviewed commit") &&
+       release_gate_convergence.include?("through its direct-commit flow, not a release-handler commit handoff operation") &&
+       release_gate_convergence.include?("new full release-qa pass") &&
+       release_gate_convergence.include?("exactly one direct-child correction commit") &&
+       release_gate_convergence.include?("tests are not removed, skipped, weakened, or relaxed") &&
+       release_gate_convergence.include?("Diff size, commit title, file location alone") &&
+       release_gate_convergence.include?("Never claim that release QA directly passed the direct child") &&
+       release_gate_convergence.include?("any further candidate commit requires new full release QA"),
+       "release gate convergence must optimize diagnosis without weakening the final gate or exact QA binding")
 assert(release_handler.include?("references/publication-recovery.md") &&
        release_handler.include?("scripts/inspect_publication_state.py") &&
        release_handler.include?("--first-release") &&
@@ -2217,16 +2246,32 @@ assert(release_handler.include?("references/publication-recovery.md") &&
        release_qa.include?("--first-release"),
        "release workflows must support first releases and deterministic publication recovery")
 assert(release_recovery.include?("Recovery is stateless") &&
+       release_recovery.include?("direct-QA candidate SHA") &&
+       release_recovery.include?("release-basis candidate SHA") &&
+       release_recovery.include?("approved QA-neutral binding") &&
+       release_recovery.include?("exact reuse-attempt fact") &&
+       release_recovery.include?("first-and-only reuse-attempt fact") &&
        release_recovery.include?("push_main") &&
        release_recovery.include?("create_and_push_tag") &&
        release_recovery.include?("create_hosted_release") &&
        release_recovery.include?("verify_complete") &&
+       release_recovery.include?("live publication-remote tag") &&
+       release_recovery.include?("A local-only tag is remote `absent`") &&
        release_recovery.include?("earlier authority does not survive a new invocation"),
        "publication recovery must reconcile matching state without persisting hidden authority")
+assert(workflow_contracts_doc.include?("one approved QA-neutral direct child") &&
+       workflow_contracts_doc.include?("direct-QA and release-basis SHAs remain distinct"),
+       "workflow contract summary must describe bounded gate convergence and the direct-child QA exception")
 assert(release_publication_script.file? &&
-       release_publication_script_body.include?("aquarium-release-publication-observation/v2") &&
-       release_publication_script_body.include?("aquarium-release-publication-state/v2") &&
-       release_publication_script_body.include?("remote_main_relation_to_qa_candidate") &&
+       release_publication_script_body.include?("aquarium-release-publication-observation/v3") &&
+       release_publication_script_body.include?("aquarium-release-publication-state/v3") &&
+       release_publication_script_body.include?("release_basis_candidate_sha") &&
+       release_publication_script_body.include?("qa_evidence_relation_to_release_basis") &&
+       release_publication_script_body.include?("approved_qa_neutral_descendant") &&
+       release_publication_script_body.include?("qa_evidence != release_sha") &&
+       release_publication_script_body.include?("release_sha != release_basis") &&
+       release_publication_script_body.include?("qa_reuse_attempt == 1") &&
+       release_publication_script_body.include?("remote_main_relation_to_release_basis") &&
        release_publication_script_body.include?(%q[remote_relation in {"equal", "ancestor"}]) &&
        release_publication_script_body.include?(%q[next_action = "push_main"]) &&
        release_publication_script_body.include?(%q[next_action = "create_and_push_tag"]) &&

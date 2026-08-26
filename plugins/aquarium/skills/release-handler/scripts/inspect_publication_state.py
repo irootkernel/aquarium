@@ -8,9 +8,9 @@ import re
 import sys
 from typing import Any
 
-REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v2"
-RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v2"
-ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v2"
+REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v3"
+RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v3"
+ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v3"
 MAX_REQUEST_BYTES = 64 * 1024
 SEMVER = re.compile(r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$")
 OBJECT_ID = re.compile(r"^[0-9a-f]{40,64}$")
@@ -61,13 +61,16 @@ def inspect(payload: object) -> dict[str, object]:
         {
             "schema_version",
             "version",
-            "qa_candidate_sha",
+            "release_basis_candidate_sha",
             "release_commit",
             "qa_evidence_candidate_sha",
+            "qa_evidence_relation_to_release_basis",
+            "qa_binding",
+            "qa_reuse_attempt",
             "gate_evidence_release_commit_sha",
             "local_main_sha",
             "remote_main_sha",
-            "remote_main_relation_to_qa_candidate",
+            "remote_main_relation_to_release_basis",
             "tag",
             "hosted_release",
         },
@@ -76,7 +79,9 @@ def inspect(payload: object) -> dict[str, object]:
     version = request["version"]
     if not isinstance(version, str) or SEMVER.fullmatch(version) is None:
         raise ObservationError("observation_invalid", "version is invalid")
-    qa_candidate = object_id(request["qa_candidate_sha"], "qa candidate")
+    release_basis = object_id(
+        request["release_basis_candidate_sha"], "release-basis candidate"
+    )
     release_commit = exact_mapping(
         request["release_commit"], {"sha", "parent_sha", "title"}, "release commit"
     )
@@ -88,12 +93,33 @@ def inspect(payload: object) -> dict[str, object]:
     qa_evidence = optional_object_id(
         request["qa_evidence_candidate_sha"], "QA evidence candidate"
     )
+    qa_relation = request["qa_evidence_relation_to_release_basis"]
+    if not isinstance(qa_relation, str) or qa_relation not in {
+        "equal",
+        "direct_parent",
+    }:
+        raise ObservationError(
+            "observation_invalid", "QA evidence relationship is invalid"
+        )
+    qa_binding = request["qa_binding"]
+    if not isinstance(qa_binding, str) or qa_binding not in {
+        "exact",
+        "approved_qa_neutral_descendant",
+    }:
+        raise ObservationError("observation_invalid", "QA binding is invalid")
+    qa_reuse_attempt = request["qa_reuse_attempt"]
+    if (
+        not isinstance(qa_reuse_attempt, int)
+        or isinstance(qa_reuse_attempt, bool)
+        or qa_reuse_attempt not in {0, 1}
+    ):
+        raise ObservationError("observation_invalid", "QA reuse attempt is invalid")
     gate_evidence = optional_object_id(
         request["gate_evidence_release_commit_sha"], "gate evidence release commit"
     )
     local_main = object_id(request["local_main_sha"], "local main")
     remote_main = object_id(request["remote_main_sha"], "remote main")
-    remote_relation = request["remote_main_relation_to_qa_candidate"]
+    remote_relation = request["remote_main_relation_to_release_basis"]
     if not isinstance(remote_relation, str) or remote_relation not in {
         "equal",
         "ancestor",
@@ -103,7 +129,7 @@ def inspect(payload: object) -> dict[str, object]:
         raise ObservationError(
             "observation_invalid", "remote main relationship is invalid"
         )
-    if (remote_main == qa_candidate) != (remote_relation == "equal"):
+    if (remote_main == release_basis) != (remote_relation == "equal"):
         raise ObservationError(
             "observation_invalid", "remote main relationship contradicts its SHA"
         )
@@ -133,11 +159,26 @@ def inspect(payload: object) -> dict[str, object]:
             "observation_invalid", "absent hosted release has object data"
         )
 
+    exact_qa_binding = (
+        qa_binding == "exact"
+        and qa_evidence == release_basis
+        and qa_relation == "equal"
+        and qa_reuse_attempt == 0
+    )
+    neutral_qa_binding = (
+        qa_binding == "approved_qa_neutral_descendant"
+        and qa_evidence is not None
+        and qa_evidence != release_basis
+        and qa_evidence != release_sha
+        and qa_relation == "direct_parent"
+        and qa_reuse_attempt == 1
+    )
     evidence_status = (
         "matching"
-        if release_parent == qa_candidate
+        if release_sha != release_basis
+        and release_parent == release_basis
         and release_title == f"[REL] Release {version}"
-        and qa_evidence == qa_candidate
+        and (exact_qa_binding or neutral_qa_binding)
         and gate_evidence == release_sha
         else "unproven"
     )
@@ -202,10 +243,14 @@ def inspect(payload: object) -> dict[str, object]:
     return {
         "schema_version": RESULT_SCHEMA_VERSION,
         "version": version,
-        "qa_candidate_sha": qa_candidate,
+        "release_basis_candidate_sha": release_basis,
+        "qa_evidence_candidate_sha": qa_evidence,
+        "qa_evidence_relation_to_release_basis": qa_relation,
+        "qa_binding": qa_binding,
+        "qa_reuse_attempt": qa_reuse_attempt,
         "release_commit_sha": release_sha,
         "remote_main_sha": remote_main,
-        "remote_main_relation_to_qa_candidate": remote_relation,
+        "remote_main_relation_to_release_basis": remote_relation,
         "classification": classification,
         "next_action": next_action,
         "statuses": statuses,

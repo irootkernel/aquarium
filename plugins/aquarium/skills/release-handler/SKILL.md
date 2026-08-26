@@ -5,7 +5,7 @@ description: "Prepare, validate, publish, or retarget one stable release with cu
 
 # Release Handler
 
-Own one stable release lifecycle without weakening repository release policy. Read [evidence-residency.md](../../references/evidence-residency.md), [release-notes.md](../../references/release-notes.md), and the repository's complete release instructions. Use `$aquarium:release-qa` for scenario QA and `$aquarium:task-commit` for every actual commit; neither leaf grants this workflow publication authority.
+Own one stable release lifecycle without weakening repository release policy. Read [evidence-residency.md](../../references/evidence-residency.md), [release-notes.md](../../references/release-notes.md), and the repository's complete release instructions. Use `$aquarium:release-qa` for scenario QA and `$aquarium:task-commit` for every actual commit; neither leaf grants this workflow publication authority. Read [gate-convergence.md](references/gate-convergence.md) before executing or recovering from a full release gate.
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases through already-configured ambient authentication. It does not authorize credential inspection or changes, authentication, staging, commits, pushes, tags, hosted Releases, destructive tag or Release changes, or post-release next-cycle publication. Obtain each required authority at its actual boundary.
 
@@ -38,11 +38,19 @@ If the retained record is unavailable or the manifest cannot be reconciled exact
 
 ## Create and Publish the Release
 
-After QA passes, re-inspect the exact candidate and confirm that changelog entries are byte-identical to the passing candidate. Apply only repository-authorized release metadata: the published version, pinned validation expectation, the changelog heading's `Unreleased` to publication-date transition, and deterministic release links when the repository uses them. Any entry-text change invalidates QA and returns to candidate settlement.
+After QA passes, re-inspect the exact candidate and confirm that changelog entries are byte-identical to the passing candidate. The sole later candidate exception is one approved QA-neutral direct child established under the gate-convergence reference; keep its direct-QA SHA and release-basis SHA distinct.
 
-Before running the selected repository release gate, show its exact commands and obtain separate explicit authority to execute them; selecting `full` or `light` does not itself authorize tests or other gate commands. If authority is withheld, leave the gate unrun and stop as incomplete.
+Apply only repository-authorized release metadata: the published version, pinned validation expectation, the changelog heading's `Unreleased` to publication-date transition, and deterministic release links when the repository uses them. Any entry-text change invalidates QA and returns to candidate settlement.
 
-Run only the approved gate commands and all required mismatch checks. Do not commit or publish when a required check fails or is missing. After explicit commit approval, create exactly one repository-conforming release commit through `$aquarium:task-commit` with `intentional no-note`. Preserve the exact QA candidate SHA, release commit and parent, QA result, and release-gate result in the active handler report, then obtain separate push and publication authority.
+Before running the selected repository release gate, show its exact commands and obtain separate explicit authority; selecting `full` or `light` does not itself authorize tests or other gate commands. If authority is withheld, leave the gate unrun and stop as incomplete.
+
+In full mode, freeze its authoritative public checkpoints and include the aggregate and every possible suffix command in the requested convergence authority. In light mode, preserve the repository's fixed reduced gate and stop when policy requires full verification. Never split recipe lines or infer resumable stages from command output.
+
+Run only the approved gate commands and all required mismatch checks. On a full-gate failure, use the gate-convergence reference: rerun only the failing public checkpoint through the frozen suffix while diagnosing, settle at most one correction commit for that cycle, and require the complete authoritative gate to pass once from the beginning without candidate mutation before release. Suffix completion is never release-gate `PASS`.
+
+A QA-affecting correction requires new full release QA with explicit authority; the current invocation stops before that pass. The handler may instead restart once from a proven, explicitly approved QA-neutral direct child without rerunning release QA; never classify a small diff by size, accept a second reuse, or report the direct child as directly QA-passed. A new invocation re-establishes all facts and authority.
+
+Do not commit or publish when a required check fails or is missing. After explicit commit approval, create exactly one repository-conforming release commit through `$aquarium:task-commit` with `intentional no-note`. Preserve the direct-QA candidate SHA, release-basis candidate SHA, QA binding, release commit and parent, QA result, and release-gate result in the active handler report, then obtain separate push and publication authority.
 
 Publish in this order unless stricter repository policy overrides it:
 
@@ -51,9 +59,9 @@ Publish in this order unless stricter repository policy overrides it:
 3. create the hosted Release using the settled changelog entries as highlights and current gate evidence as a separate validation section;
 4. verify remote `main`, the peeled tag, and hosted Release target the intended release commit.
 
-Before every publication mutation and after every successful step, re-query live remote `main`, recompute its ancestry relationship to the QA candidate without fetching, and run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v2` JSON observation.
+Before every publication mutation and after every successful step, re-query live remote `main`, recompute its ancestry relationship to the release-basis candidate without fetching, and run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v3` JSON observation. Bind exact QA directly, or bind one approved QA-neutral direct child while retaining the distinct direct-QA evidence SHA.
 
-Perform only its one returned next action after obtaining that action's authority. A remote `main` that still equals or is an ancestor of the QA candidate permits the single fast-forward `push_main`; a different descendant, divergence, unavailable relationship, `conflict`, or `unproven` state stops as `INCOMPLETE`. A `matching` step is skipped. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
+Perform only its one returned next action after obtaining that action's authority. A remote `main` that still equals or is an ancestor of the release-basis candidate permits the single fast-forward `push_main`; a different descendant, divergence, unavailable relationship, `conflict`, or `unproven` state stops as `INCOMPLETE`. A `matching` step is skipped. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
 
 ## Open the Next Cycle
 
@@ -63,4 +71,6 @@ Show the exact new empty `Unreleased` section and request separate commit author
 
 ## Report
 
-Return the intended version, mode, previous release or confirmed first-release baseline, every candidate and release commit SHA, changelog path and decision, release-qa result and evidence root, local gate commands and exit codes, publication-state classification and per-object status, push, tag, hosted Release and peeled-target verification, next planned version and its separate commit or gap, current Git state, and any remaining uncertainty.
+Return the intended version, mode, previous release or confirmed first-release baseline, every candidate and release commit SHA including the distinct direct-QA, release-basis, and correction commit identities, QA binding, exact reuse-attempt fact and approval, changelog path and decision, release-qa result and evidence root, frozen gate checkpoints, and suffix and final aggregate commands and exit codes.
+
+Also return publication-state classification and per-object status, push, tag, hosted Release and peeled-target verification, next planned version and its separate commit or gap, current Git state, and any remaining uncertainty.

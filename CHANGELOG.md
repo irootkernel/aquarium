@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Extend docs-setup with explicit audience, epic SOT lifecycle, canonical closeout, operations documentation, and conservative structural inspection.
+- Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, and permit one approved QA-neutral direct child without misbinding publication evidence.
 
 ### Fixed
 

@@ -56,7 +56,9 @@ Independent review uses one fresh Codex. Orca review uses one selected supported
 
 Full release mode runs the complete repository gate after metadata changes. Light mode requires explicit prior test confirmation for the exact candidate and permits only release metadata changes. A functional change invalidates light-mode confirmation and requires new confirmation or full mode.
 
-After QA, the handler verifies unchanged candidate and entry text, creates the repository-authorized release commit, pushes main, creates and pushes an annotated tag, publishes the hosted Release, and verifies all three remote identities. Opening the next Unreleased cycle remains a separate post-release action.
+After QA, the handler normally verifies an unchanged candidate and unchanged entry text. A failed full gate may use bounded public-checkpoint suffixes for diagnosis, but each cycle settles at most one correction commit and release readiness still requires one uninterrupted final aggregate from the beginning. QA-affecting corrections require a new authorized full release QA; the sole reuse exception is one approved QA-neutral direct child whose direct-QA and release-basis SHAs remain distinct.
+
+The handler then creates the repository-authorized release commit, pushes main, creates and pushes an annotated tag, publishes the hosted Release, and verifies all three remote identities. Opening the next Unreleased cycle remains a separate post-release action.
 
 ## Pause, Resume, and Hand Off
 

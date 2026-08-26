@@ -22,19 +22,22 @@ BASE = "4" * 40
 
 def observation() -> dict[str, object]:
     return {
-        "schema_version": "aquarium-release-publication-observation/v2",
+        "schema_version": "aquarium-release-publication-observation/v3",
         "version": "v0.1.11",
-        "qa_candidate_sha": QA,
+        "release_basis_candidate_sha": QA,
         "release_commit": {
             "sha": RELEASE,
             "parent_sha": QA,
             "title": "[REL] Release v0.1.11",
         },
         "qa_evidence_candidate_sha": QA,
+        "qa_evidence_relation_to_release_basis": "equal",
+        "qa_binding": "exact",
+        "qa_reuse_attempt": 0,
         "gate_evidence_release_commit_sha": RELEASE,
         "local_main_sha": RELEASE,
         "remote_main_sha": QA,
-        "remote_main_relation_to_qa_candidate": "equal",
+        "remote_main_relation_to_release_basis": "equal",
         "tag": {"state": "absent", "annotated": False, "peeled_sha": None},
         "hosted_release": {"state": "absent", "tag": None, "target_sha": None},
     }
@@ -47,7 +50,7 @@ def observation() -> dict[str, object]:
         (
             lambda value: value.update(
                 remote_main_sha=RELEASE,
-                remote_main_relation_to_qa_candidate="descendant",
+                remote_main_relation_to_release_basis="descendant",
             ),
             "partial",
             "create_and_push_tag",
@@ -56,7 +59,7 @@ def observation() -> dict[str, object]:
             lambda value: (
                 value.update(
                     remote_main_sha=RELEASE,
-                    remote_main_relation_to_qa_candidate="descendant",
+                    remote_main_relation_to_release_basis="descendant",
                 ),
                 value.update(
                     tag={
@@ -73,7 +76,7 @@ def observation() -> dict[str, object]:
             lambda value: (
                 value.update(
                     remote_main_sha=RELEASE,
-                    remote_main_relation_to_qa_candidate="descendant",
+                    remote_main_relation_to_release_basis="descendant",
                 ),
                 value.update(
                     tag={
@@ -105,11 +108,11 @@ def test_publication_resume_returns_one_ordered_action(
     assert result["next_action"] == next_action
 
 
-def test_publication_allows_remote_ancestor_of_qa_candidate() -> None:
+def test_publication_allows_remote_ancestor_of_release_basis() -> None:
     value = observation()
     value.update(
         remote_main_sha=BASE,
-        remote_main_relation_to_qa_candidate="ancestor",
+        remote_main_relation_to_release_basis="ancestor",
     )
 
     result = inspect_publication_state.inspect(value)
@@ -118,7 +121,68 @@ def test_publication_allows_remote_ancestor_of_qa_candidate() -> None:
     assert result["next_action"] == "push_main"
     assert result["statuses"]["remote_main"] == "missing"
     assert result["remote_main_sha"] == BASE
-    assert result["remote_main_relation_to_qa_candidate"] == "ancestor"
+    assert result["remote_main_relation_to_release_basis"] == "ancestor"
+
+
+def test_publication_accepts_one_approved_qa_neutral_descendant() -> None:
+    value = observation()
+    value.update(
+        release_basis_candidate_sha=OTHER,
+        qa_evidence_relation_to_release_basis="direct_parent",
+        qa_binding="approved_qa_neutral_descendant",
+        qa_reuse_attempt=1,
+        remote_main_sha=OTHER,
+        remote_main_relation_to_release_basis="equal",
+    )
+    value["release_commit"]["parent_sha"] = OTHER
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "partial"
+    assert result["next_action"] == "push_main"
+    assert result["statuses"]["evidence"] == "matching"
+    assert result["release_basis_candidate_sha"] == OTHER
+    assert result["qa_evidence_candidate_sha"] == QA
+    assert result["qa_evidence_relation_to_release_basis"] == "direct_parent"
+    assert result["qa_binding"] == "approved_qa_neutral_descendant"
+    assert result["qa_reuse_attempt"] == 1
+
+
+def test_publication_rejects_circular_qa_evidence_binding() -> None:
+    value = observation()
+    value.update(
+        release_basis_candidate_sha=OTHER,
+        qa_evidence_candidate_sha=RELEASE,
+        qa_evidence_relation_to_release_basis="direct_parent",
+        qa_binding="approved_qa_neutral_descendant",
+        qa_reuse_attempt=1,
+        remote_main_sha=OTHER,
+        remote_main_relation_to_release_basis="equal",
+    )
+    value["release_commit"]["parent_sha"] = OTHER
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "unproven"
+    assert result["next_action"] == "stop"
+    assert result["statuses"]["evidence"] == "unproven"
+
+
+def test_publication_rejects_self_parent_release_commit() -> None:
+    value = observation()
+    value.update(
+        release_basis_candidate_sha=RELEASE,
+        qa_evidence_candidate_sha=RELEASE,
+        remote_main_sha=QA,
+        remote_main_relation_to_release_basis="ancestor",
+    )
+    value["release_commit"]["parent_sha"] = RELEASE
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "unproven"
+    assert result["next_action"] == "stop"
+    assert result["statuses"]["evidence"] == "unproven"
 
 
 @pytest.mark.parametrize(
@@ -127,11 +191,11 @@ def test_publication_allows_remote_ancestor_of_qa_candidate() -> None:
         lambda value: value.update(local_main_sha=OTHER),
         lambda value: value.update(
             remote_main_sha=OTHER,
-            remote_main_relation_to_qa_candidate="descendant",
+            remote_main_relation_to_release_basis="descendant",
         ),
         lambda value: value.update(
             remote_main_sha=OTHER,
-            remote_main_relation_to_qa_candidate="diverged",
+            remote_main_relation_to_release_basis="diverged",
         ),
         lambda value: value.update(
             tag={"state": "present", "annotated": False, "peeled_sha": RELEASE}
@@ -177,7 +241,7 @@ def test_remote_relationship_must_match_observed_sha(
     value = observation()
     value.update(
         remote_main_sha=remote_sha,
-        remote_main_relation_to_qa_candidate=relation,
+        remote_main_relation_to_release_basis=relation,
     )
 
     with pytest.raises(inspect_publication_state.ObservationError) as error:
@@ -188,7 +252,7 @@ def test_remote_relationship_must_match_observed_sha(
 
 def test_remote_relationship_rejects_non_string_value() -> None:
     value = observation()
-    value["remote_main_relation_to_qa_candidate"] = []
+    value["remote_main_relation_to_release_basis"] = []
 
     with pytest.raises(inspect_publication_state.ObservationError) as error:
         inspect_publication_state.inspect(value)
@@ -196,15 +260,89 @@ def test_remote_relationship_rejects_non_string_value() -> None:
     assert error.value.code == "observation_invalid"
 
 
-def test_v1_observation_is_rejected() -> None:
+def test_v2_observation_is_rejected() -> None:
     value = observation()
-    value["schema_version"] = "aquarium-release-publication-observation/v1"
-    del value["remote_main_relation_to_qa_candidate"]
+    value["schema_version"] = "aquarium-release-publication-observation/v2"
 
     with pytest.raises(inspect_publication_state.ObservationError) as error:
         inspect_publication_state.inspect(value)
 
     assert error.value.code == "schema_unsupported"
+
+
+@pytest.mark.parametrize(
+    "configure",
+    [
+        lambda value: value.update(
+            qa_binding="approved_qa_neutral_descendant",
+            qa_evidence_relation_to_release_basis="direct_parent",
+            qa_reuse_attempt=1,
+        ),
+        lambda value: value.update(
+            release_basis_candidate_sha=OTHER,
+            qa_binding="approved_qa_neutral_descendant",
+            qa_evidence_relation_to_release_basis="equal",
+            qa_reuse_attempt=1,
+        ),
+        lambda value: value.update(
+            release_basis_candidate_sha=OTHER,
+            qa_binding="approved_qa_neutral_descendant",
+            qa_evidence_relation_to_release_basis="direct_parent",
+            qa_reuse_attempt=0,
+        ),
+        lambda value: value.update(
+            qa_binding="exact",
+            qa_evidence_relation_to_release_basis="direct_parent",
+            qa_reuse_attempt=0,
+        ),
+        lambda value: value.update(qa_evidence_candidate_sha=OTHER),
+        lambda value: value.update(qa_reuse_attempt=1),
+        lambda value: value.update(
+            release_basis_candidate_sha=OTHER,
+            qa_evidence_candidate_sha=None,
+            qa_binding="approved_qa_neutral_descendant",
+            qa_evidence_relation_to_release_basis="direct_parent",
+            qa_reuse_attempt=1,
+        ),
+    ],
+)
+def test_invalid_qa_bindings_do_not_prove_release(configure: object) -> None:
+    value = observation()
+    configure(value)
+    if value["release_basis_candidate_sha"] == OTHER:
+        value["release_commit"]["parent_sha"] = OTHER
+        value.update(
+            remote_main_sha=OTHER,
+            remote_main_relation_to_release_basis="equal",
+        )
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "unproven"
+    assert result["next_action"] == "stop"
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid"),
+    [
+        ("qa_binding", "unknown"),
+        ("qa_binding", []),
+        ("qa_evidence_relation_to_release_basis", "ancestor"),
+        ("qa_evidence_relation_to_release_basis", []),
+        ("qa_reuse_attempt", -1),
+        ("qa_reuse_attempt", 2),
+        ("qa_reuse_attempt", True),
+        ("qa_reuse_attempt", "1"),
+    ],
+)
+def test_invalid_qa_binding_fields_are_rejected(field: str, invalid: object) -> None:
+    value = observation()
+    value[field] = invalid
+
+    with pytest.raises(inspect_publication_state.ObservationError) as error:
+        inspect_publication_state.inspect(value)
+
+    assert error.value.code == "observation_invalid"
 
 
 @pytest.mark.parametrize(
@@ -231,7 +369,7 @@ def test_unproven_release_evidence_classifies_divergent_remote_release() -> None
     value["release_commit"]["parent_sha"] = OTHER
     value.update(
         remote_main_sha=RELEASE,
-        remote_main_relation_to_qa_candidate="diverged",
+        remote_main_relation_to_release_basis="diverged",
     )
 
     result = inspect_publication_state.inspect(value)
