@@ -10,7 +10,7 @@ The root `CHANGELOG.md` owns cumulative release notes and the open release versi
 
 ## Goal and Purpose
 
-Release Aquarium v0.1.12 from one exact candidate after adopting the released Podway v0.2.6 runtime contract, reauthoring Aquarium's canonical Procedures from the released preset patterns, preserving valid local customization, independently qualifying the official artifact, reconciling Aquarium-owned integration requirements, and verifying the published commit, tag, and GitHub Release.
+Release Aquarium v0.1.12 from one exact candidate after adopting the released Podway v0.2.6 runtime contract, reauthoring Aquarium's canonical Procedures from the released preset patterns, preserving valid local customization, independently qualifying the official artifact, reconciling every predecessor acceptance requirement, and verifying the published commit, tag, and GitHub Release.
 
 This work exists to prevent a development-branch result, consumer-side claim, stale review, or partial publication observation from being promoted to release proof.
 
@@ -20,7 +20,7 @@ This work exists to prevent a development-branch result, consumer-side claim, st
 2. Reauthor the five canonical Aquarium Procedures from the applicable v0.2.6 preset patterns while retaining Aquarium-owned workflow and approval semantics.
 3. Preserve a Podway-valid same-ID local Procedure unless the user explicitly selects reviewed canonical replacement.
 4. Obtain Podway's exact independently released v0.2.6 artifact and qualify the final canonical Procedures and runtime paths against it.
-5. Reconcile all material Aquarium-owned integration requirements, validate the final exact candidate, and execute a full release with exact publication verification.
+5. Reconcile every predecessor acceptance requirement, validate the final exact candidate, and execute a full release with exact publication verification.
 
 ## Cross-Cutting Boundaries
 
@@ -136,8 +136,12 @@ Establish exact distribution evidence for Podway v0.2.6 and independently prove 
 - [ ] Verify the downloaded archive against the published checksum before execution.
 - [ ] Run the complete authoring sequence against all five exact canonical Procedure bytes: format check, validate, vet, lint with warnings as errors, check with warnings as errors, and preview.
 - [ ] Require preview's exact digest-fenced start suggestion and the official binary's v0.2.6 build identity rather than reconstructing either value.
-- [ ] Run `PODWAY_BIN=<absolute-path> make test-podway-compat` against the extracted exact binary and exact Aquarium candidate.
-- [ ] Under separate runtime authorization, exercise the versioned accepted-path inventory through the public CLI, official matching daemon binary, an isolated non-production socket, and disposable worktrees.
+- [ ] Under separate runtime authorization, keep `PODWAY_BIN=<absolute-path> make test-podway-compat` as the stable external-artifact entrypoint and extend it with a reproducible isolated runtime E2E that derives the sibling official `podwayd` from `PODWAY_BIN` and verifies the matching v0.2.6 build identity.
+- [ ] Allocate a unique `/tmp`-rooted disposable `HOME`, Podway home, socket, cache, temporary state, and Git worktree set for every run; do not touch the production daemon or the Aquarium and Podway source repositories, and require no network access after the artifact and checksum are provisioned.
+- [ ] Use observable daemon readiness rather than fixed sleeps, enforce bounded startup, operation, and overall deadlines, and fail nonzero with bounded diagnostics when any deadline expires.
+- [ ] Guarantee termination of the sibling `podwayd` process and cleanup of sockets, temporary state, and disposable worktrees after success, failure, timeout, or interruption so the next run starts cleanly.
+- [ ] Exercise all five exact canonical Procedures through digest-fenced start, goal-bearing begin, observation v3, representative successful completion, and the Aquarium-owned required-evidence, guard-failure, rework, paged-read, and terminal-disposition seams.
+- [ ] Repeat the isolated runtime suite from at least two fresh disposable roots and require the same pass or failure classification with no surviving daemon, socket, temporary state, or worktree.
 - [ ] Confirm the released list-scale declaration and runtime enforcement required by Aquarium.
 - [ ] Confirm strict unknown-field rejection, conditional items, guarded decisions, structured external results, evidence pagination, stale-evidence behavior, immutable old snapshots, and phase-aware verified readiness.
 - [ ] Record the exact Podway SHA, archive and binary identities, checksum result, Aquarium SHA, commands, exit statuses, bounded runtime proof, and limitations separately.
@@ -149,16 +153,17 @@ Establish exact distribution evidence for Podway v0.2.6 and independently prove 
 - [ ] Do not claim Aquarium distribution readiness solely because Podway's release gate passed.
 - [ ] Do not reuse compatibility evidence after either the Podway artifact or Aquarium candidate changes.
 - [ ] Do not start, stop, install, replace, or reuse the production Podway daemon for runtime qualification.
+- [ ] Do not enroll the official-artifact runtime E2E in ordinary `make test` or `make test-e2e`, and do not use the Aquarium or Podway source repository as its runtime sandbox.
 
 ## TASK-003: Validate the Complete Aquarium v0.1.12 Candidate
 
 ### Objective
 
-Reconcile Aquarium-owned integration requirements and validate one final exact candidate after every accepted release-affecting change.
+Reconcile every predecessor acceptance requirement and validate one final exact candidate after every accepted release-affecting change.
 
 ### Do
 
-- [ ] Map every Aquarium-owned requirement from the two Sudal integration requests to current code, tests, documentation, and exact external-release evidence.
+- [ ] Map every acceptance requirement owned by `TASK-016`, `TASK-017`, `TASK-018`, `TASK-001`, and `TASK-002` to the latest code, tests, documentation, and exact external-release evidence.
 - [ ] Distinguish already satisfied behavior, confirmed gaps, external ownership, and unverifiable claims without creating retroactive Completed tasks.
 - [ ] Require stable Podway v0.2.6 through v0.2.x and validate the v0.2.6 runtime interfaces and all canonical Procedure behavior with the exact released binary.
 - [ ] Validate Podway-valid same-ID local Procedure preservation, explicit canonical replacement, and the no-overwrite boundary without an Aquarium structural compatibility layer.
@@ -170,7 +175,7 @@ Reconcile Aquarium-owned integration requirements and validate one final exact c
 
 ### Do Not
 
-- [ ] Do not use stale integration-request analysis or evidence from an earlier candidate.
+- [ ] Do not use validation or evidence from an earlier candidate.
 - [ ] Do not promote a cross-repository consumer claim to completion of producer-owned work.
 - [ ] Do not claim release or distribution readiness from green static validators alone.
 - [ ] Do not leave a current correctness or acceptance blocker as deferred feedback.

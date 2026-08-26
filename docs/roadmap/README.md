@@ -35,21 +35,23 @@ Epic status is independent of child task status. Completing every child does not
 
 **Status:** `Planned`
 
-Deliver Aquarium v0.1.12 with the released Podway v0.2.6 runtime contract, preset-informed canonical Procedures, preserved local Procedure customization, complete Sudal integration-request validation, and verified publication.
+Deliver Aquarium v0.1.12 with the released Podway v0.2.6 runtime contract, preset-informed canonical Procedures, preserved local Procedure customization, complete predecessor-acceptance validation, and verified publication.
 
 Podway owns its v0.2.6 implementation, release QA, distribution gate, and publication. Aquarium may consume that result only after it obtains the exact Podway release commit and independently verifies the official artifact; an Aquarium consumer claim alone cannot complete the dependency.
 
 **Detailed SOT:** [`TODO-RELEASE-v0-1-12.md`](../todo/TODO-RELEASE-v0-1-12.md)
 
-| Task | Title | Summary | Status | Depends On |
-| --- | --- | --- | --- | --- |
-| TASK-016 | Align the Podway v0.2.6 runtime contract | Adopt the released observation, lifecycle, evidence-read, skill, and daemon-readiness interfaces. | Planned | External Podway v0.2.6 release |
-| TASK-017 | Reauthor the delivery Procedures | Rebuild the task, goal, and validation Procedures from the applicable v0.2.6 preset patterns. | Planned | TASK-016 |
-| TASK-018 | Reauthor the analysis Procedures | Rebuild the design and war-room Procedures from the applicable v0.2.6 analysis and bug-fix patterns. | Planned | TASK-016 |
-| TASK-001 | Preserve local Procedure customization | Accept Podway-valid same-ID local Procedure content and replace it only after an explicit reviewed choice. | Planned | TASK-017, TASK-018 |
-| TASK-002 | Qualify the official Podway v0.2.6 release | Independently verify the exact released artifact against the final canonical Procedures and runtime paths. | Planned | TASK-001, TASK-016, TASK-017, TASK-018; external Podway v0.2.6 release |
-| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Reconcile integration requirements and prove the final exact development candidate. | Planned | TASK-001, TASK-002, TASK-016, TASK-017, TASK-018 |
-| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Planned | TASK-003 |
+**Design Gate impact:** `Not required` — Member-task acceptance owns every identified local requirement. Focused task checks, exact external-artifact and development qualification, epic validation, release QA, and publication observation will verify those requirements and outcomes without defining another epic invariant.
+
+| Task | Title | Summary | Status | Depends On | Design Gate impact | Reason |
+| --- | --- | --- | --- | --- | --- | --- |
+| TASK-016 | Align the Podway v0.2.6 runtime contract | Adopt the released observation, lifecycle, evidence-read, skill, and daemon-readiness interfaces. | Planned | External Podway v0.2.6 release | Not required | Task acceptance owns its versioned runtime and inspection contracts, and the task's consumer, fixture, and focused interface checks will verify them without defining an additional gate invariant. |
+| TASK-017 | Reauthor the delivery Procedures | Rebuild the task, goal, and validation Procedures from the applicable v0.2.6 preset patterns. | Planned | TASK-016 | Not required | Task acceptance owns its delivery Procedure contracts, and Podway authoring checks and focused delivery-path scenarios will verify them without defining an additional gate invariant. |
+| TASK-018 | Reauthor the analysis Procedures | Rebuild the design and war-room Procedures from the applicable v0.2.6 analysis and bug-fix patterns. | Planned | TASK-016 | Not required | Task acceptance owns its analysis Procedure contracts, and Podway authoring checks and focused design and war-room scenarios will verify them without defining an additional gate invariant. |
+| TASK-001 | Preserve local Procedure customization | Accept Podway-valid same-ID local Procedure content and replace it only after an explicit reviewed choice. | Planned | TASK-017, TASK-018 | Not required | Task acceptance owns its local-customization and no-overwrite contracts, and focused setup and update scenarios will verify them without defining an additional gate invariant. |
+| TASK-002 | Qualify the official Podway v0.2.6 release | Independently verify the exact released artifact against the final canonical Procedures and runtime paths. | Planned | TASK-001, TASK-016, TASK-017, TASK-018; external Podway v0.2.6 release | Not required | Task acceptance owns its official-artifact and bounded-daemon qualification requirements, and the exact external-artifact gate will verify them without defining an additional Design Gate invariant. |
+| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Reconcile every predecessor acceptance requirement and prove the final exact development candidate. | Planned | TASK-001, TASK-002, TASK-016, TASK-017, TASK-018 | Not required | Task acceptance owns predecessor reconciliation and current-candidate requirements, and the development gate will verify them without defining a new invariant. Any newly discovered eligible seam invariant must be reclassified as Pending before implementation. |
+| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Planned | TASK-003 | Not required | Task acceptance owns its publication requirements, while release QA and ordered publication observation will verify network- and remote-state-dependent outcomes outside the Design Gate contract. |
 
 ## EPIC-002: Build the Aquarium Development Environment
 
