@@ -199,6 +199,8 @@ orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
 orca_provider_contracts = PLUGIN.join("skills/orca-review/references/provider-contracts.md").read
 orca_terminal_helper = PLUGIN.join("skills/orca-review/scripts/create_provider_terminal.py")
 orca_terminal_helper_body = orca_terminal_helper.read
+orca_state_helper = PLUGIN.join("skills/orca-review/scripts/inspect_repository_state.py")
+orca_state_helper_body = orca_state_helper.read
 review_contract = PLUGIN.join("references/review-contract.md").read
 orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
@@ -2053,15 +2055,44 @@ assert(orca_review.include?("run no tests or builds") &&
        orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
        "orca-review must remain static, adjudicated, and operationally bounded")
 
-assert(orca_provider_contracts.include?("<PROVIDER> --model fable --permission-mode plan") &&
+assert(orca_provider_contracts.include?("<PROVIDER> --model fable --dangerously-skip-permissions\n") &&
        orca_provider_contracts.include?("may create Opus or Sonnet subagents when") &&
        orca_provider_contracts.include?("A small review may remain Fable-only") &&
-       orca_provider_contracts.include?("<PROVIDER> --model k3 --plan") &&
-       orca_provider_contracts.include?("<PROVIDER> --mode plan --sandbox") &&
+       orca_provider_contracts.include?("<PROVIDER> --model k3 --yolo\n") &&
+       orca_provider_contracts.include?("<PROVIDER> --sandbox --dangerously-skip-permissions\n") &&
        orca_provider_contracts.include?("--agent <agent> --model <model> --effort <effort>") &&
        orca_provider_contracts.include?("Do not run `agy agent`, `agy models`") &&
-       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --mode plan"),
+       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --yolo\n") &&
+       !orca_provider_contracts.include?("--permission-mode plan") &&
+       !orca_provider_contracts.include?("--model k3 --plan") &&
+       !orca_provider_contracts.include?("--mode plan"),
        "orca-review provider contracts must preserve exact launches and optional provider-native delegation")
+assert(orca_provider_contracts.include?("provider-native auto-approval or permission-bypass argument") &&
+       orca_provider_contracts.include?("coordinator-owned pre-Dispatch and post-completion repository-state comparison") &&
+       orca_provider_contracts.include?("unexpected permission or authentication prompt is an operational failure") &&
+       orca_provider_contracts.include?("without asking the coordinator or user to approve it") &&
+       orca_review.include?("must not enter or request a provider plan mode") &&
+       orca_review.include?("never create, modify, delete, or move a file") &&
+       orca_review.include?("never alter the Git index or a ref") &&
+       orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot") &&
+       orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --compare") &&
+       orca_review.include?("HEAD or ref drift, provider-attributed drift, or unexplained drift") &&
+       orca_review.include?("without asking the coordinator or user to approve it"),
+       "orca-review auto-approval mode must preserve a supervised no-mutation boundary")
+assert(orca_state_helper.file? &&
+       orca_state_helper_body.include?('SCHEMA_VERSION = "aquarium-orca-review-repository-state/v1"') &&
+       orca_state_helper_body.include?('"for-each-ref"') &&
+       orca_state_helper_body.include?('["ls-files", "--stage", "-z"]') &&
+       orca_state_helper_body.include?('["diff", "--binary", "--no-ext-diff", "--no-textconv"]') &&
+       orca_state_helper_body.include?('["status", "--porcelain=v2", "-z", "--untracked-files=all"]') &&
+       orca_state_helper_body.include?('"drift": bool(changed)') &&
+       orca_state_helper_body.include?("baseline fingerprint is invalid"),
+       "orca-review repository-state helper must compare bounded Git-observable state")
+assert(ROOT.join("PRIVACY.md").read.include?("native auto-approval or permission-bypass argument") &&
+       ROOT.join("PRIVACY.md").read.include?("not automatically reverted") &&
+       ROOT.join("TERMS.md").read.include?("provider-native auto-approval or permission-bypass arguments") &&
+       ROOT.join("TERMS.md").read.include?("invalidates a clean review verdict"),
+       "public policy must disclose Orca Review's auto-approval and no-mutation boundary")
 assert(orca_review.include?("scripts/create_provider_terminal.py") &&
        orca_review.include?("exact Git worktree root") &&
        orca_provider_contracts.include?("non-expanding stdin") &&
@@ -2697,13 +2728,15 @@ assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit 
 assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py") &&
        makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py") &&
        makefile.include?("plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py") &&
+       makefile.include?("plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py") &&
        makefile.include?("tests/unit/test_inspect_release_notes_unit.py") &&
        makefile.include?("tests/unit/test_inspect_publication_state_unit.py") &&
        makefile.include?("tests/unit/test_create_provider_terminal_unit.py") &&
+       makefile.include?("tests/unit/test_inspect_orca_review_state_unit.py") &&
        makefile.include?("plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py") &&
        makefile.include?("tests/unit/test_inspect_review_target_unit.py") &&
-       testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers") &&
-       testing_document.include?("release-notes, publication-state, provider-terminal, and independent-review target helpers' bounded structural states"),
+       testing_document.include?("release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target inspectors and helpers") &&
+       testing_document.include?("release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target helpers' bounded structural states"),
        "release and review helpers and tests must remain in the common test contract")
 assert(makefile.include?("test-podway-compat: test-requirements") &&
        makefile.include?('PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py') &&
@@ -2728,7 +2761,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
        testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
-       testing_document.include?("docs-setup, release-notes, publication-state, provider-terminal, and independent-review target inspectors and helpers") &&
+       testing_document.include?("docs-setup, release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target inspectors and helpers") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),

@@ -21,6 +21,7 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
 	plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py \
+	plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
 	plugins/aquarium/skills/test-setup/scripts/inspect_testing.py \
@@ -32,6 +33,7 @@ PYTHON_FILES := \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_create_provider_terminal_unit.py \
+	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \

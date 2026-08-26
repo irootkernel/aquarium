@@ -39,13 +39,21 @@ The selection record must disclose the exact provider command, requested lead id
 
 Resolve the installed Orca command and live guides exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run and Task, then create one fresh provider terminal in the current worktree only through `scripts/create_provider_terminal.py` with the selected logical argv from [provider-contracts.md](references/provider-contracts.md).
 
-Feed the helper request through non-expanding stdin with the exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing. The helper-generated command must revalidate provider identity at provider-process start. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
+Immediately before terminal creation, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned baseline. Then feed the terminal-helper request through non-expanding stdin with that same exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing.
 
-Inject one Dispatch containing the canonical Task. Require the lead to remain read-only, run no tests or builds, inspect exact target blobs instead of excluded working-tree copies, report only verified actionable findings, label execution-dependent claims `runtime unverified`, modify no files, and complete the injected lifecycle exactly once.
+The helper-generated command must revalidate provider identity at provider-process start. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
+
+Inject one Dispatch containing the canonical Task. Tell the lead explicitly that this is review, not implementation, and that it must not enter or request a provider plan mode. Regardless of the tools available in normal mode, require the lead to remain read-only; never create, modify, delete, or move a file; and never alter the Git index or a ref.
+
+Require the lead to run no tests or builds and no generators, formatters, or linters; perform no authentication, installation, or update; inspect exact target blobs instead of excluded working-tree copies; report only verified actionable findings; label execution-dependent claims `runtime unverified`; and complete the injected lifecycle exactly once. If required evidence cannot be gathered under those restrictions, require a bounded confirmation need instead of a mutation.
 
 Provider-native subagents are optional evidence gatherers except where the selected provider contract says otherwise. The lead owns decomposition, evidence review, requirement-goal assessment, deduplication, decisions, and final synthesis. Record which subagents and effective models were actually used when the provider exposes that evidence; absence of optional subagents is not a review failure.
 
-Supervise, settle, acknowledge, and recover through the live Orca guides. Never retry automatically, switch providers, weaken permissions, release an active worker, or reinterpret an operational failure as `APPROVE`.
+Supervise, settle, acknowledge, and recover through the live Orca guides. The exact provider-native auto-approval or permission-bypass argument must prevent ordinary permission prompts. If a permission prompt still appears, treat it as an operational failure and stop without asking the coordinator or user to approve it, sending input, switching modes, or weakening the review restrictions. Never retry automatically, switch providers, release an active worker, or reinterpret an operational failure as `APPROVE`.
+
+After accepted completion and before adjudication, feed the complete baseline through non-expanding stdin to `scripts/inspect_repository_state.py --repository <exact-git-root> --compare`. Report the returned modified-file status and changed dimensions. No drift proves only the helper's bounded Git-observable state. HEAD or ref drift, provider-attributed drift, or unexplained drift is operationally incomplete and prevents `APPROVE`; report it without reverting anything.
+
+When exact index or dirty-remainder drift is user-owned, re-run the canonical target inspector, obtain confirmation for the displayed paths, and apply the shared staged-target or excluded-dirty rules instead of invalidating solely because the live staged index changed.
 
 ## Adjudicate and Report
 

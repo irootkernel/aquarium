@@ -6,7 +6,7 @@ Read only the selected provider section after loading the shared review and Orca
 
 The helper requires the supplied repository to be the exact Git worktree root, revalidates the consent-bound Orca and provider canonical targets and digests, serializes the provider argv once, and invokes Orca through a native subprocess argument vector. The generated provider command revalidates the provider target, digest, and file identity again at provider-process start before executing it. If non-expanding stdin is unavailable, stop before terminal creation.
 
-Launch one fresh terminal in the current worktree and keep it in the provider's read-only or plan mode. Authentication prompts, model rejection, premature exit, missing Dispatch support, helper rejection, or any request to weaken permissions stop the review.
+Launch one fresh terminal in the current worktree with the exact provider-native auto-approval or permission-bypass argument below. Do not add a plan or accept-edits argument or substitute another permission mode. These arguments prevent interactive permission prompts; the Dispatch instructions, Orca supervision, and the coordinator-owned pre-Dispatch and post-completion repository-state comparison own the no-mutation boundary. An unexpected permission or authentication prompt is an operational failure: stop without asking the coordinator or user to approve it, sending input, or weakening the review restrictions. Model rejection, premature exit, missing Dispatch support, repository-state drift, or helper rejection also stops a clean review unless the shared contract explicitly accepts confirmed user-owned drift.
 
 The lead owns the final verdict. Optional native subagents gather bounded evidence for the lead; they do not report directly to Aquarium. Record their requested and effective identities when the provider exposes that information. Never claim a model identity that the provider does not expose.
 
@@ -15,7 +15,7 @@ The lead owns the final verdict. Optional native subagents gather bounded eviden
 Provider arguments:
 
 ```text
-<PROVIDER> --model fable --permission-mode plan
+<PROVIDER> --model fable --dangerously-skip-permissions
 ```
 
 Fable manages decomposition, evidence review, requirement-goal assessment, decisions, deduplication, and final synthesis. It may create Opus or Sonnet subagents when the target benefits from deeper or broader investigation. Use Opus for difficult architecture, concurrency, or correctness reasoning and Sonnet for broad caller, test, or documentation tracing. A small review may remain Fable-only.
@@ -27,7 +27,7 @@ Record which Opus or Sonnet work was actually used and whether Fable accepted, r
 Provider arguments:
 
 ```text
-<PROVIDER> --model k3 --plan
+<PROVIDER> --model k3 --yolo
 ```
 
 Kimi may use its native review or exploration agents when useful. Do not select a configured secondary model silently. Record the effective lead or subagent identity when exposed; otherwise report it as unknown without turning that absence alone into a failed review.
@@ -37,7 +37,7 @@ Kimi may use its native review or exploration agents when useful. Do not select 
 Default provider arguments:
 
 ```text
-<PROVIDER> --mode plan --sandbox
+<PROVIDER> --sandbox --dangerously-skip-permissions
 ```
 
 Use the installed Agy defaults unless the user supplied an exact override. Append only the supplied values as native arguments:
@@ -53,7 +53,7 @@ Do not run `agy agent`, `agy models`, or another discovery command. Record the e
 Provider arguments:
 
 ```text
-<PROVIDER> --model grok-4.6 --mode plan
+<PROVIDER> --model grok-4.6 --yolo
 ```
 
 Cursor Agent may use native inherited-model subagents when useful. Do not use a project or user agent definition that forces another model. Record available task and model metadata and let the lead verify and deduplicate all subagent evidence.
