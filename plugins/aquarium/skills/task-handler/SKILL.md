@@ -25,7 +25,7 @@ Require one mutable Git repository or a working directory inside it, one canonic
 6. Route a missing or unhealthy tooling or readiness prerequisite to an exact `$aquarium:dev-setup` continuation request. Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite, and do not install or initialize tools here.
 7. Honor an explicit pre-session opt-out without Podway discovery. Otherwise apply the shared contract's readiness and session checks. On degraded readiness, stop and ask the user to choose `$aquarium:dev-setup` repair or an explicit opt-out for this task.
    - A matching recoverable session becomes part of the plan. Only when starting a different session, present the existing session and obtain the shared contract's explicit preserve, lifecycle, delete, or eligible-replace choice. Never route by skill owner or describe the choice as setup repair.
-   - A disposed terminal session with verified handoff evidence and a current `session.start_replace` template becomes an exact successor candidate. Disclose its fenced eligible replacement in this task's envelope and, after approval, use `start --replace-eligible` without a separate reset before re-observing and beginning the prepared task session.
+   - A disposed terminal session with verified handoff evidence and a current `session.start_replace` template becomes an exact successor candidate. Disclose its automatic archival in this task's envelope and, after approval, execute the template's current plain `start` argv without a separate reset before re-observing and beginning the prepared task session.
 
 In a Sanho-managed repository, record whether `$use-sanho` is available. If repository guidance requires it and it is missing or invalid, route an exact `$aquarium:dev-setup` continuation request. Otherwise keep it optional and let the document and close phases apply the repository's fallback Sanho guidance at their actual Git boundary.
 
@@ -99,9 +99,11 @@ Keep the goal active through every phase. Mark it complete only after `$aquarium
 
 ## Resume Without Shadow State
 
-Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence.
+Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and Mulgae run and finding evidence. When Podway is active, its latest `podway.observation-result/v3` envelope is also required reconstruction evidence.
 
-When Podway is active, its latest `podway.observation-result/v2` envelope is also required reconstruction evidence. A matching prepared revision resumes through its fresh `session.begin` template; a running session resumes at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree. A recorded plan handoff also requires the exact artifact checks in the shared reference. Otherwise stop rather than repairing history by inference.
+Treat bounded readback previews as metadata; retrieve each selected complete value through digest-bound evidence-read pagination, and re-observe and restart when a page token is stale.
+
+A matching prepared revision resumes through its fresh `session.begin` template; a running session resumes at the earliest unproven phase only when the active procedure ID, canonical task identity, goal revision, and current node agree. A recorded plan handoff also requires the exact artifact checks in the shared reference. Otherwise stop rather than repairing history by inference.
 
 Resume at the earliest phase whose postcondition is not currently proven. Do not repeat a proven phase merely to recreate a report, but invalidate affected evidence when task-owned code, tests, documentation, roadmap state, review target, or repository authority changed after that evidence was recorded.
 

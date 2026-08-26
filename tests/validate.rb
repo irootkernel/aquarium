@@ -430,7 +430,10 @@ assert(dev_setup.include?("either `Install and configure` or `Diagnose only`") &
        dev_setup.include?("except for the exact selected-skill freshness comparison authorized below"),
        "dev-setup must compare only explicitly selected Sanho, Mulgae, Gaori, or Podway skills")
 assert(dev_setup.include?("newest non-draft, non-prerelease tag within the tool's supported release line") &&
-       dev_setup.include?("Fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`") &&
+       dev_setup.include?("For Sanho, Mulgae, and Gaori") &&
+       dev_setup.include?("For Podway") &&
+       dev_setup.include?("references/goal.md") &&
+       dev_setup.include?("create-podway-procedure") &&
        dev_setup.include?("compute their SHA-256 digests") &&
        dev_setup.include?("Never execute fetched content"),
        "dev-setup must bound and verify the automatic skill payload")
@@ -642,7 +645,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v8
+  aquarium-dev-setup-inspection.v9
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
@@ -688,10 +691,10 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 3 &&
        canonical_roadmap.include?("## EPIC-001: Release Aquarium v0.1.12") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Introduce Dolgorae") &&
-       canonical_roadmap.include?("**Status:** `Planned`") &&
+       canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
        roadmap_task_ids.length == 18 &&
        roadmap_task_ids.uniq.sort == (1..18).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 18 &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 18 &&
        canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        canonical_roadmap.include?("No child task identity or implementation authority is allocated") &&
@@ -890,10 +893,10 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.daemon-status-result/v2") &&
        tool_catalog.include?("readiness_state=ready") &&
        tool_catalog.include?("readiness_stage=ready") &&
-       tool_catalog.include?("none failed") &&
+       tool_catalog.include?("nonzero failed count") &&
        tool_catalog.include?("podway.status-result/v3") &&
        tool_catalog.include?("podway.compact-status-result/v3") &&
-       tool_catalog.include?("podway.observation-result/v2") &&
+       tool_catalog.include?("podway.observation-result/v3") &&
        tool_catalog.include?("podway.session-start-result/v3") &&
        tool_catalog.include?("podway.session-begin-result/v1") &&
        tool_catalog.include?("podway.terminal-disposition-result/v1") &&
@@ -904,9 +907,10 @@ assert(tool_catalog.include?("podway.output/v3") &&
 assert(tool_catalog.include?("prepared revision-0 session") &&
        tool_catalog.include?("session.begin") &&
        tool_catalog.include?("Terminal sessions expose a disposition template") &&
-       tool_catalog.include?("start --replace-eligible") &&
-       tool_catalog.include?("Never substitute force reset or force replacement"),
-       "Podway v0.2.5 prepared lifecycle and eligible replacement guidance is missing")
+       tool_catalog.include?("plain `start`") &&
+       tool_catalog.include?("Never infer a removed replacement flag") &&
+       tool_catalog.include?("32 sessions"),
+       "Podway v0.2.6 prepared lifecycle and archival guidance is missing")
 assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence only") &&
        tool_catalog.include?("Never use dev-setup to observe, cancel, discard, or reset") &&
        tool_catalog.include?("only session-state reset exception"),
@@ -1352,7 +1356,7 @@ assert(task_handler.include?("Do not create or read `.aquarium`"),
 assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
        task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
-assert(task_handler.lines.length < 111, "task-handler must remain orchestration-focused")
+assert(task_handler.lines.length < 114, "task-handler must remain orchestration-focused")
 
 assert(task_handler.include?("`execute` by default") &&
        task_handler.include?("`plan-only`") &&
@@ -1489,7 +1493,7 @@ assert(podway_contract.include?("MUTATION_OUTCOME_UNKNOWN") &&
        podway_contract.include?("podway.job-lookup-result/v4") &&
        podway_contract.include?("idempotency key"),
        "Podway mutation reconciliation is missing")
-assert(podway_contract.include?("podway.observation-result/v2") &&
+assert(podway_contract.include?("podway.observation-result/v3") &&
        podway_contract.include?("podway.status-result/v3") &&
        podway_contract.include?("prepared revision-0 session") &&
        podway_contract.include?("session.begin") &&
@@ -1508,14 +1512,14 @@ assert(podway_contract.include?("## Record Terminal Disposition Conservatively")
        podway_contract.include?("Earlier task or remediation commits do not prevent this disposition") &&
        podway_contract.include?("leave the terminal revision undisposed") &&
        podway_contract.include?("never choose force reset or force replacement automatically") &&
-       podway_contract.include?("start --replace-eligible"),
+       podway_contract.include?("plain `start` automatically archives"),
        "Podway terminal disposition and eligible replacement policy is incomplete")
 assert(podway_contract.include?("## Reconcile an Existing Session Only When Starting Another") &&
        podway_contract.include?("If the current session's Procedure and canonical identity match the requested work, resume it normally") &&
        podway_contract.include?("**Preserve:**") &&
        podway_contract.include?("**Finish or cancel while preserving history:**") &&
        podway_contract.include?("**Delete:**") &&
-       podway_contract.include?("**Replace an eligible terminal session:**"),
+       podway_contract.include?("**Start after an eligible terminal session:**"),
        "Podway existing-session handling must be explicit only when another session would start")
 assert(podway_contract.include?("[evidence-residency.md](evidence-residency.md)") &&
        podway_contract.include?("These records are local runtime and orchestration evidence") &&
@@ -1576,7 +1580,7 @@ assert(podway_contract.include?("None of these dispositions commits work, change
          body.include?("explicit preserve, lifecycle, delete, or eligible-replace choice") &&
          body.include?("Never route by skill owner") &&
          body.include?("disposed terminal session with verified handoff evidence") &&
-         body.include?("use `start --replace-eligible` without a separate reset") &&
+         body.include?("execute the template's current plain `start` argv without a separate reset") &&
          body.include?("describe the choice as setup repair") &&
          !body.include?("on degraded readiness or") &&
          body.include?("shared `Handle In-Progress Stop Requests` flow") &&

@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v8"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v9"
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
@@ -50,7 +50,7 @@ MULGAE_SKILL_FILES = (
 PODWAY_SKILL_FILES = (
     "SKILL.md",
     "references/lifecycle.md",
-    "references/authoring.md",
+    "references/goal.md",
     "references/recovery.md",
 )
 PODWAY_PROCEDURES = (
@@ -2486,14 +2486,21 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["version_supported"] = supported_podway_version(tool["version"])
 
     daemon_probe = json_probe(
-        [tool["executable"], "daemon", "status", "--json"],
+        [
+            tool["executable"],
+            "--json",
+            "daemon",
+            "wait-ready",
+            "--timeout",
+            "120s",
+        ],
         repository,
-        timeout_seconds,
+        max(timeout_seconds, 125.0),
     )
     normalized_daemon, daemon_payload = normalize_podway_envelope(
         daemon_probe,
-        "daemon.status",
-        ("podway.daemon-status-result/v1", "podway.daemon-status-result/v2"),
+        "daemon.wait-ready",
+        ("podway.daemon-status-result/v2",),
     )
     daemon_version = None
     daemon_reachable = False
@@ -2588,11 +2595,6 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 and readiness_state == "ready"
                 and readiness_stage == "ready"
                 and worktree_recovery["completed"] == worktree_recovery["total"]
-                and worktree_recovery["failed"] == 0
-            )
-        else:
-            daemon_ready = bool(
-                daemon_reachable and daemon_payload.get("status") == "running"
             )
         normalized_daemon["result"] = {
             "installed": daemon_payload.get("installed") is True,

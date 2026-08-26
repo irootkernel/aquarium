@@ -27,13 +27,13 @@ Epic status is independent of child task status. Completing every child does not
 
 | Epic | Title | Status |
 | --- | --- | --- |
-| EPIC-001 | Release Aquarium v0.1.12 | Planned |
+| EPIC-001 | Release Aquarium v0.1.12 | In Progress |
 | EPIC-002 | Build the Aquarium development environment | Planned |
 | EPIC-003 | Introduce Dolgorae | Planned |
 
 ## EPIC-001: Release Aquarium v0.1.12
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Deliver Aquarium v0.1.12 with the released Podway v0.2.6 runtime contract, preset-informed canonical Procedures, preserved local Procedure customization, complete predecessor-acceptance validation, and verified publication.
 
@@ -45,7 +45,7 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 | Task | Title | Summary | Status | Depends On | Design Gate impact | Reason |
 | --- | --- | --- | --- | --- | --- | --- |
-| TASK-016 | Align the Podway v0.2.6 runtime contract | Adopt the released observation, lifecycle, evidence-read, skill, and daemon-readiness interfaces. | Planned | External Podway v0.2.6 release | Not required | Task acceptance owns its versioned runtime and inspection contracts, and the task's consumer, fixture, and focused interface checks will verify them without defining an additional gate invariant. |
+| TASK-016 | Align the Podway v0.2.6 runtime contract | Adopt the released observation, lifecycle, evidence-read, skill, and daemon-readiness interfaces. | Completed | External Podway v0.2.6 release | Not required | Task acceptance owns its versioned runtime and inspection contracts, and the task's consumer, fixture, and focused interface checks will verify them without defining an additional gate invariant. |
 | TASK-017 | Reauthor the delivery Procedures | Rebuild the task, goal, and validation Procedures from the applicable v0.2.6 preset patterns. | Planned | TASK-016 | Not required | Task acceptance owns its delivery Procedure contracts, and Podway authoring checks and focused delivery-path scenarios will verify them without defining an additional gate invariant. |
 | TASK-018 | Reauthor the analysis Procedures | Rebuild the design and war-room Procedures from the applicable v0.2.6 analysis and bug-fix patterns. | Planned | TASK-016 | Not required | Task acceptance owns its analysis Procedure contracts, and Podway authoring checks and focused design and war-room scenarios will verify them without defining an additional gate invariant. |
 | TASK-001 | Preserve local Procedure customization | Accept Podway-valid same-ID local Procedure content and replace it only after an explicit reviewed choice. | Planned | TASK-017, TASK-018 | Not required | Task acceptance owns its local-customization and no-overwrite contracts, and focused setup and update scenarios will verify them without defining an additional gate invariant. |
