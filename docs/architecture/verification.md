@@ -6,7 +6,7 @@ Aquarium verification is local and layered. Each layer has a bounded claim, and 
 
 | Layer | Main authority | Claim |
 | --- | --- | --- |
-| Static cross-contract validation | [`tests/validate.rb`](../../tests/validate.rb) | Required files, phrases, links, schemas, Procedure declarations, documentation, and release invariants agree |
+| Static cross-contract validation | [`tests/validate.rb`](../../tests/validate.rb) | Required files, links, schema identifiers, Procedure declarations, and release invariants agree without pinning prose wording |
 | Python unit tests | `tests/test_*.py` | Inspector, normalizer, observer, and helper logic behaves in isolated cases |
 | Python E2E tests | `tests/e2e/` | Local scripts behave correctly against black-box repository fixtures |
 | Approved legacy integration suites | `tests/integration/` | Executable inspection, commit-gate, and bundle-normalization boundaries remain compatible |

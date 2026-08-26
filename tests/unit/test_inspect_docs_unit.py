@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import os
 from pathlib import Path
 
 SCRIPT = (
@@ -14,235 +13,73 @@ inspect_docs = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(inspect_docs)
 
 
-def test_definition_ids_distinguishes_epic_summary_from_definitions() -> None:
+def test_header_states_the_bounded_inspector_purpose() -> None:
+    header = "\n".join(SCRIPT.read_text(encoding="utf-8").splitlines()[:5])
+
+    assert "conservative, read-only structural discovery" in header
+    assert "Do not validate prose wording" in header
+
+
+def test_field_parser_tolerates_markdown_and_line_endings() -> None:
+    text = (
+        "## EPIC-001: First\r\n"
+        "\r\n"
+        "- Detailed SOT:\r\n"
+        "[Dossier](../todo/TODO-EPIC-001.md)\r\n"
+    )
+    _, lines = inspect_docs.epic_sections(text)[0]
+
+    assert inspect_docs.field_links(lines, "Detailed SOT") == (
+        1,
+        ["../todo/TODO-EPIC-001.md"],
+    )
+
+
+def test_link_resolution_rejects_external_and_repository_escape() -> None:
+    source = Path("docs/roadmap/README.md")
+
+    assert inspect_docs.resolve_document_link(source, "/tmp/spec.md") is None
+    assert (
+        inspect_docs.resolve_document_link(source, "https://example.com/spec") is None
+    )
+    assert inspect_docs.resolve_document_link(source, "../../../outside.md") is None
+    assert inspect_docs.resolve_document_link(
+        source, "../specs/README.md#contract"
+    ) == Path("docs/specs/README.md")
+
+
+def test_epic_and_task_parser_extracts_only_explicit_roadmap_structure() -> None:
     text = """\
-| Epic | Title |
-| --- | --- |
-| EPIC-001 | First |
+# Roadmap
 
 ## EPIC-001: First
 
-| Task | Title | Status |
-| --- | --- | --- |
-| TASK-001 | Foundation | Planned |
-"""
-
-    assert inspect_docs.definition_ids(text) == [
-        ("EPIC-001", 5, "heading"),
-        ("TASK-001", 9, "table"),
-    ]
-
-
-def test_migration_requires_planned_epic_and_all_planned_tasks() -> None:
-    eligible = """\
-## EPIC-002: Future
-
-**Status:** `Planned`
+**Status:** `In Progress`
 
 | Task | Title | Status |
 | --- | --- | --- |
-| TASK-003 | One | Planned |
-| TASK-004 | Two | Planned |
-"""
-    blocked = eligible.replace("EPIC-002", "EPIC-003").replace(
-        "| TASK-004 | Two | Planned |", "| TASK-004 | Two | In Progress |"
-    )
-    path = Path("docs/roadmap/README.md")
-
-    result = inspect_docs.migration_analysis([path], {path: eligible + blocked})
-
-    assert [item["planned_only_eligible"] for item in result] == [True, False]
-    assert result[0]["tasks"] == [
-        {"id": "TASK-003", "status": "Planned"},
-        {"id": "TASK-004", "status": "Planned"},
-    ]
-
-
-def test_sensitive_paths_are_excluded_without_inspecting_values() -> None:
-    assert inspect_docs.sensitive_path(Path(".env.example"))
-    assert inspect_docs.sensitive_path(Path("config/auth-token.txt"))
-    assert inspect_docs.sensitive_path(Path("docs/credentials/README.md"))
-    assert not inspect_docs.sensitive_path(Path("docs/specs/product.md"))
-
-
-def test_identifier_patterns_preserve_legacy_shapes() -> None:
-    values = {
-        match.group(0)
-        for match in inspect_docs.ID_TOKEN.finditer(
-            "EPIC-001 TASK-003-A CEPIC-27 CTASK-204 V2GRD-001 sched-022"
-        )
-    }
-
-    assert values == {
-        "EPIC-001",
-        "TASK-003-A",
-        "CEPIC-27",
-        "CTASK-204",
-        "V2GRD-001",
-        "sched-022",
-    }
-
-
-def test_semantic_epic_and_compact_completed_task_are_preserved() -> None:
-    text = """\
-## WIKRET: Preserve identity
-
-**Status:** `Planned`
-
-| Task ID | Status |
-| --- | --- |
-| CTASK204 | Completed |
-"""
-    path = Path("docs/ROADMAP.md")
-
-    assert inspect_docs.definition_ids(text) == [
-        ("WIKRET", 1, "heading"),
-        ("CTASK204", 7, "table"),
-    ]
-    result = inspect_docs.migration_analysis([path], {path: text})
-    assert result[0]["tasks"] == [{"id": "CTASK204", "status": "Completed"}]
-    assert result[0]["planned_only_eligible"] is False
-
-
-def test_unrecognized_task_row_blocks_planned_only_prefilter() -> None:
-    text = """\
-## EPIC-001: Preserve unknown child
-
-**Status:** `Planned`
-
-| Task ID | Status |
-| --- | --- |
-| ??? | Planned |
-"""
-    path = Path("docs/roadmap/README.md")
-
-    result = inspect_docs.migration_analysis([path], {path: text})
-    assert result[0]["planned_only_eligible"] is False
-
-
-def test_task_status_comes_only_from_declared_status_column() -> None:
-    text = """\
-## EPIC-001: Active task
-
-**Status:** `Planned`
-
-| Task ID | Title | Status |
-| --- | --- | --- |
-| TASK-001 | Planned | In Progress |
-"""
-    path = Path("docs/roadmap/README.md")
-
-    rows = inspect_docs.task_rows_with_lines(text)
-    assert rows == [("TASK-001", "In Progress", 7)]
-    result = inspect_docs.migration_analysis([path], {path: text})
-    assert result[0]["planned_only_eligible"] is False
-
-
-def test_definition_ids_uses_epic_containment_and_ignores_numeric_prose_headings() -> (
-    None
-):
-    text = """\
-| Epic | Title |
-| --- | --- |
-| V2GRD | Legacy |
-
-## V2GRD: Legacy
-
-| Task | Title | Status |
-| --- | --- | --- |
-| V2GRD-001 | Foundation | Planned |
-
-## Q3-2026: Delivery window
-
-| Task | Title | Status |
-| --- | --- | --- |
-| TASK-999 | Not adopted | Planned |
-"""
-
-    assert inspect_docs.definition_ids(text) == [
-        ("V2GRD", 5, "heading"),
-        ("V2GRD-001", 9, "table"),
-    ]
-
-
-def test_migration_block_stops_at_any_level_two_heading() -> None:
-    text = """\
-## EPIC-001: Missing status
+| TASK-001 | Foundation | Completed |
 
 ## Notes
 
-**Status:** `Planned`
-
-| Task | Title | Status |
-| --- | --- | --- |
-| TASK-001 | Not contained | Planned |
+TASK-999 is prose, not a task definition.
 """
-    path = Path("docs/roadmap/README.md")
+    identifier, lines = inspect_docs.epic_sections(text)[0]
 
-    result = inspect_docs.migration_analysis([path], {path: text})
-
-    assert result == [
-        {
-            "epic": "EPIC-001",
-            "path": "docs/roadmap/README.md",
-            "status": "unknown",
-            "tasks": [],
-            "planned_only_eligible": False,
-            "reason": "status_or_task_ownership_not_eligible",
-        }
-    ]
+    assert identifier == "EPIC-001"
+    assert inspect_docs.status_value(lines) == "In Progress"
+    assert inspect_docs.task_rows(lines) == [{"id": "TASK-001", "status": "Completed"}]
 
 
-def test_planned_epic_without_tasks_is_epic_only_migration_eligible() -> None:
-    text = """\
-## EPIC-002: Empty planned epic
-
-**Status:** `Planned`
-"""
-    path = Path("docs/roadmap/README.md")
-
-    result = inspect_docs.migration_analysis([path], {path: text})
-
-    assert result[0]["planned_only_eligible"] is True
-    assert result[0]["reason"] == "planned_epic_without_child_tasks"
+def test_sensitive_paths_are_excluded_without_reading_values() -> None:
+    assert inspect_docs.sensitive_path(Path(".env.example"))
+    assert inspect_docs.sensitive_path(Path("docs/ops/key-rotation.md"))
+    assert inspect_docs.sensitive_path(Path("docs/todo/TODO-SECRETS.md"))
+    assert not inspect_docs.sensitive_path(Path("docs/specs/product.md"))
 
 
-def test_preserved_paths_accepts_only_exact_repository_relative_paths() -> None:
-    accepted, rejected = inspect_docs.preserved_paths(
-        "`docs/architecture-decisions/0001.md`<br>`../outside.md`<br>`/tmp/file`"
-        "<br>`docs/*.md`<br>`docs\\legacy.md`<br>docs/unquoted.md"
-    )
+def test_owner_containment_is_component_aware() -> None:
+    owner = Path("docs/todo")
 
-    assert accepted == ["docs/architecture-decisions/0001.md"]
-    assert rejected == [
-        "../outside.md",
-        "/tmp/file",
-        "docs/*.md",
-        "docs/unquoted.md",
-        "docs\\legacy.md",
-    ]
-
-
-def test_role_candidates_deduplicate_aliases_for_one_filesystem_object(
-    tmp_path: Path, monkeypatch: object
-) -> None:
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    roadmap = docs / "ROADMAP.md"
-    roadmap.write_text("# Roadmap\n", encoding="utf-8")
-    os.link(roadmap, docs / "roadmap-alias.md")
-    monkeypatch.setitem(
-        inspect_docs.ROLE_ALIASES,
-        "roadmap",
-        ("ROADMAP.md", "roadmap-alias.md"),
-    )
-
-    assert inspect_docs.path_role_candidates(tmp_path, Path("docs"), "roadmap") == [
-        "docs/ROADMAP.md"
-    ]
-
-
-def test_epic_status_emits_only_allowlisted_values() -> None:
-    assert inspect_docs.epic_status("**Status:** `In Review`\n") == "In Review"
-    assert inspect_docs.epic_status("**상태:** `Planned`\n") == "Planned"
-    assert inspect_docs.epic_status("**Status:** owner@example.com\n") == "unknown"
+    assert inspect_docs.within_owner(Path("docs/todo/TODO-ONE.md"), owner)
+    assert not inspect_docs.within_owner(Path("docs/todo-other/TODO-ONE.md"), owner)

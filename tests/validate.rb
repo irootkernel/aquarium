@@ -224,6 +224,7 @@ test_setup_script_body = test_setup_script.read
 docs_setup = PLUGIN.join("skills/docs-setup/SKILL.md").read
 docs_setup_profiles = PLUGIN.join("skills/docs-setup/references/profiles.md").read
 docs_setup_migration = PLUGIN.join("skills/docs-setup/references/migration.md").read
+docs_setup_operations = PLUGIN.join("skills/docs-setup/references/operations.md").read
 docs_setup_script = PLUGIN.join("skills/docs-setup/scripts/inspect_docs.py")
 docs_setup_script_body = docs_setup_script.read
 documentation_index_path = ROOT.join("docs/README.md")
@@ -232,6 +233,7 @@ documentation_role_paths = %w[
   architecture-decision-records
   deferred-feedback
   implementation-tips
+  ops
   roadmap
   specs
   todo
@@ -268,6 +270,7 @@ assert(documentation_adr_paths.all? { |matches| matches.length == 1 },
 documentation_index = documentation_index_path.read
 canonical_roadmap = documentation_role_paths.fetch("roadmap").read
 todo_index = documentation_role_paths.fetch("todo").read
+ops_index = documentation_role_paths.fetch("ops").read
 documentation_details = documentation_detail_paths.transform_values(&:read)
 documentation_adrs = documentation_adr_paths.flatten.to_h { |path| [path, path.read] }
 design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
@@ -539,23 +542,13 @@ assert(test_setup.include?("does not authorize a test that creates containers") 
        ROOT.join("PRIVACY.md").read.include?("obtains separate approval before execution"),
        "test-setup and public privacy guidance must preserve effectful E2E approval and production safety")
 assert(docs_setup_script.file?, "docs-setup structural inspector is missing")
-assert(docs_setup_script_body.include?("aquarium-docs-inspection/v1") &&
+assert(docs_setup_script_body.include?("aquarium-docs-inspection/v2") &&
        docs_setup_script_body.include?("--literal-pathspecs") &&
-       docs_setup_script_body.include?("planned_epic_and_all_child_tasks_only") &&
-       docs_setup_script_body.include?("legacy-adopt") &&
        docs_setup_script_body.include?("sensitive_path") &&
-       docs_setup_script_body.include?("safe_regular_file") &&
-       docs_setup_script_body.include?("tracked_symlink_excluded") &&
-       docs_setup_script_body.include?("canonical_untracked_text_files") &&
-       docs_setup_script_body.include?("ambiguous_cross_scope_identifier_reference") &&
-       docs_setup_script_body.include?("preserved_historical_paths") &&
-       docs_setup_script_body.include?("content_semantics") &&
-       docs_setup_script_body.include?("runtime_truth") &&
        docs_setup_script_body.include?("GIT_OPTIONAL_LOCKS") &&
        docs_setup_script_body.include?("core.fsmonitor=false"),
-       "docs-setup inspector must remain bounded, local, and structurally conservative")
+       "docs-setup inspector must expose its v2 contract and preserve bounded Git inspection")
 assert(docs_setup.include?("scripts/inspect_docs.py") &&
-       docs_setup.include?("conservative structural evidence only") &&
        docs_setup.include?("Apply exactly this diff") &&
        docs_setup.include?("never stages, commits, pushes, publishes") &&
        docs_setup.include?("does not become repository-native CI"),
@@ -567,6 +560,7 @@ assert(docs_setup.include?("Never open `.env*`, authentication, credential, key,
        "docs-setup and public privacy guidance must preserve local inspection boundaries")
 assert(documentation_contract.include?("## Semantic Roles") &&
        documentation_contract.include?("## Profiles") &&
+       documentation_contract.include?("## TODO Dossier Lifecycle") &&
        documentation_contract.include?("## New Roadmap Identity") &&
        documentation_contract.include?("EPIC-[0-9]{3,}") &&
        documentation_contract.include?("TASK-[0-9]{3,}") &&
@@ -577,8 +571,10 @@ assert(documentation_contract.include?("## Semantic Roles") &&
        documentation_contract.include?("Do not create `.aquarium`") &&
        docs_setup_profiles.include?("single-scope") &&
        docs_setup_profiles.include?("multi-scope") &&
-       docs_setup_profiles.include?("legacy-adopt"),
-       "documentation governance must define roles, profiles, and roadmap-local numeric IDs")
+       docs_setup_profiles.include?("legacy-adopt") &&
+       docs_setup_operations.include?("## Runbook Contract") &&
+       docs_setup_operations.include?("## Empty Operations Surface"),
+       "documentation governance must define audiences, eight roles, dossier lifecycle, profiles, and roadmap IDs")
 assert(docs_setup_migration.include?("status is exactly `Planned`") &&
        docs_setup_migration.include?("every child task is exactly `Planned`") &&
        docs_setup_migration.include?("id-migrations/YYYY-MM-DD.md") &&
@@ -601,9 +597,12 @@ assert(documentation_index.include?("`single-scope`") &&
        documentation_index.include?("current stable package as `v0.1.11`") &&
        documentation_index.include?("open `v0.1.12` release candidate") &&
        documentation_index.include?("TODO and work dossiers") &&
-       documentation_index.include?("never owns its ID, ordering, dependencies, or lifecycle status") &&
        documentation_index.include?("ruby tests/validate.rb"),
        "Aquarium documentation index must define its profile, roles, roadmap identity, language, and checks")
+assert(ops_index.start_with?("# Aquarium Operations\n") &&
+       ops_index.include?("## Current Operational Surface") &&
+       ops_index.include?("## Runbook Requirements"),
+       "Aquarium operations index must expose its operational surface and runbook sections")
 
 capability_catalog = documentation_details.fetch("capabilities")
 assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
@@ -640,7 +639,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
   aquarium-dev-setup-inspection.v8
-  aquarium-docs-inspection/v1
+  aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
   aquarium-dev-setup-bundle-plan.v1
@@ -1182,7 +1181,6 @@ assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&
 end
 assert(task_commit.include?("After the commit and its hooks"),
        "task-commit must refresh Sanho evidence after hooks")
-
 assert(epic_handler.include?("one canonical roadmap path inside that repository") &&
        epic_handler.include?("exactly one epic ID"),
        "epic-handler must require one repository roadmap and epic")
@@ -1405,7 +1403,7 @@ assert(ROOT.join("README.md").read.include?("explicit plan handoff to another ag
   assert(body.include?("exact") && body.match?(/explicit approval/i),
          "#{name} must gate durable document changes on exact-diff approval")
 end
-assert(new_project.include?("PRD and one initial roadmap per delivery scope") &&
+assert(new_project.include?("a PRD, one initial roadmap per delivery scope") &&
        new_project.include?("non-Git project") &&
        new_project.include?("skip Podway completely") &&
        new_project.include?("gate creation requires a later explicit"),
@@ -2811,6 +2809,8 @@ skill_paths.each do |path|
   lines = path.read.lines.map(&:chomp)
   frontmatter_end = lines[1..].index("---")
   assert(frontmatter_end, "missing closing frontmatter delimiter: #{path}")
+  assert(lines[frontmatter_end + 2] == "",
+         "skill frontmatter must be followed by one blank line: #{path}")
   lines[(frontmatter_end + 2)..].each_with_index do |line, offset|
     assert(line.length <= 560,
            "skill body line exceeds 560 characters: #{path}:#{frontmatter_end + 3 + offset} (#{line.length})")

@@ -9,7 +9,11 @@ Plan only one task. Require the repository, canonical roadmap path, and exact ta
 
 ## Explore Without Mutation
 
-Read applicable repository instructions, the task entry, linked authority documents, current architecture, Git state, existing tests, CI and task runners, documentation synchronization rules, and configured development-tool guidance. Do not create a goal, edit files, generate code, run rewriting formatters, stage changes, invoke providers, or alter external state.
+Read applicable repository instructions, the task entry, its parent epic, the epic's linked active dossier, `docs/README.md`, every relevant canonical role owner, current architecture, Git state, existing tests, CI and task runners, documentation synchronization rules, and configured development-tool guidance. Resolve those authorities from the canonical roadmap; do not require the user to name the dossier or related document paths.
+
+Treat a member task without its required active dossier as a contract gap and require an explicit `$aquarium:docs-setup` `adopt` retrofit first.
+
+Do not create a goal, edit files, generate code, run rewriting formatters, stage changes, invoke providers, or alter external state.
 
 ## Produce and Approve the Plan
 
@@ -19,7 +23,7 @@ Produce a decision-complete plan containing:
 - current architecture observations and affected behavior;
 - implementation approach and meaningful tradeoffs;
 - requirement-to-verification matrix;
-- documentation, rollout, and review impact;
+- specifications, architecture, decision, implementation-tip, operations, public-documentation, rollout, and review impact;
 - exact repository-native verification commands;
 - known permission, tool, provider, and environment gaps.
 

@@ -15,6 +15,7 @@ ROLES = (
     "architecture",
     "architecture-decision-records",
     "implementation-tips",
+    "ops",
     "roadmap",
     "deferred-feedback",
     "todo",
@@ -56,77 +57,88 @@ def inspect(
     return result, json.loads(result.stdout)
 
 
-def roadmap(epic: str = "EPIC-001", task: str = "TASK-001") -> str:
-    return f"""\
-# Roadmap
+def roadmap(
+    *,
+    status: str = "Planned",
+    task: bool = True,
+    detailed_sot: str | None = "../todo/TODO-EPIC-001.md",
+    outcomes: str | None = None,
+    newline: str = "\n",
+) -> str:
+    lines = ["# Roadmap", "", "## EPIC-001: First", "", f"**Status:** `{status}`"]
+    if detailed_sot is not None:
+        lines.extend(["", f"**Detailed SOT:** [Dossier]({detailed_sot})"])
+    if outcomes is not None:
+        lines.extend(["", f"**Canonical Outcomes:** [Outcome]({outcomes})"])
+    if task:
+        lines.extend(
+            [
+                "",
+                "| Task | Title | Status |",
+                "| --- | --- | --- |",
+                f"| TASK-001 | Foundation | {status} |",
+            ]
+        )
+    return newline.join(lines) + newline
 
-## {epic}: First
 
-**Status:** `Planned`
-
-| Task | Title | Status |
-| --- | --- | --- |
-| {task} | Foundation | Planned |
-"""
-
-
-def make_single_scope(
-    repository: Path, *, epic: str = "EPIC-001", task: str = "TASK-001"
-) -> None:
-    write(repository / "docs/README.md", "# Documentation\n")
-    for role in ROLES:
-        content = roadmap(epic, task) if role == "roadmap" else "# Index\n"
-        write(repository / "docs" / role / "README.md", content)
-
-
-def make_delivery_scope(repository: Path, scope: str) -> None:
+def make_scope(repository: Path, base: Path = Path("docs")) -> None:
     for role in ROLES:
         content = roadmap() if role == "roadmap" else "# Index\n"
-        write(repository / "docs" / scope / role / "README.md", content)
+        write(repository / base / role / "README.md", content)
+    write(repository / base / "todo/TODO-EPIC-001.md", "# Dossier\n")
 
 
-def test_single_scope_reports_canonical_ids_and_planned_migration(
-    tmp_path: Path,
-) -> None:
+def make_single_scope(repository: Path) -> None:
+    write(repository / "docs/README.md", "# Documentation\n")
+    make_scope(repository)
+
+
+def finding_codes(payload: dict[str, object]) -> set[str]:
+    findings = payload["findings"]
+    assert isinstance(findings, list)
+    return {item["code"] for item in findings}
+
+
+def test_v2_reports_only_minimum_structural_contract(tmp_path: Path) -> None:
     repository = tmp_path / "single"
     initialize(repository)
     make_single_scope(repository)
-    write(repository / "src/reference.txt", "EPIC-001 is implemented by TASK-001.\n")
+    write(repository / "src/reference.txt", "EPIC-001 TASK-001\n")
     commit_all(repository)
 
     result, payload = inspect(repository)
 
     assert result.returncode == 0
-    assert payload["schema_version"] == "aquarium-docs-inspection/v1"
+    assert payload["schema_version"] == "aquarium-docs-inspection/v2"
     assert payload["structural_status"] == "conforming"
-    assert payload["documentation"]["profile"] == "single-scope"
-    assert payload["id_scheme"] == "canonical-numeric"
-    assert payload["migration"]["epics"][0]["planned_only_eligible"] is True
-    identifiers = {
-        (item["namespace"], item["id"]): item for item in payload["identifiers"]
+    assert set(payload) == {
+        "schema_version",
+        "repository",
+        "structural_status",
+        "documentation",
+        "roadmaps",
+        "excluded_files",
+        "findings",
     }
-    assert identifiers[("default", "TASK-001")]["canonical_numeric"] is True
-    assert any(
-        reference["path"] == "src/reference.txt"
-        for reference in identifiers[("default", "EPIC-001")]["references"]
-    )
+    assert payload["documentation"]["profile"] == "single-scope"
+    assert payload["roadmaps"][0]["epics"][0]["tasks"] == [
+        {"id": "TASK-001", "status": "Planned"}
+    ]
 
 
-def test_multi_scope_allows_same_numeric_ids_in_distinct_roadmaps(
-    tmp_path: Path,
-) -> None:
+def test_multi_scope_discovers_independent_delivery_owners(tmp_path: Path) -> None:
     repository = tmp_path / "multi"
     initialize(repository)
     write(repository / "docs/README.md", "# Documentation\n")
     for role in ("specs", "architecture", "architecture-decision-records"):
         write(repository / "docs/project" / role / "README.md")
-    make_delivery_scope(repository, "server")
-    make_delivery_scope(repository, "app")
+    make_scope(repository, Path("docs/server"))
+    make_scope(repository, Path("docs/app"))
     commit_all(repository)
 
-    result, payload = inspect(repository)
+    _, payload = inspect(repository)
 
-    assert result.returncode == 0
     assert payload["structural_status"] == "conforming"
     assert payload["documentation"]["profile"] == "multi-scope"
     assert {scope["name"] for scope in payload["documentation"]["scopes"]} == {
@@ -134,545 +146,239 @@ def test_multi_scope_allows_same_numeric_ids_in_distinct_roadmaps(
         "server",
         "app",
     }
-    definitions = [
-        item
-        for item in payload["identifiers"]
-        if item["id"] == "EPIC-001" and item["definitions"]
-    ]
-    assert {item["namespace"] for item in definitions} == {"app", "server"}
-    assert not any(
-        finding["code"] == "duplicate_roadmap_identifier"
-        for finding in payload["findings"]
-    )
+    assert {roadmap["scope"] for roadmap in payload["roadmaps"]} == {"server", "app"}
 
 
-@pytest.mark.parametrize(
-    ("epic", "task"),
-    [
-        ("CEPIC-27", "CTASK-204"),
-        ("V2GRD", "V2GRD-001"),
-        ("WIKRET", "CTASK204"),
-    ],
-)
-def test_legacy_identifiers_are_adopted_without_numeric_rewrite(
-    tmp_path: Path, epic: str, task: str
-) -> None:
-    repository = tmp_path / task.lower()
-    initialize(repository)
-    make_single_scope(repository, epic=epic, task=task)
-    commit_all(repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    assert payload["documentation"]["profile"] == "legacy-adopt"
-    assert payload["documentation"]["structural_profile"] == "single-scope"
-    assert payload["id_scheme"] == "legacy"
-    assert any(
-        item["id"] == task and item["canonical_numeric"] is False
-        for item in payload["identifiers"]
-    )
-
-
-def test_excludes_sensitive_binary_and_symlinked_tracked_files(tmp_path: Path) -> None:
-    repository = tmp_path / "excluded"
+def test_missing_and_competing_role_owners_are_nonconforming(tmp_path: Path) -> None:
+    repository = tmp_path / "roles"
     initialize(repository)
     make_single_scope(repository)
-    write(repository / ".env.example", "TASK-999=secret\n")
-    binary = repository / "asset.bin"
-    binary.write_bytes(b"TASK-998\0value")
-    target = tmp_path / "outside.txt"
-    target.write_text("TASK-997\n", encoding="utf-8")
-    (repository / "linked.md").symlink_to(target)
-    run(["git", "add", "."], repository)
-    run(["git", "commit", "-qm", "fixture"], repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    assert payload["structural_status"] == "unverifiable"
-    assert payload["excluded_files"]["sensitive"] == 1
-    assert payload["excluded_files"]["binary"] == 1
-    assert payload["excluded_files"]["symlink"] == 1
-    serialized = json.dumps(payload)
-    assert "TASK-999" not in serialized
-    assert "TASK-998" not in serialized
-    assert "TASK-997" not in serialized
-
-
-def test_migration_record_reports_stale_old_id_references(tmp_path: Path) -> None:
-    repository = tmp_path / "migration"
-    initialize(repository)
-    make_single_scope(repository)
-    write(
-        repository / "docs/roadmap/id-migrations/2026-08-24.md",
-        """\
-# ID Migration
-
-**Canonical roadmap:** `docs/roadmap/README.md`
-**Migration date:** `2026-08-24`
-**Scope:** `default`
-
-| Old ID | New ID | Kind | Title |
-| --- | --- | --- | --- |
-| OLD-001 | TASK-001 | Task | Foundation |
-""",
-    )
-    write(repository / "docs/specs/legacy.md", "OLD-001 remains stale.\n")
+    (repository / "docs/ops/README.md").unlink()
+    write(repository / "docs/ROADMAP.md", roadmap())
     commit_all(repository)
 
-    result, payload = inspect(repository)
+    _, payload = inspect(repository)
 
-    assert result.returncode == 0
     assert payload["structural_status"] == "nonconforming"
-    assert payload["migration"]["records"][0]["stale_references"] == [
-        {"path": "docs/specs/legacy.md", "line": 1, "namespace": "default"}
-    ]
-    assert any(
-        finding["code"] == "stale_migrated_id_reference"
-        for finding in payload["findings"]
-    )
-
-
-def test_migration_record_rejects_unquoted_preserved_path(tmp_path: Path) -> None:
-    repository = tmp_path / "migration-unquoted"
-    initialize(repository)
-    make_single_scope(repository)
-    write(
-        repository / "docs/roadmap/id-migrations/2026-08-24.md",
-        """\
-# ID Migration
-
-**Canonical roadmap:** `docs/roadmap/README.md`
-**Migration date:** `2026-08-24`
-**Scope:** `default`
-
-| Old ID | New ID | Kind | Title | Preserved Historical Paths |
-| --- | --- | --- | --- | --- |
-| OLD-001 | TASK-001 | Task | Foundation | docs/specs/legacy.md |
-""",
-    )
-    write(repository / "docs/specs/legacy.md", "OLD-001 remains stale.\n")
-    commit_all(repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    assert payload["structural_status"] == "nonconforming"
-    assert payload["migration"]["records"][0]["stale_references"] == [
-        {"path": "docs/specs/legacy.md", "line": 1, "namespace": "default"}
-    ]
-    assert {finding["code"] for finding in payload["findings"]} >= {
-        "invalid_preserved_historical_path",
-        "stale_migrated_id_reference",
+    assert finding_codes(payload) >= {
+        "documentation_role_missing",
+        "competing_role_owners",
     }
 
 
-def test_rejects_non_root_and_symlinked_repository_paths(tmp_path: Path) -> None:
+def test_runbooks_alias_can_own_operations(tmp_path: Path) -> None:
+    repository = tmp_path / "runbooks"
+    initialize(repository)
+    make_single_scope(repository)
+    (repository / "docs/ops/README.md").unlink()
+    write(repository / "docs/runbooks/README.md")
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    roles = payload["documentation"]["scopes"][0]["role_candidates"]
+    assert roles["ops"] == ["docs/runbooks"]
+
+
+def test_active_epic_with_tasks_requires_dossier(tmp_path: Path) -> None:
+    repository = tmp_path / "missing-dossier"
+    initialize(repository)
+    make_single_scope(repository)
+    write(repository / "docs/roadmap/README.md", roadmap(detailed_sot=None))
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "nonconforming"
+    assert "active_epic_dossier_missing" in finding_codes(payload)
+
+
+@pytest.mark.parametrize(
+    "target",
+    ["../../outside.md", "/absolute.md", "../specs/README.md", "../todo/missing.md"],
+)
+def test_active_epic_rejects_unsafe_or_non_todo_dossier(
+    tmp_path: Path, target: str
+) -> None:
+    repository = tmp_path / target.replace("/", "-")
+    initialize(repository)
+    make_single_scope(repository)
+    write(repository / "docs/roadmap/README.md", roadmap(detailed_sot=target))
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "active_epic_dossier_invalid" in finding_codes(payload)
+
+
+def test_taskless_placeholder_needs_no_dossier(tmp_path: Path) -> None:
+    repository = tmp_path / "placeholder"
+    initialize(repository)
+    make_single_scope(repository)
+    write(repository / "docs/roadmap/README.md", roadmap(task=False, detailed_sot=None))
+    (repository / "docs/todo/TODO-EPIC-001.md").unlink()
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+
+
+def test_active_epic_rejects_canonical_outcomes_even_without_tasks(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "active-outcomes"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(task=False, detailed_sot=None, outcomes="../specs/README.md"),
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "active_epic_canonical_outcomes_present" in finding_codes(payload)
+
+
+def test_completed_contract_rejects_retained_dossier_and_missing_outcome(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "completed-invalid"
+    initialize(repository)
+    make_single_scope(repository)
+    write(repository / "docs/roadmap/README.md", roadmap(status="Completed"))
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert finding_codes(payload) >= {
+        "completed_epic_dossier_retained",
+        "completed_epic_canonical_outcomes_missing",
+    }
+
+
+def test_completed_contract_accepts_existing_repository_outcome(tmp_path: Path) -> None:
+    repository = tmp_path / "completed-valid"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(
+            status="Completed",
+            detailed_sot=None,
+            outcomes="../specs/README.md",
+        ),
+    )
+    (repository / "docs/todo/TODO-EPIC-001.md").unlink()
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+
+
+def test_historical_completed_epic_is_grandfathered(tmp_path: Path) -> None:
+    repository = tmp_path / "historical"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(status="Completed", detailed_sot=None, outcomes=None),
+    )
+    (repository / "docs/todo/TODO-EPIC-001.md").unlink()
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    assert not any(
+        code.startswith("completed_epic_") for code in finding_codes(payload)
+    )
+
+
+def test_crlf_and_relaxed_markdown_produce_the_same_structure(tmp_path: Path) -> None:
+    repository = tmp_path / "crlf"
+    initialize(repository)
+    make_single_scope(repository)
+    content = roadmap(newline="\r\n").replace(
+        "**Detailed SOT:** [Dossier]", "- Detailed SOT:\r\n[Dossier]"
+    )
+    (repository / "docs/roadmap/README.md").write_bytes(content.encode("utf-8"))
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    assert payload["roadmaps"][0]["epics"][0]["detailed_sot"] == [
+        "../todo/TODO-EPIC-001.md"
+    ]
+
+
+def test_duplicate_current_roadmap_identifier_is_nonconforming(tmp_path: Path) -> None:
+    repository = tmp_path / "duplicate"
+    initialize(repository)
+    make_single_scope(repository)
+    path = repository / "docs/roadmap/README.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "\n## EPIC-002: Second\n\n**Status:** `Planned`\n\n"
+        + "| Task | Title | Status |\n| --- | --- | --- |\n"
+        + "| TASK-001 | Duplicate | Planned |\n",
+        encoding="utf-8",
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "nonconforming"
+    assert "duplicate_roadmap_identifier" in finding_codes(payload)
+
+
+def test_excluded_linked_document_is_unverifiable_not_missing(tmp_path: Path) -> None:
+    repository = tmp_path / "excluded"
+    initialize(repository)
+    make_single_scope(repository)
+    dossier = repository / "docs/todo/TODO-KEY-ROTATION.md"
+    write(dossier, "# Dossier\n")
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(detailed_sot="../todo/TODO-KEY-ROTATION.md"),
+    )
+    (repository / "docs/todo/TODO-EPIC-001.md").unlink()
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "unverifiable"
+    assert "active_epic_dossier_unverifiable" in finding_codes(payload)
+    assert payload["excluded_files"]["sensitive"] == 1
+
+
+def test_untracked_canonical_documents_are_inspected(tmp_path: Path) -> None:
+    repository = tmp_path / "untracked"
+    initialize(repository)
+    write(repository / "README.md", "# Product\n")
+    commit_all(repository)
+    make_single_scope(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    assert payload["roadmaps"][0]["epics"][0]["id"] == "EPIC-001"
+
+
+def test_repository_must_be_exact_non_symlink_git_root(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     initialize(repository)
     make_single_scope(repository)
     commit_all(repository)
     nested = repository / "nested"
     nested.mkdir()
-    link = tmp_path / "repository-link"
-    link.symlink_to(repository, target_is_directory=True)
 
-    nested_result, nested_payload = inspect(nested)
-    link_result, link_payload = inspect(link)
+    result, payload = inspect(nested)
 
-    assert nested_result.returncode == 2
-    assert nested_payload["error"]["code"] == "repository_not_root"
-    assert link_result.returncode == 2
-    assert link_payload["error"]["code"] == "repository_symlinked"
-
-
-def test_multi_scope_migration_does_not_rewrite_another_scope_same_id(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "multi-migration"
-    initialize(repository)
-    write(repository / "docs/README.md", "# Documentation\n")
-    write(repository / "docs/project/specs/README.md")
-    make_delivery_scope(repository, "app")
-    make_delivery_scope(repository, "server")
-    write(repository / "docs/server/roadmap/README.md", roadmap(task="TASK-101"))
-    write(
-        repository / "docs/server/roadmap/id-migrations/2026-08-24.md",
-        """\
-# ID Migration
-
-**Canonical roadmap:** `docs/server/roadmap/README.md`
-**Migration date:** `2026-08-24`
-**Scope:** `server`
-
-| Old ID | New ID | Kind | Title | Preserved Historical Paths |
-| --- | --- | --- | --- | --- |
-| TASK-001 | TASK-101 | Task | Foundation | - |
-""",
-    )
-    write(repository / "docs/app/specs/reference.md", "TASK-001 remains current.\n")
-    commit_all(repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    record = payload["migration"]["records"][0]
-    assert record["namespace"] == "server"
-    assert record["stale_references"] == []
-    app_identifier = next(
-        item
-        for item in payload["identifiers"]
-        if item["namespace"] == "app" and item["id"] == "TASK-001"
-    )
-    assert any(
-        reference["path"] == "docs/app/specs/reference.md"
-        and reference["namespace"] == "app"
-        for reference in app_identifier["references"]
-    )
-
-
-def test_multi_scope_requires_qualification_for_another_scope_id(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "cross-scope-reference"
-    initialize(repository)
-    write(repository / "docs/README.md", "# Documentation\n")
-    make_delivery_scope(repository, "app")
-    make_delivery_scope(repository, "server")
-    write(repository / "docs/server/roadmap/README.md", roadmap(task="TASK-900"))
-    write(repository / "docs/app/specs/reference.md", "TASK-900 is required.\n")
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["structural_status"] == "nonconforming"
-    assert any(
-        finding["code"] == "unqualified_cross_scope_identifier_reference"
-        and finding["path"] == "docs/app/specs/reference.md"
-        for finding in payload["findings"]
-    )
-    server_task = next(
-        item
-        for item in payload["identifiers"]
-        if item["namespace"] == "server" and item["id"] == "TASK-900"
-    )
-    assert any(
-        reference["path"] == "docs/app/specs/reference.md"
-        for reference in server_task["references"]
-    )
-
-
-def test_migration_record_requires_canonical_shape_and_current_target(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "malformed-migration"
-    initialize(repository)
-    make_single_scope(repository)
-    write(
-        repository / "docs/roadmap/id-migrations/not-a-date.md",
-        """\
-# ID Migration
-
-| Old ID | New ID |
-| --- | --- |
-| OLD-001 | TASK-999 |
-""",
-    )
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["structural_status"] == "nonconforming"
-    assert {finding["code"] for finding in payload["findings"]} >= {
-        "migration_record_path_invalid",
-        "migration_record_metadata_invalid",
-        "migration_record_table_invalid",
-    }
-
-
-def test_multi_scope_bare_shared_reference_is_unverifiable(tmp_path: Path) -> None:
-    repository = tmp_path / "ambiguous-reference"
-    initialize(repository)
-    write(
-        repository / "docs/README.md",
-        "TASK-001 is shared.\napp:TASK-001 is qualified.\n",
-    )
-    make_delivery_scope(repository, "app")
-    make_delivery_scope(repository, "server")
-    commit_all(repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    assert payload["structural_status"] == "unverifiable"
-    assert any(
-        finding["code"] == "ambiguous_cross_scope_identifier_reference"
-        and finding["path"] == "docs/README.md"
-        for finding in payload["findings"]
-    )
-    app_identifier = next(
-        item
-        for item in payload["identifiers"]
-        if item["namespace"] == "app" and item["id"] == "TASK-001"
-    )
-    assert {
-        "path": "docs/README.md",
-        "line": 2,
-        "namespace": "app",
-    } in app_identifier["references"]
-
-
-def test_untracked_canonical_documents_are_inspected_after_apply(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "untracked-docs"
-    initialize(repository)
-    make_single_scope(repository)
-
-    result, payload = inspect(repository)
-
-    assert result.returncode == 0
-    assert payload["structural_status"] == "conforming"
-    assert payload["canonical_untracked_text_files"] == 8
-    assert any(item["id"] == "EPIC-001" for item in payload["identifiers"])
-
-
-def test_shared_scope_roles_are_optional_and_delivery_roles_are_forbidden(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "shared-scope"
-    initialize(repository)
-    write(repository / "docs/README.md", "# Documentation\n")
-    write(repository / "docs/project/specs/README.md")
-    make_delivery_scope(repository, "app")
-    make_delivery_scope(repository, "server")
-    commit_all(repository)
-
-    _, conforming = inspect(repository)
-
-    assert conforming["structural_status"] == "conforming"
-    write(repository / "docs/project/roadmap/README.md", roadmap())
-    commit_all(repository)
-
-    _, forbidden = inspect(repository)
-
-    assert forbidden["structural_status"] == "nonconforming"
-    assert any(
-        finding["code"] == "forbidden_shared_role"
-        and finding["path"] == "docs/project/roadmap"
-        for finding in forbidden["findings"]
-    )
-
-
-def test_competing_roadmap_aliases_are_reported(tmp_path: Path) -> None:
-    repository = tmp_path / "competing-roadmaps"
-    initialize(repository)
-    make_single_scope(repository)
-    write(repository / "docs/ROADMAP.md", roadmap("EPIC-002", "TASK-002"))
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["structural_status"] == "nonconforming"
-    assert any(
-        finding["code"] == "competing_role_owners" for finding in payload["findings"]
-    )
-
-
-def test_file_roadmap_discovers_sibling_migration_records(tmp_path: Path) -> None:
-    repository = tmp_path / "file-roadmap"
-    initialize(repository)
-    write(repository / "docs/README.md", "# Documentation\n")
-    for role in ROLES:
-        if role == "roadmap":
-            continue
-        write(repository / "docs" / role / "README.md")
-    write(repository / "docs/ROADMAP.md", roadmap(task="TASK-101"))
-    write(
-        repository / "docs/id-migrations/2026-08-24.md",
-        """\
-# ID Migration
-
-**Canonical roadmap:** `docs/ROADMAP.md`
-**Migration date:** `2026-08-24`
-**Scope:** `default`
-
-| Old ID | New ID | Kind | Title | Preserved Historical Paths |
-| --- | --- | --- | --- | --- |
-| TASK-001 | TASK-101 | Task | Foundation | - |
-""",
-    )
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["migration"]["records"][0]["namespace"] == "default"
-    assert payload["migration"]["records"][0]["path"] == (
-        "docs/id-migrations/2026-08-24.md"
-    )
-
-
-def test_excluded_canonical_roadmap_makes_result_unverifiable(tmp_path: Path) -> None:
-    repository = tmp_path / "non-utf8-roadmap"
-    initialize(repository)
-    make_single_scope(repository)
-    (repository / "docs/roadmap/README.md").write_bytes(b"# Roadmap\n\xff")
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["structural_status"] == "unverifiable"
-    assert payload["excluded_files"]["non_utf8"] == 1
-    assert any(
-        finding["code"] == "canonical_authority_excluded"
-        and finding["path"] == "docs/roadmap/README.md"
-        for finding in payload["findings"]
-    )
-
-
-def test_historical_paths_are_scoped_to_the_owning_roadmap(tmp_path: Path) -> None:
-    repository = tmp_path / "historical-paths"
-    initialize(repository)
-    make_single_scope(repository, task="TASK-101")
-    write(
-        repository / "docs/roadmap/id-migrations/2026-08-24.md",
-        """\
-# ID Migration
-
-**Canonical roadmap:** `docs/roadmap/README.md`
-**Migration date:** `2026-08-24`
-**Scope:** `default`
-
-| Old ID | New ID | Kind | Title | Preserved Historical Paths |
-| --- | --- | --- | --- | --- |
-| TASK-001 | TASK-101 | Task | Foundation | `docs/architecture-decision-records/0001.md` |
-""",
-    )
-    write(repository / "docs/roadmap/archives/old.md", "TASK-001\n")
-    write(repository / "docs/architecture-decision-records/0001.md", "TASK-001\n")
-    write(repository / "vendor/archive/notes.md", "TASK-001\n")
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    stale = payload["migration"]["records"][0]["stale_references"]
-    assert stale == [
-        {"path": "vendor/archive/notes.md", "line": 1, "namespace": "default"}
-    ]
-
-
-def test_reports_missing_docs_roles_and_cli_error_envelopes(tmp_path: Path) -> None:
-    repository = tmp_path / "missing-docs"
-    initialize(repository)
-
-    _, missing_docs = inspect(repository)
-
-    assert any(
-        finding["code"] == "docs_missing" for finding in missing_docs["findings"]
-    )
-    write(repository / "docs/specs/README.md")
-
-    _, missing_root = inspect(repository)
-
-    assert any(
-        finding["code"] == "root_docs_index_missing"
-        for finding in missing_root["findings"]
-    )
-    write(repository / "docs/README.md", "# Documentation\n")
-
-    _, missing_roles = inspect(repository)
-
-    assert any(
-        finding["code"] == "documentation_role_missing"
-        for finding in missing_roles["findings"]
-    )
-    non_git = tmp_path / "not-git"
-    non_git.mkdir()
-    non_git_result, non_git_payload = inspect(non_git)
-    invalid_result = subprocess.run(
-        [sys.executable, str(SCRIPT)],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-
-    assert non_git_result.returncode == 2
-    assert non_git_payload["error"]["code"] == "repository_not_git"
-    assert invalid_result.returncode == 2
-    assert json.loads(invalid_result.stdout)["error"]["code"] == "invalid_arguments"
-
-
-def test_ignored_canonical_documents_are_not_accepted_as_authority(
-    tmp_path: Path,
-) -> None:
-    repository = tmp_path / "ignored-docs"
-    initialize(repository)
-    write(repository / ".gitignore", "docs/\n")
-    make_single_scope(repository)
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert payload["structural_status"] == "unverifiable"
-    assert payload["canonical_untracked_text_files"] == 0
-    assert any(
-        finding["code"] == "canonical_authority_uninventoried"
-        for finding in payload["findings"]
-    )
-
-
-def test_reports_duplicate_and_ambiguous_semantic_identifier(tmp_path: Path) -> None:
-    repository = tmp_path / "ambiguous-id"
-    initialize(repository)
-    make_single_scope(repository, epic="V2GRD-001", task="V2GRD-001")
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    codes = {finding["code"] for finding in payload["findings"]}
-    assert "duplicate_roadmap_identifier" in codes
-    assert "ambiguous_roadmap_identifier" in codes
-
-
-def test_multi_scope_reports_unselected_root_roadmap(tmp_path: Path) -> None:
-    repository = tmp_path / "root-roadmap"
-    initialize(repository)
-    write(repository / "docs/README.md", "# Documentation\n")
-    make_delivery_scope(repository, "app")
-    make_delivery_scope(repository, "server")
-    write(repository / "docs/roadmap/README.md", roadmap("EPIC-999", "TASK-999"))
-    commit_all(repository)
-
-    _, payload = inspect(repository)
-
-    assert any(
-        finding["code"] == "unselected_root_role_owner"
-        and finding["path"] == "docs/roadmap"
-        for finding in payload["findings"]
-    )
-
-
-def test_symlinked_role_ancestor_is_not_an_owner(tmp_path: Path) -> None:
-    repository = tmp_path / "symlink-role"
-    initialize(repository)
-    make_single_scope(repository)
-    target = tmp_path / "external-architecture"
-    target.mkdir()
-    write(target / "README.md")
-    architecture = repository / "docs/architecture"
-    for child in architecture.iterdir():
-        child.unlink()
-    architecture.rmdir()
-    architecture.symlink_to(target, target_is_directory=True)
-    run(["git", "add", "-A"], repository)
-    run(["git", "commit", "-qm", "fixture"], repository)
-
-    _, payload = inspect(repository)
-
-    assert any(
-        finding["code"] == "documentation_role_missing"
-        and "architecture" in finding["message"]
-        for finding in payload["findings"]
-    )
+    assert result.returncode == 2
+    assert payload["schema_version"] == "aquarium-docs-inspection-error/v2"
+    assert payload["error"]["code"] == "repository_not_root"

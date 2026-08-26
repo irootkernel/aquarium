@@ -76,7 +76,7 @@ Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and
 
 ## References
 
-- [Canonical documentation](docs/README.md) maps the repository's specifications, architecture, decisions, implementation guidance, roadmap, TODO candidates, and deferred feedback.
+- [Canonical documentation](docs/README.md) maps the repository's specifications, architecture, decisions, implementation guidance, operations runbooks, roadmap, TODO candidates, and deferred feedback.
 - [TESTING.md](TESTING.md) defines this repository's test authority and the `aquarium-test-contract/v1` evidence mapping.
 - [CHANGELOG.md](CHANGELOG.md) records concise release outcomes and the planned next stable version.
 - [Documentation governance](plugins/aquarium/references/documentation-governance.md) defines Aquarium's documentation roles, profiles, and default roadmap identity.

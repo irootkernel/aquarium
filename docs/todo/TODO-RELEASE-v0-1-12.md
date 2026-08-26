@@ -2,6 +2,8 @@
 
 ## Authority
 
+**Roadmap epic:** `EPIC-001`
+
 This dossier is the detailed scope and acceptance source of truth for `EPIC-001` and `TASK-001` through `TASK-004`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks in this file are review evidence only and never change roadmap state.
 
 The root `CHANGELOG.md` owns cumulative release notes and the open release version. Repository instructions and the release workflow own approval, verification, commit, tag, push, and publication behavior when they are stricter than this dossier.

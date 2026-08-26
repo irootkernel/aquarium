@@ -24,7 +24,7 @@ Before approval, show every mapping and every tracked occurrence classified as `
 
 Apply all current-reference rewrites and the permanent mapping in one approved change. Afterward, an old ID may remain only in the migration record, immutable Git history, an `archive/` or `archives/` directory owned by that canonical roadmap, an exact path declared in `Preserved Historical Paths`, or a reported unverifiable binary/external location.
 
-Run the bundled inspector and every repository-native checker covering the affected formats. A green link or regex check proves only that bounded condition; verify roadmap ownership, task containment, lifecycle preservation, schema validity, and generated-contract consistency separately.
+Run the bundled inspector and every repository-native checker covering the affected formats. The inspector inventories explicit roadmap units and structural conflicts but does not decide migration eligibility or stale-reference disposition. Verify the complete mapping, roadmap ownership, task containment, lifecycle preservation, schema validity, and generated-contract consistency separately.
 
 ## Path and Profile Migration
 

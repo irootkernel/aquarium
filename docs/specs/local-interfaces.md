@@ -19,7 +19,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
 | `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v8` | Read-only normalized Git, tool, skill, MCP, configuration, and readiness inspection |
-| `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v1` | Conservative documentation-role, roadmap-ID, reference, migration, and exclusion inspection |
+| `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
 | `dev-setup-bundle/scripts/normalize_manifest.py` | External `aquarium.dev-setup-bundle/v1` YAML manifest | `aquarium-dev-setup-bundle-plan.v1` | Validates, canonicalizes, and deduplicates explicit repository setup selections |
 | `independent-review/scripts/inspect_review_target.py` | Repository and one staged, HEAD, commit, or range selector | `aquarium-independent-review-target/v1` | Resolves exact Git objects, dirty boundaries, and target metadata without reviewing source |

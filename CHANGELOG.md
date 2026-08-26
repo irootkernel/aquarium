@@ -8,6 +8,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add maintainer documentation for Aquarium's implemented capabilities, architecture, decisions, and implementation guidance.
 
+### Changed
+
+- Extend docs-setup with explicit audience, epic SOT lifecycle, canonical closeout, operations documentation, and conservative structural inspection.
+
 ### Fixed
 
 - Fix the Kimi and GLM edition links in the English and Korean project READMEs.

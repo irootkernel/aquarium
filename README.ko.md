@@ -76,7 +76,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 ## 참고 문서
 
-- [Canonical documentation](docs/README.md)은 이 저장소의 specification, architecture, decision, implementation guidance, roadmap, TODO candidate, deferred feedback 권위를 연결합니다.
+- [Canonical documentation](docs/README.md)은 이 저장소의 specification, architecture, decision, implementation guidance, operations runbook, roadmap, TODO candidate, deferred feedback 권위를 연결합니다.
 - [TESTING.md](TESTING.md)는 이 저장소의 test authority와 `aquarium-test-contract/v1` evidence mapping을 정의합니다.
 - [CHANGELOG.md](CHANGELOG.md)는 간결한 release outcome과 계획된 다음 stable version을 기록합니다.
 - [Documentation governance](plugins/aquarium/references/documentation-governance.md)는 Aquarium의 문서 역할, profile, 기본 roadmap identity를 정의합니다.

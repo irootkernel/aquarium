@@ -70,7 +70,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - `CHANGELOG.md` owns cumulative release notes and the planned next version.
 - Aquarium release notes: CHANGELOG.md
 - `docs/README.md` owns the single-scope documentation profile, semantic role map, source-of-truth precedence, language policy, and documentation checks.
-- `docs/roadmap/README.md` alone owns Aquarium epic and task identity, ordering, dependencies, lifecycle vocabulary, and current delivery status. `docs/todo/README.md` and `docs/deferred-feedback/README.md` own work that has not entered that lifecycle.
+- `docs/roadmap/README.md` alone owns Aquarium epic and task identity, ordering, dependencies, lifecycle vocabulary, and current delivery status. `docs/todo/README.md` owns pre-roadmap candidates plus temporary dossiers for adopted active epics, while `docs/deferred-feedback/README.md` owns smaller work that has not entered the roadmap lifecycle.
 - `plugins/aquarium/skills/*/SKILL.md` and their linked references own workflow behavior; keep conditional detail in references instead of expanding every entrypoint.
 - `plugins/aquarium/assets/podway/procedures/` owns the Procedure sources installed into target repositories.
 - `Makefile` is the executable test authority, and `TESTING.md` owns the enrolled `aquarium-test-contract/v1` stage, framework, environment, diagnostic, and waiver mapping.

@@ -11,6 +11,8 @@ Always read [evidence-residency.md](../../references/evidence-residency.md), the
 
 Resolve the target roadmap's recorded identity contract before allocating an epic or task ID. Establish repository authority, current architecture and behavior, epic identity, user outcome, non-goals, dependencies, migration needs, failure behavior, rollout boundary, and acceptance evidence.
 
-After the approved envelope, use installed upstream `$interview`, `$pm`, or `$seed` only as needed. Produce one coherent epic with ordered work units and explicit ownership. Put an explicit `Design Gate impact` of `Not required`, `Pending`, or resolved `GATE-*` IDs on the epic and every implementation task, propagating the epic decision unless a task has a narrower resolved impact. A new or changed invariant must remain `Pending` until a separate `$aquarium:design-qa` run resolves it.
+After the approved envelope, use installed upstream `$interview`, `$pm`, or `$seed` only as needed. Produce one coherent epic with ordered work units and explicit ownership. Create or revise exactly one scope-local `TODO-*.md` dossier that declares the epic, owns its temporary goal, scope, task objectives, required and prohibited actions, and acceptance, is recorded in the adopted section of the TODO index, and is linked from the roadmap as `Detailed SOT`.
+
+Put `Design Gate impact` on the epic and every implementation task as `Not required`, `Pending`, or resolved `GATE-*` IDs. A new or changed invariant remains `Pending` until `$aquarium:design-qa` resolves it.
 
 Run upstream `$qa`, adjudicate the draft, show the exact roadmap and documentation diff, and apply it only after explicit approval and snapshot recheck. End with the epic identity, applied paths, validation, gate status, and implementation blockers.

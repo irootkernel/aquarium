@@ -2,6 +2,8 @@
 
 ## Authority
 
+**Roadmap epic:** `EPIC-002`
+
 This dossier is the detailed scope and acceptance source of truth for `EPIC-002` and `TASK-005` through `TASK-015`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks in this file are review evidence only and never change roadmap state.
 
 The future `$aquarium:dev-aquarium` skill and its linked references will own shipped workflow behavior after implementation. Repository-owned Make targets will own producer behavior. Until then, this dossier owns the planned contract without presenting it as current or released behavior.
@@ -308,5 +310,5 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 - [ ] `TASK-005` through `TASK-015` are `Completed` in the canonical roadmap.
 - [ ] The cold validation uses the final exact Aquarium and producer candidates after all accepted changes.
 - [ ] Stable fallback, broken-enrollment fail-close, exact-SHA pinning, lease safety, and prompt cleanup are independently demonstrated.
-- [ ] Current specs, architecture, ADRs, implementation tips, public documentation, privacy terms, and executable validation reflect the shipped behavior without moving lifecycle status out of the roadmap.
+- [ ] Current specs, architecture, ADRs, implementation tips, operations, public documentation, privacy terms, and executable validation reflect the shipped behavior without moving lifecycle status out of the roadmap.
 - [ ] Development-contract evidence remains explicitly separate from stable release and distribution evidence.
