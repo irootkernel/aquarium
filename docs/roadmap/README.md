@@ -35,7 +35,7 @@ Epic status is independent of child task status. Completing every child does not
 
 **Status:** `Planned`
 
-Deliver Aquarium v0.1.12 with explicit project-owned Procedure support, independently qualified Podway v0.2.6 compatibility, complete Sudal integration-request validation, and verified publication.
+Deliver Aquarium v0.1.12 with the released Podway v0.2.6 runtime contract, preset-informed canonical Procedures, preserved local Procedure customization, complete Sudal integration-request validation, and verified publication.
 
 Podway owns its v0.2.6 implementation, release QA, distribution gate, and publication. Aquarium may consume that result only after it obtains the exact Podway release commit and independently verifies the official artifact; an Aquarium consumer claim alone cannot complete the dependency.
 
@@ -43,9 +43,12 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-001 | Support project-owned Procedure customization | Add an explicit, validated ownership transition without overwriting project-owned Procedures. | Planned | None |
-| TASK-002 | Qualify the official Podway v0.2.6 release | Independently verify the exact released Podway artifact and Aquarium compatibility. | Planned | External Podway v0.2.6 release |
-| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Reconcile integration requirements and prove the final exact development candidate. | Planned | TASK-001, TASK-002 |
+| TASK-016 | Align the Podway v0.2.6 runtime contract | Adopt the released observation, lifecycle, evidence-read, skill, and daemon-readiness interfaces. | Planned | External Podway v0.2.6 release |
+| TASK-017 | Reauthor the delivery Procedures | Rebuild the task, goal, and validation Procedures from the applicable v0.2.6 preset patterns. | Planned | TASK-016 |
+| TASK-018 | Reauthor the analysis Procedures | Rebuild the design and war-room Procedures from the applicable v0.2.6 analysis and bug-fix patterns. | Planned | TASK-016 |
+| TASK-001 | Preserve local Procedure customization | Accept Podway-valid same-ID local Procedure content and replace it only after an explicit reviewed choice. | Planned | TASK-017, TASK-018 |
+| TASK-002 | Qualify the official Podway v0.2.6 release | Independently verify the exact released artifact against the final canonical Procedures and runtime paths. | Planned | TASK-001, TASK-016, TASK-017, TASK-018; external Podway v0.2.6 release |
+| TASK-003 | Validate the complete Aquarium v0.1.12 candidate | Reconcile integration requirements and prove the final exact development candidate. | Planned | TASK-001, TASK-002, TASK-016, TASK-017, TASK-018 |
 | TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Planned | TASK-003 |
 
 ## EPIC-002: Build the Aquarium Development Environment

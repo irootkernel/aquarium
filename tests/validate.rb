@@ -683,25 +683,30 @@ assert(!canonical_documentation.include?("/Users/") &&
 
 release_012_dossier = documentation_details.fetch("release-v0.1.12-dossier")
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
+roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
 assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 3 &&
        canonical_roadmap.include?("## EPIC-001: Release Aquarium v0.1.12") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Introduce Dolgorae") &&
        canonical_roadmap.include?("**Status:** `Planned`") &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] } ==
-         (1..15).map { |number| "TASK-%03d" % number } &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 15 &&
+       roadmap_task_ids.length == 18 &&
+       roadmap_task_ids.uniq.sort == (1..18).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| Planned \|/).length == 18 &&
        canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        canonical_roadmap.include?("No child task identity or implementation authority is allocated") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-003 and TASK-001 through TASK-015")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-003 and unique TASK-001 through TASK-018")
 assert(todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
        todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
+       todo_index.include?("`TASK-016` through `TASK-018`") &&
        release_012_dossier.include?("detailed scope and acceptance source of truth for `EPIC-001`") &&
-       release_012_dossier.include?("## TASK-001: Support Project-Owned Procedure Customization") &&
+       release_012_dossier.include?("## TASK-016: Align the Podway v0.2.6 Runtime Contract") &&
+       release_012_dossier.include?("## TASK-017: Reauthor the Delivery Procedures") &&
+       release_012_dossier.include?("## TASK-018: Reauthor the Analysis Procedures") &&
+       release_012_dossier.include?("## TASK-001: Preserve Local Procedure Customization") &&
        release_012_dossier.include?("## TASK-004: Release Aquarium v0.1.12") &&
        release_012_dossier.include?("make test-podway-compat") &&
        release_012_dossier.include?("$aquarium:release-handler") &&
