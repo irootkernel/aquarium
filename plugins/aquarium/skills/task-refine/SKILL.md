@@ -1,11 +1,11 @@
 ---
 name: task-refine
-description: "Deslop and optimize the verified diff for one roadmap task. Use when $aquarium:task-handler delegates refinement or when the user explicitly invokes $aquarium:task-refine with exact task identity, current verification evidence, and explicit staging authority."
+description: "Deslop and optimize the implementation-checked diff for one roadmap task before final verification. Use when $aquarium:task-handler delegates refinement or when the user explicitly invokes $aquarium:task-refine with exact task identity, current focused implementation-check evidence, and explicit staging authority."
 ---
 
 # Task Refine
 
-Refine only the verified task-owned diff established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, verified baseline, and explicit authority for the staging steps below.
+Refine only the implementation-checked task-owned diff established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, current focused implementation-check evidence, and explicit authority for the staging steps below. Final requirement-mapped verification follows refinement.
 
 ## Deslop
 

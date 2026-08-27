@@ -145,6 +145,119 @@ def untracked_identity(repository: Path) -> bytes:
     return identity.digest()
 
 
+def tracked_files_identity(repository: Path, visited: set[Path] | None = None) -> bytes:
+    try:
+        physical_repository = repository.resolve(strict=True)
+    except OSError as error:
+        raise InspectionError(
+            "worktree_unavailable", "tracked worktree state is unavailable"
+        ) from error
+    seen = visited if visited is not None else set()
+    if physical_repository in seen:
+        raise InspectionError(
+            "worktree_unavailable", "tracked worktree contains a recursive Git link"
+        )
+    seen.add(physical_repository)
+
+    entries = require_git(
+        repository,
+        ["ls-files", "--stage", "-z"],
+        "worktree_unavailable",
+        "tracked worktree state is unavailable",
+    )
+    identity = hashlib.sha256()
+    for entry in entries.split(b"\0"):
+        if not entry:
+            continue
+        try:
+            metadata, raw_path = entry.split(b"\t", 1)
+            mode, _object_id, stage = metadata.split(b" ", 2)
+        except ValueError as error:
+            raise InspectionError(
+                "worktree_unavailable", "tracked worktree state is unavailable"
+            ) from error
+        identity.update(len(metadata).to_bytes(8, "big"))
+        identity.update(metadata)
+        identity.update(len(raw_path).to_bytes(8, "big"))
+        identity.update(raw_path)
+        if stage != b"0":
+            continue
+
+        path = repository / os.fsdecode(raw_path)
+        try:
+            file_status = path.lstat()
+        except FileNotFoundError:
+            identity.update(b"missing\0")
+            continue
+        except OSError as error:
+            raise InspectionError(
+                "worktree_unavailable", "tracked worktree state is unavailable"
+            ) from error
+        identity.update(stat.S_IFMT(file_status.st_mode).to_bytes(8, "big"))
+        identity.update(stat.S_IMODE(file_status.st_mode).to_bytes(8, "big"))
+        if stat.S_ISREG(file_status.st_mode):
+            contents = hashlib.sha256()
+            try:
+                with path.open("rb") as source:
+                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                        contents.update(chunk)
+            except OSError as error:
+                raise InspectionError(
+                    "worktree_unavailable", "tracked worktree state is unavailable"
+                ) from error
+            identity.update(b"regular\0")
+            identity.update(contents.digest())
+        elif stat.S_ISLNK(file_status.st_mode):
+            try:
+                target = os.fsencode(os.readlink(path))
+            except OSError as error:
+                raise InspectionError(
+                    "worktree_unavailable", "tracked worktree state is unavailable"
+                ) from error
+            identity.update(b"symlink\0")
+            identity.update(len(target).to_bytes(8, "big"))
+            identity.update(target)
+        elif mode == b"160000" and stat.S_ISDIR(file_status.st_mode):
+            identity.update(b"gitlink\0")
+            identity.update(tracked_files_identity(path, seen))
+            identity.update(
+                json.dumps(
+                    head_state(path), sort_keys=True, separators=(",", ":")
+                ).encode()
+            )
+            identity.update(
+                require_git(
+                    path,
+                    [
+                        "for-each-ref",
+                        "--format=%(refname)%00%(objectname)%00%(symref)",
+                    ],
+                    "worktree_unavailable",
+                    "tracked worktree state is unavailable",
+                )
+            )
+            identity.update(
+                require_git(
+                    path,
+                    ["rev-parse", "--verify", "HEAD^{commit}"],
+                    "worktree_unavailable",
+                    "tracked worktree state is unavailable",
+                )
+            )
+            identity.update(
+                require_git(
+                    path,
+                    ["ls-files", "--stage", "-v", "-z"],
+                    "worktree_unavailable",
+                    "tracked worktree state is unavailable",
+                )
+            )
+            identity.update(untracked_identity(path))
+        else:
+            identity.update(b"unsupported\0")
+    return identity.digest()
+
+
 def head_state(repository: Path) -> dict[str, str | None]:
     commit = (
         require_git(
@@ -184,13 +297,25 @@ def snapshot(repository: Path) -> dict[str, Any]:
     )
     tracked_worktree = require_git(
         repository,
-        ["diff", "--binary", "--no-ext-diff", "--no-textconv"],
+        [
+            "diff",
+            "--binary",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--ignore-submodules=none",
+        ],
         "worktree_unavailable",
         "tracked worktree state is unavailable",
     )
     status = require_git(
         repository,
-        ["status", "--porcelain=v2", "-z", "--untracked-files=all"],
+        [
+            "status",
+            "--porcelain=v2",
+            "-z",
+            "--untracked-files=all",
+            "--ignore-submodules=none",
+        ],
         "status_unavailable",
         "Git status is unavailable",
     )
@@ -199,7 +324,9 @@ def snapshot(repository: Path) -> dict[str, Any]:
         "head": head_state(repository),
         "refs_sha256": sha256(refs),
         "index_sha256": sha256(index),
-        "tracked_worktree_sha256": sha256(tracked_worktree),
+        "tracked_worktree_sha256": sha256(
+            tracked_worktree + b"\0tracked-files\0" + tracked_files_identity(repository)
+        ),
         "status_sha256": sha256(status_identity),
     }
     fingerprint = sha256(

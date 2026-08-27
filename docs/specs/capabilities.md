@@ -29,7 +29,7 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 | `$aquarium:task-commit` | Commit request or delegated handoff | Reconciles roadmap lifecycle, exact staging scope, Lore context, Sanho checks, and one authorized commit | A commit never authorizes amend, push, merge, or release |
 | `$aquarium:epic-handler` | Explicit | Orders one epic's tasks, completes task goals and commits, then audits and hardens the integrated epic | External prerequisites require exact committed revisions and independent evidence |
 
-Task delivery uses at most two operationally complete task review rounds. Epic delivery uses bounded full-target review and remediation followed by one confirmation-only pass; clean evidence ends either loop immediately.
+Task delivery uses up to three remediation-eligible review rounds followed by a fourth confirmation-only round; any additional fix-and-confirmation round requires explicit user approval. Epic delivery uses bounded full-target review and remediation followed by one confirmation-only pass; clean evidence ends either loop immediately.
 
 ## Validation and Independent Review
 

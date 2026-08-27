@@ -52,6 +52,16 @@ FIELD_LINE = re.compile(
     r"^\s*(?:[-*]\s+)?(?:\*\*)?([^:*]+):(?:\*\*)?\s*(.*)$",
     re.IGNORECASE,
 )
+TASK_TABLE_HEADERS = {
+    "task",
+    "tasks",
+    "task id",
+    "task identifier",
+    "work item",
+    "work unit",
+    "작업",
+    "태스크",
+}
 
 
 class InspectionError(Exception):
@@ -367,6 +377,8 @@ def task_rows(lines: list[str]) -> list[dict[str, str]]:
             continue
         if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
             continue
+        if not headers or headers[0] not in TASK_TABLE_HEADERS:
+            continue
         identifier = cells[0]
         if not looks_like_identifier(identifier):
             continue
@@ -477,7 +489,10 @@ def inspect_epic_lifecycle(
             outcome_count == 1
             and bool(outcome_targets)
             and all(
-                target is not None and target in inventory for target in outcome_targets
+                target is not None
+                and target in inventory
+                and (todo_owner is None or not within_owner(target, todo_owner))
+                for target in outcome_targets
             )
         )
         if not valid_outcomes:
@@ -540,6 +555,8 @@ def inspect_epic_lifecycle(
         and target.suffix.lower() == ".md"
         and todo_owner is not None
         and within_owner(target, todo_owner)
+        and target != todo_owner
+        and target != todo_owner / "README.md"
         and target in inventory
     )
     if not valid:

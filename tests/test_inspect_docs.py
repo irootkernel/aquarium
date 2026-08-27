@@ -212,6 +212,20 @@ def test_active_epic_rejects_unsafe_or_non_todo_dossier(
     assert "active_epic_dossier_invalid" in finding_codes(payload)
 
 
+def test_active_epic_rejects_todo_owner_index_as_dossier(tmp_path: Path) -> None:
+    repository = tmp_path / "todo-owner-dossier"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md", roadmap(detailed_sot="../todo/README.md")
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "active_epic_dossier_invalid" in finding_codes(payload)
+
+
 def test_taskless_placeholder_needs_no_dossier(tmp_path: Path) -> None:
     repository = tmp_path / "placeholder"
     initialize(repository)
@@ -279,6 +293,25 @@ def test_completed_contract_accepts_existing_repository_outcome(tmp_path: Path) 
     assert payload["structural_status"] == "conforming"
 
 
+def test_completed_contract_rejects_todo_outcome(tmp_path: Path) -> None:
+    repository = tmp_path / "completed-todo-outcome"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(
+            status="Completed",
+            detailed_sot=None,
+            outcomes="../todo/TODO-EPIC-001.md",
+        ),
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "completed_epic_canonical_outcomes_missing" in finding_codes(payload)
+
+
 def test_historical_completed_epic_is_grandfathered(tmp_path: Path) -> None:
     repository = tmp_path / "historical"
     initialize(repository)
@@ -334,6 +367,25 @@ def test_duplicate_current_roadmap_identifier_is_nonconforming(tmp_path: Path) -
 
     assert payload["structural_status"] == "nonconforming"
     assert "duplicate_roadmap_identifier" in finding_codes(payload)
+
+
+def test_dependency_table_does_not_define_tasks(tmp_path: Path) -> None:
+    repository = tmp_path / "dependency-table"
+    initialize(repository)
+    make_single_scope(repository)
+    path = repository / "docs/roadmap/README.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "\n| Dependency | Reason |\n| --- | --- |\n"
+        + "| EPIC-002 | Required first |\n"
+        + "\n## EPIC-002: Second\n\n**Status:** `Planned`\n",
+        encoding="utf-8",
+    )
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "duplicate_roadmap_identifier" not in finding_codes(payload)
 
 
 def test_excluded_linked_document_is_unverifiable_not_missing(tmp_path: Path) -> None:

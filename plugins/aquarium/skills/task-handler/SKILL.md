@@ -45,8 +45,8 @@ Resolve every phase skill from the installed Aquarium plugin, read its complete 
 
 1. `$aquarium:task-plan`
 2. `$aquarium:task-implement`
-3. `$aquarium:task-verify`
-4. `$aquarium:task-refine`
+3. `$aquarium:task-refine`
+4. `$aquarium:task-verify`
 5. `$aquarium:task-document`
 6. `$aquarium:task-review`
 7. `$aquarium:task-close`
@@ -63,8 +63,8 @@ After each phase, re-read the roadmap entry, Git state, affected files, and phas
 |---|---|
 | Plan | A decision-complete plan is explicitly approved; `plan-only` makes no mutation; `plan-handoff` makes no roadmap edit, records the verified artifact, stops at `implement`, and returns the exact session-bound continuation; any roadmap-defined `In Progress` transition is applied and verified only before implementation. |
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
-| Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
+| Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence for the refined target, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
 | Document | Canonical documents, the active dossier, roadmap, and release note are current; documentation validation has current evidence; accepted task information is promoted to its canonical owner; every repository handoff is actionable for a named future consumer with a clear Internal or External lifecycle; completion or runtime evidence is not duplicated as handoff prose; consumed or stale Internal entries are removed or updated. |
 | Review | One exact complete task target received bounded Mulgae review and every valid finding is resolved or explicitly dispositioned. |
 | Close | The user approved tests, documentation, the exact final implementation, and the terminal status; any authorized commit succeeded through `$aquarium:task-commit`. |

@@ -14,7 +14,7 @@ Podway, Mulgae, Gaori, Orca, terminals, and other tools produce rich local runti
 
 Keep native runtime evidence in the owning tool's ignored local storage. Do not treat it as specifications, roadmap history, or architecture authority. When a durable downstream consumer has a verified need, promote only a reviewed, bounded, non-sensitive structured artifact under `evidence/aquarium/`, unless the repository declares an exact relative `Aquarium evidence root` in project configuration.
 
-A promoted artifact identifies its producer, target, scope, time, result, and limitations. It excludes credentials, raw transcripts, ambient runtime history, and unrelated repository content. Promotion requires deliberate review and follows the normal documentation and Git approval boundaries.
+A promoted artifact identifies its producer, exact target revision, scope, result, and limitations. It excludes credentials, raw transcripts, ambient runtime history, and unrelated repository content. Promotion requires deliberate review and follows the normal documentation and Git approval boundaries.
 
 ## Consequences
 

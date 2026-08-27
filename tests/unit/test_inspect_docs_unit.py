@@ -71,6 +71,16 @@ TASK-999 is prose, not a task definition.
     assert inspect_docs.task_rows(lines) == [{"id": "TASK-001", "status": "Completed"}]
 
 
+def test_task_parser_ignores_non_task_tables() -> None:
+    lines = [
+        "| Dependency | Reason |",
+        "| --- | --- |",
+        "| EPIC-002 | Required first |",
+    ]
+
+    assert inspect_docs.task_rows(lines) == []
+
+
 def test_sensitive_paths_are_excluded_without_reading_values() -> None:
     assert inspect_docs.sensitive_path(Path(".env.example"))
     assert inspect_docs.sensitive_path(Path("docs/ops/key-rotation.md"))

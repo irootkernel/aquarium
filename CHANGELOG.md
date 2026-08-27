@@ -6,28 +6,21 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add maintainer documentation for Aquarium's implemented capabilities, architecture, decisions, and implementation guidance.
+- Add maintainer documentation for Aquarium's implemented capabilities, architecture, decisions, operations, and implementation guidance.
+- Add an isolated official Podway v0.2.6 compatibility gate covering both released binaries, every canonical Procedure, and Aquarium lifecycle seams.
 
 ### Changed
 
 - Let Aquarium workflows use native tool capabilities without skill-owned sessions or unsupported orchestration limits.
-- Extend docs-setup with explicit audience, epic SOT lifecycle, canonical closeout, operations documentation, and conservative structural inspection.
-- Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, permit one approved QA-neutral direct child, and reject draft or prerelease objects as completed stable Releases.
-- Run Orca reviewers with provider-native auto-approval while enforcing the static no-mutation contract through explicit Dispatch instructions, supervision, and Git-state verification of index flags and untracked content.
-- Reauthor the task, goal, validation, design, and war-room Procedures from Podway v0.2.6 delivery, analysis, and bug-fix patterns with typed checks, guarded routing, fresh evidence handoffs, and explicit approval boundaries.
-- Preserve same-ID Podway-valid local Procedure customizations and require an exact reviewed choice before canonical replacement.
-- Add an isolated official Podway v0.2.6 compatibility gate covering both released binaries, every canonical Procedure, and Aquarium lifecycle seams.
+- Extend docs-setup with governed roadmap and dossier lifecycles, canonical closeout, operations documentation, and conservative role-aware structural inspection.
+- Strengthen release QA and publication recovery with project-derived scenario matrices, clean local-main candidates ahead of remote main, resumable full gates, one approved QA-neutral direct child, and v4 ordered publication observation.
+- Run Orca reviewers with provider-native auto-approval while enforcing exact repository identity and no-mutation supervision across refs, the index, tracked worktrees, submodules, and untracked content.
+- Reauthor the task, goal, validation, design, and war-room Procedures for Podway v0.2.6 with typed checks, guarded routing, refined-target verification, fresh evidence handoffs, explicit approval boundaries, and reviewed preservation of valid local customizations.
+- Strengthen development setup for Podway v0.2.6, isolated Ouroboros MCP runtimes, and structurally valid but upstream-unverified Deslop installations.
 
 ### Fixed
 
 - Fix the Kimi and GLM edition links in the English and Korean project READMEs.
-- Recognize Ouroboros's canonical isolated Codex MCP launcher without mistaking the base MCP 1.x profile for its MCP 2 runtime.
-- Replace hardcoded Aquarium-specific release QA confirmation clusters with project-derived matrices.
-- Allow release QA for clean local main candidates ahead of remote main without requiring a pre-QA push.
-- Avoid a redundant Ouroboros Codex artifact refresh before full runtime setup.
-- Require Podway v0.2.6 for Aquarium development setup.
-- Adopt Podway v0.2.6 observation, evidence pagination, session archival, paired-skill, and phase-aware readiness contracts.
-- Reject empty or relative repository identities before creating Orca provider terminals.
 
 ## v0.1.11 - 2026-08-25
 

@@ -2192,6 +2192,7 @@ def inspect_lora() -> dict[str, Any]:
 
 def inspect_deslop() -> dict[str, Any]:
     name = "deslop"
+    expected_entries = {"SKILL.md", "LICENSE"}
     installations: list[dict[str, Any]] = []
     for root in skill_roots():
         skill_directory = root.joinpath(name)
@@ -2204,6 +2205,7 @@ def inspect_deslop() -> dict[str, Any]:
                     "license_file_present": False,
                     "frontmatter_valid": False,
                     "symlinked": True,
+                    "unexpected_entries": [],
                 }
             )
             continue
@@ -2216,6 +2218,14 @@ def inspect_deslop() -> dict[str, Any]:
             skill_directory, "LICENSE"
         )
         symlinked = skill_symlinked or license_symlinked
+        try:
+            unexpected_entries = sorted(
+                entry.name
+                for entry in skill_directory.iterdir()
+                if entry.name not in expected_entries
+            )
+        except OSError:
+            unexpected_entries = ["<unreadable>"]
         installations.append(
             {
                 "location": str(skill_directory),
@@ -2224,6 +2234,7 @@ def inspect_deslop() -> dict[str, Any]:
                 "frontmatter_valid": skill_file_present
                 and frontmatter_name(skill_path) == name,
                 "symlinked": symlinked,
+                "unexpected_entries": unexpected_entries,
             }
         )
 
@@ -2233,14 +2244,17 @@ def inspect_deslop() -> dict[str, Any]:
         and installations[0]["license_file_present"]
         and installations[0]["frontmatter_valid"]
         and not installations[0]["symlinked"]
+        and not installations[0]["unexpected_entries"]
     )
     return {
         "catalog_status": "active",
         "setup_supported": True,
         "installed": ready,
+        "complete_tree_verified": False,
+        "verification_scope": "structure_only",
         "executable": None,
         "version": None,
-        "status": "configured"
+        "status": "unverifiable"
         if ready
         else ("degraded" if installations else "missing"),
         "agent_skill": {

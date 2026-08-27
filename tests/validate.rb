@@ -1334,7 +1334,7 @@ assert(epic_handler.include?("requests without one canonical roadmap epic identi
        task_handler.include?("requests without one canonical roadmap task identity") &&
        !epic_handler.include?("free-form") && !task_handler.include?("free-form"),
        "handlers must express applicability through canonical roadmap identities")
-phase_names = %w[task-plan task-implement task-verify task-refine task-document task-review task-close]
+phase_names = %w[task-plan task-implement task-refine task-verify task-document task-review task-close]
 phase_section_index = task_handler.index("Resolve every phase skill")
 phase_indexes = phase_names.map { |name| task_handler.index("$aquarium:#{name}", phase_section_index) }
 assert(phase_indexes.all? && phase_indexes.each_cons(2).all? { |left, right| left < right },
@@ -2184,8 +2184,9 @@ assert(orca_state_helper.file? &&
        orca_state_helper_body.include?('"for-each-ref"') &&
        orca_state_helper_body.include?('["ls-files", "--stage", "-v", "-z"]') &&
        orca_state_helper_body.include?('["ls-files", "--others", "--exclude-standard", "-z"]') &&
-       orca_state_helper_body.include?('["diff", "--binary", "--no-ext-diff", "--no-textconv"]') &&
-       orca_state_helper_body.include?('["status", "--porcelain=v2", "-z", "--untracked-files=all"]') &&
+       orca_state_helper_body.include?("tracked_files_identity") &&
+       orca_state_helper_body.scan('"--ignore-submodules=none"').length == 2 &&
+       orca_state_helper_body.include?('b"\\0tracked-files\\0"') &&
        orca_state_helper_body.include?('"drift": bool(changed)') &&
        orca_state_helper_body.include?("baseline fingerprint is invalid"),
        "orca-review repository-state helper must compare bounded Git-observable state")
@@ -2369,6 +2370,7 @@ assert(release_gate_convergence.include?("independently invocable stage declared
        release_gate_convergence.include?("tests are not removed, skipped, weakened, or relaxed") &&
        release_gate_convergence.include?("Diff size, commit title, file location alone") &&
        release_gate_convergence.include?("Never claim that release QA directly passed the direct child") &&
+       release_gate_convergence.include?("v4 publication observation") &&
        release_gate_convergence.include?("any further candidate commit requires new full release QA"),
        "release gate convergence must optimize diagnosis without weakening the final gate or exact QA binding")
 assert(release_handler.include?("references/publication-recovery.md") &&

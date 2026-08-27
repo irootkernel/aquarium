@@ -99,6 +99,68 @@ def test_compare_detects_assume_unchanged_index_flag(repository: Path) -> None:
     assert "index_sha256" in result["changed"]
 
 
+def test_compare_detects_content_hidden_by_assume_unchanged(repository: Path) -> None:
+    git(repository, "update-index", "--assume-unchanged", "tracked.txt")
+    baseline = inspect_repository_state.snapshot(repository)
+    (repository / "tracked.txt").write_text("changed\n", encoding="utf-8")
+
+    result = inspect_repository_state.compare(repository, baseline)
+
+    assert result["drift"] is True
+    assert "tracked_worktree_sha256" in result["changed"]
+
+
+def test_compare_detects_content_hidden_by_skip_worktree(repository: Path) -> None:
+    git(repository, "update-index", "--skip-worktree", "tracked.txt")
+    baseline = inspect_repository_state.snapshot(repository)
+    (repository / "tracked.txt").write_text("changed\n", encoding="utf-8")
+
+    result = inspect_repository_state.compare(repository, baseline)
+
+    assert result["drift"] is True
+    assert "tracked_worktree_sha256" in result["changed"]
+
+
+def test_compare_detects_submodule_content_despite_ignore_all(tmp_path: Path) -> None:
+    child = tmp_path / "child"
+    child.mkdir()
+    git(child, "init", "-q")
+    git(child, "config", "user.name", "Test User")
+    git(child, "config", "user.email", "test@example.com")
+    (child / "tracked.txt").write_text("initial\n", encoding="utf-8")
+    git(child, "add", "tracked.txt")
+    git(child, "commit", "-qm", "initial")
+
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    git(parent, "init", "-q")
+    git(parent, "config", "user.name", "Test User")
+    git(parent, "config", "user.email", "test@example.com")
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "protocol.file.allow=always",
+            "submodule",
+            "add",
+            "-q",
+            str(child),
+            "modules/child",
+        ],
+        cwd=parent,
+        check=True,
+    )
+    git(parent, "commit", "-qam", "add submodule")
+    git(parent, "config", "submodule.modules/child.ignore", "all")
+    baseline = inspect_repository_state.snapshot(parent)
+    (parent / "modules/child/tracked.txt").write_text("changed\n", encoding="utf-8")
+
+    result = inspect_repository_state.compare(parent, baseline)
+
+    assert result["drift"] is True
+    assert "tracked_worktree_sha256" in result["changed"]
+
+
 def test_baseline_requires_matching_repository_and_fingerprint(
     repository: Path, tmp_path: Path
 ) -> None:

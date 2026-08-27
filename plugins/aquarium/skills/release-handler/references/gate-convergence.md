@@ -43,7 +43,7 @@ Diff size, commit title, file location alone, formatting claims, or a successful
 
 Record the prior release-qa result against its actual SHA and record the current SHA separately as an approved QA-neutral release-basis candidate. Never claim that release QA directly passed the direct child. Re-establish the release from live Git and hosting state on handler restart; retained evidence grants no test, commit, push, tag, or publication authority.
 
-For publication, bind the metadata-only release commit and final gate evidence to the release-basis candidate while retaining the distinct direct-QA evidence SHA. Supply both through the v3 publication observation. Publication recovery is `unproven` when either binding or the one-attempt equivalence fact is unavailable.
+For publication, bind the metadata-only release commit and final gate evidence to the release-basis candidate while retaining the distinct direct-QA evidence SHA. Supply both through the v4 publication observation. Publication recovery is `unproven` when either binding or the one-attempt equivalence fact is unavailable.
 
 After a QA-neutral reuse, any further candidate commit requires new full release QA. A metadata-only correction may still use the existing release-basis candidate, but the complete final gate must pass again from the beginning.
 

@@ -921,8 +921,25 @@ class InspectToolsTest(unittest.TestCase):
         self.assertTrue(tools["lora"]["lore_setup_present"])
         self.assertFalse(tools["lora"]["skills"]["lore-commits"]["duplicate"])
         self.assertFalse(tools["lora"]["skills"]["lore-query"]["symlinked"])
-        self.assertEqual(tools["deslop"]["status"], "configured")
+        self.assertEqual(tools["deslop"]["status"], "unverifiable")
         self.assertTrue(tools["deslop"]["installed"])
+        self.assertFalse(tools["deslop"]["complete_tree_verified"])
+        self.assertEqual(tools["deslop"]["verification_scope"], "structure_only")
+
+    def test_deslop_installation_with_extra_file_is_degraded(self) -> None:
+        skill_directory = self.install_deslop_skill()
+        skill_directory.joinpath("EXTRA.txt").write_text(
+            "unexpected\n", encoding="utf-8"
+        )
+
+        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+
+        self.assertEqual(deslop["status"], "degraded")
+        self.assertFalse(deslop["installed"])
+        self.assertEqual(
+            deslop["agent_skill"]["installations"][0]["unexpected_entries"],
+            ["EXTRA.txt"],
+        )
 
     def test_deslop_invalid_frontmatter_is_degraded(self) -> None:
         self.install_deslop_skill(name="wrong-name")
