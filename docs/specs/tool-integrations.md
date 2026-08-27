@@ -30,7 +30,7 @@ MCP registration correctness does not prove that the active Codex session has re
 
 ## Podway Readiness
 
-Aquarium readiness requires a supported stable CLI and matching daemon, a healthy initialized workspace, tracked `.podway/config.yaml` and `.podway/.gitignore`, and all five managed Procedure files as regular non-symlink byte-identical copies that pass `procedure check --warnings-as-errors`.
+Aquarium readiness requires a supported stable CLI and matching daemon, a healthy initialized workspace, tracked `.podway/config.yaml` and `.podway/.gitignore`, and all five managed Procedure paths as tracked regular non-symlink files with the expected filename and Procedure ID that pass `procedure check --warnings-as-errors`. Each file may contain canonical bytes or a Podway-valid same-ID local customization.
 
 The bounded `daemon wait-ready` result is healthy when readiness state and stage are `ready` and the closed recovery inventory reports every worktree completed. A nonzero failed count may represent quarantined completed recovery and does not by itself degrade readiness. A prepared, running, incomplete, or undisposed terminal session is a lifecycle conflict owned by the matching workflow or `$use-podway`, not a setup repair.
 
