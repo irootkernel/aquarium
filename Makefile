@@ -17,6 +17,7 @@ export PYTEST_ADDOPTS
 PYTHON_FILES := \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
+	plugins/aquarium/skills/dev-aquarium/scripts/dev_contract.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
@@ -35,6 +36,7 @@ PYTHON_FILES := \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_create_provider_terminal_unit.py \
+	tests/unit/test_dev_aquarium_contract_unit.py \
 	tests/unit/test_dev_aquarium_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \

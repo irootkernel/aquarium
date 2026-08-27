@@ -1,0 +1,7 @@
+{
+  "schema": "aquarium-dev-producer-description/v1",
+  "project_id": "aquarium",
+  "next_version": "v0.1.14",
+  "artifact_kind": "codex-plugin",
+  "artifact_path": "plugin"
+}

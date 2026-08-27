@@ -1,0 +1,11 @@
+{
+  "schema": "aquarium-dev-error/v1",
+  "error": {
+    "code": "codex_login_required",
+    "message": "The isolated Codex home is not authenticated.",
+    "action": "Run CODEX_HOME=~/.aquarium/codex codex login.",
+    "stage": "configure-codex",
+    "project_id": "aquarium",
+    "git_sha": null
+  }
+}

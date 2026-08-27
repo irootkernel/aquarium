@@ -1,0 +1,8 @@
+{
+  "schema": "aquarium-dev-manager-result/v1",
+  "operation": "diagnose",
+  "status": "diagnosed",
+  "project_id": "aquarium",
+  "message": "Development enrollment is healthy.",
+  "details": {}
+}

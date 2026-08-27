@@ -1,0 +1,9 @@
+{
+  "schema": "aquarium-dev-artifact-manifest/v1",
+  "project_id": "aquarium",
+  "git_sha": "0123456789abcdef0123456789abcdef01234567",
+  "development_version": "v0.1.14-dev.0123456789ab",
+  "artifact_kind": "codex-plugin",
+  "artifact_path": "plugin",
+  "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

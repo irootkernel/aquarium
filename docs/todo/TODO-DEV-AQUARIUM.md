@@ -124,21 +124,21 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Freeze the `aquarium-dev-describe` and `aquarium-dev-build` JSON schemas, required fields, exit behavior, and stdout/stderr discipline.
-- [ ] Freeze the `AQUARIUM_DEV_OUTPUT` containment and staging rules.
-- [ ] Freeze project identifiers, exact-SHA identity, next-development-version authority, checksum requirements, and artifact kinds.
-- [ ] Freeze the `~/.aquarium/` directory layout without adding a top-level `bin/`.
-- [ ] Freeze enrollment, canonical checkout identity, re-enrollment, hook ownership, current-selector, lease, and cleanup contracts.
-- [ ] Freeze stable fallback versus broken-enrollment fail-close behavior and machine-readable error identities.
-- [ ] Define how the isolated Codex home pins a matching Aquarium plugin, paired skills, MCP configuration, and resolved tool artifacts.
-- [ ] Add schema fixtures and negative contract tests before downstream producer implementation.
+- [x] Freeze the `aquarium-dev-describe` and `aquarium-dev-build` JSON schemas, required fields, exit behavior, and stdout/stderr discipline.
+- [x] Freeze the `AQUARIUM_DEV_OUTPUT` containment and staging rules.
+- [x] Freeze project identifiers, exact-SHA identity, next-development-version authority, checksum requirements, and artifact kinds.
+- [x] Freeze the `~/.aquarium/` directory layout without adding a top-level `bin/`.
+- [x] Freeze enrollment, canonical checkout identity, re-enrollment, hook ownership, current-selector, lease, and cleanup contracts.
+- [x] Freeze stable fallback versus broken-enrollment fail-close behavior and machine-readable error identities.
+- [x] Define how the isolated Codex home pins a matching Aquarium plugin, paired skills, MCP configuration, and resolved tool artifacts.
+- [x] Add schema fixtures and negative contract tests before downstream producer implementation.
 
 ### Do Not
 
-- [ ] Do not allow producer-specific undocumented flags or inferred artifact locations.
-- [ ] Do not accept branch names, working-tree bytes, or mutable paths as substitutes for exact commit identity.
-- [ ] Do not let enrollment metadata own project lifecycle, roadmap, Git, Procedure, or release state.
-- [ ] Do not add compatibility branches for impossible states instead of rejecting invalid contract data.
+- [x] Do not allow producer-specific undocumented flags or inferred artifact locations.
+- [x] Do not accept branch names, working-tree bytes, or mutable paths as substitutes for exact commit identity.
+- [x] Do not let enrollment metadata own project lifecycle, roadmap, Git, Procedure, or release state.
+- [x] Do not add compatibility branches for impossible states instead of rejecting invalid contract data.
 
 ## TASK-007: Implement Enrollment and Hook Lifecycle
 
