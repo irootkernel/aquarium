@@ -242,7 +242,7 @@ node_definitions:
         criteria: The exact approved documents are applied and all required validation is current.
       - id: not-achieved
         label: Goal not achieved
-        criteria: Required documents, validation, or gate resolution remain incomplete.
+        criteria: Required documents, validation, or unresolved constraints remain incomplete.
       - id: superseded
         label: Goal superseded
         criteria: The desired design outcome has been replaced explicitly.
@@ -258,7 +258,7 @@ node_definitions:
   closeout-record:
     type: action
     title: Record design closeout
-    intent: Record final artifacts, gate state, residue, commit authority, and publication state.
+    intent: Record final artifacts, unresolved constraints, residue, commit authority, and publication state.
     items:
       - id: closeout-summary
         type: text

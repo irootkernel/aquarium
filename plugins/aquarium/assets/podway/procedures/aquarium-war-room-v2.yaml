@@ -303,7 +303,7 @@ node_definitions:
     items:
       - id: closeout-summary
         type: text
-        prompt: Record classification, paths and digests, evidence gaps, gate state, repository residue, and next explicit workflow.
+        prompt: Record classification, paths and digests, evidence gaps, repository residue, and next explicit workflow.
         required: true
         min_length: 1
         max_length: 4000
