@@ -99,4 +99,4 @@ EPIC-004 depends on the completed EPIC-001 adoption result. Release QA owns rele
 
 | Task | Title | Summary | Status | Depends On | Design Gate impact | Reason |
 | --- | --- | --- | --- | --- | --- | --- |
-| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Planned | TASK-003 | Not required | Task acceptance owns its publication requirements, while release QA and ordered publication observation verify network- and remote-state-dependent outcomes outside the Design Gate contract. |
+| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | In Progress | TASK-003 | Not required | Task acceptance owns its publication requirements, while release QA and ordered publication observation verify network- and remote-state-dependent outcomes outside the Design Gate contract. |

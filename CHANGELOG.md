@@ -27,6 +27,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Avoid a redundant Ouroboros Codex artifact refresh before full runtime setup.
 - Require Podway v0.2.6 for Aquarium development setup.
 - Adopt Podway v0.2.6 observation, evidence pagination, session archival, paired-skill, and phase-aware readiness contracts.
+- Reject empty or relative repository identities before creating Orca provider terminals.
 
 ## v0.1.11 - 2026-08-25
 

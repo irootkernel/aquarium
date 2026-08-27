@@ -147,6 +147,19 @@ def test_repository_must_be_exact_git_root(tmp_path: Path) -> None:
     assert error.value.code == "repository_not_root"
 
 
+@pytest.mark.parametrize("repository", ["", ".", "relative/repository"])
+def test_repository_must_be_nonempty_and_absolute(
+    tmp_path: Path, repository: str
+) -> None:
+    payload, _ = request(tmp_path)
+    payload["repository"] = repository
+
+    with pytest.raises(create_provider_terminal.RequestError) as error:
+        create_provider_terminal.parse_request(payload)
+
+    assert error.value.code == "repository_invalid"
+
+
 def test_provider_is_revalidated_in_spawned_command(tmp_path: Path) -> None:
     payload, _ = request(tmp_path)
     provider = Path(payload["provider"]["canonical_target"])
