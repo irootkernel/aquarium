@@ -14,8 +14,8 @@ Git-backed shape workflows use `aquarium-design-v2`, except `war-room`, which us
 | --- | --- | --- |
 | Plan | `task-plan` | Decision-complete approved plan bound to one roadmap task |
 | Implement | `task-implement` | Complete task-owned behavior and regression coverage |
-| Verify | `task-verify` | Requirement-to-test matrix and current authorized check evidence |
 | Refine | `task-refine` | Verified task diff cleaned without changing approved behavior |
+| Verify | `task-verify` | Requirement-to-test matrix and current authorized check evidence for the refined target |
 | Document | `task-document` | Current durable documentation, handoff, and release-note decision |
 | Review | `task-review` | Complete target publication, successful findings query, and local adjudication |
 | Close | `task-close` | Explicit terminal status and optional exact commit handoff |
@@ -28,7 +28,7 @@ With Podway selected, the handler creates or resumes one `aquarium-task-v2` sess
 
 `epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, orders member tasks by dependency and roadmap order, and completes one isolated task commit at a time.
 
-Each member task uses one `aquarium-goal-v2` session. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, and repeats within the bounded review budget.
+Each member task uses one `aquarium-goal-v2` session and records any durable hardening deferral before deciding whether that evidence supports the task. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, re-audits the changed candidate, and repeats within the bounded review budget.
 
 Task-owned gaps reopen the owning task when the roadmap defines that path. Cross-task seam gaps use the epic identity. External gaps stop with the other repository owner, exact required revision, and missing evidence; Aquarium never edits another repository merely to close its own epic.
 

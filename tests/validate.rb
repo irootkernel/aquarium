@@ -634,9 +634,9 @@ assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(v
 
 local_interfaces_doc = documentation_details.fetch("local-interfaces")
 procedure_declarations = {
-  "aquarium-task-v2" => "3",
-  "aquarium-goal-v2" => "4",
-  "aquarium-validation-v2" => "5",
+  "aquarium-task-v2" => "4",
+  "aquarium-goal-v2" => "5",
+  "aquarium-validation-v2" => "6",
   "aquarium-design-v2" => "1",
   "aquarium-war-room-v2" => "1"
 }
@@ -1625,20 +1625,23 @@ expected_procedure_graphs = {
     "entry" => "record-plan",
     "manual_targets" => %w[implement verify refine document review],
     "evidence" => {
-      "decide-verification" => required_evidence.call("implement", "verify"),
+      "refine" => required_evidence.call("implement"),
+      "verify" => required_evidence.call("refine"),
+      "decide-verification" => required_evidence.call("verify"),
+      "review" => required_evidence.call("verify", "document"),
       "decide-review" => required_evidence.call("review"),
       "assess-goal" => required_evidence.call("record-plan", "implement", "verify", "refine", "document", "review"),
       "approve-closeout" => required_evidence.call("assess-goal", "record-outcome")
     },
     "nodes" => {
       "record-plan" => { "next" => "implement" },
-      "implement" => { "next" => "verify" },
+      "implement" => { "next" => "refine" },
+      "refine" => { "next" => "verify" },
       "verify" => { "next" => "decide-verification" },
-      "decide-verification" => { "routes" => { "passed" => %w[refine advance], "failed" => %w[implement rework] } },
-      "refine" => { "next" => "document" },
+      "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
       "review" => { "next" => "decide-review" },
-      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "changes-requested" => %w[refine rework] } },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
       "record-outcome" => { "next" => "approve-closeout" },
       "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
@@ -1650,14 +1653,17 @@ expected_procedure_graphs = {
     "entry" => "complete-work",
     "manual_targets" => %w[complete-work record-evidence],
     "evidence" => {
-      "decide-evidence" => required_evidence.call("complete-work", "record-evidence"),
-      "assess-goal" => [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", false]]
+      "record-hardening-deferral" => required_evidence.call("record-evidence"),
+      "decide-evidence" => required_evidence.call("complete-work", "record-evidence", "record-hardening-deferral"),
+      "record-hardening-handoff" => required_evidence.call("record-hardening-deferral"),
+      "assess-goal" => [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", true], ["record-hardening-handoff", false]]
     },
     "nodes" => {
       "complete-work" => { "next" => "record-evidence" },
-      "record-evidence" => { "next" => "decide-evidence" },
-      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-deferral advance], "rework-required" => %w[complete-work rework] } },
-      "record-hardening-deferral" => { "next" => "assess-goal" },
+      "record-evidence" => { "next" => "record-hardening-deferral" },
+      "record-hardening-deferral" => { "next" => "decide-evidence" },
+      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-handoff advance], "rework-required" => %w[complete-work rework] } },
+      "record-hardening-handoff" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
     }
@@ -1668,18 +1674,22 @@ expected_procedure_graphs = {
     "manual_targets" => %w[audit remediate re-audit final-review micro-remediate],
     "evidence" => {
       "decide-gaps" => required_evidence.call("audit"),
+      "re-audit" => required_evidence.call("remediate"),
+      "decide-re-audit" => required_evidence.call("re-audit"),
+      "final-review" => [["audit", true], ["re-audit", false]],
       "decide-final-review" => required_evidence.call("final-review"),
       "await-user-direction" => [["final-review", true]],
-      "assess-goal" => [["capture-baseline", true], ["final-review", true], ["await-user-direction", false],
+      "assess-goal" => [["capture-baseline", true], ["final-review", false], ["await-user-direction", false],
                         ["micro-remediate", false], ["record-accepted-low", false],
                         ["record-accepted-medium-risk", false], ["record-stopped", false], ["record-incomplete", false]]
     },
     "nodes" => {
       "capture-baseline" => { "next" => "audit" },
       "audit" => { "next" => "decide-gaps" },
-      "decide-gaps" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate advance] } },
+      "decide-gaps" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate advance], "incomplete" => %w[record-incomplete advance] } },
       "remediate" => { "next" => "re-audit" },
-      "re-audit" => { "next" => "final-review" },
+      "re-audit" => { "next" => "decide-re-audit" },
+      "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate rework], "incomplete" => %w[record-incomplete advance] } },
       "final-review" => { "next" => "decide-final-review" },
       "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework], "user-direction" => %w[await-user-direction advance], "incomplete" => %w[record-incomplete advance] } },
       "await-user-direction" => { "routes" => { "fix-and-review" => %w[audit rework], "accept-low" => %w[record-accepted-low advance], "micro-fix" => %w[micro-remediate advance], "accept-medium-risk" => %w[record-accepted-medium-risk advance], "stop" => %w[record-stopped advance] } },
@@ -1752,7 +1762,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "5", "aquarium-goal-v2.yaml" => "4", "aquarium-task-v2.yaml" => "3" }.fetch(filename, "1")
+  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "5", "aquarium-task-v2.yaml" => "4" }.fetch(filename, "1")
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1776,6 +1786,19 @@ expected_procedure_graphs.each do |filename, expected|
   end.to_h
   assert(actual_evidence == expected.fetch("evidence"),
          "managed procedure evidence bindings drifted: #{filename}")
+  if %w[aquarium-task-v2.yaml aquarium-goal-v2.yaml aquarium-validation-v2.yaml].include?(filename)
+    graph_nodes = procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
+    procedure.dig("graph", "nodes").each do |consumer|
+      consumer.fetch("evidence_from", []).each do |entry|
+        source = graph_nodes.fetch(entry.fetch("node"))
+        definition = procedure.dig("node_definitions", source.fetch("use"))
+        next unless definition.fetch("type") == "action"
+
+        assert(entry.fetch("items", []).any?,
+               "delivery procedure action evidence must select exact items: #{filename}:#{consumer.fetch('id')}:#{source.fetch('id')}")
+      end
+    end
+  end
 end
 
 local_procedures_directory = ROOT.join(".podway/procedures")
@@ -1811,10 +1834,16 @@ end
 plan_handoff_item.call(task_procedure, "plan-record")
 task_review_items = review_item_index.call(task_procedure, "review-record")
 task_closeout_items = review_item_index.call(task_procedure, "closeout-record")
+task_verification_items = review_item_index.call(task_procedure, "verification-record")
+task_verification_options = task_procedure.dig("node_definitions", "verification-decision", "options")
 assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
+       task_review_items.fetch("review-round").fetch("minimum") == 1 &&
        task_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
-       task_review_items.fetch("review-run-id").fetch("type") == "text",
-       "task procedure must record the Mulgae root review ordinal, mode, and exact run")
+       task_review_items.fetch("review-run-id").fetch("type") == "text" &&
+       task_verification_items.fetch("verification-result").fetch("type") == "check_result" &&
+       task_verification_items.fetch("verification-observations").fetch("required_when").first.dig("field") == "outcome" &&
+       task_verification_options.all? { |option| option.fetch("guards").length == 1 },
+       "task procedure must bind positive review ordinals and guarded typed verification evidence")
 assert(task_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
        task_procedure_text.include?("Select no option while a confirmation-only review retains a valid finding"),
        "task procedure must represent the confirmation-only user hold")
@@ -1836,9 +1865,14 @@ validation_review_items = review_item_index.call(validation_procedure, "final-re
 validation_goal_options = validation_procedure.dig("node_definitions", "goal-assessment", "options").to_h do |option|
   [option.fetch("id"), option.fetch("criteria")]
 end
+validation_audit_items = review_item_index.call(validation_procedure, "audit-record")
 assert(validation_review_items.fetch("review-round").fetch("type") == "integer" &&
+       validation_review_items.fetch("review-round").fetch("minimum") == 1 &&
        validation_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
        validation_review_items.fetch("review-run-id").fetch("type") == "text" &&
+       validation_review_items.fetch("final-review-result").fetch("type") == "check_result" &&
+       validation_audit_items.fetch("audit-result").fetch("type") == "check_result" &&
+       validation_audit_items.fetch("confirmed-gap-count").fetch("minimum") == 0 &&
        %w[critical-findings high-findings medium-findings low-findings valid-finding-ids].all? { |id| validation_review_items.key?(id) } &&
        validation_procedure_text.include?("Leave this decision unset until the user explicitly selects the next action") &&
        validation_procedure_text.include?("one remediation pass and one next-ordinal whole-epic confirmation review") &&
@@ -1849,7 +1883,7 @@ assert(validation_goal_options.fetch("achieved").include?("reached from validate
        validation_goal_options.fetch("not-achieved").include?("can never select achieved"),
        "validation procedure must forbid achieved closeout from incomplete or stopped dispositions")
 validation_closeout_items = review_item_index.call(validation_procedure, "closeout-record")
-assert(validation_procedure.fetch("version") == "5" &&
+assert(validation_procedure.fetch("version") == "6" &&
        validation_procedure.dig("node_definitions", "closeout-record", "intent").include?("explicit no-change result") &&
        validation_closeout_items.fetch("closeout-summary").fetch("prompt").include?("verified reason no repository record is required") &&
        validation_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
@@ -1873,13 +1907,17 @@ assert(goal_procedure_text.include?("Required checks and review are complete, CI
        goal_procedure_text.include?("Evidence or CI failed"),
        "goal procedure must require passing CI for support and route failure to rework")
 goal_deferral_items = review_item_index.call(goal_procedure, "hardening-deferral-record")
-assert(goal_deferral_items.fetch("hardening-deferral-run-id").fetch("type") == "text" &&
+assert(goal_deferral_items.fetch("hardening-deferral-state").fetch("required") == true &&
+       goal_deferral_items.fetch("hardening-deferral-state").fetch("choices") == %w[not-applicable recorded] &&
+       goal_deferral_items.fetch("hardening-deferral-run-id").fetch("type") == "text" &&
+       goal_deferral_items.fetch("hardening-deferral-run-id").fetch("required") == false &&
+       goal_deferral_items.fetch("hardening-deferral-run-id").fetch("required_when").first.fetch("equals") == "recorded" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("type") == "list" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("unique") == true &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200 &&
-       goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("required") == true &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("required") == false &&
        goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("max_length") == 1024 &&
-       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("required") == true &&
+       goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("required") == false &&
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("min_length") == 71 &&
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("max_length") == 71 &&
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("multiline") == false &&
@@ -1890,8 +1928,8 @@ goal_procedure_nodes = goal_procedure.dig("graph", "nodes").to_h { |node| [node.
 goal_assess_evidence = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map do |entry|
   [entry.fetch("node"), entry.fetch("required")]
 end
-assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", false]],
-       "goal procedure must include optional hardening-deferral evidence in assessment")
+assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", true], ["record-hardening-handoff", false]],
+       "goal procedure must assess required pre-decision deferral evidence and an optional adopted handoff")
 
 procedure_nodes = expected_procedure_graphs.transform_values { |spec| spec.fetch("nodes").keys }
 skill_procedure_routes = {
@@ -2575,10 +2613,10 @@ assert(task_close.include?("Never select a terminal state") &&
        "task-close must leave lifecycle choice to the user and commit execution to task-commit")
 
 promotion_index = epic_handler.index("Create and stage the smallest safe structured projection")
-deferral_decision_index = epic_handler.index("then select the deferral decision", promotion_index)
-podway_deferral_index = epic_handler.index("record the exact run and finding IDs", deferral_decision_index)
+podway_deferral_index = epic_handler.index("record the exact run and finding IDs", promotion_index)
+deferral_decision_index = epic_handler.index("only then select the deferral decision", podway_deferral_index)
 assert(promotion_index && deferral_decision_index && podway_deferral_index &&
-       promotion_index < deferral_decision_index && deferral_decision_index < podway_deferral_index,
+       promotion_index < podway_deferral_index && podway_deferral_index < deferral_decision_index,
        "epic-handler must promote and verify evidence before selecting and recording a hardening deferral")
 assert(epic_validator.include?("zero or more promoted manifest path and digest pairs or their explicit absence") &&
        epic_validator.include?("named consumer that requires durable accepted-risk evidence") &&

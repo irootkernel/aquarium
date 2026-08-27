@@ -6,9 +6,9 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `3` | `task-handler` | Plan, implementation, verification, refinement, documentation, Mulgae review, goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `4` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal |
-| `aquarium-validation-v2` | `5` | `epic-handler` and `epic-validator` | Baseline, audit, remediation, bounded review decisions, disposition, assessment, and closeout |
+| `aquarium-task-v2` | `4` | `task-handler` | Plan, implementation, refinement, typed verification, phase-owned Mulgae review, goal assessment, approval, and closeout |
+| `aquarium-goal-v2` | `5` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with pre-decision hardening evidence |
+| `aquarium-validation-v2` | `6` | `epic-handler` and `epic-validator` | Baseline, guarded audit, remediation, re-audit, bounded review decisions, disposition, assessment, and closeout |
 | `aquarium-design-v2` | `1` | `new-project`, `new-feature`, `refactor`, and `design-qa` | Context, Ouroboros discovery, draft, QA, approval, application, assessment, and closeout |
 | `aquarium-war-room-v2` | `1` | `war-room` | Incident baseline, investigation, cause and scope decisions, proposal, QA, approval, documentation, and closeout |
 

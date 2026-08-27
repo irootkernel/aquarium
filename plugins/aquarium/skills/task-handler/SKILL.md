@@ -1,6 +1,6 @@
 ---
 name: task-handler
-description: "Strengthen or resume the procedure around exactly one named roadmap task goal through planning, implementation, verification, refinement, documentation, Mulgae review, and user-approved closeout, including an explicitly requested plan handoff. Use when the user explicitly invokes $aquarium:task-handler with a repository, canonical roadmap path, and exactly one task ID; require explicit invocation and one canonical roadmap task identity."
+description: "Strengthen or resume the procedure around exactly one named roadmap task goal through planning, implementation, refinement, verification, documentation, Mulgae review, and user-approved closeout, including an explicitly requested plan handoff. Use when the user explicitly invokes $aquarium:task-handler with a repository, canonical roadmap path, and exactly one task ID; require explicit invocation and one canonical roadmap task identity."
 ---
 
 # Task Handler
@@ -84,7 +84,7 @@ Distinguish a leaf phase summary, Podway recovery evidence, and a durable reposi
 When Podway is active:
 
 - Immediately before each phase delegation, run `podway observe --json --wait-for-idle` and verify this task's Procedure ID, canonical identity, session, attempt, goal revision, and expected node from the observation. After the leaf returns native evidence, independently verify its postcondition, record the bounded result with current fences, and advance only through an action allowed by `guidance.allowed_actions` and represented by a current `mutation_templates` entry.
-- Verification failure selects the failed route. In remediation-eligible review rounds, verified findings select rework; a rejected final approval does too. Match the correction to manual `implement` for behavior, manual `verify` for evidence or tests, automatic `refine` for cleanup, or no-op `refine` followed by `document` for documentation only. Apply every confirmation-only pause before any review decision.
+- Verification failure returns to `refine` so any cleanup and the affected checks are recorded against the same current target. In remediation-eligible review rounds, implementation or refinement findings return through `implement`, while documentation-only findings return through `document`; a rejected final approval uses the earliest owning manual target. Apply every confirmation-only pause before any review decision.
 - Record `changes-requested` only for an explicit correction request or a specifically unmet gate. For `Keep in review`, silence, or an ambiguous answer, record no decision and leave the session at its current node.
 - Record the assessed outcome at `record-outcome` from the goal assessment plus the verification gaps, finding dispositions, and documentation gaps carried by the leaf reports, before requesting final approval.
 - Request a successful terminal transition only after an `achieved` goal assessment. After `not-achieved`, re-enter the owning phase through manual rework or report the exact blocker; after `superseded`, use a goal revision with a declared rework target or stop and report the supersession. Neither outcome may select a successful roadmap state or complete the Codex goal as achieved.
