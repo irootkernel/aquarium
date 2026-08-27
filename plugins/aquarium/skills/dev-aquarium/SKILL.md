@@ -42,6 +42,6 @@ The native hook queues an exact completed local-main SHA and starts asynchronous
 
 ## Launch
 
-Use `launch --project-id <id> -- <command> [args...]` only after healthy diagnosis. It resolves and leases one immutable artifact before starting the child and holds that lease for the child's lifetime. If no enrollment exists, the command may use the named stable executable. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.
+Use `launch --project-id <id> [--stable <path>] -- [args...]` only after healthy diagnosis. It resolves and leases one immutable executable before replacing the manager process and holds that inherited lease for the child's lifetime. Supply `--stable` only when the project has no enrollment. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.
 
 The development Codex runtime uses only `~/.aquarium/codex`. Missing login is a user action reported as `CODEX_HOME=~/.aquarium/codex codex login`; this skill never authenticates or reads or copies the stable Codex home.

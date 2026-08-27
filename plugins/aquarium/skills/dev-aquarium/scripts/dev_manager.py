@@ -15,10 +15,11 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from dev_contract import (
     PROJECT_IDS,
+    SHA_RE,
     ContractError,
     validate_description,
     validate_manifest,
@@ -40,6 +41,30 @@ class ManagerError(Exception):
     stage: str
     project_id: str | None = None
     git_sha: str | None = None
+
+
+@dataclass
+class ResolvedArtifact:
+    project_id: str
+    source: str
+    path: Path
+    git_sha: str | None
+    development_version: str | None
+    sha256: str | None
+    artifact_kind: str | None
+    lease: Any = None
+
+    def close(self) -> None:
+        if self.lease is not None:
+            fcntl.flock(self.lease.fileno(), fcntl.LOCK_UN)
+            self.lease.close()
+            self.lease = None
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
 
 
 def run_git(
@@ -667,28 +692,47 @@ def _publish(
     destination = host_root / "artifacts" / project_id / git_sha
     current = host_root / "current" / project_id
     current.parent.mkdir(parents=True, exist_ok=True)
+    previous_sha = None
+    if current.is_symlink():
+        try:
+            previous = current.resolve(strict=True)
+            expected_parent = (host_root / "artifacts" / project_id).resolve()
+            if previous.parent == expected_parent:
+                previous_sha = previous.name
+        except OSError:
+            pass
     try:
-        if destination.exists():
-            existing = _manifest_from_generation(destination, project_id, git_sha)
-            artifact = _contained_artifact(destination, existing["artifact_path"])
-            if existing != manifest or artifact_digest(artifact) != manifest["sha256"]:
-                raise ManagerError(
-                    "artifact_invalid",
-                    "The existing immutable generation conflicts with the build.",
-                    "Remove the corrupt generation and rebuild.",
-                    "publish",
-                    project_id,
-                    git_sha,
-                )
-            shutil.rmtree(staging)
-            status = "no-change"
-        else:
-            os.replace(staging, destination)
-            status = "success"
-        temporary = current.parent / f".{project_id}.{os.getpid()}.tmp"
-        temporary.unlink(missing_ok=True)
-        os.symlink(os.path.relpath(destination, current.parent), temporary)
-        os.replace(temporary, current)
+        with _artifact_lock(host_root, project_id, git_sha, fcntl.LOCK_EX):
+            if destination.exists():
+                existing = _manifest_from_generation(destination, project_id, git_sha)
+                artifact = _contained_artifact(destination, existing["artifact_path"])
+                if (
+                    existing != manifest
+                    or artifact_digest(artifact) != manifest["sha256"]
+                ):
+                    raise ManagerError(
+                        "artifact_invalid",
+                        "The existing immutable generation conflicts with the build.",
+                        "Remove the corrupt generation and rebuild.",
+                        "publish",
+                        project_id,
+                        git_sha,
+                    )
+                shutil.rmtree(staging)
+                status = "no-change"
+            else:
+                os.replace(staging, destination)
+                status = "success"
+            temporary = current.parent / f".{project_id}.{os.getpid()}.tmp"
+            temporary.unlink(missing_ok=True)
+            os.symlink(os.path.relpath(destination, current.parent), temporary)
+            os.replace(temporary, current)
+        if previous_sha is not None and previous_sha != git_sha:
+            cleanup_status, cleanup = cleanup_generation(
+                project_id, previous_sha, host_root, wait=False
+            )
+            if cleanup_status == "no-change" and cleanup.get("leased"):
+                _spawn_cleanup(host_root, project_id, previous_sha)
         return status, {
             "project_id": project_id,
             "git_sha": git_sha,
@@ -696,6 +740,7 @@ def _publish(
             "artifact": str(destination / manifest["artifact_path"]),
             "current": str(current),
             "sha256": manifest["sha256"],
+            "superseded_git_sha": previous_sha,
         }
     except ManagerError:
         raise
@@ -736,6 +781,239 @@ def _publisher_lock(host_root: Path, project_id: str):
     stream = path.open("a+b")
     fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
     return stream
+
+
+def _artifact_lock_path(host_root: Path, project_id: str, git_sha: str) -> Path:
+    return host_root / "locks" / "artifacts" / project_id / f"{git_sha}.lock"
+
+
+def _artifact_lock(host_root: Path, project_id: str, git_sha: str, operation: int):
+    path = _artifact_lock_path(host_root, project_id, git_sha)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stream = path.open("a+b")
+    try:
+        fcntl.flock(stream.fileno(), operation)
+    except OSError:
+        stream.close()
+        raise
+    return stream
+
+
+def _current_generation(host_root: Path, project_id: str) -> Path | None:
+    current = host_root / "current" / project_id
+    if not current.exists() and not current.is_symlink():
+        return None
+    if not current.is_symlink():
+        raise ManagerError(
+            "artifact_invalid",
+            "The current selector is not a symbolic link.",
+            "Repair the development channel by rebuilding the enrolled project.",
+            "resolve",
+            project_id,
+        )
+    try:
+        generation = current.resolve(strict=True)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_missing",
+            str(error),
+            "Rebuild the enrolled project to restore its current artifact.",
+            "resolve",
+            project_id,
+        ) from error
+    expected_parent = (host_root / "artifacts" / project_id).resolve()
+    if generation.parent != expected_parent:
+        raise ManagerError(
+            "artifact_invalid",
+            "The current selector escapes the enrolled project's artifact root.",
+            "Repair the development channel by rebuilding the enrolled project.",
+            "resolve",
+            project_id,
+        )
+    return generation
+
+
+def _validate_generation(
+    generation: Path,
+    project_id: str,
+    description: dict[str, Any],
+) -> tuple[Path, dict[str, Any]]:
+    git_sha = generation.name
+    manifest = _manifest_from_generation(generation, project_id, git_sha)
+    expected = {
+        "project_id": project_id,
+        "git_sha": git_sha,
+        "development_version": f"{description['next_version']}-dev.{git_sha[:12]}",
+        "artifact_kind": description["artifact_kind"],
+        "artifact_path": description["artifact_path"],
+    }
+    if any(manifest[field] != value for field, value in expected.items()):
+        raise ManagerError(
+            "artifact_invalid",
+            "The current generation does not match its enrollment or producer.",
+            "Rebuild the enrolled project from its canonical local main.",
+            "resolve",
+            project_id,
+            git_sha if len(git_sha) == 40 else None,
+        )
+    artifact = _contained_artifact(generation, manifest["artifact_path"])
+    if artifact_digest(artifact) != manifest["sha256"]:
+        raise ManagerError(
+            "checksum_mismatch",
+            "The current artifact checksum no longer matches its manifest.",
+            "Rebuild the enrolled project from its canonical local main.",
+            "resolve",
+            project_id,
+            git_sha,
+        )
+    return artifact, manifest
+
+
+def resolve_artifact(
+    project_id: str, host_root: Path, stable: Path | None = None
+) -> ResolvedArtifact:
+    if project_id not in PROJECT_IDS:
+        raise ManagerError(
+            "invalid_arguments",
+            "The requested project ID is unsupported.",
+            "Use one project ID from the shared development contract.",
+            "resolve",
+        )
+    enrollment = read_enrollment(host_root, project_id)
+    if enrollment is None:
+        if stable is None:
+            raise ManagerError(
+                "enrollment_missing",
+                "No development enrollment or stable fallback was supplied.",
+                "Supply the stable tool path or enroll a canonical checkout.",
+                "resolve",
+                project_id,
+            )
+        try:
+            path = stable.resolve(strict=True)
+        except OSError as error:
+            raise ManagerError(
+                "artifact_missing",
+                str(error),
+                "Supply an existing stable tool path.",
+                "resolve",
+                project_id,
+            ) from error
+        return ResolvedArtifact(project_id, "stable", path, None, None, None, None)
+
+    checkout = Path(enrollment["checkout"])
+    diagnosed_checkout, _, _, _ = _repository_identity(checkout)
+    description = _describe(diagnosed_checkout)
+    if description["project_id"] != project_id:
+        raise ManagerError(
+            "enrollment_broken",
+            "The enrolled checkout now describes a different project.",
+            "Repair enrollment before resolving a development artifact.",
+            "resolve",
+            project_id,
+        )
+    generation = _current_generation(host_root, project_id)
+    if generation is None:
+        raise ManagerError(
+            "artifact_missing",
+            "The enrolled project has no current development artifact.",
+            "Run an explicitly approved rebuild.",
+            "resolve",
+            project_id,
+        )
+    git_sha = generation.name
+    if len(git_sha) != 40 or any(
+        character not in "0123456789abcdef" for character in git_sha
+    ):
+        raise ManagerError(
+            "artifact_invalid",
+            "The selected generation name is not a full lowercase Git SHA.",
+            "Run an explicitly approved rebuild.",
+            "resolve",
+            project_id,
+        )
+    try:
+        lease = _artifact_lock(host_root, project_id, git_sha, fcntl.LOCK_SH)
+    except OSError as error:
+        raise ManagerError(
+            "lease_unavailable",
+            str(error),
+            "Retry after inspecting host-local artifact locks.",
+            "resolve",
+            project_id,
+            git_sha,
+        ) from error
+    try:
+        artifact, manifest = _validate_generation(generation, project_id, description)
+    except Exception:
+        lease.close()
+        raise
+    return ResolvedArtifact(
+        project_id,
+        "development",
+        artifact,
+        git_sha,
+        manifest["development_version"],
+        manifest["sha256"],
+        manifest["artifact_kind"],
+        lease,
+    )
+
+
+def _spawn_cleanup(host_root: Path, project_id: str, git_sha: str) -> None:
+    subprocess.Popen(
+        [
+            os.fspath(Path(os.sys.executable).resolve()),
+            os.fspath(Path(__file__).with_name("dev_aquarium.py").resolve()),
+            "--host-root",
+            os.fspath(host_root),
+            "cleanup",
+            "--project-id",
+            project_id,
+            "--git-sha",
+            git_sha,
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+        close_fds=True,
+    )
+
+
+def cleanup_generation(
+    project_id: str, git_sha: str, host_root: Path, *, wait: bool
+) -> tuple[str, dict[str, Any]]:
+    if project_id not in PROJECT_IDS or not SHA_RE.fullmatch(git_sha):
+        raise ManagerError(
+            "invalid_arguments",
+            "Cleanup requires one supported project ID and full lowercase Git SHA.",
+            "Use identities returned by the development artifact manifest.",
+            "cleanup",
+        )
+    operation = fcntl.LOCK_EX if wait else fcntl.LOCK_EX | fcntl.LOCK_NB
+    try:
+        lease = _artifact_lock(host_root, project_id, git_sha, operation)
+    except BlockingIOError:
+        return "no-change", {"git_sha": git_sha, "leased": True}
+    with lease:
+        current = _current_generation(host_root, project_id)
+        if current is not None and current.name == git_sha:
+            return "no-change", {"git_sha": git_sha, "current": True}
+        generation = host_root / "artifacts" / project_id / git_sha
+        if generation.exists():
+            if generation.is_symlink() or not generation.is_dir():
+                raise ManagerError(
+                    "artifact_invalid",
+                    "The cleanup target is not an immutable generation directory.",
+                    "Inspect the host-local artifact root before retrying cleanup.",
+                    "cleanup",
+                    project_id,
+                    git_sha,
+                )
+            shutil.rmtree(generation)
+            return "success", {"git_sha": git_sha, "removed": True}
+        return "no-change", {"git_sha": git_sha, "removed": False}
 
 
 def _build_current(repository: Path, host_root: Path) -> tuple[str, dict[str, Any]]:

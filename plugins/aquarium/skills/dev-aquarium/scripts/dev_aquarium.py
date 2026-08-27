@@ -5,18 +5,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 from dev_contract import validate_error, validate_result
 from dev_manager import (
     ManagerError,
+    cleanup_generation,
     diagnose,
     enroll,
     process_queue,
     queue_request,
     rebuild,
     repair_hook,
+    resolve_artifact,
 )
 
 
@@ -46,6 +49,16 @@ def parser() -> argparse.ArgumentParser:
     rebuild_parser.add_argument("--approve-build", action="store_true")
     worker_parser = commands.add_parser("worker", help=argparse.SUPPRESS)
     worker_parser.add_argument("--project-id", required=True, help=argparse.SUPPRESS)
+    cleanup_parser = commands.add_parser("cleanup", help=argparse.SUPPRESS)
+    cleanup_parser.add_argument("--project-id", required=True, help=argparse.SUPPRESS)
+    cleanup_parser.add_argument("--git-sha", required=True, help=argparse.SUPPRESS)
+    resolve_parser = commands.add_parser("resolve")
+    resolve_parser.add_argument("--project-id", required=True)
+    resolve_parser.add_argument("--stable", type=Path)
+    launch_parser = commands.add_parser("launch")
+    launch_parser.add_argument("--project-id", required=True)
+    launch_parser.add_argument("--stable", type=Path)
+    launch_parser.add_argument("arguments", nargs=argparse.REMAINDER)
     return value
 
 
@@ -132,6 +145,74 @@ def main() -> int:
                 status,
                 details["project_id"],
                 "Development artifact reconciled.",
+                details,
+            )
+            return 0
+        if arguments.command == "resolve":
+            with resolve_artifact(
+                arguments.project_id, arguments.host_root, arguments.stable
+            ) as resolved:
+                details = {
+                    "source": resolved.source,
+                    "path": str(resolved.path),
+                    "git_sha": resolved.git_sha,
+                    "development_version": resolved.development_version,
+                    "sha256": resolved.sha256,
+                }
+            result(
+                "resolve",
+                "success",
+                arguments.project_id,
+                "Artifact resolved and validated.",
+                details,
+            )
+            return 0
+        if arguments.command == "launch":
+            resolved = resolve_artifact(
+                arguments.project_id, arguments.host_root, arguments.stable
+            )
+            launch_arguments = arguments.arguments
+            if launch_arguments[:1] == ["--"]:
+                launch_arguments = launch_arguments[1:]
+            if resolved.artifact_kind == "codex-plugin" or not resolved.path.is_file():
+                resolved.close()
+                raise ManagerError(
+                    "artifact_invalid",
+                    "The resolved artifact is not an executable file.",
+                    "Use resolve for plugin artifacts and launch only executable tools.",
+                    "launch",
+                    arguments.project_id,
+                    resolved.git_sha,
+                )
+            if resolved.lease is not None:
+                os.set_inheritable(resolved.lease.fileno(), True)
+            try:
+                os.execv(
+                    resolved.path,
+                    [str(resolved.path), *launch_arguments],
+                )
+            except OSError as error:
+                resolved.close()
+                raise ManagerError(
+                    "artifact_invalid",
+                    str(error),
+                    "Repair the selected executable artifact and retry.",
+                    "launch",
+                    arguments.project_id,
+                    resolved.git_sha,
+                ) from error
+        if arguments.command == "cleanup":
+            status, details = cleanup_generation(
+                arguments.project_id,
+                arguments.git_sha,
+                arguments.host_root,
+                wait=True,
+            )
+            result(
+                "publish",
+                status,
+                arguments.project_id,
+                "Superseded generation cleanup reconciled.",
                 details,
             )
             return 0

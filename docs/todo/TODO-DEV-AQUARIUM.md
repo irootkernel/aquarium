@@ -184,21 +184,21 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Resolve the global stable tool only when the project has no canonical enrollment.
-- [ ] Fail closed when enrollment exists but the canonical checkout or current artifact is missing, corrupt, or inconsistent.
-- [ ] Acquire and validate a shared artifact lease before launching a development tool.
-- [ ] Pin the resolved path, SHA, version, and checksum for the complete child-process lifetime.
-- [ ] Use an exclusive lease for publication and cleanup operations that affect artifact reachability.
-- [ ] Remove the superseded artifact immediately when no shared lease remains, or immediately after the last active lease exits.
-- [ ] Recover stale leases only through operating-system ownership semantics rather than elapsed-time guessing.
-- [ ] Test concurrent launch, publication, failure, interruption, and cleanup races.
+- [x] Resolve the global stable tool only when the project has no canonical enrollment.
+- [x] Fail closed when enrollment exists but the canonical checkout or current artifact is missing, corrupt, or inconsistent.
+- [x] Acquire and validate a shared artifact lease before launching a development tool.
+- [x] Pin the resolved path, SHA, version, and checksum for the complete child-process lifetime.
+- [x] Use an exclusive lease for publication and cleanup operations that affect artifact reachability.
+- [x] Remove the superseded artifact immediately when no shared lease remains, or immediately after the last active lease exits.
+- [x] Recover stale leases only through operating-system ownership semantics rather than elapsed-time guessing.
+- [x] Test concurrent launch, publication, failure, interruption, and cleanup races.
 
 ### Do Not
 
-- [ ] Do not fall back to stable when a recorded development enrollment is broken.
-- [ ] Do not re-resolve current during a running invocation.
-- [ ] Do not delete an artifact while any process holds its shared lease.
-- [ ] Do not retain old binaries as an unbounded historical cache.
+- [x] Do not fall back to stable when a recorded development enrollment is broken.
+- [x] Do not re-resolve current during a running invocation.
+- [x] Do not delete an artifact while any process holds its shared lease.
+- [x] Do not retain old binaries as an unbounded historical cache.
 
 ## TASK-010: Isolate Aquarium and Codex Development Runtime
 

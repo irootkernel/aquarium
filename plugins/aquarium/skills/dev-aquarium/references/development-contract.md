@@ -47,7 +47,7 @@ The canonical plugin-directory digest visits regular files in ascending UTF-8 ar
 
 ## Manager result and error
 
-A successful command emits exactly one `aquarium-dev-manager-result/v1` object containing `schema`, `operation`, `status`, `project_id`, `message`, and `details`. Operations are `diagnose`, `enroll`, `rebuild`, `publish`, `resolve`, `launch`, `repair`, or `configure-codex`; status is `success`, `no-change`, or `diagnosed`. `project_id` may be `null` only when diagnosis cannot identify a supported project. `details` is a bounded object and must not contain credentials or raw tool output.
+A successful manager command emits exactly one `aquarium-dev-manager-result/v1` object containing `schema`, `operation`, `status`, `project_id`, `message`, and `details`. Operations are `diagnose`, `enroll`, `rebuild`, `publish`, `resolve`, `launch`, `repair`, or `configure-codex`; status is `success`, `no-change`, or `diagnosed`. `project_id` may be `null` only when diagnosis cannot identify a supported project. `details` is a bounded object and must not contain credentials or raw tool output. Successful `launch` is the sole transport exception: after validation it replaces the manager process with the resolved executable, passes through its arguments and streams unchanged, keeps the artifact lease descriptor open, and returns the child process's exit behavior. A rejected launch still emits the normal error object.
 
 A rejected command emits exactly one `aquarium-dev-error/v1` object to stderr with `schema` and an `error` object containing exactly `code`, `message`, `action`, `stage`, `project_id`, and `git_sha`. The last two values may be null. Stable codes are:
 

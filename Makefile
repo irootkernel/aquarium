@@ -41,6 +41,7 @@ PYTHON_FILES := \
 	tests/unit/test_dev_aquarium_contract_unit.py \
 	tests/unit/test_dev_aquarium_enrollment_unit.py \
 	tests/unit/test_dev_aquarium_publication_unit.py \
+	tests/unit/test_dev_aquarium_resolution_unit.py \
 	tests/unit/test_dev_aquarium_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
