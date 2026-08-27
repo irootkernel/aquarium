@@ -44,6 +44,12 @@ codex plugin add aquarium@root-kernel
 
 Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup`이 지원 도구의 상태를 진단하고, 각각 별도 승인을 받아 정확한 upstream source에서 설치하거나 복구합니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
 
+## Development Channel
+
+`$aquarium:dev-aquarium`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 만들며, `~/.aquarium/codex` 아래에 별도의 Codex runtime을 구성합니다. Enrollment, hook 변경, build, isolated Codex 구성은 각각 별도 승인을 유지합니다.
+
+Development runtime은 stable Codex home이나 그 login을 읽거나 복사하거나 변경하지 않습니다. 별도 login이 없으면 Aquarium은 사용자가 직접 실행할 `CODEX_HOME=~/.aquarium/codex codex login` 명령을 정확히 안내합니다. Development artifact는 local integration evidence일 뿐이며 stable 설치, release candidate, distribution artifact, release QA의 대체물이 아닙니다.
+
 ## 주요 워크플로
 
 1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다.

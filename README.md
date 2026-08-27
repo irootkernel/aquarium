@@ -44,6 +44,12 @@ Restart Codex after installing or upgrading, then open `/hooks` and explicitly t
 
 Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup` checks the supported tools and proposes installs or repairs from their exact upstream sources, each behind its own approval. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
+## Development Channel
+
+`$aquarium:dev-aquarium` provides an explicit Apple Silicon macOS development channel for Aquarium maintainers. It enrolls one named canonical local-`main` checkout, builds immutable exact-commit artifacts, and configures a separate Codex runtime under `~/.aquarium/codex`. Enrollment, hook changes, builds, and isolated Codex configuration each retain a separate approval boundary.
+
+The development runtime never reads, copies, or changes the stable Codex home or its login. If its separate login is missing, Aquarium reports the exact `CODEX_HOME=~/.aquarium/codex codex login` action for the user to run. Development artifacts are local integration evidence only; they are not a stable installation, release candidate, distribution artifact, or substitute for release QA.
+
 ## Main Workflows
 
 1. **Shape** — `$aquarium:new-project` turns a goal into an approved PRD and a first roadmap. `$aquarium:new-feature` and `$aquarium:refactor` create or revise one epic. `$aquarium:war-room` diagnoses a hard bug and proposes the next work unit, or reports the investigation as incomplete, without writing the fix.

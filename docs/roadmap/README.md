@@ -28,7 +28,7 @@ Epic status is independent of child task status. Completing every child does not
 | Epic | Title | Status |
 | --- | --- | --- |
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
-| EPIC-002 | Build the Aquarium development environment | In Progress |
+| EPIC-002 | Build the Aquarium development environment | Blocked |
 | EPIC-003 | Introduce Dolgorae | Planned |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 
@@ -53,11 +53,11 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 ## EPIC-002: Build the Aquarium Development Environment
 
-**Status:** `In Progress`
+**Status:** `Blocked`
 
 Build the `dev-aquarium` development channel planned for v0.1.14 so Aquarium, Podway, Mulgae, Gaori, and Sanho can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and preserve stable global tools when no project is enrolled.
 
-This epic begins after the v0.1.13 corrective release. It does not open the v0.1.14 CHANGELOG cycle or present the planned behavior as shipped.
+The Aquarium-owned runtime is complete. Further progress requires exact clean local-`main` producer handoffs from Podway, Mulgae, Gaori, and Sanho. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not. Until those four repositories provide that evidence, `TASK-011` through `TASK-015` remain planned and this epic is blocked.
 
 **Detailed SOT:** [`TODO-DEV-AQUARIUM.md`](../todo/TODO-DEV-AQUARIUM.md)
 
@@ -68,7 +68,7 @@ This epic begins after the v0.1.13 corrective release. It does not open the v0.1
 | TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Completed | TASK-006 |
 | TASK-008 | Implement build scheduling and publication | Build exact local-main candidates, serialize publishers, and atomically advance the current artifact. | Completed | TASK-006 |
 | TASK-009 | Implement resolution, leases, and cleanup | Resolve development versus stable tools, pin invocations, protect active artifacts, and remove superseded binaries. | Completed | TASK-006, TASK-008 |
-| TASK-010 | Isolate Aquarium and Codex development runtime | Install the development plugin, paired skills, MCP configuration, and separate Codex home under the shared contract. | Planned | TASK-007, TASK-008, TASK-009 |
+| TASK-010 | Isolate Aquarium and Codex development runtime | Install the development plugin, paired skills, MCP configuration, and separate Codex home under the shared contract. | Completed | TASK-007, TASK-008, TASK-009 |
 | TASK-011 | Integrate Podway | Add and verify Podway's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-012 | Integrate Mulgae | Add and verify Mulgae's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-013 | Integrate Gaori | Add and verify Gaori's shared producer contract and development resolution. | Planned | TASK-010 |

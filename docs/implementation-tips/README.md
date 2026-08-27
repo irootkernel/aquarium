@@ -8,6 +8,7 @@ This index links non-normative guidance for changing, verifying, and releasing A
 - [Changing Procedures](changing-procedures.md) covers graph ownership, versioning, installation bytes, and Podway compatibility.
 - [Changing inspectors](changing-inspectors.md) covers conservative local inspection, schemas, safety, and fixtures.
 - [Testing and releasing](testing-and-releasing.md) maps change classes to focused checks and exact-candidate release proof.
+- [Changing the development channel](changing-development-channel.md) covers producer, manager, isolation, and cross-project handoff changes.
 
 ## Starting Point
 

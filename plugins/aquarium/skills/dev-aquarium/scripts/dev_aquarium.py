@@ -13,6 +13,7 @@ from dev_contract import validate_error, validate_result
 from dev_manager import (
     ManagerError,
     cleanup_generation,
+    configure_codex,
     diagnose,
     enroll,
     process_queue,
@@ -31,6 +32,7 @@ def parser() -> argparse.ArgumentParser:
         default=Path.home() / ".aquarium",
         help=argparse.SUPPRESS,
     )
+    value.add_argument("--codex-bin", default="codex", help=argparse.SUPPRESS)
     commands = value.add_subparsers(dest="command", required=True)
     diagnose_parser = commands.add_parser("diagnose")
     diagnose_parser.add_argument("--repository", type=Path, required=True)
@@ -59,6 +61,9 @@ def parser() -> argparse.ArgumentParser:
     launch_parser.add_argument("--project-id", required=True)
     launch_parser.add_argument("--stable", type=Path)
     launch_parser.add_argument("arguments", nargs=argparse.REMAINDER)
+    codex_parser = commands.add_parser("configure-codex")
+    codex_parser.add_argument("--repository", type=Path, required=True)
+    codex_parser.add_argument("--approve-codex", action="store_true")
     return value
 
 
@@ -79,7 +84,9 @@ def main() -> int:
     arguments = parser().parse_args()
     try:
         if arguments.command == "diagnose":
-            details = diagnose(arguments.repository, arguments.host_root)
+            details = diagnose(
+                arguments.repository, arguments.host_root, arguments.codex_bin
+            )
             result(
                 "diagnose",
                 "diagnosed",
@@ -201,6 +208,21 @@ def main() -> int:
                     arguments.project_id,
                     resolved.git_sha,
                 ) from error
+        if arguments.command == "configure-codex":
+            status, details = configure_codex(
+                arguments.repository,
+                arguments.host_root,
+                approve_codex=arguments.approve_codex,
+                codex_bin=arguments.codex_bin,
+            )
+            result(
+                "configure-codex",
+                status,
+                "aquarium",
+                "Isolated Codex runtime reconciled.",
+                details,
+            )
+            return 0
         if arguments.command == "cleanup":
             status, details = cleanup_generation(
                 arguments.project_id,

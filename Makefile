@@ -19,6 +19,7 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
 	plugins/aquarium/skills/dev-aquarium/scripts/dev_contract.py \
 	plugins/aquarium/skills/dev-aquarium/scripts/dev_aquarium.py \
+	plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py \
 	plugins/aquarium/skills/dev-aquarium/scripts/dev_manager.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
@@ -42,6 +43,7 @@ PYTHON_FILES := \
 	tests/unit/test_dev_aquarium_enrollment_unit.py \
 	tests/unit/test_dev_aquarium_publication_unit.py \
 	tests/unit/test_dev_aquarium_resolution_unit.py \
+	tests/unit/test_dev_aquarium_runtime_unit.py \
 	tests/unit/test_dev_aquarium_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
@@ -54,6 +56,13 @@ PYTHON_FILES := \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
 .PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat
+.PHONY: aquarium-dev-describe aquarium-dev-build
+
+aquarium-dev-describe:
+	@$(PYTHON) plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py describe
+
+aquarium-dev-build:
+	@$(PYTHON) plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py build
 
 test:
 	$(MAKE) test-prepare

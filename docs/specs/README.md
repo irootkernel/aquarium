@@ -13,6 +13,7 @@ The plugin manifest owns the current package version and the root CHANGELOG owns
 - [Tool integrations](tool-integrations.md) records supported versions, platforms, readiness dimensions, and ownership boundaries.
 - [Local interfaces](local-interfaces.md) catalogs Procedure IDs, local CLIs, hooks, and JSON schemas.
 - [Safety and evidence](safety-and-evidence.md) defines authority, approval, review, and evidence-residency behavior.
+- [Development channel](development-channel.md) specifies producer, enrollment, resolution, and isolated Codex behavior.
 
 ## Exact Authorities
 

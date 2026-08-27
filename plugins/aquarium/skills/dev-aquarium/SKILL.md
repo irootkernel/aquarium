@@ -40,6 +40,19 @@ Use `diagnose` again after every effect. Offer only the exact repair named by cu
 
 The native hook queues an exact completed local-main SHA and starts asynchronous work. A request or worker failure may emit a bounded diagnostic but never rewrites or rolls back the completed Git commit.
 
+## Configure isolated Codex
+
+Only from the enrolled Aquarium checkout, and only after separate configuration approval, run:
+
+```text
+python3 <skill-directory>/scripts/dev_aquarium.py configure-codex \
+  --repository <aquarium-git-root> --approve-codex
+```
+
+This leases and installs the exact current Aquarium marketplace generation into `~/.aquarium/codex`, so the plugin and its bundled skills cannot mix generations. It reconciles only enrolled Mulgae and Gaori MCP servers through the installed development manager; Podway and Sanho remain CLI integrations. Each MCP launch resolves and leases that external project's current enrolled artifact. Missing external enrollment is reported and never replaced with stable configuration.
+
+Run diagnosis afterward. Its bounded report must identify the selected enrollment and hook, current artifact, isolated plugin and bundled-skill generation, MCP servers, login readiness, and every supported project's resolved development artifact or explicit non-enrolled/broken state.
+
 ## Launch
 
 Use `launch --project-id <id> [--stable <path>] -- [args...]` only after healthy diagnosis. It resolves and leases one immutable executable before replacing the manager process and holds that inherited lease for the child's lifetime. Supply `--stable` only when the project has no enrollment. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.

@@ -8,6 +8,7 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 - [Workflow runtime](workflow-runtime.md) follows invocation through discovery, approval, execution, and handoff.
 - [State and evidence](state-and-evidence.md) separates roadmap, Procedure, Git, host, and durable evidence planes.
 - [Verification](verification.md) explains the layered test architecture and the limits of each proof.
+- [Development channel](development-channel.md) traces exact-main production, immutable publication, leased resolution, and isolated Codex wiring.
 
 ## Core Boundaries
 

@@ -12,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,10 @@ MARKER_END = "# END AQUARIUM DEV v1"
 MANIFEST_NAME = ".aquarium-manifest.json"
 QUEUE_SCHEMA = "aquarium-dev-build-request/v1"
 DIAGNOSTIC_SCHEMA = "aquarium-dev-diagnostic/v1"
+MCP_ARGUMENTS = {
+    "mulgae": lambda checkout: ["mcp", "--project-root", str(checkout)],
+    "gaori": lambda checkout: ["--repo", str(checkout), "mcp"],
+}
 
 
 @dataclass
@@ -342,7 +347,156 @@ def read_enrollment(host_root: Path, project_id: str) -> dict[str, Any] | None:
     return value
 
 
-def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
+def _codex_environment(host_root: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["CODEX_HOME"] = str(host_root / "codex")
+    return environment
+
+
+def _run_codex(
+    codex_bin: str,
+    host_root: Path,
+    *arguments: str,
+    json_output: bool = False,
+    check: bool = True,
+) -> Any:
+    result = subprocess.run(
+        [codex_bin, *arguments],
+        env=_codex_environment(host_root),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if check and result.returncode != 0:
+        raise ManagerError(
+            "codex_not_configured",
+            (
+                result.stderr.strip()
+                or result.stdout.strip()
+                or "Codex rejected configuration."
+            )[:1000],
+            "Inspect the isolated Codex home and retry approved configuration.",
+            "configure-codex",
+            "aquarium",
+        )
+    if not json_output:
+        return result
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise ManagerError(
+            "codex_not_configured",
+            "Codex did not return the expected JSON result.",
+            "Use a supported Codex CLI and retry approved configuration.",
+            "configure-codex",
+            "aquarium",
+        ) from error
+
+
+def codex_diagnosis(host_root: Path, codex_bin: str) -> dict[str, Any]:
+    codex_home = host_root / "codex"
+    login_action = f"CODEX_HOME={codex_home} codex login"
+    if not codex_home.exists():
+        return {
+            "home": str(codex_home),
+            "configured": False,
+            "login": "required",
+            "login_action": login_action,
+            "plugin": None,
+            "paired_skills": None,
+            "mcp_servers": [],
+        }
+    try:
+        plugins = _run_codex(
+            codex_bin, host_root, "plugin", "list", "--json", json_output=True
+        )
+        servers = _run_codex(
+            codex_bin, host_root, "mcp", "list", "--json", json_output=True
+        )
+        installed = [
+            {
+                "plugin_id": item.get("pluginId"),
+                "version": item.get("version"),
+                "enabled": item.get("enabled"),
+            }
+            for item in plugins.get("installed", [])
+            if item.get("pluginId") == "aquarium@root-kernel"
+        ]
+        mcp_names = sorted(
+            item.get("name")
+            for item in servers
+            if item.get("name") in MCP_ARGUMENTS and item.get("enabled") is True
+        )
+        login = _run_codex(
+            codex_bin, host_root, "login", "status", check=False
+        ).returncode
+        return {
+            "home": str(codex_home),
+            "configured": len(installed) == 1,
+            "login": "ready" if login == 0 else "required",
+            "login_action": None if login == 0 else login_action,
+            "plugin": installed[0] if len(installed) == 1 else None,
+            "paired_skills": (
+                {
+                    "source": "aquarium-plugin",
+                    "version": installed[0]["version"],
+                }
+                if len(installed) == 1
+                else None
+            ),
+            "mcp_servers": mcp_names,
+        }
+    except ManagerError as error:
+        return {
+            "home": str(codex_home),
+            "configured": False,
+            "login": "unknown",
+            "login_action": login_action,
+            "plugin": None,
+            "paired_skills": None,
+            "mcp_servers": [],
+            "error": error.code,
+        }
+
+
+def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
+    projects = []
+    for project_id in sorted(PROJECT_IDS):
+        try:
+            enrollment = read_enrollment(host_root, project_id)
+            if enrollment is None:
+                projects.append({"project_id": project_id, "state": "not-enrolled"})
+                continue
+            checkout = Path(enrollment["checkout"])
+            description = _describe(checkout)
+            generation = _current_generation(host_root, project_id)
+            if generation is None:
+                projects.append({"project_id": project_id, "state": "artifact-missing"})
+                continue
+            artifact, manifest = _validate_generation(
+                generation, project_id, description
+            )
+            projects.append(
+                {
+                    "project_id": project_id,
+                    "state": "development",
+                    "checkout": str(checkout),
+                    "git_sha": manifest["git_sha"],
+                    "development_version": manifest["development_version"],
+                    "artifact": str(artifact),
+                    "sha256": manifest["sha256"],
+                }
+            )
+        except ManagerError as error:
+            projects.append(
+                {"project_id": project_id, "state": "broken", "error": error.code}
+            )
+    return projects
+
+
+def diagnose(
+    repository: Path, host_root: Path, codex_bin: str = "codex"
+) -> dict[str, Any]:
     require_supported_host()
     checkout, branch, git_sha, dirty = _repository_identity(repository)
     description = _describe(checkout)
@@ -360,6 +514,23 @@ def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
             hook_state = (
                 "owned" if enrollment["hook_block"] in hook_content else "stale"
             )
+    current = {"state": "absent"}
+    if enrollment_state == "healthy":
+        try:
+            generation = _current_generation(host_root, project_id)
+            if generation is not None:
+                artifact, manifest = _validate_generation(
+                    generation, project_id, description
+                )
+                current = {
+                    "state": "healthy",
+                    "git_sha": manifest["git_sha"],
+                    "development_version": manifest["development_version"],
+                    "artifact": str(artifact),
+                    "sha256": manifest["sha256"],
+                }
+        except ManagerError as error:
+            current = {"state": "broken", "error": error.code}
     return {
         "checkout": str(checkout),
         "branch": branch,
@@ -368,6 +539,9 @@ def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
         "description": description,
         "enrollment": enrollment_state,
         "hook": hook_state,
+        "current": current,
+        "codex": codex_diagnosis(host_root, codex_bin),
+        "resolved_projects": resolved_project_diagnosis(host_root),
     }
 
 
@@ -958,6 +1132,200 @@ def resolve_artifact(
         manifest["artifact_kind"],
         lease,
     )
+
+
+def configure_codex(
+    repository: Path,
+    host_root: Path,
+    *,
+    approve_codex: bool,
+    codex_bin: str = "codex",
+) -> tuple[str, dict[str, Any]]:
+    checkout, _, description, git_sha = _require_enrolled_checkout(
+        repository, host_root, require_clean=False
+    )
+    if description["project_id"] != "aquarium":
+        raise ManagerError(
+            "unsupported_project",
+            "Isolated Codex configuration must be initiated from Aquarium.",
+            "Run configuration from the enrolled Aquarium checkout.",
+            "configure-codex",
+            description["project_id"],
+            git_sha,
+        )
+    if not approve_codex:
+        raise ManagerError(
+            "approval_required",
+            "Isolated Codex configuration approval is required.",
+            "Approve only configuration beneath the displayed Aquarium Codex home.",
+            "configure-codex",
+            "aquarium",
+            git_sha,
+        )
+    codex_home = host_root / "codex"
+    codex_home.mkdir(parents=True, exist_ok=True, mode=0o700)
+    codex_home.chmod(0o700)
+    with ExitStack() as stack:
+        aquarium = stack.enter_context(resolve_artifact("aquarium", host_root))
+        if aquarium.artifact_kind != "codex-plugin":
+            raise ManagerError(
+                "artifact_invalid",
+                "The enrolled Aquarium artifact is not a Codex plugin marketplace.",
+                "Rebuild Aquarium with its codex-plugin producer contract.",
+                "configure-codex",
+                "aquarium",
+                aquarium.git_sha,
+            )
+        plugins = _run_codex(
+            codex_bin, host_root, "plugin", "list", "--json", json_output=True
+        )
+        if any(
+            item.get("pluginId") == "aquarium@root-kernel"
+            for item in plugins.get("installed", [])
+        ):
+            _run_codex(
+                codex_bin,
+                host_root,
+                "plugin",
+                "remove",
+                "aquarium@root-kernel",
+                "--json",
+            )
+        marketplaces = _run_codex(
+            codex_bin,
+            host_root,
+            "plugin",
+            "marketplace",
+            "list",
+            "--json",
+            json_output=True,
+        )
+        if any(
+            item.get("name") == "root-kernel"
+            for item in marketplaces.get("marketplaces", [])
+        ):
+            _run_codex(
+                codex_bin,
+                host_root,
+                "plugin",
+                "marketplace",
+                "remove",
+                "root-kernel",
+                "--json",
+            )
+        _run_codex(
+            codex_bin,
+            host_root,
+            "plugin",
+            "marketplace",
+            "add",
+            str(aquarium.path),
+            "--json",
+        )
+        installed = _run_codex(
+            codex_bin,
+            host_root,
+            "plugin",
+            "add",
+            "aquarium@root-kernel",
+            "--json",
+            json_output=True,
+        )
+        installed_root = Path(installed.get("installedPath", ""))
+        manager_script = installed_root / "skills/dev-aquarium/scripts/dev_aquarium.py"
+        if (
+            not installed_root.is_absolute()
+            or not manager_script.is_file()
+            or codex_home.resolve() not in installed_root.resolve().parents
+        ):
+            raise ManagerError(
+                "codex_not_configured",
+                "Codex did not install the Aquarium plugin beneath its isolated home.",
+                "Inspect the isolated plugin cache and retry configuration.",
+                "configure-codex",
+                "aquarium",
+                aquarium.git_sha,
+            )
+        existing_servers = _run_codex(
+            codex_bin, host_root, "mcp", "list", "--json", json_output=True
+        )
+        existing_names = {item.get("name") for item in existing_servers}
+        integrations = []
+        for project_id in ("podway", "mulgae", "gaori", "sanho"):
+            enrollment = read_enrollment(host_root, project_id)
+            if enrollment is None:
+                integrations.append({"project_id": project_id, "state": "not-enrolled"})
+                if project_id in MCP_ARGUMENTS and project_id in existing_names:
+                    _run_codex(codex_bin, host_root, "mcp", "remove", project_id)
+                continue
+            resolved = stack.enter_context(resolve_artifact(project_id, host_root))
+            integration = {
+                "project_id": project_id,
+                "state": "development",
+                "git_sha": resolved.git_sha,
+                "development_version": resolved.development_version,
+                "sha256": resolved.sha256,
+                "mcp": project_id in MCP_ARGUMENTS,
+            }
+            integrations.append(integration)
+            if project_id not in MCP_ARGUMENTS:
+                continue
+            if project_id in existing_names:
+                _run_codex(codex_bin, host_root, "mcp", "remove", project_id)
+            checkout_path = Path(enrollment["checkout"])
+            _run_codex(
+                codex_bin,
+                host_root,
+                "mcp",
+                "add",
+                project_id,
+                "--",
+                os.fspath(Path(os.sys.executable).resolve()),
+                str(manager_script),
+                "--host-root",
+                str(host_root),
+                "launch",
+                "--project-id",
+                project_id,
+                "--",
+                *MCP_ARGUMENTS[project_id](checkout_path),
+            )
+        verification = codex_diagnosis(host_root, codex_bin)
+        if not verification["configured"]:
+            raise ManagerError(
+                "codex_not_configured",
+                "The isolated Aquarium plugin failed post-configuration diagnosis.",
+                "Inspect the isolated Codex home and retry configuration.",
+                "configure-codex",
+                "aquarium",
+                aquarium.git_sha,
+            )
+        details = {
+            "checkout": str(checkout),
+            "codex_home": str(codex_home),
+            "plugin_git_sha": aquarium.git_sha,
+            "plugin_version": aquarium.development_version,
+            "plugin_sha256": aquarium.sha256,
+            "paired_skills": {
+                "source": "aquarium-plugin",
+                "git_sha": aquarium.git_sha,
+                "development_version": aquarium.development_version,
+            },
+            "integrations": integrations,
+            "mcp_servers": verification["mcp_servers"],
+            "login": verification["login"],
+            "login_action": verification["login_action"],
+        }
+    if details["login"] != "ready":
+        raise ManagerError(
+            "codex_login_required",
+            "The isolated Codex home is configured but not authenticated.",
+            details["login_action"],
+            "configure-codex",
+            "aquarium",
+            git_sha,
+        )
+    return "success", details
 
 
 def _spawn_cleanup(host_root: Path, project_id: str, git_sha: str) -> None:

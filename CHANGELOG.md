@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.14 - Unreleased
 
+### Added
+
+- Add the explicit `dev-aquarium` channel for exact local-main artifacts, safe enrollment and hooks, atomic publication, leased resolution, and an isolated Codex home.
+
 ## v0.1.13 - 2026-08-28
 
 ### Removed

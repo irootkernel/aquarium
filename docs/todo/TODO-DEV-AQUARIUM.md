@@ -6,7 +6,7 @@
 
 This dossier is the detailed scope and acceptance source of truth for `EPIC-002` and `TASK-005` through `TASK-015`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks in this file are review evidence only and never change roadmap state.
 
-The future `$aquarium:dev-aquarium` skill and its linked references will own shipped workflow behavior after implementation. Repository-owned Make targets will own producer behavior. Until then, this dossier owns the planned contract without presenting it as current or released behavior.
+The shipped `$aquarium:dev-aquarium` skill and its linked reference own implemented workflow behavior. This dossier continues to own the remaining cross-repository integration and cold-validation acceptance scope without presenting it as current or released behavior.
 
 ## Goal
 
@@ -204,20 +204,20 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Implement Aquarium's producer output for the development plugin snapshot and paired resources.
-- [ ] Create the dedicated Codex home below `~/.aquarium/` without reading or copying stable-home credentials.
-- [ ] Install or refresh the exact Aquarium development plugin, paired skills, and MCP configuration through explicit approval.
-- [ ] Ensure the development plugin and paired skills resolve the same enrolled artifact generation.
-- [ ] Detect missing first login and return exact user action without attempting authentication.
-- [ ] Keep stable Codex configuration and global Aquarium installation unchanged.
-- [ ] Provide one diagnostic report covering enrollment, plugin SHA, paired skill generation, MCP configuration, and resolved project artifacts.
+- [x] Implement Aquarium's producer output for the development plugin snapshot and paired resources.
+- [x] Create the dedicated Codex home below `~/.aquarium/` without reading or copying stable-home credentials.
+- [x] Install or refresh the exact Aquarium development plugin, paired skills, and MCP configuration through explicit approval.
+- [x] Ensure the development plugin and paired skills resolve the same enrolled artifact generation.
+- [x] Detect missing first login and return exact user action without attempting authentication.
+- [x] Keep stable Codex configuration and global Aquarium installation unchanged.
+- [x] Provide one diagnostic report covering enrollment, plugin SHA, paired skill generation, MCP configuration, and resolved project artifacts.
 
 ### Do Not
 
-- [ ] Do not mutate the user's stable Codex home as a shortcut.
-- [ ] Do not copy tokens, sessions, credentials, or secret configuration into Aquarium-managed metadata.
-- [ ] Do not mix a development plugin with incompatible stable paired skills or MCP endpoints.
-- [ ] Do not present successful development setup as a stable Aquarium installation or release.
+- [x] Do not mutate the user's stable Codex home as a shortcut.
+- [x] Do not copy tokens, sessions, credentials, or secret configuration into Aquarium-managed metadata.
+- [x] Do not mix a development plugin with incompatible stable paired skills or MCP endpoints.
+- [x] Do not present successful development setup as a stable Aquarium installation or release.
 
 ## TASK-011: Integrate Podway
 
