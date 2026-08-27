@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 
 import pytest
@@ -63,3 +64,43 @@ def test_exact_binary_requires_an_absolute_path() -> None:
         match="absolute path",
     ):
         verify_podway_compatibility.exact_binary("podway")
+
+
+def test_exact_sibling_daemon_requires_an_executable_peer(tmp_path: Path) -> None:
+    binary = tmp_path / "podway"
+    binary.write_bytes(b"cli")
+    binary.chmod(0o755)
+    with pytest.raises(
+        verify_podway_compatibility.podway_runtime_qualification.RuntimeQualificationError,
+        match="executable sibling",
+    ):
+        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
+            binary
+        )
+
+    daemon = tmp_path / "podwayd"
+    daemon.write_bytes(b"daemon")
+    daemon.chmod(0o755)
+    assert (
+        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
+            binary
+        )
+        == daemon
+    )
+
+
+def test_exact_sibling_daemon_rejects_a_symlink(tmp_path: Path) -> None:
+    binary = tmp_path / "podway"
+    binary.write_bytes(b"cli")
+    binary.chmod(0o755)
+    target = tmp_path / "real-podwayd"
+    target.write_bytes(b"daemon")
+    target.chmod(0o755)
+    os.symlink(target.name, tmp_path / "podwayd")
+    with pytest.raises(
+        verify_podway_compatibility.podway_runtime_qualification.RuntimeQualificationError,
+        match="must not be symlinks",
+    ):
+        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
+            binary
+        )

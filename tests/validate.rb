@@ -656,7 +656,7 @@ documented_schema_ids = %w[
   aquarium-release-notes-inspection/v1
   aquarium-release-publication-observation/v3
   aquarium-release-publication-state/v3
-  aquarium-podway-compatibility.v1
+  aquarium-podway-compatibility.v2
 ]
 assert(documented_schema_ids.all? { |schema_id| local_interfaces_doc.include?("`#{schema_id}`") },
        "local interface documentation must preserve the major JSON schema identifiers")
@@ -2841,10 +2841,11 @@ assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspec
        "release and review helpers and tests must remain in the common test contract")
 assert(makefile.include?("test-podway-compat: test-requirements") &&
        makefile.include?('PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py') &&
+       makefile.include?("tests/podway_runtime_qualification.py") &&
        makefile.include?("tests/unit/test_verify_podway_compatibility_unit.py") &&
        testing_document.include?("external-artifact gate") &&
        testing_document.include?("development-contract evidence only") &&
-       testing_document.include?("not runtime record-value enforcement") &&
+       testing_document.include?("two fresh isolated runtime roots") &&
        root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.6-podway> make test-podway-compat") &&
        root_agents.include?("cannot satisfy this distribution gate"),
        "Podway v0.2.6 compatibility must remain an exact-artifact release gate")

@@ -26,7 +26,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `orca-review/scripts/create_provider_terminal.py` | `aquarium-orca-provider-terminal-request/v1` JSON on standard input | `aquarium-orca-provider-terminal-result/v1` | Creates one provider terminal through the local Orca CLI after request validation |
 | `release-handler/scripts/inspect_release_notes.py` | Repository, expected version, and release baseline | `aquarium-release-notes-inspection/v1` | Inventories cumulative release-note enrollment and candidate delta |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v3` JSON on standard input | `aquarium-release-publication-state/v3` | Normalizes local, remote, tag, hosted Release, and exact or approved QA-neutral candidate binding supplied by the caller |
-| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v1` | Executes the exact v0.2.6 binary against all managed Procedures and declaration-limit failures |
+| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v2` | Executes the exact v0.2.6 CLI and sibling daemon against all managed Procedures, declaration-limit failures, and two fresh isolated runtime passes |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
 

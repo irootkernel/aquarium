@@ -30,6 +30,7 @@ PYTHON_FILES := \
 	tests/test_inspect_testing.py \
 	tests/test_normalize_manifest.py \
 	tests/test_task_commit_gate.py \
+	tests/podway_runtime_qualification.py \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_create_provider_terminal_unit.py \
