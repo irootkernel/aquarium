@@ -870,13 +870,25 @@ class ManagedRuntime:
                 )
             self.task_list_limit = True
             return
-        records = {
-            item["item_id"]: self.value_for(item, node)
-            for item in required
-            if item["type"] != "artifact"
-        }
-        if records:
-            self.record(observation, records)
+        current = observation
+        for _ in range(10):
+            required = [
+                item
+                for item in current["active_items"]
+                if item.get("required_now") and not item.get("satisfied")
+            ]
+            records = {
+                item["item_id"]: self.value_for(item, node)
+                for item in required
+                if item["type"] != "artifact"
+            }
+            if not records:
+                return
+            self.record(current, records)
+            current = self.observe()
+        raise RuntimeQualificationError(
+            "conditional action requirements did not converge"
+        )
 
     def assess_goal(self, observation: dict[str, Any]) -> dict[str, Any]:
         goal = observation["guidance"].get("goal", {})
