@@ -1,6 +1,6 @@
 # Capability Catalog
 
-Aquarium exposes 23 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
+Aquarium exposes 24 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
 
 ## Design and Discovery
 
@@ -53,6 +53,7 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
+| `$aquarium:dev-aquarium` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout and reconciles the Aquarium-owned native hook block | Enrollment, hook, build, isolated Codex configuration, and authentication remain separate effects |
 | `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, installation, configuration, repair, staging, and commit stay independent |
 | `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external manifest and applies single-repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |

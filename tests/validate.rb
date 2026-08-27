@@ -54,6 +54,7 @@ end
 
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
+  dev-aquarium
   dev-setup-bundle
   dev-setup
   docs-setup
@@ -609,7 +610,7 @@ assert(ops_index.start_with?("# Aquarium Operations\n") &&
        "Aquarium operations index must expose its operational surface and runbook sections")
 
 capability_catalog = documentation_details.fetch("capabilities")
-assert(capability_catalog.include?("Aquarium exposes 23 skills") &&
+assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
        capability_catalog.include?("current implementation raises the Podway minimum") &&
        capability_catalog.include?("CHANGELOG.md") &&

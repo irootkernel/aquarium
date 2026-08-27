@@ -144,21 +144,21 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Introduce the explicit-only `$aquarium:dev-aquarium` skill with diagnosis before effects.
-- [ ] Validate one regular non-symlink Git root, supported project identity, canonical local `main`, and both producer targets.
-- [ ] Present separate approvals for enrollment, hook mutation, initial build, and native Codex configuration.
-- [ ] Enroll at most one canonical checkout per project and record only bounded non-secret host-local metadata.
-- [ ] Make same-checkout enrollment idempotent.
-- [ ] Require explicit approval before re-enrollment from another checkout and transfer only Aquarium-owned hook integration.
-- [ ] Preserve unrelated native hooks and report any hook ownership conflict instead of overwriting it.
-- [ ] Provide diagnosis and repair paths for missing checkouts, invalid identities, stale hooks, and incomplete setup.
+- [x] Introduce the explicit-only `$aquarium:dev-aquarium` skill with diagnosis before effects.
+- [x] Validate one regular non-symlink Git root, supported project identity, canonical local `main`, and both producer targets.
+- [x] Present separate approvals for enrollment, hook mutation, initial build, and native Codex configuration.
+- [x] Enroll at most one canonical checkout per project and record only bounded non-secret host-local metadata.
+- [x] Make same-checkout enrollment idempotent.
+- [x] Require explicit approval before re-enrollment from another checkout and transfer only Aquarium-owned hook integration.
+- [x] Preserve unrelated native hooks and report any hook ownership conflict instead of overwriting it.
+- [x] Provide diagnosis and repair paths for missing checkouts, invalid identities, stale hooks, and incomplete setup.
 
 ### Do Not
 
-- [ ] Do not discover or enroll repositories implicitly.
-- [ ] Do not install hooks, build artifacts, change native configuration, or authenticate during read-only diagnosis.
-- [ ] Do not delete or rewrite unrelated hook content.
-- [ ] Do not silently change the canonical checkout because the skill was invoked elsewhere.
+- [x] Do not discover or enroll repositories implicitly.
+- [x] Do not install hooks, build artifacts, change native configuration, or authenticate during read-only diagnosis.
+- [x] Do not delete or rewrite unrelated hook content.
+- [x] Do not silently change the canonical checkout because the skill was invoked elsewhere.
 
 ## TASK-008: Implement Build Scheduling and Publication
 

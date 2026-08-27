@@ -65,7 +65,7 @@ This epic begins after the v0.1.13 corrective release. It does not open the v0.1
 | --- | --- | --- | --- | --- |
 | TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and isolated Codex operation before implementation. | Completed | TASK-004 |
 | TASK-006 | Define the shared development contract | Freeze producer, artifact, enrollment, resolver, version, and failure contracts. | Completed | TASK-005 |
-| TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Planned | TASK-006 |
+| TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Completed | TASK-006 |
 | TASK-008 | Implement build scheduling and publication | Build exact local-main candidates, serialize publishers, and atomically advance the current artifact. | Planned | TASK-006 |
 | TASK-009 | Implement resolution, leases, and cleanup | Resolve development versus stable tools, pin invocations, protect active artifacts, and remove superseded binaries. | Planned | TASK-006, TASK-008 |
 | TASK-010 | Isolate Aquarium and Codex development runtime | Install the development plugin, paired skills, MCP configuration, and separate Codex home under the shared contract. | Planned | TASK-007, TASK-008, TASK-009 |
