@@ -24,6 +24,18 @@ node_definitions:
         required: false
         allowed_media_types:
           - text/markdown
+  implementation-entry-record:
+    type: action
+    title: Prepare implementation entry
+    intent: Bind implementation either to the approved plan or to an operationally complete failed review CI decision.
+    items:
+      - id: implementation-entry-summary
+        type: text
+        prompt: Record the approved-plan basis on first entry or the exact failed review CI and rework basis on CI re-entry.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
   implementation-record:
     type: action
     title: Record implementation
@@ -178,18 +190,6 @@ node_definitions:
         prompt: Record the number of unresolved findings owned by documentation.
         required: true
         minimum: 0
-  ci-failure-record:
-    type: action
-    title: Hand off failed review CI
-    intent: Bind an operationally complete failing CI decision to implementation rework before changing the target.
-    items:
-      - id: ci-failure-summary
-        type: text
-        prompt: Record the failed CI decision, exact review identity, and implementation rework basis.
-        required: true
-        min_length: 1
-        max_length: 3000
-        multiline: true
   review-decision:
     type: decision
     title: Evaluate review
@@ -347,6 +347,14 @@ graph:
   nodes:
     - id: record-plan
       use: plan-record
+      next: prepare-implementation
+    - id: prepare-implementation
+      use: implementation-entry-record
+      evidence_from:
+        - node: record-plan
+          required: true
+          items:
+            - plan-summary
       next: implement
     - id: implement
       use: implementation-record
@@ -417,7 +425,7 @@ graph:
           to: assess-goal
           effect: advance
         ci-failed:
-          to: record-ci-failure
+          to: prepare-implementation
           effect: rework
         implementation-changes:
           to: implement
@@ -425,17 +433,6 @@ graph:
         documentation-changes:
           to: document
           effect: rework
-    - id: record-ci-failure
-      use: ci-failure-record
-      evidence_from:
-        - node: review
-          required: true
-          items:
-            - review-round
-            - review-run-id
-            - review-summary
-            - ci-decision
-      next: implement
     - id: assess-goal
       use: goal-assessment
       evidence_from:
@@ -443,6 +440,10 @@ graph:
           required: true
           items:
             - plan-summary
+        - node: prepare-implementation
+          required: true
+          items:
+            - implementation-entry-summary
         - node: implement
           required: true
           items:

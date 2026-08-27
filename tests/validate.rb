@@ -1639,25 +1639,25 @@ expected_procedure_graphs = {
     "entry" => "record-plan",
     "manual_targets" => %w[implement verify refine document review],
     "evidence" => {
+      "prepare-implementation" => required_evidence.call("record-plan"),
       "refine" => required_evidence.call("implement"),
       "verify" => required_evidence.call("refine"),
       "decide-verification" => required_evidence.call("verify"),
       "review" => required_evidence.call("verify", "document"),
       "decide-review" => required_evidence.call("review"),
-      "record-ci-failure" => required_evidence.call("review"),
-      "assess-goal" => required_evidence.call("record-plan", "implement", "verify", "refine", "document", "review"),
+      "assess-goal" => required_evidence.call("record-plan", "prepare-implementation", "implement", "verify", "refine", "document", "review"),
       "approve-closeout" => required_evidence.call("assess-goal", "record-outcome")
     },
     "nodes" => {
-      "record-plan" => { "next" => "implement" },
+      "record-plan" => { "next" => "prepare-implementation" },
+      "prepare-implementation" => { "next" => "implement" },
       "implement" => { "next" => "refine" },
       "refine" => { "next" => "verify" },
       "verify" => { "next" => "decide-verification" },
       "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
       "review" => { "next" => "decide-review" },
-      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[record-ci-failure rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
-      "record-ci-failure" => { "next" => "implement" },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[prepare-implementation rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
       "record-outcome" => { "next" => "approve-closeout" },
       "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
@@ -1839,7 +1839,7 @@ task_procedure_nodes = task_procedure.dig("graph", "nodes").each_with_object({})
   index[node.fetch("id")] = node
 end
 task_assess_evidence = task_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map { |entry| [entry.fetch("node"), entry.fetch("required")] }
-assert(task_assess_evidence == %w[record-plan implement verify refine document review].map { |node| [node, true] },
+assert(task_assess_evidence == %w[record-plan prepare-implementation implement verify refine document review].map { |node| [node, true] },
        "task procedure assess-goal must draw required evidence from the full phase trail")
 assert(task_procedure_text.include?("must reach implementation through manual rework"),
        "task procedure must document the manual-rework escape to implementation")
@@ -2054,7 +2054,8 @@ assert(task_handler.include?("only after an `achieved` goal assessment") &&
        "task-handler must gate success on the goal assessment and skip decisions on holds")
 assert(task_review.include?("only `ci-decision=pass` with no unresolved valid finding and no file change supports `approved`") &&
        task_review.include?("selects `ci-failed` through its explicit failure handoff") &&
-       task_handler.include?("records the exact CI failure handoff at `record-ci-failure`"),
+       task_handler.include?("re-enters the dominating `prepare-implementation` action") &&
+       task_handler.include?("records the exact CI failure handoff there"),
        "task-review must route CI and finding failures through their exact rework paths")
 assert(task_handler.include?("In rounds one through three") &&
        task_handler.include?("Round four is confirmation-only") &&
