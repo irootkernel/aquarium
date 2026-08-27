@@ -77,6 +77,28 @@ def test_compare_detects_untracked_path_set_drift(repository: Path) -> None:
     assert "status_sha256" in result["changed"]
 
 
+def test_compare_detects_existing_untracked_content_drift(repository: Path) -> None:
+    path = repository / "untracked.txt"
+    path.write_text("before\n", encoding="utf-8")
+    baseline = inspect_repository_state.snapshot(repository)
+    path.write_text("after\n", encoding="utf-8")
+
+    result = inspect_repository_state.compare(repository, baseline)
+
+    assert result["drift"] is True
+    assert "status_sha256" in result["changed"]
+
+
+def test_compare_detects_assume_unchanged_index_flag(repository: Path) -> None:
+    baseline = inspect_repository_state.snapshot(repository)
+    git(repository, "update-index", "--assume-unchanged", "tracked.txt")
+
+    result = inspect_repository_state.compare(repository, baseline)
+
+    assert result["drift"] is True
+    assert "index_sha256" in result["changed"]
+
+
 def test_baseline_requires_matching_repository_and_fingerprint(
     repository: Path, tmp_path: Path
 ) -> None:

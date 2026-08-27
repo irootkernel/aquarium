@@ -4,7 +4,7 @@ This directory is the maintainer-facing catalog of Aquarium's implemented behavi
 
 ## Version Scope
 
-The plugin manifest identifies the current stable package as `v0.1.11`. This checkout also contains the open `v0.1.12` candidate changes recorded in the root CHANGELOG, so candidate-only behavior is labeled separately from released behavior.
+The plugin manifest owns the current package version and the root CHANGELOG owns release history and the one open candidate when present. Specifications describe the implemented checkout without duplicating release state.
 
 ## Detailed Specifications
 

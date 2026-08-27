@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,28 @@ SPEC = importlib.util.spec_from_file_location("verify_podway_compatibility", SCR
 assert SPEC is not None and SPEC.loader is not None
 verify_podway_compatibility = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(verify_podway_compatibility)
+
+
+def git(repository: Path, *arguments: str) -> None:
+    subprocess.run(["git", *arguments], cwd=repository, check=True)
+
+
+def test_repository_identity_rejects_dirty_worktree(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init", "-q")
+    git(repository, "config", "user.name", "Test User")
+    git(repository, "config", "user.email", "test@example.com")
+    (repository / "tracked.txt").write_text("initial\n", encoding="utf-8")
+    git(repository, "add", "tracked.txt")
+    git(repository, "commit", "-qm", "initial")
+    (repository / "tracked.txt").write_text("changed\n", encoding="utf-8")
+
+    with pytest.raises(
+        verify_podway_compatibility.CompatibilityError,
+        match="dirty Aquarium worktree",
+    ):
+        verify_podway_compatibility.repository_identity(repository)
 
 
 def test_replace_once_applies_one_exact_declaration_change() -> None:

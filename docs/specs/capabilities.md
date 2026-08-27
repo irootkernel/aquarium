@@ -59,8 +59,8 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |
 | `$aquarium:test-setup` | Explicit | Audits and configures the common Make or Bun test contract and evidence-backed legacy waivers | Applying test files does not authorize side-effectful E2E execution |
 
-## Current Candidate Corrections
+## Current Integration Corrections
 
-The open v0.1.12 candidate raises the Podway minimum to v0.2.6, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
+The current implementation raises the Podway minimum to v0.2.6, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
 
-These corrections are implemented on current `main` but are not shipped as v0.1.11 behavior. [`CHANGELOG.md`](../../CHANGELOG.md) remains the release-status authority.
+[`CHANGELOG.md`](../../CHANGELOG.md) remains the release-status authority for these implemented corrections.

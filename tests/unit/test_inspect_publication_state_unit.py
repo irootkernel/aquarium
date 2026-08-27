@@ -22,7 +22,7 @@ BASE = "4" * 40
 
 def observation() -> dict[str, object]:
     return {
-        "schema_version": "aquarium-release-publication-observation/v3",
+        "schema_version": "aquarium-release-publication-observation/v4",
         "version": "v0.1.11",
         "release_basis_candidate_sha": QA,
         "release_commit": {
@@ -39,7 +39,13 @@ def observation() -> dict[str, object]:
         "remote_main_sha": QA,
         "remote_main_relation_to_release_basis": "equal",
         "tag": {"state": "absent", "annotated": False, "peeled_sha": None},
-        "hosted_release": {"state": "absent", "tag": None, "target_sha": None},
+        "hosted_release": {
+            "state": "absent",
+            "tag": None,
+            "target_sha": None,
+            "draft": False,
+            "prerelease": False,
+        },
     }
 
 
@@ -88,6 +94,8 @@ def observation() -> dict[str, object]:
                         "state": "present",
                         "tag": "v0.1.11",
                         "target_sha": RELEASE,
+                        "draft": False,
+                        "prerelease": False,
                     },
                 ),
             ),
@@ -205,6 +213,8 @@ def test_publication_rejects_self_parent_release_commit() -> None:
                 "state": "present",
                 "tag": "v0.1.11",
                 "target_sha": OTHER,
+                "draft": False,
+                "prerelease": False,
             }
         ),
         lambda value: value.update(
@@ -212,6 +222,8 @@ def test_publication_rejects_self_parent_release_commit() -> None:
                 "state": "present",
                 "tag": "v0.1.11",
                 "target_sha": RELEASE,
+                "draft": False,
+                "prerelease": False,
             }
         ),
     ],
@@ -260,9 +272,9 @@ def test_remote_relationship_rejects_non_string_value() -> None:
     assert error.value.code == "observation_invalid"
 
 
-def test_v2_observation_is_rejected() -> None:
+def test_v3_observation_is_rejected() -> None:
     value = observation()
-    value["schema_version"] = "aquarium-release-publication-observation/v2"
+    value["schema_version"] = "aquarium-release-publication-observation/v3"
 
     with pytest.raises(inspect_publication_state.ObservationError) as error:
         inspect_publication_state.inspect(value)
@@ -390,6 +402,8 @@ def test_unproven_release_evidence_classifies_divergent_remote_release() -> None
                 "state": "absent",
                 "tag": "v0.1.11",
                 "target_sha": RELEASE,
+                "draft": False,
+                "prerelease": False,
             }
         ),
     ],
@@ -402,3 +416,27 @@ def test_absent_objects_reject_contradictory_data(configure: object) -> None:
         inspect_publication_state.inspect(value)
 
     assert error.value.code == "observation_invalid"
+
+
+@pytest.mark.parametrize("field", ["draft", "prerelease"])
+def test_non_public_hosted_release_conflicts(field: str) -> None:
+    value = observation()
+    value.update(
+        remote_main_sha=RELEASE,
+        remote_main_relation_to_release_basis="descendant",
+        tag={"state": "present", "annotated": True, "peeled_sha": RELEASE},
+        hosted_release={
+            "state": "present",
+            "tag": "v0.1.11",
+            "target_sha": RELEASE,
+            "draft": False,
+            "prerelease": False,
+        },
+    )
+    value["hosted_release"][field] = True
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "conflict"
+    assert result["next_action"] == "stop"
+    assert result["statuses"]["hosted_release"] == "conflict"

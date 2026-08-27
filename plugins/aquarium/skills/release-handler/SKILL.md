@@ -59,7 +59,7 @@ Publish in this order unless stricter repository policy overrides it:
 3. create the hosted Release using the settled changelog entries as highlights and current gate evidence as a separate validation section;
 4. verify remote `main`, the peeled tag, and hosted Release target the intended release commit.
 
-Before every publication mutation and after every successful step, re-query live remote `main`, recompute its ancestry relationship to the release-basis candidate without fetching, and run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v3` JSON observation. Bind exact QA directly, or bind one approved QA-neutral direct child while retaining the distinct direct-QA evidence SHA.
+Before every publication mutation and after every successful step, re-query live remote `main`, recompute its ancestry relationship to the release-basis candidate without fetching, and run `scripts/inspect_publication_state.py` with a fresh non-expanding `aquarium-release-publication-observation/v4` JSON observation. Bind exact QA directly, or bind one approved QA-neutral direct child while retaining the distinct direct-QA evidence SHA.
 
 Perform only its one returned next action after obtaining that action's authority. A remote `main` that still equals or is an ancestor of the release-basis candidate permits the single fast-forward `push_main`; a different descendant, divergence, unavailable relationship, `conflict`, or `unproven` state stops as `INCOMPLETE`. A `matching` step is skipped. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
 

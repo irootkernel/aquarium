@@ -600,8 +600,8 @@ assert(documentation_index.include?("`single-scope`") &&
        documentation_index.include?("TASK-[0-9]{3,}") &&
        documentation_index.include?("English is canonical") &&
        documentation_index.include?("Aquarium maintainers and workflow authors") &&
-       documentation_index.include?("current stable package as `v0.1.11`") &&
-       documentation_index.include?("open `v0.1.12` release candidate") &&
+       documentation_index.include?("plugin manifest owns the current package version") &&
+       documentation_index.include?("without duplicating release state") &&
        documentation_index.include?("TODO and work dossiers") &&
        documentation_index.include?("ruby tests/validate.rb"),
        "Aquarium documentation index must define its profile, roles, roadmap identity, language, and checks")
@@ -613,9 +613,10 @@ assert(ops_index.start_with?("# Aquarium Operations\n") &&
 capability_catalog = documentation_details.fetch("capabilities")
 assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
-       capability_catalog.include?("open v0.1.12 candidate") &&
-       capability_catalog.include?("not shipped as v0.1.11 behavior"),
-       "capability catalog must inventory all Aquarium skills and separate stable from candidate behavior")
+       capability_catalog.include?("current implementation raises the Podway minimum") &&
+       capability_catalog.include?("CHANGELOG.md") &&
+       capability_catalog.include?("release-status authority"),
+       "capability catalog must inventory all Aquarium skills and defer release status to the CHANGELOG")
 
 workflow_contracts_doc = documentation_details.fetch("workflow-contracts")
 tool_integrations_doc = documentation_details.fetch("tool-integrations")
@@ -654,8 +655,8 @@ documented_schema_ids = %w[
   aquarium-orca-provider-terminal-request/v1
   aquarium-orca-provider-terminal-result/v1
   aquarium-release-notes-inspection/v1
-  aquarium-release-publication-observation/v3
-  aquarium-release-publication-state/v3
+  aquarium-release-publication-observation/v4
+  aquarium-release-publication-state/v4
   aquarium-podway-compatibility.v2
 ]
 assert(documented_schema_ids.all? { |schema_id| local_interfaces_doc.include?("`#{schema_id}`") },
@@ -2182,7 +2183,8 @@ assert(orca_provider_contracts.include?("provider-native auto-approval or permis
 assert(orca_state_helper.file? &&
        orca_state_helper_body.include?('SCHEMA_VERSION = "aquarium-orca-review-repository-state/v1"') &&
        orca_state_helper_body.include?('"for-each-ref"') &&
-       orca_state_helper_body.include?('["ls-files", "--stage", "-z"]') &&
+       orca_state_helper_body.include?('["ls-files", "--stage", "-v", "-z"]') &&
+       orca_state_helper_body.include?('["ls-files", "--others", "--exclude-standard", "-z"]') &&
        orca_state_helper_body.include?('["diff", "--binary", "--no-ext-diff", "--no-textconv"]') &&
        orca_state_helper_body.include?('["status", "--porcelain=v2", "-z", "--untracked-files=all"]') &&
        orca_state_helper_body.include?('"drift": bool(changed)') &&
@@ -2394,8 +2396,8 @@ assert(workflow_contracts_doc.include?("one approved QA-neutral direct child") &
        workflow_contracts_doc.include?("direct-QA and release-basis SHAs remain distinct"),
        "workflow contract summary must describe bounded gate convergence and the direct-child QA exception")
 assert(release_publication_script.file? &&
-       release_publication_script_body.include?("aquarium-release-publication-observation/v3") &&
-       release_publication_script_body.include?("aquarium-release-publication-state/v3") &&
+       release_publication_script_body.include?("aquarium-release-publication-observation/v4") &&
+       release_publication_script_body.include?("aquarium-release-publication-state/v4") &&
        release_publication_script_body.include?("release_basis_candidate_sha") &&
        release_publication_script_body.include?("qa_evidence_relation_to_release_basis") &&
        release_publication_script_body.include?("approved_qa_neutral_descendant") &&
@@ -2404,6 +2406,8 @@ assert(release_publication_script.file? &&
        release_publication_script_body.include?("qa_reuse_attempt == 1") &&
        release_publication_script_body.include?("remote_main_relation_to_release_basis") &&
        release_publication_script_body.include?(%q[remote_relation in {"equal", "ancestor"}]) &&
+       release_publication_script_body.include?(%q[not hosted["draft"]]) &&
+       release_publication_script_body.include?(%q[not hosted["prerelease"]]) &&
        release_publication_script_body.include?(%q[next_action = "push_main"]) &&
        release_publication_script_body.include?(%q[next_action = "create_and_push_tag"]) &&
        release_publication_script_body.include?(%q[next_action = "create_hosted_release"]) &&

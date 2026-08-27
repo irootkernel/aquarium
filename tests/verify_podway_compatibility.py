@@ -208,7 +208,11 @@ def repository_identity(repository: Path) -> tuple[str, bool]:
     revision = head.stdout.strip()
     if head.returncode != 0 or len(revision) != 40 or status.returncode != 0:
         raise CompatibilityError("cannot bind compatibility evidence to Aquarium Git")
-    return revision, not status.stdout
+    if status.stdout:
+        raise CompatibilityError(
+            "cannot bind compatibility evidence to a dirty Aquarium worktree"
+        )
+    return revision, True
 
 
 def verify(binary: Path, repository: Path) -> dict[str, Any]:

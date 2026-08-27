@@ -12,11 +12,11 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Let Aquarium workflows use native tool capabilities without skill-owned sessions or unsupported orchestration limits.
 - Extend docs-setup with explicit audience, epic SOT lifecycle, canonical closeout, operations documentation, and conservative structural inspection.
-- Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, and permit one approved QA-neutral direct child without misbinding publication evidence.
-- Run Orca reviewers with provider-native auto-approval while enforcing the static no-mutation contract through explicit Dispatch instructions, supervision, and Git-state verification.
+- Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, permit one approved QA-neutral direct child, and reject draft or prerelease objects as completed stable Releases.
+- Run Orca reviewers with provider-native auto-approval while enforcing the static no-mutation contract through explicit Dispatch instructions, supervision, and Git-state verification of index flags and untracked content.
 - Reauthor the task, goal, validation, design, and war-room Procedures from Podway v0.2.6 delivery, analysis, and bug-fix patterns with typed checks, guarded routing, fresh evidence handoffs, and explicit approval boundaries.
 - Preserve same-ID Podway-valid local Procedure customizations and require an exact reviewed choice before canonical replacement.
-- Qualify the official Podway v0.2.6 CLI and daemon through two fresh isolated runtime passes across every canonical Procedure and Aquarium lifecycle seam.
+- Add an isolated official Podway v0.2.6 compatibility gate covering both released binaries, every canonical Procedure, and Aquarium lifecycle seams.
 
 ### Fixed
 

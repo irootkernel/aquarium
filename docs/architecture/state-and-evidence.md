@@ -29,4 +29,4 @@ A green structural inspector does not prove semantic correctness. A local tool r
 
 Ignored `.podway`, `.gaori`, Mulgae, terminal, and similar runtime artifacts stay with their native tools. They are not tracked documentation authority. When a downstream workflow needs durable proof, Aquarium promotes only a reviewed, bounded, non-sensitive structured artifact under `evidence/aquarium/`, unless repository configuration declares another relative Aquarium evidence root.
 
-Promoted evidence records identity, scope, producer, timestamp, and limitations. It omits credentials, raw transcripts, unrelated source, and ambient runtime history. Promotion is a deliberate documentation change, not an automatic side effect of a successful run.
+Promoted evidence records bounded work-unit identity, purpose, producer, exact target binding, payload digests, and limitations. It omits credentials, raw transcripts, unrelated source, timestamps, and ambient runtime history. Promotion is a deliberate documentation change, not an automatic side effect of a successful run.

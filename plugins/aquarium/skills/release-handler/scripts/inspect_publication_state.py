@@ -8,9 +8,9 @@ import re
 import sys
 from typing import Any
 
-REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v3"
-RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v3"
-ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v3"
+REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v4"
+RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v4"
+ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v4"
 MAX_REQUEST_BYTES = 64 * 1024
 SEMVER = re.compile(r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$")
 OBJECT_ID = re.compile(r"^[0-9a-f]{40,64}$")
@@ -135,7 +135,9 @@ def inspect(payload: object) -> dict[str, object]:
         )
     tag = exact_mapping(request["tag"], {"state", "annotated", "peeled_sha"}, "tag")
     hosted = exact_mapping(
-        request["hosted_release"], {"state", "tag", "target_sha"}, "hosted release"
+        request["hosted_release"],
+        {"state", "tag", "target_sha", "draft", "prerelease"},
+        "hosted release",
     )
     if tag["state"] not in {"absent", "present"} or not isinstance(
         tag["annotated"], bool
@@ -152,8 +154,17 @@ def inspect(payload: object) -> dict[str, object]:
     if hosted_tag is not None and not isinstance(hosted_tag, str):
         raise ObservationError("observation_invalid", "hosted release tag is invalid")
     hosted_target = optional_object_id(hosted["target_sha"], "hosted release target")
+    if not isinstance(hosted["draft"], bool) or not isinstance(
+        hosted["prerelease"], bool
+    ):
+        raise ObservationError(
+            "observation_invalid", "hosted release publication state is invalid"
+        )
     if hosted["state"] == "absent" and (
-        hosted_tag is not None or hosted_target is not None
+        hosted_tag is not None
+        or hosted_target is not None
+        or hosted["draft"]
+        or hosted["prerelease"]
     ):
         raise ObservationError(
             "observation_invalid", "absent hosted release has object data"
@@ -204,7 +215,12 @@ def inspect(payload: object) -> dict[str, object]:
         tag_status = "conflict"
     if hosted["state"] == "absent":
         hosted_status = "missing"
-    elif hosted_tag == version and hosted_target == release_sha:
+    elif (
+        hosted_tag == version
+        and hosted_target == release_sha
+        and not hosted["draft"]
+        and not hosted["prerelease"]
+    ):
         hosted_status = "matching"
     else:
         hosted_status = "conflict"

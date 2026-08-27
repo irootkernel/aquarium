@@ -6,7 +6,7 @@ This index adopts one canonical documentation model for the Aquarium repository 
 
 This tree is written for Aquarium maintainers and workflow authors. The root [`README.md`](../README.md) remains the user-facing product overview, while [`README.ko.md`](../README.ko.md) remains its maintained Korean translation.
 
-The plugin manifest identifies the current stable package as `v0.1.11`. The root CHANGELOG owns the open `v0.1.12` release candidate, while the roadmap records `v0.1.13` as a later planned release rather than an open candidate. Maintainer documents describe the current checkout and label candidate-only or planned behavior instead of presenting it as already released.
+The plugin manifest owns the current package version, the root CHANGELOG owns release history and the one open candidate when present, and the roadmap owns later planned releases. Maintainer documents describe the current checkout and distinguish planned behavior from implemented behavior without duplicating release state.
 
 ## Profile and Scope
 

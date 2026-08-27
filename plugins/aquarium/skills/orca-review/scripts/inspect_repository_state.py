@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -92,6 +93,58 @@ def sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def untracked_identity(repository: Path) -> bytes:
+    paths = require_git(
+        repository,
+        ["ls-files", "--others", "--exclude-standard", "-z"],
+        "worktree_unavailable",
+        "untracked worktree state is unavailable",
+    )
+    identity = hashlib.sha256()
+    for raw_path in paths.split(b"\0"):
+        if not raw_path:
+            continue
+        path = repository / os.fsdecode(raw_path)
+        try:
+            metadata = path.lstat()
+        except OSError as error:
+            raise InspectionError(
+                "worktree_unavailable", "untracked worktree state is unavailable"
+            ) from error
+        identity.update(len(raw_path).to_bytes(8, "big"))
+        identity.update(raw_path)
+        identity.update(stat.S_IFMT(metadata.st_mode).to_bytes(8, "big"))
+        identity.update(stat.S_IMODE(metadata.st_mode).to_bytes(8, "big"))
+        if stat.S_ISREG(metadata.st_mode):
+            contents = hashlib.sha256()
+            try:
+                with path.open("rb") as source:
+                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                        contents.update(chunk)
+            except OSError as error:
+                raise InspectionError(
+                    "worktree_unavailable", "untracked worktree state is unavailable"
+                ) from error
+            identity.update(b"regular\0")
+            identity.update(contents.digest())
+        elif stat.S_ISLNK(metadata.st_mode):
+            try:
+                target = os.fsencode(os.readlink(path))
+            except OSError as error:
+                raise InspectionError(
+                    "worktree_unavailable", "untracked worktree state is unavailable"
+                ) from error
+            identity.update(b"symlink\0")
+            identity.update(len(target).to_bytes(8, "big"))
+            identity.update(target)
+        else:
+            raise InspectionError(
+                "worktree_unavailable",
+                "untracked worktree contains an unsupported file type",
+            )
+    return identity.digest()
+
+
 def head_state(repository: Path) -> dict[str, str | None]:
     commit = (
         require_git(
@@ -125,7 +178,7 @@ def snapshot(repository: Path) -> dict[str, Any]:
     )
     index = require_git(
         repository,
-        ["ls-files", "--stage", "-z"],
+        ["ls-files", "--stage", "-v", "-z"],
         "index_unavailable",
         "Git index is unavailable",
     )
@@ -141,12 +194,13 @@ def snapshot(repository: Path) -> dict[str, Any]:
         "status_unavailable",
         "Git status is unavailable",
     )
+    status_identity = status + b"\0untracked-content\0" + untracked_identity(repository)
     state: dict[str, Any] = {
         "head": head_state(repository),
         "refs_sha256": sha256(refs),
         "index_sha256": sha256(index),
         "tracked_worktree_sha256": sha256(tracked_worktree),
-        "status_sha256": sha256(status),
+        "status_sha256": sha256(status_identity),
     }
     fingerprint = sha256(
         json.dumps(state, sort_keys=True, separators=(",", ":")).encode()

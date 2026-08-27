@@ -11,16 +11,16 @@ Resolve and independently verify:
 - the exact zero-or-one reuse attempt and release-gate evidence bound to the release commit;
 - current local and live remote `main` SHAs plus the verified remote relationship to the release-basis candidate;
 - publication-remote target tag absence or an annotated publication-remote tag whose peeled target is the release commit; and
-- hosted Release absence or its exact tag and resolved target commit.
+- hosted Release absence or its exact tag, resolved target commit, draft state, and prerelease state.
 
-Send only those bounded facts as one `aquarium-release-publication-observation/v3` JSON object through non-expanding stdin to `scripts/inspect_publication_state.py`. Do not interpolate observations into a shell command.
+Send only those bounded facts as one `aquarium-release-publication-observation/v4` JSON object through non-expanding stdin to `scripts/inspect_publication_state.py`. Do not interpolate observations into a shell command.
 
 The object contains these bounded facts:
 
 - `version`, `release_basis_candidate_sha`, and `release_commit` (`sha`, `parent_sha`, `title`);
 - `qa_evidence_candidate_sha`, `qa_evidence_relation_to_release_basis` (`equal` or `direct_parent`), `qa_binding` (`exact` or `approved_qa_neutral_descendant`), and `qa_reuse_attempt` (`0` or `1`);
 - `gate_evidence_release_commit_sha`, `local_main_sha`, `remote_main_sha`, and `remote_main_relation_to_release_basis` (`equal`, `ancestor`, `descendant`, or `diverged`); and
-- `tag` (`state`, `annotated`, `peeled_sha`) describing the live publication-remote tag, and `hosted_release` (`state`, `tag`, `target_sha`). A local-only tag is remote `absent` and must not suppress `create_and_push_tag`.
+- `tag` (`state`, `annotated`, `peeled_sha`) describing the live publication-remote tag, and `hosted_release` (`state`, `tag`, `target_sha`, `draft`, `prerelease`). A local-only tag is remote `absent` and must not suppress `create_and_push_tag`; a draft or prerelease hosted object is a conflict, never a completed stable Release.
 
 For `exact`, require the evidence and release-basis SHAs to match, relation `equal`, and attempt `0`. For `approved_qa_neutral_descendant`, require distinct SHAs, relation `direct_parent`, and attempt `1`. The helper checks this closed structural binding; the handler remains responsible for proving the Git relationship, retained QA record, first-and-only reuse-attempt fact, non-distributed surface, semantic neutrality, and explicit approval before constructing the observation.
 
