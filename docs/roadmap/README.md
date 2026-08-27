@@ -28,7 +28,7 @@ Epic status is independent of child task status. Completing every child does not
 | Epic | Title | Status |
 | --- | --- | --- |
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
-| EPIC-002 | Build the Aquarium development environment | Planned |
+| EPIC-002 | Build the Aquarium development environment | In Progress |
 | EPIC-003 | Introduce Dolgorae | Planned |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 
@@ -53,7 +53,7 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 ## EPIC-002: Build the Aquarium Development Environment
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Build the `dev-aquarium` development channel planned for v0.1.14 so Aquarium, Podway, Mulgae, Gaori, and Sanho can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and preserve stable global tools when no project is enrolled.
 
@@ -63,7 +63,7 @@ This epic begins after the v0.1.13 corrective release. It does not open the v0.1
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and isolated Codex operation before implementation. | Planned | TASK-004 |
+| TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and isolated Codex operation before implementation. | Completed | TASK-004 |
 | TASK-006 | Define the shared development contract | Freeze producer, artifact, enrollment, resolver, version, and failure contracts. | Planned | TASK-005 |
 | TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Planned | TASK-006 |
 | TASK-008 | Implement build scheduling and publication | Build exact local-main candidates, serialize publishers, and atomically advance the current artifact. | Planned | TASK-006 |

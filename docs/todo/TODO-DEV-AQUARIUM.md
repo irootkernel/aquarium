@@ -105,20 +105,20 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Prove shared and exclusive operating-system lease behavior on every supported host platform.
-- [ ] Prove atomic directory promotion and current-selector replacement on the supported filesystem.
-- [ ] Inspect existing hook strategies in Aquarium and the four initial tool repositories and prove coexistence without replacing unrelated hooks.
-- [ ] Prove that a post-commit request can report failure without changing or rolling back the completed Git commit.
-- [ ] Prove dedicated Codex-home isolation for plugin, paired skills, MCP configuration, and login state.
-- [ ] Prove that a child process can remain pinned to an acquired artifact while a newer artifact is published.
-- [ ] Record bounded evidence, rejected alternatives, platform limitations, and every contract decision required by `TASK-006`.
+- [x] Prove shared and exclusive operating-system lease behavior on every supported host platform.
+- [x] Prove atomic directory promotion and current-selector replacement on the supported filesystem.
+- [x] Inspect existing hook strategies in Aquarium and the four initial tool repositories and prove coexistence without replacing unrelated hooks.
+- [x] Prove that a post-commit request can report failure without changing or rolling back the completed Git commit.
+- [x] Prove dedicated Codex-home isolation for plugin, paired skills, MCP configuration, and login state.
+- [x] Prove that a child process can remain pinned to an acquired artifact while a newer artifact is published.
+- [x] Record bounded evidence, rejected alternatives, platform limitations, and every contract decision required by `TASK-006`.
 
 ### Do Not
 
-- [ ] Do not persist production enrollment or install permanent hooks.
-- [ ] Do not modify consumer repositories merely to make the feasibility probe pass.
-- [ ] Do not treat a single happy-path prototype as cross-project acceptance.
-- [ ] Do not begin full implementation while a core lock, hook, atomicity, or Codex-isolation assumption remains unproven.
+- [x] Do not persist production enrollment or install permanent hooks.
+- [x] Do not modify consumer repositories merely to make the feasibility probe pass.
+- [x] Do not treat a single happy-path prototype as cross-project acceptance.
+- [x] Do not begin full implementation while a core lock, hook, atomicity, or Codex-isolation assumption remains unproven.
 
 ## TASK-006: Define the Shared Development Contract
 

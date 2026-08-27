@@ -35,6 +35,7 @@ PYTHON_FILES := \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_create_provider_terminal_unit.py \
+	tests/unit/test_dev_aquarium_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
