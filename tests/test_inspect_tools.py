@@ -1249,6 +1249,7 @@ class InspectToolsTest(unittest.TestCase):
                 "aquarium-task-v2.yaml": {
                     "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9",
                     "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
+                    "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
                 },
                 "aquarium-goal-v2.yaml": {
                     "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3",

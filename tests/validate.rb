@@ -1644,6 +1644,7 @@ expected_procedure_graphs = {
       "decide-verification" => required_evidence.call("verify"),
       "review" => required_evidence.call("verify", "document"),
       "decide-review" => required_evidence.call("review"),
+      "record-ci-failure" => required_evidence.call("review"),
       "assess-goal" => required_evidence.call("record-plan", "implement", "verify", "refine", "document", "review"),
       "approve-closeout" => required_evidence.call("assess-goal", "record-outcome")
     },
@@ -1655,7 +1656,8 @@ expected_procedure_graphs = {
       "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
       "review" => { "next" => "decide-review" },
-      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[implement rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[record-ci-failure rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
+      "record-ci-failure" => { "next" => "implement" },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
       "record-outcome" => { "next" => "approve-closeout" },
       "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
@@ -2051,7 +2053,8 @@ assert(task_handler.include?("only after an `achieved` goal assessment") &&
        task_handler.include?("record no decision"),
        "task-handler must gate success on the goal assessment and skip decisions on holds")
 assert(task_review.include?("only `ci-decision=pass` with no unresolved valid finding and no file change supports `approved`") &&
-       task_review.include?("selects `ci-failed`, `implementation-changes`, or `documentation-changes`"),
+       task_review.include?("selects `ci-failed` through its explicit failure handoff") &&
+       task_handler.include?("records the exact CI failure handoff at `record-ci-failure`"),
        "task-review must route CI and finding failures through their exact rework paths")
 assert(task_handler.include?("In rounds one through three") &&
        task_handler.include?("Round four is confirmation-only") &&

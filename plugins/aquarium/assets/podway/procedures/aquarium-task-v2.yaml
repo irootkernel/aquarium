@@ -178,6 +178,18 @@ node_definitions:
         prompt: Record the number of unresolved findings owned by documentation.
         required: true
         minimum: 0
+  ci-failure-record:
+    type: action
+    title: Hand off failed review CI
+    intent: Bind an operationally complete failing CI decision to implementation rework before changing the target.
+    items:
+      - id: ci-failure-summary
+        type: text
+        prompt: Record the failed CI decision, exact review identity, and implementation rework basis.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
   review-decision:
     type: decision
     title: Evaluate review
@@ -405,7 +417,7 @@ graph:
           to: assess-goal
           effect: advance
         ci-failed:
-          to: implement
+          to: record-ci-failure
           effect: rework
         implementation-changes:
           to: implement
@@ -413,6 +425,17 @@ graph:
         documentation-changes:
           to: document
           effect: rework
+    - id: record-ci-failure
+      use: ci-failure-record
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-round
+            - review-run-id
+            - review-summary
+            - ci-decision
+      next: implement
     - id: assess-goal
       use: goal-assessment
       evidence_from:

@@ -6,7 +6,7 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `5` | `task-handler` | Plan, implementation, refinement, typed verification, CI-aware phase-owned Mulgae review routing, goal assessment, approval, and closeout |
+| `aquarium-task-v2` | `5` | `task-handler` | Plan, implementation, refinement, typed verification, explicit CI-failure handoff, phase-owned Mulgae review routing, goal assessment, approval, and closeout |
 | `aquarium-goal-v2` | `6` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with pre-decision hardening evidence and a validation-bound closeout review exception |
 | `aquarium-validation-v2` | `6` | `epic-handler` and `epic-validator` | Baseline, guarded audit, remediation, re-audit, bounded review decisions, disposition, assessment, and closeout |
 | `aquarium-design-v2` | `2` | `new-project`, `new-feature`, `refactor`, and `design-qa` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout |
