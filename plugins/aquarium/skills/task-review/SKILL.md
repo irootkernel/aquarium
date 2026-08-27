@@ -9,7 +9,7 @@ Review only the complete implementation, tests, refinement, and review-state doc
 
 One invocation consumes one round only after one root `review` run reaches committed publication with complete coverage and a successful findings query, including a `request_changes` policy outcome or failing CI decision. Preflight, status, findings and excerpt reads, and Mulgae-internal retry or extraction do not consume another round.
 
-Fixing findings in this phase changes the diff, so all affected prior phase evidence is stale — including implementation and verification evidence when a fix changes behavior or tests; the handler then selects `changes-requested` and reworks to the phase that owns the change, and only a pass with no file changes supports `approved`.
+Fixing findings in this phase changes the diff, so all affected prior phase evidence is stale — including implementation and verification evidence when a fix changes behavior or tests. The handler records the structured `ci-decision`, then selects `ci-failed`, `implementation-changes`, or `documentation-changes` to reach the exact owning phase; only `ci-decision=pass` with no unresolved valid finding and no file change supports `approved`.
 
 ## Run and Resolve the Mulgae Review
 

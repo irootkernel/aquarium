@@ -24,6 +24,8 @@ Git-backed shape workflows use `aquarium-design-v2`, except `war-room`, which us
 
 With Podway selected, the handler creates or resumes one `aquarium-task-v2` session only after plan approval, begins the prepared session through its fenced mutation, mirrors the active goal in Codex, and records independently checked phase handoffs. Plan-only mode creates no runtime state; plan-handoff mode attaches one private session-bound artifact and stops before implementation.
 
+An operationally complete task review records `ci-decision` separately from its finding counts. CI failure always returns to implementation through `ci-failed`; after CI passes, implementation or refinement findings use `implementation-changes`, documentation-only findings use `documentation-changes`, and only a clean review may use `approved`. Incomplete review capture records no decision.
+
 ## Deliver One Epic
 
 `epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, orders member tasks by dependency and roadmap order, and completes one isolated task commit at a time.

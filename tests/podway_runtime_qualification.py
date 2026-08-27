@@ -192,6 +192,8 @@ class ManagedRuntime:
         self.command_sequence = 0
         self.old_page_token: str | None = None
         self.task_verification_reworked = False
+        self.task_review_reworked = False
+        self.task_review_guard_failure = False
         self.task_evidence_reworked = False
         self.task_guard_failure = False
         self.task_required_failure = False
@@ -789,6 +791,11 @@ class ManagedRuntime:
             preferred = {
                 "hardening-deferral-state": "not-applicable",
                 "review-mode": "remediation-eligible",
+                "ci-decision": (
+                    "fail"
+                    if node == "review" and not self.task_review_reworked
+                    else "pass"
+                ),
                 "reproduction-state": "reproduced",
             }.get(item_id)
             value = preferred if preferred in choices else choices[0]
@@ -1208,6 +1215,28 @@ class ManagedRuntime:
                 self.task_evidence_reworked = True
                 continue
 
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "decide-review"
+                and not self.task_review_reworked
+            ):
+                rejected = self.decide(observation, "approved", expected_exit=None)
+                rejected_code = (
+                    error_code(rejected) if rejected.returncode != 0 else None
+                )
+                if (
+                    rejected.returncode == 0
+                    or rejected_code != "OPTION_GUARD_UNSATISFIED"
+                ):
+                    raise RuntimeQualificationError(
+                        "review CI guard did not reject approval: "
+                        f"exit={rejected.returncode}; code={rejected_code!r}"
+                    )
+                self.task_review_guard_failure = True
+                self.decide(observation, "ci-failed")
+                self.task_review_reworked = True
+                continue
+
             if node == "assess-goal":
                 observation = self.assess_goal(observation)
             option = SUCCESS_OPTIONS.get(node)
@@ -1279,6 +1308,8 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                 "list_scale_enforced": runtime.task_list_limit,
                 "guarded_decision": runtime.task_guard_failure,
                 "verification_rework": runtime.task_verification_reworked,
+                "review_rework": runtime.task_review_reworked,
+                "review_guard_failure": runtime.task_review_guard_failure,
                 "manual_rework": runtime.task_evidence_reworked,
                 "stale_page_token": runtime.task_stale_token,
                 "immutable_snapshot": runtime.task_snapshot_immutable,

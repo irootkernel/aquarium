@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "4"
+version: "5"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -156,6 +156,13 @@ node_definitions:
         min_length: 1
         max_length: 6000
         multiline: true
+      - id: ci-decision
+        type: choice
+        prompt: Record the exact Mulgae CI decision for this operationally complete review.
+        required: true
+        choices:
+          - pass
+          - fail
       - id: unresolved-valid-findings
         type: integer
         prompt: Record the number of unresolved valid findings.
@@ -186,6 +193,10 @@ node_definitions:
         guards:
           - evidence:
               node: review
+              item: ci-decision
+            equals: pass
+          - evidence:
+              node: review
               item: unresolved-valid-findings
             equals: 0
           - evidence:
@@ -196,10 +207,22 @@ node_definitions:
               node: review
               item: unresolved-documentation-findings
             equals: 0
+      - id: ci-failed
+        label: CI failed
+        criteria: The root review is operationally complete, but its CI decision failed and requires implementation rework regardless of finding counts.
+        guards:
+          - evidence:
+              node: review
+              item: ci-decision
+            equals: fail
       - id: implementation-changes
         label: Implementation changes requested
-        criteria: Review is incomplete, CI failed, or a remediation-eligible valid finding requires correction through the owning phase. Do not select this option for a confirmation-only hold without user authorization.
+        criteria: A remediation-eligible review whose CI passed has a valid implementation or refinement finding. Do not select this option for a confirmation-only hold without user authorization.
         guards:
+          - evidence:
+              node: review
+              item: ci-decision
+            equals: pass
           - evidence:
               node: review
               item: review-mode
@@ -212,6 +235,10 @@ node_definitions:
         label: Documentation changes requested
         criteria: A remediation-eligible review has no implementation finding and at least one documentation finding.
         guards:
+          - evidence:
+              node: review
+              item: ci-decision
+            equals: pass
           - evidence:
               node: review
               item: review-mode
@@ -369,6 +396,7 @@ graph:
             - review-mode
             - review-run-id
             - review-summary
+            - ci-decision
             - unresolved-valid-findings
             - unresolved-implementation-findings
             - unresolved-documentation-findings
@@ -376,6 +404,9 @@ graph:
         approved:
           to: assess-goal
           effect: advance
+        ci-failed:
+          to: implement
+          effect: rework
         implementation-changes:
           to: implement
           effect: rework
@@ -413,6 +444,7 @@ graph:
             - review-mode
             - review-run-id
             - review-summary
+            - ci-decision
             - unresolved-valid-findings
             - unresolved-implementation-findings
             - unresolved-documentation-findings

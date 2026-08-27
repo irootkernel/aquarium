@@ -15,7 +15,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Extend docs-setup with governed roadmap and dossier lifecycles, canonical closeout, operations documentation, and conservative role-aware structural inspection.
 - Strengthen release QA and publication recovery with project-derived scenario matrices, clean local-main candidates ahead of remote main, resumable full gates, one approved QA-neutral direct child, and v4 ordered publication observation.
 - Run Orca reviewers with provider-native auto-approval while enforcing exact repository identity and no-mutation supervision across refs, the index, tracked worktrees, submodules, and untracked content.
-- Reauthor the task, goal, validation, design, and war-room Procedures for Podway v0.2.6 with typed checks, guarded routing, refined-target verification, fresh evidence handoffs, explicit approval boundaries, and reviewed preservation of valid local customizations.
+- Reauthor the task, goal, validation, design, and war-room Procedures for Podway v0.2.6 with typed checks, CI-aware phase-owned review routing, refined-target verification, fresh evidence handoffs, explicit approval boundaries, and reviewed preservation of valid local customizations.
 - Strengthen development setup for Podway v0.2.6, isolated Ouroboros MCP runtimes, and structurally valid but upstream-unverified Deslop installations.
 
 ### Fixed

@@ -635,7 +635,7 @@ assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(v
 
 local_interfaces_doc = documentation_details.fetch("local-interfaces")
 procedure_declarations = {
-  "aquarium-task-v2" => "4",
+  "aquarium-task-v2" => "5",
   "aquarium-goal-v2" => "6",
   "aquarium-validation-v2" => "6",
   "aquarium-design-v2" => "2",
@@ -1643,7 +1643,7 @@ expected_procedure_graphs = {
       "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
       "review" => { "next" => "decide-review" },
-      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[implement rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
       "record-outcome" => { "next" => "approve-closeout" },
       "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
@@ -1773,7 +1773,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "6", "aquarium-task-v2.yaml" => "4", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
+  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "6", "aquarium-task-v2.yaml" => "5", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1849,6 +1849,8 @@ assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
        task_review_items.fetch("review-round").fetch("minimum") == 1 &&
        task_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible confirmation-only] &&
        task_review_items.fetch("review-run-id").fetch("type") == "text" &&
+       task_review_items.fetch("ci-decision").fetch("type") == "choice" &&
+       task_review_items.fetch("ci-decision").fetch("choices") == %w[pass fail] &&
        task_verification_items.fetch("verification-result").fetch("type") == "check_result" &&
        task_verification_items.fetch("verification-observations").fetch("required_when").first.dig("field") == "outcome" &&
        task_verification_options.all? { |option| option.fetch("guards").length == 1 },
@@ -1856,8 +1858,12 @@ assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
 assert(task_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
        task_procedure_text.include?("Select no option while a confirmation-only review retains a valid finding"),
        "task procedure must represent the confirmation-only user hold")
-assert(task_procedure_text.include?("Review is incomplete, CI failed, or a remediation-eligible valid finding"),
-       "task procedure must route a failing-CI review to rework even with zero findings")
+task_review_options = task_procedure.dig("node_definitions", "review-decision", "options").to_h { |option| [option.fetch("id"), option] }
+assert(task_review_options.fetch("ci-failed").fetch("guards") == [{"evidence" => {"node" => "review", "item" => "ci-decision"}, "equals" => "fail"}] &&
+       task_review_options.fetch("approved").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
+       task_review_options.fetch("implementation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
+       task_review_options.fetch("documentation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision",
+       "task procedure must route CI failure independently and require CI pass for finding-owned routes")
 assert(task_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
        task_closeout_items.fetch("promoted-evidence-references").fetch("required") == false &&
        task_closeout_items.fetch("promoted-evidence-references").fetch("min_items") == 0 &&
@@ -2032,8 +2038,9 @@ end
 assert(task_handler.include?("only after an `achieved` goal assessment") &&
        task_handler.include?("record no decision"),
        "task-handler must gate success on the goal assessment and skip decisions on holds")
-assert(task_review.include?("only a pass with no file changes supports `approved`"),
-       "task-review must route review-phase fixes through the rework path")
+assert(task_review.include?("only `ci-decision=pass` with no unresolved valid finding and no file change supports `approved`") &&
+       task_review.include?("selects `ci-failed`, `implementation-changes`, or `documentation-changes`"),
+       "task-review must route CI and finding failures through their exact rework paths")
 assert(task_handler.include?("In rounds one through three") &&
        task_handler.include?("Round four is confirmation-only") &&
        task_handler.include?("Reset the ordinal only for an explicitly approved new goal revision") &&
