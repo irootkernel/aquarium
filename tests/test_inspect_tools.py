@@ -3154,7 +3154,33 @@ class InspectToolsTest(unittest.TestCase):
         self.assertFalse(ouroboros["installed"])
         self.assertEqual(ouroboros["status"], "missing")
         self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
+        self.assertEqual(ouroboros["mcp_runtime"]["status"], "unverifiable")
+        self.assertEqual(
+            ouroboros["mcp_runtime"]["probe"]["reason"],
+            "registration_not_supported_launcher",
+        )
         self.assertEqual(ouroboros["probes"]["version"]["reason"], "executable_missing")
+
+    def test_missing_ouroboros_keeps_invalid_isolated_runtime_unverifiable(
+        self,
+    ) -> None:
+        for mode in (
+            "isolated-unsupported-pin",
+            "isolated-nested-env",
+            "isolated-extra-arg",
+        ):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(ouroboros_mcp_mode=mode)
+                completed = self.inspect(include_ouroboros=True)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+                self.assertFalse(ouroboros["installed"])
+                self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
+                self.assertEqual(ouroboros["mcp_runtime"]["status"], "unverifiable")
+                self.assertEqual(
+                    ouroboros["mcp_runtime"]["probe"]["reason"],
+                    "registration_not_supported_launcher",
+                )
 
     def test_installed_ouroboros_reports_registration_unverifiable_without_codex(
         self,

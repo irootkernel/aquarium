@@ -2311,6 +2311,19 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
                 "status": "configured",
                 "probe": runtime_probe,
             }
+        elif codex:
+            registration_reason = (
+                tool["mcp_registration"].get("probe", {}).get("reason")
+            )
+            runtime_reason = (
+                "registration_not_supported_launcher"
+                if registration_reason in {None, "registration_mismatch"}
+                else registration_reason
+            )
+            tool["mcp_runtime"] = {
+                "status": "unverifiable",
+                "probe": skipped_probe(runtime_reason),
+            }
         else:
             tool["mcp_runtime"] = {
                 "status": "missing",
