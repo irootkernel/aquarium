@@ -9,7 +9,15 @@ import sys
 from pathlib import Path
 
 from dev_contract import validate_error, validate_result
-from dev_manager import ManagerError, diagnose, enroll, repair_hook
+from dev_manager import (
+    ManagerError,
+    diagnose,
+    enroll,
+    process_queue,
+    queue_request,
+    rebuild,
+    repair_hook,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -31,6 +39,13 @@ def parser() -> argparse.ArgumentParser:
     repair_parser = commands.add_parser("repair-hook")
     repair_parser.add_argument("--repository", type=Path, required=True)
     repair_parser.add_argument("--approve-hook", action="store_true")
+    request_parser = commands.add_parser("request")
+    request_parser.add_argument("--repository", type=Path, required=True)
+    rebuild_parser = commands.add_parser("rebuild")
+    rebuild_parser.add_argument("--repository", type=Path, required=True)
+    rebuild_parser.add_argument("--approve-build", action="store_true")
+    worker_parser = commands.add_parser("worker", help=argparse.SUPPRESS)
+    worker_parser.add_argument("--project-id", required=True, help=argparse.SUPPRESS)
     return value
 
 
@@ -77,17 +92,55 @@ def main() -> int:
                 details,
             )
             return 0
-        status, details = repair_hook(
-            arguments.repository,
-            arguments.host_root,
-            Path(__file__),
-            approve_hook=arguments.approve_hook,
-        )
+        if arguments.command == "repair-hook":
+            status, details = repair_hook(
+                arguments.repository,
+                arguments.host_root,
+                Path(__file__),
+                approve_hook=arguments.approve_hook,
+            )
+            result(
+                "repair",
+                status,
+                details["description"]["project_id"],
+                "Hook reconciled.",
+                details,
+            )
+            return 0
+        if arguments.command == "request":
+            status, details = queue_request(
+                arguments.repository,
+                arguments.host_root,
+                Path(__file__),
+            )
+            result(
+                "publish",
+                status,
+                details["project_id"],
+                "Build request queued.",
+                details,
+            )
+            return 0
+        if arguments.command == "rebuild":
+            status, details = rebuild(
+                arguments.repository,
+                arguments.host_root,
+                approve_build=arguments.approve_build,
+            )
+            result(
+                "rebuild",
+                status,
+                details["project_id"],
+                "Development artifact reconciled.",
+                details,
+            )
+            return 0
+        status, details = process_queue(arguments.project_id, arguments.host_root)
         result(
-            "repair",
+            "publish",
             status,
-            details["description"]["project_id"],
-            "Hook reconciled.",
+            arguments.project_id,
+            "Queued build requests processed.",
             details,
         )
         return 0

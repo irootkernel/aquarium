@@ -164,21 +164,21 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Trigger a build request only for a completed commit on the enrolled canonical checkout's local `main`.
-- [ ] Serialize publisher work per project and coalesce duplicate requests for the same SHA.
-- [ ] Invoke the repository-owned build target with a fresh contained staging directory.
-- [ ] Validate manifest schema, project identity, exact SHA, development version, output containment, artifact existence, and checksum.
-- [ ] Promote validated artifacts immutably and advance the current selector atomically.
-- [ ] Leave the prior current artifact unchanged on build, validation, or publication failure.
-- [ ] Record bounded diagnostics identifying the rejected SHA and failure stage.
-- [ ] Provide an explicit rebuild path for recovery without requiring another Git commit.
+- [x] Trigger a build request only for a completed commit on the enrolled canonical checkout's local `main`.
+- [x] Serialize publisher work per project and coalesce duplicate requests for the same SHA.
+- [x] Invoke the repository-owned build target with a fresh contained staging directory.
+- [x] Validate manifest schema, project identity, exact SHA, development version, output containment, artifact existence, and checksum.
+- [x] Promote validated artifacts immutably and advance the current selector atomically.
+- [x] Leave the prior current artifact unchanged on build, validation, or publication failure.
+- [x] Record bounded diagnostics identifying the rejected SHA and failure stage.
+- [x] Provide an explicit rebuild path for recovery without requiring another Git commit.
 
 ### Do Not
 
-- [ ] Do not build from a dirty working tree, a non-main commit, or a SHA different from the post-commit request.
-- [ ] Do not run repository-specific build commands outside the shared Make contract.
-- [ ] Do not expose partially written artifacts through the current selector.
-- [ ] Do not make a failed development build invalidate the completed Git commit or stable global tool.
+- [x] Do not build from a dirty working tree, a non-main commit, or a SHA different from the post-commit request.
+- [x] Do not run repository-specific build commands outside the shared Make contract.
+- [x] Do not expose partially written artifacts through the current selector.
+- [x] Do not make a failed development build invalidate the completed Git commit or stable global tool.
 
 ## TASK-009: Implement Resolution, Leases, and Cleanup
 

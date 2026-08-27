@@ -43,6 +43,8 @@ The object has exactly these fields:
 
 The manager compares the manifest with the description, enrolled project, requested SHA, actual artifact, and checksum. It rejects unknown fields and mismatches.
 
+The canonical plugin-directory digest visits regular files in ascending UTF-8 artifact-relative POSIX-path order. For each file, it hashes the path bytes, one NUL byte, the 32 raw bytes of that file's SHA-256 digest, and one newline. Empty directories do not contribute bytes. Symbolic links and special files are invalid. A file artifact uses the SHA-256 digest of its exact bytes.
+
 ## Manager result and error
 
 A successful command emits exactly one `aquarium-dev-manager-result/v1` object containing `schema`, `operation`, `status`, `project_id`, `message`, and `details`. Operations are `diagnose`, `enroll`, `rebuild`, `publish`, `resolve`, `launch`, `repair`, or `configure-codex`; status is `success`, `no-change`, or `diagnosed`. `project_id` may be `null` only when diagnosis cannot identify a supported project. `details` is a bounded object and must not contain credentials or raw tool output.
