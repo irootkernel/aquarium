@@ -14,7 +14,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Extend docs-setup with explicit audience, epic SOT lifecycle, canonical closeout, operations documentation, and conservative structural inspection.
 - Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, and permit one approved QA-neutral direct child without misbinding publication evidence.
 - Run Orca reviewers with provider-native auto-approval while enforcing the static no-mutation contract through explicit Dispatch instructions, supervision, and Git-state verification.
-- Reauthor the task, goal, and validation Procedures from Podway v0.2.6 delivery and analysis patterns with typed checks, guarded routing, and fresh evidence handoffs.
+- Reauthor the task, goal, validation, design, and war-room Procedures from Podway v0.2.6 delivery, analysis, and bug-fix patterns with typed checks, guarded routing, fresh evidence handoffs, and explicit approval boundaries.
 
 ### Fixed
 

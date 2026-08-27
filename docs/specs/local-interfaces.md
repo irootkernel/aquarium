@@ -9,8 +9,8 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 | `aquarium-task-v2` | `4` | `task-handler` | Plan, implementation, refinement, typed verification, phase-owned Mulgae review, goal assessment, approval, and closeout |
 | `aquarium-goal-v2` | `5` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with pre-decision hardening evidence |
 | `aquarium-validation-v2` | `6` | `epic-handler` and `epic-validator` | Baseline, guarded audit, remediation, re-audit, bounded review decisions, disposition, assessment, and closeout |
-| `aquarium-design-v2` | `1` | `new-project`, `new-feature`, `refactor`, and `design-qa` | Context, Ouroboros discovery, draft, QA, approval, application, assessment, and closeout |
-| `aquarium-war-room-v2` | `1` | `war-room` | Incident baseline, investigation, cause and scope decisions, proposal, QA, approval, documentation, and closeout |
+| `aquarium-design-v2` | `2` | `new-project`, `new-feature`, `refactor`, and `design-qa` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout |
+| `aquarium-war-room-v2` | `2` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout |
 
 Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`](../../plugins/aquarium/assets/podway/procedures/). The version belongs to the Procedure document, not the Aquarium plugin version, and an active session retains the immutable snapshot with which it started.
 

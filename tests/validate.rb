@@ -637,8 +637,8 @@ procedure_declarations = {
   "aquarium-task-v2" => "4",
   "aquarium-goal-v2" => "5",
   "aquarium-validation-v2" => "6",
-  "aquarium-design-v2" => "1",
-  "aquarium-war-room-v2" => "1"
+  "aquarium-design-v2" => "2",
+  "aquarium-war-room-v2" => "2"
 }
 assert(procedure_declarations.all? do |procedure_id, version|
          local_interfaces_doc.include?("| `#{procedure_id}` | `#{version}` |")
@@ -1707,16 +1707,23 @@ expected_procedure_graphs = {
     "entry" => "capture-context",
     "manual_targets" => %w[discover draft quality approve-diff],
     "evidence" => {
+      "discover" => required_evidence.call("capture-context"),
+      "draft" => required_evidence.call("discover"),
+      "challenge" => required_evidence.call("draft"),
+      "quality" => required_evidence.call("draft", "challenge"),
       "decide-quality" => required_evidence.call("draft", "quality"),
-      "approve-diff" => required_evidence.call("draft", "quality"),
-      "assess-goal" => required_evidence.call("capture-context", "apply-documents")
+      "approve-diff" => required_evidence.call("draft", "challenge", "quality"),
+      "apply-documents" => required_evidence.call("draft", "approve-diff"),
+      "assess-goal" => required_evidence.call("capture-context", "apply-documents"),
+      "closeout" => required_evidence.call("assess-goal")
     },
     "nodes" => {
       "capture-context" => { "next" => "discover" },
       "discover" => { "next" => "draft" },
-      "draft" => { "next" => "quality" },
+      "draft" => { "next" => "challenge" },
+      "challenge" => { "next" => "quality" },
       "quality" => { "next" => "decide-quality" },
-      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "revise" => %w[draft rework] } },
+      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "discovery-changes" => %w[discover rework], "draft-changes" => %w[draft rework], "incomplete" => %w[quality rework] } },
       "approve-diff" => { "routes" => { "approved" => %w[apply-documents advance], "changes-requested" => %w[draft rework] } },
       "apply-documents" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
@@ -1728,12 +1735,15 @@ expected_procedure_graphs = {
     "entry" => "capture-baseline",
     "manual_targets" => %w[investigate draft-task draft-epic draft-incomplete],
     "evidence" => {
+      "investigate" => required_evidence.call("capture-baseline"),
       "decide-cause" => required_evidence.call("investigate"),
       "classify-scope" => required_evidence.call("investigate", "decide-cause"),
       "quality" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] },
       "decide-quality" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] } + [["quality", true]],
       "approve-diff" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] } + [["quality", true]],
-      "assess-goal" => [["investigate", true], ["document", false], ["record-rejection", false]]
+      "document" => %w[draft-task draft-epic draft-incomplete].map { |node| [node, false] } + [["approve-diff", true]],
+      "assess-goal" => required_evidence.call("investigate", "document"),
+      "closeout" => required_evidence.call("assess-goal")
     },
     "nodes" => {
       "capture-baseline" => { "next" => "investigate" },
@@ -1744,10 +1754,9 @@ expected_procedure_graphs = {
       "draft-epic" => { "next" => "quality" },
       "draft-incomplete" => { "next" => "quality" },
       "quality" => { "next" => "decide-quality" },
-      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "revise" => %w[investigate rework] } },
-      "approve-diff" => { "routes" => { "approved" => %w[document advance], "changes-requested" => %w[record-rejection advance] } },
+      "decide-quality" => { "routes" => { "passed" => %w[approve-diff advance], "investigation-changes" => %w[capture-baseline rework], "proposal-changes" => %w[investigate rework], "incomplete" => %w[quality rework] } },
+      "approve-diff" => { "routes" => { "approved" => %w[document advance], "changes-requested" => %w[investigate rework] } },
       "document" => { "next" => "assess-goal" },
-      "record-rejection" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
     }
@@ -1762,7 +1771,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "5", "aquarium-task-v2.yaml" => "4" }.fetch(filename, "1")
+  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "5", "aquarium-task-v2.yaml" => "4", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1786,17 +1795,15 @@ expected_procedure_graphs.each do |filename, expected|
   end.to_h
   assert(actual_evidence == expected.fetch("evidence"),
          "managed procedure evidence bindings drifted: #{filename}")
-  if %w[aquarium-task-v2.yaml aquarium-goal-v2.yaml aquarium-validation-v2.yaml].include?(filename)
-    graph_nodes = procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
-    procedure.dig("graph", "nodes").each do |consumer|
-      consumer.fetch("evidence_from", []).each do |entry|
-        source = graph_nodes.fetch(entry.fetch("node"))
-        definition = procedure.dig("node_definitions", source.fetch("use"))
-        next unless definition.fetch("type") == "action"
+  graph_nodes = procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
+  procedure.dig("graph", "nodes").each do |consumer|
+    consumer.fetch("evidence_from", []).each do |entry|
+      source = graph_nodes.fetch(entry.fetch("node"))
+      definition = procedure.dig("node_definitions", source.fetch("use"))
+      next unless definition.fetch("type") == "action"
 
-        assert(entry.fetch("items", []).any?,
-               "delivery procedure action evidence must select exact items: #{filename}:#{consumer.fetch('id')}:#{source.fetch('id')}")
-      end
+      assert(entry.fetch("items", []).any?,
+             "managed procedure action evidence must select exact items: #{filename}:#{consumer.fetch('id')}:#{source.fetch('id')}")
     end
   end
 end
@@ -1930,6 +1937,51 @@ goal_assess_evidence = goal_procedure_nodes.fetch("assess-goal").fetch("evidence
 end
 assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", true], ["record-hardening-handoff", false]],
        "goal procedure must assess required pre-decision deferral evidence and an optional adopted handoff")
+
+analysis_procedure_contract = lambda do |filename, quality_definition, semantic_definitions, count_ids, finding_ids|
+  procedure = YAML.safe_load(procedures_directory.join(filename).read, aliases: false)
+  quality_items = review_item_index.call(procedure, quality_definition)
+  quality_options = procedure.dig("node_definitions", "quality-decision", "options")
+  assert(quality_items.fetch("quality-result").fetch("type") == "check_result" &&
+         count_ids.all? { |id| quality_items.fetch(id).fetch("minimum") == 0 } &&
+         finding_ids.all? { |id| quality_items.fetch(id).fetch("required_when").length == 1 } &&
+         quality_items.fetch("quality-observations").fetch("required_when").first.dig("field") == "outcome" &&
+         quality_options.all? { |option| option.fetch("guards").any? },
+         "analysis procedure must bind typed quality results, conditional findings, and guarded routing: #{filename}")
+  semantic_definitions.each do |definition|
+    options = procedure.dig("node_definitions", definition, "options")
+    assert(options.all? { |option| !option.key?("guards") },
+           "analysis procedure semantic decisions must remain unguarded: #{filename}:#{definition}")
+  end
+  procedure
+end
+
+design_procedure = analysis_procedure_contract.call(
+  "aquarium-design-v2.yaml",
+  "quality-record",
+  %w[approval-decision goal-assessment],
+  %w[unresolved-discovery-findings unresolved-draft-findings],
+  %w[discovery-findings draft-findings]
+)
+design_challenge_items = review_item_index.call(design_procedure, "challenge-record")
+assert(design_challenge_items.fetch("counterarguments").fetch("type") == "list" &&
+       design_challenge_items.fetch("counterarguments").fetch("required") == true &&
+       design_challenge_items.fetch("uncertainty").fetch("required") == true,
+       "design procedure must bind counterarguments and remaining uncertainty before quality review")
+war_room_procedure = analysis_procedure_contract.call(
+  "aquarium-war-room-v2.yaml",
+  "quality-record",
+  %w[cause-decision scope-decision approval-decision goal-assessment],
+  %w[unresolved-investigation-findings unresolved-proposal-findings],
+  %w[investigation-findings proposal-findings]
+)
+war_room_baseline_items = review_item_index.call(war_room_procedure, "baseline-record")
+assert(%w[reproduction-state observed-behavior expected-behavior baseline-summary].all? do |id|
+         war_room_baseline_items.fetch(id).fetch("required") == true
+       end,
+       "war-room procedure must bind reproduction state, observed behavior, expected behavior, and baseline authority")
+assert(!war_room_procedure.dig("graph", "nodes").any? { |node| node.fetch("id") == "record-rejection" },
+       "war-room procedure must not terminate before an approved diagnostic artifact")
 
 procedure_nodes = expected_procedure_graphs.transform_values { |spec| spec.fetch("nodes").keys }
 skill_procedure_routes = {
