@@ -219,6 +219,18 @@ def tracked_files_identity(repository: Path, visited: set[Path] | None = None) -
             identity.update(target)
         elif mode == b"160000" and stat.S_ISDIR(file_status.st_mode):
             identity.update(b"gitlink\0")
+            submodule_root = git_command(path, ["rev-parse", "--show-toplevel"])
+            try:
+                initialized = (
+                    submodule_root.returncode == 0
+                    and Path(submodule_root.stdout.decode("utf-8").strip()).resolve()
+                    == path.resolve()
+                )
+            except (OSError, UnicodeError):
+                initialized = False
+            if not initialized:
+                identity.update(b"uninitialized\0")
+                continue
             identity.update(tracked_files_identity(path, seen))
             identity.update(
                 json.dumps(

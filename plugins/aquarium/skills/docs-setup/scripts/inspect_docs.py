@@ -174,6 +174,21 @@ def untracked_paths(repository: Path) -> list[Path]:
     )
 
 
+def ignored_paths(repository: Path) -> list[Path]:
+    return git_paths(
+        repository,
+        [
+            "--literal-pathspecs",
+            "ls-files",
+            "-z",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+        ],
+        "ignored_path_invalid",
+    )
+
+
 def sensitive_path(relative: Path) -> bool:
     return any(
         part.lower().startswith(".env") or SENSITIVE_COMPONENT.search(part)
@@ -636,11 +651,13 @@ def inspect_roadmap(
 def inspect_repository(repository: Path) -> dict[str, Any]:
     tracked = tracked_paths(repository)
     untracked = untracked_paths(repository)
+    ignored = documentation_inventory([], ignored_paths(repository))
     inventory = documentation_inventory(tracked, untracked)
     inventory_set = set(inventory)
     structure = discover_structure(repository)
     texts: dict[Path, str] = {}
     exclusions: Counter[str] = Counter()
+    exclusions["ignored"] = sum(path.suffix.lower() == ".md" for path in ignored)
     findings: list[dict[str, str]] = []
 
     for path in inventory:

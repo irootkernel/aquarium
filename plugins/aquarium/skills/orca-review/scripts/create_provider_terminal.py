@@ -288,6 +288,7 @@ def create_terminal(payload: object) -> dict[str, object]:
         ],
         check=False,
         capture_output=True,
+        cwd=request["repository"],
         text=True,
         timeout=30,
     )

@@ -135,6 +135,29 @@ def test_provider_command_uses_verified_canonical_target(tmp_path: Path) -> None
     ]
 
 
+def test_orca_runs_from_requested_repository(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload, _ = request(tmp_path)
+    observed = tmp_path / "orca-cwd"
+    orca = Path(payload["orca"]["canonical_target"])
+    executable(
+        orca,
+        "#!/usr/bin/env python3\n"
+        "import json, os, sys\n"
+        f"open({str(observed)!r}, 'w', encoding='utf-8').write(os.getcwd())\n"
+        "print(json.dumps({'argv': sys.argv[1:]}))\n",
+    )
+    payload["orca"]["sha256"] = digest(orca)
+    caller = tmp_path / "caller"
+    caller.mkdir()
+    monkeypatch.chdir(caller)
+
+    create_provider_terminal.create_terminal(payload)
+
+    assert observed.read_text(encoding="utf-8") == payload["repository"]
+
+
 def test_repository_must_be_exact_git_root(tmp_path: Path) -> None:
     payload, _ = request(tmp_path)
     nested = Path(payload["repository"]) / "nested"

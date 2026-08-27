@@ -408,6 +408,20 @@ def test_excluded_linked_document_is_unverifiable_not_missing(tmp_path: Path) ->
     assert payload["excluded_files"]["sensitive"] == 1
 
 
+def test_ignored_documents_are_counted_without_reading_contents(tmp_path: Path) -> None:
+    repository = tmp_path / "ignored"
+    initialize(repository)
+    make_single_scope(repository)
+    write(repository / ".gitignore", "docs/private/\n")
+    commit_all(repository)
+    write(repository / "docs/private/SECRET.md", "credential-marker\n")
+
+    _, payload = inspect(repository)
+
+    assert payload["excluded_files"]["ignored"] == 1
+    assert "credential-marker" not in json.dumps(payload)
+
+
 def test_untracked_canonical_documents_are_inspected(tmp_path: Path) -> None:
     repository = tmp_path / "untracked"
     initialize(repository)

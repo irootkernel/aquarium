@@ -161,6 +161,46 @@ def test_compare_detects_submodule_content_despite_ignore_all(tmp_path: Path) ->
     assert "tracked_worktree_sha256" in result["changed"]
 
 
+def test_snapshot_accepts_uninitialized_submodule(tmp_path: Path) -> None:
+    child = tmp_path / "child"
+    child.mkdir()
+    git(child, "init", "-q")
+    git(child, "config", "user.name", "Test User")
+    git(child, "config", "user.email", "test@example.com")
+    (child / "tracked.txt").write_text("initial\n", encoding="utf-8")
+    git(child, "add", "tracked.txt")
+    git(child, "commit", "-qm", "initial")
+
+    source = tmp_path / "source"
+    source.mkdir()
+    git(source, "init", "-q")
+    git(source, "config", "user.name", "Test User")
+    git(source, "config", "user.email", "test@example.com")
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "protocol.file.allow=always",
+            "submodule",
+            "add",
+            "-q",
+            str(child),
+            "modules/child",
+        ],
+        cwd=source,
+        check=True,
+    )
+    git(source, "commit", "-qam", "add submodule")
+
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", "-q", str(source), str(clone)], check=True)
+
+    baseline = inspect_repository_state.snapshot(clone)
+    result = inspect_repository_state.compare(clone, baseline)
+
+    assert result["drift"] is False
+
+
 def test_baseline_requires_matching_repository_and_fingerprint(
     repository: Path, tmp_path: Path
 ) -> None:

@@ -636,7 +636,7 @@ assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(v
 local_interfaces_doc = documentation_details.fetch("local-interfaces")
 procedure_declarations = {
   "aquarium-task-v2" => "4",
-  "aquarium-goal-v2" => "5",
+  "aquarium-goal-v2" => "6",
   "aquarium-validation-v2" => "6",
   "aquarium-design-v2" => "2",
   "aquarium-war-room-v2" => "2"
@@ -1773,7 +1773,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "5", "aquarium-task-v2.yaml" => "4", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
+  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "6", "aquarium-task-v2.yaml" => "4", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1908,9 +1908,13 @@ goal_procedure = YAML.safe_load(procedures_directory.join("aquarium-goal-v2.yaml
 plan_handoff_item.call(goal_procedure, "work-record")
 goal_review_items = review_item_index.call(goal_procedure, "evidence-record")
 assert(goal_review_items.fetch("review-round").fetch("type") == "integer" &&
-       goal_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible hardening-deferral-eligible] &&
-       goal_review_items.fetch("review-run-id").fetch("type") == "text",
-       "goal procedure must record the member-task review ordinal, mode, and exact run")
+       goal_review_items.fetch("review-round").fetch("required") == false &&
+       goal_review_items.fetch("review-round").fetch("required_when").first.fetch("not_equals") == "closeout-not-required" &&
+       goal_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible hardening-deferral-eligible closeout-not-required] &&
+       goal_review_items.fetch("review-run-id").fetch("type") == "text" &&
+       goal_review_items.fetch("review-run-id").fetch("required") == false &&
+       goal_review_items.fetch("review-run-id").fetch("required_when").first.fetch("not_equals") == "closeout-not-required",
+       "goal procedure must record member reviews while allowing only the final closeout exception")
 goal_procedure_text = procedures_directory.join("aquarium-goal-v2.yaml").read
 assert(goal_procedure_text.include?("Required checks and review are complete, CI passed") &&
        goal_procedure_text.include?("Evidence or CI failed"),
