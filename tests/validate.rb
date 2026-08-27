@@ -54,7 +54,6 @@ end
 
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
-  design-qa
   dev-setup-bundle
   dev-setup
   docs-setup
@@ -120,9 +119,8 @@ assert(manifest.fetch("description").include?("AI Fleet") &&
        !manifest.fetch("description").start_with?("Ouroboros"),
        "plugin metadata must position Aquarium as an AI Fleet engineering layer")
 assert(manifest.dig("interface", "longDescription").include?("release-candidate QA") &&
-       manifest.dig("interface", "longDescription").include?("Design Gates") &&
        manifest.dig("interface", "longDescription").include?("test setup"),
-       "plugin description must advertise test setup, release QA, and Design Gates")
+       "plugin description must advertise test setup and release QA")
 readme_introduction = ROOT.join("README.md").read.split("## Install", 2).first
 assert(readme_introduction.include?("engineering reliable software with AI Fleets") &&
        readme_introduction.include?("Agentic Engineering") &&
@@ -277,7 +275,6 @@ todo_index = documentation_role_paths.fetch("todo").read
 ops_index = documentation_role_paths.fetch("ops").read
 documentation_details = documentation_detail_paths.transform_values(&:read)
 documentation_adrs = documentation_adr_paths.flatten.to_h { |path| [path, path.read] }
-design_qa = PLUGIN.join("skills/design-qa/SKILL.md").read
 new_project = PLUGIN.join("skills/new-project/SKILL.md").read
 new_feature = PLUGIN.join("skills/new-feature/SKILL.md").read
 refactor = PLUGIN.join("skills/refactor/SKILL.md").read
@@ -612,7 +609,7 @@ assert(ops_index.start_with?("# Aquarium Operations\n") &&
        "Aquarium operations index must expose its operational surface and runbook sections")
 
 capability_catalog = documentation_details.fetch("capabilities")
-assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
+assert(capability_catalog.include?("Aquarium exposes 23 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
        capability_catalog.include?("current implementation raises the Podway minimum") &&
        capability_catalog.include?("CHANGELOG.md") &&
@@ -975,8 +972,8 @@ assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
 assert(ROOT.join("README.md").read.include?("provides local execution memory") &&
        !ROOT.join("README.md").read.include?("durable local execution memory") &&
        !ROOT.join("README.ko.md").read.include?("영속적인 local execution memory") &&
-       ROOT.join("README.md").read.include?("selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa`") &&
-       ROOT.join("README.ko.md").read.include?("`task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용") &&
+       ROOT.join("README.md").read.include?("selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, and `war-room`") &&
+       ROOT.join("README.ko.md").read.include?("`task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`은 기본적으로 Podway를 사용") &&
        ROOT.join("README.md").read.include?("opted out before the first managed-session mutation") &&
        ROOT.join("README.md").read.include?("standalone `use-podway` skill"),
        "public Podway guidance must explain its role and workflow boundary concisely")
@@ -1401,7 +1398,6 @@ assert(task_handler.include?("stop at `implement`") &&
   "new-feature" => new_feature,
   "refactor" => refactor,
   "war-room" => war_room,
-  "design-qa" => design_qa,
 }.each do |name, body|
   assert(!body.include?("mode=plan-handoff") && !body.include?("plan-handoff.md"),
          "plan handoff mode must not be exposed by #{name}")
@@ -1416,17 +1412,15 @@ assert(ROOT.join("README.md").read.include?("explicit plan handoff to another ag
   "new-feature" => new_feature,
   "refactor" => refactor,
   "war-room" => war_room,
-  "design-qa" => design_qa,
 }.each do |name, body|
-  assert(body.include?("ouroboros-integration.md") && body.include?("design-gates.md"),
-         "#{name} must use the shared Ouroboros and Design Gate contracts")
+  assert(body.include?("ouroboros-integration.md"),
+         "#{name} must use the shared Ouroboros contract")
   assert(body.include?("exact") && body.match?(/explicit approval/i),
          "#{name} must gate durable document changes on exact-diff approval")
 end
 assert(new_project.include?("a PRD, one initial roadmap per delivery scope") &&
        new_project.include?("non-Git project") &&
-       new_project.include?("skip Podway completely") &&
-       new_project.include?("gate creation requires a later explicit"),
+       new_project.include?("skip Podway completely"),
        "new-project must stop at PRD and roadmap and keep non-Git work Podway-free")
 assert(new_project.include?("documentation-governance.md") &&
        new_project.include?("`single-scope`") &&
@@ -1447,15 +1441,6 @@ assert(war_room.include?("Do not implement a fix") &&
        war_room.include?("record its adjudicated result at `quality`") &&
        war_room.include?("zero unresolved locally valid findings"),
        "war-room must stop at diagnosis and one work-unit classification")
-assert(design_qa.include?("docs/gating-rules.md") &&
-       design_qa.include?("docs/gating-rules-retired.md") &&
-       design_qa.include?("authoritative current and retired registry paths") &&
-       design_qa.include?("concise title") &&
-       design_qa.include?("local offline") &&
-       design_qa.include?("tombstone") &&
-       design_qa.include?("impacted roadmap-marker diff") &&
-       design_qa.include?("retain the retired history"),
-       "design-qa must own executable current gates and retired bodies")
 assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") &&
        ouroboros_contract.include?("blocks these Ouroboros-assisted workflows") &&
        ouroboros_contract.include?("Use the canonical work identity directly without a skill-name prefix") &&
@@ -1465,29 +1450,12 @@ assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") 
        ouroboros_contract.include?("Podway-blind") &&
        ouroboros_contract.include?("full provider prompts, transcripts"),
        "shared Ouroboros contract must bound versions, execution, writes, Podway, and stored evidence")
-assert(design_gate_contract.include?("Design Gate impact") &&
-       design_gate_contract.include?("authoritative current and retired registry paths together") &&
-       design_gate_contract.include?("derive the retired path as its sibling") &&
-       design_gate_contract.include?("Every newly authored implementation work unit") &&
-       design_gate_contract.include?("inherit its parent epic's marker") &&
-       design_gate_contract.include?("missing effective marker is a contract gap") &&
+assert(design_gate_contract.include?("applies only when `$aquarium:release-qa`") &&
+       design_gate_contract.include?("Aquarium does not create, update, require, or enroll") &&
        design_gate_contract.include?("leaves the source repository unchanged") &&
-       design_gate_contract.include?("Reactivation replaces") &&
-       design_gate_contract.include?("must never have both an active body and a current tombstone") &&
-       design_gate_contract.include?("`Pending` blocks implementation") &&
-       design_gate_contract.include?("Only `$aquarium:design-qa`") &&
        design_gate_contract.include?("Design Gate not enrolled") &&
        design_gate_contract.include?("absence from the candidate is a contract finding"),
-       "Design Gate contract must define ownership, implementation blocking, and gradual enrollment")
-assert(task_handler.include?("Resolve the effective `Design Gate impact` from the task first and then its parent epic") &&
-       task_handler.include?("Stop before plan approval or implementation when the effective marker is missing or `Pending`") &&
-       epic_handler.include?("Resolve every member task's effective `Design Gate impact` from the task first and then the epic") &&
-       task_verify.include?("For every inherited or task-explicit resolved active `GATE-*` ID") &&
-       task_verify.include?("source-repository status is unchanged") &&
-       epic_validator.include?("integration seam") &&
-       task_document.include?("must not create, change, reactivate, retire"),
-       "delivery workflows must consume Design Gates without taking registry ownership")
-
+       "Design Gate contract must remain release-QA-only and preserve gradual enrollment")
 podway_reference = PLUGIN.join("references/podway-integration.md")
 assert(podway_reference.file?, "shared Podway integration contract is missing")
 podway_contract = podway_reference.read
@@ -1536,7 +1504,7 @@ assert(podway_contract.include?("[evidence-residency.md](evidence-residency.md)"
 assert(podway_contract.include?("Aquarium does not own Podway sessions") &&
        podway_contract.include?("descriptive metadata, not an access-control principal") &&
        podway_contract.include?("Do not route the user to a matching owner") &&
-       !podway_contract.include?("Only `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, and `design-qa` may own or advance"),
+       !podway_contract.include?("may own or advance"),
        "Aquarium must not impose skill ownership on Podway sessions")
 assert(podway_contract.include?("$use-podway") &&
        podway_contract.include?("optional skill is unavailable or invalid") &&
@@ -1617,7 +1585,6 @@ assert(agents_reference.include?("use Podway by default") &&
        agents_reference.include?("diagnosis, recovery, cancellation, or discard operation") &&
        agents_reference.include?("$aquarium:new-project") &&
        agents_reference.include?("$aquarium:war-room") &&
-       agents_reference.include?("$aquarium:design-qa") &&
        agents_reference.include?("No Aquarium skill owns a Podway session") &&
        agents_reference.include?("only when starting a different session"),
        "AGENTS guidance must preserve default use and workflow-local opt-out")
@@ -2017,7 +1984,6 @@ skill_procedure_routes = {
   "new-project" => %w[aquarium-design-v2.yaml],
   "new-feature" => %w[aquarium-design-v2.yaml],
   "refactor" => %w[aquarium-design-v2.yaml],
-  "design-qa" => %w[aquarium-design-v2.yaml],
   "war-room" => %w[aquarium-war-room-v2.yaml]
 }
 skill_procedure_routes.each do |skill_name, procedures|
@@ -2611,7 +2577,6 @@ assert(task_handler.include?("Reject audit logs, completion summaries, evidence 
   "release-handler" => release_handler,
   "release-qa" => release_qa,
   "war-room" => war_room,
-  "design-qa" => design_qa,
   "new-project" => new_project,
   "new-feature" => new_feature,
   "refactor" => refactor
@@ -2620,7 +2585,6 @@ assert(task_handler.include?("Reject audit logs, completion summaries, evidence 
 end
 {
   "war-room" => war_room,
-  "design-qa" => design_qa,
   "new-project" => new_project,
   "new-feature" => new_feature,
   "refactor" => refactor
@@ -2935,7 +2899,6 @@ assert(gaori_commands.keys.sort == expected_gaori_handlers.keys.sort &&
 readme = ROOT.join("README.md").read
 korean_readme = ROOT.join("README.ko.md").read
 readme_skill_names = %w[
-  design-qa
   dev-setup-bundle
   dev-setup
   docs-setup

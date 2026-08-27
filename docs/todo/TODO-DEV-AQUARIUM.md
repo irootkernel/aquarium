@@ -302,7 +302,7 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 - [ ] Do not reuse enrollment, build, login, or artifact state from the implementation environment.
 - [ ] Do not skip failure and concurrency scenarios after happy-path success.
-- [ ] Do not claim stable distribution readiness, publish v0.1.13, or open its CHANGELOG cycle from development-channel evidence.
+- [ ] Do not claim stable distribution readiness, publish v0.1.14, or open its CHANGELOG cycle from development-channel evidence.
 - [ ] Do not complete the epic from cross-repository consumer claims without exact producer SHAs and independent revalidation.
 
 ## Epic Acceptance

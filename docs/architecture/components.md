@@ -17,11 +17,11 @@ Aquarium is a declarative orchestration plugin. Most product behavior is express
 
 ## Skill Layer
 
-The 24 skill entrypoints form four kinds of component:
+The 23 skill entrypoints form four kinds of component:
 
 - Orchestrators own a complete lifecycle, such as `task-handler`, `epic-handler`, `release-handler`, and the three design entrypoints.
 - Leaf skills own bounded task phases such as planning, implementation, verification, review, closeout, and commit preparation.
-- Auditors produce read-only findings or readiness decisions, including `epic-validator`, `independent-review`, `orca-review`, `release-qa`, and `design-qa`.
+- Auditors produce read-only findings or readiness decisions, including `epic-validator`, `independent-review`, `orca-review`, and `release-qa`.
 - Setup skills inspect and optionally configure tools, documentation, and tests while preserving separate proposal and apply approvals.
 
 Only `task-commit` permits implicit invocation. All other entrypoints require an explicit matching request or an authorized parent-workflow handoff.

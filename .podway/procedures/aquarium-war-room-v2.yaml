@@ -78,7 +78,7 @@ node_definitions:
     objective: End diagnosis with exactly one bounded task, one epic, or an incomplete investigation.
     prompt: What artifact should this investigation produce?
     evidence_guidance:
-      - Read the established cause or blocker, affected contracts, dependencies, risks, and Design Gate impact.
+      - Read the established cause or blocker, affected contracts, dependencies, and risks.
     options:
       - id: task
         label: Bounded task
@@ -99,7 +99,7 @@ node_definitions:
     items:
       - id: proposal-summary
         type: text
-        prompt: Record target paths, draft digests, scope, evidence, acceptance checks, risks, and Design Gate impact.
+        prompt: Record target paths, draft digests, scope, evidence, acceptance checks, and risks.
         required: true
         min_length: 1
         max_length: 6000
@@ -265,7 +265,7 @@ node_definitions:
     items:
       - id: documentation-summary
         type: text
-        prompt: Record applied paths and digests, validation, work-unit classification, and final Design Gate impact.
+        prompt: Record applied paths and digests, validation, and work-unit classification.
         required: true
         min_length: 1
         max_length: 5000

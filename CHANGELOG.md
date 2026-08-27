@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.13 - Unreleased
 
+### Removed
+
+- Remove `design-qa` and its Design Gate coupling from design, delivery, and validation workflows.
+
 ## v0.1.12 - 2026-08-27
 
 ### Added

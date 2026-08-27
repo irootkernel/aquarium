@@ -7,9 +7,7 @@ description: "Update durable documentation and review status for one refined roa
 
 Document only the refined task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
-Read [documentation-governance.md](../../references/documentation-governance.md), [design-gates.md](../../references/design-gates.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md). Resolve the authoritative current and retired registry paths, using `docs/gating-rules.md` and `docs/gating-rules-retired.md` only as defaults.
-
-This skill may update a work unit's existing Design Gate impact reference as directed by authoritative task scope, but it must not create, change, reactivate, retire, or otherwise edit either resolved registry. Return an explicit `$aquarium:design-qa` handoff for any registry change.
+Read [documentation-governance.md](../../references/documentation-governance.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md).
 
 ## Update Durable Documentation
 

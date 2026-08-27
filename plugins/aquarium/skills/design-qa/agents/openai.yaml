@@ -1,6 +1,0 @@
-interface:
-  display_name: "Design QA"
-  short_description: "Design durable local gates"
-  default_prompt: "Use $aquarium:design-qa to design or update local Design Gates after an approved exact diff."
-policy:
-  allow_implicit_invocation: false

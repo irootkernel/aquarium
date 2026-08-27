@@ -52,7 +52,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 
 - Use `$aquarium:task-handler` for one named roadmap task, `$aquarium:epic-handler` for one roadmap epic, and `$aquarium:epic-validator` to cold-validate a completed epic.
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for explicitly requested Ouroboros-assisted design workflows.
-- Use `$aquarium:war-room` for difficult-bug diagnosis and `$aquarium:design-qa` for local Design Gate lifecycle work.
+- Use `$aquarium:war-room` for difficult-bug diagnosis.
 - Use `$aquarium:release-handler` for one stable release lifecycle, `$aquarium:release-qa` for its exact release-candidate verification, and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.

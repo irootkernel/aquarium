@@ -7,10 +7,6 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 Verify the implemented task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff. Read [evidence-residency.md](../../references/evidence-residency.md) before consuming or returning runtime evidence.
 
-Read [design-gates.md](../../references/design-gates.md). Resolve the effective Design Gate impact from the task first and then its parent epic, applying the documented legacy-only `Not required` rule when neither marker exists. Stop when the effective marker is missing in an enrolled repository or is `Pending`.
-
-For every inherited or task-explicit resolved active `GATE-*` ID, run its registered local offline procedure against the exact task snapshot with declared outputs and caches redirected to a disposable root, capture the objective pass condition and outcome, and verify that source-repository status is unchanged. Keep missing, stale, failed, mutating, or unexecutable gate evidence as a verification blocker.
-
 ## Build the Requirement-to-Test Matrix
 
 When root `TESTING.md` registers `aquarium-test-contract/v1`, read it with the executable Makefile or Bun scripts. Treat their documented complete aggregate as the repository-wide gate, reject stale or unapproved waivers, and keep any required stage that did not run as an evidence gap. A disagreement between `TESTING.md` and the executable handlers is a contract defect; do not choose whichever command is easier to run. An unenrolled repository retains its established local test authority and is not enrolled implicitly during task verification.

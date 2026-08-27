@@ -97,7 +97,6 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:epic-validator` to cold-validate and remediate one completed roadmap epic.
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow.
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, or incomplete-investigation proposal.
-- Use `$aquarium:design-qa` to create, change, reactivate, or retire local Design Gates.
 - Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.

@@ -27,7 +27,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 roadmap, 코드, 테스트에 대해 로컬에서 검증하기 전까지 참고 의견(advisory)으로만 취급합니다.
 - **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
 - **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review와 remediation round는 정해진 예산 안에서만 돌고, cold validation은 새 gap이 더 발견되지 않으면 멈춥니다.
-- **불변식과 테스트는 계약입니다.** Design Gate는 offline에서 객관적으로 검증 가능한 규칙입니다. Gate impact가 아직 pending인 task는 구현할 수 없고, release QA는 모든 active gate를 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
+- **불변식과 테스트는 계약입니다.** Release QA는 저장소가 자체적으로 등록한 active Design Gate가 있으면 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
@@ -46,7 +46,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 ## 주요 워크플로
 
-1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다. `$aquarium:design-qa`는 Design Gate를 만들고, 바꾸고, 퇴역시킵니다.
+1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다.
 2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 epic의 task를 순서대로 수행한 뒤 epic 전체를 hardening합니다. Commit은 별도로 `$aquarium:task-commit`을 거치며 사용자가 승인합니다.
 3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 staged change, commit, range, task, epic, 특별 조사에 하나의 canonical static Codex review 계약을 적용합니다. `$aquarium:orca-review`는 같은 계약을 사용자가 선택한 non-Codex provider에 적용합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
 4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
@@ -55,7 +55,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 ## 생태계가 연결되는 방식
 
-- [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`, `design-qa`는 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
+- [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`은 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 Claude Fable, Kimi, Agy, Cursor Agent 중 하나가 exact Git target을 review하도록 감독합니다. Dirty working-tree 내용은 제외하거나, 사용자가 승인한 exact path만 staging하며, Aquarium은 결과를 독립적으로 판정합니다.

@@ -2,7 +2,7 @@ schema: podway.procedure/v2
 id: aquarium-design-v2
 version: "2"
 name: Aquarium Design
-purpose: Shape one approved project, epic, refactor, or Design Gate document set without implementing it.
+purpose: Shape one approved project, feature epic, or refactor document set without implementing it.
 description: A Podway record of Aquarium context capture, Ouroboros discovery, drafting, challenge, guarded quality review, exact-diff approval, document application, and closeout.
 goal_tracking: true
 node_definitions:
@@ -33,11 +33,11 @@ node_definitions:
   draft-record:
     type: action
     title: Record the proposed design
-    intent: Bind quality review to one exact draft and Design Gate impact.
+    intent: Bind quality review to one exact draft and its unresolved constraints.
     items:
       - id: draft-summary
         type: text
-        prompt: Record target paths, draft digests, work-unit identity, Design Gate impact, and unresolved constraints.
+        prompt: Record target paths, draft digests, work-unit identity, and unresolved constraints.
         required: true
         min_length: 1
         max_length: 5000
@@ -139,7 +139,7 @@ node_definitions:
     objective: Route each complete quality result to the phase that owns its correction.
     prompt: Is the current draft ready for exact-diff approval?
     evidence_guidance:
-      - Read the draft identity, Ouroboros QA evidence, local adjudication, and gate impact.
+      - Read the draft identity, Ouroboros QA evidence, local adjudication, and unresolved constraints.
     options:
       - id: passed
         label: Quality passed
@@ -224,7 +224,7 @@ node_definitions:
     items:
       - id: application-summary
         type: text
-        prompt: Record applied paths and digests, validation commands and outcomes, and final Design Gate state.
+        prompt: Record applied paths and digests, validation commands and outcomes, and unresolved constraints.
         required: true
         min_length: 1
         max_length: 6000
@@ -235,7 +235,7 @@ node_definitions:
     objective: Determine whether the approved document outcome was achieved without implementation.
     prompt: What is the outcome of the current design goal?
     evidence_guidance:
-      - Read the approved diff, applied digests, validation, and Design Gate state.
+      - Read the approved diff, applied digests, validation, and unresolved constraints.
     options:
       - id: achieved
         label: Goal achieved
@@ -262,7 +262,7 @@ node_definitions:
     items:
       - id: closeout-summary
         type: text
-        prompt: Record final paths and digests, gate IDs or pending status, repository residue, commit if required, and publication state.
+        prompt: Record final paths and digests, repository residue, commit if required, and publication state.
         required: true
         min_length: 1
         max_length: 4000

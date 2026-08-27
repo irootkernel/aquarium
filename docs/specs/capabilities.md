@@ -1,16 +1,15 @@
 # Capability Catalog
 
-Aquarium exposes 24 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
+Aquarium exposes 23 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
 
 ## Design and Discovery
 
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
 | `$aquarium:new-project` | Explicit | Produces an approved greenfield PRD and initial roadmap through Ouroboros-assisted discovery and QA | Creates design documents only; it does not implement the project |
-| `$aquarium:new-feature` | Explicit | Creates or revises one feature epic in an existing canonical roadmap | Does not implement the feature or modify the Design Gate registry |
+| `$aquarium:new-feature` | Explicit | Creates or revises one feature epic in an existing canonical roadmap | Does not implement the feature |
 | `$aquarium:refactor` | Explicit | Creates or revises one refactor or behavior-change epic | Does not implement the refactor |
 | `$aquarium:war-room` | Explicit | Diagnoses one difficult bug, isolates root cause, and proposes the next work unit or an incomplete result | Does not implement the fix |
-| `$aquarium:design-qa` | Explicit | Creates, changes, or retires durable local Design Gates through an approved exact diff | Does not treat a QA phrase or runtime run as a gate definition |
 
 These workflows use Ouroboros only for their explicitly approved discovery or QA leaf operations. Git-backed runs select Podway by default before the first managed-session mutation and may be explicitly opted out before that boundary.
 
