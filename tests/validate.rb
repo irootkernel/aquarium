@@ -106,7 +106,7 @@ end
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
 assert((%w[ai-fleet agentic design documentation deslop graph loop lora lore multi-agent orchestration ouroboros podway release qa workflow] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
-assert(manifest.fetch("version") == "0.1.12", "plugin version must be 0.1.12")
+assert(manifest.fetch("version") == "0.1.13", "plugin version must be 0.1.13")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
   assert(release_tag == "v#{manifest.fetch('version')}",
