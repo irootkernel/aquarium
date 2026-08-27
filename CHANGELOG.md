@@ -12,7 +12,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Let Aquarium workflows use native tool capabilities without skill-owned sessions or unsupported orchestration limits.
-- Extend docs-setup with governed roadmap and dossier lifecycles, canonical closeout, operations documentation, and conservative role-aware structural inspection.
+- Extend docs-setup with governed roadmap and dossier lifecycles, canonical closeout, operations documentation, and conservative role- and lifecycle-vocabulary-aware structural inspection.
 - Strengthen release QA and publication recovery with machine-validated frozen scenario records, exact remediation manifests, atomic one-attempt confirmation admission, clean local-main candidates ahead of remote main, resumable full gates, one approved QA-neutral direct child, and v4 ordered publication observation.
 - Run Orca reviewers with provider-native auto-approval while enforcing exact repository identity and no-mutation supervision across refs, the index, tracked worktrees, submodules, and untracked content.
 - Reauthor the task, goal, validation, design, and war-room Procedures for Podway v0.2.6 with typed checks, CI-aware phase-owned review routing, refined-target verification, fresh evidence handoffs, explicit approval boundaries, and reviewed preservation of valid local customizations.

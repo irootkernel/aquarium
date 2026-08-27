@@ -62,6 +62,13 @@ TASK_TABLE_HEADERS = {
     "작업",
     "태스크",
 }
+ACTIVE_EPIC_STATUSES = {
+    "Planned",
+    "In Progress",
+    "In Review",
+    "Deferred",
+    "Blocked",
+}
 
 
 class InspectionError(Exception):
@@ -537,6 +544,18 @@ def inspect_epic_lifecycle(
                         excluded.as_posix(),
                     )
                 )
+        return findings
+
+    if status not in ACTIVE_EPIC_STATUSES:
+        if tasks or contract_evidence:
+            findings.append(
+                finding(
+                    "epic_lifecycle_unverifiable",
+                    "unverifiable",
+                    f"{epic['id']} uses lifecycle status {status!r}, whose active or completed meaning is not known.",
+                    roadmap.as_posix(),
+                )
+            )
         return findings
 
     if outcome_count:

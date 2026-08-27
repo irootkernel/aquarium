@@ -331,6 +331,28 @@ def test_historical_completed_epic_is_grandfathered(tmp_path: Path) -> None:
     )
 
 
+def test_legacy_completion_status_is_unverifiable_not_active(tmp_path: Path) -> None:
+    repository = tmp_path / "legacy-completed"
+    initialize(repository)
+    make_single_scope(repository)
+    write(
+        repository / "docs/roadmap/README.md",
+        roadmap(
+            status="Done",
+            detailed_sot=None,
+            outcomes="../specs/README.md",
+        ),
+    )
+    (repository / "docs/todo/TODO-EPIC-001.md").unlink()
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "unverifiable"
+    assert "epic_lifecycle_unverifiable" in finding_codes(payload)
+    assert not any(code.startswith("active_epic_") for code in finding_codes(payload))
+
+
 def test_crlf_and_relaxed_markdown_produce_the_same_structure(tmp_path: Path) -> None:
     repository = tmp_path / "crlf"
     initialize(repository)
