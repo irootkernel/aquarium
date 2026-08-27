@@ -257,7 +257,6 @@ documentation_detail_paths = {
   "changing-procedures" => ROOT.join("docs/implementation-tips/changing-procedures.md"),
   "changing-inspectors" => ROOT.join("docs/implementation-tips/changing-inspectors.md"),
   "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md"),
-  "release-v0.1.12-dossier" => ROOT.join("docs/todo/TODO-RELEASE-v0-1-12.md"),
   "dev-aquarium-dossier" => ROOT.join("docs/todo/TODO-DEV-AQUARIUM.md")
 }
 documentation_adr_paths = (1..6).map do |number|
@@ -697,7 +696,6 @@ assert(!canonical_documentation.include?("/Users/") &&
        !canonical_documentation.match?(/(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*\S+/i),
        "canonical documentation must not contain absolute workspace paths or apparent credential values")
 
-release_012_dossier = documentation_details.fetch("release-v0.1.12-dossier")
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
 assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
@@ -709,22 +707,17 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        roadmap_task_ids.length == 18 &&
        roadmap_task_ids.uniq.sort == (1..18).map { |number| "TASK-%03d" % number }.sort &&
        canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 18 &&
-       canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
+       !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [Tool integrations]") &&
+       canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        canonical_roadmap.include?("No child task identity or implementation authority is allocated") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
        "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-004 and unique TASK-001 through TASK-018")
-assert(todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
+assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
        todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
-       todo_index.include?("`EPIC-004` and `TASK-004`") &&
-       release_012_dossier.include?("detailed scope and acceptance source of truth for `EPIC-004` and `TASK-004`") &&
-       release_012_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 1 &&
-       release_012_dossier.include?("## TASK-004: Release Aquarium v0.1.12") &&
-       release_012_dossier.include?("make test-podway-compat") &&
-       release_012_dossier.include?("$aquarium:release-handler") &&
        dev_aquarium_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
        dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 11 &&
        (5..15).all? { |number| dev_aquarium_dossier.include?("## TASK-%03d:" % number) } &&
@@ -734,7 +727,7 @@ assert(todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        dev_aquarium_dossier.include?("There is no top-level `~/.aquarium/bin/`") &&
        dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
        dev_aquarium_dossier.include?("This epic does not introduce Dolgorae"),
-       "roadmap work dossiers must own the detailed release and development-environment acceptance contracts")
+       "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&

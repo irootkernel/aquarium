@@ -30,7 +30,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
 | EPIC-002 | Build the Aquarium development environment | Planned |
 | EPIC-003 | Introduce Dolgorae | Planned |
-| EPIC-004 | Release Aquarium v0.1.12 | Planned |
+| EPIC-004 | Release Aquarium v0.1.12 | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -87,16 +87,16 @@ EPIC-003 depends on EPIC-002. No child task identity or implementation authority
 
 ## EPIC-004: Release Aquarium v0.1.12
 
-**Status:** `Planned`
+**Status:** `Completed`
 
 Publish Aquarium v0.1.12 from the exact candidate produced by EPIC-001 after a new complete release-QA pass, the selected local release gate, ordered publication, and exact remote verification.
 
 EPIC-004 depends on the completed EPIC-001 adoption result. Release QA owns release readiness and may return defects to their canonical owners without reopening adoption merely because publication remains incomplete.
 
-**Detailed SOT:** [`TODO-RELEASE-v0-1-12.md`](../todo/TODO-RELEASE-v0-1-12.md)
+**Canonical Outcomes:** [v0.1.12 release notes](../../CHANGELOG.md), [release workflow contract](../specs/workflow-contracts.md), [local exact-candidate verification](../architecture-decision-records/0006-local-exact-candidate-verification.md)
 
 **Design Gate impact:** `Not required` — TASK-004 owns the release and publication contract, while release QA and ordered publication observation verify network- and remote-state-dependent outcomes outside the Design Gate contract.
 
 | Task | Title | Summary | Status | Depends On | Design Gate impact | Reason |
 | --- | --- | --- | --- | --- | --- | --- |
-| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | In Progress | TASK-003 | Not required | Task acceptance owns its publication requirements, while release QA and ordered publication observation verify network- and remote-state-dependent outcomes outside the Design Gate contract. |
+| TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Completed | TASK-003 | Not required | Task acceptance owns its publication requirements, while release QA and ordered publication observation verify network- and remote-state-dependent outcomes outside the Design Gate contract. |
