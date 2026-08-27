@@ -25,10 +25,13 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `independent-review/scripts/inspect_review_target.py` | Repository and one staged, HEAD, commit, or range selector | `aquarium-independent-review-target/v1` | Resolves exact Git objects, dirty boundaries, and target metadata without reviewing source |
 | `orca-review/scripts/create_provider_terminal.py` | `aquarium-orca-provider-terminal-request/v1` JSON on standard input | `aquarium-orca-provider-terminal-result/v1` | Creates one provider terminal through the local Orca CLI after request validation |
 | `release-handler/scripts/inspect_release_notes.py` | Repository, expected version, and release baseline | `aquarium-release-notes-inspection/v1` | Inventories cumulative release-note enrollment and candidate delta |
+| `release-qa/scripts/manage_release_qa.py` | Versioned full-pass, preparation, admission, or finish JSON | `aquarium-release-qa-confirmation-record/v1`, `aquarium-release-qa-confirmation-manifest/v1`, `aquarium-release-qa-confirmation-claim/v1`, or `aquarium-release-qa-confirmation-result/v1` | Freezes complete QA matrices, derives exact remediation coverage, atomically admits one confirmation attempt, and validates its complete result |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v4` JSON on standard input | `aquarium-release-publication-state/v4` | Normalizes local, remote, tag, stable hosted Release, and exact or approved QA-neutral candidate binding supplied by the caller |
 | `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v2` | Executes the exact v0.2.6 CLI and sibling daemon against all managed Procedures, declaration-limit failures, and two fresh isolated runtime passes |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
+
+The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` worker results and the `aquarium-release-qa-full-pass/v1`, `aquarium-release-qa-confirmation-prepare/v1`, `aquarium-release-qa-confirmation-begin/v1`, and `aquarium-release-qa-confirmation-finish/v1` command inputs. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
 
 ## Roadmap Commit Hook
 

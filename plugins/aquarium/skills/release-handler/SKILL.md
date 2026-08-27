@@ -32,9 +32,11 @@ The handler's explicit release request is an authorized handoff for exactly one 
 
 When remediation changes a shipped outcome, update the open changelog entry in the same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Preserve the full pass's authoritative frozen confirmation record and retained evidence root.
 
-Build the confirmation manifest by copying its complete cluster and scenario inventory and entry facts without re-deriving, regrouping, or sampling them. Append only the current candidate, remediation range, changed-surface mappings, finding reproductions, and one-attempt facts required by release QA.
+Build the confirmation manifest only through the release-QA skill's deterministic helper: `scripts/manage_release_qa.py prepare-confirmation --input <prepare.json> --output <full-evidence-root>/confirmation-manifest.json`. The input names the canonical frozen record, current exact candidate, changed-surface mappings, and finding reproductions.
 
-If the retained record is unavailable or the manifest cannot be reconciled exactly against it, stop as `INCOMPLETE` before invoking confirmation. Stop when QA is incomplete, findings remain, or the permitted confirmation does not pass.
+The helper copies its complete cluster and scenario inventory and entry facts without re-deriving, regrouping, or sampling them, then appends only the current candidate, exact non-empty remediation range, those mappings and reproductions, and the one-attempt fact.
+
+If the helper rejects the retained record, evidence, ancestry, changed-surface coverage, finding reproduction coverage, or output boundary, stop as `INCOMPLETE` before invoking confirmation. Never manually repair or bypass its manifest. Stop when QA is incomplete, findings remain, or the permitted confirmation does not pass.
 
 ## Create and Publish the Release
 

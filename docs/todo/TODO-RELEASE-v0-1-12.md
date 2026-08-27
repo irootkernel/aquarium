@@ -30,12 +30,6 @@ This work keeps release readiness, distribution state, and network publication s
 - No step may include unrelated staged, unstaged, untracked, or ignored runtime work.
 - A failed or incomplete release-QA pass grants no publication authority and cannot be reused as a passing baseline.
 
-## Known Entry Findings
-
-- Align the release gate convergence guidance with the publication inspector's supported v4 observation schema before establishing the next candidate.
-- Reject empty or relative Orca repository identities before path resolution so provider terminals cannot be created from cwd-relative input.
-- Treat the prior user-global Codex refresh as an isolation incident only; diagnosis or restoration requires separate explicit authority and is not part of EPIC-004 by default.
-
 ## TASK-004: Release Aquarium v0.1.12
 
 ### Objective

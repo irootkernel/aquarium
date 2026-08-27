@@ -204,6 +204,8 @@ orca_state_helper_body = orca_state_helper.read
 review_contract = PLUGIN.join("references/review-contract.md").read
 orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
+release_qa_helper = PLUGIN.join("skills/release-qa/scripts/manage_release_qa.py")
+release_qa_helper_body = release_qa_helper.read
 release_handler = PLUGIN.join("skills/release-handler/SKILL.md").read
 release_gate_convergence = PLUGIN.join("skills/release-handler/references/gate-convergence.md").read
 release_recovery = PLUGIN.join("skills/release-handler/references/publication-recovery.md").read
@@ -658,6 +660,16 @@ documented_schema_ids = %w[
   aquarium-release-publication-observation/v4
   aquarium-release-publication-state/v4
   aquarium-podway-compatibility.v2
+  aquarium-release-qa-cluster-result/v1
+  aquarium-release-qa-full-pass/v1
+  aquarium-release-qa-confirmation-record/v1
+  aquarium-release-qa-confirmation-prepare/v1
+  aquarium-release-qa-confirmation-manifest/v1
+  aquarium-release-qa-confirmation-begin/v1
+  aquarium-release-qa-confirmation-claim/v1
+  aquarium-release-qa-confirmation-finish/v1
+  aquarium-release-qa-confirmation-result/v1
+  aquarium-release-qa-error/v1
 ]
 assert(documented_schema_ids.all? { |schema_id| local_interfaces_doc.include?("`#{schema_id}`") },
        "local interface documentation must preserve the major JSON schema identifiers")
@@ -2331,6 +2343,26 @@ assert(release_qa.include?("## Establish Design Gate Enrollment") &&
        release_qa.include?("sole exception is an exact local offline procedure") &&
        release_qa.include?("both applicable matrices"),
        "release-qa must combine gradual Design Gate enrollment with a separate release-delta matrix")
+assert(release_qa_helper.file? && release_qa_helper.executable? &&
+       release_qa_helper_body.include?('CLUSTER_SCHEMA = "aquarium-release-qa-cluster-result/v1"') &&
+       release_qa_helper_body.include?('RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v1"') &&
+       release_qa_helper_body.include?('MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v1"') &&
+       release_qa_helper_body.include?('CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v1"') &&
+       release_qa_helper_body.include?('RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v1"') &&
+       release_qa_helper_body.include?("os.O_EXCL") &&
+       release_qa_helper_body.include?("os.replace") &&
+       release_qa_helper_body.include?('"merge-base", "--is-ancestor"') &&
+       release_qa_helper_body.include?('"status", "--porcelain", "--untracked-files=all"') &&
+       release_qa_helper_body.include?('"INCOMPLETE"') &&
+       release_qa_helper_body.include?('"FINDINGS"'),
+       "release-qa helper must freeze, reconcile, atomically admit, and finish exact evidence")
+assert(release_qa.include?("scripts/manage_release_qa.py freeze-full") &&
+       release_qa.include?("scripts/manage_release_qa.py begin-confirmation") &&
+       release_qa.include?("scripts/manage_release_qa.py finish-confirmation") &&
+       release_qa.include?("aquarium-release-qa-cluster-result/v1") &&
+       release_qa.include?("never reconstruct the record after remediation") &&
+       release_qa.include?("every retained cluster and scenario exactly once with no extras"),
+       "release-qa must route frozen records and confirmation through its deterministic helper")
 
 assert(release_handler.include?("Explicit invocation authorizes read-only release discovery") &&
        release_handler.include?("Compare every commit and material changed surface") &&
@@ -2344,10 +2376,11 @@ assert(release_handler.include?("Explicit invocation authorizes read-only releas
        release_handler.include?("Never rewrite or delete a published tag or Release"),
        "release-handler must preserve candidate, publication, and next-cycle boundaries")
 assert(release_handler.include?("Preserve the full pass's authoritative frozen confirmation record") &&
-       release_handler.include?("copying its complete cluster and scenario inventory and entry facts") &&
+       release_handler.include?("scripts/manage_release_qa.py prepare-confirmation") &&
+       release_handler.include?("copies its complete cluster and scenario inventory and entry facts") &&
        release_handler.include?("without re-deriving, regrouping, or sampling") &&
        release_handler.include?("changed-surface mappings") &&
-       release_handler.include?("reconciled exactly against it") &&
+       release_handler.include?("Never manually repair or bypass its manifest") &&
        release_handler.include?("stop as `INCOMPLETE` before invoking confirmation"),
        "release-handler must hand off the complete retained full-pass record to confirmation")
 assert(release_handler.include?("Do not push a candidate before release QA") &&

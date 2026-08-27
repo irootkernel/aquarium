@@ -24,6 +24,7 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
+	plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py \
 	plugins/aquarium/skills/test-setup/scripts/inspect_testing.py \
 	tests/test_inspect_docs.py \
 	tests/test_inspect_tools.py \
@@ -38,9 +39,11 @@ PYTHON_FILES := \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \
+	tests/unit/test_manage_release_qa_unit.py \
 	tests/unit/test_inspect_testing_unit.py \
 	tests/unit/test_verify_podway_compatibility_unit.py \
-	tests/e2e/test_test_setup_cli.py
+	tests/e2e/test_test_setup_cli.py \
+	tests/e2e/test_release_qa_confirmation_cli.py
 
 .PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat
 

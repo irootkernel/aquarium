@@ -60,6 +60,8 @@ Full release mode runs the complete repository gate after metadata changes. Ligh
 
 After QA, the handler normally verifies an unchanged candidate and unchanged entry text. A failed full gate may use bounded public-checkpoint suffixes for diagnosis, but each cycle settles at most one correction commit and release readiness still requires one uninterrupted final aggregate from the beginning. QA-affecting corrections require a new authorized full release QA; the sole reuse exception is one approved QA-neutral direct child whose direct-QA and release-basis SHAs remain distinct.
 
+Release-QA workers emit versioned cluster results. A full pass freezes their complete commit, changed-surface, cluster, scenario, finding, and evidence inventory before remediation. Confirmation preparation derives the exact non-empty remediation range and coverage from Git, admission atomically claims the one permitted attempt by frozen-record digest, and finish validation rejects missing, extra, reassigned, stale, out-of-root, or source-mutating evidence. These private records under `/tmp` are workflow authority for the bounded pass, not tracked repository documentation.
+
 The handler then creates the repository-authorized release commit, pushes main, creates and pushes an annotated tag, publishes the hosted Release, and verifies all three remote identities. Opening the next Unreleased cycle remains a separate post-release action.
 
 ## Pause, Resume, and Hand Off

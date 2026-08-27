@@ -25,4 +25,6 @@ Tests that start containers, contact providers, use credentials, publish data, o
 
 Verification attaches to exact content. A code or substantive documentation change after a release-QA confirmation creates a new candidate. Development checks can support contract readiness, but only the release workflow can establish distribution readiness through exact artifact and remote-state observation.
 
+Release-QA confirmation has a machine-validated evidence lifecycle. A full pass atomically freezes its exact matrix before remediation; preparation binds the frozen inventory to the Git-derived remediation range and changed surfaces; admission uses an exclusive claim keyed by the frozen-record digest; and completion requires one fresh result for every retained scenario. Prose summaries and reconstructed manifests cannot authorize confirmation.
+
 The repository does not use GitHub Actions as release authority. The selected local release gate and the ordered publication observations remain authoritative.

@@ -52,6 +52,8 @@ Reject `confirmation` as `INCOMPLETE` if that exact reconciliation, the manifest
 
 In `full` mode, follow every section below and explore the complete Design Gate and release-delta matrices. In `confirmation` mode, do not rebuild or broaden those matrices. Preserve the project-derived cluster boundaries and scenario inventory from the frozen previous full-pass matrix, and dispatch fresh workers for every retained cluster.
 
+Do not admit confirmation from prose or a hand-copied manifest. Resolve this skill's directory and run `scripts/manage_release_qa.py begin-confirmation --input <begin.json>` before dispatch. The helper validates the canonical record and manifest, Git ancestry, exact clean local-main candidate, physical evidence roots, and atomically claims the sole attempt. Any nonzero result is `INCOMPLETE` and starts no worker.
+
 For each cluster, rerun every retained scenario and every verified finding reproduction. Require every remediation-changed surface to map to at least one retained scenario or finding reproduction, and return `INCOMPLETE` when that mapping or its evidence is missing because confirmation cannot add new coverage.
 
 Existing tests and validators remain prohibited as QA scenario evidence. Capture the same command, controlled environment, outcome, resulting files, worker identity, and source-repository status required for a full pass, but write all new evidence beneath a fresh confirmation evidence root.
@@ -109,6 +111,8 @@ Use the available agent delegation surface to dispatch fresh subagents for indep
 
 Require every worker to avoid existing test commands, source-repository writes, network access, credentials, global state, remediation, release-readiness decisions, and next-action recommendations. A worker may mutate only its assigned fixture and must return commands, observations, evidence paths, and source-repository status; the coordinator alone assigns final severity and status.
 
+Each worker must also write one bounded `aquarium-release-qa-cluster-result/v1` JSON file beneath its assigned physical evidence root. It records the exact candidate, stable cluster ID, source status before and after, and every stable scenario ID with sources, procedure, controlled environment, expected and observed outcomes, `pass`, `finding`, or `gap`, regular non-symlink evidence files, and verified finding identities. Cluster and scenario IDs are globally unique for the pass.
+
 Do not replace an unavailable, failed, or timed-out fresh worker with coordinator execution or static review. Mark its required coverage as missing and return `INCOMPLETE`. Parallelize independent clusters when capacity allows without weakening isolation.
 
 Adjudicate every worker report against the release contract and candidate. Reproduce a suspected defect in a clean sibling fixture or confirm it directly from deterministic evidence before accepting it. Put unreproduced, environment-dependent, or authority-dependent claims under evidence gaps, not findings.
@@ -122,6 +126,12 @@ Choose one overall result in this order across both matrices:
 3. `PASS` only when the active Design Gate matrix, when enrolled, and the release-delta matrix are both complete and no verified defect remains.
 
 In `full` mode, store beneath the retained evidence root and return an authoritative frozen confirmation record containing the exact cluster decomposition and every stable cluster and scenario identifier, source matrix, procedure, controlled environment, expected and observed outcomes, and retained evidence location. This record, not a later reconstruction, is the inventory authority for any permitted confirmation pass.
+
+Before reporting the full verdict or applying remediation, run `scripts/manage_release_qa.py freeze-full --input <full-pass.json> --output <evidence-root>/confirmation-record.json`. The input supplies every worker result, the exact ordered commit matrix, every changed-path surface mapping, and Design Gate state.
+
+A nonzero result makes the pass `INCOMPLETE`; never reconstruct the record after remediation. The helper computes `INCOMPLETE` before `FINDINGS` before `PASS`, writes the canonical `aquarium-release-qa-confirmation-record/v1` atomically with private permissions, and freezes even a complete `FINDINGS` pass.
+
+After an admitted confirmation finishes, run `scripts/manage_release_qa.py finish-confirmation --input <finish.json> --output <confirmation-root>/confirmation-result.json`. It requires every retained cluster and scenario exactly once with no extras, all finding reproductions, fresh in-root evidence, the unchanged clean candidate, and the matching attempt claim. Its `aquarium-release-qa-confirmation-result/v1` verdict is authoritative; a nonzero result or any missing evidence is `INCOMPLETE`.
 
 Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, authoritative frozen confirmation record, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
 

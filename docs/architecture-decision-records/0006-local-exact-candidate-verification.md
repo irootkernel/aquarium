@@ -16,6 +16,8 @@ Use deterministic local inspectors and repository tests as development-contract 
 
 Structural inspectors remain read-only, local, and conservative. They report only encoded structure. Scenario tests cover behavioral and approval paths. Release QA binds its result to the exact candidate; substantive changes invalidate prior confirmation or QA.
 
+Release-QA evidence is frozen before remediation in a private versioned record. Any bounded confirmation is derived from that record and the exact Git remediation range, admitted through one atomic claim, and completed only when a machine check reconciles every retained scenario and finding reproduction. Human summaries remain useful reports but are not confirmation authority.
+
 ## Consequences
 
 - Maintainers can reproduce the authoritative gate from the repository and declared local dependencies.
@@ -28,6 +30,7 @@ Structural inspectors remain read-only, local, and conservative. They report onl
 - Phrase-only validation as complete proof was rejected because it cannot exercise handoffs, failure paths, or effects.
 - Hosted CI as the sole release authority was rejected because it does not represent the required local approval and artifact boundaries.
 - Reusing test confirmation after functional changes was rejected because the evidence no longer identifies the candidate being released.
+- Reconstructing a confirmation matrix from prose after remediation was rejected because omissions, reassignment, and duplicate attempts cannot be detected reliably.
 
 ## References
 
