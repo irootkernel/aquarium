@@ -18,7 +18,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v9` | Read-only normalized Git, tool, skill, MCP, configuration, and bounded readiness inspection |
+| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v10` | Read-only normalized Git, tool, skill, MCP, configuration, same-ID Podway-valid customization, and bounded readiness inspection |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
 | `dev-setup-bundle/scripts/normalize_manifest.py` | External `aquarium.dev-setup-bundle/v1` YAML manifest | `aquarium-dev-setup-bundle-plan.v1` | Validates, canonicalizes, and deduplicates explicit repository setup selections |

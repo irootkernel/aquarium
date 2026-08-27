@@ -127,16 +127,18 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
-Use the v8 inspector's `migration_kinds` to distinguish that product rename from the exact `podway_v0.2.5_workaround`. The workaround classification is valid only when a safe installed managed file is byte-identical to the one deterministic compatibility transform derived from the current plugin source; any other difference is `diverged`, not migration proof.
+Use the v10 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.6 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
 
-Check every safe present managed Procedure independently, even when it differs from the source. A workaround remains degraded until a separately approved replacement restores the canonical plugin bytes; never recreate, extend, or install the workaround.
+Treat `update_explanation` values such as `prior_canonical` and `podway_v0.2.5_workaround` only as bounded explanations for an offered canonical update. They never form a validity, ownership, migration, or readiness class. A tracked same-ID `valid_customization` is configured when the other Podway readiness requirements pass.
 
 Aquarium Podway readiness configuration has four disclosed parts:
 
-- Copy all five plugin-owned procedure sources from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/` and check each with `podway procedure check --warnings-as-errors`.
+- Install a missing or explicitly selected canonical copy from [the bundled procedure directory](../../assets/podway/procedures/) byte-for-byte to `.podway/procedures/`, then check its expected ID and validity with the selected Podway binary.
 - `podway init` also creates `.podway/config.yaml`, `.podway/.gitignore`, and ignored runtime state; show the exact proposed files and diff before approval.
-- When a managed procedure differs, show the exact source-to-project diff and obtain approval before replacing it; do not alter an active procedure snapshot.
+- When a valid managed Procedure differs, show the exact current-to-canonical diff and ask whether to preserve that local file or replace it with canonical bytes. Preservation writes no file or metadata. Replacement follows the selected backup policy, rechecks the exact target snapshot, and requires explicit approval for that one diff; never merge, normalize, or reformat it.
 - Treat partial installation as degraded readiness, not activation or legacy state.
+
+Do not create an ownership manifest, provenance registry, or central Aquarium state. Replacing a managed file never alters an active session's immutable Procedure snapshot.
 
 Managed-Procedure removal is a separate destructive proposal. Show the exact managed procedure files to remove, preserve `.podway/config.yaml`, runtime state, custom procedures, and every session, and obtain explicit approval. Do not reset, cancel, or delete any session as part of setup or removal.
 

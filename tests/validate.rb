@@ -645,7 +645,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v9
+  aquarium-dev-setup-inspection.v10
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
@@ -939,15 +939,17 @@ assert(tool_catalog.include?("aquarium-task-v2") &&
        "Podway managed procedures are missing")
 assert(tool_catalog.include?("migration_required=true") &&
        tool_catalog.include?("migration_kinds.product_rename") &&
-       tool_catalog.include?("migration_kinds.podway_v0.2.5_workaround") &&
-       tool_catalog.include?("classifies every other mismatch as `diverged`") &&
+       tool_catalog.include?("`valid_customization`") &&
+       tool_catalog.include?("`update_explanation`") &&
+       tool_catalog.include?("Preserve means no write and no metadata") &&
+       tool_catalog.include?("active session retains its immutable snapshot") &&
        tool_catalog.include?("root-kernel-task-v2.yaml") &&
        tool_catalog.include?("root-kernel-goal-v2.yaml") &&
        tool_catalog.include?("root-kernel-validation-v2.yaml"),
        "Podway migration classification contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
-       tool_catalog.include?("v8 inspection") &&
+       tool_catalog.include?("v10 inspection") &&
        tool_catalog.include?("--include-podway") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")

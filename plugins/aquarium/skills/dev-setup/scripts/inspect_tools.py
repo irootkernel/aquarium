@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v9"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v10"
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
@@ -60,6 +60,23 @@ PODWAY_PROCEDURES = (
     "aquarium-design-v2.yaml",
     "aquarium-war-room-v2.yaml",
 )
+PODWAY_PRIOR_CANONICAL_SHA256 = {
+    "aquarium-task-v2.yaml": {
+        "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9"
+    },
+    "aquarium-goal-v2.yaml": {
+        "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3"
+    },
+    "aquarium-validation-v2.yaml": {
+        "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50"
+    },
+    "aquarium-design-v2.yaml": {
+        "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6"
+    },
+    "aquarium-war-room-v2.yaml": {
+        "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb"
+    },
+}
 LEGACY_PODWAY_PROCEDURES = (
     "root-kernel-task-v2.yaml",
     "root-kernel-goal-v2.yaml",
@@ -2377,8 +2394,6 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     legacy_managed: list[dict[str, Any]] = []
     present_count = 0
     legacy_present_count = 0
-    matching_count = 0
-    workaround_count = 0
     tracked_count = 0
     for name in PODWAY_PROCEDURES:
         source = PODWAY_SOURCE_DIRECTORY / name
@@ -2407,20 +2422,27 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         )
         if symlinked or source_symlinked:
             source_state = "unsafe"
+            update_explanation = "unsafe"
         elif not present:
             source_state = "missing"
+            update_explanation = "missing"
         elif not source_present:
             source_state = "unsafe"
+            update_explanation = "unsafe"
         elif matching:
             source_state = "canonical"
+            update_explanation = "current_canonical"
+        elif target_digest in PODWAY_PRIOR_CANONICAL_SHA256[name]:
+            source_state = "pending_validation"
+            update_explanation = "prior_canonical"
         elif workaround is not None and target_bytes == workaround:
-            source_state = "podway_v0.2.5_workaround"
+            source_state = "pending_validation"
+            update_explanation = "podway_v0.2.5_workaround"
         else:
-            source_state = "diverged"
+            source_state = "pending_validation"
+            update_explanation = "local_customization"
         tracked = present and tracked_by_git(repository, relative_path, timeout_seconds)
         present_count += int(present or symlinked)
-        matching_count += int(matching)
-        workaround_count += int(source_state == "podway_v0.2.5_workaround")
         tracked_count += int(tracked)
         managed.append(
             {
@@ -2432,6 +2454,8 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 "installed_sha256": target_digest,
                 "matches_source": matching,
                 "source_state": source_state,
+                "update_explanation": update_explanation,
+                "expected_procedure_id": Path(name).stem,
             }
         )
     for name in LEGACY_PODWAY_PROCEDURES:
@@ -2457,7 +2481,6 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["legacy_managed_procedures"] = legacy_managed
     tool["migration_kinds"] = {
         "product_rename": legacy_present_count > 0,
-        "podway_v0.2.5_workaround": workaround_count > 0,
     }
     tool["migration_required"] = any(tool["migration_kinds"].values())
     tool["readiness_status"] = (
@@ -2470,6 +2493,9 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool["daemon_version"] = None
     tool["versions_match"] = False
     if not tool["installed"]:
+        for entry in managed:
+            if entry["source_state"] in {"canonical", "pending_validation"}:
+                entry["source_state"] = "unverifiable"
         tool["probes"]["version"] = skipped_probe("executable_missing")
         tool["probes"]["daemon_status"] = skipped_probe("executable_missing")
         tool["probes"]["doctor"] = skipped_probe("executable_missing")
@@ -2656,7 +2682,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                 "session_lifecycle": session.get("lifecycle")
                 if isinstance(session, dict)
                 and session.get("lifecycle")
-                in {"prepared", "active", "completed", "cancelled", "discarded"}
+                in {"prepared", "running", "completed", "cancelled", "discarded"}
                 else None,
                 "session_revision": session.get("revision")
                 if isinstance(session, dict)
@@ -2683,7 +2709,7 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
                     re.IGNORECASE,
                 )
                 and session.get("lifecycle")
-                in {"prepared", "active", "completed", "cancelled", "discarded"}
+                in {"prepared", "running", "completed", "cancelled", "discarded"}
                 and isinstance(session.get("revision"), int)
                 and not isinstance(session.get("revision"), bool)
             )
@@ -2700,9 +2726,9 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         tool["probes"]["doctor"] = skipped_probe("workspace_not_initialized")
         tool["probes"]["session_status"] = skipped_probe("workspace_not_initialized")
 
-    procedure_checks_ok = True
+    valid_managed_count = 0
     for entry in managed:
-        if not entry["present"] or entry["symlinked"]:
+        if entry["source_state"] not in {"canonical", "pending_validation"}:
             continue
         check = json_probe(
             [
@@ -2724,12 +2750,62 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         entry["check"] = normalized_check
         if isinstance(payload, dict):
             entry["check"]["valid"] = payload.get("valid") is True
-        procedure_checks_ok = (
-            procedure_checks_ok
-            and normalized_check["ok"]
+        check_valid = (
+            normalized_check["ok"]
             and isinstance(payload, dict)
             and payload.get("valid") is True
         )
+        preview_payload = None
+        preview_valid = False
+        if check_valid:
+            preview = json_probe(
+                [
+                    tool["executable"],
+                    "--json",
+                    "procedure",
+                    "preview",
+                    entry["path"],
+                ],
+                repository,
+                timeout_seconds,
+            )
+            normalized_preview, preview_payload = normalize_podway_envelope(
+                preview,
+                "procedure.preview",
+                ("podway.procedure-preview-result/v1",),
+            )
+            entry["preview"] = normalized_preview
+            if isinstance(preview_payload, dict):
+                entry["preview"]["admissible"] = (
+                    preview_payload.get("admissible") is True
+                )
+                procedure_id = preview_payload.get("procedure_id")
+                entry["preview"]["procedure_id"] = (
+                    procedure_id if isinstance(procedure_id, str) else None
+                )
+            preview_valid = (
+                normalized_preview["ok"]
+                and isinstance(preview_payload, dict)
+                and preview_payload.get("admissible") is True
+                and preview_payload.get("procedure_id")
+                == entry["expected_procedure_id"]
+            )
+        check_rejected = isinstance(payload, dict) and payload.get("valid") is False
+        preview_rejected = isinstance(preview_payload, dict) and (
+            preview_payload.get("admissible") is False
+            or isinstance(preview_payload.get("procedure_id"), str)
+            and preview_payload["procedure_id"] != entry["expected_procedure_id"]
+        )
+        procedure_valid = check_valid and preview_valid
+        if procedure_valid:
+            entry["source_state"] = (
+                "canonical" if entry["matches_source"] else "valid_customization"
+            )
+            valid_managed_count += 1
+        elif check_rejected or preview_rejected:
+            entry["source_state"] = "invalid"
+        else:
+            entry["source_state"] = "unverifiable"
 
     doctor_ok = not initialized
     doctor_payload = tool["probes"]["doctor"].get("result") if initialized else None
@@ -2753,9 +2829,8 @@ def inspect_podway(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     if present_count == 0:
         tool["status"] = "installed" if healthy else "degraded"
     elif (
-        matching_count == len(PODWAY_PROCEDURES)
+        valid_managed_count == len(PODWAY_PROCEDURES)
         and tracked_count == len(PODWAY_PROCEDURES)
-        and procedure_checks_ok
         and initialized
         and tool["configuration"][1]["present"]
         and healthy

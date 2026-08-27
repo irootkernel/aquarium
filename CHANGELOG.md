@@ -15,6 +15,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Resume failed full release gates from authoritative public stages, require one uninterrupted final pass, and permit one approved QA-neutral direct child without misbinding publication evidence.
 - Run Orca reviewers with provider-native auto-approval while enforcing the static no-mutation contract through explicit Dispatch instructions, supervision, and Git-state verification.
 - Reauthor the task, goal, validation, design, and war-room Procedures from Podway v0.2.6 delivery, analysis, and bug-fix patterns with typed checks, guarded routing, fresh evidence handoffs, and explicit approval boundaries.
+- Preserve same-ID Podway-valid local Procedure customizations and require an exact reviewed choice before canonical replacement.
 
 ### Fixed
 
