@@ -980,7 +980,12 @@ class ManagedRuntime:
             raise RuntimeQualificationError("pagination fixture did not prepare")
         self.begin_goal(self.observe(), "aquarium-pagination-v2")
 
-        for expected_node in ("record-plan", "implement", "refine"):
+        for expected_node in (
+            "record-plan",
+            "prepare-implementation",
+            "implement",
+            "refine",
+        ):
             observation = self.observe()
             if observation["guidance"]["node"]["graph_node_id"] != expected_node:
                 raise RuntimeQualificationError("pagination fixture path drifted")
