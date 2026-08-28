@@ -29,7 +29,7 @@ Epic status is independent of child task status. Completing every child does not
 | --- | --- | --- |
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
 | EPIC-002 | Build the Aquarium development environment | Blocked |
-| EPIC-003 | Introduce Dolgorae | Planned |
+| EPIC-003 | Activate Dolgorae-backed Reviews | Planned |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
@@ -75,13 +75,23 @@ The Aquarium-owned runtime is complete. Further progress requires exact clean lo
 | TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-015 | Cold-validate the integrated environment | Prove setup, update, fallback, failure, concurrency, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014 |
 
-## EPIC-003: Introduce Dolgorae
+## EPIC-003: Activate Dolgorae-backed Reviews
 
 **Status:** `Planned`
 
-Introduce Dolgorae as the second v0.1.14 development epic and the next Aquarium-managed package and handler. This placeholder reserves the epic identity only; detailed scope, SOT, task IDs, and acceptance criteria have not yet been adopted.
+Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The design preserves Orca supervision for `orca-review`, aligns Mulgae only on common source-scope and target-identity semantics, and requires exact candidate, capture, lifecycle, and settlement evidence before runtime activation.
 
-EPIC-003 is independent of EPIC-002, and its detailed scope may be adopted immediately. No child task identity or implementation authority is allocated by this placeholder; implementation begins only after its detailed SOT, child task identities, and acceptance criteria are adopted.
+EPIC-003 design and Dolgorae runtime activation do not depend on completing EPIC-002. Implementation builds on the completed `TASK-010` development-runtime and shared-contract foundation, but does not depend on `TASK-011` through `TASK-015`. Dolgorae is bound directly from the exact external `TASK-015` handoff rather than added as a `dev-aquarium` producer.
+
+**Detailed SOT:** [`TODO-DOLGORAE-REVIEWS.md`](../todo/TODO-DOLGORAE-REVIEWS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-019 | Adopt the Dolgorae candidate contract | Freeze executable acquisition, identity, capability, schema, bounds, launch binding, and pre-launch revalidation contracts. | Planned | TASK-010 |
+| TASK-020 | Adopt immutable review targets | Implement the six captured source scopes, immutable manifests, source identity, safety boundaries, and owner-bound settlement identities. | Planned | TASK-019 |
+| TASK-021 | Implement Dolgorae independent-review supervision | Run one fresh Codex Reviewer through Dolgorae without Orca objects and settle only from authoritative terminal evidence. | Planned | TASK-020 |
+| TASK-022 | Preserve Orca review and align Mulgae semantics | Retain Orca lifecycle ownership and prove common target semantics across Orca and Mulgae without lifecycle coupling. | Planned | TASK-020 |
+| TASK-023 | Activate and validate the exact candidate | Bind the external Dolgorae TASK-015 artifact, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | Planned | TASK-021, TASK-022; external Dolgorae TASK-015 |
 
 ## EPIC-004: Release Aquarium v0.1.12
 
