@@ -79,9 +79,9 @@ The Aquarium-owned runtime is complete. Further progress requires exact clean lo
 
 **Status:** `Planned`
 
-Introduce Dolgorae as the second v0.1.14 development epic and the next Aquarium-managed package and handler after the shared development environment is established. This placeholder reserves the epic identity and dependency only; detailed scope, SOT, task IDs, and acceptance criteria have not yet been adopted.
+Introduce Dolgorae as the second v0.1.14 development epic and the next Aquarium-managed package and handler. This placeholder reserves the epic identity only; detailed scope, SOT, task IDs, and acceptance criteria have not yet been adopted.
 
-EPIC-003 depends on EPIC-002. No child task identity or implementation authority is allocated by this placeholder.
+EPIC-003 is independent of EPIC-002, and its detailed scope may be adopted immediately. No child task identity or implementation authority is allocated by this placeholder; implementation begins only after its detailed SOT, child task identities, and acceptance criteria are adopted.
 
 ## EPIC-004: Release Aquarium v0.1.12
 
