@@ -449,6 +449,7 @@ def test_worker_reports_failure_when_terminal_request_cannot_be_quarantined(
         ("checkout", None),
         ("checkout", {}),
         ("checkout", []),
+        ("checkout", "invalid\0path"),
         ("git_sha", None),
         ("git_sha", "not-a-full-lowercase-sha"),
     ),

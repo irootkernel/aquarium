@@ -1916,6 +1916,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                     or request.get("project_id") != project_id
                     or not isinstance(request.get("checkout"), str)
                     or not request["checkout"]
+                    or "\0" in request["checkout"]
                     or not isinstance(request.get("git_sha"), str)
                     or SHA_RE.fullmatch(request["git_sha"]) is None
                 ):
