@@ -124,9 +124,9 @@ def revalidate_guarded_executable(
             not stat.S_ISREG(descriptor_stat.st_mode)
             or not os.access(resolved.path, os.X_OK)
             or (descriptor_stat.st_dev, descriptor_stat.st_ino)
-            != (path_stat.st_dev, path_stat.st_ino)
-            or (descriptor_stat.st_dev, descriptor_stat.st_ino)
             != (execution_stat.st_dev, execution_stat.st_ino)
+            or (descriptor_stat.st_dev, descriptor_stat.st_ino)
+            == (path_stat.st_dev, path_stat.st_ino)
         ):
             raise OSError("the executable path changed before launch")
         digest = hashlib.sha256()
@@ -162,7 +162,6 @@ def open_guarded_executable(resolved, expected_sha256: str) -> int:
         ) from error
     try:
         revalidate_guarded_executable(resolved, descriptor, expected_sha256)
-        os.set_inheritable(descriptor, True)
         return descriptor
     except ManagerError:
         os.close(descriptor)
@@ -336,6 +335,8 @@ def main() -> int:
                     revalidate_guarded_executable(
                         resolved, executable_descriptor, guard[2]
                     )
+                    os.close(executable_descriptor)
+                    executable_descriptor = None
                 os.execv(
                     resolved.execution_path,
                     [str(resolved.path), *launch_arguments],

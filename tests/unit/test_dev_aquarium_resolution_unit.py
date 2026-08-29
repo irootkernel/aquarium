@@ -379,6 +379,7 @@ def test_execution_alias_rejects_source_path_replacement(tmp_path):
 
     assert resolved.execution_path.read_bytes() == expected
     assert resolved.execution_path != resolved.path
+    assert not os.path.samefile(resolved.execution_path, resolved.path)
     assert stat.S_IMODE(resolved.path.stat().st_mode) == 0o500
     assert stat.S_IMODE(resolved.execution_path.stat().st_mode) == 0o500
     resolved.close()
@@ -392,6 +393,7 @@ def test_guarded_descriptor_revalidation_rejects_alias_replacement(tmp_path):
     enroll_and_build(repository, host_root)
     resolved = resolve_artifact("podway", host_root)
     descriptor = open_guarded_executable(resolved, resolved.sha256)
+    assert not os.get_inheritable(descriptor)
     alias = resolved.execution_path
     replacement = alias.parent / "replacement"
     with pytest.raises(OSError):

@@ -380,6 +380,31 @@ def _codex_environment(host_root: Path) -> dict[str, str]:
     return environment
 
 
+def _terminate_process_bounded(process: subprocess.Popen[Any]) -> None:
+    for termination_signal in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(process.pid, termination_signal)
+        except OSError:
+            if process.poll() is None:
+                try:
+                    process.send_signal(termination_signal)
+                except OSError:
+                    pass
+        try:
+            process.communicate(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+    if process.stdout is not None:
+        process.stdout.close()
+    if process.stderr is not None:
+        process.stderr.close()
+    try:
+        process.wait(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
+
+
 def _run_codex(
     codex_bin: str,
     host_root: Path,
@@ -400,12 +425,7 @@ def _run_codex(
     try:
         stdout, stderr = process.communicate(timeout=timeout_seconds)
     except subprocess.TimeoutExpired as error:
-        os.killpg(process.pid, signal.SIGTERM)
-        try:
-            process.communicate(timeout=1)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.communicate(timeout=1)
+        _terminate_process_bounded(process)
         raise ManagerError(
             "codex_not_configured",
             f"Codex did not finish within {timeout_seconds:g} seconds.",
@@ -950,29 +970,7 @@ def _validated_build(
         try:
             stdout, stderr = process.communicate(timeout=PRODUCER_BUILD_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired as error:
-            for termination_signal in (signal.SIGTERM, signal.SIGKILL):
-                try:
-                    os.killpg(process.pid, termination_signal)
-                except OSError:
-                    if process.poll() is None:
-                        try:
-                            process.send_signal(termination_signal)
-                        except OSError:
-                            pass
-                try:
-                    process.communicate(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
-                    break
-                except subprocess.TimeoutExpired:
-                    continue
-            else:
-                if process.stdout is not None:
-                    process.stdout.close()
-                if process.stderr is not None:
-                    process.stderr.close()
-                try:
-                    process.wait(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
-                except subprocess.TimeoutExpired:
-                    pass
+            _terminate_process_bounded(process)
             raise ManagerError(
                 "producer_build_timeout",
                 "The producer build exceeded its bounded execution time.",
@@ -1301,7 +1299,8 @@ def _execution_alias(
             if (
                 target.is_symlink()
                 or not target.is_file()
-                or not os.path.samefile(artifact, target)
+                or os.path.samefile(artifact, target)
+                or _sha256_file(artifact) != _sha256_file(target)
             ):
                 raise OSError("the guarded execution alias has changed identity")
             target_flags = target.stat().st_flags
@@ -1321,9 +1320,11 @@ def _execution_alias(
         root.chmod(0o700)
         temporary = root / f".executable.{os.getpid()}.tmp"
         temporary.unlink(missing_ok=True)
-        os.link(artifact, temporary, follow_symlinks=False)
-        if not os.path.samefile(artifact, temporary):
-            raise OSError("the guarded execution alias does not bind the artifact")
+        shutil.copyfile(artifact, temporary, follow_symlinks=False)
+        if os.path.samefile(artifact, temporary) or _sha256_file(
+            artifact
+        ) != _sha256_file(temporary):
+            raise OSError("the guarded execution copy does not bind the artifact bytes")
         temporary.chmod(0o500)
         os.replace(temporary, target)
         root.chmod(0o500)
