@@ -113,18 +113,9 @@ def launch_guard(arguments: argparse.Namespace) -> tuple[str, str, str] | None:
     return git_sha, development_version, sha256
 
 
-def open_guarded_executable(resolved, expected_sha256: str) -> int:
-    try:
-        descriptor = os.open(resolved.execution_path, os.O_RDONLY | os.O_CLOEXEC)
-    except OSError as error:
-        raise ManagerError(
-            "artifact_invalid",
-            str(error),
-            "Repair the selected executable artifact and retry.",
-            "launch",
-            resolved.project_id,
-            resolved.git_sha,
-        ) from error
+def revalidate_guarded_executable(
+    resolved, descriptor: int, expected_sha256: str
+) -> None:
     try:
         descriptor_stat = os.fstat(descriptor)
         path_stat = resolved.path.stat()
@@ -146,10 +137,7 @@ def open_guarded_executable(resolved, expected_sha256: str) -> int:
                 "the opened executable checksum does not match the launch guard"
             )
         os.lseek(descriptor, 0, os.SEEK_SET)
-        os.set_inheritable(descriptor, True)
-        return descriptor
     except OSError as error:
-        os.close(descriptor)
         raise ManagerError(
             "artifact_invalid",
             str(error),
@@ -158,6 +146,27 @@ def open_guarded_executable(resolved, expected_sha256: str) -> int:
             resolved.project_id,
             resolved.git_sha,
         ) from error
+
+
+def open_guarded_executable(resolved, expected_sha256: str) -> int:
+    try:
+        descriptor = os.open(resolved.execution_path, os.O_RDONLY | os.O_CLOEXEC)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_invalid",
+            str(error),
+            "Repair the selected executable artifact and retry.",
+            "launch",
+            resolved.project_id,
+            resolved.git_sha,
+        ) from error
+    try:
+        revalidate_guarded_executable(resolved, descriptor, expected_sha256)
+        os.set_inheritable(descriptor, True)
+        return descriptor
+    except ManagerError:
+        os.close(descriptor)
+        raise
 
 
 def result(operation: str, status: str, project_id: str | None, message: str, details):
@@ -323,6 +332,10 @@ def main() -> int:
             if resolved.lease is not None:
                 os.set_inheritable(resolved.lease.fileno(), True)
             try:
+                if executable_descriptor is not None:
+                    revalidate_guarded_executable(
+                        resolved, executable_descriptor, guard[2]
+                    )
                 os.execv(
                     resolved.execution_path,
                     [str(resolved.path), *launch_arguments],

@@ -9,6 +9,7 @@ import os
 import platform
 import shlex
 import shutil
+import signal
 import stat
 import subprocess
 import tempfile
@@ -36,6 +37,7 @@ MCP_ARGUMENTS = {
     "mulgae": lambda checkout: ["mcp", "--project-root", str(checkout)],
     "gaori": lambda checkout: ["--repo", str(checkout), "mcp"],
 }
+CODEX_COMMAND_TIMEOUT_SECONDS = 120
 
 
 @dataclass
@@ -360,14 +362,34 @@ def _run_codex(
     *arguments: str,
     json_output: bool = False,
     check: bool = True,
+    timeout_seconds: float = CODEX_COMMAND_TIMEOUT_SECONDS,
 ) -> Any:
-    result = subprocess.run(
-        [codex_bin, *arguments],
+    command = [codex_bin, *arguments]
+    process = subprocess.Popen(
+        command,
         env=_codex_environment(host_root),
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        check=False,
+        start_new_session=True,
     )
+    try:
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as error:
+        os.killpg(process.pid, signal.SIGTERM)
+        try:
+            process.communicate(timeout=1)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.communicate(timeout=1)
+        raise ManagerError(
+            "codex_not_configured",
+            f"Codex did not finish within {timeout_seconds:g} seconds.",
+            "Inspect the isolated Codex home and retry approved configuration.",
+            "configure-codex",
+            "aquarium",
+        ) from error
+    result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
     if check and result.returncode != 0:
         raise ManagerError(
             "codex_not_configured",
@@ -458,6 +480,81 @@ def codex_diagnosis(host_root: Path, codex_bin: str) -> dict[str, Any]:
             "mcp_servers": [],
             "error": error.code,
         }
+
+
+def _snapshot_codex_configuration(codex_home: Path, snapshot: Path) -> None:
+    snapshot.chmod(0o700)
+    for name in ("config.toml", "plugins", "fake-state.json"):
+        source = codex_home / name
+        if source.is_symlink():
+            raise ManagerError(
+                "codex_not_configured",
+                f"The isolated Codex {name} state is a symbolic link.",
+                "Replace the linked state before retrying approved configuration.",
+                "configure-codex",
+                "aquarium",
+            )
+        if not source.exists():
+            continue
+        target = snapshot / name
+        if source.is_dir():
+            shutil.copytree(source, target, symlinks=True)
+        elif source.is_file():
+            shutil.copy2(source, target)
+        else:
+            raise ManagerError(
+                "codex_not_configured",
+                f"The isolated Codex {name} state is not regular.",
+                "Repair the isolated state before retrying approved configuration.",
+                "configure-codex",
+                "aquarium",
+            )
+
+
+def _restore_codex_configuration(codex_home: Path, snapshot: Path) -> None:
+    for name in ("config.toml", "plugins", "fake-state.json"):
+        current = codex_home / name
+        saved = snapshot / name
+        if current.is_symlink() or current.is_file():
+            current.unlink()
+        elif current.is_dir():
+            shutil.rmtree(current)
+        if saved.is_dir():
+            shutil.copytree(saved, current, symlinks=True)
+        elif saved.is_file():
+            shutil.copy2(saved, current)
+
+
+def _recover_codex_transaction(codex_home: Path, transaction: Path) -> None:
+    if not transaction.is_dir() or transaction.is_symlink():
+        return
+    active = transaction / "active"
+    if not active.is_file() or active.is_symlink():
+        shutil.rmtree(transaction)
+        return
+    mode_file = transaction / "home-mode"
+    if not mode_file.is_file() or mode_file.is_symlink():
+        raise ManagerError(
+            "codex_not_configured",
+            "The interrupted Codex configuration has invalid recovery metadata.",
+            "Inspect the isolated transaction before retrying configuration.",
+            "configure-codex",
+            "aquarium",
+        )
+    try:
+        home_mode = int(mode_file.read_text(encoding="ascii"), 8)
+    except ValueError as error:
+        raise ManagerError(
+            "codex_not_configured",
+            "The interrupted Codex configuration has an invalid home mode.",
+            "Inspect the isolated transaction before retrying configuration.",
+            "configure-codex",
+            "aquarium",
+        ) from error
+    codex_home.mkdir(parents=True, exist_ok=True, mode=home_mode)
+    _restore_codex_configuration(codex_home, transaction)
+    codex_home.chmod(home_mode)
+    shutil.rmtree(transaction)
 
 
 def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
@@ -1061,8 +1158,14 @@ def _execution_alias(
                 or not os.path.samefile(artifact, target)
             ):
                 raise OSError("the guarded execution alias has changed identity")
+            if not target.stat().st_flags & stat.UF_IMMUTABLE:
+                os.chflags(target, stat.UF_IMMUTABLE)
+            if not root.stat().st_flags & stat.UF_IMMUTABLE:
+                root.chmod(0o500)
+                os.chflags(root, stat.UF_IMMUTABLE)
             return target
         root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chflags(root, 0)
         root.chmod(0o700)
         temporary = root / f".executable.{os.getpid()}.tmp"
         temporary.unlink(missing_ok=True)
@@ -1071,6 +1174,8 @@ def _execution_alias(
             raise OSError("the guarded execution alias does not bind the artifact")
         os.replace(temporary, target)
         root.chmod(0o500)
+        os.chflags(target, stat.UF_IMMUTABLE)
+        os.chflags(root, stat.UF_IMMUTABLE)
         return target
     except OSError as error:
         raise ManagerError(
@@ -1211,9 +1316,43 @@ def configure_codex(
             git_sha,
         )
     codex_home = host_root / "codex"
-    codex_home.mkdir(parents=True, exist_ok=True, mode=0o700)
-    codex_home.chmod(0o700)
+    login_action = f"CODEX_HOME={codex_home} codex login"
+    transaction_parent = host_root / "transactions"
+    transaction = transaction_parent / "codex-config"
+    _recover_codex_transaction(codex_home, transaction)
+    if not codex_home.is_dir() or codex_home.is_symlink():
+        raise ManagerError(
+            "codex_login_required",
+            "The isolated Codex home does not exist; configuration was not changed.",
+            login_action,
+            "configure-codex",
+            "aquarium",
+            git_sha,
+        )
+    if _run_codex(codex_bin, host_root, "login", "status", check=False).returncode != 0:
+        raise ManagerError(
+            "codex_login_required",
+            "The isolated Codex home is not authenticated; configuration was not changed.",
+            login_action,
+            "configure-codex",
+            "aquarium",
+            git_sha,
+        )
+    home_mode = stat.S_IMODE(codex_home.stat().st_mode)
+    transaction_parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    staging = Path(tempfile.mkdtemp(prefix=".codex-config-", dir=transaction_parent))
+    try:
+        _snapshot_codex_configuration(codex_home, staging)
+        (staging / "home-mode").write_text(f"{home_mode:o}\n", encoding="ascii")
+        (staging / "active").write_text("aquarium-codex-transaction/v1\n")
+        os.replace(staging, transaction)
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
     with ExitStack() as stack:
+        rollback = stack.enter_context(ExitStack())
+        rollback.callback(_recover_codex_transaction, codex_home, transaction)
+        codex_home.chmod(0o700)
         aquarium = stack.enter_context(resolve_artifact("aquarium", host_root))
         if aquarium.artifact_kind != "codex-plugin":
             raise ManagerError(
@@ -1364,27 +1503,33 @@ def configure_codex(
             "login": verification["login"],
             "login_action": verification["login_action"],
         }
-    if details["login"] != "ready":
-        raise ManagerError(
-            "codex_login_required",
-            "The isolated Codex home is configured but not authenticated.",
-            details["login_action"],
-            "configure-codex",
-            "aquarium",
-            git_sha,
-        )
-    artifact_root = host_root / "artifacts" / "aquarium"
-    if artifact_root.is_dir():
-        for generation in sorted(artifact_root.iterdir()):
-            if generation.name == details["plugin_git_sha"] or not SHA_RE.fullmatch(
-                generation.name
-            ):
-                continue
-            cleanup_status, cleanup = cleanup_generation(
-                "aquarium", generation.name, host_root, wait=False
+        if details["login"] != "ready":
+            raise ManagerError(
+                "codex_login_required",
+                "The isolated Codex home lost authentication during configuration.",
+                details["login_action"] or login_action,
+                "configure-codex",
+                "aquarium",
+                git_sha,
             )
-            if cleanup_status == "no-change" and cleanup.get("leased"):
-                _spawn_cleanup(host_root, "aquarium", generation.name)
+        (transaction / "active").unlink()
+        rollback.pop_all()
+    shutil.rmtree(transaction, ignore_errors=True)
+    artifact_root = host_root / "artifacts" / "aquarium"
+    try:
+        if artifact_root.is_dir():
+            for generation in sorted(artifact_root.iterdir()):
+                if generation.name == details["plugin_git_sha"] or not SHA_RE.fullmatch(
+                    generation.name
+                ):
+                    continue
+                cleanup_status, cleanup = cleanup_generation(
+                    "aquarium", generation.name, host_root, wait=False
+                )
+                if cleanup_status == "no-change" and cleanup.get("leased"):
+                    _spawn_cleanup(host_root, "aquarium", generation.name)
+    except Exception as error:  # noqa: BLE001
+        details["cleanup_warning"] = type(error).__name__
     return "success", details
 
 
@@ -1439,10 +1584,20 @@ def cleanup_generation(
                     project_id,
                     git_sha,
                 )
+            for managed_path in (
+                host_root / "runtime" / project_id / git_sha,
+                generation,
+            ):
+                if not managed_path.exists() or managed_path.is_symlink():
+                    continue
+                for descendant in [managed_path, *managed_path.rglob("*")]:
+                    if not descendant.is_symlink():
+                        os.chflags(descendant, 0)
+                if managed_path.is_dir():
+                    managed_path.chmod(0o700)
             shutil.rmtree(generation)
             runtime = host_root / "runtime" / project_id / git_sha
             if runtime.exists():
-                runtime.chmod(0o700)
                 shutil.rmtree(runtime)
             return "success", {"git_sha": git_sha, "removed": True}
         return "no-change", {"git_sha": git_sha, "removed": False}

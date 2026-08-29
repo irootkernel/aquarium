@@ -49,7 +49,9 @@ python3 <skill-directory>/scripts/dev_aquarium.py configure-codex \
   --repository <aquarium-git-root> --approve-codex
 ```
 
-This leases and installs the exact current Aquarium marketplace generation into `~/.aquarium/codex`, so the plugin and its bundled skills cannot mix generations. It reconciles only enrolled Mulgae and Gaori MCP servers through the installed development manager; Dolgorae, Podway, and Sanho remain CLI integrations. Each MCP launch resolves and leases that external project's current enrolled artifact. Missing external enrollment is reported and never replaced with stable configuration.
+This leases and installs the exact current Aquarium marketplace generation into `~/.aquarium/codex`, so the plugin and its bundled skills cannot mix generations. Authentication is checked before mutation. Configuration uses a durable rollback snapshot beneath the Aquarium host root, restores an interrupted transaction on the next invocation, bounds every Codex subprocess and its descendants, and retains the prior active configuration until the new generation passes diagnosis.
+
+It reconciles only enrolled Mulgae and Gaori MCP servers through the installed development manager; Dolgorae, Podway, and Sanho remain CLI integrations. Each MCP launch resolves and leases that external project's current enrolled artifact. Missing external enrollment is reported and never replaced with stable configuration.
 
 Run diagnosis afterward. Its bounded report must identify the selected enrollment and hook, current artifact, isolated plugin and bundled-skill generation, MCP servers, login readiness, and every supported project's resolved development artifact or explicit non-enrolled/broken state.
 

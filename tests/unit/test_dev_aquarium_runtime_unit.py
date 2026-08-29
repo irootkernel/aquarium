@@ -4,14 +4,30 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SOURCE_SCRIPTS / "dev_aquarium.py"
 sys.path.insert(0, str(SOURCE_SCRIPTS))
 
-from dev_manager import artifact_digest
+import dev_manager
+from dev_manager import ManagerError, artifact_digest
+
+
+@pytest.fixture(autouse=True)
+def clear_managed_immutable_flags(tmp_path):
+    yield
+    for current, directories, files in os.walk(tmp_path):
+        os.chflags(current, 0)
+        for name in (*directories, *files):
+            target = Path(current) / name
+            if not target.is_symlink():
+                os.chflags(target, 0)
+
 
 FAKE_CODEX = r"""#!/usr/bin/env python3
 import json
@@ -31,18 +47,28 @@ state = json.loads(state_path.read_text()) if state_path.exists() else {
 args = sys.argv[1:]
 if args == ["login", "status"]:
     raise SystemExit(0 if (home / "logged-in").exists() else 1)
+failure = os.environ.get("AQUARIUM_TEST_CODEX_FAILURE")
+if args == ["mcp", "list", "--json"] and failure == "mcp-list":
+    print("injected mcp-list failure", file=sys.stderr)
+    raise SystemExit(1)
 if args == ["plugin", "list", "--json"]:
     print(json.dumps({"installed": [] if state["plugin"] is None else [state["plugin"]]}))
 elif args == ["plugin", "marketplace", "list", "--json"]:
     values = [] if state["marketplace"] is None else [{"name": "root-kernel"}]
     print(json.dumps({"marketplaces": values}))
 elif args[:3] == ["plugin", "marketplace", "add"]:
+    if failure == "marketplace-add":
+        print("injected marketplace-add failure", file=sys.stderr)
+        raise SystemExit(1)
     state["marketplace"] = args[3]
     print(json.dumps({"marketplaceName": "root-kernel"}))
 elif args[:3] == ["plugin", "marketplace", "remove"]:
     state["marketplace"] = None
     print(json.dumps({"removed": True}))
 elif args[:2] == ["plugin", "add"]:
+    if failure == "plugin-add":
+        print("injected plugin-add failure", file=sys.stderr)
+        raise SystemExit(1)
     source = Path(state["marketplace"]) / "plugins/aquarium"
     manifest = json.loads((source / ".codex-plugin/plugin.json").read_text())
     installed = home / "plugins/cache/root-kernel/aquarium" / manifest["version"]
@@ -298,7 +324,9 @@ def test_isolated_codex_configuration_requires_approval_and_login(
     error = json.loads(configured.stderr)["error"]
     assert error["code"] == "codex_login_required"
     assert error["action"] == f"CODEX_HOME={host_root / 'codex'} codex login"
+    assert not (host_root / "codex").exists()
     assert stable_sentinel.read_text() == "stable"
+    (host_root / "codex").mkdir()
     (host_root / "codex/logged-in").touch()
 
     completed = run_cli(
@@ -353,6 +381,9 @@ def test_isolated_codex_configuration_requires_approval_and_login(
     assert rebuilt.returncode == 0, rebuilt.stderr
     assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
 
+    prior_configuration = (host_root / "codex/fake-state.json").read_bytes()
+    (host_root / "codex").chmod(0o750)
+    prior_mode = stat.S_IMODE((host_root / "codex").stat().st_mode)
     (host_root / "codex/logged-in").unlink()
     login_blocked = run_cli(
         host_root,
@@ -366,6 +397,8 @@ def test_isolated_codex_configuration_requires_approval_and_login(
     assert login_blocked.returncode == 1
     assert json.loads(login_blocked.stderr)["error"]["code"] == "codex_login_required"
     assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
+    assert (host_root / "codex/fake-state.json").read_bytes() == prior_configuration
+    assert stat.S_IMODE((host_root / "codex").stat().st_mode) == prior_mode
     (host_root / "codex/logged-in").touch()
 
     updated = run_cli(
@@ -424,3 +457,242 @@ def test_codex_mcp_wiring_uses_the_installed_manager_and_enrolled_generation(
         "--project-root",
         str(mulgae),
     ]
+
+
+@pytest.mark.parametrize("failure", ("marketplace-add", "plugin-add", "mcp-list"))
+def test_codex_configuration_restores_prior_state_after_install_failure(
+    tmp_path, monkeypatch, failure
+):
+    repository = create_aquarium_repository(tmp_path / "aquarium")
+    host_root = tmp_path / "host"
+    fake_codex = tmp_path / "fake-codex"
+    fake_codex.write_text(FAKE_CODEX, encoding="utf-8")
+    fake_codex.chmod(0o755)
+    enroll_and_build(repository, host_root)
+    (host_root / "codex").mkdir()
+    (host_root / "codex/logged-in").touch()
+
+    configured = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert configured.returncode == 0, configured.stderr
+    prior_config = (host_root / "codex/fake-state.json").read_bytes()
+    prior_plugins = {
+        path.relative_to(host_root / "codex/plugins"): path.read_bytes()
+        for path in (host_root / "codex/plugins").rglob("*")
+        if path.is_file()
+    }
+    (host_root / "codex").chmod(0o750)
+    prior_mode = stat.S_IMODE((host_root / "codex").stat().st_mode)
+
+    marker = repository / "revision.txt"
+    marker.write_text("next", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", marker.name], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "next"],
+        check=True,
+    )
+    rebuilt = run_cli(
+        host_root,
+        "rebuild",
+        "--repository",
+        repository,
+        "--approve-build",
+    )
+    assert rebuilt.returncode == 0, rebuilt.stderr
+
+    monkeypatch.setenv("AQUARIUM_TEST_CODEX_FAILURE", failure)
+    failed = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+
+    assert failed.returncode == 1
+    assert json.loads(failed.stderr)["error"]["code"] == "codex_not_configured"
+    assert (host_root / "codex/fake-state.json").read_bytes() == prior_config
+    assert stat.S_IMODE((host_root / "codex").stat().st_mode) == prior_mode
+    restored_plugins = {
+        path.relative_to(host_root / "codex/plugins"): path.read_bytes()
+        for path in (host_root / "codex/plugins").rglob("*")
+        if path.is_file()
+    }
+    assert restored_plugins == prior_plugins
+
+    monkeypatch.delenv("AQUARIUM_TEST_CODEX_FAILURE")
+    retried = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert retried.returncode == 0, retried.stderr
+
+
+def test_codex_command_timeout_has_a_bounded_configuration_error(tmp_path, monkeypatch):
+    sleeper = tmp_path / "sleeping-codex"
+    child_pid = tmp_path / "child-pid"
+    sleeper.write_text(
+        '#!/bin/sh\nsleep 10 &\necho "$!" > "$AQUARIUM_CHILD_PID"\nwait\n',
+        encoding="utf-8",
+    )
+    sleeper.chmod(0o700)
+    monkeypatch.setenv("AQUARIUM_CHILD_PID", str(child_pid))
+    started = time.monotonic()
+    with pytest.raises(ManagerError) as raised:
+        dev_manager._run_codex(
+            str(sleeper),
+            tmp_path,
+            "plugin",
+            "list",
+            "--json",
+            timeout_seconds=0.5,
+        )
+    elapsed = time.monotonic() - started
+
+    assert raised.value.code == "codex_not_configured"
+    assert "within 0.5 seconds" in raised.value.message
+    assert elapsed < 2
+    descendant = int(child_pid.read_text())
+    deadline = time.monotonic() + 1
+    while time.monotonic() < deadline:
+        try:
+            os.kill(descendant, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.01)
+    else:
+        pytest.fail("the timed-out Codex descendant survived process-group cleanup")
+
+
+def test_codex_configuration_success_is_not_reversed_by_cleanup_failure(tmp_path):
+    repository = create_aquarium_repository(tmp_path / "aquarium")
+    host_root = tmp_path / "host"
+    fake_codex = tmp_path / "fake-codex"
+    fake_codex.write_text(FAKE_CODEX, encoding="utf-8")
+    fake_codex.chmod(0o755)
+    enroll_and_build(repository, host_root)
+    (host_root / "codex").mkdir()
+    (host_root / "codex/logged-in").touch()
+    first = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert first.returncode == 0, first.stderr
+    first_sha = json.loads(first.stdout)["details"]["plugin_git_sha"]
+
+    marker = repository / "revision.txt"
+    marker.write_text("next", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", marker.name], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "next"],
+        check=True,
+    )
+    rebuilt = run_cli(
+        host_root,
+        "rebuild",
+        "--repository",
+        repository,
+        "--approve-build",
+    )
+    assert rebuilt.returncode == 0, rebuilt.stderr
+    old_generation = host_root / "artifacts/aquarium" / first_sha
+    shutil.rmtree(old_generation)
+    old_generation.write_text("blocks cleanup", encoding="utf-8")
+
+    updated = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+
+    assert updated.returncode == 0, updated.stderr
+    details = json.loads(updated.stdout)["details"]
+    assert details["plugin_git_sha"] != first_sha
+    assert old_generation.is_file()
+
+
+def test_next_configuration_recovers_an_interrupted_durable_transaction(tmp_path):
+    repository = create_aquarium_repository(tmp_path / "aquarium")
+    host_root = tmp_path / "host"
+    fake_codex = tmp_path / "fake-codex"
+    fake_codex.write_text(FAKE_CODEX, encoding="utf-8")
+    fake_codex.chmod(0o755)
+    enroll_and_build(repository, host_root)
+    codex_home = host_root / "codex"
+    codex_home.mkdir()
+    (codex_home / "logged-in").touch()
+    configured = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert configured.returncode == 0, configured.stderr
+    codex_home.chmod(0o750)
+    prior_state = (codex_home / "fake-state.json").read_bytes()
+
+    transaction = host_root / "transactions/codex-config"
+    transaction.parent.mkdir(parents=True, exist_ok=True)
+    transaction.mkdir()
+    dev_manager._snapshot_codex_configuration(codex_home, transaction)
+    (transaction / "home-mode").write_text("750\n", encoding="ascii")
+    (transaction / "active").write_text("aquarium-codex-transaction/v1\n")
+    (codex_home / "fake-state.json").write_text("{}", encoding="utf-8")
+    shutil.rmtree(codex_home / "plugins")
+    codex_home.chmod(0o700)
+    (codex_home / "logged-in").unlink()
+
+    recovered = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+
+    assert recovered.returncode == 1
+    assert json.loads(recovered.stderr)["error"]["code"] == "codex_login_required"
+    assert (codex_home / "fake-state.json").read_bytes() == prior_state
+    assert (codex_home / "plugins").is_dir()
+    assert stat.S_IMODE(codex_home.stat().st_mode) == 0o750
+    assert not transaction.exists()
+
+    (codex_home / "logged-in").touch()
+    retried = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert retried.returncode == 0, retried.stderr

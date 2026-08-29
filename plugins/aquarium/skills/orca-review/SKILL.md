@@ -44,7 +44,7 @@ The selection record must disclose the exact provider command, requested lead id
 
 ## Dispatch and Supervise
 
-Resolve the installed Orca command and live guides exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run and Task, then create one fresh provider terminal in the current worktree only through `scripts/create_provider_terminal.py` with the selected logical argv from [provider-contracts.md](references/provider-contracts.md).
+Resolve the installed Orca command and live guides exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Reuse the exact Run and Task created before capture; do not allocate another lifecycle object. Then create one fresh provider terminal in the current worktree only through `scripts/create_provider_terminal.py` with the selected logical argv from [provider-contracts.md](references/provider-contracts.md).
 
 Immediately before terminal creation, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned source-mutation baseline. Then feed the terminal-helper request through non-expanding stdin with that same exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing.
 

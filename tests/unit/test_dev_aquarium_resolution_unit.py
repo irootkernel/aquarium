@@ -5,12 +5,26 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
+from dev_aquarium import open_guarded_executable  # isort: skip
 from dev_manager import resolve_artifact  # isort: skip
+
+
+@pytest.fixture(autouse=True)
+def clear_managed_immutable_flags(tmp_path):
+    yield
+    for current, directories, files in os.walk(tmp_path):
+        os.chflags(current, 0)
+        for name in (*directories, *files):
+            target = Path(current) / name
+            if not target.is_symlink():
+                os.chflags(target, 0)
 
 
 PRODUCER = r'''import hashlib
@@ -348,7 +362,7 @@ def test_guarded_launch_rejects_partial_or_stable_identity(tmp_path):
     assert payload(guarded_stable)["error"]["code"] == "artifact_invalid"
 
 
-def test_execution_alias_survives_source_path_replacement(tmp_path):
+def test_execution_alias_rejects_source_path_replacement(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"
     enroll_and_build(repository, host_root)
@@ -357,23 +371,143 @@ def test_execution_alias_survives_source_path_replacement(tmp_path):
     expected = resolved.execution_path.read_bytes()
     replacement = tmp_path / "replacement"
     replacement.write_text("replaced", encoding="utf-8")
-    os.replace(replacement, resolved.path)
+    with pytest.raises(OSError):
+        os.replace(replacement, resolved.path)
 
     assert resolved.execution_path.read_bytes() == expected
     assert resolved.execution_path != resolved.path
     resolved.close()
+    os.chflags(resolved.execution_path, 0)
+    os.chflags(resolved.execution_path.parent, 0)
 
 
-def test_dolgorae_source_bearing_launch_requires_exact_guards(tmp_path):
+def test_guarded_descriptor_revalidation_rejects_alias_replacement(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll_and_build(repository, host_root)
+    resolved = resolve_artifact("podway", host_root)
+    descriptor = open_guarded_executable(resolved, resolved.sha256)
+    alias = resolved.execution_path
+    replacement = alias.parent / "replacement"
+    with pytest.raises(OSError):
+        alias.parent.chmod(0o700)
+        replacement.write_text("replaced", encoding="utf-8")
+        replacement.chmod(0o700)
+        os.replace(replacement, alias)
+
+    os.close(descriptor)
+    resolved.close()
+    os.chflags(alias, 0)
+    os.chflags(alias.parent, 0)
+
+
+@pytest.mark.parametrize(
+    "operation",
+    (
+        ("specialist", "review"),
+        ("review-target", "capture"),
+        ("review-target", "settle"),
+    ),
+)
+def test_dolgorae_source_bearing_launch_requires_exact_guards(tmp_path, operation):
     result = run_cli(
         tmp_path / "host",
         "launch",
         "--project-id",
         "dolgorae",
         "--",
-        "specialist",
-        "review",
+        *operation,
     )
 
     assert result.returncode == 2
     assert payload(result)["error"]["code"] == "invalid_arguments"
+
+
+@pytest.mark.parametrize(
+    "guards",
+    (
+        ("--expected-git-sha", "0" * 40),
+        (
+            "--expected-development-version",
+            "v0.1.0-dev.000000000000",
+            "--expected-sha256",
+            "sha256:" + "0" * 64,
+        ),
+        (
+            "--expected-sha256",
+            "sha256:invalid",
+            "--expected-development-version",
+            "v0.1.0-dev.000000000000",
+            "--expected-git-sha",
+            "0" * 40,
+        ),
+        (
+            "--expected-git-sha",
+            "",
+            "--expected-development-version",
+            "v0.1.0-dev.000000000000",
+            "--expected-sha256",
+            "sha256:" + "0" * 64,
+        ),
+        (
+            "--expected-development-version",
+            "v0.1.0-dev." + "0" * 13,
+            "--expected-git-sha",
+            "0" * 40,
+            "--expected-sha256",
+            "sha256:" + "0" * 64,
+        ),
+        (
+            "--expected-sha256",
+            "sha256:" + "0" * 65,
+            "--expected-development-version",
+            "v0.1.0-dev.000000000000",
+            "--expected-git-sha",
+            "0" * 40,
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "operation",
+    (
+        ("specialist", "review"),
+        ("review-target", "capture"),
+        ("review-target", "settle"),
+    ),
+)
+def test_dolgorae_review_launch_rejects_partial_and_malformed_guards(
+    tmp_path, guards, operation
+):
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        *guards,
+        "--",
+        *operation,
+    )
+
+    assert result.returncode == 2
+    assert payload(result)["error"]["code"] == "invalid_arguments"
+
+
+def test_dolgorae_review_launch_accepts_reordered_complete_guard_options(tmp_path):
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--expected-sha256",
+        "sha256:" + "0" * 64,
+        "--expected-git-sha",
+        "0" * 40,
+        "--expected-development-version",
+        "v0.1.0-dev.000000000000",
+        "--",
+        "review-target",
+        "settle",
+    )
+
+    assert result.returncode == 1
+    assert payload(result)["error"]["code"] == "enrollment_missing"
