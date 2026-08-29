@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import stat
 import sys
 from pathlib import Path
 
@@ -109,6 +111,48 @@ def launch_guard(arguments: argparse.Namespace) -> tuple[str, str, str] | None:
             arguments.project_id,
         )
     return git_sha, development_version, sha256
+
+
+def open_guarded_executable(resolved, expected_sha256: str) -> int:
+    try:
+        descriptor = os.open(resolved.path, os.O_RDONLY | os.O_CLOEXEC)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_invalid",
+            str(error),
+            "Repair the selected executable artifact and retry.",
+            "launch",
+            resolved.project_id,
+            resolved.git_sha,
+        ) from error
+    try:
+        descriptor_stat = os.fstat(descriptor)
+        path_stat = resolved.path.stat()
+        if (
+            not stat.S_ISREG(descriptor_stat.st_mode)
+            or not os.access(resolved.path, os.X_OK)
+            or (descriptor_stat.st_dev, descriptor_stat.st_ino)
+            != (path_stat.st_dev, path_stat.st_ino)
+        ):
+            raise OSError("the executable path changed before launch")
+        digest = hashlib.sha256()
+        while chunk := os.read(descriptor, 1024 * 1024):
+            digest.update(chunk)
+        if f"sha256:{digest.hexdigest()}" != expected_sha256:
+            raise OSError("the opened executable checksum does not match the launch guard")
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        os.set_inheritable(descriptor, True)
+        return descriptor
+    except OSError as error:
+        os.close(descriptor)
+        raise ManagerError(
+            "artifact_invalid",
+            str(error),
+            "Resolve the intended immutable generation and retry with its exact guards.",
+            "launch",
+            resolved.project_id,
+            resolved.git_sha,
+        ) from error
 
 
 def result(operation: str, status: str, project_id: str | None, message: str, details):
@@ -237,6 +281,11 @@ def main() -> int:
                     arguments.project_id,
                     resolved.git_sha,
                 )
+            executable_descriptor = (
+                open_guarded_executable(resolved, guard[2])
+                if guard is not None
+                else None
+            )
             launch_arguments = arguments.arguments
             if launch_arguments[:1] == ["--"]:
                 launch_arguments = launch_arguments[1:]
@@ -258,6 +307,8 @@ def main() -> int:
                     [str(resolved.path), *launch_arguments],
                 )
             except OSError as error:
+                if executable_descriptor is not None:
+                    os.close(executable_descriptor)
                 resolved.close()
                 raise ManagerError(
                     "artifact_invalid",

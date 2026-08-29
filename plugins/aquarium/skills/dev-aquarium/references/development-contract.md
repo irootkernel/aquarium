@@ -88,7 +88,7 @@ No enrollment permits stable fallback. Once an enrollment record exists, a missi
 
 Resolution acquires a shared BSD advisory lock for the selected immutable artifact before returning its path. Launch holds the open lock descriptor for the complete child lifetime and never re-resolves `current`. Publication and cleanup require exclusive locks. Cleanup removes a superseded artifact immediately when its exclusive non-blocking lease succeeds; otherwise an asynchronous cleanup worker waits for operating-system ownership to become available. PIDs, timestamps, and grace periods are not lease authority.
 
-An exact development-candidate launch supplies `--expected-git-sha`, `--expected-development-version`, and `--expected-sha256` as one complete guard set. Partial or malformed guards are rejected before resolution. A stable fallback never satisfies guarded launch, and any mismatch against the leased immutable generation fails before executable replacement.
+An exact development-candidate launch supplies `--expected-git-sha`, `--expected-development-version`, and `--expected-sha256` as one complete guard set. Partial or malformed guards are rejected before resolution. A stable fallback never satisfies guarded launch, and any mismatch against the leased immutable generation fails before executable replacement. Guarded launch also opens and rehashes the selected regular executable, compares its device and inode with the resolved path, and inherits that descriptor with the generation lease across replacement.
 
 ## Scheduling and failure behavior
 

@@ -697,6 +697,7 @@ assert(!canonical_documentation.include?("/Users/") &&
 
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
 dolgorae_reviews_dossier = documentation_details.fetch("dolgorae-reviews-dossier")
+dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
 assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
@@ -739,6 +740,13 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        dolgorae_reviews_dossier.include?("Completed Confirm") &&
        dolgorae_reviews_dossier.include?("mutable `current` selector"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
+assert(dolgorae_review_contract.include?("all three exact guards") &&
+       dolgorae_review_contract.include?("workspace`, `staged`, `dirty`, `head`, `commit`, and `range") &&
+       dolgorae_review_contract.include?("dolgorae-specialist-review-tool-v2.schema.json") &&
+       dolgorae_review_contract.include?("dolgorae-review-target-v1.schema.json") &&
+       dolgorae_review_contract.include?("900-second ceiling") &&
+       dolgorae_review_contract.include?("Candidate-defined secret screening"),
+       "Dolgorae consumer contract must freeze candidate identity, checked wire, bounds, scopes, and trust boundaries")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
