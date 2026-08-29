@@ -115,7 +115,7 @@ def launch_guard(arguments: argparse.Namespace) -> tuple[str, str, str] | None:
 
 def open_guarded_executable(resolved, expected_sha256: str) -> int:
     try:
-        descriptor = os.open(resolved.path, os.O_RDONLY | os.O_CLOEXEC)
+        descriptor = os.open(resolved.execution_path, os.O_RDONLY | os.O_CLOEXEC)
     except OSError as error:
         raise ManagerError(
             "artifact_invalid",
@@ -128,11 +128,14 @@ def open_guarded_executable(resolved, expected_sha256: str) -> int:
     try:
         descriptor_stat = os.fstat(descriptor)
         path_stat = resolved.path.stat()
+        execution_stat = resolved.execution_path.stat()
         if (
             not stat.S_ISREG(descriptor_stat.st_mode)
             or not os.access(resolved.path, os.X_OK)
             or (descriptor_stat.st_dev, descriptor_stat.st_ino)
             != (path_stat.st_dev, path_stat.st_ino)
+            or (descriptor_stat.st_dev, descriptor_stat.st_ino)
+            != (execution_stat.st_dev, execution_stat.st_ino)
         ):
             raise OSError("the executable path changed before launch")
         digest = hashlib.sha256()
@@ -266,6 +269,24 @@ def main() -> int:
             return 0
         if arguments.command == "launch":
             guard = launch_guard(arguments)
+            launch_arguments = arguments.arguments
+            if launch_arguments[:1] == ["--"]:
+                launch_arguments = launch_arguments[1:]
+            source_bearing_dolgorae = arguments.project_id == "dolgorae" and (
+                launch_arguments[:2] == ["specialist", "review"]
+                or launch_arguments[:2] in (
+                    ["review-target", "capture"],
+                    ["review-target", "settle"],
+                )
+            )
+            if source_bearing_dolgorae and guard is None:
+                raise ManagerError(
+                    "invalid_arguments",
+                    "Dolgorae review operations require a complete exact-generation guard set.",
+                    "Supply the expected Git SHA, development version, and SHA-256.",
+                    "launch",
+                    arguments.project_id,
+                )
             resolved = resolve_artifact(
                 arguments.project_id, arguments.host_root, arguments.stable
             )
@@ -288,9 +309,6 @@ def main() -> int:
                 if guard is not None
                 else None
             )
-            launch_arguments = arguments.arguments
-            if launch_arguments[:1] == ["--"]:
-                launch_arguments = launch_arguments[1:]
             if resolved.artifact_kind == "codex-plugin" or not resolved.path.is_file():
                 resolved.close()
                 raise ManagerError(
@@ -305,7 +323,7 @@ def main() -> int:
                 os.set_inheritable(resolved.lease.fileno(), True)
             try:
                 os.execv(
-                    resolved.path,
+                    resolved.execution_path,
                     [str(resolved.path), *launch_arguments],
                 )
             except OSError as error:

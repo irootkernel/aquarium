@@ -182,6 +182,7 @@ def test_shared_resolution_lease_defers_cleanup_until_release(tmp_path):
     first_sha = enroll_and_build(repository, host_root)
     first_generation = host_root / "artifacts/podway" / first_sha
     first_resolution = resolve_artifact("podway", host_root)
+    first_execution = first_resolution.execution_path
     second_resolution = resolve_artifact("podway", host_root)
     second_sha = commit_next_revision(repository)
 
@@ -202,6 +203,8 @@ def test_shared_resolution_lease_defers_cleanup_until_release(tmp_path):
     assert first_generation.exists()
     second_resolution.close()
     wait_missing(first_generation)
+    assert first_execution is not None
+    assert not first_execution.exists()
 
 
 def test_publication_immediately_removes_an_unleased_generation(tmp_path):
@@ -343,3 +346,34 @@ def test_guarded_launch_rejects_partial_or_stable_identity(tmp_path):
     )
     assert guarded_stable.returncode == 1
     assert payload(guarded_stable)["error"]["code"] == "artifact_invalid"
+
+
+def test_execution_alias_survives_source_path_replacement(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll_and_build(repository, host_root)
+    resolved = resolve_artifact("podway", host_root)
+    assert resolved.execution_path is not None
+    expected = resolved.execution_path.read_bytes()
+    replacement = tmp_path / "replacement"
+    replacement.write_text("replaced", encoding="utf-8")
+    os.replace(replacement, resolved.path)
+
+    assert resolved.execution_path.read_bytes() == expected
+    assert resolved.execution_path != resolved.path
+    resolved.close()
+
+
+def test_dolgorae_source_bearing_launch_requires_exact_guards(tmp_path):
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--",
+        "specialist",
+        "review",
+    )
+
+    assert result.returncode == 2
+    assert payload(result)["error"]["code"] == "invalid_arguments"

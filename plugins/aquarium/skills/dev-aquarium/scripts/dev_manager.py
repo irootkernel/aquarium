@@ -57,6 +57,7 @@ class ResolvedArtifact:
     development_version: str | None
     sha256: str | None
     artifact_kind: str | None
+    execution_path: Path | None = None
     lease: Any = None
 
     def close(self) -> None:
@@ -1047,6 +1048,39 @@ def _validate_generation(
     return artifact, manifest
 
 
+def _execution_alias(
+    host_root: Path, project_id: str, git_sha: str, artifact: Path
+) -> Path:
+    root = host_root / "runtime" / project_id / git_sha
+    target = root / "executable"
+    try:
+        if target.exists():
+            if target.is_symlink() or not target.is_file() or not os.path.samefile(
+                artifact, target
+            ):
+                raise OSError("the guarded execution alias has changed identity")
+            return target
+        root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        root.chmod(0o700)
+        temporary = root / f".executable.{os.getpid()}.tmp"
+        temporary.unlink(missing_ok=True)
+        os.link(artifact, temporary, follow_symlinks=False)
+        if not os.path.samefile(artifact, temporary):
+            raise OSError("the guarded execution alias does not bind the artifact")
+        os.replace(temporary, target)
+        root.chmod(0o500)
+        return target
+    except OSError as error:
+        raise ManagerError(
+            "artifact_invalid",
+            str(error),
+            "Rebuild the enrolled project from its canonical local main.",
+            "resolve",
+            project_id,
+            git_sha,
+        ) from error
+
+
 def resolve_artifact(
     project_id: str, host_root: Path, stable: Path | None = None
 ) -> ResolvedArtifact:
@@ -1077,7 +1111,9 @@ def resolve_artifact(
                 "resolve",
                 project_id,
             ) from error
-        return ResolvedArtifact(project_id, "stable", path, None, None, None, None)
+        return ResolvedArtifact(
+            project_id, "stable", path, None, None, None, None, path
+        )
 
     checkout = Path(enrollment["checkout"])
     diagnosed_checkout, _, _, _ = _repository_identity(checkout)
@@ -1123,6 +1159,11 @@ def resolve_artifact(
         ) from error
     try:
         artifact, manifest = _validate_generation(generation, project_id, description)
+        execution_path = (
+            _execution_alias(host_root, project_id, git_sha, artifact)
+            if manifest["artifact_kind"] == "executable"
+            else artifact
+        )
     except Exception:
         lease.close()
         raise
@@ -1134,6 +1175,7 @@ def resolve_artifact(
         manifest["development_version"],
         manifest["sha256"],
         manifest["artifact_kind"],
+        execution_path,
         lease,
     )
 
@@ -1320,18 +1362,6 @@ def configure_codex(
             "login": verification["login"],
             "login_action": verification["login_action"],
         }
-        artifact_root = host_root / "artifacts" / "aquarium"
-        if artifact_root.is_dir():
-            for generation in sorted(artifact_root.iterdir()):
-                if generation.name == aquarium.git_sha or not SHA_RE.fullmatch(
-                    generation.name
-                ):
-                    continue
-                cleanup_status, cleanup = cleanup_generation(
-                    "aquarium", generation.name, host_root, wait=False
-                )
-                if cleanup_status == "no-change" and cleanup.get("leased"):
-                    _spawn_cleanup(host_root, "aquarium", generation.name)
     if details["login"] != "ready":
         raise ManagerError(
             "codex_login_required",
@@ -1341,6 +1371,18 @@ def configure_codex(
             "aquarium",
             git_sha,
         )
+    artifact_root = host_root / "artifacts" / "aquarium"
+    if artifact_root.is_dir():
+        for generation in sorted(artifact_root.iterdir()):
+            if generation.name == details["plugin_git_sha"] or not SHA_RE.fullmatch(
+                generation.name
+            ):
+                continue
+            cleanup_status, cleanup = cleanup_generation(
+                "aquarium", generation.name, host_root, wait=False
+            )
+            if cleanup_status == "no-change" and cleanup.get("leased"):
+                _spawn_cleanup(host_root, "aquarium", generation.name)
     return "success", details
 
 
@@ -1396,6 +1438,10 @@ def cleanup_generation(
                     git_sha,
                 )
             shutil.rmtree(generation)
+            runtime = host_root / "runtime" / project_id / git_sha
+            if runtime.exists():
+                runtime.chmod(0o700)
+                shutil.rmtree(runtime)
             return "success", {"git_sha": git_sha, "removed": True}
         return "no-change", {"git_sha": git_sha, "removed": False}
 

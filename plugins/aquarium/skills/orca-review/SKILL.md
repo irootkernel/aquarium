@@ -19,7 +19,11 @@ Extend `$aquarium:independent-review` with a removable non-Codex provider layer.
 
 Classify and resolve one `workspace`, `staged`, `dirty`, `head`, `commit`, or `range` source scope exactly as the shared review contract specifies. A `task`, `epic`, or special request supplies authority and focus only. Inspect current state without mutation and never stage or normalize content.
 
-Admit and revalidate the exact enrolled Dolgorae generation, then create one protected owner-credential carrier outside the repository. Through the guarded manager, call checked `review-target.capture` with backend `orca` and a new immutable Orca lifecycle identity. Bind its complete capture result, immutable root, exact authority paths, included and excluded state, target and manifest digests, and review focus to the Task. Delete an unused carrier after a failed capture; preserve an admitted carrier until authoritative settlement or recovery.
+Create the Orca Run and review Task first and record their authoritative identities without Dispatching source. Admit and revalidate the exact enrolled Dolgorae generation, then create one protected owner-credential carrier outside the repository.
+
+Through the guarded manager, call checked `review-target.capture` with backend `orca` and the immutable Run and Task lifecycle identity. Bind its complete capture result, immutable root, exact authority paths, included and excluded state, target and manifest digests, and review focus to the Task.
+
+If capture fails, close the still-empty Orca lifecycle through its native authority. Delete an unused carrier after a failed capture; preserve an admitted carrier until authoritative settlement or recovery.
 
 The provider still runs in Orca's current registered checkout, not a private repository snapshot, but the Task authorizes review only from the immutable capture root. Disclose that the same operating-system user can technically read excluded source-worktree bytes. Never substitute the current checkout for captured review input.
 

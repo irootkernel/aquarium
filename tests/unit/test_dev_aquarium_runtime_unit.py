@@ -353,6 +353,21 @@ def test_isolated_codex_configuration_requires_approval_and_login(
     assert rebuilt.returncode == 0, rebuilt.stderr
     assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
 
+    (host_root / "codex/logged-in").unlink()
+    login_blocked = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+    assert login_blocked.returncode == 1
+    assert json.loads(login_blocked.stderr)["error"]["code"] == "codex_login_required"
+    assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
+    (host_root / "codex/logged-in").touch()
+
     updated = run_cli(
         host_root,
         "--codex-bin",
