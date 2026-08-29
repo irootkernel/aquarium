@@ -1055,8 +1055,10 @@ def _execution_alias(
     target = root / "executable"
     try:
         if target.exists():
-            if target.is_symlink() or not target.is_file() or not os.path.samefile(
-                artifact, target
+            if (
+                target.is_symlink()
+                or not target.is_file()
+                or not os.path.samefile(artifact, target)
             ):
                 raise OSError("the guarded execution alias has changed identity")
             return target

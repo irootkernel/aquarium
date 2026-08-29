@@ -274,7 +274,8 @@ def main() -> int:
                 launch_arguments = launch_arguments[1:]
             source_bearing_dolgorae = arguments.project_id == "dolgorae" and (
                 launch_arguments[:2] == ["specialist", "review"]
-                or launch_arguments[:2] in (
+                or launch_arguments[:2]
+                in (
                     ["review-target", "capture"],
                     ["review-target", "settle"],
                 )
