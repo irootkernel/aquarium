@@ -39,6 +39,7 @@ MCP_ARGUMENTS = {
 }
 CODEX_COMMAND_TIMEOUT_SECONDS = 120
 PRODUCER_BUILD_TIMEOUT_SECONDS = 600
+PROCESS_TERMINATION_GRACE_SECONDS = 5
 
 
 @dataclass
@@ -946,12 +947,29 @@ def _validated_build(
         try:
             stdout, stderr = process.communicate(timeout=PRODUCER_BUILD_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired as error:
-            os.killpg(process.pid, signal.SIGTERM)
-            try:
-                process.communicate(timeout=5)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.communicate()
+            for termination_signal in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.killpg(process.pid, termination_signal)
+                except OSError:
+                    if process.poll() is None:
+                        try:
+                            process.send_signal(termination_signal)
+                        except OSError:
+                            pass
+                try:
+                    process.communicate(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+            else:
+                if process.stdout is not None:
+                    process.stdout.close()
+                if process.stderr is not None:
+                    process.stderr.close()
+                try:
+                    process.wait(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+                except subprocess.TimeoutExpired:
+                    pass
             raise ManagerError(
                 "producer_build_timeout",
                 "The producer build exceeded its bounded execution time.",

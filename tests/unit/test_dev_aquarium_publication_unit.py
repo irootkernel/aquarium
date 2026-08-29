@@ -1,5 +1,6 @@
 import json
 import os
+import signal
 import stat
 import subprocess
 import sys
@@ -65,6 +66,18 @@ elif mode == "build":
 elif mode == "hang":
     child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     Path(os.environ["AQUARIUM_TEST_CHILD_PID"]).write_text(str(child.pid))
+    time.sleep(60)
+elif mode == "escape":
+    child = subprocess.Popen([
+        sys.executable,
+        "-c",
+        "import os,time; os.setsid(); "
+        "open(os.environ['AQUARIUM_TEST_ESCAPE_READY'], 'w').write(str(os.getpid())); "
+        "time.sleep(60)",
+    ])
+    ready = Path(os.environ["AQUARIUM_TEST_ESCAPE_READY"])
+    while not ready.exists():
+        time.sleep(0.01)
     time.sleep(60)
 print(json.dumps(manifest, sort_keys=True))
 """
@@ -251,6 +264,37 @@ def test_timed_out_build_kills_process_group_and_releases_publisher_lock(
     status, details = dev_manager.rebuild(repository, host_root, approve_build=True)
     assert status == "success"
     assert details["git_sha"]
+
+
+def test_timed_out_build_does_not_wait_for_pipes_held_by_escaped_child(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    ready = tmp_path / "escaped.pid"
+    enroll(repository, host_root)
+    monkeypatch.setattr(dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr(dev_manager, "PROCESS_TERMINATION_GRACE_SECONDS", 0.1)
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "escape")
+    monkeypatch.setenv("AQUARIUM_TEST_ESCAPE_READY", str(ready))
+
+    started = time.monotonic()
+    with pytest.raises(ManagerError) as failure:
+        dev_manager.rebuild(repository, host_root, approve_build=True)
+    elapsed = time.monotonic() - started
+    escaped_pid = int(ready.read_text())
+    try:
+        assert failure.value.code == "producer_build_timeout"
+        assert elapsed < 1
+        assert not list((host_root / "artifacts/aquarium").glob(".staging-*"))
+        monkeypatch.setenv("AQUARIUM_TEST_MODE", "success")
+        status, _ = dev_manager.rebuild(repository, host_root, approve_build=True)
+        assert status == "success"
+    finally:
+        try:
+            os.kill(escaped_pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
 
 def test_manifest_identity_mismatch_never_exposes_staging(tmp_path):
