@@ -357,6 +357,35 @@ def test_worker_retains_failed_request_and_reports_failure(tmp_path, monkeypatch
     assert not request_path.exists()
 
 
+def test_worker_quarantines_stale_request_without_poisoning_future_runs(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, old = queue_request(repository, host_root, CLI, spawn_worker=False)
+    old_request = Path(old["queued"])
+    marker = repository / "revision.txt"
+    marker.write_text("next\n", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", marker.name], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "next"],
+        check=True,
+    )
+    _, current = queue_request(repository, host_root, CLI, spawn_worker=False)
+
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "sha_mismatch"
+    assert not old_request.exists()
+    quarantined = list((host_root / "queue-failures/aquarium").glob("*.json"))
+    assert len(quarantined) == 1
+    assert json.loads(quarantined[0].read_text())["git_sha"] == old["git_sha"]
+    status, details = process_queue("aquarium", host_root)
+    assert status == "success"
+    assert details["published"] in {0, 1}
+    assert (host_root / "current/aquarium").resolve().name == current["git_sha"]
+
+
 def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"

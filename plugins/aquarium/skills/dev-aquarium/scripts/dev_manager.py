@@ -13,6 +13,7 @@ import signal
 import stat
 import subprocess
 import tempfile
+import time
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -1078,6 +1079,11 @@ def _unseal_managed_tree(root: Path) -> None:
             path.chmod(0o700)
 
 
+def _unseal_with_guaranteed_reseal(stack: ExitStack, root: Path) -> None:
+    stack.callback(_seal_generation, root)
+    _unseal_managed_tree(root)
+
+
 def _publish(
     host_root: Path, staging: Path, manifest: dict[str, Any]
 ) -> tuple[str, dict[str, Any]]:
@@ -1518,8 +1524,7 @@ def _configure_codex_locked(
                 aquarium.git_sha,
             )
         aquarium_generation = aquarium.path.parent
-        _unseal_managed_tree(aquarium_generation)
-        stack.callback(_seal_generation, aquarium_generation)
+        _unseal_with_guaranteed_reseal(stack, aquarium_generation)
         plugins = _run_codex(
             codex_bin, host_root, "plugin", "list", "--json", json_output=True
         )
@@ -1854,6 +1859,16 @@ def queue_request(
     }
 
 
+def _quarantine_build_request(
+    host_root: Path, project_id: str, request_path: Path
+) -> Path:
+    quarantine = host_root / "queue-failures" / project_id
+    quarantine.mkdir(parents=True, exist_ok=True)
+    destination = quarantine / f"{request_path.stem}.{time.time_ns()}.json"
+    os.replace(request_path, destination)
+    return destination
+
+
 def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]]:
     if project_id not in PROJECT_IDS:
         raise ManagerError(
@@ -1865,6 +1880,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
     queue = host_root / "queue" / project_id
     processed = 0
     published = 0
+    quarantined = 0
     latest: dict[str, Any] = {}
     first_failure: ManagerError | None = None
     with _publisher_lock(host_root, project_id):
@@ -1879,7 +1895,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                     or request.get("schema") != QUEUE_SCHEMA
                     or request.get("project_id") != project_id
                 ):
-                    raise ManagerError(
+                    error = ManagerError(
                         "invalid_arguments",
                         "The queued build request is invalid.",
                         "Remove the invalid request and queue the current revision again.",
@@ -1887,11 +1903,14 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                         project_id,
                         request.get("git_sha") if isinstance(request, dict) else None,
                     )
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                    raise error
                 checkout, _, description, git_sha = _require_enrolled_checkout(
                     Path(request["checkout"]), host_root, require_clean=True
                 )
                 if git_sha != request["git_sha"]:
-                    raise ManagerError(
+                    error = ManagerError(
                         "sha_mismatch",
                         "The queued revision is no longer the completed local-main revision.",
                         "Queue the current completed local-main revision.",
@@ -1899,6 +1918,9 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                         project_id,
                         request["git_sha"],
                     )
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                    raise error
                 staging, manifest = _validated_build(
                     checkout, host_root, description, git_sha
                 )
@@ -1909,7 +1931,20 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 _write_diagnostic(host_root, error)
                 if first_failure is None:
                     first_failure = error
-            except (OSError, json.JSONDecodeError) as error:
+            except json.JSONDecodeError as error:
+                _quarantine_build_request(host_root, project_id, request_path)
+                quarantined += 1
+                wrapped = ManagerError(
+                    "invalid_arguments",
+                    str(error),
+                    "Queue the current completed local-main revision again.",
+                    "schedule",
+                    project_id,
+                )
+                _write_diagnostic(host_root, wrapped)
+                if first_failure is None:
+                    first_failure = wrapped
+            except OSError as error:
                 wrapped = ManagerError(
                     "invalid_arguments",
                     str(error),
@@ -1925,5 +1960,6 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
     return "success", {
         "processed": processed,
         "published": published,
+        "quarantined": quarantined,
         **latest,
     }

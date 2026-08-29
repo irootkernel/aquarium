@@ -5,6 +5,7 @@ import stat
 import subprocess
 import sys
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 import pytest
@@ -638,6 +639,27 @@ def test_codex_configuration_success_is_not_reversed_by_cleanup_failure(tmp_path
     details = json.loads(updated.stdout)["details"]
     assert details["plugin_git_sha"] != first_sha
     assert old_generation.is_file()
+
+
+def test_partial_unseal_failure_reseals_the_complete_generation(tmp_path, monkeypatch):
+    generation = tmp_path / "generation"
+    generation.mkdir()
+    payload = generation / "payload.txt"
+    payload.write_text("immutable\n", encoding="utf-8")
+    dev_manager._seal_generation(generation)
+
+    def fail_after_partial_unseal(root):
+        os.chflags(root, 0)
+        root.chmod(0o700)
+        raise OSError("injected partial unseal failure")
+
+    monkeypatch.setattr(dev_manager, "_unseal_managed_tree", fail_after_partial_unseal)
+
+    with pytest.raises(OSError), ExitStack() as stack:
+        dev_manager._unseal_with_guaranteed_reseal(stack, generation)
+
+    assert generation.stat().st_flags & stat.UF_IMMUTABLE
+    assert payload.stat().st_flags & stat.UF_IMMUTABLE
 
 
 def test_next_configuration_recovers_an_interrupted_durable_transaction(tmp_path):
