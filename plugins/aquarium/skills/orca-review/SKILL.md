@@ -48,6 +48,8 @@ Resolve the installed Orca command and live guides exactly as [orca-supervision.
 
 Immediately before terminal creation, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned source-mutation baseline. Then feed the terminal-helper request through non-expanding stdin with that same exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing.
 
+The helper copies the verified Orca executable into a private user-immutable location before launch. Its injected provider guard independently copies, rehashes, seals, executes, and removes the verified provider bytes, so later canonical-path replacement cannot change either executed object.
+
 The helper-generated command must revalidate provider identity at provider-process start. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
 
 Inject one Dispatch containing the canonical Task and immutable capture root. Tell the lead explicitly that this is review, not implementation, and that it must not enter or request a provider plan mode. Regardless of the tools available in normal mode, require the lead to remain read-only; never create, modify, delete, or move a file; and never alter the Git index or a ref.

@@ -1762,6 +1762,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
     processed = 0
     published = 0
     latest: dict[str, Any] = {}
+    first_failure: ManagerError | None = None
     with _publisher_lock(host_root, project_id):
         for request_path in sorted(queue.glob("*.json")) if queue.exists() else []:
             processed += 1
@@ -1799,8 +1800,11 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 )
                 _, latest = _publish(host_root, staging, manifest)
                 published += 1
+                request_path.unlink(missing_ok=True)
             except ManagerError as error:
                 _write_diagnostic(host_root, error)
+                if first_failure is None:
+                    first_failure = error
             except (OSError, json.JSONDecodeError) as error:
                 wrapped = ManagerError(
                     "invalid_arguments",
@@ -1810,8 +1814,10 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                     project_id,
                 )
                 _write_diagnostic(host_root, wrapped)
-            finally:
-                request_path.unlink(missing_ok=True)
+                if first_failure is None:
+                    first_failure = wrapped
+    if first_failure is not None:
+        raise first_failure
     return "success", {
         "processed": processed,
         "published": published,

@@ -7,9 +7,12 @@ import hashlib
 import json
 import os
 import shlex
+import shutil
 import stat
 import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -22,8 +25,11 @@ PROVIDER_EXEC_GUARD = r"""
 import hashlib
 import os
 import pathlib
+import shutil
 import stat
+import subprocess
 import sys
+import tempfile
 
 target = pathlib.Path(sys.argv[1])
 expected_digest = sys.argv[2]
@@ -54,7 +60,25 @@ try:
     )
     if digest.hexdigest() != expected_digest or identity(before) != identity(after):
         reject()
-    os.execv(observed, [str(observed), *sys.argv[4:]])
+    private_root = pathlib.Path(tempfile.mkdtemp(prefix="aquarium-provider-"))
+    private_target = private_root / "executable"
+    try:
+        shutil.copyfile(observed, private_target)
+        private_target.chmod(0o500)
+        private_digest = hashlib.sha256(private_target.read_bytes()).hexdigest()
+        if private_digest != expected_digest:
+            reject()
+        private_root.chmod(0o500)
+        os.chflags(private_target, stat.UF_IMMUTABLE)
+        os.chflags(private_root, stat.UF_IMMUTABLE)
+        completed = subprocess.run([str(private_target), *sys.argv[4:]], check=False)
+    finally:
+        if private_target.exists():
+            os.chflags(private_target, 0)
+        os.chflags(private_root, 0)
+        private_root.chmod(0o700)
+        shutil.rmtree(private_root, ignore_errors=True)
+    raise SystemExit(completed.returncode)
 except (OSError, RuntimeError):
     reject()
 """.strip()
@@ -72,6 +96,29 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+@contextmanager
+def immutable_executable_copy(target: Path, expected_digest: str):
+    root = Path(tempfile.mkdtemp(prefix="aquarium-orca-"))
+    executable = root / "executable"
+    try:
+        shutil.copyfile(target, executable)
+        executable.chmod(0o500)
+        if sha256_file(executable) != expected_digest:
+            raise RequestError(
+                "orca_identity_changed", "orca identity changed before launch"
+            )
+        root.chmod(0o500)
+        os.chflags(executable, stat.UF_IMMUTABLE)
+        os.chflags(root, stat.UF_IMMUTABLE)
+        yield executable
+    finally:
+        if executable.exists():
+            os.chflags(executable, 0)
+        os.chflags(root, 0)
+        root.chmod(0o700)
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def require_string(value: object, code: str, message: str) -> str:
@@ -228,7 +275,9 @@ def parse_request(payload: object) -> dict[str, Any]:
         isinstance(argument, str) and "\0" not in argument for argument in arguments
     ):
         raise RequestError("arguments_invalid", "provider arguments are invalid")
-    orca_entrypoint, _, _ = canonical_entrypoint(payload["orca"], repository, "orca")
+    orca_entrypoint, orca_target, orca_digest = canonical_entrypoint(
+        payload["orca"], repository, "orca"
+    )
     provider_entrypoint, provider_target, provider_digest = canonical_entrypoint(
         payload["provider"], repository, "provider"
     )
@@ -248,6 +297,8 @@ def parse_request(payload: object) -> dict[str, Any]:
         "title": title,
         "arguments": arguments,
         "orca_entrypoint": orca_entrypoint,
+        "orca_target": orca_target,
+        "orca_digest": orca_digest,
         "provider_entrypoint": provider_entrypoint,
         "provider_target": provider_target,
         "provider_digest": provider_digest,
@@ -273,25 +324,28 @@ def create_terminal(payload: object) -> dict[str, object]:
         *request["arguments"],
     ]
     command = shlex.join(provider_argv)
-    result = subprocess.run(
-        [
-            str(request["orca_entrypoint"]),
-            "terminal",
-            "create",
-            "--worktree",
-            request["worktree"],
-            "--title",
-            request["title"],
-            "--command",
-            command,
-            "--json",
-        ],
-        check=False,
-        capture_output=True,
-        cwd=request["repository"],
-        text=True,
-        timeout=30,
-    )
+    with immutable_executable_copy(
+        request["orca_target"], request["orca_digest"]
+    ) as orca_executable:
+        result = subprocess.run(
+            [
+                str(orca_executable),
+                "terminal",
+                "create",
+                "--worktree",
+                request["worktree"],
+                "--title",
+                request["title"],
+                "--command",
+                command,
+                "--json",
+            ],
+            check=False,
+            capture_output=True,
+            cwd=request["repository"],
+            text=True,
+            timeout=30,
+        )
     if result.returncode != 0:
         raise RequestError(
             "orca_terminal_create_failed", "Orca terminal creation failed"

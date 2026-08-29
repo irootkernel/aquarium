@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import shlex
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -113,6 +114,24 @@ def test_provider_digest_drift_stops_before_orca(tmp_path: Path) -> None:
         create_provider_terminal.create_terminal(payload)
 
     assert error.value.code == "provider_identity_changed"
+
+
+def test_orca_private_copy_survives_canonical_replacement(tmp_path: Path) -> None:
+    payload, _ = request(tmp_path)
+    orca = Path(payload["orca"]["canonical_target"])
+    expected_digest = payload["orca"]["sha256"]
+
+    with create_provider_terminal.immutable_executable_copy(
+        orca, expected_digest
+    ) as admitted:
+        executable(orca, "#!/bin/sh\nexit 99\n")
+        completed = subprocess.run(
+            [admitted], check=False, capture_output=True, text=True
+        )
+        assert admitted.stat().st_flags & stat.UF_IMMUTABLE
+
+    assert completed.returncode == 0
+    assert json.loads(completed.stdout) == {"argv": []}
 
 
 def test_provider_command_uses_verified_canonical_target(tmp_path: Path) -> None:

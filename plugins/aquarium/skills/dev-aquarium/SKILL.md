@@ -38,7 +38,7 @@ Add `--approve-reenrollment` only after the diagnosed project is already owned b
 
 Use `diagnose` again after every effect. Offer only the exact repair named by current output. Hook repair uses `repair-hook --approve-hook`; rebuild and Codex configuration retain their own approvals. Never edit enrollment JSON or hook markers manually, copy stable Codex credentials, or turn a broken enrollment into stable fallback.
 
-The native hook queues an exact completed local-main SHA and starts asynchronous work. A request or worker failure may emit a bounded diagnostic but never rewrites or rolls back the completed Git commit.
+The native hook queues an exact completed local-main SHA and starts asynchronous work. A request or worker failure emits a bounded diagnostic but never rewrites or rolls back the completed Git commit. The worker deletes a request only after successful publication; producer, validation, or publication failure retains it and returns a failed machine result so a later invocation can retry the exact revision.
 
 ## Configure isolated Codex
 

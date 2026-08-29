@@ -13,7 +13,7 @@ SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from dev_manager import process_queue, queue_request
+from dev_manager import ManagerError, process_queue, queue_request
 
 
 @pytest.fixture(autouse=True)
@@ -251,6 +251,26 @@ def test_duplicate_requests_coalesce_and_worker_publishes_once(tmp_path):
     assert details["processed"] == 1
     assert details["published"] == 1
     assert not list((host_root / "queue/aquarium").glob("*.json"))
+
+
+def test_worker_retains_failed_request_and_reports_failure(tmp_path, monkeypatch):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, queued = queue_request(repository, host_root, CLI, spawn_worker=False)
+    request_path = Path(queued["queued"])
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "build")
+
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "producer_build_failed"
+    assert request_path.is_file()
+    monkeypatch.delenv("AQUARIUM_TEST_MODE")
+    status, details = process_queue("aquarium", host_root)
+    assert status == "success"
+    assert details["published"] == 1
+    assert not request_path.exists()
 
 
 def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
