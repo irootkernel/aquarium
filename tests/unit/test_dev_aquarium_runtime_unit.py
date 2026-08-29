@@ -34,6 +34,7 @@ import json
 import os
 import shutil
 import sys
+import time
 from pathlib import Path
 
 home = Path(os.environ["CODEX_HOME"])
@@ -48,6 +49,10 @@ args = sys.argv[1:]
 if args == ["login", "status"]:
     raise SystemExit(0 if (home / "logged-in").exists() else 1)
 failure = os.environ.get("AQUARIUM_TEST_CODEX_FAILURE")
+if args == ["plugin", "list", "--json"] and os.environ.get(
+    "AQUARIUM_TEST_CODEX_DELAY"
+) == "plugin-list":
+    time.sleep(0.5)
 if args == ["mcp", "list", "--json"] and failure == "mcp-list":
     print("injected mcp-list failure", file=sys.stderr)
     raise SystemExit(1)
@@ -615,6 +620,7 @@ def test_codex_configuration_success_is_not_reversed_by_cleanup_failure(tmp_path
     )
     assert rebuilt.returncode == 0, rebuilt.stderr
     old_generation = host_root / "artifacts/aquarium" / first_sha
+    dev_manager._unseal_managed_tree(old_generation)
     shutil.rmtree(old_generation)
     old_generation.write_text("blocks cleanup", encoding="utf-8")
 
@@ -696,3 +702,42 @@ def test_next_configuration_recovers_an_interrupted_durable_transaction(tmp_path
         "--approve-codex",
     )
     assert retried.returncode == 0, retried.stderr
+
+
+def test_concurrent_codex_configuration_is_serialized(tmp_path, monkeypatch):
+    repository = create_aquarium_repository(tmp_path / "aquarium")
+    host_root = tmp_path / "host"
+    fake_codex = tmp_path / "fake-codex"
+    fake_codex.write_text(FAKE_CODEX, encoding="utf-8")
+    fake_codex.chmod(0o755)
+    enroll_and_build(repository, host_root)
+    (host_root / "codex").mkdir()
+    (host_root / "codex/logged-in").touch()
+    monkeypatch.setenv("AQUARIUM_TEST_CODEX_DELAY", "plugin-list")
+    command = [
+        sys.executable,
+        CLI,
+        "--host-root",
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    ]
+
+    first = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    second = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    first_stdout, first_stderr = first.communicate(timeout=30)
+    second_stdout, second_stderr = second.communicate(timeout=30)
+
+    assert first.returncode == 0, first_stderr
+    assert second.returncode == 0, second_stderr
+    assert json.loads(first_stdout)["status"] == "success"
+    assert json.loads(second_stdout)["status"] == "success"
+    assert not (host_root / "transactions/codex-config").exists()

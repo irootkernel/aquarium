@@ -13,7 +13,7 @@ CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from dev_aquarium import open_guarded_executable  # isort: skip
-from dev_manager import resolve_artifact  # isort: skip
+from dev_manager import _unseal_managed_tree, resolve_artifact  # isort: skip
 
 
 @pytest.fixture(autouse=True)
@@ -182,6 +182,8 @@ def test_resolution_fails_closed_on_corrupt_enrolled_artifact(tmp_path):
     host_root = tmp_path / "host"
     enroll_and_build(repository, host_root)
     artifact = (host_root / "current/podway/bin/tool").resolve()
+    _unseal_managed_tree(artifact.parents[1])
+    artifact.chmod(0o700)
     artifact.write_text("corrupt", encoding="utf-8")
 
     result = run_cli(host_root, "resolve", "--project-id", "podway")

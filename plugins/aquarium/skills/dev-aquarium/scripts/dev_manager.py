@@ -956,6 +956,32 @@ def _manifest_from_generation(
         ) from error
 
 
+def _seal_generation(generation: Path) -> None:
+    paths = [generation, *generation.rglob("*")]
+    if any(path.is_symlink() for path in paths):
+        raise OSError("an immutable generation contains a symbolic link")
+    for path in reversed(paths):
+        if path.stat().st_flags & stat.UF_IMMUTABLE:
+            continue
+        if path.is_dir():
+            path.chmod(0o500)
+        elif path.is_file():
+            executable = bool(path.stat().st_mode & 0o111)
+            path.chmod(0o500 if executable else 0o400)
+        else:
+            raise OSError("an immutable generation contains a special file")
+        os.chflags(path, stat.UF_IMMUTABLE)
+
+
+def _unseal_managed_tree(root: Path) -> None:
+    for path in [root, *root.rglob("*")]:
+        if path.is_symlink():
+            continue
+        os.chflags(path, 0)
+        if path.is_dir():
+            path.chmod(0o700)
+
+
 def _publish(
     host_root: Path, staging: Path, manifest: dict[str, Any]
 ) -> tuple[str, dict[str, Any]]:
@@ -995,6 +1021,14 @@ def _publish(
             else:
                 os.replace(staging, destination)
                 status = "success"
+            if manifest["artifact_kind"] == "executable":
+                _execution_alias(
+                    host_root,
+                    project_id,
+                    git_sha,
+                    destination / manifest["artifact_path"],
+                )
+            _seal_generation(destination)
             temporary = current.parent / f".{project_id}.{os.getpid()}.tmp"
             temporary.unlink(missing_ok=True)
             os.symlink(os.path.relpath(destination, current.parent), temporary)
@@ -1294,6 +1328,22 @@ def configure_codex(
     approve_codex: bool,
     codex_bin: str = "codex",
 ) -> tuple[str, dict[str, Any]]:
+    with _publisher_lock(host_root, "aquarium"):
+        return _configure_codex_locked(
+            repository,
+            host_root,
+            approve_codex=approve_codex,
+            codex_bin=codex_bin,
+        )
+
+
+def _configure_codex_locked(
+    repository: Path,
+    host_root: Path,
+    *,
+    approve_codex: bool,
+    codex_bin: str = "codex",
+) -> tuple[str, dict[str, Any]]:
     checkout, _, description, git_sha = _require_enrolled_checkout(
         repository, host_root, require_clean=False
     )
@@ -1363,6 +1413,9 @@ def configure_codex(
                 "aquarium",
                 aquarium.git_sha,
             )
+        aquarium_generation = aquarium.path.parent
+        _unseal_managed_tree(aquarium_generation)
+        stack.callback(_seal_generation, aquarium_generation)
         plugins = _run_codex(
             codex_bin, host_root, "plugin", "list", "--json", json_output=True
         )
@@ -1418,6 +1471,16 @@ def configure_codex(
             "--json",
             json_output=True,
         )
+        if artifact_digest(aquarium.path) != aquarium.sha256:
+            raise ManagerError(
+                "checksum_mismatch",
+                "The Aquarium marketplace changed during isolated installation.",
+                "Rebuild the exact generation before retrying configuration.",
+                "configure-codex",
+                "aquarium",
+                aquarium.git_sha,
+            )
+        _seal_generation(aquarium_generation)
         installed_root = Path(installed.get("installedPath", ""))
         manager_script = installed_root / "skills/dev-aquarium/scripts/dev_aquarium.py"
         if (
@@ -1590,11 +1653,7 @@ def cleanup_generation(
             ):
                 if not managed_path.exists() or managed_path.is_symlink():
                     continue
-                for descendant in [managed_path, *managed_path.rglob("*")]:
-                    if not descendant.is_symlink():
-                        os.chflags(descendant, 0)
-                if managed_path.is_dir():
-                    managed_path.chmod(0o700)
+                _unseal_managed_tree(managed_path)
             shutil.rmtree(generation)
             runtime = host_root / "runtime" / project_id / git_sha
             if runtime.exists():

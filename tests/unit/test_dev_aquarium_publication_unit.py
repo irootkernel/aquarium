@@ -1,9 +1,12 @@
 import json
 import os
+import stat
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
@@ -11,6 +14,18 @@ CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from dev_manager import process_queue, queue_request
+
+
+@pytest.fixture(autouse=True)
+def clear_managed_immutable_flags(tmp_path):
+    yield
+    for current, directories, files in os.walk(tmp_path):
+        os.chflags(current, 0)
+        for name in (*directories, *files):
+            target = Path(current) / name
+            if not target.is_symlink():
+                os.chflags(target, 0)
+
 
 PRODUCER = r"""import hashlib
 import json
@@ -125,6 +140,9 @@ def test_rebuild_requires_approval_and_publishes_validated_generation(tmp_path):
     manifest = json.loads((current / ".aquarium-manifest.json").read_text())
     assert manifest["git_sha"] == sha
     assert (current / "plugin/payload.txt").read_text() == f"artifact {sha}\n"
+    assert current.resolve().stat().st_flags & stat.UF_IMMUTABLE
+    with pytest.raises(OSError):
+        (current / "plugin/payload.txt").write_text("mutated", encoding="utf-8")
 
 
 def test_aquarium_rebuild_retains_previous_marketplace_until_configuration(tmp_path):
