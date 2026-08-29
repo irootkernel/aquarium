@@ -267,3 +267,82 @@ def test_launch_holds_lease_through_child_interruption(tmp_path):
     child.terminate()
     child.wait(timeout=5)
     wait_missing(first_generation)
+
+
+def test_guarded_launch_accepts_only_the_complete_exact_generation(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    git_sha = enroll_and_build(repository, host_root)
+    manifest = json.loads(
+        (
+            host_root
+            / "artifacts/podway"
+            / git_sha
+            / ".aquarium-manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    launched = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "podway",
+        "--expected-git-sha",
+        manifest["git_sha"],
+        "--expected-development-version",
+        manifest["development_version"],
+        "--expected-sha256",
+        manifest["sha256"],
+    )
+
+    assert launched.returncode == 0, launched.stderr
+    assert launched.stdout == "development tool\n"
+
+    mismatched = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "podway",
+        "--expected-git-sha",
+        "0" * 40,
+        "--expected-development-version",
+        manifest["development_version"],
+        "--expected-sha256",
+        manifest["sha256"],
+    )
+    assert mismatched.returncode == 1
+    assert payload(mismatched)["error"]["code"] == "artifact_invalid"
+
+
+def test_guarded_launch_rejects_partial_or_stable_identity(tmp_path):
+    host_root = tmp_path / "host"
+    partial = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "podway",
+        "--expected-git-sha",
+        "0" * 40,
+    )
+    assert partial.returncode == 2
+    assert payload(partial)["error"]["code"] == "invalid_arguments"
+
+    stable = tmp_path / "stable"
+    stable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    stable.chmod(0o700)
+    guarded_stable = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "podway",
+        "--stable",
+        stable,
+        "--expected-git-sha",
+        "0" * 40,
+        "--expected-development-version",
+        "v0.2.7-dev.000000000000",
+        "--expected-sha256",
+        "sha256:" + "0" * 64,
+    )
+    assert guarded_stable.returncode == 1
+    assert payload(guarded_stable)["error"]["code"] == "artifact_invalid"

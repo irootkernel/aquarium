@@ -49,12 +49,14 @@ python3 <skill-directory>/scripts/dev_aquarium.py configure-codex \
   --repository <aquarium-git-root> --approve-codex
 ```
 
-This leases and installs the exact current Aquarium marketplace generation into `~/.aquarium/codex`, so the plugin and its bundled skills cannot mix generations. It reconciles only enrolled Mulgae and Gaori MCP servers through the installed development manager; Podway and Sanho remain CLI integrations. Each MCP launch resolves and leases that external project's current enrolled artifact. Missing external enrollment is reported and never replaced with stable configuration.
+This leases and installs the exact current Aquarium marketplace generation into `~/.aquarium/codex`, so the plugin and its bundled skills cannot mix generations. It reconciles only enrolled Mulgae and Gaori MCP servers through the installed development manager; Dolgorae, Podway, and Sanho remain CLI integrations. Each MCP launch resolves and leases that external project's current enrolled artifact. Missing external enrollment is reported and never replaced with stable configuration.
 
 Run diagnosis afterward. Its bounded report must identify the selected enrollment and hook, current artifact, isolated plugin and bundled-skill generation, MCP servers, login readiness, and every supported project's resolved development artifact or explicit non-enrolled/broken state.
 
 ## Launch
 
 Use `launch --project-id <id> [--stable <path>] -- [args...]` only after healthy diagnosis. It resolves and leases one immutable executable before replacing the manager process and holds that inherited lease for the child's lifetime. Supply `--stable` only when the project has no enrollment. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.
+
+For an exact development candidate, supply `--expected-git-sha`, `--expected-development-version`, and `--expected-sha256` together before `--`; partial, stable, or mismatched guarded launches fail closed.
 
 The development Codex runtime uses only `~/.aquarium/codex`. Missing login is a user action reported as `CODEX_HOME=~/.aquarium/codex codex login`; this skill never authenticates or reads or copies the stable Codex home.

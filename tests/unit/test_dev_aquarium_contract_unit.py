@@ -27,6 +27,17 @@ def test_positive_contract_fixtures(name, validator):
     assert validator(document) == document
 
 
+def test_dolgorae_is_a_supported_executable_producer():
+    description = json.loads(
+        (FIXTURES / "description.json").read_text(encoding="utf-8")
+    )
+    description.update(
+        project_id="dolgorae", artifact_kind="executable", artifact_path="bin/dolgorae"
+    )
+
+    assert dev_contract.validate_description(description) == description
+
+
 @pytest.mark.parametrize(
     ("fixture", "validator", "mutation"),
     [

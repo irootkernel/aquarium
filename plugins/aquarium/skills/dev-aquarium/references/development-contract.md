@@ -22,7 +22,7 @@ The object has exactly these fields:
 | Field | Contract |
 | --- | --- |
 | `schema` | `aquarium-dev-producer-description/v1` |
-| `project_id` | `aquarium`, `podway`, `mulgae`, `gaori`, or `sanho` |
+| `project_id` | `aquarium`, `podway`, `mulgae`, `gaori`, `sanho`, or `dolgorae` |
 | `next_version` | stable semantic version with a leading `v`, such as `v0.1.14` |
 | `artifact_kind` | `codex-plugin` or `executable` |
 | `artifact_path` | normalized non-empty relative path with no `.` or `..` component |
@@ -88,6 +88,8 @@ No enrollment permits stable fallback. Once an enrollment record exists, a missi
 
 Resolution acquires a shared BSD advisory lock for the selected immutable artifact before returning its path. Launch holds the open lock descriptor for the complete child lifetime and never re-resolves `current`. Publication and cleanup require exclusive locks. Cleanup removes a superseded artifact immediately when its exclusive non-blocking lease succeeds; otherwise an asynchronous cleanup worker waits for operating-system ownership to become available. PIDs, timestamps, and grace periods are not lease authority.
 
+An exact development-candidate launch supplies `--expected-git-sha`, `--expected-development-version`, and `--expected-sha256` as one complete guard set. Partial or malformed guards are rejected before resolution. A stable fallback never satisfies guarded launch, and any mismatch against the leased immutable generation fails before executable replacement.
+
 ## Scheduling and failure behavior
 
 The native `post-commit` marker only queues the completed local-main SHA and starts the per-project asynchronous worker. The worker serializes on the publisher lock and coalesces duplicate SHA requests. Build and validation happen in a fresh same-filesystem staging directory. Any failure preserves the prior current selector and writes one bounded latest diagnostic. Git commit success and HEAD are never rewritten or rolled back.
@@ -96,4 +98,4 @@ The native `post-commit` marker only queues the completed local-main SHA and sta
 
 The development runtime sets `CODEX_HOME=~/.aquarium/codex`. It configures the exact local Aquarium plugin snapshot, paired skills, MCP servers, and resolved enrolled artifacts through separate approval. It never reads, copies, or mutates the stable Codex home or authentication. Missing isolated login returns `codex_login_required` with the exact user action; Aquarium never authenticates.
 
-The Aquarium artifact is a local marketplace containing the committed marketplace metadata and complete committed plugin tree. The derived plugin manifest uses `v<next>-dev.<sha12>` identity; its bundled skills therefore share the plugin generation. Approved configuration installs that leased marketplace into the isolated home. Enrolled Mulgae and Gaori MCP entries invoke the manager from the installed plugin generation and resolve the external artifact at launch; Podway and Sanho are CLI-only integrations. Diagnosis reports the selected checkout, enrollment, hook, current artifact, isolated plugin and bundled-skill version, enabled owned MCP names, login readiness, and the validated current artifact identity or explicit state for every supported project.
+The Aquarium artifact is a local marketplace containing the committed marketplace metadata and complete committed plugin tree. The derived plugin manifest uses `v<next>-dev.<sha12>` identity; its bundled skills therefore share the plugin generation. Approved configuration installs that leased marketplace into the isolated home. Enrolled Mulgae and Gaori MCP entries invoke the manager from the installed plugin generation and resolve the external artifact at launch; Dolgorae, Podway, and Sanho are CLI-only integrations. Diagnosis reports the selected checkout, enrollment, hook, current artifact, isolated plugin and bundled-skill version, enabled owned MCP names, login readiness, and the validated current artifact identity or explicit state for every supported project.

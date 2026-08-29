@@ -288,12 +288,12 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ### Do
 
-- [ ] Accept one exact clean local-`main` producer handoff from external Dolgorae `TASK-035` through the frozen shared Make contract.
-- [ ] Add `dolgorae` as an `executable` project identity without adding an MCP registration or global PATH entry.
-- [ ] Resolve and report the canonical immutable generation path, exact Git SHA, development version, artifact kind, and SHA-256.
-- [ ] Require the expected Git SHA, development version, and SHA-256 as one complete launch guard set when a consumer binds an exact development candidate.
-- [ ] Hold the selected generation lease through executable replacement and preserve fail-closed behavior when current advances, enrollment breaks, or bytes drift.
-- [ ] Include Dolgorae in isolated Codex diagnosis as a CLI integration and keep stable-home state unchanged.
+- [x] Accept one exact clean local-`main` producer handoff from external Dolgorae `TASK-035` through the frozen shared Make contract.
+- [x] Add `dolgorae` as an `executable` project identity without adding an MCP registration or global PATH entry.
+- [x] Resolve and report the canonical immutable generation path, exact Git SHA, development version, artifact kind, and SHA-256.
+- [x] Require the expected Git SHA, development version, and SHA-256 as one complete launch guard set when a consumer binds an exact development candidate.
+- [x] Hold the selected generation lease through executable replacement and preserve fail-closed behavior when current advances, enrollment breaks, or bytes drift.
+- [x] Include Dolgorae in isolated Codex diagnosis as a CLI integration and keep stable-home state unchanged.
 
 ### Do Not
 

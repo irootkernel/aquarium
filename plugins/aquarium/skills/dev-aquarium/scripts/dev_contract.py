@@ -7,7 +7,9 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
-PROJECT_IDS = frozenset({"aquarium", "podway", "mulgae", "gaori", "sanho"})
+PROJECT_IDS = frozenset(
+    {"aquarium", "podway", "mulgae", "gaori", "sanho", "dolgorae"}
+)
 ARTIFACT_KINDS = frozenset({"codex-plugin", "executable"})
 OPERATIONS = frozenset(
     {

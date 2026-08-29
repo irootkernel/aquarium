@@ -1251,7 +1251,7 @@ def configure_codex(
         )
         existing_names = {item.get("name") for item in existing_servers}
         integrations = []
-        for project_id in ("podway", "mulgae", "gaori", "sanho"):
+        for project_id in ("podway", "mulgae", "gaori", "sanho", "dolgorae"):
             enrollment = read_enrollment(host_root, project_id)
             if enrollment is None:
                 integrations.append({"project_id": project_id, "state": "not-enrolled"})

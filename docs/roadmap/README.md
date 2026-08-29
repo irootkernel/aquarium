@@ -73,7 +73,7 @@ The Aquarium-owned runtime is complete. Further progress requires exact clean lo
 | TASK-012 | Integrate Mulgae | Add and verify Mulgae's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-013 | Integrate Gaori | Add and verify Gaori's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
-| TASK-024 | Integrate Dolgorae | Add and verify Dolgorae's executable producer, exact-generation resolution, guarded launch, and isolated Codex visibility. | Planned | TASK-010; external Dolgorae TASK-035 |
+| TASK-024 | Integrate Dolgorae | Add and verify Dolgorae's executable producer, exact-generation resolution, guarded launch, and isolated Codex visibility. | In Review | TASK-010; external Dolgorae TASK-035 |
 | TASK-015 | Cold-validate the integrated environment | Prove setup, update, fallback, failure, concurrency, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-024 |
 
 ## EPIC-003: Activate Dolgorae-backed Reviews

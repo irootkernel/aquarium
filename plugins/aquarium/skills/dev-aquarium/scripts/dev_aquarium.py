@@ -9,7 +9,13 @@ import os
 import sys
 from pathlib import Path
 
-from dev_contract import validate_error, validate_result
+from dev_contract import (
+    DEV_VERSION_RE,
+    DIGEST_RE,
+    SHA_RE,
+    validate_error,
+    validate_result,
+)
 from dev_manager import (
     ManagerError,
     cleanup_generation,
@@ -60,11 +66,49 @@ def parser() -> argparse.ArgumentParser:
     launch_parser = commands.add_parser("launch")
     launch_parser.add_argument("--project-id", required=True)
     launch_parser.add_argument("--stable", type=Path)
+    launch_parser.add_argument("--expected-git-sha")
+    launch_parser.add_argument("--expected-development-version")
+    launch_parser.add_argument("--expected-sha256")
     launch_parser.add_argument("arguments", nargs=argparse.REMAINDER)
     codex_parser = commands.add_parser("configure-codex")
     codex_parser.add_argument("--repository", type=Path, required=True)
     codex_parser.add_argument("--approve-codex", action="store_true")
     return value
+
+
+def launch_guard(arguments: argparse.Namespace) -> tuple[str, str, str] | None:
+    values = (
+        arguments.expected_git_sha,
+        arguments.expected_development_version,
+        arguments.expected_sha256,
+    )
+    if not any(value is not None for value in values):
+        return None
+    if not all(value is not None for value in values):
+        raise ManagerError(
+            "invalid_arguments",
+            "Exact launch guards must include Git SHA, development version, and SHA-256 together.",
+            "Supply the complete expected generation identity or omit all three guards.",
+            "launch",
+            arguments.project_id,
+        )
+    git_sha, development_version, sha256 = values
+    assert git_sha is not None
+    assert development_version is not None
+    assert sha256 is not None
+    if (
+        not SHA_RE.fullmatch(git_sha)
+        or not DEV_VERSION_RE.fullmatch(development_version)
+        or not DIGEST_RE.fullmatch(sha256)
+    ):
+        raise ManagerError(
+            "invalid_arguments",
+            "One or more exact launch guards have an invalid format.",
+            "Supply a full lowercase Git SHA, development version, and prefixed SHA-256.",
+            "launch",
+            arguments.project_id,
+        )
+    return git_sha, development_version, sha256
 
 
 def result(operation: str, status: str, project_id: str | None, message: str, details):
@@ -175,9 +219,24 @@ def main() -> int:
             )
             return 0
         if arguments.command == "launch":
+            guard = launch_guard(arguments)
             resolved = resolve_artifact(
                 arguments.project_id, arguments.host_root, arguments.stable
             )
+            if guard is not None and (
+                resolved.source != "development"
+                or guard
+                != (resolved.git_sha, resolved.development_version, resolved.sha256)
+            ):
+                resolved.close()
+                raise ManagerError(
+                    "artifact_invalid",
+                    "The resolved artifact does not match the complete expected generation identity.",
+                    "Resolve the intended immutable generation and retry with its exact guards.",
+                    "launch",
+                    arguments.project_id,
+                    resolved.git_sha,
+                )
             launch_arguments = arguments.arguments
             if launch_arguments[:1] == ["--"]:
                 launch_arguments = launch_arguments[1:]
