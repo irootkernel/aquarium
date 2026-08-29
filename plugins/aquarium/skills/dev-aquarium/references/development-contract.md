@@ -94,6 +94,8 @@ An exact development-candidate launch supplies `--expected-git-sha`, `--expected
 
 The native `post-commit` marker only queues the completed local-main SHA and starts the per-project asynchronous worker. The worker serializes on the publisher lock and coalesces duplicate SHA requests. Build and validation happen in a fresh same-filesystem staging directory. Any failure preserves the prior current selector and writes one bounded latest diagnostic. Git commit success and HEAD are never rewritten or rolled back.
 
+An Aquarium marketplace generation referenced by isolated Codex configuration is retained across current advancement. Successful reconfiguration to the new marketplace generation releases and cleans superseded Aquarium generations; a failed or interrupted reconfiguration preserves the prior bytes needed for recovery. Other projects retain ordinary lease-driven prompt cleanup.
+
 ## Isolated Codex home
 
 The development runtime sets `CODEX_HOME=~/.aquarium/codex`. It configures the exact local Aquarium plugin snapshot, paired skills, MCP servers, and resolved enrolled artifacts through separate approval. It never reads, copies, or mutates the stable Codex home or authentication. Missing isolated login returns `codex_login_required` with the exact user action; Aquarium never authenticates.

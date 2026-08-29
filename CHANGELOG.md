@@ -9,6 +9,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Add the explicit `dev-aquarium` channel for exact local-main artifacts, safe enrollment and hooks, atomic publication, leased resolution, and an isolated Codex home.
 - Add Dolgorae as a CLI-only development producer with exact-generation guarded launch support.
 
+### Fixed
+
+- Retain the configured Aquarium marketplace generation until isolated Codex reconfiguration completes.
+
 ## v0.1.13 - 2026-08-28
 
 ### Removed

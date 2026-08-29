@@ -335,6 +335,39 @@ def test_isolated_codex_configuration_requires_approval_and_login(
     )
     assert aquarium["git_sha"] == details["plugin_git_sha"]
 
+    first_sha = details["plugin_git_sha"]
+    marker = repository / "revision.txt"
+    marker.write_text("next", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", marker.name], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "next"],
+        check=True,
+    )
+    rebuilt = run_cli(
+        host_root,
+        "rebuild",
+        "--repository",
+        repository,
+        "--approve-build",
+    )
+    assert rebuilt.returncode == 0, rebuilt.stderr
+    assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
+
+    updated = run_cli(
+        host_root,
+        "--codex-bin",
+        fake_codex,
+        "configure-codex",
+        "--repository",
+        repository,
+        "--approve-codex",
+    )
+
+    assert updated.returncode == 0, updated.stderr
+    updated_details = json.loads(updated.stdout)["details"]
+    assert updated_details["plugin_git_sha"] != first_sha
+    assert not (host_root / "artifacts/aquarium" / first_sha).exists()
+
 
 def test_codex_mcp_wiring_uses_the_installed_manager_and_enrolled_generation(
     tmp_path,

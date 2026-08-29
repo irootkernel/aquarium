@@ -127,6 +127,38 @@ def test_rebuild_requires_approval_and_publishes_validated_generation(tmp_path):
     assert (current / "plugin/payload.txt").read_text() == f"artifact {sha}\n"
 
 
+def test_aquarium_rebuild_retains_previous_marketplace_until_configuration(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    first = run_cli(
+        host_root,
+        "rebuild",
+        "--repository",
+        repository,
+        "--approve-build",
+    )
+    first_sha = payload(first)["details"]["git_sha"]
+    marker = repository / "revision.txt"
+    marker.write_text("next", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", marker.name], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "next"],
+        check=True,
+    )
+
+    second = run_cli(
+        host_root,
+        "rebuild",
+        "--repository",
+        repository,
+        "--approve-build",
+    )
+
+    assert second.returncode == 0, second.stderr
+    assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
+
+
 def test_failed_rebuild_preserves_previous_selector_and_writes_diagnostic(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"

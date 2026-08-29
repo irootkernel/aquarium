@@ -92,7 +92,7 @@ EPIC-003 does not depend on completing EPIC-002 or its unfinished original produ
 | TASK-020 | Adopt immutable review targets | Implement the six captured source scopes, immutable manifests, source identity, safety boundaries, and owner-bound settlement identities. | In Review | TASK-019 |
 | TASK-021 | Implement Dolgorae independent-review supervision | Run one fresh Codex Reviewer through Dolgorae without Orca objects and settle only from authoritative terminal evidence. | In Review | TASK-020 |
 | TASK-022 | Preserve Orca review and align Mulgae semantics | Retain Orca lifecycle ownership and prove common target semantics across Orca and Mulgae without lifecycle coupling. | In Review | TASK-020 |
-| TASK-023 | Activate and validate the exact candidate | Bind one exact enrolled Dolgorae generation, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | Planned | TASK-021, TASK-022; external Dolgorae TASK-015 |
+| TASK-023 | Activate and validate the exact candidate | Bind one exact enrolled Dolgorae generation, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | In Progress | TASK-021, TASK-022; external Dolgorae TASK-015 |
 
 ## EPIC-004: Release Aquarium v0.1.12
 

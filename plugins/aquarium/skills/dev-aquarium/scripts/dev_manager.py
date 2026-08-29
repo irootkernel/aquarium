@@ -901,7 +901,11 @@ def _publish(
             temporary.unlink(missing_ok=True)
             os.symlink(os.path.relpath(destination, current.parent), temporary)
             os.replace(temporary, current)
-        if previous_sha is not None and previous_sha != git_sha:
+        if (
+            project_id != "aquarium"
+            and previous_sha is not None
+            and previous_sha != git_sha
+        ):
             cleanup_status, cleanup = cleanup_generation(
                 project_id, previous_sha, host_root, wait=False
             )
@@ -1316,6 +1320,18 @@ def configure_codex(
             "login": verification["login"],
             "login_action": verification["login_action"],
         }
+        artifact_root = host_root / "artifacts" / "aquarium"
+        if artifact_root.is_dir():
+            for generation in sorted(artifact_root.iterdir()):
+                if generation.name == aquarium.git_sha or not SHA_RE.fullmatch(
+                    generation.name
+                ):
+                    continue
+                cleanup_status, cleanup = cleanup_generation(
+                    "aquarium", generation.name, host_root, wait=False
+                )
+                if cleanup_status == "no-change" and cleanup.get("leased"):
+                    _spawn_cleanup(host_root, "aquarium", generation.name)
     if details["login"] != "ready":
         raise ManagerError(
             "codex_login_required",
