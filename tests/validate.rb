@@ -747,6 +747,16 @@ assert(dolgorae_review_contract.include?("all three exact guards") &&
        dolgorae_review_contract.include?("900-second ceiling") &&
        dolgorae_review_contract.include?("Candidate-defined secret screening"),
        "Dolgorae consumer contract must freeze candidate identity, checked wire, bounds, scopes, and trust boundaries")
+assert(review_contract.include?("| `workspace` |") &&
+       review_contract.include?("| `staged` |") &&
+       review_contract.include?("| `dirty` |") &&
+       review_contract.include?("| `head` |") &&
+       review_contract.include?("| `commit` |") &&
+       review_contract.include?("| `range` |") &&
+       review_contract.include?("owner-binding digest") &&
+       review_contract.include?("concurrent losing compare-and-set") &&
+       review_contract.include?("creates and accepts no Orca Run"),
+       "review contract must preserve six immutable targets, owner-bound settlement, and backend isolation")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
@@ -2096,24 +2106,20 @@ assert(independent_review.include?("authorizes no source edits, tests, builds") 
        independent_review.include?("Valid, Invalid, or Needs confirmation"),
        "independent-review must remain static, read-only, and independently adjudicated")
 
-%w[staged commit range task epic].each do |target|
+%w[workspace staged dirty head commit range task epic].each do |target|
   assert(review_contract.include?("`#{target}`"),
          "shared review contract target is missing: #{target}")
 end
-assert(review_contract.include?("Dirty working-tree content is never a target") &&
-       review_contract.include?("stage all displayed paths or an explicitly named subset") &&
-       review_contract.include?("git add -- <paths>") &&
-       review_contract.include?("Leave the approved index changes staged") &&
-       review_contract.include?("For commit, range, and confirmed `HEAD` targets, exclude dirty content automatically") &&
-       review_contract.include?("same-user reviewer can technically read excluded working-tree bytes"),
-       "shared review contract must preserve exact dirty-state authority boundaries")
-assert(review_contract.include?("always ask the user to confirm staged, `HEAD`") &&
-       review_contract.include?("explicit invocation that names an exact target and reviewer authorizes transmitting") &&
-       review_contract.include?("Do not require separate preparation and transmission approvals") &&
-       review_contract.include?("A staged review uses the live index") &&
-       review_contract.include?("do not detect drift or invalidate the result") &&
+assert(review_contract.include?("Do not stage, edit, clean, stash, checkout") &&
+       review_contract.include?("later live index or working tree") &&
+       review_contract.include?("same-user processes") &&
+       review_contract.include?("capture-time drift") &&
+       review_contract.include?("source worktree, index, refs, or Git metadata"),
+       "shared review contract must preserve immutable source and dirty-state authority boundaries")
+assert(review_contract.include?("explicit invocation naming the exact target and reviewer authorizes transmission") &&
        review_contract.include?("`runtime unverified`") &&
-       review_contract.include?("A lifecycle failure or wrong scope is operationally incomplete"),
+       review_contract.include?("Wrong scope, modified source state") &&
+       review_contract.include?("incomplete settlement is operationally incomplete"),
        "shared review contract must bind special requests, consent, static proof, and lifecycle status")
 
 assert(independent_review_script.file? &&
