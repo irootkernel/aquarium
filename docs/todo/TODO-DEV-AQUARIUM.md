@@ -4,13 +4,13 @@
 
 **Roadmap epic:** `EPIC-002`
 
-This dossier is the detailed scope and acceptance source of truth for `EPIC-002` and `TASK-005` through `TASK-015`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks in this file are review evidence only and never change roadmap state.
+This dossier is the detailed scope and acceptance source of truth for `EPIC-002`, `TASK-005` through `TASK-015`, and `TASK-024`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks in this file are review evidence only and never change roadmap state.
 
 The shipped `$aquarium:dev-aquarium` skill and its linked reference own implemented workflow behavior. This dossier continues to own the remaining cross-repository integration and cold-validation acceptance scope without presenting it as current or released behavior.
 
 ## Goal
 
-Provide an explicit Aquarium development channel that continuously exposes exact local `main` artifacts from Aquarium, Podway, Mulgae, Gaori, and Sanho to their canonical development checkouts. The channel must surface package, handler, skill, MCP, and cross-project integration failures before stable release preparation while preserving a stable global fallback for projects that have not enrolled.
+Provide an explicit Aquarium development channel that continuously exposes exact local `main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae to their canonical development checkouts. The channel must surface package, handler, skill, MCP, and cross-project integration failures before stable release preparation while preserving a stable global fallback for projects that have not enrolled.
 
 ## Purpose
 
@@ -23,11 +23,11 @@ The current workflow often discovers integration failures only after a downstrea
 - An invocation pins one resolved artifact for its lifetime, so publication or cleanup cannot change the running tool beneath it.
 - No canonical enrollment uses the global stable tool; an invalid existing enrollment fails closed instead of silently falling back.
 - A newly published artifact replaces the prior current artifact, and the superseded artifact is removed as soon as no active lease references it.
-- Aquarium and all four initial tool producers pass focused contract tests and cold cross-project integration scenarios.
+- Aquarium, all four initial tool producers, and the first additional Dolgorae producer pass their scoped contract tests; the final cold validation covers the complete enrolled set.
 
 ## Non-Goals
 
-- This epic does not introduce Dolgorae, allocate Dolgorae task IDs, or define Dolgorae-specific producer behavior.
+- This epic does not own Dolgorae runtime behavior, roadmap IDs, release state, or Specialist Review semantics; external Dolgorae `TASK-035` owns its producer implementation.
 - It does not publish stable releases, satisfy release distribution gates, or replace exact official artifacts required by release QA.
 - It does not discover arbitrary repositories, enroll every worktree, or choose a canonical checkout implicitly.
 - It does not create repository-local `.aquarium` state or make host-local development metadata a roadmap, Git, Procedure, or release authority.
@@ -99,6 +99,7 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 | `TASK-012` | Mulgae producer and consumer integration |
 | `TASK-013` | Gaori producer and consumer integration |
 | `TASK-014` | Sanho producer and consumer integration |
+| `TASK-024` | Dolgorae executable producer and guarded consumer integration |
 | `TASK-015` | Clean-state cross-project validation of the complete development channel |
 
 ## TASK-005: Prove Development-Channel Feasibility
@@ -283,19 +284,37 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 - [ ] Do not bypass Sanho policy, commit gates, or explicit push approval.
 - [ ] Do not make Aquarium own Sanho's native policy or release implementation.
 
+## TASK-024: Integrate Dolgorae
+
+### Do
+
+- [ ] Accept one exact clean local-`main` producer handoff from external Dolgorae `TASK-035` through the frozen shared Make contract.
+- [ ] Add `dolgorae` as an `executable` project identity without adding an MCP registration or global PATH entry.
+- [ ] Resolve and report the canonical immutable generation path, exact Git SHA, development version, artifact kind, and SHA-256.
+- [ ] Require the expected Git SHA, development version, and SHA-256 as one complete launch guard set when a consumer binds an exact development candidate.
+- [ ] Hold the selected generation lease through executable replacement and preserve fail-closed behavior when current advances, enrollment breaks, or bytes drift.
+- [ ] Include Dolgorae in isolated Codex diagnosis as a CLI integration and keep stable-home state unchanged.
+
+### Do Not
+
+- [ ] Do not make Aquarium own Dolgorae runtime, Specialist Review, profile, workspace, roadmap, or release behavior.
+- [ ] Do not register Dolgorae as an MCP server or silently substitute a stable binary for a broken enrollment.
+- [ ] Do not treat a successful producer build as Dolgorae release or distribution evidence.
+- [ ] Do not make `TASK-024` wait for `TASK-011` through `TASK-014`; only `TASK-015` joins the complete producer set.
+
 ## TASK-015: Cold-Validate the Integrated Environment
 
 ### Do
 
 - [ ] Start from clean temporary user and repository state with no development enrollment.
 - [ ] Prove the global stable fallback before enrollment.
-- [ ] Enroll Aquarium and each of the four initial tool producers only through the skill workflow.
+- [ ] Enroll Aquarium, each of the four initial tool producers, and Dolgorae only through the skill workflow.
 - [ ] Prove initial build, exact-SHA selection, subsequent post-commit update, and atomic current advancement.
 - [ ] Prove same-checkout idempotency and explicitly approved re-enrollment to another checkout.
 - [ ] Prove missing producer, rejected manifest, build failure, missing canonical checkout, corrupt current artifact, and failed Codex-login diagnostics.
 - [ ] Prove concurrent invocation pinning, lease-protected replacement, and prompt cleanup after the last lease exits.
 - [ ] Prove the isolated Codex plugin, paired skills, MCP configuration, and all resolved binaries refer to compatible development generations.
-- [ ] Exercise representative Aquarium integrations using Podway, Mulgae, Gaori, and Sanho without provider or publication effects outside explicit authorization.
+- [ ] Exercise representative Aquarium integrations using Podway, Mulgae, Gaori, Sanho, and Dolgorae without provider or publication effects outside explicit authorization.
 - [ ] Run focused suites followed by the complete applicable Aquarium development gate and record exact candidate SHAs.
 
 ### Do Not
@@ -307,7 +326,7 @@ Aquarium development uses a dedicated Codex home below `~/.aquarium/`, separate 
 
 ## Epic Acceptance
 
-- [ ] `TASK-005` through `TASK-015` are `Completed` in the canonical roadmap.
+- [ ] `TASK-005` through `TASK-015` and `TASK-024` are `Completed` in the canonical roadmap.
 - [ ] The cold validation uses the final exact Aquarium and producer candidates after all accepted changes.
 - [ ] Stable fallback, broken-enrollment fail-close, exact-SHA pinning, lease safety, and prompt cleanup are independently demonstrated.
 - [ ] Current specs, architecture, ADRs, implementation tips, operations, public documentation, privacy terms, and executable validation reflect the shipped behavior without moving lifecycle status out of the roadmap.

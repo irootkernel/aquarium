@@ -6,7 +6,7 @@
 
 This dossier is the detailed scope and acceptance source of truth for `EPIC-003` and `TASK-019` through `TASK-023`. The [canonical roadmap](../roadmap/README.md) alone owns their identities, ordering, dependencies, lifecycle vocabulary, and current status. Checklist state in this file is review evidence only and never changes roadmap state.
 
-Dolgorae `TASK-014` and `TASK-015` own their checked capture, settlement, Specialist Review, carrier, and candidate contracts. Aquarium owns its consumer requirements and must map the delivered contracts without inventing or weakening unfinished Dolgorae wire details. Dolgorae `TASK-016` consumes Aquarium's runtime Completed Confirm and is not an Aquarium prerequisite.
+Dolgorae `TASK-014` and `TASK-015` own their checked capture, settlement, Specialist Review, and carrier contracts. External Dolgorae `TASK-035` owns the shared executable producer. Aquarium owns its consumer requirements and must map those delivered contracts without inventing or weakening Dolgorae wire details. Dolgorae `TASK-016` consumes Aquarium's runtime Completed Confirm and is not an Aquarium prerequisite.
 
 Adopting this dossier changes documentation authority only. It does not activate Dolgorae, modify review runtime behavior, install an executable, or establish release, installation, or distribution readiness.
 
@@ -18,11 +18,11 @@ Keep `$aquarium:orca-review` under Orca lifecycle ownership while giving it the 
 
 ## Dependency Boundary
 
-- `TASK-019` builds on the completed Aquarium `TASK-010` runtime and shared-contract foundation.
-- `TASK-019` through `TASK-022` do not depend on unfinished EPIC-002 producer integration.
+- `TASK-019` depends on Aquarium `TASK-024`, which adds only the Dolgorae producer and guarded executable consumer to the completed `TASK-010` foundation.
+- `TASK-019` through `TASK-023` do not depend on `TASK-011` through `TASK-015` or on completing EPIC-002.
 - Those tasks may use checked adapters, fixtures, and controlled fake executables, but cannot claim live Dolgorae readiness.
-- `TASK-023` alone depends on the exact candidate supplied by external Dolgorae `TASK-015`.
-- Dolgorae is bound directly from that handoff and is not added to `$aquarium:dev-aquarium` producer management.
+- External Dolgorae `TASK-015` remains the runtime-contract prerequisite, and external `TASK-035` is satisfied through Aquarium `TASK-024`.
+- `TASK-023` admits one exact enrolled generation and freezes its producer SHA, development version, canonical generation path, file identity, executable SHA-256, runtime version, and capability digest before source-bearing execution.
 
 ## Common Review Target Contract
 
@@ -93,7 +93,7 @@ A process exit alone is not completion evidence. Post-capture source mutation ca
 
 Adopt the exact executable acquisition and consumer boundary required before source-bearing Dolgorae execution.
 
-The handoff must bind the Dolgorae commit, version, canonical executable path, platform file identity, executable SHA-256, and capability or contract digest.
+The admitted generation must bind the Dolgorae producer commit, development and runtime versions, canonical immutable generation path, platform file identity, executable SHA-256, and capability or contract digest.
 
 ### Required Contract
 
@@ -103,6 +103,7 @@ Before candidate acquisition implementation is accepted, freeze:
 - canonical serialization, digest domains and preimages, duplicate and unknown field behavior, and mutation-sensitive vectors;
 - supported review operations, source scopes, machine constraints, and effective resource-limit intersection;
 - a race-resistant mechanism proving the executed object is the validated object;
+- all-or-none expected Git SHA, development version, and SHA-256 launch guards;
 - launch-time revalidation of executable, capability, machine, and target identities;
 - safe credential-carrier and model-visible-data boundaries inherited from the checked Dolgorae contract.
 
@@ -167,11 +168,11 @@ Move `orca-review` to the common immutable target meanings without changing Orca
 
 ### Outcome
 
-Bind the exact external Dolgorae `TASK-015` artifact, activate it under Aquarium authority, run the complete E2E campaign, and return the runtime Completed Confirm required by Dolgorae `TASK-016`.
+Bind one exact Dolgorae generation delivered through `TASK-024`, activate it under Aquarium authority, run the complete E2E campaign, and return the runtime Completed Confirm required by Dolgorae `TASK-016`.
 
 ### Acceptance
 
-- The delivered commit, version, canonical path, file identity, executable SHA-256, capability digest, and launch identity are revalidated.
+- The resolved producer commit, development and runtime versions, canonical generation path, file identity, executable SHA-256, capability digest, and guarded launch identity are revalidated.
 - Checked Dolgorae wire documents map to every adopted Aquarium semantic requirement.
 - All six scopes, Git boundary cases, failure and recovery paths, backend isolation, settlement authorization, cleanup, and rollback pass against the exact candidate.
 - Aquarium's focused and complete applicable repository gates pass for the exact committed candidate.
@@ -180,8 +181,8 @@ Bind the exact external Dolgorae `TASK-015` artifact, activate it under Aquarium
 
 ## Prohibited Shortcuts and Non-Goals
 
-- Do not add Dolgorae to `$aquarium:dev-aquarium` producer management in this epic.
-- Do not make EPIC-003 depend on unfinished EPIC-002 producer tasks.
+- Do not bypass `TASK-024`, bind the mutable `current` selector as candidate identity, or execute an unguarded development generation.
+- Do not make EPIC-003 depend on `TASK-011` through `TASK-015` or on completing EPIC-002.
 - Do not invent unchecked Dolgorae wire fields, carriers, or candidate limits.
 - Do not reinterpret task, epic, or special request as source scopes.
 - Do not read live mutable Git state after capture as review input.

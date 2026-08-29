@@ -704,9 +704,9 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
        canonical_roadmap.include?("## EPIC-004: Release Aquarium v0.1.12") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 23 &&
-       roadmap_task_ids.uniq.sort == (1..23).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 23 &&
+       roadmap_task_ids.length == 24 &&
+       roadmap_task_ids.uniq.sort == (1..24).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 24 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -714,28 +714,30 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-004 and unique TASK-001 through TASK-023")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-004 and unique TASK-001 through TASK-024")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
        todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
        todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
        dev_aquarium_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
-       dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 11 &&
+       dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 12 &&
        (5..15).all? { |number| dev_aquarium_dossier.include?("## TASK-%03d:" % number) } &&
+       dev_aquarium_dossier.include?("## TASK-024: Integrate Dolgorae") &&
        dev_aquarium_dossier.include?("$aquarium:dev-aquarium") &&
        dev_aquarium_dossier.include?("make aquarium-dev-describe") &&
        dev_aquarium_dossier.include?("make aquarium-dev-build") &&
        dev_aquarium_dossier.include?("There is no top-level `~/.aquarium/bin/`") &&
        dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
-       dev_aquarium_dossier.include?("This epic does not introduce Dolgorae") &&
+       dev_aquarium_dossier.include?("external Dolgorae `TASK-035`") &&
        dolgorae_reviews_dossier.include?("detailed scope and acceptance source of truth for `EPIC-003`") &&
        dolgorae_reviews_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 5 &&
        (19..23).all? { |number| dolgorae_reviews_dossier.include?("## TASK-%03d:" % number) } &&
        %w[workspace staged dirty head commit range].all? { |scope| dolgorae_reviews_dossier.include?("| `#{scope}` |") } &&
        dolgorae_reviews_dossier.include?("No Orca Run, Task, Dispatch, worker, terminal, context, worktree") &&
-       dolgorae_reviews_dossier.include?("external Dolgorae `TASK-015`") &&
+       dolgorae_reviews_dossier.include?("External Dolgorae `TASK-015`") &&
+       dolgorae_reviews_dossier.include?("Aquarium `TASK-024`") &&
        dolgorae_reviews_dossier.include?("Completed Confirm") &&
-       dolgorae_reviews_dossier.include?("Do not add Dolgorae to `$aquarium:dev-aquarium`"),
+       dolgorae_reviews_dossier.include?("mutable `current` selector"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
