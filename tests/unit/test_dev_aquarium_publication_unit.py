@@ -14,6 +14,7 @@ SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
+import dev_aquarium
 import dev_manager
 from dev_manager import ManagerError, process_queue, queue_request
 
@@ -120,6 +121,37 @@ def run_cli(host_root: Path, *arguments: str, mode: str = "success"):
 
 def payload(result: subprocess.CompletedProcess[str]):
     return json.loads(result.stdout or result.stderr)
+
+
+@pytest.mark.parametrize("code", ("producer_build_timeout", "worker_failed"))
+def test_cli_serializes_new_worker_error_codes(code, tmp_path, monkeypatch, capsys):
+    def fail_worker(*_args, **_kwargs):
+        raise ManagerError(
+            code,
+            "bounded worker failure",
+            "Retry after inspection.",
+            "schedule",
+            "aquarium",
+        )
+
+    monkeypatch.setattr(dev_aquarium, "process_queue", fail_worker)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(CLI),
+            "--host-root",
+            str(tmp_path / "host"),
+            "worker",
+            "--project-id",
+            "aquarium",
+        ],
+    )
+
+    assert dev_aquarium.main() == 1
+    error = json.loads(capsys.readouterr().err)
+    assert error["schema"] == "aquarium-dev-error/v1"
+    assert error["error"]["code"] == code
 
 
 def enroll(repository: Path, host_root: Path) -> None:

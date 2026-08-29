@@ -31,6 +31,7 @@ ERROR_CODES = frozenset(
         "producer_contract_missing",
         "producer_description_invalid",
         "producer_build_failed",
+        "producer_build_timeout",
         "producer_manifest_invalid",
         "not_local_main",
         "dirty_worktree",
@@ -49,6 +50,7 @@ ERROR_CODES = frozenset(
         "codex_login_required",
         "approval_required",
         "invalid_arguments",
+        "worker_failed",
     }
 )
 
