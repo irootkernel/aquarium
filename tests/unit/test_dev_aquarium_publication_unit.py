@@ -404,6 +404,45 @@ def test_worker_quarantines_non_regular_queue_entry(tmp_path):
     assert details["processed"] == 0
 
 
+def test_worker_preserves_valid_request_after_operational_io_failure(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, queued = queue_request(repository, host_root, CLI, spawn_worker=False)
+    request_path = Path(queued["queued"])
+
+    def fail_build(*_args, **_kwargs):
+        raise OSError("transient producer filesystem failure")
+
+    monkeypatch.setattr(dev_manager, "_validated_build", fail_build)
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "worker_failed"
+    assert request_path.is_file()
+    assert not (host_root / "queue-failures/aquarium").exists()
+
+
+def test_worker_reports_failure_when_terminal_request_cannot_be_quarantined(
+    tmp_path, monkeypatch
+):
+    host_root = tmp_path / "host"
+    invalid = host_root / "queue/aquarium/invalid.json"
+    invalid.mkdir(parents=True)
+
+    def fail_quarantine(*_args, **_kwargs):
+        raise OSError("quarantine unavailable")
+
+    monkeypatch.setattr(dev_manager, "_quarantine_build_request", fail_quarantine)
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "worker_failed"
+    assert invalid.is_dir()
+
+
 def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"

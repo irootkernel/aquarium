@@ -1945,8 +1945,21 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 if first_failure is None:
                     first_failure = error
             except json.JSONDecodeError as error:
-                _quarantine_build_request(host_root, project_id, request_path)
-                quarantined += 1
+                try:
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                except OSError as quarantine_error:
+                    wrapped = ManagerError(
+                        "worker_failed",
+                        str(quarantine_error),
+                        "Inspect the queue path and retry the preserved request.",
+                        "schedule",
+                        project_id,
+                    )
+                    _write_diagnostic(host_root, wrapped)
+                    if first_failure is None:
+                        first_failure = wrapped
+                    continue
                 wrapped = ManagerError(
                     "invalid_arguments",
                     str(error),
@@ -1958,22 +1971,15 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 if first_failure is None:
                     first_failure = wrapped
             except OSError as error:
-                moved = False
-                try:
-                    _quarantine_build_request(host_root, project_id, request_path)
-                    quarantined += 1
-                    moved = True
-                except OSError:
-                    pass
                 wrapped = ManagerError(
-                    "invalid_arguments",
+                    "worker_failed",
                     str(error),
-                    "Queue the current completed local-main revision again.",
+                    "Inspect the worker diagnostic and retry the preserved request.",
                     "schedule",
                     project_id,
                 )
                 _write_diagnostic(host_root, wrapped)
-                if moved and first_failure is None:
+                if first_failure is None:
                     first_failure = wrapped
     if first_failure is not None:
         raise first_failure
