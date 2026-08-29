@@ -301,6 +301,27 @@ def _remove_recorded_block(enrollment: dict[str, Any]) -> None:
     _atomic_write(hook, remaining, mode)
 
 
+def _file_snapshot(path: Path) -> tuple[bool, str, int]:
+    if not path.exists():
+        return False, "", 0
+    if path.is_symlink() or not path.is_file():
+        raise ManagerError(
+            "enrollment_broken",
+            "A managed enrollment path is not a regular file.",
+            "Restore the bounded hook or enrollment path before retrying.",
+            "enrollment",
+        )
+    return True, path.read_text(encoding="utf-8"), stat.S_IMODE(path.stat().st_mode)
+
+
+def _restore_file_snapshot(path: Path, snapshot: tuple[bool, str, int]) -> None:
+    existed, content, mode = snapshot
+    if existed:
+        _atomic_write(path, content, mode)
+    else:
+        path.unlink(missing_ok=True)
+
+
 def enrollment_path(host_root: Path, project_id: str) -> Path:
     return host_root / "enrollments" / f"{project_id}.json"
 
@@ -672,42 +693,75 @@ def enroll(
             project_id,
             diagnosis["git_sha"],
         )
-    checkout = Path(diagnosis["checkout"])
-    hook = _hook_path(checkout)
-    block = marker_block(checkout, manager_script)
-    existing = read_enrollment(host_root, project_id)
-    if existing is not None and Path(existing["checkout"]) != checkout:
-        if not approve_reenrollment:
+    with _enrollment_lock(host_root, project_id):
+        diagnosis = diagnose(repository, host_root)
+        if diagnosis["description"]["project_id"] != project_id:
             raise ManagerError(
-                "enrollment_conflict",
-                "Another canonical checkout is already enrolled.",
-                "Approve re-enrollment from the diagnosed old checkout to this checkout.",
+                "enrollment_broken",
+                "The producer identity changed while enrollment was being admitted.",
+                "Retry after restoring one stable producer description.",
                 "enrollment",
                 project_id,
-                diagnosis["git_sha"],
             )
-        new_content, _ = _read_hook(hook)
-        _validate_block_installable(new_content, block)
-        _remove_recorded_block(existing)
-    hook_changed = _install_block(hook, block)
-    if (
-        existing is not None
-        and Path(existing["checkout"]) == checkout
-        and existing["hook_block"] == block
-    ):
-        return "no-change", diagnosis
-    record = {
-        "schema": ENROLLMENT_SCHEMA,
-        "project_id": project_id,
-        "checkout": str(checkout),
-        "hook_path": str(hook),
-        "hook_block": block,
-        "enrolled_at": datetime.now(timezone.utc).isoformat(),
-    }
-    target = enrollment_path(host_root, project_id)
-    _atomic_write(target, json.dumps(record, sort_keys=True, indent=2) + "\n", 0o600)
-    diagnosis["hook_changed"] = hook_changed
-    return "success", diagnosis
+        checkout = Path(diagnosis["checkout"])
+        hook = _hook_path(checkout)
+        block = marker_block(checkout, manager_script)
+        existing = read_enrollment(host_root, project_id)
+        if existing is not None and Path(existing["checkout"]) != checkout:
+            if not approve_reenrollment:
+                raise ManagerError(
+                    "enrollment_conflict",
+                    "Another canonical checkout is already enrolled.",
+                    "Approve re-enrollment from the diagnosed old checkout to this checkout.",
+                    "enrollment",
+                    project_id,
+                    diagnosis["git_sha"],
+                )
+            new_content, _ = _read_hook(hook)
+            _validate_block_installable(new_content, block)
+
+        if (
+            existing is not None
+            and Path(existing["checkout"]) == checkout
+            and existing["hook_block"] == block
+        ):
+            return "no-change", diagnosis
+
+        target = enrollment_path(host_root, project_id)
+        managed_paths = {hook, target}
+        if existing is not None:
+            managed_paths.add(Path(existing["hook_path"]))
+        snapshots = {path: _file_snapshot(path) for path in managed_paths}
+        try:
+            hook_changed = _install_block(hook, block)
+            if existing is not None and Path(existing["checkout"]) != checkout:
+                _remove_recorded_block(existing)
+            record = {
+                "schema": ENROLLMENT_SCHEMA,
+                "project_id": project_id,
+                "checkout": str(checkout),
+                "hook_path": str(hook),
+                "hook_block": block,
+                "enrolled_at": datetime.now(timezone.utc).isoformat(),
+            }
+            _atomic_write(
+                target, json.dumps(record, sort_keys=True, indent=2) + "\n", 0o600
+            )
+            if read_enrollment(host_root, project_id) != record:
+                raise ManagerError(
+                    "enrollment_broken",
+                    "The enrollment record changed while it was being committed.",
+                    "Inspect the bounded enrollment path before retrying.",
+                    "enrollment",
+                    project_id,
+                    diagnosis["git_sha"],
+                )
+        except BaseException:
+            for path, snapshot in snapshots.items():
+                _restore_file_snapshot(path, snapshot)
+            raise
+        diagnosis["hook_changed"] = hook_changed
+        return "success", diagnosis
 
 
 def repair_hook(
@@ -719,17 +773,6 @@ def repair_hook(
 ) -> tuple[str, dict[str, Any]]:
     diagnosis = diagnose(repository, host_root)
     project_id = diagnosis["description"]["project_id"]
-    enrollment = read_enrollment(host_root, project_id)
-    if enrollment is None or Path(enrollment["checkout"]) != Path(
-        diagnosis["checkout"]
-    ):
-        raise ManagerError(
-            "enrollment_missing",
-            "This checkout is not the canonical enrolled checkout.",
-            "Enroll it before repairing its hook.",
-            "hook",
-            project_id,
-        )
     if not approve_hook:
         raise ManagerError(
             "approval_required",
@@ -738,18 +781,31 @@ def repair_hook(
             "hook",
             project_id,
         )
-    expected = marker_block(Path(diagnosis["checkout"]), manager_script)
-    if enrollment["hook_block"] != expected:
-        raise ManagerError(
-            "hook_conflict",
-            "Recorded hook ownership does not match this manager generation.",
-            "Re-enroll through the explicit transfer workflow.",
-            "hook",
-            project_id,
-        )
-    changed = _install_block(Path(enrollment["hook_path"]), expected)
-    diagnosis["hook_changed"] = changed
-    return ("success" if changed else "no-change"), diagnosis
+    with _enrollment_lock(host_root, project_id):
+        diagnosis = diagnose(repository, host_root)
+        enrollment = read_enrollment(host_root, project_id)
+        if enrollment is None or Path(enrollment["checkout"]) != Path(
+            diagnosis["checkout"]
+        ):
+            raise ManagerError(
+                "enrollment_missing",
+                "This checkout is not the canonical enrolled checkout.",
+                "Enroll it before repairing its hook.",
+                "hook",
+                project_id,
+            )
+        expected = marker_block(Path(diagnosis["checkout"]), manager_script)
+        if enrollment["hook_block"] != expected:
+            raise ManagerError(
+                "hook_conflict",
+                "Recorded hook ownership does not match this manager generation.",
+                "Re-enroll through the explicit transfer workflow.",
+                "hook",
+                project_id,
+            )
+        changed = _install_block(Path(enrollment["hook_path"]), expected)
+        diagnosis["hook_changed"] = changed
+        return ("success" if changed else "no-change"), diagnosis
 
 
 def _require_enrolled_checkout(
@@ -1087,6 +1143,14 @@ def _write_diagnostic(host_root: Path, error: ManagerError) -> None:
 
 def _publisher_lock(host_root: Path, project_id: str):
     path = host_root / "locks" / "publisher" / f"{project_id}.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stream = path.open("a+b")
+    fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+    return stream
+
+
+def _enrollment_lock(host_root: Path, project_id: str):
+    path = host_root / "locks" / "enrollment" / f"{project_id}.lock"
     path.parent.mkdir(parents=True, exist_ok=True)
     stream = path.open("a+b")
     fcntl.flock(stream.fileno(), fcntl.LOCK_EX)

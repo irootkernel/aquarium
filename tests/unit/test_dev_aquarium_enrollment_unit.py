@@ -3,12 +3,17 @@ import os
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-CLI = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts/dev_aquarium.py"
+SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
+CLI = SOURCE_SCRIPTS / "dev_aquarium.py"
+sys.path.insert(0, str(SOURCE_SCRIPTS))
+
+import dev_manager
 
 
 def create_repository(path: Path) -> Path:
@@ -203,6 +208,113 @@ def test_reenrollment_preflights_new_hook_before_removing_old_block(tmp_path):
 
     assert payload(result)["error"]["code"] == "hook_conflict"
     assert first_hook.read_bytes() == owned
+
+
+@pytest.mark.parametrize("failure_stage", ("new-hook", "old-hook", "record"))
+def test_reenrollment_restores_every_owned_file_after_failure(
+    tmp_path, monkeypatch, failure_stage
+):
+    first_repository = create_repository(tmp_path / "first")
+    second_repository = create_repository(tmp_path / "second")
+    host_root = tmp_path / "host"
+    assert (
+        run_cli(
+            host_root,
+            "enroll",
+            "--repository",
+            first_repository,
+            "--approve-enrollment",
+            "--approve-hook",
+        ).returncode
+        == 0
+    )
+    first_hook = first_repository / ".git/hooks/post-commit"
+    second_hook = second_repository / ".git/hooks/post-commit"
+    enrollment = host_root / "enrollments/aquarium.json"
+    before = {
+        first_hook: first_hook.read_bytes(),
+        second_hook: None,
+        enrollment: enrollment.read_bytes(),
+    }
+
+    original_install = dev_manager._install_block
+    original_remove = dev_manager._remove_recorded_block
+    original_read = dev_manager.read_enrollment
+
+    def fail_install(hook, block):
+        changed = original_install(hook, block)
+        if failure_stage == "new-hook":
+            raise RuntimeError("failure after new-hook installation")
+        return changed
+
+    def fail_remove(record):
+        original_remove(record)
+        if failure_stage == "old-hook":
+            raise RuntimeError("failure after old-hook removal")
+
+    def fail_record(root, project_id):
+        value = original_read(root, project_id)
+        if (
+            failure_stage == "record"
+            and value is not None
+            and Path(value["checkout"]) == second_repository
+        ):
+            raise RuntimeError("failure after record replacement")
+        return value
+
+    monkeypatch.setattr(dev_manager, "_install_block", fail_install)
+    monkeypatch.setattr(dev_manager, "_remove_recorded_block", fail_remove)
+    monkeypatch.setattr(dev_manager, "read_enrollment", fail_record)
+
+    with pytest.raises(RuntimeError):
+        dev_manager.enroll(
+            second_repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=True,
+        )
+
+    for path, expected in before.items():
+        if expected is None:
+            assert not path.exists()
+        else:
+            assert path.read_bytes() == expected
+
+
+def test_enrollment_waits_for_the_project_mutation_lock(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    lease = dev_manager._enrollment_lock(host_root, "aquarium")
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            CLI,
+            "--host-root",
+            host_root,
+            "enroll",
+            "--repository",
+            repository,
+            "--approve-enrollment",
+            "--approve-hook",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        time.sleep(0.5)
+        assert process.poll() is None
+    finally:
+        lease.close()
+    stdout, stderr = process.communicate(timeout=10)
+
+    assert process.returncode == 0, stderr
+    assert json.loads(stdout)["status"] == "success"
+    assert (repository / ".git/hooks/post-commit").read_text().count(
+        "BEGIN AQUARIUM DEV v1"
+    ) == 1
 
 
 def test_external_or_symbolic_hook_configuration_fails_closed(tmp_path):
