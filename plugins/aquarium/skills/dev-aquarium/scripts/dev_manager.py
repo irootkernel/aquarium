@@ -38,6 +38,7 @@ MCP_ARGUMENTS = {
     "gaori": lambda checkout: ["--repo", str(checkout), "mcp"],
 }
 CODEX_COMMAND_TIMEOUT_SECONDS = 120
+PRODUCER_BUILD_TIMEOUT_SECONDS = 600
 
 
 @dataclass
@@ -929,7 +930,7 @@ def _validated_build(
     artifact_parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".staging-", dir=artifact_parent))
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             [
                 "make",
                 "-s",
@@ -937,9 +938,30 @@ def _validated_build(
                 f"AQUARIUM_DEV_OUTPUT={staging}",
             ],
             cwd=checkout,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            check=False,
+            start_new_session=True,
+        )
+        try:
+            stdout, stderr = process.communicate(timeout=PRODUCER_BUILD_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired as error:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.communicate()
+            raise ManagerError(
+                "producer_build_timeout",
+                "The producer build exceeded its bounded execution time.",
+                "Inspect the producer, then run an explicitly approved rebuild.",
+                "build",
+                project_id,
+                git_sha,
+            ) from error
+        result = subprocess.CompletedProcess(
+            process.args, process.returncode, stdout, stderr
         )
         if result.returncode != 0:
             raise ManagerError(

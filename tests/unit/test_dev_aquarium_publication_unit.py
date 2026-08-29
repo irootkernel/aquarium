@@ -13,6 +13,7 @@ SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
+import dev_manager
 from dev_manager import ManagerError, process_queue, queue_request
 
 
@@ -31,6 +32,8 @@ PRODUCER = r"""import hashlib
 import json
 import os
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 output = Path(os.environ["AQUARIUM_DEV_OUTPUT"])
@@ -59,6 +62,10 @@ elif mode == "sha":
     manifest["git_sha"] = "0" * 40
 elif mode == "build":
     raise SystemExit(1)
+elif mode == "hang":
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    Path(os.environ["AQUARIUM_TEST_CHILD_PID"]).write_text(str(child.pid))
+    time.sleep(60)
 print(json.dumps(manifest, sort_keys=True))
 """
 
@@ -211,6 +218,39 @@ def test_failed_rebuild_preserves_previous_selector_and_writes_diagnostic(tmp_pa
     assert diagnostic["code"] == "checksum_mismatch"
     assert diagnostic["stage"] == "validate"
     assert len(diagnostic["message"]) <= 1000
+
+
+def test_timed_out_build_kills_process_group_and_releases_publisher_lock(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    child_pid_path = tmp_path / "child.pid"
+    enroll(repository, host_root)
+    monkeypatch.setattr(dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "hang")
+    monkeypatch.setenv("AQUARIUM_TEST_CHILD_PID", str(child_pid_path))
+
+    with pytest.raises(ManagerError) as failure:
+        dev_manager.rebuild(repository, host_root, approve_build=True)
+
+    assert failure.value.code == "producer_build_timeout"
+    assert not list((host_root / "artifacts/aquarium").glob(".staging-*"))
+    child_pid = int(child_pid_path.read_text())
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.05)
+    else:
+        pytest.fail("producer child survived process-group timeout cleanup")
+
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "success")
+    status, details = dev_manager.rebuild(repository, host_root, approve_build=True)
+    assert status == "success"
+    assert details["git_sha"]
 
 
 def test_manifest_identity_mismatch_never_exposes_staging(tmp_path):
