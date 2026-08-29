@@ -386,6 +386,24 @@ def test_worker_quarantines_stale_request_without_poisoning_future_runs(tmp_path
     assert (host_root / "current/aquarium").resolve().name == current["git_sha"]
 
 
+def test_worker_quarantines_non_regular_queue_entry(tmp_path):
+    host_root = tmp_path / "host"
+    invalid = host_root / "queue/aquarium/invalid.json"
+    invalid.mkdir(parents=True)
+
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "invalid_arguments"
+    assert not invalid.exists()
+    quarantined = list((host_root / "queue-failures/aquarium").glob("*.json"))
+    assert len(quarantined) == 1
+    assert quarantined[0].is_dir()
+    status, details = process_queue("aquarium", host_root)
+    assert status == "success"
+    assert details["processed"] == 0
+
+
 def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"

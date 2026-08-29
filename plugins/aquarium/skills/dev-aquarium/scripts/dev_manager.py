@@ -723,12 +723,11 @@ def enroll(
             new_content, _ = _read_hook(hook)
             _validate_block_installable(new_content, block)
 
-        if (
+        same_enrollment = (
             existing is not None
             and Path(existing["checkout"]) == checkout
             and existing["hook_block"] == block
-        ):
-            return "no-change", diagnosis
+        )
 
         target = enrollment_path(host_root, project_id)
         managed_paths = {hook, target}
@@ -737,6 +736,9 @@ def enroll(
         snapshots = {path: _file_snapshot(path) for path in managed_paths}
         try:
             hook_changed = _install_block(hook, block)
+            if same_enrollment:
+                diagnosis["hook_changed"] = hook_changed
+                return ("success" if hook_changed else "no-change"), diagnosis
             if existing is not None and Path(existing["checkout"]) != checkout:
                 _remove_recorded_block(existing)
             record = {
@@ -1887,6 +1889,17 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
         for request_path in sorted(queue.glob("*.json")) if queue.exists() else []:
             processed += 1
             try:
+                if request_path.is_symlink() or not request_path.is_file():
+                    error = ManagerError(
+                        "invalid_arguments",
+                        "The queued build request is not one regular file.",
+                        "Queue the current completed local-main revision again.",
+                        "schedule",
+                        project_id,
+                    )
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                    raise error
                 request = json.loads(request_path.read_text(encoding="utf-8"))
                 expected_fields = {"schema", "project_id", "git_sha", "checkout"}
                 if (
@@ -1945,6 +1958,13 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 if first_failure is None:
                     first_failure = wrapped
             except OSError as error:
+                moved = False
+                try:
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                    moved = True
+                except OSError:
+                    pass
                 wrapped = ManagerError(
                     "invalid_arguments",
                     str(error),
@@ -1953,7 +1973,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                     project_id,
                 )
                 _write_diagnostic(host_root, wrapped)
-                if first_failure is None:
+                if moved and first_failure is None:
                     first_failure = wrapped
     if first_failure is not None:
         raise first_failure

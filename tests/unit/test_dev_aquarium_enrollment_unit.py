@@ -123,6 +123,35 @@ def test_enrollment_preserves_foreign_hook_and_is_idempotent(tmp_path):
     assert enrollment.read_bytes() == first_record
 
 
+def test_reenrollment_repairs_a_missing_owned_hook_block(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    first = run_cli(
+        host_root,
+        "enroll",
+        "--repository",
+        repository,
+        "--approve-enrollment",
+        "--approve-hook",
+    )
+    assert first.returncode == 0
+    hook = repository / ".git/hooks/post-commit"
+    hook.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    repaired = run_cli(
+        host_root,
+        "enroll",
+        "--repository",
+        repository,
+        "--approve-enrollment",
+        "--approve-hook",
+    )
+
+    assert repaired.returncode == 0, repaired.stderr
+    assert payload(repaired)["status"] == "success"
+    assert hook.read_text().count("BEGIN AQUARIUM DEV v1") == 1
+
+
 def test_reenrollment_requires_approval_and_transfers_only_owned_block(tmp_path):
     first_repository = create_repository(tmp_path / "first")
     second_repository = create_repository(tmp_path / "second")
