@@ -275,10 +275,7 @@ def test_guarded_launch_accepts_only_the_complete_exact_generation(tmp_path):
     git_sha = enroll_and_build(repository, host_root)
     manifest = json.loads(
         (
-            host_root
-            / "artifacts/podway"
-            / git_sha
-            / ".aquarium-manifest.json"
+            host_root / "artifacts/podway" / git_sha / ".aquarium-manifest.json"
         ).read_text(encoding="utf-8")
     )
 

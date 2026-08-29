@@ -139,7 +139,9 @@ def open_guarded_executable(resolved, expected_sha256: str) -> int:
         while chunk := os.read(descriptor, 1024 * 1024):
             digest.update(chunk)
         if f"sha256:{digest.hexdigest()}" != expected_sha256:
-            raise OSError("the opened executable checksum does not match the launch guard")
+            raise OSError(
+                "the opened executable checksum does not match the launch guard"
+            )
         os.lseek(descriptor, 0, os.SEEK_SET)
         os.set_inheritable(descriptor, True)
         return descriptor
