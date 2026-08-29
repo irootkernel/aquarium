@@ -5,20 +5,23 @@ description: "Run the canonical independent-review target contract through a use
 
 # Orca Review
 
-Extend `$aquarium:independent-review` with a removable non-Codex provider layer. Target selection, dirty-state handling, static-review limits, adjudication, and the result envelope remain identical to the canonical independent-review contract.
+Extend `$aquarium:independent-review` with a removable non-Codex provider layer. Immutable target selection, static-review limits, adjudication, and the result envelope remain identical to the canonical independent-review contract, while Orca retains complete provider lifecycle ownership.
 
 ## Load the Contracts
 
 1. Read [review-contract.md](../../references/review-contract.md) completely.
-2. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
-3. Read [provider-contracts.md](references/provider-contracts.md) completely, then apply only the selected provider section.
-4. Resolve the `independent-review` skill directory and use its `scripts/inspect_review_target.py`. Do not maintain another target inspector here.
+2. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
+3. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
+4. Read [provider-contracts.md](references/provider-contracts.md) completely, then apply only the selected provider section.
+5. Resolve the installed `dev-aquarium` manager from this plugin generation.
 
 ## Establish the Target
 
-Classify and resolve one `staged`, `commit`, `range`, `task`, `epic`, or `special request` target exactly as the shared review contract specifies. A dirty working tree is never a target. For a staged target, ask whether to stage exact displayed paths, exclude the dirty remainder, or cancel. For commit, range, and confirmed `HEAD` targets, exclude dirty content automatically.
+Classify and resolve one `workspace`, `staged`, `dirty`, `head`, `commit`, or `range` source scope exactly as the shared review contract specifies. A `task`, `epic`, or special request supplies authority and focus only. Inspect current state without mutation and never stage or normalize content.
 
-Use the current checkout, not a private snapshot. When excluded dirty content exists, disclose that it remains outside the authorized scope but can technically be read by a reviewer process running as the same operating-system user. Bind the target inspector's complete result, exact authority paths, included and excluded state, and review focus to the Task.
+Admit and revalidate the exact enrolled Dolgorae generation, then create one protected owner-credential carrier outside the repository. Through the guarded manager, call checked `review-target.capture` with backend `orca` and a new immutable Orca lifecycle identity. Bind its complete capture result, immutable root, exact authority paths, included and excluded state, target and manifest digests, and review focus to the Task. Delete an unused carrier after a failed capture; preserve an admitted carrier until authoritative settlement or recovery.
+
+The provider still runs in Orca's current registered checkout, not a private repository snapshot, but the Task authorizes review only from the immutable capture root. Disclose that the same operating-system user can technically read excluded source-worktree bytes. Never substitute the current checkout for captured review input.
 
 ## Discover and Select the Provider
 
@@ -39,11 +42,11 @@ The selection record must disclose the exact provider command, requested lead id
 
 Resolve the installed Orca command and live guides exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run and Task, then create one fresh provider terminal in the current worktree only through `scripts/create_provider_terminal.py` with the selected logical argv from [provider-contracts.md](references/provider-contracts.md).
 
-Immediately before terminal creation, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned baseline. Then feed the terminal-helper request through non-expanding stdin with that same exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing.
+Immediately before terminal creation, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned source-mutation baseline. Then feed the terminal-helper request through non-expanding stdin with that same exact Git worktree root and verify its returned Orca terminal result and argv digest before continuing.
 
 The helper-generated command must revalidate provider identity at provider-process start. Verify the requested lead identity when the provider exposes it. A helper failure or missing or mismatched exposed identity stops before source-bearing Dispatch.
 
-Inject one Dispatch containing the canonical Task. Tell the lead explicitly that this is review, not implementation, and that it must not enter or request a provider plan mode. Regardless of the tools available in normal mode, require the lead to remain read-only; never create, modify, delete, or move a file; and never alter the Git index or a ref.
+Inject one Dispatch containing the canonical Task and immutable capture root. Tell the lead explicitly that this is review, not implementation, and that it must not enter or request a provider plan mode. Regardless of the tools available in normal mode, require the lead to remain read-only; never create, modify, delete, or move a file; and never alter the Git index or a ref.
 
 Require the lead to run no tests or builds and no generators, formatters, or linters; perform no authentication, installation, or update; inspect exact target blobs instead of excluded working-tree copies; report only verified actionable findings; label execution-dependent claims `runtime unverified`; and complete the injected lifecycle exactly once. If required evidence cannot be gathered under those restrictions, require a bounded confirmation need instead of a mutation.
 
@@ -53,10 +56,14 @@ Supervise, settle, acknowledge, and recover through the live Orca guides. The ex
 
 After accepted completion and before adjudication, feed the complete baseline through non-expanding stdin to `scripts/inspect_repository_state.py --repository <exact-git-root> --compare`. Report the returned modified-file status and changed dimensions. No drift proves only the helper's bounded Git-observable state. HEAD or ref drift, provider-attributed drift, or unexplained drift is operationally incomplete and prevents `APPROVE`; report it without reverting anything.
 
-When exact index or dirty-remainder drift is user-owned, re-run the canonical target inspector, obtain confirmation for the displayed paths, and apply the shared staged-target or excluded-dirty rules instead of invalidating solely because the live staged index changed.
+After accepted Orca completion, construct only the checked terminal receipt from authoritative Run, Task, Dispatch, terminal, acknowledgement, state revision, and evidence digest. Revalidate the exact Dolgorae candidate, then call checked `review-target.settle` with the protected owner credential and expected capture revision. Active, unknown, stale, foreign-owner, lifecycle-mismatched, missing-evidence, or concurrent-losing settlement preserves capture and recovery evidence. Exact accepted replay is idempotent.
 
 ## Adjudicate and Report
 
 Independently verify every finding against the exact target and authority without changing files or running checks. Classify findings as Valid, Invalid, or Needs confirmation under the shared contract. A static functionality review can establish support in code and documentation but cannot prove runtime behavior.
 
-Return the complete shared result envelope plus the selected provider identity, actual optional-subagent evidence, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Wrong scope, modified files, missing output, provider-identity mismatch, or incomplete lifecycle prevents a clean verdict. Do not implement remediation.
+Return the complete shared result envelope plus the selected provider identity, actual optional-subagent evidence, capture and settlement evidence, and separate Orca Run, Task, Dispatch, terminal, and lifecycle status. Wrong scope, modified files, missing output, provider-identity mismatch, incomplete lifecycle, or incomplete settlement prevents a clean verdict. Do not implement remediation.
+
+## Mulgae semantic conformance
+
+When comparing a corresponding Mulgae review, require the same source-scope meaning, resolved Git identities, included and excluded disposition, and comparable whole-target digest. A mismatch fails closed. Never make Mulgae depend on Dolgorae capture internals or make Aquarium, Dolgorae, or Orca own Mulgae provider, extraction, adjudication, publication, archive, or settlement state.

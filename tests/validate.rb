@@ -2149,9 +2149,10 @@ assert(independent_review_script_body.include?('"status"') &&
 
 assert(orca_review.include?("removable non-Codex provider layer") &&
        orca_review.include?("user explicitly invokes") &&
-       orca_review.include?("use its `scripts/inspect_review_target.py`") &&
-       orca_review.include?("current checkout, not a private snapshot"),
-       "orca-review must remain an explicit provider extension of the canonical target contract")
+       orca_review.include?("[dolgorae-review-contract.md](../../references/dolgorae-review-contract.md)") &&
+       orca_review.include?("installed `dev-aquarium` manager") &&
+       orca_review.include?("current registered checkout, not a private repository snapshot"),
+       "orca-review must remain an explicit immutable-target provider extension")
 assert(orca_review.include?("Probe only `claude`, `kimi`, `agy`, and `cursor-agent`") &&
        orca_review.include?("Claude with a Fable lead") &&
        orca_review.include?("Kimi with K3") &&
@@ -2170,6 +2171,12 @@ assert(orca_review.include?("run no tests or builds") &&
        orca_review.include?("Never retry automatically, switch providers") &&
        orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
        "orca-review must remain static, adjudicated, and operationally bounded")
+assert(orca_review.include?("review-target.capture") &&
+       orca_review.include?("review-target.settle") &&
+       orca_review.include?("protected owner credential") &&
+       orca_review.include?("Orca retains complete provider lifecycle ownership") &&
+       orca_review.include?("Mulgae provider, extraction, adjudication, publication, archive, or settlement state"),
+       "orca-review must use Dolgorae capture while preserving Orca and Mulgae lifecycle ownership")
 
 assert(orca_provider_contracts.include?("<PROVIDER> --model fable --dangerously-skip-permissions\n") &&
        orca_provider_contracts.include?("may create Opus or Sonnet subagents when") &&
