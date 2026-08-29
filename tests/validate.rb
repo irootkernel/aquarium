@@ -2090,21 +2090,23 @@ assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        independent_review.include?("user explicitly invokes"),
        "independent-review must remain user-invoked only")
 assert(independent_review.include?("[review-contract.md](../../references/review-contract.md)") &&
-       independent_review.include?("[orca-supervision.md](../../references/orca-supervision.md)") &&
-       independent_review.include?("scripts/inspect_review_target.py"),
-       "independent-review must load the shared target and backend contracts")
-assert(independent_review.include?("`staged`, `commit`, `range`, `task`, `epic`, or `special request`") &&
-       independent_review.include?("always ask the user to confirm staged, `HEAD`") &&
-       independent_review.include?("authority identifies one unambiguous staged candidate, commit, or range"),
-       "independent-review must resolve every supported target without silently broadening it")
-assert(independent_review.include?("--worktree current --agent codex") &&
-       independent_review.include?("one fresh reviewer") &&
-       independent_review.include?("Wrong scope, modified files, missing output"),
-       "independent-review must use one fresh Codex and fail closed on incomplete review evidence")
-assert(independent_review.include?("authorizes no source edits, tests, builds") &&
-       independent_review.include?("Do not seed the reviewer with suspected findings") &&
-       independent_review.include?("Valid, Invalid, or Needs confirmation"),
-       "independent-review must remain static, read-only, and independently adjudicated")
+       independent_review.include?("[dolgorae-review-contract.md](../../references/dolgorae-review-contract.md)") &&
+       independent_review.include?("installed `dev-aquarium` manager"),
+       "independent-review must load the shared target, candidate, and installed-manager contracts")
+assert(%w[workspace staged dirty head commit range].all? { |scope| independent_review.include?("`#{scope}`") } &&
+       independent_review.include?("`task`, `epic`, or special request") &&
+       independent_review.include?("Never stage or normalize content"),
+       "independent-review must resolve all six immutable scopes without silently broadening or mutating them")
+assert(independent_review.include?("exactly one checked v2 operation") &&
+       independent_review.include?("one fresh managed Codex Reviewer") &&
+       independent_review.include?("orca_objects_created: false") &&
+       independent_review.include?("never falls back to Orca"),
+       "independent-review must use one fresh Codex through Dolgorae with no Orca objects")
+assert(independent_review.include?("Do not seed suspected findings") &&
+       independent_review.include?("Valid, Invalid, or Needs confirmation") &&
+       independent_review.include?("A process exit, silence, or elapsed deadline is not completion evidence") &&
+       independent_review.include?("incomplete settlement prevents `APPROVE`"),
+       "independent-review must remain static, terminal-evidence-bound, and independently adjudicated")
 
 %w[workspace staged dirty head commit range task epic].each do |target|
   assert(review_contract.include?("`#{target}`"),
