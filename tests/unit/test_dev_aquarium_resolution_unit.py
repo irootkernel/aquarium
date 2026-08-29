@@ -1,5 +1,6 @@
 import json
 import os
+import stat
 import subprocess
 import sys
 import time
@@ -46,7 +47,7 @@ if [ "$1" = hold ]; then
 fi
 printf '%s\\n' 'development tool'
 """, encoding="utf-8")
-artifact.chmod(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+artifact.chmod(0o755)
 manifest = {
     "schema": "aquarium-dev-artifact-manifest/v1",
     "project_id": "podway",
@@ -378,6 +379,8 @@ def test_execution_alias_rejects_source_path_replacement(tmp_path):
 
     assert resolved.execution_path.read_bytes() == expected
     assert resolved.execution_path != resolved.path
+    assert stat.S_IMODE(resolved.path.stat().st_mode) == 0o500
+    assert stat.S_IMODE(resolved.execution_path.stat().st_mode) == 0o500
     resolved.close()
     os.chflags(resolved.execution_path, 0)
     os.chflags(resolved.execution_path.parent, 0)

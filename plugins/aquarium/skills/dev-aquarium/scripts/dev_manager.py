@@ -1304,7 +1304,13 @@ def _execution_alias(
                 or not os.path.samefile(artifact, target)
             ):
                 raise OSError("the guarded execution alias has changed identity")
-            if not target.stat().st_flags & stat.UF_IMMUTABLE:
+            target_flags = target.stat().st_flags
+            if stat.S_IMODE(target.stat().st_mode) != 0o500:
+                if target_flags & stat.UF_IMMUTABLE:
+                    os.chflags(target, 0)
+                target.chmod(0o500)
+                os.chflags(target, stat.UF_IMMUTABLE)
+            elif not target_flags & stat.UF_IMMUTABLE:
                 os.chflags(target, stat.UF_IMMUTABLE)
             if not root.stat().st_flags & stat.UF_IMMUTABLE:
                 root.chmod(0o500)
@@ -1318,6 +1324,7 @@ def _execution_alias(
         os.link(artifact, temporary, follow_symlinks=False)
         if not os.path.samefile(artifact, temporary):
             raise OSError("the guarded execution alias does not bind the artifact")
+        temporary.chmod(0o500)
         os.replace(temporary, target)
         root.chmod(0o500)
         os.chflags(target, stat.UF_IMMUTABLE)
@@ -1907,6 +1914,10 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                     or set(request) != expected_fields
                     or request.get("schema") != QUEUE_SCHEMA
                     or request.get("project_id") != project_id
+                    or not isinstance(request.get("checkout"), str)
+                    or not request["checkout"]
+                    or not isinstance(request.get("git_sha"), str)
+                    or SHA_RE.fullmatch(request["git_sha"]) is None
                 ):
                     error = ManagerError(
                         "invalid_arguments",

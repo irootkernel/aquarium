@@ -443,6 +443,34 @@ def test_worker_reports_failure_when_terminal_request_cannot_be_quarantined(
     assert invalid.is_dir()
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("checkout", None),
+        ("checkout", {}),
+        ("checkout", []),
+        ("git_sha", None),
+        ("git_sha", "not-a-full-lowercase-sha"),
+    ),
+)
+def test_worker_quarantines_invalid_request_field_types(tmp_path, field, value):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, queued = queue_request(repository, host_root, CLI, spawn_worker=False)
+    request_path = Path(queued["queued"])
+    request = json.loads(request_path.read_text())
+    request[field] = value
+    request_path.write_text(json.dumps(request), encoding="utf-8")
+
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "invalid_arguments"
+    assert not request_path.exists()
+    assert len(list((host_root / "queue-failures/aquarium").glob("*.json"))) == 1
+
+
 def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"
