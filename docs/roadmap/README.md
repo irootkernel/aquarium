@@ -29,7 +29,7 @@ Epic status is independent of child task status. Completing every child does not
 | --- | --- | --- |
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
 | EPIC-002 | Build the Aquarium development environment | Blocked |
-| EPIC-003 | Activate Dolgorae-backed Reviews | Planned |
+| EPIC-003 | Activate Dolgorae-backed Reviews | Completed |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
@@ -78,21 +78,21 @@ The Aquarium-owned runtime is complete. Further progress requires exact clean lo
 
 ## EPIC-003: Activate Dolgorae-backed Reviews
 
-**Status:** `Planned`
+**Status:** `Completed`
 
 Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The design preserves Orca supervision for `orca-review`, aligns Mulgae only on common source-scope and target-identity semantics, and requires exact candidate, capture, lifecycle, and settlement evidence before runtime activation.
 
 EPIC-003 does not depend on completing EPIC-002 or its unfinished original producer tasks. It depends only on `TASK-024`, which extends the completed `TASK-010` foundation with an exact Dolgorae development generation. External Dolgorae `TASK-015` remains the checked runtime-contract prerequisite, while external `TASK-035` owns producer delivery through `TASK-024`.
 
-**Detailed SOT:** [`TODO-DOLGORAE-REVIEWS.md`](../todo/TODO-DOLGORAE-REVIEWS.md)
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/skills/dev-aquarium/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-019 | Adopt the Dolgorae candidate contract | Freeze generation acquisition, identity, capability, schema, bounds, guarded launch, and pre-launch revalidation contracts. | In Review | TASK-024 |
-| TASK-020 | Adopt immutable review targets | Implement the six captured source scopes, immutable manifests, source identity, safety boundaries, and owner-bound settlement identities. | In Review | TASK-019 |
-| TASK-021 | Implement Dolgorae independent-review supervision | Run one fresh Codex Reviewer through Dolgorae without Orca objects and settle only from authoritative terminal evidence. | In Review | TASK-020 |
-| TASK-022 | Preserve Orca review and align Mulgae semantics | Retain Orca lifecycle ownership and prove common target semantics across Orca and Mulgae without lifecycle coupling. | In Review | TASK-020 |
-| TASK-023 | Activate and validate the exact candidate | Bind one exact enrolled Dolgorae generation, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | In Progress | TASK-021, TASK-022; external Dolgorae TASK-015 |
+| TASK-019 | Adopt the Dolgorae candidate contract | Freeze generation acquisition, identity, capability, schema, bounds, guarded launch, and pre-launch revalidation contracts. | Completed | TASK-024 |
+| TASK-020 | Adopt immutable review targets | Implement the six captured source scopes, immutable manifests, source identity, safety boundaries, and owner-bound settlement identities. | Completed | TASK-019 |
+| TASK-021 | Implement Dolgorae independent-review supervision | Run one fresh Codex Reviewer through Dolgorae without Orca objects and settle only from authoritative terminal evidence. | Completed | TASK-020 |
+| TASK-022 | Preserve Orca review and align Mulgae semantics | Retain Orca lifecycle ownership and prove common target semantics across Orca and Mulgae without lifecycle coupling. | Completed | TASK-020 |
+| TASK-023 | Activate and validate the exact candidate | Bind one exact enrolled Dolgorae generation, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | Completed | TASK-021, TASK-022; external Dolgorae TASK-015 |
 
 ## EPIC-004: Release Aquarium v0.1.12
 

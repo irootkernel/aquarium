@@ -256,8 +256,7 @@ documentation_detail_paths = {
   "changing-procedures" => ROOT.join("docs/implementation-tips/changing-procedures.md"),
   "changing-inspectors" => ROOT.join("docs/implementation-tips/changing-inspectors.md"),
   "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md"),
-  "dev-aquarium-dossier" => ROOT.join("docs/todo/TODO-DEV-AQUARIUM.md"),
-  "dolgorae-reviews-dossier" => ROOT.join("docs/todo/TODO-DOLGORAE-REVIEWS.md")
+  "dev-aquarium-dossier" => ROOT.join("docs/todo/TODO-DEV-AQUARIUM.md")
 }
 documentation_adr_paths = (1..6).map do |number|
   Dir[ROOT.join("docs/architecture-decision-records/%04d-*.md" % number)].map { |path| Pathname.new(path) }
@@ -696,7 +695,6 @@ assert(!canonical_documentation.include?("/Users/") &&
        "canonical documentation must not contain absolute workspace paths or apparent credential values")
 
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
-dolgorae_reviews_dossier = documentation_details.fetch("dolgorae-reviews-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
 assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
@@ -710,15 +708,16 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 24 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
-       canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
+       !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [Tool integrations]") &&
+       canonical_roadmap.include?("**Canonical Outcomes:** [Dolgorae review contract]") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
        "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-004 and unique TASK-001 through TASK-024")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
-       todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
+       !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
        todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
        dev_aquarium_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
        dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 12 &&
@@ -729,16 +728,7 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        dev_aquarium_dossier.include?("make aquarium-dev-build") &&
        dev_aquarium_dossier.include?("There is no top-level `~/.aquarium/bin/`") &&
        dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
-       dev_aquarium_dossier.include?("external Dolgorae `TASK-035`") &&
-       dolgorae_reviews_dossier.include?("detailed scope and acceptance source of truth for `EPIC-003`") &&
-       dolgorae_reviews_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 5 &&
-       (19..23).all? { |number| dolgorae_reviews_dossier.include?("## TASK-%03d:" % number) } &&
-       %w[workspace staged dirty head commit range].all? { |scope| dolgorae_reviews_dossier.include?("| `#{scope}` |") } &&
-       dolgorae_reviews_dossier.include?("No Orca Run, Task, Dispatch, worker, terminal, context, worktree") &&
-       dolgorae_reviews_dossier.include?("External Dolgorae `TASK-015`") &&
-       dolgorae_reviews_dossier.include?("Aquarium `TASK-024`") &&
-       dolgorae_reviews_dossier.include?("Completed Confirm") &&
-       dolgorae_reviews_dossier.include?("mutable `current` selector"),
+       dev_aquarium_dossier.include?("external Dolgorae `TASK-035`"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(dolgorae_review_contract.include?("all three exact guards") &&
        dolgorae_review_contract.include?("workspace`, `staged`, `dirty`, `head`, `commit`, and `range") &&
