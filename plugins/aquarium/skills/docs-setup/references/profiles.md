@@ -19,11 +19,11 @@ docs/
 `-- todo/README.md
 ```
 
-The roadmap contains status definitions, an epic summary, one epic section per adopted epic, and a task table below each epic. Use a level-two `## EPIC-NNN: Title` heading, an explicit `Status` field within that section, and a Markdown table whose first column identifies tasks. Use the stable `Detailed SOT` and `Canonical Outcomes` field names with Markdown links. A level-two heading ends the preceding epic section even when it is not another epic.
+The roadmap contains status definitions, an epic summary, one epic section per adopted epic, and a task table below each epic. Use a level-two `## EPIC-NNN: Title` heading, an explicit `Status` field within that section, and a Markdown table whose first column identifies tasks. Preserve existing `Detailed SOT`, `Canonical Outcomes`, or repository-defined equivalent links without requiring them for every epic. A level-two heading ends the preceding epic section even when it is not another epic.
 
 Legacy adoption preserves established identifier shapes. The bundled v2 inspector reports explicit roadmap units without classifying their shape or migration eligibility; the workflow applies this profile and the migration contract. Do not create one file per task by default.
 
-Keep small postponed findings in the one deferred-feedback index. A TODO file represents one future epic-sized candidate and stays outside roadmap lifecycle until promotion. After promotion, retain it as the active epic's temporary dossier, identify the roadmap epic in its content, record it in the adopted TODO index, and link it as `Detailed SOT`. Epic closeout promotes durable content, deletes the dossier and index entry, and replaces that link with `Canonical Outcomes` links. Existing design dossiers may retain established Markdown names during legacy adoption; scope ownership and the roadmap link, not a `TODO-` filename prefix, identify them.
+Keep small postponed findings in the one deferred-feedback index. A TODO file represents one future epic-sized candidate and stays outside roadmap lifecycle until a work-definition workflow promotes it. Preserve existing active dossiers, their index entries, links, and repository-declared closeout lifecycle without creating a missing execution document. Existing design dossiers may retain established Markdown names during legacy adoption; scope ownership and repository authority, not a `TODO-` filename prefix, identify them.
 
 ## Multiple Scopes (`multi-scope`)
 
@@ -37,6 +37,6 @@ Shared work is split into linked work units in the implementation-owning roadmap
 
 Map an existing directory or file to a role only when its content and repository guidance establish that ownership. Names alone are insufficient. A file such as `docs/ROADMAP.md`, `docs/adr/README.md`, `docs/guides/`, or `docs/deferred-feedback.md` can remain canonical when its meaning matches the role.
 
-Preserve established archives, semantic epic codes, slug-derived task IDs, adopted design dossiers, and language conventions. Treat `ops`, `operations`, and `runbooks` as discovery candidates but map one only when its content establishes operational ownership. Report a missing architecture or operations owner, competing roadmap, mixed current/future specification, status-bearing TODO, or ambiguous active-dossier lifecycle as a gap; do not silently declare it conforming.
+Preserve established archives, semantic epic codes, slug-derived task IDs, adopted design dossiers, and language conventions. Treat `ops`, `operations`, and `runbooks` as discovery candidates but map one only when its content establishes operational ownership. Report a missing architecture or operations owner, competing roadmap, mixed current/future specification, status-bearing TODO, or ambiguous declared dossier owner as a gap; do not silently declare it conforming.
 
 Adoption writes the minimum root index and missing role indexes needed to make authority discoverable. It does not rename valid paths, normalize IDs, archive history, or rewrite content without a separately approved migration.

@@ -25,7 +25,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 | Implementation tips | `docs/implementation-tips/README.md` | Non-normative development, verification, and release guidance |
 | Operations | `docs/ops/README.md` | Environment setup, deployment, configuration, diagnosis, recovery, and first-aid runbooks |
 | Roadmap | `docs/roadmap/README.md` | Adopted epic and task identity, ordering, dependencies, lifecycle vocabulary, and status |
-| TODO and work dossiers | `docs/todo/README.md` | Future epic-sized candidates plus detailed scope and acceptance dossiers referenced by adopted roadmap work |
+| TODO and work dossiers | `docs/todo/README.md` | Future epic-sized candidates plus optional detailed scope and acceptance dossiers referenced by complex adopted roadmap work |
 | Deferred feedback | `docs/deferred-feedback/README.md` | Small actionable findings intentionally postponed from current work |
 
 ## Maintainer Navigation
@@ -40,7 +40,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 ## Source-of-Truth Precedence
 
 - `docs/roadmap/README.md` alone owns delivery identity and lifecycle state; TODO and deferred feedback never act as competing status authorities.
-- A `docs/todo/TODO-*.md` file referenced by an active roadmap epic is its temporary development SOT for detailed goal, scope, approach, task boundaries, and acceptance, but never owns ID, ordering, dependencies, or lifecycle status. Each task promotes accepted durable information to the appropriate canonical role. Epic closeout deletes the dossier and replaces its roadmap link with `Canonical Outcomes` links.
+- The [Epic Execution SOT contract](../plugins/aquarium/references/epic-execution-sot.md) decides when complex work needs a dossier. A referenced `docs/todo/TODO-*.md` is the consumer epic or epics' temporary development SOT for detailed goal, scope, approach, task boundaries, and acceptance, but never owns ID, ordering, dependencies, or lifecycle status. Each task promotes accepted durable information to the appropriate canonical role; small epics use their roadmap and canonical documents directly.
 - `docs/specs/README.md` owns the specification catalog and declares the exact repository files that own each detailed product contract; the index does not restate those contracts.
 - `docs/architecture/README.md` and architecture decision records own current structure and durable design rationale without overriding executable behavior.
 - `docs/implementation-tips/README.md` owns guidance for changing, verifying, and releasing Aquarium; `docs/ops/README.md` separately owns environment operation, diagnosis, and recovery guidance.

@@ -10,6 +10,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Add Dolgorae as a CLI-only development producer with exact-generation guarded launch support.
 - Adopt the official Dolgorae v0.1.0 Apple Silicon release for setup diagnosis and checksum-bound stable review launch.
 
+### Changed
+
+- Require an execution dossier for epics with at least three member tasks or three requirement-bearing canonical documents, while letting smaller semantically complete epics use repository-owned documentation and retaining shared dossiers until their final consumer closes.
+
 ### Fixed
 
 - Retain the configured Aquarium marketplace generation until isolated Codex reconfiguration completes.

@@ -324,19 +324,8 @@ def owner_file(repository: Path, owner: Path) -> Path:
 
 
 def documentation_inventory(tracked: list[Path], untracked: list[Path]) -> list[Path]:
-    root_documents = {
-        Path("README.md"),
-        Path("README.ko.md"),
-        Path("CHANGELOG.md"),
-        Path("PRIVACY.md"),
-        Path("TERMS.md"),
-    }
     return sorted(
-        {
-            path
-            for path in tracked + untracked
-            if path in root_documents or (path.parts and path.parts[0] == "docs")
-        },
+        {path for path in tracked + untracked if path.suffix.lower() == ".md"},
         key=lambda path: path.as_posix(),
     )
 
@@ -453,12 +442,6 @@ def resolve_document_link(source: Path, raw_target: str) -> Path | None:
     return Path(*parts) if parts else None
 
 
-def within_owner(target: Path, owner: Path) -> bool:
-    if owner.suffix.lower() == ".md":
-        return target == owner
-    return target == owner or target.is_relative_to(owner)
-
-
 def excluded_target(
     target: Path | None, inventory: set[Path], readable: set[Path]
 ) -> bool:
@@ -468,7 +451,6 @@ def excluded_target(
 def inspect_epic_lifecycle(
     epic: dict[str, Any],
     roadmap: Path,
-    todo_owner: Path | None,
     inventory: set[Path],
     readable: set[Path],
 ) -> list[dict[str, str]]:
@@ -477,8 +459,6 @@ def inspect_epic_lifecycle(
     outcome_count = epic.pop("_outcome_count")
     detailed_raw = epic.pop("_detailed_raw")
     outcome_raw = epic.pop("_outcome_raw")
-    detailed_targets = [resolve_document_link(roadmap, value) for value in detailed_raw]
-    outcome_targets = [resolve_document_link(roadmap, value) for value in outcome_raw]
     status = epic["status"]
     tasks = epic["tasks"]
     contract_evidence = bool(detailed_count or outcome_count)
@@ -495,58 +475,7 @@ def inspect_epic_lifecycle(
             )
         return findings
 
-    if status == "Completed":
-        if not contract_evidence:
-            return findings
-        if detailed_count:
-            findings.append(
-                finding(
-                    "completed_epic_dossier_retained",
-                    "error",
-                    f"{epic['id']} is Completed but retains Detailed SOT.",
-                    roadmap.as_posix(),
-                )
-            )
-        valid_outcomes = (
-            outcome_count == 1
-            and bool(outcome_targets)
-            and all(
-                target is not None
-                and target in inventory
-                and (todo_owner is None or not within_owner(target, todo_owner))
-                for target in outcome_targets
-            )
-        )
-        if not valid_outcomes:
-            findings.append(
-                finding(
-                    "completed_epic_canonical_outcomes_missing",
-                    "error",
-                    f"{epic['id']} must link existing in-repository canonical outcomes.",
-                    roadmap.as_posix(),
-                )
-            )
-        else:
-            excluded = next(
-                (
-                    target
-                    for target in outcome_targets
-                    if excluded_target(target, inventory, readable)
-                ),
-                None,
-            )
-            if excluded is not None:
-                findings.append(
-                    finding(
-                        "completed_epic_canonical_outcomes_unverifiable",
-                        "unverifiable",
-                        f"{epic['id']} links an outcome whose contents were excluded.",
-                        excluded.as_posix(),
-                    )
-                )
-        return findings
-
-    if status not in ACTIVE_EPIC_STATUSES:
+    if status != "Completed" and status not in ACTIVE_EPIC_STATUSES:
         if tasks or contract_evidence:
             findings.append(
                 finding(
@@ -558,60 +487,63 @@ def inspect_epic_lifecycle(
             )
         return findings
 
-    if outcome_count:
-        findings.append(
-            finding(
-                "active_epic_canonical_outcomes_present",
-                "error",
-                f"{epic['id']} is active but carries Canonical Outcomes.",
-                roadmap.as_posix(),
-            )
-        )
-
-    if not tasks and not detailed_count:
-        return findings
-    if detailed_count == 0:
-        findings.append(
-            finding(
-                "active_epic_dossier_missing",
-                "error",
-                f"{epic['id']} has tasks but no Detailed SOT link.",
-                roadmap.as_posix(),
-            )
-        )
-        return findings
-
-    target = detailed_targets[0] if len(detailed_targets) == 1 else None
-    valid = (
-        detailed_count == 1
-        and len(detailed_targets) == 1
-        and target is not None
-        and target.suffix.lower() == ".md"
-        and todo_owner is not None
-        and within_owner(target, todo_owner)
-        and target != todo_owner
-        and target != todo_owner / "README.md"
-        and target in inventory
+    declared_fields = (
+        (
+            "Detailed SOT",
+            detailed_count,
+            detailed_raw,
+            "epic_detailed_sot_invalid",
+            "epic_detailed_sot_unverifiable",
+        ),
+        (
+            "Canonical Outcomes",
+            outcome_count,
+            outcome_raw,
+            "epic_canonical_outcomes_invalid",
+            "epic_canonical_outcomes_unverifiable",
+        ),
     )
-    if not valid:
-        findings.append(
-            finding(
-                "active_epic_dossier_invalid",
-                "error",
-                f"{epic['id']} must link one existing scope-local TODO dossier.",
-                roadmap.as_posix(),
+    for label, count, raw_values, invalid_code, unverifiable_code in declared_fields:
+        if count == 0:
+            continue
+        targets = [resolve_document_link(roadmap, value) for value in raw_values]
+        valid = (
+            count == 1
+            and bool(targets)
+            and all(
+                target is not None
+                and target.suffix.lower() == ".md"
+                and target in inventory
+                for target in targets
             )
         )
-    elif excluded_target(target, inventory, readable):
-        assert target is not None
-        findings.append(
-            finding(
-                "active_epic_dossier_unverifiable",
-                "unverifiable",
-                f"{epic['id']} links a dossier whose contents were excluded.",
-                target.as_posix(),
+        if not valid:
+            findings.append(
+                finding(
+                    invalid_code,
+                    "error",
+                    f"{epic['id']} declares {label} but does not link existing in-repository Markdown documents.",
+                    roadmap.as_posix(),
+                )
             )
+            continue
+        excluded = next(
+            (
+                target
+                for target in targets
+                if excluded_target(target, inventory, readable)
+            ),
+            None,
         )
+        if excluded is not None:
+            findings.append(
+                finding(
+                    unverifiable_code,
+                    "unverifiable",
+                    f"{epic['id']} links {label} content that was excluded.",
+                    excluded.as_posix(),
+                )
+            )
     return findings
 
 
@@ -625,9 +557,6 @@ def inspect_roadmap(
     findings: list[dict[str, str]] = []
     epics: list[dict[str, Any]] = []
     seen: set[str] = set()
-    todo_candidates = scope["role_candidates"]["todo"]
-    todo_owner = Path(todo_candidates[0]) if len(todo_candidates) == 1 else None
-
     for identifier, lines in epic_sections(text):
         detailed_count, detailed_raw = field_links(lines, "Detailed SOT")
         outcome_count, outcome_raw = field_links(lines, "Canonical Outcomes")
@@ -656,9 +585,7 @@ def inspect_roadmap(
                 )
             )
         seen.update(identifiers)
-        findings.extend(
-            inspect_epic_lifecycle(epic, path, todo_owner, inventory, readable)
-        )
+        findings.extend(inspect_epic_lifecycle(epic, path, inventory, readable))
         epics.append(epic)
     return {
         "scope": scope["name"],

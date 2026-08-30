@@ -88,8 +88,14 @@ def test_sensitive_paths_are_excluded_without_reading_values() -> None:
     assert not inspect_docs.sensitive_path(Path("docs/specs/product.md"))
 
 
-def test_owner_containment_is_component_aware() -> None:
-    owner = Path("docs/todo")
+def test_documentation_inventory_includes_code_adjacent_markdown() -> None:
+    tracked = [
+        Path("docs/specs/README.md"),
+        Path("plugins/example/SKILL.md"),
+        Path("src/example.py"),
+    ]
 
-    assert inspect_docs.within_owner(Path("docs/todo/TODO-ONE.md"), owner)
-    assert not inspect_docs.within_owner(Path("docs/todo-other/TODO-ONE.md"), owner)
+    assert inspect_docs.documentation_inventory(tracked, []) == [
+        Path("docs/specs/README.md"),
+        Path("plugins/example/SKILL.md"),
+    ]

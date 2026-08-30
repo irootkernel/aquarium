@@ -283,6 +283,7 @@ war_room = PLUGIN.join("skills/war-room/SKILL.md").read
 ouroboros_contract = PLUGIN.join("references/ouroboros-integration.md").read
 design_gate_contract = PLUGIN.join("references/design-gates.md").read
 documentation_contract = PLUGIN.join("references/documentation-governance.md").read
+execution_sot_contract = PLUGIN.join("references/epic-execution-sot.md").read
 release_notes_contract = PLUGIN.join("references/release-notes.md").read
 plan_handoff_path = PLUGIN.join("references/plan-handoff.md")
 assert(plan_handoff_path.file?, "shared plan-handoff contract is missing")
@@ -566,7 +567,7 @@ assert(docs_setup.include?("Never open `.env*`, authentication, credential, key,
        "docs-setup and public privacy guidance must preserve local inspection boundaries")
 assert(documentation_contract.include?("## Semantic Roles") &&
        documentation_contract.include?("## Profiles") &&
-       documentation_contract.include?("## TODO Dossier Lifecycle") &&
+       documentation_contract.include?("## Optional Work Dossiers") &&
        documentation_contract.include?("## New Roadmap Identity") &&
        documentation_contract.include?("EPIC-[0-9]{3,}") &&
        documentation_contract.include?("TASK-[0-9]{3,}") &&
@@ -580,7 +581,25 @@ assert(documentation_contract.include?("## Semantic Roles") &&
        docs_setup_profiles.include?("legacy-adopt") &&
        docs_setup_operations.include?("## Runbook Contract") &&
        docs_setup_operations.include?("## Empty Operations Surface"),
-       "documentation governance must define audiences, eight roles, dossier lifecycle, profiles, and roadmap IDs")
+       "documentation governance must define audiences, eight roles, optional dossiers, profiles, and roadmap IDs")
+assert(execution_sot_contract.include?("three or more member tasks") &&
+       execution_sot_contract.include?("three or more requirement-bearing canonical documents") &&
+       execution_sot_contract.include?("at most two member tasks") &&
+       execution_sot_contract.include?("at most two requirement-bearing canonical documents") &&
+       execution_sot_contract.include?("Never route dossier creation to `docs-setup`") &&
+       execution_sot_contract.include?("never recreate a deleted temporary dossier") &&
+       execution_sot_contract.include?("inventory all canonical roadmap references") &&
+       execution_sot_contract.include?("retain the dossier and TODO index entry") &&
+       execution_sot_contract.include?("last consumer epic's closeout") &&
+       execution_sot_contract.include?("Do not create, delete, rename, or relink documents solely to manufacture a dossier closeout diff"),
+       "execution SOT contract must own the conditional dossier threshold, routing, validation, and closeout")
+assert(!docs_setup.include?("missing dossier") &&
+       !docs_setup.include?("retrofit a pre-contract active epic") &&
+       docs_setup.include?("never create or retrofit a work item or execution SOT") &&
+       !docs_setup_script_body.include?("active_epic_dossier_missing") &&
+       !docs_setup_script_body.include?("completed_epic_dossier_retained") &&
+       !docs_setup_script_body.include?("completed_epic_canonical_outcomes_missing"),
+       "docs-setup must discover declared dossier links without owning work-item creation or lifecycle")
 assert(docs_setup_migration.include?("status is exactly `Planned`") &&
        docs_setup_migration.include?("every child task is exactly `Planned`") &&
        docs_setup_migration.include?("id-migrations/YYYY-MM-DD.md") &&
@@ -1444,6 +1463,8 @@ assert(ROOT.join("README.md").read.include?("explicit plan handoff to another ag
 }.each do |name, body|
   assert(body.include?("ouroboros-integration.md"),
          "#{name} must use the shared Ouroboros contract")
+  assert(body.include?("epic-execution-sot.md") && body.include?("execution-SOT threshold"),
+         "#{name} must apply the shared conditional dossier contract")
   assert(body.include?("exact") && body.match?(/explicit approval/i),
          "#{name} must gate durable document changes on exact-diff approval")
 end
@@ -1470,6 +1491,23 @@ assert(war_room.include?("Do not implement a fix") &&
        war_room.include?("record its adjudicated result at `quality`") &&
        war_room.include?("zero unresolved locally valid findings"),
        "war-room must stop at diagnosis and one work-unit classification")
+{
+  "epic-handler" => epic_handler,
+  "task-handler" => task_handler,
+  "epic-validator" => epic_validator,
+}.each do |name, body|
+  assert(body.include?("epic-execution-sot.md"),
+         "#{name} must consume the shared execution SOT contract")
+end
+assert(epic_handler.include?("use the discovered canonical document set collectively") &&
+       epic_handler.include?("inventory every canonical roadmap reference") &&
+       epic_handler.include?("retaining a correctly linked shared dossier is not residue") &&
+       task_handler.include?("use the resolved canonical set") &&
+       epic_validator.include?("without recreating a deleted dossier") &&
+       !epic_handler.include?("`$aquarium:docs-setup` `adopt`") &&
+       !task_handler.include?("`$aquarium:docs-setup` `adopt`") &&
+       !task_plan.include?("`$aquarium:docs-setup` `adopt`"),
+       "handlers and validator must accept small distributed SOTs and never route dossier creation to docs-setup")
 assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") &&
        ouroboros_contract.include?("blocks these Ouroboros-assisted workflows") &&
        ouroboros_contract.include?("Use the canonical work identity directly without a skill-name prefix") &&

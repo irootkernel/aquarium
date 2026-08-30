@@ -7,15 +7,19 @@ description: "Update durable documentation and review status for one refined roa
 
 Document only the refined task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
-Read [documentation-governance.md](../../references/documentation-governance.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md).
+Read [documentation-governance.md](../../references/documentation-governance.md), [epic-execution-sot.md](../../references/epic-execution-sot.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md).
 
 ## Update Durable Documentation
 
-Resolve the task's parent epic, linked active dossier, `docs/README.md`, and canonical role owners from the roadmap. Determine documentation impact from final behavior and the task-owned dossier requirements. Promote accepted behavior to specifications, current components and boundaries to architecture, accepted rationale to architecture decision records, code-changing or verification guidance to implementation tips, environment setup or deployment and recovery guidance to operations, and user-facing value or usage to the root README.
+Resolve the task's parent epic, handler-resolved execution SOT and any linked active dossier, `docs/README.md`, and canonical role owners from the roadmap. Determine documentation impact from final behavior and the task-owned requirements.
 
-Update only affected durable owners, generated-document sources, the active dossier, and roadmap entries.
+Promote accepted behavior to specifications, current components and boundaries to architecture, accepted rationale to architecture decision records, code-changing or verification guidance to implementation tips, environment setup or deployment and recovery guidance to operations, and user-facing value or usage to the root README.
 
-Keep the dossier current for remaining member tasks. Remove or revise consumed handoffs and stale assumptions, but retain the epic's requirements and acceptance contract until epic closeout. Do not mark checklist state as lifecycle state or turn the dossier into implementation history. Stop the document phase when a durable task outcome has no canonical owner, when operational impact is left in implementation tips, or when a later task would read stale dossier guidance.
+Update only affected durable owners, generated-document sources, any active dossier, and roadmap entries.
+
+When a dossier exists, keep it current for remaining member tasks and consumer epics. Remove or revise only this task's consumed handoffs and stale assumptions; retain requirements and acceptance needed by any remaining consumer until its epic closeout.
+
+Do not create a dossier during this leaf phase, mark checklist state as lifecycle state, or turn the execution SOT into implementation history. Stop the document phase when a durable task outcome has no canonical owner, when operational impact is left in implementation tips, or when a later task would read stale execution guidance.
 
 Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. For an enrolled repository, settle exactly one release-note decision before review: add one concise `entry` for a user-visible, compatibility, security, privacy, or operational outcome, or record `intentional no-note` for an internal-only change.
 
@@ -53,7 +57,7 @@ Follow repository-owned documentation synchronization rules. Run required status
 
 In a Sanho-managed repository, reference `$use-sanho` and follow it only when this phase reaches an explicitly requested synchronization, lifecycle, or recovery action. Do not invoke Sanho for routine documentation editing or validation. If the skill is unavailable and repository guidance requires it, return an exact `$aquarium:dev-setup` continuation request; otherwise apply the repository's native Sanho rules and report that specialized guidance was unavailable.
 
-Run applicable documentation validation after the update. Verify the promoted canonical content, active dossier consistency, and operations boundary separately from structural checks. Separate task-caused failures from pre-existing failures, but do not claim a complete documentation gate passed when it did not. Do not stage, invoke Mulgae, commit, or publish unless the orchestrator recorded separate authority for that exact action.
+Run applicable documentation validation after the update. Verify the promoted canonical content, any active dossier consistency, and operations boundary separately from structural checks. Separate task-caused failures from pre-existing failures, but do not claim a complete documentation gate passed when it did not. Do not stage, invoke Mulgae, commit, or publish unless the orchestrator recorded separate authority for that exact action.
 
 ## Report Orchestration Evidence
 

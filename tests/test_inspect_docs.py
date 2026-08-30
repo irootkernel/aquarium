@@ -181,7 +181,7 @@ def test_runbooks_alias_can_own_operations(tmp_path: Path) -> None:
     assert roles["ops"] == ["docs/runbooks"]
 
 
-def test_active_epic_with_tasks_requires_dossier(tmp_path: Path) -> None:
+def test_active_epic_with_tasks_does_not_require_dossier_shape(tmp_path: Path) -> None:
     repository = tmp_path / "missing-dossier"
     initialize(repository)
     make_single_scope(repository)
@@ -190,15 +190,15 @@ def test_active_epic_with_tasks_requires_dossier(tmp_path: Path) -> None:
 
     _, payload = inspect(repository)
 
-    assert payload["structural_status"] == "nonconforming"
-    assert "active_epic_dossier_missing" in finding_codes(payload)
+    assert payload["structural_status"] == "conforming"
+    assert not any("dossier_missing" in code for code in finding_codes(payload))
 
 
 @pytest.mark.parametrize(
     "target",
-    ["../../outside.md", "/absolute.md", "../specs/README.md", "../todo/missing.md"],
+    ["../../outside.md", "/absolute.md", "../todo/missing.md"],
 )
-def test_active_epic_rejects_unsafe_or_non_todo_dossier(
+def test_declared_detailed_sot_rejects_unsafe_or_missing_documents(
     tmp_path: Path, target: str
 ) -> None:
     repository = tmp_path / target.replace("/", "-")
@@ -209,21 +209,45 @@ def test_active_epic_rejects_unsafe_or_non_todo_dossier(
 
     _, payload = inspect(repository)
 
-    assert "active_epic_dossier_invalid" in finding_codes(payload)
+    assert "epic_detailed_sot_invalid" in finding_codes(payload)
 
 
-def test_active_epic_rejects_todo_owner_index_as_dossier(tmp_path: Path) -> None:
-    repository = tmp_path / "todo-owner-dossier"
+@pytest.mark.parametrize("target", ["../specs/README.md", "../todo/README.md"])
+def test_declared_detailed_sot_accepts_repository_defined_documents(
+    tmp_path: Path, target: str
+) -> None:
+    repository = tmp_path / target.replace("/", "-")
     initialize(repository)
     make_single_scope(repository)
-    write(
-        repository / "docs/roadmap/README.md", roadmap(detailed_sot="../todo/README.md")
-    )
+    write(repository / "docs/roadmap/README.md", roadmap(detailed_sot=target))
     commit_all(repository)
 
     _, payload = inspect(repository)
 
-    assert "active_epic_dossier_invalid" in finding_codes(payload)
+    assert payload["structural_status"] == "conforming"
+
+
+def test_declared_detailed_sot_accepts_distributed_canonical_documents(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "distributed-sot"
+    initialize(repository)
+    make_single_scope(repository)
+    content = roadmap(detailed_sot="../specs/README.md").replace(
+        "[Dossier](../specs/README.md)",
+        "[Specification](../specs/README.md), "
+        "[Architecture](../architecture/README.md)",
+    )
+    write(repository / "docs/roadmap/README.md", content)
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    assert payload["roadmaps"][0]["epics"][0]["detailed_sot"] == [
+        "../specs/README.md",
+        "../architecture/README.md",
+    ]
 
 
 def test_taskless_placeholder_needs_no_dossier(tmp_path: Path) -> None:
@@ -239,7 +263,7 @@ def test_taskless_placeholder_needs_no_dossier(tmp_path: Path) -> None:
     assert payload["structural_status"] == "conforming"
 
 
-def test_active_epic_rejects_canonical_outcomes_even_without_tasks(
+def test_active_epic_may_declare_repository_defined_canonical_outcomes(
     tmp_path: Path,
 ) -> None:
     repository = tmp_path / "active-outcomes"
@@ -253,10 +277,10 @@ def test_active_epic_rejects_canonical_outcomes_even_without_tasks(
 
     _, payload = inspect(repository)
 
-    assert "active_epic_canonical_outcomes_present" in finding_codes(payload)
+    assert payload["structural_status"] == "conforming"
 
 
-def test_completed_contract_rejects_retained_dossier_and_missing_outcome(
+def test_completed_epic_preserves_repository_defined_dossier_lifecycle(
     tmp_path: Path,
 ) -> None:
     repository = tmp_path / "completed-invalid"
@@ -267,10 +291,34 @@ def test_completed_contract_rejects_retained_dossier_and_missing_outcome(
 
     _, payload = inspect(repository)
 
-    assert finding_codes(payload) >= {
-        "completed_epic_dossier_retained",
-        "completed_epic_canonical_outcomes_missing",
-    }
+    assert payload["structural_status"] == "conforming"
+
+
+def test_completed_epic_may_share_dossier_with_active_consumer(tmp_path: Path) -> None:
+    repository = tmp_path / "shared-dossier"
+    initialize(repository)
+    make_single_scope(repository)
+    shared_dossier = "../todo/TODO-EPIC-001.md"
+    content = roadmap(status="Completed", detailed_sot=shared_dossier)
+    content += (
+        "\n## EPIC-002: Second\n\n"
+        "**Status:** `Planned`\n\n"
+        f"**Detailed SOT:** [Shared dossier]({shared_dossier})\n\n"
+        "| Task | Title | Status |\n"
+        "| --- | --- | --- |\n"
+        "| TASK-002 | Follow-up | Planned |\n"
+    )
+    write(repository / "docs/roadmap/README.md", content)
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert payload["structural_status"] == "conforming"
+    epics = payload["roadmaps"][0]["epics"]
+    assert [epic["detailed_sot"] for epic in epics] == [
+        [shared_dossier],
+        [shared_dossier],
+    ]
 
 
 def test_completed_contract_accepts_existing_repository_outcome(tmp_path: Path) -> None:
@@ -293,7 +341,9 @@ def test_completed_contract_accepts_existing_repository_outcome(tmp_path: Path) 
     assert payload["structural_status"] == "conforming"
 
 
-def test_completed_contract_rejects_todo_outcome(tmp_path: Path) -> None:
+def test_completed_contract_accepts_repository_defined_todo_outcome(
+    tmp_path: Path,
+) -> None:
     repository = tmp_path / "completed-todo-outcome"
     initialize(repository)
     make_single_scope(repository)
@@ -309,7 +359,7 @@ def test_completed_contract_rejects_todo_outcome(tmp_path: Path) -> None:
 
     _, payload = inspect(repository)
 
-    assert "completed_epic_canonical_outcomes_missing" in finding_codes(payload)
+    assert payload["structural_status"] == "conforming"
 
 
 def test_historical_completed_epic_is_grandfathered(tmp_path: Path) -> None:
@@ -326,9 +376,7 @@ def test_historical_completed_epic_is_grandfathered(tmp_path: Path) -> None:
     _, payload = inspect(repository)
 
     assert payload["structural_status"] == "conforming"
-    assert not any(
-        code.startswith("completed_epic_") for code in finding_codes(payload)
-    )
+    assert not finding_codes(payload)
 
 
 def test_legacy_completion_status_is_unverifiable_not_active(tmp_path: Path) -> None:
@@ -350,7 +398,9 @@ def test_legacy_completion_status_is_unverifiable_not_active(tmp_path: Path) -> 
 
     assert payload["structural_status"] == "unverifiable"
     assert "epic_lifecycle_unverifiable" in finding_codes(payload)
-    assert not any(code.startswith("active_epic_") for code in finding_codes(payload))
+    assert not any(
+        code.startswith("epic_detailed_sot_") for code in finding_codes(payload)
+    )
 
 
 def test_crlf_and_relaxed_markdown_produce_the_same_structure(tmp_path: Path) -> None:
@@ -426,7 +476,7 @@ def test_excluded_linked_document_is_unverifiable_not_missing(tmp_path: Path) ->
     _, payload = inspect(repository)
 
     assert payload["structural_status"] == "unverifiable"
-    assert "active_epic_dossier_unverifiable" in finding_codes(payload)
+    assert "epic_detailed_sot_unverifiable" in finding_codes(payload)
     assert payload["excluded_files"]["sensitive"] == 1
 
 
