@@ -83,7 +83,7 @@ class NormalizeManifestTest(unittest.TestCase):
             f"""
             schema: aquarium.dev-setup-bundle/v1
             defaults:
-              tools: [mulgae, gaori, podway, ouroboros, lora, deslop]
+              tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop]
               project_mcp: [mulgae, gaori]
               agents_guidance: skip
             targets:
@@ -115,13 +115,23 @@ class NormalizeManifestTest(unittest.TestCase):
         first = plan["targets"][0]
         self.assertEqual(first["repository"], str(self.repository_a.resolve()))
         self.assertIn("sanho", first["tools"])
+        self.assertIn("dolgorae", first["tools"])
         self.assertNotIn("ouroboros", first["tools"])
         self.assertEqual(first["project_mcp"], ["mulgae"])
         self.assertEqual(first["agents_guidance"], "propose")
         self.assertEqual(plan["targets"][2]["reason_codes"], ["target_not_found"])
         self.assertEqual(
             plan["shared_tools"],
-            ["sanho", "mulgae", "gaori", "podway", "ouroboros", "lora", "deslop"],
+            [
+                "sanho",
+                "dolgorae",
+                "mulgae",
+                "gaori",
+                "podway",
+                "ouroboros",
+                "lora",
+                "deslop",
+            ],
         )
 
     def test_manifest_change_changes_digest(self) -> None:

@@ -31,6 +31,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-002 | Build the Aquarium development environment | Blocked |
 | EPIC-003 | Activate Dolgorae-backed Reviews | Completed |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
+| EPIC-005 | Adopt Dolgorae v0.1.0 | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -107,3 +108,20 @@ EPIC-004 depends on the completed EPIC-001 adoption result. Release QA owns rele
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-004 | Release Aquarium v0.1.12 | Complete release QA, publication, and exact remote verification. | Completed | TASK-003 |
+
+## EPIC-005: Adopt Dolgorae v0.1.0
+
+**Status:** `Completed`
+
+Adopt the exact official Dolgorae v0.1.0 Apple Silicon release as Aquarium's stable review runtime while retaining the development producer for maintainer testing. Stable admission binds the published source commit, archive, executable checksum, machine version, capabilities, immutable execution copy, and setup approval boundaries without vendoring Dolgorae or requiring an end-user source checkout.
+
+This adoption succeeds EPIC-003 without reopening it and does not complete the unrelated Podway, Mulgae, Gaori, or Sanho producer work still blocking EPIC-002.
+
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-025 | Adopt the official Dolgorae v0.1.0 distribution | Pin the release tag, source commit, platform, archive, executable checksum, maturity, and ownership boundaries. | Completed | External Dolgorae v0.1.0 release |
+| TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, guarded private execution, and fail-closed identity checks. | Completed | TASK-025 |
+| TASK-027 | Activate stable Dolgorae-backed reviews | Move Independent Review and Orca Review production paths from the development generation to the pinned stable guard. | Completed | TASK-026; EPIC-003 |
+| TASK-028 | Qualify and close stable Dolgorae adoption | Verify the official artifact and complete code, workflow, documentation, privacy, and regression acceptance. | Completed | TASK-027 |

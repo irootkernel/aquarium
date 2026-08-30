@@ -5,6 +5,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Tool | Aquarium role | Supported identity | Platform or prerequisite | Important readiness boundary |
 | --- | --- | --- | --- | --- |
 | Codex | Primary agent runtime, plugin host, goals, MCP registrations, and hooks | Host-provided supported Codex | Repository and user configuration | Plugin availability, trusted hook state, goals, and MCP exposure remain distinct |
+| Dolgorae | Immutable source capture and checked Independent/Orca review lifecycle | Exact official `v0.1.0` executable SHA-256 `6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8` | Native Apple Silicon macOS | Release metadata, archive, installed bytes, machine version, capability digest, and guarded review admission remain distinct |
 | Orca | Supervises selected non-Codex static reviewers | No Aquarium release floor declared | Separately installed local Orca runtime | Run, Task, terminal, provider process, and report settlement must all be observed |
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.7` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `v0.1.18` through `v0.1.x` | Native Apple Silicon macOS; Go `1.26.6+` only for installation | CLI, Config v3, provider readiness, MCP scope, capture publication, findings query, and extraction quality are separate |
@@ -16,7 +17,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 
 ## Installation and Freshness
 
-For Sanho, Mulgae, Gaori, and Podway, selecting the tool in `dev-setup` authorizes a bounded freshness comparison against official GitHub Releases metadata and four public upstream skill files. It does not authorize installation, replacement, another network endpoint, or any provider request.
+Selecting Dolgorae in `dev-setup` authorizes only a bounded official GitHub Release metadata lookup; archive download and installation require separate approvals. For Sanho, Mulgae, Gaori, and Podway, selection authorizes the metadata lookup plus a bounded comparison against four public upstream skill files. Neither path authorizes installation, replacement, another network endpoint, or any provider request.
 
 Every installation proposal identifies the exact source ref, target, network endpoints, files, checksums or digests, backup choice, expected mutation, and post-action verification. Existing modified or duplicate skill copies are never overwritten or deleted silently.
 
@@ -37,6 +38,8 @@ The bounded `daemon wait-ready` result is healthy when readiness state and stage
 The exact v0.2.5 compatibility transformation is migration evidence only. Any other source mismatch is divergence, and an active Procedure snapshot is never migrated in place.
 
 ## Review and Check Adapters
+
+Dolgorae production reviews use an explicit stable path plus exact v0.1.0 version and executable-checksum guards. The manager creates and leases a private immutable execution copy and revalidates its bytes immediately before execution. This explicit stable identity may bypass an enrolled development producer but never acts as an implicit fallback; development guards remain available only for maintainer testing.
 
 Mulgae review is advisory. Aquarium requires complete capture coverage, passing CI decision, committed publication, a successful findings query, and zero locally verified unresolved findings before calling review clean.
 

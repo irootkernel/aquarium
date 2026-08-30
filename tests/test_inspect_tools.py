@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import platform
@@ -800,12 +801,13 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v10")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v11")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
         )
         self.assertEqual(payload["tools"]["sanho"]["status"], "missing")
+        self.assertEqual(payload["tools"]["dolgorae"]["status"], "missing")
         self.assertEqual(payload["tools"]["sanho"]["agent_skill"]["status"], "missing")
         self.assertEqual(payload["tools"]["mulgae"]["status"], "missing")
         self.assertEqual(payload["tools"]["mulgae"]["agent_skill"]["status"], "missing")
@@ -819,6 +821,32 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(payload["tools"]["lora"]["status"], "missing")
         self.assertEqual(payload["tools"]["deslop"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
+
+    def test_dolgorae_requires_exact_official_machine_binary(self) -> None:
+        executable = self.bin_directory / "dolgorae"
+        executable.write_text(
+            """#!/bin/sh
+printf '%s\\n' '{"schema_version":1,"ok":true,"command":"version","invocation_id":"019d0000-0000-7000-8000-000000000000","data":{"text":"dolgorae 0.1.0"}}'
+""",
+            encoding="utf-8",
+        )
+        executable.chmod(0o700)
+        digest = hashlib.sha256(executable.read_bytes()).hexdigest()
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools, "DOLGORAE_EXECUTABLE_SHA256", digest),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            tool = inspect_tools.inspect_dolgorae(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        self.assertEqual(tool["status"], "installed")
+        self.assertEqual(tool["version"], "0.1.0")
+        self.assertTrue(tool["version_supported"])
+        self.assertTrue(tool["official_executable"])
+        self.assertEqual(tool["executable_sha256"], digest)
 
     def test_configured_tools_are_normalized_without_config_contents(self) -> None:
         self.install_fake_tools()
@@ -2722,7 +2750,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v10")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v11")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 

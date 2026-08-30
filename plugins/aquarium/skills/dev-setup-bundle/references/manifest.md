@@ -10,7 +10,7 @@ Runtime normalization requires Python 3.10 or newer and PyYAML 6.x supplied by t
 schema: aquarium.dev-setup-bundle/v1
 
 defaults:
-  tools: [mulgae, gaori, podway, ouroboros, lora, deslop]
+  tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop]
   project_mcp: []
   agents_guidance: skip
 
@@ -27,7 +27,7 @@ targets:
 
 The top-level mapping accepts exactly `schema`, `defaults`, and `targets`. `schema` must be `aquarium.dev-setup-bundle/v1`. `defaults` accepts exactly `tools`, `project_mcp`, and `agents_guidance`; all three are required. `targets` must be a non-empty sequence.
 
-Supported tools are `sanho`, `mulgae`, `gaori`, `podway`, `ouroboros`, `lora`, and `deslop`. `defaults.tools` may be empty only when every target gains at least one effective tool through `include`. A target accepts exactly `path`, `include`, `exclude`, `project_mcp_include`, `project_mcp_exclude`, and `agents_guidance`; only `path` is required, and omitted list overrides are empty.
+Supported tools are `sanho`, `dolgorae`, `mulgae`, `gaori`, `podway`, `ouroboros`, `lora`, and `deslop`. `defaults.tools` may be empty only when every target gains at least one effective tool through `include`. A target accepts exactly `path`, `include`, `exclude`, `project_mcp_include`, `project_mcp_exclude`, and `agents_guidance`; only `path` is required, and omitted list overrides are empty.
 
 For each target, effective tools are `defaults.tools` plus `include` minus `exclude`. Selected Mulgae and Gaori MCP registrations are user-global by default and are prepared once as shared components. The retained v1 `project_mcp` field is an explicit local-scope override: effective local overrides are `defaults.project_mcp` plus `project_mcp_include` minus `project_mcp_exclude`. Keep the default empty unless repositories intentionally require root-bound MCP registrations. The same value may not appear in both sides of one override, local MCP overrides support only `mulgae` and `gaori`, and every effective override must also be an effective tool. Each list must contain unique strings.
 

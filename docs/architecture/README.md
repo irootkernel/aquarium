@@ -12,7 +12,7 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 
 ## Core Boundaries
 
-- Aquarium coordinates Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop but does not vendor or own their upstream implementations.
+- Aquarium coordinates Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop but does not vendor or own their upstream implementations.
 - Skills preserve separate authority for diagnosis, network lookup, installation, provider transmission, repository mutation, commits, and publication.
 - Podway and native tools own runtime and execution evidence. Ignored runtime artifacts are not roadmap history, architecture, or durable specifications.
 - Canonical documentation describes current structure and delivery intent; it does not replace executable source, Git history, external release proof, or runtime activation evidence.

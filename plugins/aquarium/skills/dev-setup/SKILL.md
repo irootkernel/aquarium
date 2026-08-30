@@ -34,13 +34,14 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, use these batches and component boundaries:
 
-- Ask about Sanho, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
+- Ask about Sanho, Dolgorae, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
 - For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
+- For Dolgorae, recommend the exact official v0.1.0 CLI while reporting release identity, executable checksum, platform, version envelope, and review admission independently. Dolgorae has no Aquarium paired skill or MCP registration.
 - For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
 - For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
 - For every paired or third-party skill, reject any symlink from the configured skill root through the required files before reading or hashing it. For Lora and Deslop, report every discovered user-global installation, frontmatter validity, duplicate or symlink state, and upstream freshness independently.
 
-Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices that either affirmative selection automatically contacts the official GitHub Releases metadata endpoint and `raw.githubusercontent.com` to compare the selected tool's latest supported stable skill with its exact `~/.agents/skills` target. This bounded freshness comparison needs no separate approval and authorizes no installation or replacement.
+Disclose in the Dolgorae selection choice that either affirmative selection automatically contacts its official GitHub Releases metadata endpoint to confirm the exact supported release. This metadata lookup needs no separate approval and authorizes no archive download or installation. Disclose separately in the Sanho, Mulgae, Gaori, and Podway choices that either affirmative selection also downloads four public skill files from `raw.githubusercontent.com` for paired-skill comparison.
 
 When Mulgae or Gaori is selected, inspect its active user-global and isolated project-local MCP registrations independently. If neither is configured, offer `Configure global MCP` (recommended), `Configure project MCP`, and `Skip`. If a project-local registration exists, ask whether it is intentional; preserve it only when the user confirms local scope. Otherwise propose removal of only that named local registration. Never infer local intent from the presence of `.codex/config.toml` or another local MCP entry.
 
@@ -56,7 +57,7 @@ Otherwise keep the read-only discovery above, then ask only about the named tool
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
-A selection expresses intent and, only for a selected Sanho, Mulgae, Gaori, or Podway tool, authorizes the disclosed bounded skill freshness comparison below. It does not authorize a command that writes persistent files, installs software, replaces a skill, changes hooks, contacts a provider, or modifies user-global state.
+A selection expresses intent and authorizes only the disclosed bounded metadata lookup for Dolgorae or selected-skill freshness comparison for Sanho, Mulgae, Gaori, or Podway. It does not authorize an archive download, a command that writes persistent files, installation, skill replacement, hook changes, provider contact, or user-global mutation.
 
 ## Compare Selected Agent Skills First
 
@@ -94,7 +95,7 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 For each selected tool:
 
-1. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, or any lookup outside that bounded comparison, disclose the official repository and commit-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
+1. For Dolgorae, reuse the exact release metadata from its automatic bounded lookup. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, or any lookup outside those bounded comparisons, disclose the official repository and commit-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
 2. Show the exact resolved stable version and source provenance. If the automatic comparison was `freshness_unverifiable`, repeat the bounded comparison without separate approval before proposing a skill action, but obtain approval for any other lookup or download.
 3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
 4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
@@ -102,6 +103,12 @@ For each selected tool:
 6. Execute only the approved action, stop on unexpected prompts or side effects, and verify with read-only commands.
 
 For Sanho, support only stable `v0.2.7` through `v0.2.x`. Resolve one exact tag and use it for both the CLI and `use-sanho` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, workspace initialization, and lifecycle repair as separate approval boundaries. A paired recommendation is not approval for both components. Treat missing, incomplete, invalid, and duplicate skill installations separately from CLI or workspace health.
+
+For Dolgorae, support only the exact official `v0.1.0` Apple Silicon release. Require archive SHA-256 `598ffaff7883b4f8cc794b890186d758795f57c1f373e6905c138abb7f3bfe41`, executable SHA-256 `6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8`, and the checked machine `--version` result `dolgorae 0.1.0`.
+
+Downloading the archive and installing its executable are separate approvals. Extract only the expected regular `README.txt` and `bin/dolgorae` entries into ephemeral storage, reject links and special files, then propose the exact absolute user target, normally `~/.local/bin/dolgorae`.
+
+Disclose that the Integration Preview is ad-hoc signed and not notarized, so Gatekeeper may require explicit local approval. Do not initialize a workspace, create a profile, authenticate, call a provider, transmit source, or start a review during setup.
 
 For Mulgae, support only stable `v0.1.18` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-mulgae` source. Require Go `1.26.6` or newer for installation, without treating an older Go toolchain as a runtime failure of an already healthy binary.
 
@@ -127,7 +134,7 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
-Use the v10 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.6 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
+Use the v11 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.6 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
 
 Treat `update_explanation` values such as `prior_canonical` and `podway_v0.2.5_workaround` only as bounded explanations for an offered canonical update. They never form a validity, ownership, migration, or readiness class. A tracked same-ID `valid_customization` is configured when the other Podway readiness requirements pass.
 
@@ -197,6 +204,7 @@ Report:
 - each selected paired skill's comparison tag, exact `~/.agents/skills` target, `current`, `missing`, `different`, or `freshness_unverifiable` result, temporary-payload cleanup, and any installation or replacement decision;
 - selected backup policy, existing state backed up or deliberately left without a backup, backup verification and restoration paths when applicable, and the disclosed recovery boundary;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;
+- Dolgorae exact release, platform, version envelope, official executable checksum, and stable review admission separately;
 - Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and global, local, and effective MCP scope separately;
 - Gaori CLI, repository config, `use-gaori` skill, and global, local, and effective MCP scope separately;
 - Podway CLI, daemon, workspace, Aquarium readiness, legacy-state detection, and `use-podway` skill state separately;

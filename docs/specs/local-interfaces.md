@@ -18,7 +18,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v10` | Read-only normalized Git, tool, skill, MCP, configuration, same-ID Podway-valid customization, and bounded readiness inspection |
+| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v11` | Read-only normalized Git, exact Dolgorae stable release, tool, skill, MCP, configuration, same-ID Podway-valid customization, and bounded readiness inspection |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
 | `dev-setup-bundle/scripts/normalize_manifest.py` | External `aquarium.dev-setup-bundle/v1` YAML manifest | `aquarium-dev-setup-bundle-plan.v1` | Validates, canonicalizes, and deduplicates explicit repository setup selections |
@@ -30,6 +30,8 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v2` | Executes the exact v0.2.6 CLI and sibling daemon against all managed Procedures, declaration-limit failures, and two fresh isolated runtime passes |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
+
+`dev-aquarium launch` retains the complete development guard triplet and adds a mutually exclusive Dolgorae stable pair: `--stable <absolute-path> --expected-stable-version <version> --expected-stable-sha256 <digest>`. Source-bearing Dolgorae operations require one complete guard family. Explicit stable admission resolves the pinned official executable even when a development enrollment exists; ordinary unguarded stable fallback retains its prior no-enrollment-only behavior.
 
 The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` worker results and the `aquarium-release-qa-full-pass/v1`, `aquarium-release-qa-confirmation-prepare/v1`, `aquarium-release-qa-confirmation-begin/v1`, and `aquarium-release-qa-confirmation-finish/v1` command inputs. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
 

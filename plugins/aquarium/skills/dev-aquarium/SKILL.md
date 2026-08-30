@@ -59,8 +59,10 @@ Run diagnosis afterward. Its bounded report must identify the selected enrollmen
 
 ## Launch
 
-Use `launch --project-id <id> [--stable <path>] -- [args...]` only after healthy diagnosis. It resolves and leases one immutable executable before replacing the manager process and holds that inherited lease for the child's lifetime. Supply `--stable` only when the project has no enrollment. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.
+Use `launch --project-id <id> [--stable <path>] -- [args...]` only after healthy diagnosis. It resolves and leases one immutable executable before replacing the manager process and holds that inherited lease for the child's lifetime. An ordinary unguarded `--stable` path is a fallback only when the project has no enrollment. If an enrollment exists but is broken, stop on the machine error and follow its repair action; never silently fall back.
 
 For an exact development candidate, supply `--expected-git-sha`, `--expected-development-version`, and `--expected-sha256` together before `--`; partial, stable, or mismatched guarded launches fail closed.
+
+For the production Dolgorae review runtime, supply one absolute `--stable` path with `--expected-stable-version v0.1.0` and `--expected-stable-sha256 sha256:6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8`. This explicit stable identity may bypass a development enrollment without changing it. Stable and development guard families are mutually exclusive, and no other project accepts stable identity guards.
 
 The development Codex runtime uses only `~/.aquarium/codex`. Missing login is a user action reported as `CODEX_HOME=~/.aquarium/codex codex login`; this skill never authenticates or reads or copies the stable Codex home.

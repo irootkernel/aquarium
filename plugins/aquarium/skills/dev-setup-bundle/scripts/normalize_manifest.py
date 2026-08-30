@@ -22,7 +22,16 @@ except ModuleNotFoundError as error:
 INPUT_SCHEMA = "aquarium.dev-setup-bundle/v1"
 OUTPUT_SCHEMA = "aquarium-dev-setup-bundle-plan.v1"
 ERROR_SCHEMA = "aquarium-dev-setup-bundle-error.v1"
-TOOLS = ("sanho", "mulgae", "gaori", "podway", "ouroboros", "lora", "deslop")
+TOOLS = (
+    "sanho",
+    "dolgorae",
+    "mulgae",
+    "gaori",
+    "podway",
+    "ouroboros",
+    "lora",
+    "deslop",
+)
 PROJECT_MCP_TOOLS = ("mulgae", "gaori")
 AGENTS_GUIDANCE = ("skip", "propose")
 TOP_LEVEL_KEYS = ("schema", "defaults", "targets")

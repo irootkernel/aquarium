@@ -11,12 +11,20 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v10"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v11"
+DOLGORAE_VERSION = "v0.1.0"
+DOLGORAE_EXECUTABLE_SHA256 = (
+    "6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8"
+)
+DOLGORAE_INVOCATION_ID_RE = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
 MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
@@ -325,6 +333,10 @@ def supported_sanho_version(version: str | None) -> bool:
         return False
     match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
     return bool(match and int(match.group(1)) >= 7)
+
+
+def supported_dolgorae_version(version: str | None) -> bool:
+    return normalized_version(version) == DOLGORAE_VERSION.removeprefix("v")
 
 
 def supported_gaori_version(version: str | None) -> bool:
@@ -993,6 +1005,85 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
         and normalized_status.get("contract_valid") is True
         and normalized_doctor.get("contract_valid") is True
         and no_doctor_warnings
+        else "degraded"
+    )
+    return tool
+
+
+def inspect_dolgorae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
+    discovered = shutil.which("dolgorae")
+    tool = base_tool("dolgorae")
+    tool["version_supported"] = False
+    tool["platform"] = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "supported": platform.system() == "Darwin"
+        and platform.machine() in {"arm64", "aarch64"},
+    }
+    tool["symlinked"] = bool(discovered and Path(discovered).is_symlink())
+    tool["regular_file"] = False
+    tool["executable_sha256"] = None
+    tool["official_executable"] = False
+    if not discovered:
+        tool["probes"]["version"] = skipped_probe("executable_missing")
+        return tool
+
+    executable = Path(discovered)
+    try:
+        executable_stat = executable.stat()
+        tool["regular_file"] = stat.S_ISREG(executable_stat.st_mode)
+        if (
+            not tool["symlinked"]
+            and tool["regular_file"]
+            and os.access(executable, os.X_OK)
+        ):
+            digest = hashlib.sha256(executable.read_bytes()).hexdigest()
+            tool["executable_sha256"] = digest
+            tool["official_executable"] = digest == DOLGORAE_EXECUTABLE_SHA256
+    except OSError:
+        pass
+
+    if (
+        tool["symlinked"]
+        or not tool["regular_file"]
+        or not os.access(executable, os.X_OK)
+    ):
+        tool["probes"]["version"] = skipped_probe("executable_unsafe")
+        tool["status"] = "degraded"
+        return tool
+
+    raw_version_probe = run_command(
+        [str(executable.resolve()), "--version"], repository, timeout_seconds
+    )
+    version_probe = parse_json_probe(raw_version_probe)
+    normalized_probe_result = normalized_probe(version_probe)
+    envelope = version_probe.get("result")
+    expected_keys = {"schema_version", "ok", "command", "invocation_id", "data"}
+    valid_envelope = bool(
+        version_probe["ok"]
+        and not raw_version_probe["stderr"]
+        and isinstance(envelope, dict)
+        and set(envelope) == expected_keys
+        and envelope.get("schema_version") == 1
+        and envelope.get("ok") is True
+        and envelope.get("command") == "version"
+        and isinstance(envelope.get("invocation_id"), str)
+        and DOLGORAE_INVOCATION_ID_RE.fullmatch(envelope["invocation_id"])
+        and envelope.get("data") == {"text": "dolgorae 0.1.0"}
+    )
+    if valid_envelope:
+        tool["version"] = "0.1.0"
+    else:
+        normalized_probe_result["ok"] = False
+        normalized_probe_result["error_code"] = "unexpected_version_envelope"
+    tool["probes"]["version"] = normalized_probe_result
+    tool["version_supported"] = supported_dolgorae_version(tool["version"])
+    tool["status"] = (
+        "installed"
+        if valid_envelope
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+        and tool["official_executable"]
         else "degraded"
     )
     return tool
@@ -2884,6 +2975,7 @@ def inspect(
     repository = resolve_repository(requested_path, timeout_seconds)
     tools = {
         "sanho": inspect_sanho(repository, timeout_seconds),
+        "dolgorae": inspect_dolgorae(repository, timeout_seconds),
         "mulgae": inspect_mulgae(
             repository, timeout_seconds, require_mcp=require_mulgae_mcp
         ),

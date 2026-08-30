@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import stat
 import sys
 from pathlib import Path
@@ -29,6 +30,15 @@ from dev_manager import (
     rebuild,
     repair_hook,
     resolve_artifact,
+    resolve_stable_dolgorae,
+)
+
+STABLE_VERSION_RE = re.compile(
+    r"v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+)
+DOLGORAE_STABLE_VERSION = "v0.1.0"
+DOLGORAE_STABLE_SHA256 = (
+    "sha256:6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8"
 )
 
 
@@ -71,6 +81,8 @@ def parser() -> argparse.ArgumentParser:
     launch_parser.add_argument("--expected-git-sha")
     launch_parser.add_argument("--expected-development-version")
     launch_parser.add_argument("--expected-sha256")
+    launch_parser.add_argument("--expected-stable-version")
+    launch_parser.add_argument("--expected-stable-sha256")
     launch_parser.add_argument("arguments", nargs=argparse.REMAINDER)
     codex_parser = commands.add_parser("configure-codex")
     codex_parser.add_argument("--repository", type=Path, required=True)
@@ -111,6 +123,40 @@ def launch_guard(arguments: argparse.Namespace) -> tuple[str, str, str] | None:
             arguments.project_id,
         )
     return git_sha, development_version, sha256
+
+
+def stable_launch_guard(arguments: argparse.Namespace) -> tuple[str, str] | None:
+    values = (arguments.expected_stable_version, arguments.expected_stable_sha256)
+    if not any(value is not None for value in values):
+        return None
+    if not all(value is not None for value in values) or arguments.stable is None:
+        raise ManagerError(
+            "invalid_arguments",
+            "Stable launch guards require the stable path, version, and SHA-256 together.",
+            "Supply --stable with both complete stable identity guards.",
+            "launch",
+            arguments.project_id,
+        )
+    version, sha256 = values
+    assert version is not None
+    assert sha256 is not None
+    if not STABLE_VERSION_RE.fullmatch(version) or not DIGEST_RE.fullmatch(sha256):
+        raise ManagerError(
+            "invalid_arguments",
+            "One or more stable launch guards have an invalid format.",
+            "Supply a v-prefixed stable version and prefixed lowercase SHA-256.",
+            "launch",
+            arguments.project_id,
+        )
+    if (version, sha256) != (DOLGORAE_STABLE_VERSION, DOLGORAE_STABLE_SHA256):
+        raise ManagerError(
+            "invalid_arguments",
+            "The stable launch identity is not the Aquarium-supported Dolgorae release.",
+            "Supply the exact pinned Dolgorae v0.1.0 version and executable SHA-256.",
+            "launch",
+            arguments.project_id,
+        )
+    return version, sha256
 
 
 def revalidate_guarded_executable(
@@ -277,6 +323,23 @@ def main() -> int:
             return 0
         if arguments.command == "launch":
             guard = launch_guard(arguments)
+            stable_guard = stable_launch_guard(arguments)
+            if guard is not None and stable_guard is not None:
+                raise ManagerError(
+                    "invalid_arguments",
+                    "Development and stable launch guards are mutually exclusive.",
+                    "Supply exactly one complete launch identity.",
+                    "launch",
+                    arguments.project_id,
+                )
+            if stable_guard is not None and arguments.project_id != "dolgorae":
+                raise ManagerError(
+                    "invalid_arguments",
+                    "Stable identity guards are supported only for Dolgorae.",
+                    "Use the development guard or an unguarded stable fallback for this project.",
+                    "launch",
+                    arguments.project_id,
+                )
             launch_arguments = arguments.arguments
             if launch_arguments[:1] == ["--"]:
                 launch_arguments = launch_arguments[1:]
@@ -288,16 +351,25 @@ def main() -> int:
                     ["review-target", "settle"],
                 )
             )
-            if source_bearing_dolgorae and guard is None:
+            if source_bearing_dolgorae and guard is None and stable_guard is None:
                 raise ManagerError(
                     "invalid_arguments",
-                    "Dolgorae review operations require a complete exact-generation guard set.",
-                    "Supply the expected Git SHA, development version, and SHA-256.",
+                    "Dolgorae review operations require one complete development or stable guard set.",
+                    "Supply the complete expected development generation or stable release identity.",
                     "launch",
                     arguments.project_id,
                 )
-            resolved = resolve_artifact(
-                arguments.project_id, arguments.host_root, arguments.stable
+            resolved = (
+                resolve_stable_dolgorae(
+                    arguments.host_root,
+                    arguments.stable,
+                    stable_guard[0],
+                    stable_guard[1],
+                )
+                if stable_guard is not None and arguments.stable is not None
+                else resolve_artifact(
+                    arguments.project_id, arguments.host_root, arguments.stable
+                )
             )
             if guard is not None and (
                 resolved.source != "development"
@@ -313,9 +385,16 @@ def main() -> int:
                     arguments.project_id,
                     resolved.git_sha,
                 )
-            executable_descriptor = (
-                open_guarded_executable(resolved, guard[2])
+            expected_executable_sha256 = (
+                guard[2]
                 if guard is not None
+                else stable_guard[1]
+                if stable_guard is not None
+                else None
+            )
+            executable_descriptor = (
+                open_guarded_executable(resolved, expected_executable_sha256)
+                if expected_executable_sha256 is not None
                 else None
             )
             if resolved.artifact_kind == "codex-plugin" or not resolved.path.is_file():
@@ -333,7 +412,7 @@ def main() -> int:
             try:
                 if executable_descriptor is not None:
                     revalidate_guarded_executable(
-                        resolved, executable_descriptor, guard[2]
+                        resolved, executable_descriptor, expected_executable_sha256
                     )
                     os.close(executable_descriptor)
                     executable_descriptor = None

@@ -1,6 +1,6 @@
 ---
 name: independent-review
-description: "Run one supervised immutable static review with a fresh Codex Reviewer through the exact enrolled Dolgorae generation, without creating Orca objects. Use when the user explicitly invokes $aquarium:independent-review."
+description: "Run one supervised immutable static review with a fresh Codex Reviewer through the exact official Dolgorae stable release, without creating Orca objects. Use when the user explicitly invokes $aquarium:independent-review."
 ---
 
 # Independent Review
@@ -11,7 +11,7 @@ Run the canonical Aquarium review contract with one fresh Codex Reviewer through
 
 1. Read [review-contract.md](../../references/review-contract.md) completely.
 2. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
-3. Resolve the installed `dev-aquarium` manager from this plugin generation. Never use a stable Dolgorae executable, mutable `current` path, PATH lookup, or source-checkout binary.
+3. Resolve the installed `dev-aquarium` manager from this plugin generation and the exact stable Dolgorae path diagnosed by `dev-setup`. Never execute Dolgorae directly, trust a mutable PATH lookup, or substitute a source-checkout binary.
 
 ## Establish the request
 
@@ -23,9 +23,9 @@ Resolve one existing Dolgorae Reviewer profile from checked workspace configurat
 
 ## Admit the candidate
 
-Run development-channel diagnosis and require healthy Dolgorae enrollment. Resolve and record the immutable generation path, producer SHA, development version, regular-file device and inode, executable SHA-256, runtime version, and compact sorted capability digest. Revalidate the full candidate immediately before source-bearing launch.
+Require the exact official Dolgorae v0.1.0 executable described by the consumer contract. Resolve and record its canonical path, release tag and source commit, regular-file device and inode, executable SHA-256, runtime version, and compact sorted capability digest. Revalidate the full candidate immediately before source-bearing launch.
 
-Use only the installed manager with the complete expected SHA, development-version, and SHA-256 guard set. A missing enrollment, stable fallback, partial guard, mutable path, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission.
+Use only the installed manager with the explicit stable path and complete expected stable-version and SHA-256 guard set. A missing installation, implicit fallback, partial or mixed guard, mutable path, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission.
 
 ## Run one fresh Reviewer
 
@@ -34,9 +34,9 @@ Launch exactly one checked v2 operation through the guarded manager:
 ```text
 python3 <installed-manager> --host-root <aquarium-host-root> launch \
   --project-id dolgorae \
-  --expected-git-sha <sha> \
-  --expected-development-version <version> \
-  --expected-sha256 <digest> -- \
+  --stable <absolute-dolgorae-path> \
+  --expected-stable-version v0.1.0 \
+  --expected-stable-sha256 sha256:6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8 -- \
   specialist review \
   --workspace <git-root> \
   --profile <reviewer-profile> \

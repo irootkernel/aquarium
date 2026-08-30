@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import stat
@@ -13,8 +14,16 @@ SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
 CLI = SCRIPT_DIR / "dev_aquarium.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from dev_aquarium import open_guarded_executable  # isort: skip
-from dev_manager import _unseal_managed_tree, resolve_artifact  # isort: skip
+from dev_aquarium import (  # isort: skip
+    DOLGORAE_STABLE_SHA256,
+    DOLGORAE_STABLE_VERSION,
+    open_guarded_executable,
+)
+from dev_manager import (  # isort: skip
+    _unseal_managed_tree,
+    resolve_artifact,
+    resolve_stable_dolgorae,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -518,3 +527,159 @@ def test_dolgorae_review_launch_accepts_reordered_complete_guard_options(tmp_pat
 
     assert result.returncode == 1
     assert payload(result)["error"]["code"] == "enrollment_missing"
+
+
+def stable_dolgorae(path: Path) -> str:
+    path.write_text(
+        """#!/bin/sh
+if [ "$1" = "--version" ]; then
+  printf '%s\\n' '{"schema_version":1,"ok":true,"command":"version","invocation_id":"019d0000-0000-7000-8000-000000000000","data":{"text":"dolgorae 0.1.0"}}'
+else
+  printf '%s\\n' 'stable dolgorae'
+fi
+""",
+        encoding="utf-8",
+    )
+    path.chmod(0o700)
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_dolgorae_stable_resolver_creates_immutable_private_copy(tmp_path):
+    host_root = tmp_path / "host"
+    stable = tmp_path / "dolgorae"
+    digest = stable_dolgorae(stable)
+
+    resolved = resolve_stable_dolgorae(
+        host_root,
+        stable,
+        "v0.1.0",
+        digest,
+    )
+
+    assert resolved.source == "stable"
+    assert resolved.stable_version == "v0.1.0"
+    assert resolved.sha256 == digest
+    runtime = host_root / "runtime/dolgorae"
+    execution_paths = list(runtime.glob("stable-0.1.0-*/executable"))
+    assert len(execution_paths) == 1
+    assert execution_paths[0].read_bytes() == stable.read_bytes()
+    assert not os.path.samefile(execution_paths[0], stable)
+    resolved.close()
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    (
+        ("--expected-stable-version", "v0.1.0"),
+        ("--expected-stable-sha256", "sha256:" + "0" * 64),
+        (
+            "--expected-stable-version",
+            "0.1.0",
+            "--expected-stable-sha256",
+            "sha256:" + "0" * 64,
+        ),
+    ),
+)
+def test_dolgorae_stable_guard_rejects_partial_or_malformed_identity(
+    tmp_path, arguments
+):
+    stable = tmp_path / "dolgorae"
+    stable_dolgorae(stable)
+
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--stable",
+        stable,
+        *arguments,
+        "--",
+        "review-target",
+        "capture",
+    )
+
+    assert result.returncode == 2
+    assert payload(result)["error"]["code"] == "invalid_arguments"
+
+
+def test_dolgorae_stable_guard_rejects_unpinned_checksum_and_version(tmp_path):
+    stable = tmp_path / "dolgorae"
+    digest = stable_dolgorae(stable)
+    host_root = tmp_path / "host"
+
+    checksum_mismatch = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--stable",
+        stable,
+        "--expected-stable-version",
+        "v0.1.0",
+        "--expected-stable-sha256",
+        "sha256:" + "0" * 64,
+    )
+    version_mismatch = run_cli(
+        host_root,
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--stable",
+        stable,
+        "--expected-stable-version",
+        "v0.1.1",
+        "--expected-stable-sha256",
+        digest,
+    )
+
+    assert checksum_mismatch.returncode == 2
+    assert payload(checksum_mismatch)["error"]["code"] == "invalid_arguments"
+    assert version_mismatch.returncode == 2
+    assert payload(version_mismatch)["error"]["code"] == "invalid_arguments"
+
+
+def test_dolgorae_stable_guard_rejects_nonofficial_binary(tmp_path):
+    stable = tmp_path / "dolgorae"
+    stable_dolgorae(stable)
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--stable",
+        stable,
+        "--expected-stable-version",
+        DOLGORAE_STABLE_VERSION,
+        "--expected-stable-sha256",
+        DOLGORAE_STABLE_SHA256,
+    )
+
+    assert result.returncode == 1
+    assert payload(result)["error"]["code"] == "artifact_invalid"
+
+
+def test_dolgorae_stable_and_development_guards_are_mutually_exclusive(tmp_path):
+    stable = tmp_path / "dolgorae"
+    stable_dolgorae(stable)
+    result = run_cli(
+        tmp_path / "host",
+        "launch",
+        "--project-id",
+        "dolgorae",
+        "--stable",
+        stable,
+        "--expected-stable-version",
+        DOLGORAE_STABLE_VERSION,
+        "--expected-stable-sha256",
+        DOLGORAE_STABLE_SHA256,
+        "--expected-git-sha",
+        "0" * 40,
+        "--expected-development-version",
+        "v0.1.0-dev.000000000000",
+        "--expected-sha256",
+        DOLGORAE_STABLE_SHA256,
+    )
+
+    assert result.returncode == 2
+    assert payload(result)["error"]["code"] == "invalid_arguments"

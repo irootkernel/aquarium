@@ -31,7 +31,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
 - **Work can pause, resume, and hand off.** `task-handler` and `epic-handler` support plan-only runs, explicit plan handoff to another agent, and resuming a matching session. A plan by itself creates no runtime state.
 
-Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
+Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
 
 ## Install
 
@@ -64,6 +64,7 @@ Foundations: `$aquarium:docs-setup` governs canonical documentation structure an
 - [Podway](https://github.com/irootkernel/podway) provides local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, and `war-room`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
 - [Gaori](https://github.com/irootkernel/gaori) runs your existing checks, keeps the raw logs, and returns a bounded summary as evidence. Gaori integration is optional, and the command's exit code stays the pass/fail authority.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics an advisory multi-provider review. Aquarium verifies each finding locally and sets explicit limits on remediation.
+- [Dolgorae](https://github.com/irootkernel/dolgorae) supplies the exact immutable capture and checked review lifecycle used by Independent Review and Orca Review. Aquarium admits only the pinned official v0.1.0 Apple Silicon executable for production reviews.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to supervise Claude Fable, Kimi, Agy, or Cursor Agent against one exact Git target. Dirty working-tree content is excluded or staged only with explicit path approval, and Aquarium independently adjudicates the result.
 - [Sanho](https://github.com/irootkernel/sanho) syncs project documentation to its canonical documentation repository once Aquarium has settled what is ready to hand off.
 - [Lora](https://github.com/tmdgusya/lora) keeps decision context in Git trailers, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) supplies the upstream `deslop` cleanup skill used during task refinement.
@@ -77,7 +78,7 @@ Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and
 
 - Invoking a workflow grants only the effects its skill documents. Installation, authentication, source transmission, tests, staging, commits, pushes, publication, and destructive lifecycle actions each need separate authority.
 - Invoking `release-handler` authorizes read-only release discovery and orchestration only; commits, pushes, tags, hosted Releases, destructive replacement, and the post-release next-cycle commit remain separate approvals. Its delegated `release-qa` pass may use existing ambient authentication for private repositories, remediate verified findings locally once, and never upload source or handle credentials.
-- When selected for setup or diagnosis, Sanho, Mulgae, Gaori, and Podway automatically query their official GitHub Releases metadata and download four public skill files from `raw.githubusercontent.com` into ephemeral storage to compare with the installed `use-*` skill. Unselected tools and other network operations are not covered, and setup never calls an AI provider.
+- When selected for setup or diagnosis, Dolgorae automatically queries its official GitHub Releases metadata; downloading or installing its archive still requires separate approval. Sanho, Mulgae, Gaori, and Podway also download four public skill files from `raw.githubusercontent.com` into ephemeral storage to compare with the installed `use-*` skill. Unselected tools and other network operations are not covered, and setup never calls an AI provider.
 - Aquarium creates no central project-state file. [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md) hold the complete data and authority contracts.
 
 ## References

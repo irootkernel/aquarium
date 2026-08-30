@@ -19,7 +19,7 @@ Extend `$aquarium:independent-review` with a removable non-Codex provider layer.
 
 Classify and resolve one `workspace`, `staged`, `dirty`, `head`, `commit`, or `range` source scope exactly as the shared review contract specifies. A `task`, `epic`, or special request supplies authority and focus only. Inspect current state without mutation and never stage or normalize content.
 
-Create the Orca Run and review Task first and record their authoritative identities without Dispatching source. Admit and revalidate the exact enrolled Dolgorae generation, then create one protected owner-credential carrier outside the repository.
+Create the Orca Run and review Task first and record their authoritative identities without Dispatching source. Admit and revalidate the exact official Dolgorae v0.1.0 stable executable through the installed manager's complete stable guard set, then create one protected owner-credential carrier outside the repository.
 
 Through the guarded manager, call checked `review-target.capture` with backend `orca` and the immutable Run and Task lifecycle identity. Bind its complete capture result, immutable root, exact authority paths, included and excluded state, target and manifest digests, and review focus to the Task.
 

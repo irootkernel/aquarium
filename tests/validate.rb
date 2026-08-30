@@ -130,7 +130,7 @@ assert(readme_introduction.include?("engineering reliable software with AI Fleet
        readme_introduction.include?("not separate products or a rigid maturity model") &&
        readme_introduction.include?("Codex is Aquarium's primary agent runtime") &&
        readme_introduction.include?("rather than promising provider or framework neutrality") &&
-       readme_introduction.include?("Codex, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
+       readme_introduction.include?("Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
        "README introduction must lead with Aquarium's AI Fleet engineering identity")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
@@ -381,7 +381,8 @@ assert(ouroboros_catalog &&
        ouroboros_catalog.include?("local and read-only") &&
        ouroboros_catalog.include?("do not contact a provider, initiate authentication, make a network request, or start an MCP server"),
        "Ouroboros catalog must diagnose CLI, Codex integration, runtime, and registration independently")
-assert(dev_setup.include?("Sanho, Mulgae, Gaori, and Podway selection choices") &&
+assert(dev_setup.include?("Dolgorae selection choice") &&
+       dev_setup.include?("Sanho, Mulgae, Gaori, and Podway choices") &&
        dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
        "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
 assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, or Deslop source") &&
@@ -417,7 +418,7 @@ assert(dev_setup.include?("Never read credential values in this skill, even afte
 assert(dev_setup.include?("When another copy exists, report the duplicate risk") &&
        dev_setup.include?("never create a known duplicate"),
        "dev-setup must not install a canonical paired skill beside a known alternate-root copy")
-selection_disclosure_index = dev_setup.index("Disclose in the Sanho, Mulgae, Gaori, and Podway selection choices")
+selection_disclosure_index = dev_setup.index("Disclose separately in the Sanho, Mulgae, Gaori, and Podway choices")
 comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
 assert(selection_disclosure_index && comparison_index && action_approval_index &&
@@ -454,8 +455,8 @@ assert(dev_setup.include?("require it to match the absence or complete digest sn
        dev_setup.include?("Clean up every ephemeral payload") &&
        dev_setup.include?("each selected paired skill's comparison tag"),
        "dev-setup must invalidate stale skill approvals and clean temporary payloads")
-assert(tool_catalog.include?("No separate approval is required for that comparison") &&
-       tool_catalog.include?("network operation outside this exact exception") &&
+assert(tool_catalog.include?("No separate approval is required for those exact lookups") &&
+       tool_catalog.include?("network operation outside these exceptions") &&
        tool_catalog.scan("automatically fetched and verified").length == 4 &&
        tool_catalog.scan("comparison fetch itself needs no separate approval").length == 4,
        "tool catalog must apply the same bounded comparison exception to all four paired skills")
@@ -479,13 +480,13 @@ assert(tool_catalog.include?("every approved action that overwrites or removes")
        tool_catalog.scan("follow the shared backup policy").length >= 4 &&
        !tool_catalog.include?("preserve a recoverable sibling backup"),
        "tool replacement guidance must support the shared no-backup policy")
-assert(ROOT.join("README.md").read.include?("automatically query their official GitHub Releases metadata") &&
+assert(ROOT.join("README.md").read.include?("Dolgorae automatically queries its official GitHub Releases metadata") &&
        ROOT.join("README.md").read.include?("four public skill files from `raw.githubusercontent.com` into ephemeral storage") &&
        ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
        ROOT.join("README.ko.md").read.include?("official GitHub Releases metadata를 자동으로 조회") &&
        ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다") &&
        ROOT.join("PRIVACY.md").read.include?("Bounded read-only network operations may be authorized") &&
-       ROOT.join("PRIVACY.md").read.include?("sends no repository or local skill content") &&
+       ROOT.join("PRIVACY.md").read.include?("send no repository or local skill content") &&
        ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
 assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authorizes read-only release discovery") &&
@@ -612,7 +613,7 @@ assert(ops_index.start_with?("# Aquarium Operations\n") &&
 capability_catalog = documentation_details.fetch("capabilities")
 assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
-       capability_catalog.include?("current implementation raises the Podway minimum") &&
+       capability_catalog.include?("raises the Podway minimum") &&
        capability_catalog.include?("CHANGELOG.md") &&
        capability_catalog.include?("release-status authority"),
        "capability catalog must inventory all Aquarium skills and defer release status to the CHANGELOG")
@@ -645,7 +646,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v10
+  aquarium-dev-setup-inspection.v11
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
@@ -697,15 +698,16 @@ assert(!canonical_documentation.include?("/Users/") &&
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 5 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
        canonical_roadmap.include?("## EPIC-004: Release Aquarium v0.1.12") &&
+       canonical_roadmap.include?("## EPIC-005: Adopt Dolgorae v0.1.0") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 24 &&
-       roadmap_task_ids.uniq.sort == (1..24).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 24 &&
+       roadmap_task_ids.length == 28 &&
+       roadmap_task_ids.uniq.sort == (1..28).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 28 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -714,7 +716,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 4 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-004 and unique TASK-001 through TASK-024")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-005 and unique TASK-001 through TASK-028")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -730,10 +732,14 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
        dev_aquarium_dossier.include?("external Dolgorae `TASK-035`"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
-assert(dolgorae_review_contract.include?("all three exact guards") &&
+assert(dolgorae_review_contract.include?("both exact guards") &&
+       dolgorae_review_contract.include?("47c95d0d060d9ee685a01bedbdeb5379515e2804") &&
+       dolgorae_review_contract.include?("6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8") &&
+       dolgorae_review_contract.include?("0c7f8bb7e6b6f86fd98eb5aec9cda1e6859fbc1da2f06b1c0e4a21ad2e5ff307") &&
        dolgorae_review_contract.include?("workspace`, `staged`, `dirty`, `head`, `commit`, and `range") &&
        dolgorae_review_contract.include?("dolgorae-specialist-review-tool-v2.schema.json") &&
        dolgorae_review_contract.include?("dolgorae-review-target-v1.schema.json") &&
+       dolgorae_review_contract.include?("dolgorae-machine-v1.schema.json") &&
        dolgorae_review_contract.include?("900-second ceiling") &&
        dolgorae_review_contract.include?("Candidate-defined secret screening"),
        "Dolgorae consumer contract must freeze candidate identity, checked wire, bounds, scopes, and trust boundaries")
@@ -792,15 +798,16 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed local Orca runtime") &&
-       ROOT.join("PRIVACY.md").read.include?("Dirty working-tree content is never a review target") &&
-       ROOT.join("PRIVACY.md").read.include?("may stage only exact paths the user approves") &&
-       ROOT.join("PRIVACY.md").read.include?("current checkout as same-user processes") &&
+       ROOT.join("PRIVACY.md").read.include?("one declared immutable source scope and exact Git identity") &&
+       ROOT.join("PRIVACY.md").read.include?("Independent Review sends the captured scope") &&
+       ROOT.join("PRIVACY.md").read.include?("creates no Orca object") &&
+       ROOT.join("PRIVACY.md").read.include?("same-user processes") &&
        ROOT.join("PRIVACY.md").read.include?("rather than an operating-system read sandbox") &&
-       ROOT.join("PRIVACY.md").read.include?("without a second preparation approval") &&
-       ROOT.join("PRIVACY.md").read.include?("Reviews remain static") &&
-       ROOT.join("PRIVACY.md").read.include?("local Run, Task, Dispatch, terminal, lifecycle, and transcript state") &&
+       ROOT.join("PRIVACY.md").read.include?("only that bounded static review transmission") &&
+       ROOT.join("PRIVACY.md").read.include?("authorizes no tests") &&
+       ROOT.join("PRIVACY.md").read.include?("Dolgorae retains immutable captures") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
-       ROOT.join("TERMS.md").read.include?("exact Git target and reviewer authorizes only the bounded static review transmission") &&
+       ROOT.join("TERMS.md").read.include?("exact Git target and reviewer authorizes only the bounded static review transmission through the verified local Dolgorae runtime") &&
        ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code, Agy"),
        "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
@@ -973,7 +980,7 @@ assert(tool_catalog.include?("migration_required=true") &&
        "Podway migration classification contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
-       tool_catalog.include?("v10 inspection") &&
+       tool_catalog.include?("v11 inspection") &&
        tool_catalog.include?("--include-podway") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")

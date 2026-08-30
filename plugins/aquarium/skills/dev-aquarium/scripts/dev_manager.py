@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shlex
 import shutil
 import signal
@@ -41,6 +42,10 @@ MCP_ARGUMENTS = {
 CODEX_COMMAND_TIMEOUT_SECONDS = 120
 PRODUCER_BUILD_TIMEOUT_SECONDS = 600
 PROCESS_TERMINATION_GRACE_SECONDS = 5
+STABLE_VERSION_PROBE_TIMEOUT_SECONDS = 30
+DOLGORAE_INVOCATION_ID_RE = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
 
 
 @dataclass
@@ -64,6 +69,7 @@ class ResolvedArtifact:
     artifact_kind: str | None
     execution_path: Path | None = None
     lease: Any = None
+    stable_version: str | None = None
 
     def close(self) -> None:
         if self.lease is not None:
@@ -1290,9 +1296,14 @@ def _validate_generation(
 
 
 def _execution_alias(
-    host_root: Path, project_id: str, git_sha: str, artifact: Path
+    host_root: Path,
+    project_id: str,
+    identity: str,
+    artifact: Path,
+    *,
+    repair_action: str = "Rebuild the enrolled project from its canonical local main.",
 ) -> Path:
-    root = host_root / "runtime" / project_id / git_sha
+    root = host_root / "runtime" / project_id / identity
     target = root / "executable"
     try:
         if target.exists():
@@ -1335,11 +1346,143 @@ def _execution_alias(
         raise ManagerError(
             "artifact_invalid",
             str(error),
-            "Rebuild the enrolled project from its canonical local main.",
+            repair_action,
             "resolve",
             project_id,
-            git_sha,
+            identity if len(identity) == 40 else None,
         ) from error
+
+
+def _strict_json_object(content: str) -> dict[str, Any]:
+    def object_from_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate JSON key")
+            result[key] = value
+        return result
+
+    value = json.loads(content, object_pairs_hook=object_from_pairs)
+    if not isinstance(value, dict):
+        raise TypeError("machine output is not one JSON object")
+    return value
+
+
+def _validate_dolgorae_stable_version(executable: Path, expected_version: str) -> None:
+    try:
+        probe = subprocess.run(
+            [str(executable), "--version"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=STABLE_VERSION_PROBE_TIMEOUT_SECONDS,
+        )
+        envelope = _strict_json_object(probe.stdout)
+    except (
+        OSError,
+        subprocess.TimeoutExpired,
+        UnicodeError,
+        json.JSONDecodeError,
+        ValueError,
+        TypeError,
+    ) as error:
+        raise ManagerError(
+            "artifact_invalid",
+            f"Stable Dolgorae version probing failed: {error}",
+            "Install the exact supported official Dolgorae release and retry.",
+            "resolve",
+            "dolgorae",
+        ) from error
+    expected_text = f"dolgorae {expected_version.removeprefix('v')}"
+    if (
+        probe.returncode != 0
+        or probe.stderr
+        or set(envelope) != {"schema_version", "ok", "command", "invocation_id", "data"}
+        or envelope.get("schema_version") != 1
+        or envelope.get("ok") is not True
+        or envelope.get("command") != "version"
+        or not isinstance(envelope.get("invocation_id"), str)
+        or not DOLGORAE_INVOCATION_ID_RE.fullmatch(envelope["invocation_id"])
+        or not isinstance(envelope.get("data"), dict)
+        or envelope["data"] != {"text": expected_text}
+    ):
+        raise ManagerError(
+            "artifact_invalid",
+            "Stable Dolgorae did not return the exact supported machine version envelope.",
+            "Install the exact supported official Dolgorae release and retry.",
+            "resolve",
+            "dolgorae",
+        )
+
+
+def resolve_stable_dolgorae(
+    host_root: Path,
+    stable: Path,
+    expected_version: str,
+    expected_sha256: str,
+) -> ResolvedArtifact:
+    if not stable.is_absolute() or stable.is_symlink():
+        raise ManagerError(
+            "artifact_invalid",
+            "Stable Dolgorae must be one absolute regular non-symlink executable path.",
+            "Supply the approved absolute path to the official Dolgorae executable.",
+            "resolve",
+            "dolgorae",
+        )
+    try:
+        path = stable.resolve(strict=True)
+        path_stat = path.stat()
+        if not stat.S_ISREG(path_stat.st_mode) or not os.access(path, os.X_OK):
+            raise OSError("the stable path is not an executable regular file")
+        if f"sha256:{_sha256_file(path)}" != expected_sha256:
+            raise OSError(
+                "the stable executable checksum does not match the launch guard"
+            )
+    except OSError as error:
+        raise ManagerError(
+            "artifact_invalid",
+            str(error),
+            "Install the exact supported official Dolgorae release and retry.",
+            "resolve",
+            "dolgorae",
+        ) from error
+
+    digest = expected_sha256.removeprefix("sha256:")
+    identity = f"stable-{expected_version.removeprefix('v')}-{digest}"
+    try:
+        lease = _artifact_lock(host_root, "dolgorae", identity, fcntl.LOCK_SH)
+    except OSError as error:
+        raise ManagerError(
+            "lease_unavailable",
+            str(error),
+            "Retry after inspecting host-local artifact locks.",
+            "resolve",
+            "dolgorae",
+        ) from error
+    try:
+        execution_path = _execution_alias(
+            host_root,
+            "dolgorae",
+            identity,
+            path,
+            repair_action="Reinstall the exact supported official Dolgorae release.",
+        )
+        _validate_dolgorae_stable_version(execution_path, expected_version)
+    except Exception:
+        lease.close()
+        raise
+    return ResolvedArtifact(
+        project_id="dolgorae",
+        source="stable",
+        path=path,
+        git_sha=None,
+        development_version=None,
+        sha256=expected_sha256,
+        artifact_kind="executable",
+        execution_path=execution_path,
+        lease=lease,
+        stable_version=expected_version,
+    )
 
 
 def resolve_artifact(

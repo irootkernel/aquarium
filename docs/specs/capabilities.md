@@ -54,13 +54,13 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
 | `$aquarium:dev-aquarium` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout and reconciles the Aquarium-owned native hook block | Enrollment, hook, build, isolated Codex configuration, and authentication remain separate effects |
-| `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, installation, configuration, repair, staging, and commit stay independent |
+| `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes Dolgorae plus supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, archive download, installation, configuration, repair, staging, and commit stay independent |
 | `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external manifest and applies single-repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |
 | `$aquarium:test-setup` | Explicit | Audits and configures the common Make or Bun test contract and evidence-backed legacy waivers | Applying test files does not authorize side-effectful E2E execution |
 
 ## Current Integration Corrections
 
-The current implementation raises the Podway minimum to v0.2.6, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
+The current implementation admits the checksum-pinned official Dolgorae v0.1.0 runtime for Independent and Orca reviews, raises the Podway minimum to v0.2.6, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
 
 [`CHANGELOG.md`](../../CHANGELOG.md) remains the release-status authority for these implemented corrections.

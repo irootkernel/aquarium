@@ -21,7 +21,7 @@ Read [manifest.md](references/manifest.md), then read [the development setup ski
 
 Show the manifest digest and an ordered matrix of ready and invalid targets, input paths, canonical Git roots, effective tools, explicit local MCP overrides, repository-guidance proposal policy, worktree state, and local readiness. Disclose that Mulgae and Gaori MCP are user-global by default and `project_mcp` is only an explicit per-target local override.
 
-Disclose that confirming a selection containing Sanho, Mulgae, Gaori, or Podway authorizes the bounded official GitHub Releases and raw-file freshness comparison defined by `dev-setup`, but no installation or replacement.
+Disclose that confirming a selection containing Dolgorae authorizes its bounded official GitHub Release metadata lookup, while Sanho, Mulgae, Gaori, or Podway also authorize the raw-file freshness comparison defined by `dev-setup`. Neither selection authorizes an archive download, installation, or replacement.
 
 Use the host's structured ask/answer tool when available to confirm the normalized selection before any network comparison. A refusal stops the bundle without mutation. Confirmation is not approval for a CLI, skill, daemon, configuration, MCP registration, managed Procedure, root AGENTS.md/CLAUDE.md edit, or any other persistent action.
 
@@ -29,7 +29,7 @@ Immediately before that confirmation, rerun the normalizer and require the manif
 
 ## Prepare Shared Components Once
 
-Resolve the union of effective tools across ready targets. Compare each selected Sanho, Mulgae, Gaori, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
+Resolve the union of effective tools across ready targets. Resolve selected Dolgorae release metadata once. Compare each selected Sanho, Mulgae, Gaori, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
 
 Handle user-global CLIs, paired skills, Lora, Deslop, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Configure each selected global MCP at most once for the bundle.
 
