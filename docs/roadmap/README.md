@@ -32,6 +32,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-003 | Activate Dolgorae-backed Reviews | Completed |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 | EPIC-005 | Adopt Dolgorae v0.1.0 | Completed |
+| EPIC-006 | Adopt Podway v0.2.7 | In Progress |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -125,3 +126,18 @@ This adoption succeeds EPIC-003 without reopening it and does not complete the u
 | TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, guarded private execution, and fail-closed identity checks. | Completed | TASK-025 |
 | TASK-027 | Activate stable Dolgorae-backed reviews | Move Independent Review and Orca Review production paths from the development generation to the pinned stable guard. | Completed | TASK-026; EPIC-003 |
 | TASK-028 | Qualify and close stable Dolgorae adoption | Verify the official artifact and complete code, workflow, documentation, privacy, and regression acceptance. | Completed | TASK-027 |
+
+## EPIC-006: Adopt Podway v0.2.7
+
+**Status:** `In Progress`
+
+Adopt the official Podway v0.2.7 release as Aquarium's minimum stable runtime, retain the existing Procedure v2 lifecycle contract, and qualify the new exact-workspace removal boundary without granting Aquarium setup or managed workflows automatic deletion authority.
+
+Podway owns its release, distribution, workspace-removal implementation, and source-distributed `use-podway` lifecycle guidance. Aquarium independently verifies the official artifact and installs or invokes the paired skill only through its existing explicit approval boundaries. This adoption does not satisfy the separate Podway development-producer handoff required by `EPIC-002` and `TASK-011`.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Local interfaces](../specs/local-interfaces.md), [Podway integration](../../plugins/aquarium/references/podway-integration.md), [Changing Procedures](../implementation-tips/changing-procedures.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-029 | Align the Podway v0.2.7 support contract | Raise the stable runtime floor, preserve same-tag CLI, daemon, and skill identity, and define the explicit workspace-removal safety boundary. | Completed | External Podway v0.2.7 release |
+| TASK-030 | Qualify and close Podway v0.2.7 adoption | Verify the official artifact against canonical Procedures, existing lifecycle seams, fenced workspace removal, replay convergence, and final exact Aquarium candidates. | In Progress | TASK-029 |

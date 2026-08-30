@@ -142,8 +142,8 @@ class InspectToolsTest(unittest.TestCase):
         mcp_neutral_mixed_missing: bool = False,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.6",
-        podway_daemon_version: str = "0.2.6",
+        podway_version: str = "v0.2.7",
+        podway_daemon_version: str = "0.2.7",
         podway_daemon_reachable: bool = True,
         podway_daemon_status_schema: str = "podway.daemon-status-result/v2",
         podway_readiness_state: str = "ready",
@@ -1371,15 +1371,16 @@ printf '%s\\n' '{"schema_version":1,"ok":true,"command":"version","invocation_id
         self.assertFalse(podway["versions_match"])
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_v026_is_the_minimum_supported_release(self) -> None:
+    def test_podway_v027_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
             ("v0.2.0", False),
             ("v0.2.2", False),
             ("v0.2.3", False),
             ("v0.2.4", False),
             ("v0.2.5", False),
-            ("v0.2.6", True),
-            ("v0.2.6-rc.1", False),
+            ("v0.2.6", False),
+            ("v0.2.7", True),
+            ("v0.2.7-rc.1", False),
             ("0.2.99", True),
             ("v0.3.0", False),
         ):

@@ -13,6 +13,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Require an execution dossier for epics with at least three member tasks or three requirement-bearing canonical documents, while letting smaller semantically complete epics use repository-owned documentation and retaining shared dossiers until their final consumer closes.
+- Adopt Podway v0.2.7 as the minimum stable runtime and extend exact-artifact qualification to workspace removal safety and replay convergence.
 
 ### Fixed
 

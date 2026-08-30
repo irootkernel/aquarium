@@ -18,6 +18,6 @@ Do not edit an installed copy in a target repository as the source change. Updat
 
 ## Compatibility Evidence
 
-A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.6 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.6-podway> make test-podway-compat` against the exact Aquarium candidate.
+A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.7 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.7-podway> make test-podway-compat` against the exact Aquarium candidate.
 
 Procedure validators prove declaration and graph invariants only. Scenario tests must cover semantic changes such as cancellation races, stale sessions, result propagation, retry behavior, and owner handoffs.

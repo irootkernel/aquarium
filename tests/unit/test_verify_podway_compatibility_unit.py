@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -79,6 +80,41 @@ def test_procedure_result_rejects_an_unexpected_envelope() -> None:
         verify_podway_compatibility.procedure_result(
             {"schema": "podway.output/v4", "command": "procedure.check"}
         )
+
+
+def test_workspace_removal_contract_uses_v3_receipt() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    completed = subprocess.CompletedProcess(
+        ["podway"],
+        0,
+        stdout=json.dumps(
+            {
+                "schema": "podway.output/v3",
+                "command": "workspace.remove",
+                "result": {
+                    "schema": "podway.workspace-removal-result/v1",
+                    "worktree_root": "/tmp/repository",
+                    "workspace_uuid": None,
+                    "registry_entry_removed": False,
+                    "podway_directory_removed": False,
+                    "already_absent": True,
+                },
+            }
+        ).encode(),
+        stderr=b"",
+    )
+
+    result = runtime.output_result(
+        completed,
+        "workspace.remove",
+        "podway.workspace-removal-result/v1",
+    )
+
+    assert result["already_absent"] is True
+    assert (
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v3"
+    )
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.7"
 
 
 def test_exact_binary_requires_an_absolute_path() -> None:

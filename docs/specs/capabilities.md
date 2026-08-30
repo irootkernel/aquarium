@@ -61,6 +61,6 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 
 ## Current Integration Corrections
 
-The current implementation admits the checksum-pinned official Dolgorae v0.1.0 runtime for Independent and Orca reviews, raises the Podway minimum to v0.2.6, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
+The current implementation admits the checksum-pinned official Dolgorae v0.1.0 runtime for Independent and Orca reviews, raises the Podway minimum to v0.2.7, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, keeps workspace removal behind the same-tag `use-podway` skill's explicit exact-target boundary, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
 
 [`CHANGELOG.md`](../../CHANGELOG.md) remains the release-status authority for these implemented corrections.

@@ -26,7 +26,7 @@ PROCESS_EXIT_TIMEOUT_SECONDS = 10
 RUN_TIMEOUT_SECONDS = 240
 REPEAT_COUNT = 2
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:9ba166ebb634be16263f425b9967df784442354835b733c3f8579c11367539b5"
+    "sha256:fc4d16da9877853d795c621ce5eaa445f94354d6ab52f4935c9e38a2318ce6c0"
 )
 
 SUCCESS_OPTIONS = {
@@ -357,7 +357,7 @@ class ManagedRuntime:
             if (
                 result.get("readiness_state") == "ready"
                 and result.get("readiness_stage") == "ready"
-                and result.get("daemon_version") == "0.2.6"
+                and result.get("daemon_version") == "0.2.7"
                 and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
             ):
                 if self.daemon_pid is None:
@@ -381,7 +381,7 @@ class ManagedRuntime:
                         except OSError:
                             pass
         raise RuntimeQualificationError(
-            "daemon did not reach v0.2.6 verified readiness: "
+            "daemon did not reach v0.2.7 verified readiness: "
             f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
         )
 
@@ -393,7 +393,7 @@ class ManagedRuntime:
                 "name": "aquarium-release-qualification",
                 "pid": os.getpid(),
                 "product": "podway",
-                "version": "v0.2.6",
+                "version": "v0.2.7",
                 "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
             },
             "operation": "control",
@@ -591,6 +591,123 @@ class ManagedRuntime:
             if isinstance(value, str):
                 return value
         raise RuntimeQualificationError("observation omitted workspace UUID fences")
+
+    def exercise_workspace_removal(self) -> dict[str, Any]:
+        assert self.sandbox is not None
+        podway_directory = self.sandbox / ".podway"
+        git_directory = self.sandbox / ".git"
+        sentinel = self.sandbox / "workspace-removal-sentinel.txt"
+        sentinel_contents = b"preserve the Git worktree\n"
+        sentinel.write_bytes(sentinel_contents)
+
+        shown = json_payload(self.raw(["--json", "workspace", "show"]))
+        workspace = shown.get("workspace")
+        workspace_uuid = workspace.get("uuid") if isinstance(workspace, dict) else None
+        if (
+            shown.get("schema") != OUTPUT_SCHEMA
+            or shown.get("command") != "workspace.show"
+            or not isinstance(workspace_uuid, str)
+        ):
+            raise RuntimeQualificationError(
+                "workspace show omitted the initialized workspace identity"
+            )
+
+        mismatched_uuid = str(uuid.uuid4())
+        while mismatched_uuid == workspace_uuid:
+            mismatched_uuid = str(uuid.uuid4())
+        mismatch = self.raw(
+            [
+                "--json",
+                "workspace",
+                "remove",
+                "--force",
+                "--if-workspace-uuid",
+                mismatched_uuid,
+                "--yes",
+            ],
+            expected_exit=None,
+        )
+        if (
+            mismatch.returncode == 0
+            or error_code(mismatch) != "WORKSPACE_UUID_MISMATCH"
+        ):
+            raise RuntimeQualificationError(
+                "workspace removal did not reject a mismatched UUID fence"
+            )
+        if not podway_directory.is_dir():
+            raise RuntimeQualificationError(
+                "mismatched workspace removal changed Podway state"
+            )
+
+        removal_arguments = [
+            "--json",
+            "workspace",
+            "remove",
+            "--force",
+            "--if-workspace-uuid",
+            workspace_uuid,
+            "--yes",
+        ]
+        removed = output_result(
+            self.raw(removal_arguments),
+            "workspace.remove",
+            "podway.workspace-removal-result/v1",
+        )
+        if removed != {
+            "schema": "podway.workspace-removal-result/v1",
+            "worktree_root": str(self.sandbox.resolve()),
+            "workspace_uuid": workspace_uuid,
+            "registry_entry_removed": True,
+            "podway_directory_removed": True,
+            "already_absent": False,
+        }:
+            raise RuntimeQualificationError(
+                "workspace removal returned an incompatible initial result"
+            )
+        if (
+            podway_directory.exists()
+            or not self.sandbox.is_dir()
+            or not git_directory.exists()
+            or sentinel.read_bytes() != sentinel_contents
+        ):
+            raise RuntimeQualificationError(
+                "workspace removal did not preserve the Git worktree boundary"
+            )
+
+        converged = output_result(
+            self.raw(removal_arguments),
+            "workspace.remove",
+            "podway.workspace-removal-result/v1",
+        )
+        if converged != {
+            "schema": "podway.workspace-removal-result/v1",
+            "worktree_root": str(self.sandbox.resolve()),
+            "workspace_uuid": None,
+            "registry_entry_removed": False,
+            "podway_directory_removed": False,
+            "already_absent": True,
+        }:
+            raise RuntimeQualificationError(
+                "workspace removal did not converge after exact fenced replay"
+            )
+        if (
+            podway_directory.exists()
+            or not self.sandbox.is_dir()
+            or not git_directory.exists()
+            or sentinel.read_bytes() != sentinel_contents
+        ):
+            raise RuntimeQualificationError(
+                "converged workspace removal crossed the Git worktree boundary"
+            )
+
+        return {
+            "result_schema": "podway.workspace-removal-result/v1",
+            "uuid_mismatch_rejected": True,
+            "initial_removal_passed": True,
+            "replay_converged": True,
+            "podway_directory_absent": True,
+            "git_worktree_preserved": True,
+        }
 
     def begin_goal(self, observation: dict[str, Any], procedure_id: str) -> None:
         templates = [
@@ -1271,7 +1388,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.6-run-{self.run_index}",
+                f"official-v0.2.7-run-{self.run_index}",
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
@@ -1301,6 +1418,8 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         raise RuntimeQualificationError(
             "failure cleanup probe left its disposable runtime root"
         )
+    with ManagedRuntime(binary, daemon, procedures, REPEAT_COUNT + 1) as runtime:
+        workspace_removal = runtime.exercise_workspace_removal()
     receipts: list[dict[str, Any]] = []
     for run_index in range(1, REPEAT_COUNT + 1):
         started = time.monotonic()
@@ -1345,5 +1464,6 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         "runtime_repeat_count": REPEAT_COUNT,
         "runtime_procedure_count": 5,
         "failure_cleanup": "passed",
+        "workspace_removal": workspace_removal,
         "runtime_runs": receipts,
     }

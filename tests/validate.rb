@@ -643,7 +643,7 @@ supported_tool_versions = [
   "Stable `v0.2.7` through `v0.2.x`",
   "Stable `v0.1.18` through `v0.1.x`",
   "Stable `v0.1.14` through `v0.1.x`",
-  "Stable `v0.2.6` through `v0.2.x`",
+  "Stable `v0.2.7` through `v0.2.x`",
   "`>=0.51.1,<0.52.0`"
 ]
 assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(version) } &&
@@ -676,7 +676,7 @@ documented_schema_ids = %w[
   aquarium-release-notes-inspection/v1
   aquarium-release-publication-observation/v4
   aquarium-release-publication-state/v4
-  aquarium-podway-compatibility.v2
+  aquarium-podway-compatibility.v3
   aquarium-release-qa-cluster-result/v1
   aquarium-release-qa-full-pass/v1
   aquarium-release-qa-confirmation-record/v1
@@ -717,16 +717,17 @@ assert(!canonical_documentation.include?("/Users/") &&
 dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 5 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 6 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
        canonical_roadmap.include?("## EPIC-004: Release Aquarium v0.1.12") &&
        canonical_roadmap.include?("## EPIC-005: Adopt Dolgorae v0.1.0") &&
+       canonical_roadmap.include?("## EPIC-006: Adopt Podway v0.2.7") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 28 &&
-       roadmap_task_ids.uniq.sort == (1..28).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 28 &&
+       roadmap_task_ids.length == 30 &&
+       roadmap_task_ids.uniq.sort == (1..30).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 30 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -735,7 +736,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 5 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-005 and unique TASK-001 through TASK-028")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-006 and unique TASK-001 through TASK-030")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-DEV-AQUARIUM.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -934,7 +935,7 @@ assert(deslop_catalog &&
        deslop_catalog.include?("byte-identical") &&
        deslop_catalog.include?("no duplicate or symlink installation"),
        "Deslop must install with its license from one exact Cursor upstream commit")
-assert(tool_catalog.include?("stable `v0.2.6` through `v0.2.x`") &&
+assert(tool_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
        "Podway CLI, daemon, and use-podway must share the supported approved release")
@@ -953,18 +954,23 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.session-reset-result/v1") &&
        tool_catalog.include?("podway.job-result/v4") &&
        tool_catalog.include?("podway.job-lookup-result/v4"),
-       "Podway v0.2.6 JSON contracts are missing")
+       "Podway v0.2.7 JSON contracts are missing")
 assert(tool_catalog.include?("prepared revision-0 session") &&
        tool_catalog.include?("session.begin") &&
        tool_catalog.include?("Terminal sessions expose a disposition template") &&
        tool_catalog.include?("plain `start`") &&
        tool_catalog.include?("Never infer a removed replacement flag") &&
        tool_catalog.include?("32 sessions"),
-       "Podway v0.2.6 prepared lifecycle and archival guidance is missing")
+       "Podway v0.2.7 prepared lifecycle and archival guidance is missing")
 assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence only") &&
        tool_catalog.include?("Never use dev-setup to observe, cancel, discard, or reset") &&
        tool_catalog.include?("only session-state reset exception"),
        "Podway setup catalog must exclude routine Procedure v2 lifecycle operations")
+assert(tool_catalog.include?("`workspace remove` is not a dev-setup repair") &&
+       tool_catalog.include?("complete `.podway` deletion") &&
+       tool_catalog.include?("preserve the Git worktree") &&
+       tool_catalog.include?("podway.workspace-removal-result/v1"),
+       "Podway workspace removal must remain an explicit exact-worktree lifecycle boundary")
 assert(tool_catalog.include?("same approved command") &&
        tool_catalog.include?("no `--socket` override") &&
        tool_catalog.include?("prior launchd label to unload"),
@@ -1526,6 +1532,10 @@ assert(design_gate_contract.include?("applies only when `$aquarium:release-qa`")
 podway_reference = PLUGIN.join("references/podway-integration.md")
 assert(podway_reference.file?, "shared Podway integration contract is missing")
 podway_contract = podway_reference.read
+assert(podway_contract.include?("Neither a setup repair nor an Aquarium workflow may invoke `workspace remove`") &&
+       podway_contract.include?("same-tag `$use-podway` flow") &&
+       podway_contract.include?("podway.workspace-removal-result/v1"),
+       "Podway integration must keep workspace removal behind the paired skill's exact-target boundary")
 assert(podway_contract.include?("The canonical roadmap owns") &&
        podway_contract.include?("Podway owns") &&
        podway_contract.include?("temporary projection"),
@@ -2838,7 +2848,7 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.6` through `v0.2.x`"),
+  assert(body.include?("stable `v0.2.7` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
 end
 
@@ -2928,9 +2938,11 @@ assert(makefile.include?("test-podway-compat: test-requirements") &&
        testing_document.include?("external-artifact gate") &&
        testing_document.include?("development-contract evidence only") &&
        testing_document.include?("two fresh isolated runtime roots") &&
-       root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.6-podway> make test-podway-compat") &&
+       testing_document.include?("A third isolated root proves") &&
+       testing_document.include?("v3 JSON receipt") &&
+       root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.7-podway> make test-podway-compat") &&
        root_agents.include?("cannot satisfy this distribution gate"),
-       "Podway v0.2.6 compatibility must remain an exact-artifact release gate")
+       "Podway v0.2.7 compatibility must remain an exact-artifact release gate")
 assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
        ROOT.join("README.md").read.include?("[Orca Review]") &&
        ROOT.join("README.ko.md").read.include?("$aquarium:orca-review") &&

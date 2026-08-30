@@ -10,7 +10,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.7` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `v0.1.18` through `v0.1.x` | Native Apple Silicon macOS; Go `1.26.6+` only for installation | CLI, Config v3, provider readiness, MCP scope, capture publication, findings query, and extraction quality are separate |
 | Gaori | Runs existing checks and compresses their output | Stable `v0.1.14` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
-| Podway | Records Git-backed workflow goals, transitions, handoffs, and session lifecycle | Stable `v0.2.6` through `v0.2.x` | Native Apple Silicon macOS; matching CLI and daemon | CLI, daemon, workspace, managed Procedures, current session, and optional skill are separate readiness axes |
+| Podway | Records Git-backed workflow goals, transitions, handoffs, and session lifecycle | Stable `v0.2.7` through `v0.2.x` | Native Apple Silicon macOS; matching CLI and daemon | CLI, daemon, workspace, managed Procedures, current session, and optional skill are separate readiness axes |
 | Ouroboros | Supplies interview, PM, Seed, and QA leaves for explicit design workflows | `>=0.51.1,<0.52.0` | Existing `uv`; exact package version for installation | CLI, Codex rules and skills, MCP runtime, effective registration, and live exposure are independent |
 | Lora / Lore | Supplies `lore-commits` and `lore-query` skills | Latest stable tag, or disclosed full `main` SHA when no stable tag exists | Detached exact checkout and user-global Codex installation | Complete source and target trees must match; `lore-setup` is intentionally not installed |
 | Deslop | Supplies task refinement cleanup | No release line; disclosed full current upstream SHA | Detached Cursor Team Kit checkout, npm, and preserved MIT license | Only upstream `deslop` is installed; Aquarium does not vendor or customize it |
@@ -36,6 +36,8 @@ Aquarium readiness requires a supported stable CLI and matching daemon, a health
 The bounded `daemon wait-ready` result is healthy when readiness state and stage are `ready` and the closed recovery inventory reports every worktree completed. A nonzero failed count may represent quarantined completed recovery and does not by itself degrade readiness. A prepared, running, incomplete, or undisposed terminal session is a lifecycle conflict owned by the matching workflow or `$use-podway`, not a setup repair.
 
 The exact v0.2.5 compatibility transformation is migration evidence only. Any other source mismatch is divergence, and an active Procedure snapshot is never migrated in place.
+
+Podway v0.2.7 workspace removal is a separately authorized lifecycle operation owned by the same-tag `use-podway` skill. Aquarium setup and managed workflows never infer that authority from an opt-out, missing session, stale registry entry, or readiness problem. Successful removal must identify `podway.workspace-removal-result/v1`, delete only the selected worktree's complete `.podway` tree, and preserve the Git worktree.
 
 ## Review and Check Adapters
 
