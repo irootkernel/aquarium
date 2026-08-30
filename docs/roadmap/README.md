@@ -32,7 +32,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-003 | Activate Dolgorae-backed Reviews | Completed |
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 | EPIC-005 | Adopt Dolgorae v0.1.0 | Completed |
-| EPIC-006 | Adopt Podway v0.2.7 | In Progress |
+| EPIC-006 | Adopt Podway v0.2.7 | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -129,7 +129,7 @@ This adoption succeeds EPIC-003 without reopening it and does not complete the u
 
 ## EPIC-006: Adopt Podway v0.2.7
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Adopt the official Podway v0.2.7 release as Aquarium's minimum stable runtime, retain the existing Procedure v2 lifecycle contract, and qualify the new exact-workspace removal boundary without granting Aquarium setup or managed workflows automatic deletion authority.
 
@@ -140,4 +140,4 @@ Podway owns its release, distribution, workspace-removal implementation, and sou
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-029 | Align the Podway v0.2.7 support contract | Raise the stable runtime floor, preserve same-tag CLI, daemon, and skill identity, and define the explicit workspace-removal safety boundary. | Completed | External Podway v0.2.7 release |
-| TASK-030 | Qualify and close Podway v0.2.7 adoption | Verify the official artifact against canonical Procedures, existing lifecycle seams, fenced workspace removal, replay convergence, and final exact Aquarium candidates. | In Progress | TASK-029 |
+| TASK-030 | Qualify and close Podway v0.2.7 adoption | Verify the official artifact against canonical Procedures, existing lifecycle seams, fenced workspace removal, replay convergence, and final exact Aquarium candidates. | Completed | TASK-029 |
