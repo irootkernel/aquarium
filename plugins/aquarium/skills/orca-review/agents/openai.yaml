@@ -1,6 +1,6 @@
 interface:
   display_name: "Orca Review"
-  short_description: "Review an exact target with a non-Codex AI"
-  default_prompt: "Use $aquarium:orca-review to review an exact Git target with a selected non-Codex Orca AI."
+  short_description: "Review an exact target with Orca-managed Codex"
+  default_prompt: "Use $aquarium:orca-review to review an exact Git target with one fresh Codex worker managed by Orca."
 policy:
   allow_implicit_invocation: false

@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
-CLI = SOURCE_SCRIPTS / "dev_aquarium.py"
+SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts"
+CLI = SOURCE_SCRIPTS / "aquarium_dev.py"
 sys.path.insert(0, str(SOURCE_SCRIPTS))
 
 import dev_manager
@@ -150,6 +150,97 @@ def test_reenrollment_repairs_a_missing_owned_hook_block(tmp_path):
     assert repaired.returncode == 0, repaired.stderr
     assert payload(repaired)["status"] == "success"
     assert hook.read_text().count("BEGIN AQUARIUM DEV v1") == 1
+
+
+def test_same_checkout_migrates_exact_recorded_legacy_hook_with_approval(tmp_path):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    hook = repository / ".git/hooks/post-commit"
+    hook.write_text("#!/bin/sh\nprintf foreign\n", encoding="utf-8")
+    legacy_manager = (
+        repository / "plugins/aquarium/skills/dev-aquarium/scripts/dev_aquarium.py"
+    )
+    dev_manager.enroll(
+        repository,
+        host_root,
+        legacy_manager,
+        approve_enrollment=True,
+        approve_hook=True,
+        approve_reenrollment=False,
+    )
+    legacy_bytes = hook.read_bytes()
+    assert b"dev-aquarium/scripts/dev_aquarium.py" in legacy_bytes
+
+    rejected = run_cli(
+        host_root,
+        "enroll",
+        "--repository",
+        repository,
+        "--approve-enrollment",
+        "--approve-hook",
+    )
+    assert payload(rejected)["error"]["code"] == "enrollment_conflict"
+    assert hook.read_bytes() == legacy_bytes
+    migrated = run_cli(
+        host_root,
+        "enroll",
+        "--repository",
+        repository,
+        "--approve-enrollment",
+        "--approve-hook",
+        "--approve-reenrollment",
+    )
+
+    assert migrated.returncode == 0, migrated.stderr
+    content = hook.read_text()
+    assert content.startswith("#!/bin/sh\nprintf foreign\n")
+    assert content.count("BEGIN AQUARIUM DEV v1") == 1
+    assert "dev-aquarium/scripts/dev_aquarium.py" not in content
+    assert "aquarium-dev/scripts/aquarium_dev.py" in content
+    record = json.loads((host_root / "enrollments/aquarium.json").read_text())
+    assert record["hook_block"] in content
+
+
+def test_same_checkout_migration_restores_hook_and_record_on_failure(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    hook = repository / ".git/hooks/post-commit"
+    hook.write_text("#!/bin/sh\nprintf foreign\n", encoding="utf-8")
+    legacy_manager = (
+        repository / "plugins/aquarium/skills/dev-aquarium/scripts/dev_aquarium.py"
+    )
+    dev_manager.enroll(
+        repository,
+        host_root,
+        legacy_manager,
+        approve_enrollment=True,
+        approve_hook=True,
+        approve_reenrollment=False,
+    )
+    enrollment = host_root / "enrollments/aquarium.json"
+    before_hook = hook.read_bytes()
+    before_record = enrollment.read_bytes()
+    original_install = dev_manager._install_block
+
+    def fail_after_install(path, block):
+        original_install(path, block)
+        raise RuntimeError("injected migration failure")
+
+    monkeypatch.setattr(dev_manager, "_install_block", fail_after_install)
+    with pytest.raises(RuntimeError):
+        dev_manager.enroll(
+            repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=True,
+        )
+
+    assert hook.read_bytes() == before_hook
+    assert enrollment.read_bytes() == before_record
 
 
 def test_reenrollment_requires_approval_and_transfers_only_owned_block(tmp_path):

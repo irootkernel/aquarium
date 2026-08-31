@@ -1,4 +1,4 @@
-"""Host-local lifecycle manager for dev-aquarium."""
+"""Host-local lifecycle manager for aquarium-dev."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import hashlib
 import json
 import os
 import platform
-import re
 import shlex
 import shutil
 import signal
@@ -15,11 +14,11 @@ import stat
 import subprocess
 import tempfile
 import time
-from contextlib import ExitStack
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 from dev_contract import (
     PROJECT_IDS,
@@ -35,17 +34,8 @@ MARKER_END = "# END AQUARIUM DEV v1"
 MANIFEST_NAME = ".aquarium-manifest.json"
 QUEUE_SCHEMA = "aquarium-dev-build-request/v1"
 DIAGNOSTIC_SCHEMA = "aquarium-dev-diagnostic/v1"
-MCP_ARGUMENTS = {
-    "mulgae": lambda checkout: ["mcp", "--project-root", str(checkout)],
-    "gaori": lambda checkout: ["--repo", str(checkout), "mcp"],
-}
-CODEX_COMMAND_TIMEOUT_SECONDS = 120
 PRODUCER_BUILD_TIMEOUT_SECONDS = 600
 PROCESS_TERMINATION_GRACE_SECONDS = 5
-STABLE_VERSION_PROBE_TIMEOUT_SECONDS = 30
-DOLGORAE_INVOCATION_ID_RE = re.compile(
-    r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
-)
 
 
 @dataclass
@@ -58,30 +48,29 @@ class ManagerError(Exception):
     git_sha: str | None = None
 
 
-@dataclass
-class ResolvedArtifact:
-    project_id: str
-    source: str
-    path: Path
-    git_sha: str | None
-    development_version: str | None
-    sha256: str | None
-    artifact_kind: str | None
-    execution_path: Path | None = None
-    lease: Any = None
-    stable_version: str | None = None
-
-    def close(self) -> None:
-        if self.lease is not None:
-            fcntl.flock(self.lease.fileno(), fcntl.LOCK_UN)
-            self.lease.close()
-            self.lease = None
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *_: object) -> None:
-        self.close()
+def _terminate_process_bounded(process: subprocess.Popen[Any]) -> None:
+    for termination_signal in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(process.pid, termination_signal)
+        except OSError:
+            if process.poll() is None:
+                try:
+                    process.send_signal(termination_signal)
+                except OSError:
+                    pass
+        try:
+            process.communicate(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+    if process.stdout is not None:
+        process.stdout.close()
+    if process.stderr is not None:
+        process.stderr.close()
+    try:
+        process.wait(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
 
 
 def run_git(
@@ -266,6 +255,50 @@ def _atomic_json(path: Path, value: dict[str, Any], mode: int = 0o600) -> None:
     _atomic_write(path, json.dumps(value, sort_keys=True, indent=2) + "\n", mode)
 
 
+def install_launcher(
+    source: Path, target: Path, *, approve_launcher: bool
+) -> tuple[str, dict[str, Any]]:
+    require_supported_host()
+    if not approve_launcher:
+        raise ManagerError(
+            "approval_required",
+            "Launcher installation approval is required.",
+            "Approve only the displayed user-local aquarium-dev launcher target.",
+            "install-launcher",
+        )
+    expected = Path.home() / ".local" / "bin" / "aquarium-dev"
+    if target != expected or not target.is_absolute():
+        raise ManagerError(
+            "invalid_arguments",
+            "The launcher target must be ~/.local/bin/aquarium-dev.",
+            "Use the supported user-local launcher target.",
+            "install-launcher",
+        )
+    if source.is_symlink() or not source.is_file():
+        raise ManagerError(
+            "artifact_missing",
+            "The packaged aquarium-dev launcher is unavailable.",
+            "Repair the Aquarium plugin installation and retry.",
+            "install-launcher",
+        )
+    content = source.read_text(encoding="utf-8")
+    if target.exists():
+        if target.is_symlink() or not target.is_file():
+            raise ManagerError(
+                "artifact_invalid",
+                "The launcher target is not a regular file.",
+                "Move the conflicting target aside before retrying.",
+                "install-launcher",
+            )
+        if (
+            target.read_text(encoding="utf-8") == content
+            and stat.S_IMODE(target.stat().st_mode) == 0o755
+        ):
+            return "no-change", {"target": str(target)}
+    _atomic_write(target, content, 0o755)
+    return "success", {"target": str(target)}
+
+
 def _install_block(hook: Path, block: str) -> bool:
     content, mode = _read_hook(hook)
     _validate_block_installable(content, block)
@@ -380,231 +413,45 @@ def read_enrollment(host_root: Path, project_id: str) -> dict[str, Any] | None:
     return value
 
 
-def _codex_environment(host_root: Path) -> dict[str, str]:
-    environment = os.environ.copy()
-    environment["CODEX_HOME"] = str(host_root / "codex")
-    return environment
-
-
-def _terminate_process_bounded(process: subprocess.Popen[Any]) -> None:
-    for termination_signal in (signal.SIGTERM, signal.SIGKILL):
-        try:
-            os.killpg(process.pid, termination_signal)
-        except OSError:
-            if process.poll() is None:
-                try:
-                    process.send_signal(termination_signal)
-                except OSError:
-                    pass
-        try:
-            process.communicate(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
-            return
-        except subprocess.TimeoutExpired:
-            continue
-    if process.stdout is not None:
-        process.stdout.close()
-    if process.stderr is not None:
-        process.stderr.close()
-    try:
-        process.wait(timeout=PROCESS_TERMINATION_GRACE_SECONDS)
-    except subprocess.TimeoutExpired:
-        pass
-
-
-def _run_codex(
-    codex_bin: str,
+def _validated_command_selector(
     host_root: Path,
-    *arguments: str,
-    json_output: bool = False,
-    check: bool = True,
-    timeout_seconds: float = CODEX_COMMAND_TIMEOUT_SECONDS,
-) -> Any:
-    command = [codex_bin, *arguments]
-    process = subprocess.Popen(
-        command,
-        env=_codex_environment(host_root),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=True,
-    )
-    try:
-        stdout, stderr = process.communicate(timeout=timeout_seconds)
-    except subprocess.TimeoutExpired as error:
-        _terminate_process_bounded(process)
+    project_id: str,
+    artifact: Path,
+    manifest: dict[str, Any],
+) -> Path | None:
+    if manifest["artifact_kind"] != "executable":
+        return None
+    selector = host_root / "bin" / project_id
+    if not selector.is_symlink():
         raise ManagerError(
-            "codex_not_configured",
-            f"Codex did not finish within {timeout_seconds:g} seconds.",
-            "Inspect the isolated Codex home and retry approved configuration.",
-            "configure-codex",
-            "aquarium",
+            "artifact_missing",
+            "The development command selector is missing.",
+            "Rebuild the enrolled project to publish its command selector.",
+            "diagnose",
+            project_id,
+            manifest["git_sha"],
+        )
+    try:
+        resolved = selector.resolve(strict=True)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_missing",
+            str(error),
+            "Rebuild the enrolled project to restore its command selector.",
+            "diagnose",
+            project_id,
+            manifest["git_sha"],
         ) from error
-    result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
-    if check and result.returncode != 0:
+    if resolved != artifact:
         raise ManagerError(
-            "codex_not_configured",
-            (
-                result.stderr.strip()
-                or result.stdout.strip()
-                or "Codex rejected configuration."
-            )[:1000],
-            "Inspect the isolated Codex home and retry approved configuration.",
-            "configure-codex",
-            "aquarium",
+            "artifact_invalid",
+            "The development command selector does not match the current artifact.",
+            "Rebuild the enrolled project to repair its command selector.",
+            "diagnose",
+            project_id,
+            manifest["git_sha"],
         )
-    if not json_output:
-        return result
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as error:
-        raise ManagerError(
-            "codex_not_configured",
-            "Codex did not return the expected JSON result.",
-            "Use a supported Codex CLI and retry approved configuration.",
-            "configure-codex",
-            "aquarium",
-        ) from error
-
-
-def codex_diagnosis(host_root: Path, codex_bin: str) -> dict[str, Any]:
-    codex_home = host_root / "codex"
-    login_action = f"CODEX_HOME={codex_home} codex login"
-    if not codex_home.exists():
-        return {
-            "home": str(codex_home),
-            "configured": False,
-            "login": "required",
-            "login_action": login_action,
-            "plugin": None,
-            "paired_skills": None,
-            "mcp_servers": [],
-        }
-    try:
-        plugins = _run_codex(
-            codex_bin, host_root, "plugin", "list", "--json", json_output=True
-        )
-        servers = _run_codex(
-            codex_bin, host_root, "mcp", "list", "--json", json_output=True
-        )
-        installed = [
-            {
-                "plugin_id": item.get("pluginId"),
-                "version": item.get("version"),
-                "enabled": item.get("enabled"),
-            }
-            for item in plugins.get("installed", [])
-            if item.get("pluginId") == "aquarium@root-kernel"
-        ]
-        mcp_names = sorted(
-            item.get("name")
-            for item in servers
-            if item.get("name") in MCP_ARGUMENTS and item.get("enabled") is True
-        )
-        login = _run_codex(
-            codex_bin, host_root, "login", "status", check=False
-        ).returncode
-        return {
-            "home": str(codex_home),
-            "configured": len(installed) == 1,
-            "login": "ready" if login == 0 else "required",
-            "login_action": None if login == 0 else login_action,
-            "plugin": installed[0] if len(installed) == 1 else None,
-            "paired_skills": (
-                {
-                    "source": "aquarium-plugin",
-                    "version": installed[0]["version"],
-                }
-                if len(installed) == 1
-                else None
-            ),
-            "mcp_servers": mcp_names,
-        }
-    except ManagerError as error:
-        return {
-            "home": str(codex_home),
-            "configured": False,
-            "login": "unknown",
-            "login_action": login_action,
-            "plugin": None,
-            "paired_skills": None,
-            "mcp_servers": [],
-            "error": error.code,
-        }
-
-
-def _snapshot_codex_configuration(codex_home: Path, snapshot: Path) -> None:
-    snapshot.chmod(0o700)
-    for name in ("config.toml", "plugins", "fake-state.json"):
-        source = codex_home / name
-        if source.is_symlink():
-            raise ManagerError(
-                "codex_not_configured",
-                f"The isolated Codex {name} state is a symbolic link.",
-                "Replace the linked state before retrying approved configuration.",
-                "configure-codex",
-                "aquarium",
-            )
-        if not source.exists():
-            continue
-        target = snapshot / name
-        if source.is_dir():
-            shutil.copytree(source, target, symlinks=True)
-        elif source.is_file():
-            shutil.copy2(source, target)
-        else:
-            raise ManagerError(
-                "codex_not_configured",
-                f"The isolated Codex {name} state is not regular.",
-                "Repair the isolated state before retrying approved configuration.",
-                "configure-codex",
-                "aquarium",
-            )
-
-
-def _restore_codex_configuration(codex_home: Path, snapshot: Path) -> None:
-    for name in ("config.toml", "plugins", "fake-state.json"):
-        current = codex_home / name
-        saved = snapshot / name
-        if current.is_symlink() or current.is_file():
-            current.unlink()
-        elif current.is_dir():
-            shutil.rmtree(current)
-        if saved.is_dir():
-            shutil.copytree(saved, current, symlinks=True)
-        elif saved.is_file():
-            shutil.copy2(saved, current)
-
-
-def _recover_codex_transaction(codex_home: Path, transaction: Path) -> None:
-    if not transaction.is_dir() or transaction.is_symlink():
-        return
-    active = transaction / "active"
-    if not active.is_file() or active.is_symlink():
-        shutil.rmtree(transaction)
-        return
-    mode_file = transaction / "home-mode"
-    if not mode_file.is_file() or mode_file.is_symlink():
-        raise ManagerError(
-            "codex_not_configured",
-            "The interrupted Codex configuration has invalid recovery metadata.",
-            "Inspect the isolated transaction before retrying configuration.",
-            "configure-codex",
-            "aquarium",
-        )
-    try:
-        home_mode = int(mode_file.read_text(encoding="ascii"), 8)
-    except ValueError as error:
-        raise ManagerError(
-            "codex_not_configured",
-            "The interrupted Codex configuration has an invalid home mode.",
-            "Inspect the isolated transaction before retrying configuration.",
-            "configure-codex",
-            "aquarium",
-        ) from error
-    codex_home.mkdir(parents=True, exist_ok=True, mode=home_mode)
-    _restore_codex_configuration(codex_home, transaction)
-    codex_home.chmod(home_mode)
-    shutil.rmtree(transaction)
+    return selector
 
 
 def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
@@ -624,6 +471,9 @@ def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
             artifact, manifest = _validate_generation(
                 generation, project_id, description
             )
+            command = _validated_command_selector(
+                host_root, project_id, artifact, manifest
+            )
             projects.append(
                 {
                     "project_id": project_id,
@@ -632,6 +482,7 @@ def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
                     "git_sha": manifest["git_sha"],
                     "development_version": manifest["development_version"],
                     "artifact": str(artifact),
+                    "command": str(command) if command is not None else None,
                     "sha256": manifest["sha256"],
                 }
             )
@@ -642,9 +493,7 @@ def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
     return projects
 
 
-def diagnose(
-    repository: Path, host_root: Path, codex_bin: str = "codex"
-) -> dict[str, Any]:
+def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
     require_supported_host()
     checkout, branch, git_sha, dirty = _repository_identity(repository)
     description = _describe(checkout)
@@ -670,11 +519,15 @@ def diagnose(
                 artifact, manifest = _validate_generation(
                     generation, project_id, description
                 )
+                command = _validated_command_selector(
+                    host_root, project_id, artifact, manifest
+                )
                 current = {
                     "state": "healthy",
                     "git_sha": manifest["git_sha"],
                     "development_version": manifest["development_version"],
                     "artifact": str(artifact),
+                    "command": str(command) if command is not None else None,
                     "sha256": manifest["sha256"],
                 }
         except ManagerError as error:
@@ -688,7 +541,6 @@ def diagnose(
         "enrollment": enrollment_state,
         "hook": hook_state,
         "current": current,
-        "codex": codex_diagnosis(host_root, codex_bin),
         "resolved_projects": resolved_project_diagnosis(host_root),
     }
 
@@ -754,6 +606,20 @@ def enroll(
             and Path(existing["checkout"]) == checkout
             and existing["hook_block"] == block
         )
+        same_checkout_migration = (
+            existing is not None
+            and Path(existing["checkout"]) == checkout
+            and existing["hook_block"] != block
+        )
+        if same_checkout_migration and not approve_reenrollment:
+            raise ManagerError(
+                "enrollment_conflict",
+                "This checkout is enrolled through an older Aquarium hook block.",
+                "Approve migration of the exact recorded block to this manager generation.",
+                "enrollment",
+                project_id,
+                diagnosis["git_sha"],
+            )
 
         target = enrollment_path(host_root, project_id)
         managed_paths = {hook, target}
@@ -761,6 +627,8 @@ def enroll(
             managed_paths.add(Path(existing["hook_path"]))
         snapshots = {path: _file_snapshot(path) for path in managed_paths}
         try:
+            if same_checkout_migration:
+                _remove_recorded_block(existing)
             hook_changed = _install_block(hook, block)
             if same_enrollment:
                 diagnosis["hook_changed"] = hook_changed
@@ -949,6 +817,79 @@ def _contained_artifact(staging: Path, relative: str) -> Path:
     return resolved
 
 
+@contextmanager
+def _exact_build_checkout(
+    checkout: Path, host_root: Path, project_id: str, git_sha: str
+):
+    build_root = host_root / "builds" / project_id
+    build_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f"{git_sha}.", dir=build_root) as raw:
+        exact_checkout = Path(raw) / "source"
+        clone = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--quiet",
+                "--no-hardlinks",
+                "--no-checkout",
+                "--",
+                str(checkout),
+                str(exact_checkout),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if clone.returncode != 0:
+            raise ManagerError(
+                "producer_build_failed",
+                (
+                    clone.stderr.strip()
+                    or "Git could not isolate the admitted revision."
+                )[:1000],
+                "Repair the local repository and run an explicitly approved rebuild.",
+                "build",
+                project_id,
+                git_sha,
+            )
+        selected = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(exact_checkout),
+                "checkout",
+                "--quiet",
+                "-B",
+                "main",
+                git_sha,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        observed_sha = run_git(exact_checkout, "rev-parse", "HEAD").stdout.strip()
+        observed_branch = run_git(
+            exact_checkout, "symbolic-ref", "--short", "HEAD"
+        ).stdout.strip()
+        if (
+            selected.returncode != 0
+            or observed_sha != git_sha
+            or observed_branch != "main"
+            or run_git(exact_checkout, "status", "--porcelain=v1").stdout
+            or not (exact_checkout / ".git").is_dir()
+        ):
+            raise ManagerError(
+                "sha_mismatch",
+                selected.stderr.strip()
+                or "The isolated build checkout does not match the admitted revision.",
+                "Queue the current completed local-main revision again.",
+                "build",
+                project_id,
+                git_sha,
+            )
+        yield exact_checkout
+
+
 def _validated_build(
     checkout: Path,
     host_root: Path,
@@ -960,31 +901,35 @@ def _validated_build(
     artifact_parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".staging-", dir=artifact_parent))
     try:
-        process = subprocess.Popen(
-            [
-                "make",
-                "-s",
-                "aquarium-dev-build",
-                f"AQUARIUM_DEV_OUTPUT={staging}",
-            ],
-            cwd=checkout,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-        try:
-            stdout, stderr = process.communicate(timeout=PRODUCER_BUILD_TIMEOUT_SECONDS)
-        except subprocess.TimeoutExpired as error:
-            _terminate_process_bounded(process)
-            raise ManagerError(
-                "producer_build_timeout",
-                "The producer build exceeded its bounded execution time.",
-                "Inspect the producer, then run an explicitly approved rebuild.",
-                "build",
-                project_id,
-                git_sha,
-            ) from error
+        with _exact_build_checkout(checkout, host_root, project_id, git_sha) as source:
+            process = subprocess.Popen(
+                [
+                    "make",
+                    "-s",
+                    "aquarium-dev-build",
+                    f"AQUARIUM_DEV_OUTPUT={staging}",
+                ],
+                cwd=source,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=True,
+                env={**os.environ, "AQUARIUM_DEV_GIT_SHA": git_sha},
+            )
+            try:
+                stdout, stderr = process.communicate(
+                    timeout=PRODUCER_BUILD_TIMEOUT_SECONDS
+                )
+            except subprocess.TimeoutExpired as error:
+                _terminate_process_bounded(process)
+                raise ManagerError(
+                    "producer_build_timeout",
+                    "The producer build exceeded its bounded execution time.",
+                    "Inspect the producer, then run an explicitly approved rebuild.",
+                    "build",
+                    project_id,
+                    git_sha,
+                ) from error
         result = subprocess.CompletedProcess(
             process.args, process.returncode, stdout, stderr
         )
@@ -1085,9 +1030,54 @@ def _unseal_managed_tree(root: Path) -> None:
             path.chmod(0o700)
 
 
-def _unseal_with_guaranteed_reseal(stack: ExitStack, root: Path) -> None:
-    stack.callback(_seal_generation, root)
-    _unseal_managed_tree(root)
+def _temporary_selector(selector: Path, target: Path) -> Path:
+    selector.parent.mkdir(parents=True, exist_ok=True)
+    temporary = selector.parent / f".{selector.name}.{os.getpid()}.tmp"
+    temporary.unlink(missing_ok=True)
+    os.symlink(os.path.relpath(target, selector.parent), temporary)
+    return temporary
+
+
+def _publish_selectors(
+    host_root: Path,
+    project_id: str,
+    destination: Path,
+    manifest: dict[str, Any],
+) -> Path | None:
+    current = host_root / "current" / project_id
+    command = host_root / "bin" / project_id
+    artifact = destination / manifest["artifact_path"]
+    if manifest["artifact_kind"] == "executable" and (
+        artifact.is_symlink()
+        or not artifact.is_file()
+        or not os.access(artifact, os.X_OK)
+    ):
+        raise ManagerError(
+            "artifact_invalid",
+            "The executable artifact cannot be exposed through the development bin directory.",
+            "Repair the producer output and rebuild the enrolled project.",
+            "publish",
+            project_id,
+        )
+    command_temporary = None
+    try:
+        if manifest["artifact_kind"] == "executable":
+            command_target = current / manifest["artifact_path"]
+            expected_target = os.path.relpath(command_target, command.parent)
+            if command.exists() and not command.is_symlink():
+                raise OSError(f"managed command is not a symbolic link: {command}")
+            if not command.is_symlink() or os.readlink(command) != expected_target:
+                command_temporary = _temporary_selector(command, command_target)
+                os.replace(command_temporary, command)
+        current_temporary = _temporary_selector(current, destination)
+        try:
+            os.replace(current_temporary, current)
+        finally:
+            current_temporary.unlink(missing_ok=True)
+        return command if manifest["artifact_kind"] == "executable" else None
+    finally:
+        if command_temporary is not None:
+            command_temporary.unlink(missing_ok=True)
 
 
 def _publish(
@@ -1129,20 +1119,10 @@ def _publish(
             else:
                 os.replace(staging, destination)
                 status = "success"
-            if manifest["artifact_kind"] == "executable":
-                _execution_alias(
-                    host_root,
-                    project_id,
-                    git_sha,
-                    destination / manifest["artifact_path"],
-                )
             _seal_generation(destination)
-            temporary = current.parent / f".{project_id}.{os.getpid()}.tmp"
-            temporary.unlink(missing_ok=True)
-            os.symlink(os.path.relpath(destination, current.parent), temporary)
-            os.replace(temporary, current)
+            command = _publish_selectors(host_root, project_id, destination, manifest)
         if (
-            project_id != "aquarium"
+            manifest["artifact_kind"] == "executable"
             and previous_sha is not None
             and previous_sha != git_sha
         ):
@@ -1157,6 +1137,7 @@ def _publish(
             "development_version": manifest["development_version"],
             "artifact": str(destination / manifest["artifact_path"]),
             "current": str(current),
+            "command": str(command) if command is not None else None,
             "sha256": manifest["sha256"],
             "superseded_git_sha": previous_sha,
         }
@@ -1225,6 +1206,40 @@ def _artifact_lock(host_root: Path, project_id: str, git_sha: str, operation: in
     return stream
 
 
+@contextmanager
+def lease_current_generation(host_root: Path, project_id: str):
+    if project_id not in PROJECT_IDS:
+        raise ManagerError(
+            "invalid_arguments",
+            "The lease project ID is unsupported.",
+            "Use one enrolled development project ID.",
+            "lease",
+        )
+    generation = _current_generation(host_root, project_id)
+    if generation is None:
+        raise ManagerError(
+            "artifact_missing",
+            "The enrolled project has no selected development generation.",
+            "Publish the enrolled project before launching a consumer.",
+            "lease",
+            project_id,
+        )
+    lease = _artifact_lock(host_root, project_id, generation.name, fcntl.LOCK_SH)
+    try:
+        if _current_generation(host_root, project_id) != generation:
+            raise ManagerError(
+                "lease_unavailable",
+                "The selected generation changed while its lease was acquired.",
+                "Resolve the current generation again before launching the consumer.",
+                "lease",
+                project_id,
+                generation.name,
+            )
+        yield generation
+    finally:
+        lease.close()
+
+
 def _current_generation(host_root: Path, project_id: str) -> Path | None:
     current = host_root / "current" / project_id
     if not current.exists() and not current.is_symlink():
@@ -1234,7 +1249,7 @@ def _current_generation(host_root: Path, project_id: str) -> Path | None:
             "artifact_invalid",
             "The current selector is not a symbolic link.",
             "Repair the development channel by rebuilding the enrolled project.",
-            "resolve",
+            "diagnose",
             project_id,
         )
     try:
@@ -1244,7 +1259,7 @@ def _current_generation(host_root: Path, project_id: str) -> Path | None:
             "artifact_missing",
             str(error),
             "Rebuild the enrolled project to restore its current artifact.",
-            "resolve",
+            "diagnose",
             project_id,
         ) from error
     expected_parent = (host_root / "artifacts" / project_id).resolve()
@@ -1253,7 +1268,7 @@ def _current_generation(host_root: Path, project_id: str) -> Path | None:
             "artifact_invalid",
             "The current selector escapes the enrolled project's artifact root.",
             "Repair the development channel by rebuilding the enrolled project.",
-            "resolve",
+            "diagnose",
             project_id,
         )
     return generation
@@ -1278,7 +1293,7 @@ def _validate_generation(
             "artifact_invalid",
             "The current generation does not match its enrollment or producer.",
             "Rebuild the enrolled project from its canonical local main.",
-            "resolve",
+            "diagnose",
             project_id,
             git_sha if len(git_sha) == 40 else None,
         )
@@ -1288,581 +1303,18 @@ def _validate_generation(
             "checksum_mismatch",
             "The current artifact checksum no longer matches its manifest.",
             "Rebuild the enrolled project from its canonical local main.",
-            "resolve",
+            "diagnose",
             project_id,
             git_sha,
         )
     return artifact, manifest
 
 
-def _execution_alias(
-    host_root: Path,
-    project_id: str,
-    identity: str,
-    artifact: Path,
-    *,
-    repair_action: str = "Rebuild the enrolled project from its canonical local main.",
-) -> Path:
-    root = host_root / "runtime" / project_id / identity
-    target = root / "executable"
-    try:
-        if target.exists():
-            if (
-                target.is_symlink()
-                or not target.is_file()
-                or os.path.samefile(artifact, target)
-                or _sha256_file(artifact) != _sha256_file(target)
-            ):
-                raise OSError("the guarded execution alias has changed identity")
-            target_flags = target.stat().st_flags
-            if stat.S_IMODE(target.stat().st_mode) != 0o500:
-                if target_flags & stat.UF_IMMUTABLE:
-                    os.chflags(target, 0)
-                target.chmod(0o500)
-                os.chflags(target, stat.UF_IMMUTABLE)
-            elif not target_flags & stat.UF_IMMUTABLE:
-                os.chflags(target, stat.UF_IMMUTABLE)
-            if not root.stat().st_flags & stat.UF_IMMUTABLE:
-                root.chmod(0o500)
-                os.chflags(root, stat.UF_IMMUTABLE)
-            return target
-        root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        os.chflags(root, 0)
-        root.chmod(0o700)
-        temporary = root / f".executable.{os.getpid()}.tmp"
-        temporary.unlink(missing_ok=True)
-        shutil.copyfile(artifact, temporary, follow_symlinks=False)
-        if os.path.samefile(artifact, temporary) or _sha256_file(
-            artifact
-        ) != _sha256_file(temporary):
-            raise OSError("the guarded execution copy does not bind the artifact bytes")
-        temporary.chmod(0o500)
-        os.replace(temporary, target)
-        root.chmod(0o500)
-        os.chflags(target, stat.UF_IMMUTABLE)
-        os.chflags(root, stat.UF_IMMUTABLE)
-        return target
-    except OSError as error:
-        raise ManagerError(
-            "artifact_invalid",
-            str(error),
-            repair_action,
-            "resolve",
-            project_id,
-            identity if len(identity) == 40 else None,
-        ) from error
-
-
-def _strict_json_object(content: str) -> dict[str, Any]:
-    def object_from_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError("duplicate JSON key")
-            result[key] = value
-        return result
-
-    value = json.loads(content, object_pairs_hook=object_from_pairs)
-    if not isinstance(value, dict):
-        raise TypeError("machine output is not one JSON object")
-    return value
-
-
-def _validate_dolgorae_stable_version(executable: Path, expected_version: str) -> None:
-    try:
-        probe = subprocess.run(
-            [str(executable), "--version"],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=STABLE_VERSION_PROBE_TIMEOUT_SECONDS,
-        )
-        envelope = _strict_json_object(probe.stdout)
-    except (
-        OSError,
-        subprocess.TimeoutExpired,
-        UnicodeError,
-        json.JSONDecodeError,
-        ValueError,
-        TypeError,
-    ) as error:
-        raise ManagerError(
-            "artifact_invalid",
-            f"Stable Dolgorae version probing failed: {error}",
-            "Install the exact supported official Dolgorae release and retry.",
-            "resolve",
-            "dolgorae",
-        ) from error
-    expected_text = f"dolgorae {expected_version.removeprefix('v')}"
-    if (
-        probe.returncode != 0
-        or probe.stderr
-        or set(envelope) != {"schema_version", "ok", "command", "invocation_id", "data"}
-        or envelope.get("schema_version") != 1
-        or envelope.get("ok") is not True
-        or envelope.get("command") != "version"
-        or not isinstance(envelope.get("invocation_id"), str)
-        or not DOLGORAE_INVOCATION_ID_RE.fullmatch(envelope["invocation_id"])
-        or not isinstance(envelope.get("data"), dict)
-        or envelope["data"] != {"text": expected_text}
-    ):
-        raise ManagerError(
-            "artifact_invalid",
-            "Stable Dolgorae did not return the exact supported machine version envelope.",
-            "Install the exact supported official Dolgorae release and retry.",
-            "resolve",
-            "dolgorae",
-        )
-
-
-def resolve_stable_dolgorae(
-    host_root: Path,
-    stable: Path,
-    expected_version: str,
-    expected_sha256: str,
-) -> ResolvedArtifact:
-    if not stable.is_absolute() or stable.is_symlink():
-        raise ManagerError(
-            "artifact_invalid",
-            "Stable Dolgorae must be one absolute regular non-symlink executable path.",
-            "Supply the approved absolute path to the official Dolgorae executable.",
-            "resolve",
-            "dolgorae",
-        )
-    try:
-        path = stable.resolve(strict=True)
-        path_stat = path.stat()
-        if not stat.S_ISREG(path_stat.st_mode) or not os.access(path, os.X_OK):
-            raise OSError("the stable path is not an executable regular file")
-        if f"sha256:{_sha256_file(path)}" != expected_sha256:
-            raise OSError(
-                "the stable executable checksum does not match the launch guard"
-            )
-    except OSError as error:
-        raise ManagerError(
-            "artifact_invalid",
-            str(error),
-            "Install the exact supported official Dolgorae release and retry.",
-            "resolve",
-            "dolgorae",
-        ) from error
-
-    digest = expected_sha256.removeprefix("sha256:")
-    identity = f"stable-{expected_version.removeprefix('v')}-{digest}"
-    try:
-        lease = _artifact_lock(host_root, "dolgorae", identity, fcntl.LOCK_SH)
-    except OSError as error:
-        raise ManagerError(
-            "lease_unavailable",
-            str(error),
-            "Retry after inspecting host-local artifact locks.",
-            "resolve",
-            "dolgorae",
-        ) from error
-    try:
-        execution_path = _execution_alias(
-            host_root,
-            "dolgorae",
-            identity,
-            path,
-            repair_action="Reinstall the exact supported official Dolgorae release.",
-        )
-        _validate_dolgorae_stable_version(execution_path, expected_version)
-    except Exception:
-        lease.close()
-        raise
-    return ResolvedArtifact(
-        project_id="dolgorae",
-        source="stable",
-        path=path,
-        git_sha=None,
-        development_version=None,
-        sha256=expected_sha256,
-        artifact_kind="executable",
-        execution_path=execution_path,
-        lease=lease,
-        stable_version=expected_version,
-    )
-
-
-def resolve_artifact(
-    project_id: str, host_root: Path, stable: Path | None = None
-) -> ResolvedArtifact:
-    if project_id not in PROJECT_IDS:
-        raise ManagerError(
-            "invalid_arguments",
-            "The requested project ID is unsupported.",
-            "Use one project ID from the shared development contract.",
-            "resolve",
-        )
-    enrollment = read_enrollment(host_root, project_id)
-    if enrollment is None:
-        if stable is None:
-            raise ManagerError(
-                "enrollment_missing",
-                "No development enrollment or stable fallback was supplied.",
-                "Supply the stable tool path or enroll a canonical checkout.",
-                "resolve",
-                project_id,
-            )
-        try:
-            path = stable.resolve(strict=True)
-        except OSError as error:
-            raise ManagerError(
-                "artifact_missing",
-                str(error),
-                "Supply an existing stable tool path.",
-                "resolve",
-                project_id,
-            ) from error
-        return ResolvedArtifact(
-            project_id, "stable", path, None, None, None, None, path
-        )
-
-    checkout = Path(enrollment["checkout"])
-    diagnosed_checkout, _, _, _ = _repository_identity(checkout)
-    description = _describe(diagnosed_checkout)
-    if description["project_id"] != project_id:
-        raise ManagerError(
-            "enrollment_broken",
-            "The enrolled checkout now describes a different project.",
-            "Repair enrollment before resolving a development artifact.",
-            "resolve",
-            project_id,
-        )
-    generation = _current_generation(host_root, project_id)
-    if generation is None:
-        raise ManagerError(
-            "artifact_missing",
-            "The enrolled project has no current development artifact.",
-            "Run an explicitly approved rebuild.",
-            "resolve",
-            project_id,
-        )
-    git_sha = generation.name
-    if len(git_sha) != 40 or any(
-        character not in "0123456789abcdef" for character in git_sha
-    ):
-        raise ManagerError(
-            "artifact_invalid",
-            "The selected generation name is not a full lowercase Git SHA.",
-            "Run an explicitly approved rebuild.",
-            "resolve",
-            project_id,
-        )
-    try:
-        lease = _artifact_lock(host_root, project_id, git_sha, fcntl.LOCK_SH)
-    except OSError as error:
-        raise ManagerError(
-            "lease_unavailable",
-            str(error),
-            "Retry after inspecting host-local artifact locks.",
-            "resolve",
-            project_id,
-            git_sha,
-        ) from error
-    try:
-        artifact, manifest = _validate_generation(generation, project_id, description)
-        execution_path = (
-            _execution_alias(host_root, project_id, git_sha, artifact)
-            if manifest["artifact_kind"] == "executable"
-            else artifact
-        )
-    except Exception:
-        lease.close()
-        raise
-    return ResolvedArtifact(
-        project_id,
-        "development",
-        artifact,
-        git_sha,
-        manifest["development_version"],
-        manifest["sha256"],
-        manifest["artifact_kind"],
-        execution_path,
-        lease,
-    )
-
-
-def configure_codex(
-    repository: Path,
-    host_root: Path,
-    *,
-    approve_codex: bool,
-    codex_bin: str = "codex",
-) -> tuple[str, dict[str, Any]]:
-    with _publisher_lock(host_root, "aquarium"):
-        return _configure_codex_locked(
-            repository,
-            host_root,
-            approve_codex=approve_codex,
-            codex_bin=codex_bin,
-        )
-
-
-def _configure_codex_locked(
-    repository: Path,
-    host_root: Path,
-    *,
-    approve_codex: bool,
-    codex_bin: str = "codex",
-) -> tuple[str, dict[str, Any]]:
-    checkout, _, description, git_sha = _require_enrolled_checkout(
-        repository, host_root, require_clean=False
-    )
-    if description["project_id"] != "aquarium":
-        raise ManagerError(
-            "unsupported_project",
-            "Isolated Codex configuration must be initiated from Aquarium.",
-            "Run configuration from the enrolled Aquarium checkout.",
-            "configure-codex",
-            description["project_id"],
-            git_sha,
-        )
-    if not approve_codex:
-        raise ManagerError(
-            "approval_required",
-            "Isolated Codex configuration approval is required.",
-            "Approve only configuration beneath the displayed Aquarium Codex home.",
-            "configure-codex",
-            "aquarium",
-            git_sha,
-        )
-    codex_home = host_root / "codex"
-    login_action = f"CODEX_HOME={codex_home} codex login"
-    transaction_parent = host_root / "transactions"
-    transaction = transaction_parent / "codex-config"
-    _recover_codex_transaction(codex_home, transaction)
-    if not codex_home.is_dir() or codex_home.is_symlink():
-        raise ManagerError(
-            "codex_login_required",
-            "The isolated Codex home does not exist; configuration was not changed.",
-            login_action,
-            "configure-codex",
-            "aquarium",
-            git_sha,
-        )
-    if _run_codex(codex_bin, host_root, "login", "status", check=False).returncode != 0:
-        raise ManagerError(
-            "codex_login_required",
-            "The isolated Codex home is not authenticated; configuration was not changed.",
-            login_action,
-            "configure-codex",
-            "aquarium",
-            git_sha,
-        )
-    home_mode = stat.S_IMODE(codex_home.stat().st_mode)
-    transaction_parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    staging = Path(tempfile.mkdtemp(prefix=".codex-config-", dir=transaction_parent))
-    try:
-        _snapshot_codex_configuration(codex_home, staging)
-        (staging / "home-mode").write_text(f"{home_mode:o}\n", encoding="ascii")
-        (staging / "active").write_text("aquarium-codex-transaction/v1\n")
-        os.replace(staging, transaction)
-    except Exception:
-        shutil.rmtree(staging, ignore_errors=True)
-        raise
-    with ExitStack() as stack:
-        rollback = stack.enter_context(ExitStack())
-        rollback.callback(_recover_codex_transaction, codex_home, transaction)
-        codex_home.chmod(0o700)
-        aquarium = stack.enter_context(resolve_artifact("aquarium", host_root))
-        if aquarium.artifact_kind != "codex-plugin":
-            raise ManagerError(
-                "artifact_invalid",
-                "The enrolled Aquarium artifact is not a Codex plugin marketplace.",
-                "Rebuild Aquarium with its codex-plugin producer contract.",
-                "configure-codex",
-                "aquarium",
-                aquarium.git_sha,
-            )
-        aquarium_generation = aquarium.path.parent
-        _unseal_with_guaranteed_reseal(stack, aquarium_generation)
-        plugins = _run_codex(
-            codex_bin, host_root, "plugin", "list", "--json", json_output=True
-        )
-        if any(
-            item.get("pluginId") == "aquarium@root-kernel"
-            for item in plugins.get("installed", [])
-        ):
-            _run_codex(
-                codex_bin,
-                host_root,
-                "plugin",
-                "remove",
-                "aquarium@root-kernel",
-                "--json",
-            )
-        marketplaces = _run_codex(
-            codex_bin,
-            host_root,
-            "plugin",
-            "marketplace",
-            "list",
-            "--json",
-            json_output=True,
-        )
-        if any(
-            item.get("name") == "root-kernel"
-            for item in marketplaces.get("marketplaces", [])
-        ):
-            _run_codex(
-                codex_bin,
-                host_root,
-                "plugin",
-                "marketplace",
-                "remove",
-                "root-kernel",
-                "--json",
-            )
-        _run_codex(
-            codex_bin,
-            host_root,
-            "plugin",
-            "marketplace",
-            "add",
-            str(aquarium.path),
-            "--json",
-        )
-        installed = _run_codex(
-            codex_bin,
-            host_root,
-            "plugin",
-            "add",
-            "aquarium@root-kernel",
-            "--json",
-            json_output=True,
-        )
-        if artifact_digest(aquarium.path) != aquarium.sha256:
-            raise ManagerError(
-                "checksum_mismatch",
-                "The Aquarium marketplace changed during isolated installation.",
-                "Rebuild the exact generation before retrying configuration.",
-                "configure-codex",
-                "aquarium",
-                aquarium.git_sha,
-            )
-        _seal_generation(aquarium_generation)
-        installed_root = Path(installed.get("installedPath", ""))
-        manager_script = installed_root / "skills/dev-aquarium/scripts/dev_aquarium.py"
-        if (
-            not installed_root.is_absolute()
-            or not manager_script.is_file()
-            or codex_home.resolve() not in installed_root.resolve().parents
-        ):
-            raise ManagerError(
-                "codex_not_configured",
-                "Codex did not install the Aquarium plugin beneath its isolated home.",
-                "Inspect the isolated plugin cache and retry configuration.",
-                "configure-codex",
-                "aquarium",
-                aquarium.git_sha,
-            )
-        existing_servers = _run_codex(
-            codex_bin, host_root, "mcp", "list", "--json", json_output=True
-        )
-        existing_names = {item.get("name") for item in existing_servers}
-        integrations = []
-        for project_id in ("podway", "mulgae", "gaori", "sanho", "dolgorae"):
-            enrollment = read_enrollment(host_root, project_id)
-            if enrollment is None:
-                integrations.append({"project_id": project_id, "state": "not-enrolled"})
-                if project_id in MCP_ARGUMENTS and project_id in existing_names:
-                    _run_codex(codex_bin, host_root, "mcp", "remove", project_id)
-                continue
-            resolved = stack.enter_context(resolve_artifact(project_id, host_root))
-            integration = {
-                "project_id": project_id,
-                "state": "development",
-                "git_sha": resolved.git_sha,
-                "development_version": resolved.development_version,
-                "sha256": resolved.sha256,
-                "mcp": project_id in MCP_ARGUMENTS,
-            }
-            integrations.append(integration)
-            if project_id not in MCP_ARGUMENTS:
-                continue
-            if project_id in existing_names:
-                _run_codex(codex_bin, host_root, "mcp", "remove", project_id)
-            checkout_path = Path(enrollment["checkout"])
-            _run_codex(
-                codex_bin,
-                host_root,
-                "mcp",
-                "add",
-                project_id,
-                "--",
-                os.fspath(Path(os.sys.executable).resolve()),
-                str(manager_script),
-                "--host-root",
-                str(host_root),
-                "launch",
-                "--project-id",
-                project_id,
-                "--",
-                *MCP_ARGUMENTS[project_id](checkout_path),
-            )
-        verification = codex_diagnosis(host_root, codex_bin)
-        if not verification["configured"]:
-            raise ManagerError(
-                "codex_not_configured",
-                "The isolated Aquarium plugin failed post-configuration diagnosis.",
-                "Inspect the isolated Codex home and retry configuration.",
-                "configure-codex",
-                "aquarium",
-                aquarium.git_sha,
-            )
-        details = {
-            "checkout": str(checkout),
-            "codex_home": str(codex_home),
-            "plugin_git_sha": aquarium.git_sha,
-            "plugin_version": aquarium.development_version,
-            "plugin_sha256": aquarium.sha256,
-            "paired_skills": {
-                "source": "aquarium-plugin",
-                "git_sha": aquarium.git_sha,
-                "development_version": aquarium.development_version,
-            },
-            "integrations": integrations,
-            "mcp_servers": verification["mcp_servers"],
-            "login": verification["login"],
-            "login_action": verification["login_action"],
-        }
-        if details["login"] != "ready":
-            raise ManagerError(
-                "codex_login_required",
-                "The isolated Codex home lost authentication during configuration.",
-                details["login_action"] or login_action,
-                "configure-codex",
-                "aquarium",
-                git_sha,
-            )
-        (transaction / "active").unlink()
-        rollback.pop_all()
-    shutil.rmtree(transaction, ignore_errors=True)
-    artifact_root = host_root / "artifacts" / "aquarium"
-    try:
-        if artifact_root.is_dir():
-            for generation in sorted(artifact_root.iterdir()):
-                if generation.name == details["plugin_git_sha"] or not SHA_RE.fullmatch(
-                    generation.name
-                ):
-                    continue
-                cleanup_status, cleanup = cleanup_generation(
-                    "aquarium", generation.name, host_root, wait=False
-                )
-                if cleanup_status == "no-change" and cleanup.get("leased"):
-                    _spawn_cleanup(host_root, "aquarium", generation.name)
-    except Exception as error:  # noqa: BLE001
-        details["cleanup_warning"] = type(error).__name__
-    return "success", details
-
-
 def _spawn_cleanup(host_root: Path, project_id: str, git_sha: str) -> None:
     subprocess.Popen(
         [
             os.fspath(Path(os.sys.executable).resolve()),
-            os.fspath(Path(__file__).with_name("dev_aquarium.py").resolve()),
+            os.fspath(Path(__file__).with_name("aquarium_dev.py").resolve()),
             "--host-root",
             os.fspath(host_root),
             "cleanup",
@@ -1909,17 +1361,11 @@ def cleanup_generation(
                     project_id,
                     git_sha,
                 )
-            for managed_path in (
-                host_root / "runtime" / project_id / git_sha,
-                generation,
-            ):
+            for managed_path in (generation,):
                 if not managed_path.exists() or managed_path.is_symlink():
                     continue
                 _unseal_managed_tree(managed_path)
             shutil.rmtree(generation)
-            runtime = host_root / "runtime" / project_id / git_sha
-            if runtime.exists():
-                shutil.rmtree(runtime)
             return "success", {"git_sha": git_sha, "removed": True}
         return "no-change", {"git_sha": git_sha, "removed": False}
 
@@ -2078,6 +1524,18 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 checkout, _, description, git_sha = _require_enrolled_checkout(
                     Path(request["checkout"]), host_root, require_clean=True
                 )
+                if description["project_id"] != project_id:
+                    error = ManagerError(
+                        "invalid_arguments",
+                        "The queued checkout belongs to another enrolled project.",
+                        "Queue the checkout through its matching project worker.",
+                        "schedule",
+                        project_id,
+                        request["git_sha"],
+                    )
+                    _quarantine_build_request(host_root, project_id, request_path)
+                    quarantined += 1
+                    raise error
                 if git_sha != request["git_sha"]:
                     error = ManagerError(
                         "sha_mismatch",

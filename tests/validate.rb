@@ -54,7 +54,7 @@ end
 
 skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.new(path) }
 expected_skill_names = %w[
-  dev-aquarium
+  aquarium-dev
   dev-setup-bundle
   dev-setup
   docs-setup
@@ -195,9 +195,6 @@ independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
 independent_review_script = PLUGIN.join("skills/independent-review/scripts/inspect_review_target.py")
 independent_review_script_body = independent_review_script.read
 orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
-orca_provider_contracts = PLUGIN.join("skills/orca-review/references/provider-contracts.md").read
-orca_terminal_helper = PLUGIN.join("skills/orca-review/scripts/create_provider_terminal.py")
-orca_terminal_helper_body = orca_terminal_helper.read
 orca_state_helper = PLUGIN.join("skills/orca-review/scripts/inspect_repository_state.py")
 orca_state_helper_body = orca_state_helper.read
 review_contract = PLUGIN.join("references/review-contract.md").read
@@ -256,7 +253,7 @@ documentation_detail_paths = {
   "changing-procedures" => ROOT.join("docs/implementation-tips/changing-procedures.md"),
   "changing-inspectors" => ROOT.join("docs/implementation-tips/changing-inspectors.md"),
   "testing-and-releasing" => ROOT.join("docs/implementation-tips/testing-and-releasing.md"),
-  "dev-aquarium-dossier" => ROOT.join("docs/todo/TODO-DEV-AQUARIUM.md")
+  "aquarium-dev-dossier" => ROOT.join("docs/todo/TODO-AQUARIUM-DEV.md")
 }
 documentation_adr_paths = (1..6).map do |number|
   Dir[ROOT.join("docs/architecture-decision-records/%04d-*.md" % number)].map { |path| Pathname.new(path) }
@@ -270,6 +267,10 @@ documentation_detail_paths.each_value do |path|
 end
 assert(documentation_adr_paths.all? { |matches| matches.length == 1 },
        "canonical ADR sequence must contain exactly ADR-0001 through ADR-0006")
+superseded_development_adr = ROOT.join("docs/architecture-decision-records/0007-host-local-immutable-development-artifacts.md")
+current_development_adr = ROOT.join("docs/architecture-decision-records/0008-separate-development-and-production-environments.md")
+assert(superseded_development_adr.file? && current_development_adr.file?,
+       "development architecture decisions ADR-0007 and ADR-0008 must both exist")
 documentation_index = documentation_index_path.read
 canonical_roadmap = documentation_role_paths.fetch("roadmap").read
 todo_index = documentation_role_paths.fetch("todo").read
@@ -671,8 +672,6 @@ documented_schema_ids = %w[
   aquarium.dev-setup-bundle/v1
   aquarium-dev-setup-bundle-plan.v1
   aquarium-independent-review-target/v1
-  aquarium-orca-provider-terminal-request/v1
-  aquarium-orca-provider-terminal-result/v1
   aquarium-release-notes-inspection/v1
   aquarium-release-publication-observation/v4
   aquarium-release-publication-state/v4
@@ -703,18 +702,28 @@ documentation_adrs.each do |path, body|
          adr_index.include?(path.basename.to_s),
          "ADR-#{number} must be accepted, complete, retrospective, and indexed")
 end
+assert(superseded_development_adr.read.include?("**Status:** `Superseded`") &&
+       superseded_development_adr.read.include?("0008-separate-development-and-production-environments.md") &&
+       current_development_adr.read.include?("**Status:** `Accepted`") &&
+       current_development_adr.read.include?("**Recorded:** `2026-08-31`") &&
+       current_development_adr.read.include?("~/.aquarium-dev/") &&
+       current_development_adr.read.include?("Dolgorae") &&
+       adr_index.include?(superseded_development_adr.basename.to_s) &&
+       adr_index.include?(current_development_adr.basename.to_s),
+       "ADR-0008 must supersede ADR-0007 and own the separated development environment")
 
 canonical_documentation_paths = [documentation_index_path] +
                                 documentation_role_paths.values +
                                 documentation_detail_paths.values +
-                                documentation_adrs.keys
+                                documentation_adrs.keys +
+                                [superseded_development_adr, current_development_adr]
 canonical_documentation = canonical_documentation_paths.map(&:read).join("\n")
 assert(!canonical_documentation.include?("/Users/") &&
        !canonical_documentation.include?("file://") &&
        !canonical_documentation.match?(/(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*\S+/i),
        "canonical documentation must not contain absolute workspace paths or apparent credential values")
 
-dev_aquarium_dossier = documentation_details.fetch("dev-aquarium-dossier")
+aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
 assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 6 &&
@@ -725,34 +734,33 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 6 &&
        canonical_roadmap.include?("## EPIC-005: Adopt Dolgorae v0.1.0") &&
        canonical_roadmap.include?("## EPIC-006: Adopt Podway v0.2.7") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 30 &&
-       roadmap_task_ids.uniq.sort == (1..30).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 30 &&
+       roadmap_task_ids.length == 31 &&
+       roadmap_task_ids.uniq.sort == (1..31).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 31 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
-       canonical_roadmap.include?("TODO-DEV-AQUARIUM.md") &&
+       canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [Tool integrations]") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [Dolgorae review contract]") &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-006 and unique TASK-001 through TASK-030")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-006 and unique TASK-001 through TASK-031")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
-       todo_index.include?("TODO-DEV-AQUARIUM.md") &&
+       todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
        todo_index.include?("Checklist state is review evidence, not roadmap lifecycle state") &&
-       dev_aquarium_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
-       dev_aquarium_dossier.scan(/^## TASK-[0-9]{3,}: /).length == 12 &&
-       (5..15).all? { |number| dev_aquarium_dossier.include?("## TASK-%03d:" % number) } &&
-       dev_aquarium_dossier.include?("## TASK-024: Integrate Dolgorae") &&
-       dev_aquarium_dossier.include?("$aquarium:dev-aquarium") &&
-       dev_aquarium_dossier.include?("make aquarium-dev-describe") &&
-       dev_aquarium_dossier.include?("make aquarium-dev-build") &&
-       dev_aquarium_dossier.include?("There is no top-level `~/.aquarium/bin/`") &&
-       dev_aquarium_dossier.include?("fails closed instead of silently falling back") &&
-       dev_aquarium_dossier.include?("external Dolgorae `TASK-035`"),
+       aquarium_dev_dossier.include?("detailed scope and acceptance source of truth for `EPIC-002`") &&
+       aquarium_dev_dossier.include?("## TASK-031: Separate Development and Production Environments") &&
+       aquarium_dev_dossier.include?("$aquarium:aquarium-dev") &&
+       aquarium_dev_dossier.include?("make aquarium-dev-describe") &&
+       aquarium_dev_dossier.include?("make aquarium-dev-build") &&
+       aquarium_dev_dossier.include?("~/.aquarium-dev/bin") &&
+       aquarium_dev_dossier.include?("including `CODEX_HOME`") &&
+       aquarium_dev_dossier.include?("Dolgorae is not a development producer"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
-assert(dolgorae_review_contract.include?("both exact guards") &&
+assert(dolgorae_review_contract.include?("globally installed `dolgorae` command") &&
+       dolgorae_review_contract.include?("outside `~/.aquarium` and `~/.aquarium-dev`") &&
        dolgorae_review_contract.include?("47c95d0d060d9ee685a01bedbdeb5379515e2804") &&
        dolgorae_review_contract.include?("6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8") &&
        dolgorae_review_contract.include?("0c7f8bb7e6b6f86fd98eb5aec9cda1e6859fbc1da2f06b1c0e4a21ad2e5ff307") &&
@@ -769,10 +777,11 @@ assert(review_contract.include?("| `workspace` |") &&
        review_contract.include?("| `head` |") &&
        review_contract.include?("| `commit` |") &&
        review_contract.include?("| `range` |") &&
-       review_contract.include?("owner-binding digest") &&
-       review_contract.include?("concurrent losing compare-and-set") &&
-       review_contract.include?("creates and accepts no Orca Run"),
-       "review contract must preserve six immutable targets, owner-bound settlement, and backend isolation")
+       review_contract.include?("Dolgorae's checked immutable capture") &&
+       review_contract.include?("Orca Review uses `independent-review/scripts/inspect_review_target.py`") &&
+       review_contract.include?("creates and accepts no Orca Run") &&
+       review_contract.include?("performs no Dolgorae discovery"),
+       "review contract must preserve six target meanings and backend isolation")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
@@ -818,16 +827,19 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed local Orca runtime") &&
-       ROOT.join("PRIVACY.md").read.include?("one declared immutable source scope and exact Git identity") &&
+       ROOT.join("PRIVACY.md").read.include?("one declared exact source scope and Git identity") &&
        ROOT.join("PRIVACY.md").read.include?("Independent Review sends the captured scope") &&
        ROOT.join("PRIVACY.md").read.include?("creates no Orca object") &&
+       ROOT.join("PRIVACY.md").read.include?("it does not discover or use Dolgorae") &&
+       ROOT.join("PRIVACY.md").read.include?("fresh native Codex worker through Orca") &&
        ROOT.join("PRIVACY.md").read.include?("same-user processes") &&
        ROOT.join("PRIVACY.md").read.include?("rather than an operating-system read sandbox") &&
        ROOT.join("PRIVACY.md").read.include?("only that bounded static review transmission") &&
        ROOT.join("PRIVACY.md").read.include?("authorizes no tests") &&
        ROOT.join("PRIVACY.md").read.include?("Dolgorae retains immutable captures") &&
        !ROOT.join("PRIVACY.md").read.include?("Two bounded read-only network operations") &&
-       ROOT.join("TERMS.md").read.include?("exact Git target and reviewer authorizes only the bounded static review transmission through the verified local Dolgorae runtime") &&
+       ROOT.join("TERMS.md").read.include?("Independent Review uses the verified local Dolgorae runtime") &&
+       ROOT.join("TERMS.md").read.include?("Orca Review uses the verified local Orca runtime and no Dolgorae component") &&
        ROOT.join("TERMS.md").read.include?("Orca, Anthropic Claude Code, OpenAI Codex, Cursor, Kimi Code, Agy"),
        "privacy policy and terms must disclose Orca review consent, source transmission, local state, and external ownership")
 required_guidance_sections = [
@@ -2117,9 +2129,6 @@ podway_blind_skills.each do |name|
   body = PLUGIN.join("skills/#{name}/SKILL.md").read
   assert(!body.match?(/podway/i), "leaf and utility skill must remain Podway-blind: #{name}")
 end
-assert(!orca_provider_contracts.match?(/podway/i),
-       "orca-review provider contracts must remain Podway-blind")
-
 assert(independent_review.include?("Return the complete shared result envelope") &&
        task_refine.include?("Return deslop actions, optimization reasoning") &&
        task_close.include?("Return the three answers, final roadmap state"),
@@ -2136,8 +2145,8 @@ assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        "independent-review must remain user-invoked only")
 assert(independent_review.include?("[review-contract.md](../../references/review-contract.md)") &&
        independent_review.include?("[dolgorae-review-contract.md](../../references/dolgorae-review-contract.md)") &&
-       independent_review.include?("installed `dev-aquarium` manager"),
-       "independent-review must load the shared target, candidate, and installed-manager contracts")
+       independent_review.include?("globally installed release candidate"),
+       "independent-review must load the shared target and globally installed candidate contracts")
 assert(%w[workspace staged dirty head commit range].all? { |scope| independent_review.include?("`#{scope}`") } &&
        independent_review.include?("`task`, `epic`, or special request") &&
        independent_review.include?("Never stage or normalize content"),
@@ -2158,15 +2167,15 @@ assert(independent_review.include?("Do not seed suspected findings") &&
          "shared review contract target is missing: #{target}")
 end
 assert(review_contract.include?("Do not stage, edit, clean, stash, checkout") &&
-       review_contract.include?("later live index or working tree") &&
+       review_contract.include?("never substitutes current index or worktree copies") &&
        review_contract.include?("same-user processes") &&
-       review_contract.include?("capture-time drift") &&
-       review_contract.include?("source worktree, index, refs, or Git metadata"),
-       "shared review contract must preserve immutable source and dirty-state authority boundaries")
+       review_contract.include?("does not accept `workspace`, `staged`, or `dirty`") &&
+       review_contract.include?("Dolgorae's checked immutable capture"),
+       "shared review contract must preserve backend-specific exact-target boundaries")
 assert(review_contract.include?("explicit invocation naming the exact target and reviewer authorizes transmission") &&
        review_contract.include?("`runtime unverified`") &&
        review_contract.include?("Wrong scope, modified source state") &&
-       review_contract.include?("incomplete settlement is operationally incomplete"),
+       review_contract.include?("incomplete backend lifecycle is operationally incomplete"),
        "shared review contract must bind special requests, consent, static proof, and lifecycle status")
 
 assert(independent_review_script.file? &&
@@ -2192,61 +2201,44 @@ assert(independent_review_script_body.include?('"status"') &&
        independent_review_script_body.include?('"range_invalid"'),
        "independent-review target inspector must prove status, staged, commit, and range structure without mutation")
 
-assert(orca_review.include?("removable non-Codex provider layer") &&
+assert(orca_review.include?("one fresh Codex worker owned and supervised entirely by Orca") &&
        orca_review.include?("user explicitly invokes") &&
-       orca_review.include?("[dolgorae-review-contract.md](../../references/dolgorae-review-contract.md)") &&
-       orca_review.include?("installed `dev-aquarium` manager") &&
-       orca_review.include?("current registered checkout, not a private repository snapshot"),
-       "orca-review must remain an explicit immutable-target provider extension")
-assert(orca_review.include?("Probe only `claude`, `kimi`, `agy`, and `cursor-agent`") &&
-       orca_review.include?("Claude with a Fable lead") &&
-       orca_review.include?("Kimi with K3") &&
-       orca_review.include?("Agy with installed defaults") &&
-       orca_review.include?("Cursor Agent with Grok 4.6") &&
-       !orca_review.include?("codex:gpt"),
-       "orca-review must offer only the supported non-Codex providers")
+       orca_review.include?("[review-contract.md](../../references/review-contract.md)") &&
+       orca_review.include?("[orca-supervision.md](../../references/orca-supervision.md)") &&
+       orca_review.include?("worker-start --worktree current --agent codex"),
+       "orca-review must remain an explicit Orca-native Codex workflow")
+assert(!orca_review.include?("dolgorae-review-contract.md") &&
+       !orca_review.include?("review-target.capture") &&
+       !orca_review.include?("review-target.settle") &&
+       !orca_review.include?("create_provider_terminal.py") &&
+       !orca_review.include?("Claude Fable") &&
+       !orca_review.include?("Kimi") &&
+       !orca_review.include?("Agy") &&
+       !orca_review.include?("Cursor Agent"),
+       "orca-review must not depend on Dolgorae or a selectable provider layer")
 assert(orca_review.include?("prefer structured ask/answer") &&
        orca_review.include?("ask one focused question in ordinary conversation") &&
-       orca_review.include?("Do not require separate preparation and transmission approvals") &&
-       orca_review.include?("same operating-system user"),
-       "orca-review must preserve structured selection, conversational fallback, and one consent boundary")
+       orca_review.include?("authorizes transmission of that target only") &&
+       orca_supervision.include?("same operating-system user"),
+       "orca-review must preserve target selection, conversational fallback, and one consent boundary")
 assert(orca_review.include?("run no tests or builds") &&
        orca_review.include?("`runtime unverified`") &&
        orca_review.include?("Valid, Invalid, or Needs confirmation") &&
-       orca_review.include?("Never retry automatically, switch providers") &&
-       orca_review.include?("separate Orca Run, Task, Dispatch, terminal, and lifecycle status"),
+       orca_review.include?("Never retry automatically, switch reviewers") &&
+       orca_review.include?("separate Orca Run, Task, Dispatch, worker"),
        "orca-review must remain static, adjudicated, and operationally bounded")
-assert(orca_review.include?("review-target.capture") &&
-       orca_review.include?("review-target.settle") &&
-       orca_review.include?("protected owner credential") &&
-       orca_review.include?("Orca retains complete provider lifecycle ownership") &&
-       orca_review.include?("Mulgae provider, extraction, adjudication, publication, archive, or settlement state"),
-       "orca-review must use Dolgorae capture while preserving Orca and Mulgae lifecycle ownership")
-
-assert(orca_provider_contracts.include?("<PROVIDER> --model fable --dangerously-skip-permissions\n") &&
-       orca_provider_contracts.include?("may create Opus or Sonnet subagents when") &&
-       orca_provider_contracts.include?("A small review may remain Fable-only") &&
-       orca_provider_contracts.include?("<PROVIDER> --model k3 --yolo\n") &&
-       orca_provider_contracts.include?("<PROVIDER> --sandbox --dangerously-skip-permissions\n") &&
-       orca_provider_contracts.include?("--agent <agent> --model <model> --effort <effort>") &&
-       orca_provider_contracts.include?("Do not run `agy agent`, `agy models`") &&
-       orca_provider_contracts.include?("<PROVIDER> --model grok-4.6 --yolo\n") &&
-       !orca_provider_contracts.include?("--permission-mode plan") &&
-       !orca_provider_contracts.include?("--model k3 --plan") &&
-       !orca_provider_contracts.include?("--mode plan"),
-       "orca-review provider contracts must preserve exact launches and optional provider-native delegation")
-assert(orca_provider_contracts.include?("provider-native auto-approval or permission-bypass argument") &&
-       orca_provider_contracts.include?("coordinator-owned pre-Dispatch and post-completion repository-state comparison") &&
-       orca_provider_contracts.include?("unexpected permission or authentication prompt is an operational failure") &&
-       orca_provider_contracts.include?("without asking the coordinator or user to approve it") &&
-       orca_review.include?("must not enter or request a provider plan mode") &&
+assert(orca_review.include?("`head`, `commit`, or `range`") &&
+       orca_review.include?("<aquarium-plugin-root>/skills/independent-review/scripts/inspect_review_target.py") &&
+       orca_review.include?("Use `$aquarium:independent-review`") &&
+       orca_review.include?("`workspace`, `staged`, and `dirty` are not Orca Review source scopes"),
+       "orca-review must use the bounded exact-Git inspector and reject mutable uncaptured scopes")
+assert(orca_review.include?("Re-run the target inspector") &&
        orca_review.include?("never create, modify, delete, or move a file") &&
        orca_review.include?("never alter the Git index or a ref") &&
        orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot") &&
        orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --compare") &&
-       orca_review.include?("HEAD or ref drift, provider-attributed drift, or unexplained drift") &&
-       orca_review.include?("without asking the coordinator or user to approve it"),
-       "orca-review auto-approval mode must preserve a supervised no-mutation boundary")
+       orca_review.include?("HEAD or ref drift, worker-attributed drift, or unexplained drift"),
+       "orca-review must preserve a supervised no-mutation boundary")
 assert(orca_state_helper.file? &&
        orca_state_helper_body.include?('SCHEMA_VERSION = "aquarium-orca-review-repository-state/v1"') &&
        orca_state_helper_body.include?('"for-each-ref"') &&
@@ -2258,35 +2250,20 @@ assert(orca_state_helper.file? &&
        orca_state_helper_body.include?('"drift": bool(changed)') &&
        orca_state_helper_body.include?("baseline fingerprint is invalid"),
        "orca-review repository-state helper must compare bounded Git-observable state")
-assert(ROOT.join("PRIVACY.md").read.include?("native auto-approval or permission-bypass argument") &&
+assert(ROOT.join("PRIVACY.md").read.include?("fresh native Codex worker through Orca") &&
        ROOT.join("PRIVACY.md").read.include?("not automatically reverted") &&
-       ROOT.join("TERMS.md").read.include?("provider-native auto-approval or permission-bypass arguments") &&
+       ROOT.join("TERMS.md").read.include?("Orca Review uses the verified local Orca runtime and no Dolgorae component") &&
        ROOT.join("TERMS.md").read.include?("invalidates a clean review verdict"),
-       "public policy must disclose Orca Review's auto-approval and no-mutation boundary")
-assert(orca_review.include?("scripts/create_provider_terminal.py") &&
-       orca_review.include?("exact Git worktree root") &&
-       orca_provider_contracts.include?("non-expanding stdin") &&
-       orca_provider_contracts.include?("provider-process start") &&
-       orca_provider_contracts.include?("never put provider paths or arguments in a shell command") &&
-       orca_supervision.include?("deterministic terminal-creation helper"),
-       "orca-review must route provider argv through the deterministic terminal helper")
-assert(orca_terminal_helper.file? &&
-       orca_terminal_helper_body.include?("aquarium-orca-provider-terminal-request/v1") &&
-       orca_terminal_helper_body.include?("shlex.join(provider_argv)") &&
-       orca_terminal_helper_body.include?(%q["terminal",]) &&
-       orca_terminal_helper_body.include?(%q["create",]) &&
-       orca_terminal_helper_body.include?("remote_routing_forbidden") &&
-       orca_terminal_helper_body.include?("repository_not_root") &&
-       orca_terminal_helper_body.include?("PROVIDER_EXEC_GUARD") &&
-       orca_terminal_helper_body.include?('f"{label}_identity_changed"'),
-       "provider terminal helper must bind identity and avoid coordinator shell interpolation")
-assert(orca_supervision.include?("current execution backend") &&
+       "public policy must disclose Orca Review's direct Codex and no-mutation boundary")
+assert(orca_supervision.include?("execution backend for `$aquarium:orca-review`") &&
        orca_supervision.include?("original registered checkout") &&
        orca_supervision.include?("Do not create or register a temporary repository snapshot") &&
        orca_supervision.include?("--worktree current --agent codex") &&
+       orca_supervision.include?("Do not reuse a terminal, create a low-level provider terminal") &&
+       orca_supervision.include?("or use Dolgorae") &&
        orca_supervision.include?("cumulative 30-minute default liveness budget") &&
        orca_supervision.include?("current recovery and FIFO rules"),
-       "shared Orca supervision must bind current-worktree execution and live lifecycle authority")
+       "Orca supervision must bind native Codex execution and live lifecycle authority")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -2920,16 +2897,15 @@ assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit 
        "root Makefile must expose the serial common test contract")
 assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py") &&
        makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py") &&
-       makefile.include?("plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py") &&
        makefile.include?("plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py") &&
        makefile.include?("tests/unit/test_inspect_release_notes_unit.py") &&
        makefile.include?("tests/unit/test_inspect_publication_state_unit.py") &&
-       makefile.include?("tests/unit/test_create_provider_terminal_unit.py") &&
        makefile.include?("tests/unit/test_inspect_orca_review_state_unit.py") &&
        makefile.include?("plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py") &&
        makefile.include?("tests/unit/test_inspect_review_target_unit.py") &&
-       testing_document.include?("release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target inspectors and helpers") &&
-       testing_document.include?("release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target helpers' bounded structural states"),
+       !makefile.include?("create_provider_terminal") &&
+       testing_document.include?("release-notes, publication-state, Orca Review repository-state, and independent-review target inspectors and helpers") &&
+       testing_document.include?("release-notes, publication-state, Orca Review repository-state, and independent-review target helpers' bounded structural states"),
        "release and review helpers and tests must remain in the common test contract")
 assert(makefile.include?("test-podway-compat: test-requirements") &&
        makefile.include?('PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py') &&
@@ -2957,7 +2933,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
        testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
-       testing_document.include?("docs-setup, release-notes, publication-state, provider-terminal, Orca Review repository-state, and independent-review target inspectors and helpers") &&
+       testing_document.include?("docs-setup, release-notes, publication-state, Orca Review repository-state, and independent-review target inspectors and helpers") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),

@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT_DIR = ROOT / "plugins/aquarium/skills/dev-aquarium/scripts"
-CLI = SCRIPT_DIR / "dev_aquarium.py"
+SCRIPT_DIR = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts"
+CLI = SCRIPT_DIR / "aquarium_dev.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-import dev_aquarium
+import aquarium_dev
 import dev_manager
 from dev_manager import ManagerError, process_queue, queue_request
 
@@ -40,15 +40,24 @@ from pathlib import Path
 
 output = Path(os.environ["AQUARIUM_DEV_OUTPUT"])
 sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+mode = os.environ.get("AQUARIUM_TEST_MODE", "success")
+if mode == "blocked":
+    ready = Path(os.environ["AQUARIUM_TEST_BUILD_READY"])
+    release = Path(os.environ["AQUARIUM_TEST_BUILD_RELEASE"])
+    ready.write_text("ready", encoding="utf-8")
+    while not release.exists():
+        time.sleep(0.01)
 artifact = output / "plugin"
 artifact.mkdir()
-(artifact / "payload.txt").write_text(f"artifact {sha}\n", encoding="utf-8")
+(artifact / "payload.txt").write_text(
+    f"artifact {sha} {Path('source.txt').read_text(encoding='utf-8').strip()}\n",
+    encoding="utf-8",
+)
 file_digest = hashlib.sha256((artifact / "payload.txt").read_bytes()).digest()
 tree = hashlib.sha256()
 tree.update(b"payload.txt\0")
 tree.update(file_digest)
 tree.update(b"\n")
-mode = os.environ.get("AQUARIUM_TEST_MODE", "success")
 manifest = {
     "schema": "aquarium-dev-artifact-manifest/v1",
     "project_id": "aquarium",
@@ -84,7 +93,7 @@ print(json.dumps(manifest, sort_keys=True))
 """
 
 
-def create_repository(path: Path) -> Path:
+def create_repository(path: Path, project_id: str = "aquarium") -> Path:
     path.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main", path], check=True)
     subprocess.run(["git", "-C", path, "config", "user.name", "Test"], check=True)
@@ -92,16 +101,22 @@ def create_repository(path: Path) -> Path:
         ["git", "-C", path, "config", "user.email", "test@example.invalid"],
         check=True,
     )
+    artifact_kind = "codex-plugin" if project_id == "aquarium" else "executable"
+    artifact_path = "plugin" if project_id == "aquarium" else f"bin/{project_id}"
     (path / "Makefile").write_text(
-        """aquarium-dev-describe:
-\t@printf '%s\\n' '{"schema":"aquarium-dev-producer-description/v1","project_id":"aquarium","next_version":"v0.1.14","artifact_kind":"codex-plugin","artifact_path":"plugin"}'
+        f"""aquarium-dev-describe:
+\t@printf '%s\\n' '{{"schema":"aquarium-dev-producer-description/v1","project_id":"{project_id}","next_version":"v0.1.14","artifact_kind":"{artifact_kind}","artifact_path":"{artifact_path}"}}'
 
 aquarium-dev-build:
 \t@python3 producer.py
 """,
         encoding="utf-8",
     )
-    (path / "producer.py").write_text(PRODUCER, encoding="utf-8")
+    producer = PRODUCER.replace(
+        '"project_id": "aquarium"', f'"project_id": "{project_id}"'
+    )
+    (path / "producer.py").write_text(producer, encoding="utf-8")
+    (path / "source.txt").write_text("initial\n", encoding="utf-8")
     subprocess.run(["git", "-C", path, "add", "."], check=True)
     subprocess.run(["git", "-C", path, "commit", "-q", "-m", "initial"], check=True)
     return path
@@ -134,7 +149,7 @@ def test_cli_serializes_new_worker_error_codes(code, tmp_path, monkeypatch, caps
             "aquarium",
         )
 
-    monkeypatch.setattr(dev_aquarium, "process_queue", fail_worker)
+    monkeypatch.setattr(aquarium_dev, "process_queue", fail_worker)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -148,7 +163,7 @@ def test_cli_serializes_new_worker_error_codes(code, tmp_path, monkeypatch, caps
         ],
     )
 
-    assert dev_aquarium.main() == 1
+    assert aquarium_dev.main() == 1
     error = json.loads(capsys.readouterr().err)
     assert error["schema"] == "aquarium-dev-error/v1"
     assert error["error"]["code"] == code
@@ -191,13 +206,13 @@ def test_rebuild_requires_approval_and_publishes_validated_generation(tmp_path):
     assert current.resolve() == host_root / "artifacts/aquarium" / sha
     manifest = json.loads((current / ".aquarium-manifest.json").read_text())
     assert manifest["git_sha"] == sha
-    assert (current / "plugin/payload.txt").read_text() == f"artifact {sha}\n"
+    assert (current / "plugin/payload.txt").read_text() == f"artifact {sha} initial\n"
     assert current.resolve().stat().st_flags & stat.UF_IMMUTABLE
     with pytest.raises(OSError):
         (current / "plugin/payload.txt").write_text("mutated", encoding="utf-8")
 
 
-def test_aquarium_rebuild_retains_previous_marketplace_until_configuration(tmp_path):
+def test_aquarium_rebuild_retains_plugin_generation_without_consumer_lease(tmp_path):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"
     enroll(repository, host_root)
@@ -226,7 +241,7 @@ def test_aquarium_rebuild_retains_previous_marketplace_until_configuration(tmp_p
     )
 
     assert second.returncode == 0, second.stderr
-    assert (host_root / "artifacts/aquarium" / first_sha).is_dir()
+    assert (host_root / "artifacts/aquarium" / first_sha).exists()
 
 
 def test_failed_rebuild_preserves_previous_selector_and_writes_diagnostic(tmp_path):
@@ -263,6 +278,60 @@ def test_failed_rebuild_preserves_previous_selector_and_writes_diagnostic(tmp_pa
     assert diagnostic["code"] == "checksum_mismatch"
     assert diagnostic["stage"] == "validate"
     assert len(diagnostic["message"]) <= 1000
+
+
+def test_build_uses_admitted_commit_when_main_advances_concurrently(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    ready = tmp_path / "build.ready"
+    release = tmp_path / "build.release"
+    enroll(repository, host_root)
+    admitted_sha = subprocess.check_output(
+        ["git", "-C", repository, "rev-parse", "HEAD"], text=True
+    ).strip()
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "blocked")
+    monkeypatch.setenv("AQUARIUM_TEST_BUILD_READY", str(ready))
+    monkeypatch.setenv("AQUARIUM_TEST_BUILD_RELEASE", str(release))
+
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            CLI,
+            "--host-root",
+            host_root,
+            "rebuild",
+            "--repository",
+            repository,
+            "--approve-build",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=os.environ.copy(),
+    )
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline and not ready.exists():
+        time.sleep(0.01)
+    assert ready.exists()
+    (repository / "source.txt").write_text("advanced\n", encoding="utf-8")
+    subprocess.run(["git", "-C", repository, "add", "source.txt"], check=True)
+    subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--no-verify", "-m", "advance"],
+        check=True,
+    )
+    release.write_text("release", encoding="utf-8")
+    stdout, stderr = process.communicate(timeout=10)
+
+    assert process.returncode == 0, stderr
+    result = json.loads(stdout)
+    assert result["details"]["git_sha"] == admitted_sha
+    current = host_root / "current/aquarium"
+    assert current.resolve().name == admitted_sha
+    assert (current / "plugin/payload.txt").read_text() == (
+        f"artifact {admitted_sha} initial\n"
+    )
 
 
 def test_timed_out_build_kills_process_group_and_releases_publisher_lock(
@@ -416,6 +485,39 @@ def test_worker_quarantines_stale_request_without_poisoning_future_runs(tmp_path
     assert status == "success"
     assert details["published"] in {0, 1}
     assert (host_root / "current/aquarium").resolve().name == current["git_sha"]
+
+
+def test_worker_quarantines_request_for_another_enrolled_project(tmp_path):
+    repository = create_repository(tmp_path / "podway", project_id="podway")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    git_sha = subprocess.check_output(
+        ["git", "-C", repository, "rev-parse", "HEAD"], text=True
+    ).strip()
+    request_path = host_root / "queue/aquarium/request.json"
+    request_path.parent.mkdir(parents=True)
+    request_path.write_text(
+        json.dumps(
+            {
+                "schema": "aquarium-dev-build-request/v1",
+                "project_id": "aquarium",
+                "git_sha": git_sha,
+                "checkout": str(repository),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ManagerError) as failure:
+        process_queue("aquarium", host_root)
+
+    assert failure.value.code == "invalid_arguments"
+    assert not request_path.exists()
+    quarantined = list((host_root / "queue-failures/aquarium").glob("*.json"))
+    assert len(quarantined) == 1
+    assert json.loads(quarantined[0].read_text())["checkout"] == str(repository)
+    assert not (host_root / "current/aquarium").exists()
+    assert not (host_root / "current/podway").exists()
 
 
 def test_worker_quarantines_non_regular_queue_entry(tmp_path):

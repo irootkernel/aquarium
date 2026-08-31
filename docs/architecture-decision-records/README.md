@@ -10,7 +10,11 @@ This directory preserves durable Aquarium architecture decisions after they are 
 - [ADR-0004: Keep Runtime Evidence Native and Promote Only Bounded Artifacts](0004-bounded-evidence-residency.md)
 - [ADR-0005: Require Separate Approval for Distinct Effects](0005-separate-effect-approvals.md)
 - [ADR-0006: Use Local Deterministic and Exact-Candidate Verification](0006-local-exact-candidate-verification.md)
-- [ADR-0007: Use Host-Local Immutable Development Artifacts](0007-host-local-immutable-development-artifacts.md)
+- [ADR-0008: Separate Development and Production Environments](0008-separate-development-and-production-environments.md)
+
+## Superseded Decisions
+
+- [ADR-0007: Use Host-Local Immutable Development Artifacts](0007-host-local-immutable-development-artifacts.md), superseded by ADR-0008
 
 ## Record Contract
 

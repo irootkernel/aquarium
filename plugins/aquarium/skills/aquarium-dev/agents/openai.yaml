@@ -1,6 +1,6 @@
 interface:
   display_name: "Aquarium Development Channel"
   short_description: "Manage exact local-main development artifacts"
-  default_prompt: "Use $aquarium:dev-aquarium to diagnose this checkout before proposing development-channel effects."
+  default_prompt: "Use $aquarium:aquarium-dev to diagnose this checkout before proposing development-channel effects."
 policy:
   allow_implicit_invocation: false

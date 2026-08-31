@@ -4,14 +4,14 @@ The development channel separates repository production from host-local consumpt
 
 1. A native post-commit marker queues only a completed canonical local-`main` SHA.
 2. One project publisher serializes requests, builds committed bytes into fresh staging, validates the producer manifest and checksum, and promotes an immutable generation.
-3. An atomic `current/<project-id>` selector exposes only a completely validated generation.
-4. A launcher acquires a shared generation lease before execution. Publication and cleanup use exclusive leases, so a running process cannot change beneath itself.
-5. Approved Aquarium configuration leases the exact plugin marketplace, installs it into `~/.aquarium/codex`, and uses that installed manager to resolve enrolled MCP tool generations at process launch.
+3. One atomic `current/<project-id>` selector chooses a completely validated generation; executable `bin/<project-id>` entries are stable indirections through it.
+4. Publication and cleanup use generation locks so a generation is never mutated and an in-use artifact is not removed.
+5. The `aquarium-dev` launcher preserves the caller's inherited environment, resolves only a supported executable through the development bin directory, and rejects global fallback.
 
-All owned host state is below `~/.aquarium/`: enrollment records, queues, bounded diagnostics, immutable artifacts, selectors, locks, runtime state, and the isolated Codex home. Repositories keep only the producer targets and an exact Aquarium marker inside their native hook. No `.aquarium` repository state is created.
+All owned development state is below `~/.aquarium-dev/`: enrollment records, queues, bounded diagnostics, immutable artifacts, selectors, and locks. Repositories keep only the producer targets and an exact Aquarium marker inside their native hook. No `.aquarium` repository state is created, and production state below `~/.aquarium/` is not read or changed by this channel.
 
-The Aquarium marketplace artifact contains committed marketplace metadata and the complete committed plugin tree. Only the copied plugin manifest is derived: its stable version gains `-dev.<sha12>`. The manifest checksum covers the resulting canonical directory tree, binding plugin code and bundled skills to one generation. MCP launch commands point to that installed generation's manager, which resolves and leases the external tool artifact independently.
+The Aquarium marketplace artifact contains committed marketplace metadata and the complete committed plugin tree. Only the copied plugin manifest is derived: its stable version gains `-dev.<sha12>`. The manifest checksum covers the resulting canonical directory tree, binding plugin code and bundled skills to one generation.
 
-The stable Codex environment is outside this graph. Every Codex subprocess receives an explicit isolated `CODEX_HOME`; no stable configuration or credentials are inputs. A failed build or configuration leaves Git history and the prior current artifact intact and produces bounded recovery information.
+Aquarium does not construct a second Codex environment. The launcher preserves the caller's `CODEX_HOME` and all other environment values except for the intentional PATH prefix. Authentication, plugin configuration, and MCP configuration stay with the caller and their selected Codex home.
 
-Stable Dolgorae review admission is a separate consumer path through the same installed manager. An explicit absolute path, exact v0.1.0 version, and official executable checksum select a checksum-keyed private immutable execution copy even when a development enrollment exists. The development `current` selector is neither consulted nor modified, and no stable fallback is inferred for a source-bearing review.
+Dolgorae is outside this development graph. Independent Review resolves `dolgorae` from the current PATH and immediately validates the official v0.1.0 executable identity and capabilities before use. Orca Review launches Codex through Orca and does not use Dolgorae. Aquarium neither enrolls a Dolgorae source checkout nor creates a private runtime copy.

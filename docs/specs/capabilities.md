@@ -36,7 +36,7 @@ Task delivery uses up to three remediation-eligible review rounds followed by a 
 | --- | --- | --- | --- |
 | `$aquarium:epic-validator` | Explicit | Cold-validates one completed epic, remediates confirmed gaps, and runs one bounded confirmation path | It does not create new requirements, rewrite history, or publish changes |
 | `$aquarium:independent-review` | Explicit | Dispatches one fresh Codex static review for staged changes, HEAD, a commit, a range, a task, an epic, or a special investigation | It is read-only and never runs tests, edits, or remediation |
-| `$aquarium:orca-review` | Explicit | Applies the same exact-target review contract through a selected Claude Fable, Kimi, Agy, or Cursor Agent in Orca | Dirty content is excluded unless exact paths are separately approved for staging |
+| `$aquarium:orca-review` | Explicit | Applies the same exact-target review contract through one fresh native Codex worker supervised by Orca | Supports HEAD, commit, and range targets; workspace, staged, and dirty targets require Independent Review |
 
 Both review workflows bind the reviewer to one exact Git target and require Aquarium to adjudicate findings against current repository authority. Reviewer success, structured extraction, and publication state are separate evidence dimensions.
 
@@ -53,7 +53,7 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
-| `$aquarium:dev-aquarium` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout and reconciles the Aquarium-owned native hook block | Enrollment, hook, build, isolated Codex configuration, and authentication remain separate effects |
+| `$aquarium:aquarium-dev` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout, publishes exact generations below `~/.aquarium-dev`, and installs the optional inherited-environment launcher | Enrollment, hook, build, and launcher installation remain separate effects; Codex configuration and Dolgorae are outside the channel |
 | `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes Dolgorae plus supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, archive download, installation, configuration, repair, staging, and commit stay independent |
 | `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external manifest and applies single-repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |
@@ -61,6 +61,6 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 
 ## Current Integration Corrections
 
-The current implementation admits the checksum-pinned official Dolgorae v0.1.0 runtime for Independent and Orca reviews, raises the Podway minimum to v0.2.7, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, keeps workspace removal behind the same-tag `use-podway` skill's explicit exact-target boundary, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
+The current implementation admits the checksum-pinned official Dolgorae v0.1.0 runtime for Independent Review, routes Orca Review directly to an Orca-managed Codex worker, raises the Podway minimum to v0.2.7, recognizes daemon-readiness v2 and the exact v0.2.5 Procedure workaround migration, keeps workspace removal behind the same-tag `use-podway` skill's explicit exact-target boundary, accepts the canonical isolated Ouroboros Codex launcher without probing the wrong environment, avoids redundant Codex artifact refresh, generalizes release QA confirmation matrices, and permits QA of a clean local main candidate ahead of remote main.
 
 [`CHANGELOG.md`](../../CHANGELOG.md) remains the release-status authority for these implemented corrections.

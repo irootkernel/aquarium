@@ -1,0 +1,11 @@
+{
+  "schema": "aquarium-dev-error/v1",
+  "error": {
+    "code": "approval_required",
+    "message": "Enrollment approval is required.",
+    "action": "Approve the displayed enrollment effect.",
+    "stage": "enrollment",
+    "project_id": "aquarium",
+    "git_sha": null
+  }
+}

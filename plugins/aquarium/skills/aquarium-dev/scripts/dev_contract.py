@@ -7,7 +7,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
-PROJECT_IDS = frozenset({"aquarium", "podway", "mulgae", "gaori", "sanho", "dolgorae"})
+PROJECT_IDS = frozenset({"aquarium", "podway", "mulgae", "gaori", "sanho"})
 ARTIFACT_KINDS = frozenset({"codex-plugin", "executable"})
 OPERATIONS = frozenset(
     {
@@ -15,10 +15,8 @@ OPERATIONS = frozenset(
         "enroll",
         "rebuild",
         "publish",
-        "resolve",
-        "launch",
         "repair",
-        "configure-codex",
+        "install-launcher",
     }
 )
 RESULT_STATUSES = frozenset({"success", "no-change", "diagnosed"})
@@ -46,8 +44,6 @@ ERROR_CODES = frozenset(
         "artifact_invalid",
         "lease_unavailable",
         "publication_failed",
-        "codex_not_configured",
-        "codex_login_required",
         "approval_required",
         "invalid_arguments",
         "worker_failed",
@@ -104,6 +100,18 @@ def _artifact_path(value: Any) -> str:
     return path
 
 
+def _artifact_contract(project_id: str, artifact_kind: Any, artifact_path: Any) -> None:
+    path = _artifact_path(artifact_path)
+    if project_id == "aquarium":
+        if artifact_kind != "codex-plugin":
+            raise ContractError("aquarium must produce one codex-plugin artifact")
+        return
+    if artifact_kind != "executable" or path != f"bin/{project_id}":
+        raise ContractError(
+            "tool producers must emit one executable at bin/<project_id>"
+        )
+
+
 def validate_description(value: Any) -> dict[str, Any]:
     document = _exact_object(
         value,
@@ -112,14 +120,14 @@ def validate_description(value: Any) -> dict[str, Any]:
     )
     if document["schema"] != "aquarium-dev-producer-description/v1":
         raise ContractError("unsupported description schema")
-    _project_id(document["project_id"])
+    project_id = _project_id(document["project_id"])
     if not isinstance(document["next_version"], str) or not VERSION_RE.fullmatch(
         document["next_version"]
     ):
         raise ContractError("next_version must be a stable v-prefixed semantic version")
     if document["artifact_kind"] not in ARTIFACT_KINDS:
         raise ContractError("unsupported artifact_kind")
-    _artifact_path(document["artifact_path"])
+    _artifact_contract(project_id, document["artifact_kind"], document["artifact_path"])
     return document
 
 
@@ -139,7 +147,7 @@ def validate_manifest(value: Any) -> dict[str, Any]:
     )
     if document["schema"] != "aquarium-dev-artifact-manifest/v1":
         raise ContractError("unsupported manifest schema")
-    _project_id(document["project_id"])
+    project_id = _project_id(document["project_id"])
     git_sha = document["git_sha"]
     if not isinstance(git_sha, str) or not SHA_RE.fullmatch(git_sha):
         raise ContractError("git_sha must be 40 lowercase hexadecimal characters")
@@ -151,7 +159,7 @@ def validate_manifest(value: Any) -> dict[str, Any]:
         )
     if document["artifact_kind"] not in ARTIFACT_KINDS:
         raise ContractError("unsupported artifact_kind")
-    _artifact_path(document["artifact_path"])
+    _artifact_contract(project_id, document["artifact_kind"], document["artifact_path"])
     if not isinstance(document["sha256"], str) or not DIGEST_RE.fullmatch(
         document["sha256"]
     ):

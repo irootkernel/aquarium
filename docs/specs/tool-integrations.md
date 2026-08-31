@@ -5,8 +5,8 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Tool | Aquarium role | Supported identity | Platform or prerequisite | Important readiness boundary |
 | --- | --- | --- | --- | --- |
 | Codex | Primary agent runtime, plugin host, goals, MCP registrations, and hooks | Host-provided supported Codex | Repository and user configuration | Plugin availability, trusted hook state, goals, and MCP exposure remain distinct |
-| Dolgorae | Immutable source capture and checked Independent/Orca review lifecycle | Exact official `v0.1.0` executable SHA-256 `6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8` | Native Apple Silicon macOS | Release metadata, archive, installed bytes, machine version, capability digest, and guarded review admission remain distinct |
-| Orca | Supervises selected non-Codex static reviewers | No Aquarium release floor declared | Separately installed local Orca runtime | Run, Task, terminal, provider process, and report settlement must all be observed |
+| Dolgorae | Immutable source capture and checked Independent Review lifecycle | Exact official `v0.1.0` executable SHA-256 `6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8` | Native Apple Silicon macOS | Release metadata, archive, installed bytes, machine version, capability digest, and guarded review admission remain distinct |
+| Orca | Launches and supervises one fresh Codex static reviewer | No Aquarium release floor declared | Separately installed local Orca runtime | Run, Task, Dispatch, worker, Delivery, acknowledgement, and settlement must all be observed |
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.7` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `v0.1.18` through `v0.1.x` | Native Apple Silicon macOS; Go `1.26.6+` only for installation | CLI, Config v3, provider readiness, MCP scope, capture publication, findings query, and extraction quality are separate |
 | Gaori | Runs existing checks and compresses their output | Stable `v0.1.14` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
@@ -41,10 +41,10 @@ Podway v0.2.7 workspace removal is a separately authorized lifecycle operation o
 
 ## Review and Check Adapters
 
-Dolgorae production reviews use an explicit stable path plus exact v0.1.0 version and executable-checksum guards. The manager creates and leases a private immutable execution copy and revalidates its bytes immediately before execution. This explicit stable identity may bypass an enrolled development producer but never acts as an implicit fallback; development guards remain available only for maintainer testing.
+Independent Review resolves `dolgorae` from the current PATH and requires the official global v0.1.0 installation. Each invocation revalidates the executable bytes, machine version, and required capability digest immediately before use. Dolgorae is not an `aquarium-dev` producer, Aquarium creates no private runtime copy, and Orca Review does not use it.
 
 Mulgae review is advisory. Aquarium requires complete capture coverage, passing CI decision, committed publication, a successful findings query, and zero locally verified unresolved findings before calling review clean.
 
 Gaori is optional evidence compression around a repository-owned command. The original command, its authorization, and its exit status remain authoritative; parser detection or summary extraction never changes the result.
 
-Orca reviewers receive one exact target and relevant authority. Dirty content, tests, authentication, provider changes, edits, commits, and publication are outside the static review authorization.
+Orca Review launches one fresh native Codex worker through Orca. It accepts exact HEAD, commit, and range targets; workspace, staged, and dirty targets require Independent Review's immutable Dolgorae capture. Tests, authentication, reviewer changes, edits, commits, and publication are outside the static review authorization.

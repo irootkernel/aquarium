@@ -5,13 +5,13 @@ description: "Run one supervised immutable static review with a fresh Codex Revi
 
 # Independent Review
 
-Run the canonical Aquarium review contract with one fresh Codex Reviewer through Dolgorae. This path creates no Orca object and never falls back to Orca. Use `$aquarium:orca-review` only when the user wants a supported non-Codex provider under Orca lifecycle ownership.
+Run the canonical Aquarium review contract with one fresh Codex Reviewer through Dolgorae. This path creates no Orca object and never falls back to Orca. Use `$aquarium:orca-review` when the user wants Orca to own and supervise the fresh Codex worker lifecycle.
 
 ## Load the contracts
 
 1. Read [review-contract.md](../../references/review-contract.md) completely.
 2. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
-3. Resolve the installed `dev-aquarium` manager from this plugin generation and the exact stable Dolgorae path diagnosed by `dev-setup`. Never execute Dolgorae directly, trust a mutable PATH lookup, or substitute a source-checkout binary.
+3. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
 
 ## Establish the request
 
@@ -25,19 +25,14 @@ Resolve one existing Dolgorae Reviewer profile from checked workspace configurat
 
 Require the exact official Dolgorae v0.1.0 executable described by the consumer contract. Resolve and record its canonical path, release tag and source commit, regular-file device and inode, executable SHA-256, runtime version, and compact sorted capability digest. Revalidate the full candidate immediately before source-bearing launch.
 
-Use only the installed manager with the explicit stable path and complete expected stable-version and SHA-256 guard set. A missing installation, implicit fallback, partial or mixed guard, mutable path, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission.
+Require `command -v dolgorae` to resolve the exact globally installed release candidate and repeat the path, file identity, version, checksum, and capability checks immediately before launch. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission.
 
 ## Run one fresh Reviewer
 
-Launch exactly one checked v2 operation through the guarded manager:
+Launch exactly one checked v2 operation through the globally installed CLI:
 
 ```text
-python3 <installed-manager> --host-root <aquarium-host-root> launch \
-  --project-id dolgorae \
-  --stable <absolute-dolgorae-path> \
-  --expected-stable-version v0.1.0 \
-  --expected-stable-sha256 sha256:6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8 -- \
-  specialist review \
+dolgorae specialist review \
   --workspace <git-root> \
   --profile <reviewer-profile> \
   --target-kind <workspace|staged|dirty|head|commit|range> \

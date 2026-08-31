@@ -1,6 +1,8 @@
 # ADR-0007: Use Host-Local Immutable Development Artifacts
 
-**Status:** `Accepted`
+**Status:** `Superseded`
+
+**Superseded by:** [ADR-0008](0008-separate-development-and-production-environments.md)
 
 **Recorded:** `2026-08-28`
 
@@ -20,7 +22,7 @@ On Apple Silicon macOS, the feasibility suite proves the following bounded prope
 - A child process can retain a shared lease on one immutable artifact while publication advances `current` to a newer artifact. Cleanup cannot take the exclusive lease until that child exits.
 - A dedicated `CODEX_HOME` selects only its own `config.toml` and `auth.json`; stable-home files are neither read nor copied by the isolated invocation probe.
 
-`tests/unit/test_dev_aquarium_feasibility_unit.py` is the executable evidence. It fails, rather than skips, outside the supported Darwin/arm64 host so an unsupported machine cannot accidentally satisfy this decision.
+`tests/unit/test_aquarium_dev_feasibility_unit.py` is the executable evidence. It fails, rather than skips, outside the supported Darwin/arm64 host so an unsupported machine cannot accidentally satisfy this decision.
 
 The five initial repositories were also inspected read-only during adoption. They used Git's default hook directory and had no existing `post-commit` hook at that point. This observation only establishes the current integration baseline; the implementation must still preserve arbitrary foreign hook bytes and mode and fail closed on ownership conflicts.
 
@@ -62,7 +64,7 @@ These decisions constrain the shared contract in `TASK-006`:
 
 ## References
 
-- [Aquarium development environment dossier](../todo/TODO-DEV-AQUARIUM.md)
+- [Aquarium development environment dossier](../todo/TODO-AQUARIUM-DEV.md)
 - [No central Aquarium state](0003-no-central-aquarium-state.md)
 - [Separate effect approvals](0005-separate-effect-approvals.md)
 - [State and evidence architecture](../architecture/state-and-evidence.md)

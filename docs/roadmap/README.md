@@ -57,43 +57,44 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 **Status:** `Blocked`
 
-Build the `dev-aquarium` development channel planned for v0.1.14 so Aquarium and its explicitly enrolled tool producers can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and preserve stable global tools when no project is enrolled.
+Build the `aquarium-dev` development channel planned for v0.1.14 so Aquarium and its explicitly enrolled tool producers can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and keep production tools and state separate.
 
-The Aquarium-owned runtime is complete. Further progress requires exact clean local-`main` producer handoffs from Podway, Mulgae, Gaori, Sanho, and the separately adopted Dolgorae producer. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not. The original four integrations and their cold validation remain blocked on their own handoffs; Dolgorae integration may complete independently once external Dolgorae `TASK-035` delivers its producer.
+The Aquarium-owned runtime is being corrected by `TASK-031`: all development state moves to `~/.aquarium-dev`, executable producers are selected through its `bin` directory, the launcher inherits the caller's environment, and Dolgorae remains a globally installed production release instead of a development producer. Further progress requires exact clean local-`main` producer handoffs from Podway, Mulgae, Gaori, and Sanho. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not.
 
-**Detailed SOT:** [`TODO-DEV-AQUARIUM.md`](../todo/TODO-DEV-AQUARIUM.md)
+**Detailed SOT:** [`TODO-AQUARIUM-DEV.md`](../todo/TODO-AQUARIUM-DEV.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and isolated Codex operation before implementation. | Completed | TASK-004 |
+| TASK-005 | Prove development-channel feasibility | Validate host locks, hook coexistence, atomic publication, and the original isolated runtime assumptions before implementation. | Completed | TASK-004 |
 | TASK-006 | Define the shared development contract | Freeze producer, artifact, enrollment, resolver, version, and failure contracts. | Completed | TASK-005 |
 | TASK-007 | Implement enrollment and hook lifecycle | Add the explicit skill workflow, canonical checkout enrollment, re-enrollment, and hook ownership transfer. | Completed | TASK-006 |
 | TASK-008 | Implement build scheduling and publication | Build exact local-main candidates, serialize publishers, and atomically advance the current artifact. | Completed | TASK-006 |
-| TASK-009 | Implement resolution, leases, and cleanup | Resolve development versus stable tools, pin invocations, protect active artifacts, and remove superseded binaries. | Completed | TASK-006, TASK-008 |
-| TASK-010 | Isolate Aquarium and Codex development runtime | Install the development plugin, paired skills, MCP configuration, and separate Codex home under the shared contract. | Completed | TASK-007, TASK-008, TASK-009 |
+| TASK-009 | Implement resolution, leases, and cleanup | Implement the original generation-resolution and cleanup contract, later simplified by TASK-031. | Completed | TASK-006, TASK-008 |
+| TASK-010 | Isolate Aquarium and Codex development runtime | Implement the original isolated Codex environment, later superseded by TASK-031. | Completed | TASK-007, TASK-008, TASK-009 |
 | TASK-011 | Integrate Podway | Add and verify Podway's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-012 | Integrate Mulgae | Add and verify Mulgae's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-013 | Integrate Gaori | Add and verify Gaori's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
-| TASK-024 | Integrate Dolgorae | Add and verify Dolgorae's executable producer, exact-generation resolution, guarded launch, and isolated Codex visibility. | Completed | TASK-010; external Dolgorae TASK-035 |
-| TASK-015 | Cold-validate the integrated environment | Prove setup, update, fallback, failure, concurrency, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-024 |
+| TASK-024 | Integrate Dolgorae | Complete the historical development-producer integration, superseded for current operation by TASK-031. | Completed | TASK-010; external Dolgorae TASK-035 |
+| TASK-031 | Separate development and production environments | Rename the channel and root to `aquarium-dev`, inherit the caller's environment, expose executable producers through one bin directory, remove Dolgorae from development management, and decouple Orca Review from Dolgorae. | In Progress | TASK-010, TASK-028 |
+| TASK-015 | Cold-validate the integrated environment | Prove setup, update, failure, concurrency, launcher, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-031 |
 
 ## EPIC-003: Activate Dolgorae-backed Reviews
 
 **Status:** `Completed`
 
-Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The design preserves Orca supervision for `orca-review`, aligns Mulgae only on common source-scope and target-identity semantics, and requires exact candidate, capture, lifecycle, and settlement evidence before runtime activation.
+Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The historical implementation also coupled `orca-review` target capture and settlement to Dolgorae while preserving Orca lifecycle ownership. `TASK-031` supersedes that Orca-side coupling: Independent Review retains the complete Dolgorae guarantees, while Orca Review uses Orca's native Codex worker lifecycle and a bounded exact-Git-target inspector.
 
-EPIC-003 does not depend on completing EPIC-002 or its unfinished original producer tasks. It depends only on `TASK-024`, which extends the completed `TASK-010` foundation with an exact Dolgorae development generation. External Dolgorae `TASK-015` remains the checked runtime-contract prerequisite, while external `TASK-035` owns producer delivery through `TASK-024`.
+EPIC-003 completed against the then-current exact Dolgorae development generation and did not depend on EPIC-002's unfinished original producer tasks. Current production execution is governed by EPIC-005 and the global-release correction in `TASK-031`.
 
-**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/skills/dev-aquarium/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/skills/aquarium-dev/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-019 | Adopt the Dolgorae candidate contract | Freeze generation acquisition, identity, capability, schema, bounds, guarded launch, and pre-launch revalidation contracts. | Completed | TASK-024 |
 | TASK-020 | Adopt immutable review targets | Implement the six captured source scopes, immutable manifests, source identity, safety boundaries, and owner-bound settlement identities. | Completed | TASK-019 |
 | TASK-021 | Implement Dolgorae independent-review supervision | Run one fresh Codex Reviewer through Dolgorae without Orca objects and settle only from authoritative terminal evidence. | Completed | TASK-020 |
-| TASK-022 | Preserve Orca review and align Mulgae semantics | Retain Orca lifecycle ownership and prove common target semantics across Orca and Mulgae without lifecycle coupling. | Completed | TASK-020 |
+| TASK-022 | Preserve Orca review and align Mulgae semantics | Historically retained Orca lifecycle ownership with Dolgorae capture; TASK-031 supersedes that capture coupling while preserving shared target semantics. | Completed | TASK-020 |
 | TASK-023 | Activate and validate the exact candidate | Bind one exact enrolled Dolgorae generation, run the complete E2E campaign, and return the candidate-bound Completed Confirm. | Completed | TASK-021, TASK-022; external Dolgorae TASK-015 |
 
 ## EPIC-004: Release Aquarium v0.1.12
@@ -114,7 +115,7 @@ EPIC-004 depends on the completed EPIC-001 adoption result. Release QA owns rele
 
 **Status:** `Completed`
 
-Adopt the exact official Dolgorae v0.1.0 Apple Silicon release as Aquarium's stable review runtime while retaining the development producer for maintainer testing. Stable admission binds the published source commit, archive, executable checksum, machine version, capabilities, immutable execution copy, and setup approval boundaries without vendoring Dolgorae or requiring an end-user source checkout.
+Adopt the exact official Dolgorae v0.1.0 Apple Silicon release as Aquarium's stable Independent Review runtime. Stable admission binds the published source commit, archive, executable checksum, machine version, capabilities, and setup approval boundaries without vendoring Dolgorae or requiring an end-user source checkout. `TASK-031` makes the globally installed release the sole current Dolgorae runtime, removes Aquarium's private execution copy, and removes Dolgorae from Orca Review.
 
 This adoption succeeds EPIC-003 without reopening it and does not complete the unrelated Podway, Mulgae, Gaori, or Sanho producer work still blocking EPIC-002.
 
@@ -123,8 +124,8 @@ This adoption succeeds EPIC-003 without reopening it and does not complete the u
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-025 | Adopt the official Dolgorae v0.1.0 distribution | Pin the release tag, source commit, platform, archive, executable checksum, maturity, and ownership boundaries. | Completed | External Dolgorae v0.1.0 release |
-| TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, guarded private execution, and fail-closed identity checks. | Completed | TASK-025 |
-| TASK-027 | Activate stable Dolgorae-backed reviews | Move Independent Review and Orca Review production paths from the development generation to the pinned stable guard. | Completed | TASK-026; EPIC-003 |
+| TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, and fail-closed identity checks; private execution is later removed by TASK-031. | Completed | TASK-025 |
+| TASK-027 | Activate stable Dolgorae-backed reviews | Historically moved both review paths to the pinned stable release; TASK-031 retains it only for Independent Review and restores native Orca Codex execution. | Completed | TASK-026; EPIC-003 |
 | TASK-028 | Qualify and close stable Dolgorae adoption | Verify the official artifact and complete code, workflow, documentation, privacy, and regression acceptance. | Completed | TASK-027 |
 
 ## EPIC-006: Adopt Podway v0.2.7

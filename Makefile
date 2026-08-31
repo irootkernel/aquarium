@@ -17,14 +17,14 @@ export PYTEST_ADDOPTS
 PYTHON_FILES := \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
-	plugins/aquarium/skills/dev-aquarium/scripts/dev_contract.py \
-	plugins/aquarium/skills/dev-aquarium/scripts/dev_aquarium.py \
-	plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py \
-	plugins/aquarium/skills/dev-aquarium/scripts/dev_manager.py \
+	plugins/aquarium/skills/aquarium-dev/scripts/dev_contract.py \
+	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev.py \
+	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev_launcher.py \
+	plugins/aquarium/skills/aquarium-dev/scripts/build_aquarium_artifact.py \
+	plugins/aquarium/skills/aquarium-dev/scripts/dev_manager.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
-	plugins/aquarium/skills/orca-review/scripts/create_provider_terminal.py \
 	plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
@@ -38,13 +38,12 @@ PYTHON_FILES := \
 	tests/podway_runtime_qualification.py \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
-	tests/unit/test_create_provider_terminal_unit.py \
-	tests/unit/test_dev_aquarium_contract_unit.py \
-	tests/unit/test_dev_aquarium_enrollment_unit.py \
-	tests/unit/test_dev_aquarium_publication_unit.py \
-	tests/unit/test_dev_aquarium_resolution_unit.py \
-	tests/unit/test_dev_aquarium_runtime_unit.py \
-	tests/unit/test_dev_aquarium_feasibility_unit.py \
+	tests/unit/test_aquarium_dev_contract_unit.py \
+	tests/unit/test_aquarium_dev_enrollment_unit.py \
+	tests/unit/test_aquarium_dev_publication_unit.py \
+	tests/unit/test_aquarium_dev_resolution_unit.py \
+	tests/unit/test_aquarium_dev_runtime_unit.py \
+	tests/unit/test_aquarium_dev_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
@@ -59,10 +58,10 @@ PYTHON_FILES := \
 .PHONY: aquarium-dev-describe aquarium-dev-build
 
 aquarium-dev-describe:
-	@$(PYTHON) plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py describe
+	@$(PYTHON) plugins/aquarium/skills/aquarium-dev/scripts/build_aquarium_artifact.py describe
 
 aquarium-dev-build:
-	@$(PYTHON) plugins/aquarium/skills/dev-aquarium/scripts/build_aquarium_artifact.py build
+	@$(PYTHON) plugins/aquarium/skills/aquarium-dev/scripts/build_aquarium_artifact.py build
 
 test:
 	$(MAKE) test-prepare
