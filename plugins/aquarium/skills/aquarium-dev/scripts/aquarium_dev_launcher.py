@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Run one supported Aquarium development executable without stable fallback."""
+"""Prefer one Aquarium development executable, then use its global release."""
 
 from __future__ import annotations
 
 import fcntl
 import os
 import re
+import shutil
 import stat
 import sys
 from pathlib import Path
 
-SUPPORTED_DEVELOPMENT_COMMANDS = frozenset({"podway", "mulgae", "gaori", "sanho"})
+SUPPORTED_DEVELOPMENT_COMMANDS = frozenset(
+    {"podway", "mulgae", "gaori", "sanho", "dolgorae"}
+)
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+class DevelopmentGenerationUnavailable(OSError):
+    """The tool has no selected Aquarium development generation."""
 
 
 def development_environment(environment: dict[str, str]) -> dict[str, str]:
@@ -30,7 +37,11 @@ def leased_executable(tool: str) -> tuple[Path, int]:
     host_root = Path.home() / ".aquarium-dev"
     current = host_root / "current" / tool
     if not current.is_symlink():
-        raise OSError(f"development generation is unavailable: {tool}")
+        if current.exists():
+            raise OSError(f"development generation is invalid: {tool}")
+        raise DevelopmentGenerationUnavailable(
+            f"development generation is unavailable: {tool}"
+        )
     generation = current.resolve(strict=True)
     expected_parent = (host_root / "artifacts" / tool).resolve(strict=True)
     if (
@@ -61,6 +72,36 @@ def leased_executable(tool: str) -> tuple[Path, int]:
         raise
 
 
+def global_executable(tool: str, environment: dict[str, str]) -> Path:
+    home = Path.home().resolve()
+    excluded_roots = (home / ".aquarium", home / ".aquarium-dev")
+    search_entries = []
+    for entry in environment.get("PATH", "").split(os.pathsep):
+        candidate = Path(entry)
+        if not entry or not candidate.is_absolute():
+            continue
+        resolved = candidate.resolve(strict=False)
+        if any(
+            resolved == root or resolved.is_relative_to(root) for root in excluded_roots
+        ):
+            continue
+        search_entries.append(entry)
+    selected = shutil.which(tool, path=os.pathsep.join(search_entries))
+    if selected is None:
+        raise OSError(f"development and global executable are unavailable: {tool}")
+    executable = Path(selected).resolve(strict=True)
+    if (
+        not executable.is_file()
+        or not os.access(executable, os.X_OK)
+        or any(
+            executable == root or executable.is_relative_to(root)
+            for root in excluded_roots
+        )
+    ):
+        raise OSError(f"global executable is invalid: {tool}")
+    return executable
+
+
 def main(arguments: list[str] | None = None) -> int:
     command = list(sys.argv[1:] if arguments is None else arguments)
     if not command:
@@ -74,11 +115,15 @@ def main(arguments: list[str] | None = None) -> int:
         return 2
     lease_descriptor = None
     try:
-        executable, lease_descriptor = leased_executable(command[0])
+        environment = dict(os.environ)
+        try:
+            executable, lease_descriptor = leased_executable(command[0])
+        except DevelopmentGenerationUnavailable:
+            executable = global_executable(command[0], environment)
         os.execve(
             executable,
             command,
-            development_environment(dict(os.environ)),
+            development_environment(environment),
         )
     except OSError as error:
         print(f"aquarium-dev: {error}", file=sys.stderr)

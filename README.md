@@ -48,7 +48,7 @@ Aquarium does not vendor third-party skill or documentation sources. `$aquarium:
 
 `$aquarium:aquarium-dev` provides an explicit Apple Silicon macOS development channel for Aquarium maintainers. It enrolls one named canonical local-`main` checkout, builds immutable exact-commit artifacts below `~/.aquarium-dev/`, and atomically exposes executable producers through `~/.aquarium-dev/bin/`. Enrollment, hook changes, builds, and launcher installation each retain a separate approval boundary.
 
-The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported development executables, resolves them through `~/.aquarium-dev/bin`, and never falls back to a production binary. Aquarium does not create or own a Codex home, authentication, plugin configuration, or MCP configuration for this channel. Dolgorae and other production tools remain globally installed release binaries outside this launcher; Dolgorae is not an `aquarium-dev` producer. Development artifacts are local integration evidence only, not release or distribution proof.
+The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported tools, prefers each available `~/.aquarium-dev/bin` generation, and falls back only a missing tool to the caller's global `PATH` outside both Aquarium roots. Invalid selected development state fails closed. Aquarium does not create or own a Codex home, authentication, plugin configuration, or MCP configuration for this channel. Dolgorae is not an `aquarium-dev` producer in this checkpoint; an absent global Dolgorae affects only its explicit invocation. Development artifacts are local integration evidence only, not release or distribution proof.
 
 ## Main Workflows
 

@@ -13,7 +13,7 @@ Development setup changes only the named checkout's Aquarium hook marker and hos
 3. Approve enrollment and the exact native hook marker independently. Re-enrollment additionally requires approval to transfer ownership from the displayed old checkout.
 4. Approve the initial build. Success requires a healthy current generation whose SHA, development version, artifact path, and checksum match the committed checkout.
 5. Separately approve installation of the exact launcher at `~/.local/bin/aquarium-dev`.
-6. Run `aquarium-dev <tool> [args...]` and confirm that the supported executable resolves from `~/.aquarium-dev/bin`, the caller's remaining environment is unchanged, and a missing or unsupported tool does not fall back globally.
+6. Run `aquarium-dev <tool> [args...]` and confirm that a selected executable resolves from `~/.aquarium-dev/bin`, a missing development generation resolves only that tool from the caller's global PATH outside both Aquarium roots, and the caller's remaining environment is unchanged. Unknown commands and invalid selected generations must fail.
 
 Success means enrollment and the owned hook are healthy, the atomic current selector and stable executable indirection resolve one validated generation, and the launcher preserves the caller's selected `CODEX_HOME`. Dolgorae is not enrolled here; reviews require the verified global release.
 

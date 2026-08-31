@@ -21,7 +21,7 @@ The canonical plugin-directory digest visits regular files in ascending UTF-8 ar
 
 Successful commands emit one `aquarium-dev-manager-result/v1` object. Operations are `diagnose`, `enroll`, `rebuild`, `publish`, `repair`, and `install-launcher`; statuses are `success`, `no-change`, and `diagnosed`. Rejections emit one `aquarium-dev-error/v1` object and fail closed.
 
-Diagnosis is read-only. Enrollment, hook mutation, build, and launcher installation remain independent approvals. There is no stable fallback, production-tool resolver, managed executable launch, Codex-home configuration, authentication, plugin installation, or MCP configuration operation.
+Diagnosis is read-only. Enrollment, hook mutation, build, and launcher installation remain independent approvals. The manager does not resolve or install production tools and has no Codex-home configuration, authentication, plugin installation, or MCP configuration operation. The separate launcher owns bounded per-command global fallback.
 
 ## Host layout
 
@@ -50,6 +50,6 @@ The native `post-commit` marker queues only the completed local-main SHA and sta
 
 ## Launcher and environment
 
-The separately approved user-local launcher is installed only at `~/.local/bin/aquarium-dev`. `aquarium-dev <tool> [args...]` accepts only `podway`, `mulgae`, `gaori`, or `sanho`, copies the current environment, preserves `CODEX_HOME` byte-for-byte when present, prepends `~/.aquarium-dev/bin` to `PATH`, leases the resolved immutable generation, and executes its exact development binary. The lease descriptor survives `exec` and is released only when that process exits. A missing entry fails without global fallback. It does not read or mutate Codex authentication, plugins, skills, apps, or MCP configuration.
+The separately approved user-local launcher is installed only at `~/.local/bin/aquarium-dev`. `aquarium-dev <tool> [args...]` accepts only `podway`, `mulgae`, `gaori`, `sanho`, or `dolgorae`, copies the current environment, preserves `CODEX_HOME` byte-for-byte when present, and prepends `~/.aquarium-dev/bin` to the child `PATH`. A selected development generation is leased and executed exactly; when no generation is selected, only that command resolves from the caller's original global `PATH` after excluding `~/.aquarium` and `~/.aquarium-dev`. An invalid selected generation fails closed. The lease descriptor survives `exec` and is released only when that process exits. It does not read or mutate Codex authentication, plugins, skills, apps, or MCP configuration.
 
-Dolgorae is excluded from this graph. Aquarium production reviews resolve the verified official Dolgorae release from the ordinary global `PATH` under the separate Dolgorae review consumer contract.
+Dolgorae remains excluded from the producer graph in this checkpoint. The launcher can resolve a globally installed Dolgorae for an explicit command, while a missing global installation affects only that invocation. Aquarium production reviews retain their separate Dolgorae consumer contract.

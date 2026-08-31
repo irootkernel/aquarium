@@ -48,7 +48,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 `$aquarium:aquarium-dev`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 `~/.aquarium-dev/` 아래에 만들며, executable producer를 `~/.aquarium-dev/bin/`에 atomic하게 노출합니다. Enrollment, hook 변경, build, launcher 설치는 각각 별도 승인을 유지합니다.
 
-사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 development executable만 허용하고 `~/.aquarium-dev/bin`에서 정확히 해석하며 production binary로 fallback하지 않습니다. Aquarium은 이 channel을 위해 Codex home, authentication, plugin configuration, MCP configuration을 만들거나 소유하지 않습니다. Dolgorae를 포함한 production tool은 이 launcher 밖에서 전역에 설치된 release binary를 사용하며, Dolgorae는 `aquarium-dev` producer가 아닙니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
+사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용하고, 각 tool의 `~/.aquarium-dev/bin` generation이 있으면 우선 사용하며 없으면 해당 tool만 두 Aquarium root 밖의 caller global `PATH`에서 해석합니다. 선택된 development state가 잘못된 경우에는 fail closed합니다. Aquarium은 이 channel을 위해 Codex home, authentication, plugin configuration, MCP configuration을 만들거나 소유하지 않습니다. Dolgorae는 이번 checkpoint의 `aquarium-dev` producer가 아니며, global Dolgorae가 없더라도 명시적으로 호출한 그 명령에만 영향을 줍니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
 
 ## 주요 워크플로
 

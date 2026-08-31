@@ -20,9 +20,9 @@ Dolgorae is not a development producer. Independent Review uses the globally ins
 - All development metadata and artifacts live below `~/.aquarium-dev`; `~/.aquarium` remains production-only.
 - Every successful canonical local-`main` build publishes one immutable exact-SHA generation and atomically advances its current selector.
 - Executable producers are exposed through stable `~/.aquarium-dev/bin` indirections backed by one atomic generation selector.
-- `aquarium-dev <tool> [args...]` admits only supported executable producers, resolves them through that directory without global fallback, and otherwise inherits the caller's environment, including `CODEX_HOME`.
+- `aquarium-dev <tool> [args...]` admits only supported tools, prefers an available development generation, falls back only an absent tool to the caller's global PATH outside both Aquarium roots, and otherwise inherits the caller's environment, including `CODEX_HOME`.
 - Aquarium does not create or own a Codex home, authentication, plugin installation, or MCP configuration for the development channel.
-- Dolgorae is absent from producer identity, enrollment, artifact, selector, resolver, and launcher state.
+- Dolgorae is absent from producer identity, enrollment, artifact, and selector state in this checkpoint; an explicit launcher invocation may use a global installation, and its absence does not block other tools.
 - Development evidence remains distinct from stable installation, release, distribution, and release-QA evidence.
 
 ## Non-Goals
@@ -50,7 +50,7 @@ All development state is rooted at `~/.aquarium-dev/`:
 - `bin/` stably resolves each executable producer through its atomic current generation;
 - `locks/`, `requests/`, and `diagnostics/` support bounded publication and recovery.
 
-The separately approved launcher is installed at `~/.local/bin/aquarium-dev`. It preserves the caller's environment while changing only the child PATH and exact executable selection. There is no development Codex home and no Aquarium-owned authentication, plugin, or MCP configuration.
+The separately approved launcher is installed at `~/.local/bin/aquarium-dev`. It preserves the caller's environment while changing only the child PATH and exact executable selection. It prefers each selected development generation independently and otherwise resolves only that missing command from the caller's global PATH outside both Aquarium roots. There is no development Codex home and no Aquarium-owned authentication, plugin, or MCP configuration.
 
 ### Producer and Publication Contract
 
@@ -72,7 +72,7 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 | `TASK-009` | Implemented the original resolver and lease model, simplified by `TASK-031`. |
 | `TASK-010` | Implemented the original isolated Codex environment, superseded by `TASK-031`. |
 | `TASK-024` | Implemented the historical Dolgorae producer path, removed by `TASK-031`. |
-| `TASK-031` | Separates development and production roots, removes Codex ownership and Dolgorae production, adds uniform bin selection and launcher behavior, and removes Dolgorae coupling from Orca Review. |
+| `TASK-031` | Separates development and production roots, removes Codex ownership, adds development-first per-tool global fallback, keeps Dolgorae setup out of this checkpoint, and removes Dolgorae coupling from Orca Review. |
 | `TASK-011` through `TASK-014` | Integrate Podway, Mulgae, Gaori, and Sanho producers. |
 | `TASK-015` | Cold-validates the complete corrected development channel. |
 
@@ -84,13 +84,14 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 - [x] Move the default development root from `~/.aquarium` to `~/.aquarium-dev`.
 - [x] Publish executable producers through stable `~/.aquarium-dev/bin/<project-id>` indirections backed by atomic current selectors.
 - [x] Add a separately approved `~/.local/bin/aquarium-dev` launcher that inherits the caller's environment and prepends only the development bin directory.
+- [x] Prefer each available development executable independently, fall back only an absent tool to global PATH outside both Aquarium roots, and fail closed on invalid selected development state.
 - [x] Remove isolated Codex configuration, authentication, plugin installation, and MCP ownership from the manager and public workflow.
-- [x] Remove Dolgorae from supported producer identities, resolution, launch, runtime-copy, diagnosis, and cleanup paths.
+- [x] Remove Dolgorae from supported producer identities, artifacts, selectors, runtime-copy, diagnosis, and cleanup paths while allowing a bounded global-only launcher fallback.
 - [x] Route Independent Review to the globally installed official Dolgorae v0.1.0 executable with immediate identity and capability checks.
 - [x] Route Orca Review directly to one fresh Orca-managed Codex worker without Dolgorae discovery, capture, launch, or settlement.
 - [x] Preserve historical decisions by superseding ADR-0007 with ADR-0008 instead of rewriting the old record.
 - [x] Pass focused unit, structural, and complete repository gates.
-- [x] Install and verify the official global Dolgorae release and the user-local launcher on the approved host.
+- [x] Install and verify the user-local launcher on the approved host; Dolgorae setup is explicitly outside this corrective checkpoint.
 - [ ] Migrate Aquarium enrollment and artifacts only from a clean committed candidate capable of reproducing the corrected contract.
 
 ### Do Not
@@ -116,8 +117,8 @@ For each of Podway, Mulgae, Gaori, and Sanho:
 - [ ] Prove initial build, exact-SHA isolation, subsequent update, atomic current advancement, stable bin resolution, and superseded-generation cleanup.
 - [ ] Prove same-checkout idempotency and approved re-enrollment.
 - [ ] Prove missing producer, rejected manifest, build failure, missing checkout, corrupt artifact, and selector-drift diagnostics.
-- [ ] Prove the launcher preserves caller environment and selects only enrolled development executables.
-- [ ] Prove Dolgorae remains globally resolved for Independent Review, absent from Orca Review, and absent from all development state.
+- [ ] Prove the launcher preserves caller environment, prefers enrolled development executables, falls back missing tools independently, and rejects corrupt selected generations.
+- [ ] Prove Dolgorae remains absent from Orca Review and development producer state; validate its separate production review setup only when that setup is in scope.
 - [ ] Run focused suites and the complete applicable Aquarium gate against the final exact candidates.
 
 ## Epic Acceptance

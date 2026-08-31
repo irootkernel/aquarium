@@ -172,7 +172,7 @@ def test_launcher_executes_leased_generation_with_derived_environment(
     )
 
 
-def test_missing_development_tool_does_not_fall_back_to_global_path(
+def test_missing_development_tool_falls_back_to_global_path(
     tmp_path, monkeypatch, capsys
 ):
     home = tmp_path / "home"
@@ -188,16 +188,66 @@ def test_missing_development_tool_does_not_fall_back_to_global_path(
     }
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     monkeypatch.setattr(os, "environ", original.copy())
+    observed = {}
+
+    def fake_execve(executable, arguments, environment):
+        observed.update(
+            executable=executable, arguments=arguments, environment=environment
+        )
+        raise OSError("stop after capture")
+
+    monkeypatch.setattr(os, "execve", fake_execve)
+
+    assert launcher.main(["podway", "version"]) == 127
+
+    assert "stop after capture" in capsys.readouterr().err
+    assert observed["executable"] == stable
+    assert observed["arguments"] == ["podway", "version"]
+    assert observed["environment"]["PATH"].split(os.pathsep) == [
+        str(home / ".aquarium-dev/bin"),
+        str(global_bin),
+    ]
+    assert observed["environment"]["CODEX_HOME"] == original["CODEX_HOME"]
+    assert os.environ == original
+
+
+def test_invalid_development_generation_does_not_fall_back(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    host_root = home / ".aquarium-dev"
+    current = host_root / "current" / "podway"
+    current.parent.mkdir(parents=True)
+    current.write_text("invalid", encoding="utf-8")
+    global_bin = tmp_path / "global-bin"
+    global_bin.mkdir()
+    stable = global_bin / "podway"
+    stable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    stable.chmod(0o755)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("PATH", str(global_bin))
     monkeypatch.setattr(
         os,
         "execve",
-        lambda *_args, **_kwargs: pytest.fail("stable executable was used as fallback"),
+        lambda *_args, **_kwargs: pytest.fail("invalid development state fell back"),
     )
 
     assert launcher.main(["podway", "version"]) == 127
 
-    assert "development generation is unavailable: podway" in capsys.readouterr().err
-    assert os.environ == original
+
+def test_global_fallback_excludes_both_aquarium_roots(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    production_bin = home / ".aquarium" / "bin"
+    development_bin = home / ".aquarium-dev" / "bin"
+    for candidate_bin in (production_bin, development_bin):
+        candidate_bin.mkdir(parents=True)
+        candidate = candidate_bin / "podway"
+        candidate.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        candidate.chmod(0o755)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+
+    with pytest.raises(OSError, match="global executable are unavailable"):
+        launcher.global_executable(
+            "podway", {"PATH": f"{development_bin}{os.pathsep}{production_bin}"}
+        )
 
 
 def test_launcher_lease_defers_superseded_generation_cleanup(tmp_path, monkeypatch):
@@ -232,7 +282,7 @@ def test_launcher_lease_defers_superseded_generation_cleanup(tmp_path, monkeypat
     assert details["removed"] is True
 
 
-@pytest.mark.parametrize("command", ("dolgorae", "unknown", "./podway"))
+@pytest.mark.parametrize("command", ("unknown", "./podway"))
 def test_launcher_rejects_commands_outside_development_channel(
     command, monkeypatch, capsys
 ):
@@ -244,6 +294,17 @@ def test_launcher_rejects_commands_outside_development_channel(
 
     assert launcher.main([command]) == 2
     assert f"unsupported development command: {command}" in capsys.readouterr().err
+
+
+def test_missing_dolgorae_is_bounded_to_that_command(tmp_path, monkeypatch, capsys):
+    home = tmp_path / "home"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("PATH", str(tmp_path / "empty-global-bin"))
+
+    assert launcher.main(["dolgorae", "--version"]) == 127
+    assert "development and global executable are unavailable: dolgorae" in (
+        capsys.readouterr().err
+    )
 
 
 def test_launcher_install_is_separately_approved_and_user_local(tmp_path, monkeypatch):

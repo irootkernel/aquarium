@@ -34,7 +34,9 @@ python3 <skill-directory>/scripts/aquarium_dev.py install-launcher \
   --approve-launcher
 ```
 
-The only supported target is `~/.local/bin/aquarium-dev`. The launcher inherits the caller's complete environment, including any existing `CODEX_HOME`, prepends only `~/.aquarium-dev/bin` to the child `PATH`, acquires an inheritable shared lease on the selected generation, and replaces itself with its exact `podway`, `mulgae`, `gaori`, or `sanho` executable. It rejects missing, production-only, and unknown commands without stable fallback. It does not select, install, or configure a Codex plugin or MCP server.
+The only supported target is `~/.local/bin/aquarium-dev`. The launcher inherits the caller's complete environment, including any existing `CODEX_HOME`, and prepends only `~/.aquarium-dev/bin` to the child `PATH`.
+
+For `podway`, `mulgae`, `gaori`, `sanho`, or `dolgorae`, it leases and executes the selected immutable development generation when one exists. Otherwise it resolves only that command from the caller's global `PATH`, excluding both Aquarium state roots. An enrolled but invalid development generation fails closed instead of hiding corruption behind a global fallback. It does not select, install, or configure a Codex plugin or MCP server.
 
 ## Build and expose development artifacts
 
@@ -48,7 +50,7 @@ Run an enrolled executable explicitly:
 aquarium-dev <tool> [args...]
 ```
 
-The development channel supports one Aquarium Codex plugin artifact plus `podway`, `mulgae`, `gaori`, and `sanho` executables at the exact respective paths `bin/<project-id>`. Dolgorae is production-only and must be invoked outside `aquarium-dev` through the normal global `PATH`; it has no Aquarium development enrollment, artifact, command entry, or fallback.
+The development producer contract supports one Aquarium Codex plugin artifact plus `podway`, `mulgae`, `gaori`, and `sanho` executables at the exact respective paths `bin/<project-id>`. Dolgorae has no Aquarium development enrollment or artifact in this checkpoint, but the launcher admits it as a global-only fallback command. A missing global Dolgorae affects only an explicit `aquarium-dev dolgorae ...` invocation and does not make the Aquarium development channel unhealthy.
 
 ## State boundary
 

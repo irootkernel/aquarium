@@ -59,7 +59,7 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 Build the `aquarium-dev` development channel planned for v0.1.14 so Aquarium and its explicitly enrolled tool producers can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and keep production tools and state separate.
 
-The Aquarium-owned runtime is being corrected by `TASK-031`: all development state moves to `~/.aquarium-dev`, executable producers are selected through its `bin` directory, the launcher inherits the caller's environment, and Dolgorae remains a globally installed production release instead of a development producer. Further progress requires exact clean local-`main` producer handoffs from Podway, Mulgae, Gaori, and Sanho. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not.
+The Aquarium-owned runtime is being corrected by `TASK-031`: all development state moves to `~/.aquarium-dev`, executable producers are preferred through its `bin` directory, each absent development command falls back independently to the caller's global PATH, and the launcher inherits the caller's environment. Dolgorae remains outside the development producer graph in this checkpoint. Further progress requires exact clean local-`main` producer handoffs from Podway, Mulgae, Gaori, and Sanho. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not.
 
 **Detailed SOT:** [`TODO-AQUARIUM-DEV.md`](../todo/TODO-AQUARIUM-DEV.md)
 
@@ -76,7 +76,7 @@ The Aquarium-owned runtime is being corrected by `TASK-031`: all development sta
 | TASK-013 | Integrate Gaori | Add and verify Gaori's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-024 | Integrate Dolgorae | Complete the historical development-producer integration, superseded for current operation by TASK-031. | Completed | TASK-010; external Dolgorae TASK-035 |
-| TASK-031 | Separate development and production environments | Rename the channel and root to `aquarium-dev`, inherit the caller's environment, expose executable producers through one bin directory, remove Dolgorae from development management, and decouple Orca Review from Dolgorae. | In Progress | TASK-010, TASK-028 |
+| TASK-031 | Separate development and production environments | Rename the channel and root to `aquarium-dev`, inherit the caller's environment, prefer executable producers through one bin directory with per-tool global fallback, keep Dolgorae setup out of this checkpoint, and decouple Orca Review from Dolgorae. | In Progress | TASK-010, TASK-028 |
 | TASK-015 | Cold-validate the integrated environment | Prove setup, update, failure, concurrency, launcher, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-031 |
 
 ## EPIC-003: Activate Dolgorae-backed Reviews

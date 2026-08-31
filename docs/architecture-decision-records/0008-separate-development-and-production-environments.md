@@ -22,6 +22,8 @@ Support Aquarium, Podway, Mulgae, Gaori, and Sanho as development producers. Exc
 
 Retain the exact committed producer contract, immutable generation promotion, atomic generation selection, bounded native hook marker, per-effect approvals, and fail-closed diagnosis. A development artifact remains integration evidence only and cannot satisfy release or distribution gates.
 
+Resolve each supported executable independently: prefer its selected immutable development generation, fall back to the caller's global PATH only when that generation is absent, and fail closed when selected development state is invalid. Exclude both Aquarium roots from global resolution so production and development state cannot recursively masquerade as a global installation.
+
 ## Consequences
 
 - Production and unreleased development state have disjoint roots.
