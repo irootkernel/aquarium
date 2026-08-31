@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 import sys
 from pathlib import Path
@@ -43,22 +44,26 @@ def clear_managed_immutable_flags(tmp_path):
                 os.chflags(target, 0)
 
 
-def executable_staging(root: Path, git_sha: str) -> tuple[Path, dict[str, str]]:
+def executable_staging(
+    root: Path, git_sha: str, project_id: str = "mulgae"
+) -> tuple[Path, dict[str, str]]:
     staging = root / f"staging-{git_sha[:8]}"
-    artifact = staging / "bin" / "podway"
+    artifact = staging / "bin" / project_id
     artifact.parent.mkdir(parents=True)
     artifact.write_text("#!/bin/sh\nprintf 'development podway\\n'\n", encoding="utf-8")
     artifact.chmod(0o755)
     manifest = {
         "schema": "aquarium-dev-artifact-manifest/v1",
-        "project_id": "podway",
+        "project_id": project_id,
         "git_sha": git_sha,
         "development_version": f"v0.2.8-dev.{git_sha[:12]}",
         "artifact_kind": "executable",
-        "artifact_path": "bin/podway",
+        "artifact_path": f"bin/{project_id}",
         "sha256": dev_manager.artifact_digest(artifact),
     }
-    (staging / ".aquarium-manifest.json").write_text("{}\n", encoding="utf-8")
+    (staging / ".aquarium-manifest.json").write_text(
+        json.dumps(manifest) + "\n", encoding="utf-8"
+    )
     return staging, manifest
 
 
@@ -72,36 +77,36 @@ def test_default_host_root_is_aquarium_dev():
 
 def test_publication_exposes_only_current_executable_in_development_bin(tmp_path):
     host_root = tmp_path / ".aquarium-dev"
-    (host_root / "artifacts" / "podway").mkdir(parents=True)
+    (host_root / "artifacts" / "mulgae").mkdir(parents=True)
     first_sha = "1" * 40
     second_sha = "2" * 40
     first, first_manifest = executable_staging(tmp_path, first_sha)
     second, second_manifest = executable_staging(tmp_path, second_sha)
 
     _, first_result = dev_manager._publish(host_root, first, first_manifest)
-    selector = host_root / "bin" / "podway"
+    selector = host_root / "bin" / "mulgae"
     assert selector.is_symlink()
     assert selector.resolve() == Path(first_result["artifact"])
     stable_target = os.readlink(selector)
-    assert stable_target == "../current/podway/bin/podway"
+    assert stable_target == "../current/mulgae/bin/mulgae"
 
     _, second_result = dev_manager._publish(host_root, second, second_manifest)
     assert selector.resolve() == Path(second_result["artifact"])
     assert os.readlink(selector) == stable_target
-    assert not (host_root / "artifacts" / "podway" / first_sha).exists()
+    assert not (host_root / "artifacts" / "mulgae" / first_sha).exists()
     assert not (host_root / "runtime").exists()
 
 
 def test_current_selector_failure_preserves_previous_generation(tmp_path, monkeypatch):
     host_root = tmp_path / ".aquarium-dev"
-    (host_root / "artifacts" / "podway").mkdir(parents=True)
+    (host_root / "artifacts" / "mulgae").mkdir(parents=True)
     first_sha = "1" * 40
     second_sha = "2" * 40
     first, first_manifest = executable_staging(tmp_path, first_sha)
     second, second_manifest = executable_staging(tmp_path, second_sha)
     dev_manager._publish(host_root, first, first_manifest)
-    current = host_root / "current" / "podway"
-    command = host_root / "bin" / "podway"
+    current = host_root / "current" / "mulgae"
+    command = host_root / "bin" / "mulgae"
     previous_current = os.readlink(current)
     stable_command = os.readlink(command)
     original_replace = dev_manager.os.replace
@@ -149,7 +154,7 @@ def test_launcher_executes_leased_generation_with_derived_environment(
     observed = {}
     home = tmp_path / "home"
     host_root = home / ".aquarium-dev"
-    (host_root / "artifacts" / "podway").mkdir(parents=True)
+    (host_root / "artifacts" / "mulgae").mkdir(parents=True)
     git_sha = "1" * 40
     staging, manifest = executable_staging(tmp_path, git_sha)
     _, published = dev_manager._publish(host_root, staging, manifest)
@@ -162,9 +167,9 @@ def test_launcher_executes_leased_generation_with_derived_environment(
         raise OSError("stop after capture")
 
     monkeypatch.setattr(os, "execve", fake_execve)
-    assert launcher.main(["podway", "doctor"]) == 127
+    assert launcher.main(["mulgae", "doctor"]) == 127
     assert observed["executable"] == Path(published["artifact"])
-    assert observed["arguments"] == ["podway", "doctor"]
+    assert observed["arguments"] == ["mulgae", "doctor"]
     assert (
         observed["environment"]["PATH"]
         .split(os.pathsep)[0]
@@ -178,7 +183,7 @@ def test_missing_development_tool_falls_back_to_global_path(
     home = tmp_path / "home"
     global_bin = tmp_path / "global-bin"
     global_bin.mkdir()
-    stable = global_bin / "podway"
+    stable = global_bin / "mulgae"
     stable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     stable.chmod(0o755)
     original = {
@@ -198,11 +203,11 @@ def test_missing_development_tool_falls_back_to_global_path(
 
     monkeypatch.setattr(os, "execve", fake_execve)
 
-    assert launcher.main(["podway", "version"]) == 127
+    assert launcher.main(["mulgae", "version"]) == 127
 
     assert "stop after capture" in capsys.readouterr().err
     assert observed["executable"] == stable
-    assert observed["arguments"] == ["podway", "version"]
+    assert observed["arguments"] == ["mulgae", "version"]
     assert observed["environment"]["PATH"].split(os.pathsep) == [
         str(home / ".aquarium-dev/bin"),
         str(global_bin),
@@ -211,12 +216,10 @@ def test_missing_development_tool_falls_back_to_global_path(
     assert os.environ == original
 
 
-def test_invalid_development_generation_does_not_fall_back(tmp_path, monkeypatch):
+def test_missing_managed_service_never_falls_back_to_global_podway(
+    tmp_path, monkeypatch, capsys
+):
     home = tmp_path / "home"
-    host_root = home / ".aquarium-dev"
-    current = host_root / "current" / "podway"
-    current.parent.mkdir(parents=True)
-    current.write_text("invalid", encoding="utf-8")
     global_bin = tmp_path / "global-bin"
     global_bin.mkdir()
     stable = global_bin / "podway"
@@ -227,10 +230,37 @@ def test_invalid_development_generation_does_not_fall_back(tmp_path, monkeypatch
     monkeypatch.setattr(
         os,
         "execve",
-        lambda *_args, **_kwargs: pytest.fail("invalid development state fell back"),
+        lambda *_args, **_kwargs: pytest.fail(
+            "managed service fell back to production"
+        ),
     )
 
     assert launcher.main(["podway", "version"]) == 127
+    assert (
+        "managed development service is unavailable: podway" in capsys.readouterr().err
+    )
+
+
+def test_invalid_development_generation_does_not_fall_back(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    host_root = home / ".aquarium-dev"
+    current = host_root / "current" / "mulgae"
+    current.parent.mkdir(parents=True)
+    current.write_text("invalid", encoding="utf-8")
+    global_bin = tmp_path / "global-bin"
+    global_bin.mkdir()
+    stable = global_bin / "mulgae"
+    stable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    stable.chmod(0o755)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("PATH", str(global_bin))
+    monkeypatch.setattr(
+        os,
+        "execve",
+        lambda *_args, **_kwargs: pytest.fail("invalid development state fell back"),
+    )
+
+    assert launcher.main(["mulgae", "version"]) == 127
 
 
 def test_global_fallback_excludes_both_aquarium_roots(tmp_path, monkeypatch):
@@ -239,21 +269,21 @@ def test_global_fallback_excludes_both_aquarium_roots(tmp_path, monkeypatch):
     development_bin = home / ".aquarium-dev" / "bin"
     for candidate_bin in (production_bin, development_bin):
         candidate_bin.mkdir(parents=True)
-        candidate = candidate_bin / "podway"
+        candidate = candidate_bin / "mulgae"
         candidate.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
         candidate.chmod(0o755)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
 
     with pytest.raises(OSError, match="global executable are unavailable"):
         launcher.global_executable(
-            "podway", {"PATH": f"{development_bin}{os.pathsep}{production_bin}"}
+            "mulgae", {"PATH": f"{development_bin}{os.pathsep}{production_bin}"}
         )
 
 
 def test_launcher_lease_defers_superseded_generation_cleanup(tmp_path, monkeypatch):
     home = tmp_path / "home"
     host_root = home / ".aquarium-dev"
-    (host_root / "artifacts" / "podway").mkdir(parents=True)
+    (host_root / "artifacts" / "mulgae").mkdir(parents=True)
     first_sha = "1" * 40
     second_sha = "2" * 40
     first, first_manifest = executable_staging(tmp_path, first_sha)
@@ -261,22 +291,23 @@ def test_launcher_lease_defers_superseded_generation_cleanup(tmp_path, monkeypat
     dev_manager._publish(host_root, first, first_manifest)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     monkeypatch.setattr(dev_manager, "_spawn_cleanup", lambda *_args: None)
-    executable, descriptor = launcher.leased_executable("podway")
+    executable, descriptors = launcher.leased_executable("mulgae")
     assert executable.parent.parent.name == first_sha
-    assert os.get_inheritable(descriptor)
+    assert all(os.get_inheritable(descriptor) for descriptor in descriptors)
     try:
         dev_manager._publish(host_root, second, second_manifest)
-        assert (host_root / "artifacts/podway" / first_sha).exists()
+        assert (host_root / "artifacts/mulgae" / first_sha).exists()
         status, details = dev_manager.cleanup_generation(
-            "podway", first_sha, host_root, wait=False
+            "mulgae", first_sha, host_root, wait=False
         )
         assert status == "no-change"
         assert details["leased"] is True
     finally:
-        os.close(descriptor)
+        for descriptor in descriptors:
+            os.close(descriptor)
 
     status, details = dev_manager.cleanup_generation(
-        "podway", first_sha, host_root, wait=False
+        "mulgae", first_sha, host_root, wait=False
     )
     assert status == "success"
     assert details["removed"] is True

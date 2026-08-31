@@ -26,6 +26,9 @@ from dev_contract import (
     ContractError,
     validate_description,
     validate_manifest,
+    validate_service_plan,
+    validate_service_result,
+    validate_service_status,
 )
 
 ENROLLMENT_SCHEMA = "aquarium-dev-enrollment/v1"
@@ -36,6 +39,7 @@ QUEUE_SCHEMA = "aquarium-dev-build-request/v1"
 DIAGNOSTIC_SCHEMA = "aquarium-dev-diagnostic/v1"
 PRODUCER_BUILD_TIMEOUT_SECONDS = 600
 PROCESS_TERMINATION_GRACE_SECONDS = 5
+SERVICE_CONTROLLER_TIMEOUT_SECONDS = 60
 
 
 @dataclass
@@ -174,7 +178,7 @@ def _describe(repository: Path) -> dict[str, Any]:
         raise ManagerError(
             "producer_description_invalid",
             str(error),
-            "Repair aquarium-dev-describe to emit one valid v1 object.",
+            "Repair aquarium-dev-describe to emit one supported description.",
             "diagnose",
         ) from error
     probe = subprocess.run(
@@ -419,7 +423,7 @@ def _validated_command_selector(
     artifact: Path,
     manifest: dict[str, Any],
 ) -> Path | None:
-    if manifest["artifact_kind"] != "executable":
+    if manifest["artifact_kind"] not in {"executable", "managed-service"}:
         return None
     selector = host_root / "bin" / project_id
     if not selector.is_symlink():
@@ -442,7 +446,12 @@ def _validated_command_selector(
             project_id,
             manifest["git_sha"],
         ) from error
-    if resolved != artifact:
+    expected = (
+        artifact
+        if manifest["artifact_kind"] == "executable"
+        else artifact / manifest["command_path"]
+    )
+    if resolved != expected:
         raise ManagerError(
             "artifact_invalid",
             "The development command selector does not match the current artifact.",
@@ -465,24 +474,62 @@ def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
             checkout = Path(enrollment["checkout"])
             description = _describe(checkout)
             generation = _current_generation(host_root, project_id)
+            pending_generation = _pending_generation(host_root, project_id)
             if generation is None:
-                projects.append({"project_id": project_id, "state": "artifact-missing"})
-                continue
+                generation = pending_generation
+                if generation is None:
+                    projects.append(
+                        {"project_id": project_id, "state": "artifact-missing"}
+                    )
+                    continue
+                selected_state = "pending-service"
+            else:
+                selected_state = "development"
             artifact, manifest = _validate_generation(
                 generation, project_id, description
             )
-            command = _validated_command_selector(
-                host_root, project_id, artifact, manifest
+            pending = None
+            if pending_generation is not None:
+                pending_artifact, pending_manifest = _validate_generation(
+                    pending_generation, project_id, description
+                )
+                pending = {
+                    "git_sha": pending_manifest["git_sha"],
+                    "development_version": pending_manifest["development_version"],
+                    "artifact": str(pending_artifact),
+                    "sha256": pending_manifest["sha256"],
+                }
+            command = (
+                _validated_command_selector(host_root, project_id, artifact, manifest)
+                if selected_state == "development"
+                else None
             )
+            service = None
+            if manifest["artifact_kind"] == "managed-service":
+                _, controller = _service_entrypoints(generation, manifest)
+                service = _controller_json(
+                    controller,
+                    [
+                        "status",
+                        "--json",
+                        "--runtime-root",
+                        os.fspath(host_root / "runtime" / project_id),
+                    ],
+                    validate_service_status,
+                    project_id,
+                    generation.name,
+                )
             projects.append(
                 {
                     "project_id": project_id,
-                    "state": "development",
+                    "state": selected_state,
                     "checkout": str(checkout),
                     "git_sha": manifest["git_sha"],
                     "development_version": manifest["development_version"],
                     "artifact": str(artifact),
                     "command": str(command) if command is not None else None,
+                    "service": service,
+                    "pending": pending,
                     "sha256": manifest["sha256"],
                 }
             )
@@ -515,19 +562,56 @@ def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
     if enrollment_state == "healthy":
         try:
             generation = _current_generation(host_root, project_id)
+            pending_generation = _pending_generation(host_root, project_id)
+            selected_state = "healthy"
+            if generation is None:
+                generation = pending_generation
+                selected_state = "pending-service"
             if generation is not None:
                 artifact, manifest = _validate_generation(
                     generation, project_id, description
                 )
-                command = _validated_command_selector(
-                    host_root, project_id, artifact, manifest
+                pending = None
+                if pending_generation is not None:
+                    pending_artifact, pending_manifest = _validate_generation(
+                        pending_generation, project_id, description
+                    )
+                    pending = {
+                        "git_sha": pending_manifest["git_sha"],
+                        "development_version": pending_manifest["development_version"],
+                        "artifact": str(pending_artifact),
+                        "sha256": pending_manifest["sha256"],
+                    }
+                command = (
+                    _validated_command_selector(
+                        host_root, project_id, artifact, manifest
+                    )
+                    if selected_state == "healthy"
+                    else None
                 )
+                service = None
+                if manifest["artifact_kind"] == "managed-service":
+                    _, controller = _service_entrypoints(generation, manifest)
+                    service = _controller_json(
+                        controller,
+                        [
+                            "status",
+                            "--json",
+                            "--runtime-root",
+                            os.fspath(host_root / "runtime" / project_id),
+                        ],
+                        validate_service_status,
+                        project_id,
+                        generation.name,
+                    )
                 current = {
-                    "state": "healthy",
+                    "state": selected_state,
                     "git_sha": manifest["git_sha"],
                     "development_version": manifest["development_version"],
                     "artifact": str(artifact),
                     "command": str(command) if command is not None else None,
+                    "service": service,
+                    "pending": pending,
                     "sha256": manifest["sha256"],
                 }
         except ManagerError as error:
@@ -744,7 +828,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def artifact_digest(path: Path) -> str:
-    """Return the v1 digest for one regular file or canonical directory tree."""
+    """Return the canonical digest for one regular file or directory tree."""
     if path.is_symlink():
         raise ManagerError(
             "artifact_invalid",
@@ -781,6 +865,61 @@ def artifact_digest(path: Path) -> str:
     return f"sha256:{digest.hexdigest()}"
 
 
+def _producer_identity_fields(document: dict[str, Any]) -> tuple[str, ...]:
+    fields = ("project_id", "artifact_kind", "artifact_path")
+    if document["artifact_kind"] == "managed-service":
+        return (*fields, "command_path", "controller_path")
+    return fields
+
+
+def _contained_executable(artifact: Path, relative: str, role: str) -> Path:
+    candidate = artifact.joinpath(*relative.split("/"))
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_missing",
+            f"The managed-service {role} is unavailable: {error}",
+            "Repair the producer bundle and rebuild.",
+            "validate",
+        ) from error
+    if artifact.resolve() not in resolved.parents or candidate.is_symlink():
+        raise ManagerError(
+            "output_escape",
+            f"The managed-service {role} escapes its bundle.",
+            "Keep every managed-service entrypoint inside the declared bundle.",
+            "validate",
+        )
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise ManagerError(
+            "artifact_invalid",
+            f"The managed-service {role} is not one regular executable.",
+            "Produce executable command and controller entrypoints.",
+            "validate",
+        )
+    return resolved
+
+
+def _validate_managed_service_bundle(
+    artifact: Path, manifest: dict[str, Any]
+) -> tuple[Path, Path] | None:
+    if manifest["artifact_kind"] != "managed-service":
+        return None
+    if not artifact.is_dir():
+        raise ManagerError(
+            "artifact_invalid",
+            "The managed-service artifact is not a bundle directory.",
+            "Produce the complete managed-service bundle at artifact_path.",
+            "validate",
+            manifest["project_id"],
+            manifest.get("git_sha"),
+        )
+    return (
+        _contained_executable(artifact, manifest["command_path"], "command"),
+        _contained_executable(artifact, manifest["controller_path"], "controller"),
+    )
+
+
 def _read_single_json(stdout: str, project_id: str, git_sha: str) -> dict[str, Any]:
     try:
         value = json.loads(stdout)
@@ -789,7 +928,7 @@ def _read_single_json(stdout: str, project_id: str, git_sha: str) -> dict[str, A
         raise ManagerError(
             "producer_manifest_invalid",
             str(error),
-            "Repair aquarium-dev-build to emit one valid v1 manifest.",
+            "Repair aquarium-dev-build to emit one supported manifest.",
             "validate",
             project_id,
             git_sha,
@@ -945,12 +1084,10 @@ def _validated_build(
         manifest = _read_single_json(result.stdout, project_id, git_sha)
         expected_version = f"{description['next_version']}-dev.{git_sha[:12]}"
         compared = {
-            "project_id": project_id,
-            "git_sha": git_sha,
-            "development_version": expected_version,
-            "artifact_kind": description["artifact_kind"],
-            "artifact_path": description["artifact_path"],
+            field: description[field]
+            for field in _producer_identity_fields(description)
         }
+        compared.update(git_sha=git_sha, development_version=expected_version)
         if any(manifest[field] != expected for field, expected in compared.items()):
             raise ManagerError(
                 "producer_manifest_invalid",
@@ -961,6 +1098,7 @@ def _validated_build(
                 git_sha,
             )
         artifact = _contained_artifact(staging, manifest["artifact_path"])
+        _validate_managed_service_bundle(artifact, manifest)
         observed_digest = artifact_digest(artifact)
         if observed_digest != manifest["sha256"]:
             raise ManagerError(
@@ -1038,6 +1176,147 @@ def _temporary_selector(selector: Path, target: Path) -> Path:
     return temporary
 
 
+def _generation_selector(
+    host_root: Path, directory: str, project_id: str
+) -> Path | None:
+    selector = host_root / directory / project_id
+    if not selector.exists() and not selector.is_symlink():
+        return None
+    if not selector.is_symlink():
+        raise ManagerError(
+            "artifact_invalid",
+            f"The {directory} selector is not a symbolic link.",
+            "Repair the development channel before continuing.",
+            "diagnose",
+            project_id,
+        )
+    try:
+        generation = selector.resolve(strict=True)
+    except OSError as error:
+        raise ManagerError(
+            "artifact_missing",
+            str(error),
+            "Rebuild the enrolled project to restore its selected artifact.",
+            "diagnose",
+            project_id,
+        ) from error
+    expected_parent = (host_root / "artifacts" / project_id).resolve()
+    if (
+        generation.parent != expected_parent
+        or SHA_RE.fullmatch(generation.name) is None
+    ):
+        raise ManagerError(
+            "artifact_invalid",
+            f"The {directory} selector escapes the project artifact root.",
+            "Repair the development channel before continuing.",
+            "diagnose",
+            project_id,
+        )
+    return generation
+
+
+def _pending_generation(host_root: Path, project_id: str) -> Path | None:
+    return _generation_selector(host_root, "pending", project_id)
+
+
+def _publish_pending(host_root: Path, project_id: str, destination: Path) -> Path:
+    pending = host_root / "pending" / project_id
+    if pending.exists() and not pending.is_symlink():
+        raise OSError(f"managed pending selector is not a symbolic link: {pending}")
+    temporary = _temporary_selector(pending, destination)
+    try:
+        os.replace(temporary, pending)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return pending
+
+
+def _service_lock(host_root: Path, project_id: str, operation: int):
+    path = host_root / "locks" / "services" / f"{project_id}.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stream = path.open("a+b")
+    try:
+        fcntl.flock(stream.fileno(), operation)
+    except OSError:
+        stream.close()
+        raise
+    return stream
+
+
+def _service_entrypoints(
+    generation: Path, manifest: dict[str, Any]
+) -> tuple[Path, Path]:
+    artifact = _contained_artifact(generation, manifest["artifact_path"])
+    entrypoints = _validate_managed_service_bundle(artifact, manifest)
+    if entrypoints is None:
+        raise ManagerError(
+            "service_unavailable",
+            "The selected generation is not a managed service.",
+            "Use a managed-service producer generation.",
+            "service",
+            manifest["project_id"],
+            manifest["git_sha"],
+        )
+    return entrypoints
+
+
+def _controller_json(
+    controller: Path,
+    arguments: list[str],
+    validator,
+    project_id: str,
+    git_sha: str,
+) -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            [os.fspath(controller), *arguments],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=SERVICE_CONTROLLER_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise ManagerError(
+            "service_unavailable",
+            f"The managed-service controller could not run: {error}",
+            "Repair the producer controller and retry.",
+            "service",
+            project_id,
+            git_sha,
+        ) from error
+    if result.returncode != 0:
+        raise ManagerError(
+            "service_activation_failed",
+            (result.stderr.strip() or "The managed-service controller failed.")[:1000],
+            "Inspect the producer-owned service recovery state before retrying.",
+            "service",
+            project_id,
+            git_sha,
+        )
+    try:
+        value = json.loads(result.stdout)
+        validator(value)
+    except (json.JSONDecodeError, ContractError) as error:
+        raise ManagerError(
+            "service_contract_invalid",
+            str(error),
+            "Repair the producer-owned Aquarium service controller.",
+            "service",
+            project_id,
+            git_sha,
+        ) from error
+    if value["project_id"] != project_id:
+        raise ManagerError(
+            "service_contract_invalid",
+            "The controller result belongs to another project.",
+            "Repair the producer-owned Aquarium service controller.",
+            "service",
+            project_id,
+            git_sha,
+        )
+    return value
+
+
 def _publish_selectors(
     host_root: Path,
     project_id: str,
@@ -1059,10 +1338,14 @@ def _publish_selectors(
             "publish",
             project_id,
         )
+    if manifest["artifact_kind"] == "managed-service":
+        _validate_managed_service_bundle(artifact, manifest)
     command_temporary = None
     try:
-        if manifest["artifact_kind"] == "executable":
+        if manifest["artifact_kind"] in {"executable", "managed-service"}:
             command_target = current / manifest["artifact_path"]
+            if manifest["artifact_kind"] == "managed-service":
+                command_target /= manifest["command_path"]
             expected_target = os.path.relpath(command_target, command.parent)
             if command.exists() and not command.is_symlink():
                 raise OSError(f"managed command is not a symbolic link: {command}")
@@ -1074,7 +1357,11 @@ def _publish_selectors(
             os.replace(current_temporary, current)
         finally:
             current_temporary.unlink(missing_ok=True)
-        return command if manifest["artifact_kind"] == "executable" else None
+        return (
+            command
+            if manifest["artifact_kind"] in {"executable", "managed-service"}
+            else None
+        )
     finally:
         if command_temporary is not None:
             command_temporary.unlink(missing_ok=True)
@@ -1089,6 +1376,7 @@ def _publish(
     current = host_root / "current" / project_id
     current.parent.mkdir(parents=True, exist_ok=True)
     previous_sha = None
+    superseded_pending_sha = None
     if current.is_symlink():
         try:
             previous = current.resolve(strict=True)
@@ -1102,6 +1390,7 @@ def _publish(
             if destination.exists():
                 existing = _manifest_from_generation(destination, project_id, git_sha)
                 artifact = _contained_artifact(destination, existing["artifact_path"])
+                _validate_managed_service_bundle(artifact, existing)
                 if (
                     existing != manifest
                     or artifact_digest(artifact) != manifest["sha256"]
@@ -1120,7 +1409,32 @@ def _publish(
                 os.replace(staging, destination)
                 status = "success"
             _seal_generation(destination)
-            command = _publish_selectors(host_root, project_id, destination, manifest)
+            if manifest["artifact_kind"] == "managed-service":
+                with _service_lock(host_root, project_id, fcntl.LOCK_EX):
+                    selected = _current_generation(host_root, project_id)
+                    previous_sha = selected.name if selected is not None else None
+                    previous_pending = _pending_generation(host_root, project_id)
+                    if previous_pending is not None:
+                        superseded_pending_sha = previous_pending.name
+                    if previous_sha == git_sha:
+                        command = _publish_selectors(
+                            host_root, project_id, destination, manifest
+                        )
+                        existing_pending = host_root / "pending" / project_id
+                        if (
+                            existing_pending.is_symlink()
+                            and existing_pending.resolve(strict=True) == destination
+                        ):
+                            existing_pending.unlink()
+                        pending = None
+                    else:
+                        pending = _publish_pending(host_root, project_id, destination)
+                        command = None
+            else:
+                pending = None
+                command = _publish_selectors(
+                    host_root, project_id, destination, manifest
+                )
         if (
             manifest["artifact_kind"] == "executable"
             and previous_sha is not None
@@ -1131,15 +1445,27 @@ def _publish(
             )
             if cleanup_status == "no-change" and cleanup.get("leased"):
                 _spawn_cleanup(host_root, project_id, previous_sha)
+        if (
+            superseded_pending_sha is not None
+            and superseded_pending_sha != git_sha
+            and superseded_pending_sha != previous_sha
+        ):
+            cleanup_status, cleanup = cleanup_generation(
+                project_id, superseded_pending_sha, host_root, wait=False
+            )
+            if cleanup_status == "no-change" and cleanup.get("leased"):
+                _spawn_cleanup(host_root, project_id, superseded_pending_sha)
         return status, {
             "project_id": project_id,
             "git_sha": git_sha,
             "development_version": manifest["development_version"],
             "artifact": str(destination / manifest["artifact_path"]),
             "current": str(current),
+            "pending": str(pending) if pending is not None else None,
             "command": str(command) if command is not None else None,
             "sha256": manifest["sha256"],
             "superseded_git_sha": previous_sha,
+            "superseded_pending_git_sha": superseded_pending_sha,
         }
     except ManagerError:
         raise
@@ -1155,6 +1481,230 @@ def _publish(
     finally:
         if staging.exists():
             shutil.rmtree(staging, ignore_errors=True)
+
+
+def _service_target(host_root: Path, project_id: str) -> Path:
+    target = _pending_generation(host_root, project_id)
+    if target is None:
+        target = _current_generation(host_root, project_id)
+    if target is None:
+        raise ManagerError(
+            "service_unavailable",
+            "The project has no current or pending managed-service generation.",
+            "Publish one managed-service producer generation first.",
+            "service",
+            project_id,
+        )
+    return target
+
+
+def _service_plan_unlocked(
+    host_root: Path, project_id: str, target: Path
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    manifest = _manifest_from_generation(target, project_id, target.name)
+    _, controller = _service_entrypoints(target, manifest)
+    runtime_root = host_root / "runtime" / project_id
+    status = _controller_json(
+        controller,
+        ["status", "--json", "--runtime-root", os.fspath(runtime_root)],
+        validate_service_status,
+        project_id,
+        target.name,
+    )
+    plan = _controller_json(
+        controller,
+        [
+            "plan",
+            "--json",
+            "--runtime-root",
+            os.fspath(runtime_root),
+            "--generation-root",
+            os.fspath(target),
+        ],
+        validate_service_plan,
+        project_id,
+        target.name,
+    )
+    if (
+        plan["target_git_sha"] != target.name
+        or plan["active_git_sha"] != status["active_git_sha"]
+        or plan["busy"] != status["busy"]
+    ):
+        raise ManagerError(
+            "service_contract_invalid",
+            "The controller plan does not match its observed service status.",
+            "Repair the producer-owned Aquarium service controller.",
+            "service",
+            project_id,
+            target.name,
+        )
+    return manifest, status, plan
+
+
+def plan_managed_service(
+    project_id: str, host_root: Path
+) -> tuple[str, dict[str, Any]]:
+    if project_id not in PROJECT_IDS:
+        raise ManagerError(
+            "invalid_arguments",
+            "The service project ID is unsupported.",
+            "Use one project ID from the shared development contract.",
+            "service",
+        )
+    target = _service_target(host_root, project_id)
+    with _service_lock(host_root, project_id, fcntl.LOCK_SH):
+        if _service_target(host_root, project_id) != target:
+            raise ManagerError(
+                "lease_unavailable",
+                "The target generation changed while service planning began.",
+                "Plan the managed service again.",
+                "service",
+                project_id,
+                target.name,
+            )
+        _, status, plan = _service_plan_unlocked(host_root, project_id, target)
+    return "diagnosed", {
+        "project_id": project_id,
+        "target_git_sha": target.name,
+        "runtime_root": str(host_root / "runtime" / project_id),
+        "status": status,
+        "plan": plan,
+    }
+
+
+def apply_managed_service(
+    project_id: str,
+    host_root: Path,
+    plan_token: str,
+    *,
+    approve_service: bool,
+) -> tuple[str, dict[str, Any]]:
+    if not approve_service:
+        raise ManagerError(
+            "approval_required",
+            "Managed-service activation approval is required.",
+            "Approve only the exact controller plan token displayed by service-plan.",
+            "service",
+            project_id if project_id in PROJECT_IDS else None,
+        )
+    if project_id not in PROJECT_IDS:
+        raise ManagerError(
+            "invalid_arguments",
+            "The service project ID is unsupported.",
+            "Use one project ID from the shared development contract.",
+            "service",
+        )
+    target = _service_target(host_root, project_id)
+    previous_sha = None
+    with _service_lock(host_root, project_id, fcntl.LOCK_EX):
+        if _service_target(host_root, project_id) != target:
+            raise ManagerError(
+                "lease_unavailable",
+                "The target generation changed before service activation.",
+                "Run service-plan again and approve its new exact token.",
+                "service",
+                project_id,
+                target.name,
+            )
+        manifest, status, plan = _service_plan_unlocked(host_root, project_id, target)
+        if plan["action"] == "defer":
+            return "no-change", {
+                "project_id": project_id,
+                "target_git_sha": target.name,
+                "deferred": True,
+                "status": status,
+                "plan": plan,
+            }
+        if plan["plan_token"] != plan_token:
+            raise ManagerError(
+                "approval_required",
+                "The supplied service plan token is absent or stale.",
+                "Run service-plan again and approve its exact current token.",
+                "service",
+                project_id,
+                target.name,
+            )
+        current = _current_generation(host_root, project_id)
+        previous_sha = current.name if current is not None else None
+        if plan["action"] == "no-change":
+            result = {
+                "schema": "aquarium-dev-service-result/v1",
+                "project_id": project_id,
+                "status": "no-change",
+                "active_git_sha": target.name,
+                "recovery_required": False,
+            }
+        else:
+            _, controller = _service_entrypoints(target, manifest)
+            result = _controller_json(
+                controller,
+                [
+                    "apply",
+                    "--json",
+                    "--runtime-root",
+                    os.fspath(host_root / "runtime" / project_id),
+                    "--generation-root",
+                    os.fspath(target),
+                    "--plan-token",
+                    plan_token,
+                ],
+                validate_service_result,
+                project_id,
+                target.name,
+            )
+        if result["active_git_sha"] != target.name or result["recovery_required"]:
+            raise ManagerError(
+                "service_activation_failed",
+                "The controller did not activate the exact target generation.",
+                "Inspect the producer-owned service recovery state before retrying.",
+                "service",
+                project_id,
+                target.name,
+            )
+        _, controller = _service_entrypoints(target, manifest)
+        observed = _controller_json(
+            controller,
+            [
+                "status",
+                "--json",
+                "--runtime-root",
+                os.fspath(host_root / "runtime" / project_id),
+            ],
+            validate_service_status,
+            project_id,
+            target.name,
+        )
+        if (
+            observed["active_git_sha"] != target.name
+            or observed["state"] not in {"ready", "busy"}
+            or observed["recovery_required"]
+        ):
+            raise ManagerError(
+                "service_activation_failed",
+                "The activated service did not become ready at the target generation.",
+                "Inspect the producer-owned service recovery state before retrying.",
+                "service",
+                project_id,
+                target.name,
+            )
+        command = _publish_selectors(host_root, project_id, target, manifest)
+        pending = host_root / "pending" / project_id
+        if pending.is_symlink() and pending.resolve(strict=True) == target:
+            pending.unlink()
+    if previous_sha is not None and previous_sha != target.name:
+        cleanup_status, cleanup = cleanup_generation(
+            project_id, previous_sha, host_root, wait=False
+        )
+        if cleanup_status == "no-change" and cleanup.get("leased"):
+            _spawn_cleanup(host_root, project_id, previous_sha)
+    return ("no-change" if plan["action"] == "no-change" else "success"), {
+        "project_id": project_id,
+        "git_sha": target.name,
+        "command": str(command),
+        "result": result,
+        "status": observed,
+        "superseded_git_sha": previous_sha,
+    }
 
 
 def _write_diagnostic(host_root: Path, error: ManagerError) -> None:
@@ -1241,37 +1791,7 @@ def lease_current_generation(host_root: Path, project_id: str):
 
 
 def _current_generation(host_root: Path, project_id: str) -> Path | None:
-    current = host_root / "current" / project_id
-    if not current.exists() and not current.is_symlink():
-        return None
-    if not current.is_symlink():
-        raise ManagerError(
-            "artifact_invalid",
-            "The current selector is not a symbolic link.",
-            "Repair the development channel by rebuilding the enrolled project.",
-            "diagnose",
-            project_id,
-        )
-    try:
-        generation = current.resolve(strict=True)
-    except OSError as error:
-        raise ManagerError(
-            "artifact_missing",
-            str(error),
-            "Rebuild the enrolled project to restore its current artifact.",
-            "diagnose",
-            project_id,
-        ) from error
-    expected_parent = (host_root / "artifacts" / project_id).resolve()
-    if generation.parent != expected_parent:
-        raise ManagerError(
-            "artifact_invalid",
-            "The current selector escapes the enrolled project's artifact root.",
-            "Repair the development channel by rebuilding the enrolled project.",
-            "diagnose",
-            project_id,
-        )
-    return generation
+    return _generation_selector(host_root, "current", project_id)
 
 
 def _validate_generation(
@@ -1282,12 +1802,12 @@ def _validate_generation(
     git_sha = generation.name
     manifest = _manifest_from_generation(generation, project_id, git_sha)
     expected = {
-        "project_id": project_id,
-        "git_sha": git_sha,
-        "development_version": f"{description['next_version']}-dev.{git_sha[:12]}",
-        "artifact_kind": description["artifact_kind"],
-        "artifact_path": description["artifact_path"],
+        field: description[field] for field in _producer_identity_fields(description)
     }
+    expected.update(
+        git_sha=git_sha,
+        development_version=f"{description['next_version']}-dev.{git_sha[:12]}",
+    )
     if any(manifest[field] != value for field, value in expected.items()):
         raise ManagerError(
             "artifact_invalid",
@@ -1298,6 +1818,7 @@ def _validate_generation(
             git_sha if len(git_sha) == 40 else None,
         )
     artifact = _contained_artifact(generation, manifest["artifact_path"])
+    _validate_managed_service_bundle(artifact, manifest)
     if artifact_digest(artifact) != manifest["sha256"]:
         raise ManagerError(
             "checksum_mismatch",
@@ -1350,6 +1871,9 @@ def cleanup_generation(
         current = _current_generation(host_root, project_id)
         if current is not None and current.name == git_sha:
             return "no-change", {"git_sha": git_sha, "current": True}
+        pending = _pending_generation(host_root, project_id)
+        if pending is not None and pending.name == git_sha:
+            return "no-change", {"git_sha": git_sha, "pending": True}
         generation = host_root / "artifacts" / project_id / git_sha
         if generation.exists():
             if generation.is_symlink() or not generation.is_dir():

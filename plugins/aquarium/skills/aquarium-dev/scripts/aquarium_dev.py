@@ -11,10 +11,12 @@ from pathlib import Path
 from dev_contract import validate_error, validate_result
 from dev_manager import (
     ManagerError,
+    apply_managed_service,
     cleanup_generation,
     diagnose,
     enroll,
     install_launcher,
+    plan_managed_service,
     process_queue,
     queue_request,
     rebuild,
@@ -56,6 +58,12 @@ def parser() -> argparse.ArgumentParser:
         "--target", type=Path, default=Path.home() / ".local" / "bin" / "aquarium-dev"
     )
     launcher_parser.add_argument("--approve-launcher", action="store_true")
+    service_plan_parser = commands.add_parser("service-plan")
+    service_plan_parser.add_argument("--project-id", required=True)
+    service_apply_parser = commands.add_parser("service-apply")
+    service_apply_parser.add_argument("--project-id", required=True)
+    service_apply_parser.add_argument("--plan-token", required=True)
+    service_apply_parser.add_argument("--approve-service", action="store_true")
     return value
 
 
@@ -171,6 +179,33 @@ def main() -> int:
                 status,
                 None,
                 "Aquarium development launcher reconciled.",
+                details,
+            )
+            return 0
+        if arguments.command == "service-plan":
+            status, details = plan_managed_service(
+                arguments.project_id, arguments.host_root
+            )
+            result(
+                "service-plan",
+                status,
+                arguments.project_id,
+                "Managed-service activation planned.",
+                details,
+            )
+            return 0
+        if arguments.command == "service-apply":
+            status, details = apply_managed_service(
+                arguments.project_id,
+                arguments.host_root,
+                arguments.plan_token,
+                approve_service=arguments.approve_service,
+            )
+            result(
+                "service-apply",
+                status,
+                arguments.project_id,
+                "Managed-service activation reconciled.",
                 details,
             )
             return 0

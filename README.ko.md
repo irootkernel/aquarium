@@ -46,9 +46,9 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 ## Development Channel
 
-`$aquarium:aquarium-dev`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 `~/.aquarium-dev/` 아래에 만들며, executable producer를 `~/.aquarium-dev/bin/`에 atomic하게 노출합니다. Enrollment, hook 변경, build, launcher 설치는 각각 별도 승인을 유지합니다.
+`$aquarium:aquarium-dev`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 `~/.aquarium-dev/` 아래에 만들며, foreground executable 또는 producer-owned managed service를 `~/.aquarium-dev/bin/`에 atomic하게 노출합니다. Enrollment, hook 변경, build, managed-service activation, launcher 설치는 각각 별도 승인을 유지합니다.
 
-사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용하고, 각 tool의 `~/.aquarium-dev/bin` generation이 있으면 우선 사용하며 없으면 해당 tool만 두 Aquarium root 밖의 caller global `PATH`에서 해석합니다. 필수 development/global binary가 모두 없으면 fail closed하고 `$aquarium:dev-setup`을 요청하며, 선택된 development state가 잘못된 경우에도 fallback 없이 fail closed합니다. Podway, Mulgae, Gaori, Dolgorae는 production fallback용 global binary가 필수이고 Sanho는 명시적인 선택 항목입니다. Aquarium은 이 channel을 위해 Codex home, authentication, plugin configuration, MCP configuration을 만들거나 소유하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
+사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용합니다. Foreground tool의 development generation이 없을 때만 두 Aquarium root 밖의 caller global `PATH`로 fallback합니다. Managed service는 producer controller가 동일 generation을 ready 또는 busy 상태로 보고할 때만 실행하며 pending, missing, mismatched, stopped, recovering 상태에서는 production으로 fallback하지 않고 fail closed합니다. Podway가 첫 번째 필수 managed service이고 Sanho는 명시적인 선택 항목입니다. Aquarium은 이 channel을 위해 Codex home, authentication, plugin configuration, MCP configuration을 만들거나 소유하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
 
 ## 주요 워크플로
 

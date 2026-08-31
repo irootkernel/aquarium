@@ -6,7 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent tools, inherited caller environment, and direct Orca-managed Codex Review.
+- Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent foreground tools, fail-closed producer-owned managed services, inherited caller environment, and direct Orca-managed Codex Review.
 - Adopt the official Dolgorae v0.1.0 Apple Silicon release for setup diagnosis and checksum-bound stable review launch.
 
 ### Changed

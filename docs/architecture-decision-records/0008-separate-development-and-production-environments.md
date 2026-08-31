@@ -18,17 +18,20 @@ Reserve `~/.aquarium/` for production state. Place all Aquarium-owned developmen
 
 Install a separately approved user-local launcher at `~/.local/bin/aquarium-dev`. It prepends only `~/.aquarium-dev/bin` to `PATH` and otherwise inherits the caller's environment, including `CODEX_HOME`. Aquarium does not create or manage a Codex home, authentication, plugin installation, or MCP configuration for this channel.
 
-Support Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae as development producers. Dolgorae remains unenrolled until its repository commits and registers an approved generation, but its global release is required before that point; there is no missing-binary exception. Independent Review resolves the globally installed official Dolgorae release and revalidates its pinned version, executable checksum, and required capabilities immediately before use; it never substitutes the development generation. Orca Review launches Codex directly through Orca and does not use Dolgorae. Aquarium does not create a private production Dolgorae execution copy. Podway, Mulgae, Gaori, and Dolgorae are required global binaries; Sanho is explicitly optional.
+Support Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae as development producers. Foreground executables retain independent global fallback when absent. Daemon-backed producers use a generic managed-service bundle and producer-owned controller; Podway is the first required adopter and never falls back from `aquarium-dev` to its stable production CLI. Dolgorae remains unenrolled until its repository commits and registers an approved generation, but its global release is required before that point. Independent Review resolves the globally installed official Dolgorae release and revalidates its pinned version, executable checksum, and required capabilities immediately before use; it never substitutes the development generation. Orca Review launches Codex directly through Orca and does not use Dolgorae. Aquarium does not create a private production Dolgorae execution copy. Sanho is explicitly optional.
 
 Retain the exact committed producer contract, immutable generation promotion, atomic generation selection, bounded native hook marker, per-effect approvals, and fail-closed diagnosis. A development artifact remains integration evidence only and cannot satisfy release or distribution gates.
 
-Resolve each supported executable independently: prefer its selected immutable development generation, fall back to the caller's global PATH only when that generation is absent, and fail closed when selected development state is invalid. Exclude both Aquarium roots from global resolution so production and development state cannot recursively masquerade as a global installation.
+Resolve each foreground executable independently: prefer its selected immutable development generation, fall back to the caller's global PATH only when that generation is absent, and fail closed when selected development state is invalid. Exclude both Aquarium roots from global resolution so production and development state cannot recursively masquerade as a global installation.
+
+For a managed service, publish a new immutable generation as pending and retain the old command/controller/service pair while it is busy. The producer controller owns read-only status and planning plus exact-token activation, its LaunchAgent and daemon topology, and recovery. Aquarium advances the public command only after the controller proves the exact target service ready, and it never interprets or edits tool-specific runtime state. Missing, pending, mismatched, stopped, or recovering managed services fail closed without production fallback.
 
 ## Consequences
 
 - Production and unreleased development state have disjoint roots.
 - Developers select a Codex home through their normal environment instead of synchronizing a second Aquarium-owned configuration.
-- Executable producers are selected uniformly through one PATH prefix.
+- Foreground and activated managed-service commands are selected uniformly through one PATH prefix while retaining different lifecycle contracts.
+- Additional daemon-backed producers can reuse one controller protocol without moving their native service state into Aquarium.
 - Dolgorae has one production installation and one release identity to audit for Independent Review; Orca Review has no Dolgorae dependency.
 - Existing `~/.aquarium` development state must be migrated only after the new committed development manager can rebuild the corresponding generation; preserved audit records and legacy Codex data are not silently deleted.
 

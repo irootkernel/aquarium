@@ -43,6 +43,7 @@ PYTHON_FILES := \
 	tests/unit/test_aquarium_dev_publication_unit.py \
 	tests/unit/test_aquarium_dev_resolution_unit.py \
 	tests/unit/test_aquarium_dev_runtime_unit.py \
+	tests/unit/test_aquarium_dev_service_unit.py \
 	tests/unit/test_aquarium_dev_feasibility_unit.py \
 	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \

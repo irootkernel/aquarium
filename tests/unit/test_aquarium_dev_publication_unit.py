@@ -488,7 +488,7 @@ def test_worker_quarantines_stale_request_without_poisoning_future_runs(tmp_path
 
 
 def test_worker_quarantines_request_for_another_enrolled_project(tmp_path):
-    repository = create_repository(tmp_path / "podway", project_id="podway")
+    repository = create_repository(tmp_path / "mulgae", project_id="mulgae")
     host_root = tmp_path / "host"
     enroll(repository, host_root)
     git_sha = subprocess.check_output(

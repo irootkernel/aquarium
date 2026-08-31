@@ -36,13 +36,33 @@ python3 <skill-directory>/scripts/aquarium_dev.py install-launcher \
 
 The only supported target is `~/.local/bin/aquarium-dev`. The launcher inherits the caller's complete environment, including any existing `CODEX_HOME`, and prepends only `~/.aquarium-dev/bin` to the child `PATH`.
 
-For `podway`, `mulgae`, `gaori`, `sanho`, or `dolgorae`, it leases and executes the selected immutable development generation when one exists. Otherwise it resolves only that command from the caller's global `PATH`, excluding both Aquarium state roots. An enrolled but invalid development generation fails closed instead of hiding corruption behind a global fallback. It does not select, install, or configure a Codex plugin or MCP server.
+For a foreground `mulgae`, `gaori`, `sanho`, or `dolgorae` producer, it leases and executes the selected immutable development generation when one exists. Otherwise it resolves only that command from the caller's global `PATH`, excluding both Aquarium state roots.
+
+A v2 managed-service producer executes only after its producer-owned controller reports the same active generation as ready or busy. Missing, pending, invalid, mismatched, stopped, or recovering managed-service state fails closed without production fallback. Podway is the first required managed service. The launcher does not inject Podway's `--dev`; the producer's development-safe command entrypoint owns that behavior.
 
 ## Build and expose development artifacts
 
 Use `diagnose` again after every effect. Hook repair uses `repair-hook --approve-hook`; a build uses `rebuild --approve-build`. Never edit enrollment JSON, hook markers, `current` selectors, or stable `bin` indirections manually.
 
-The native hook queues one exact completed local-main SHA. The manager builds that commit in an isolated exact checkout, seals the immutable generation, and atomically advances only `current/<project-id>`. Executable producers use one stable `bin/<project-id>` indirection through that selector, so readers cannot combine generations. Aquarium plugin artifacts remain available under `current/aquarium` for separately authorized consumers but are never installed into a Codex home by this workflow.
+The native hook queues one exact completed local-main SHA. The manager builds that commit in an isolated exact checkout and seals the immutable generation. Foreground producers atomically advance `current/<project-id>`. Managed-service builds first advance `pending/<project-id>`; their old command/controller/service pair stays current until an independently approved, token-fenced controller apply succeeds.
+
+Executable consumers use one stable `bin/<project-id>` indirection and generation lease; managed-service consumers additionally hold the shared service-generation lock. Aquarium plugin artifacts remain available under `current/aquarium` for separately authorized consumers but are never installed into a Codex home by this workflow.
+
+For a pending managed service, run the read-only plan and show its complete status, action, active and target SHAs, busy state, and exact token:
+
+```text
+python3 <skill-directory>/scripts/aquarium_dev.py service-plan \
+  --project-id <project-id>
+```
+
+Run `service-apply` only after separate approval of that exact plan token:
+
+```text
+python3 <skill-directory>/scripts/aquarium_dev.py service-apply \
+  --project-id <project-id> --plan-token <exact-token> --approve-service
+```
+
+A deferred busy plan has no token and authorizes no apply. Never synthesize a token, bypass the controller, or treat a successful build as service activation.
 
 Run an enrolled executable explicitly:
 
@@ -50,7 +70,9 @@ Run an enrolled executable explicitly:
 aquarium-dev <tool> [args...]
 ```
 
-The development producer contract supports one Aquarium Codex plugin artifact plus `podway`, `mulgae`, `gaori`, `sanho`, and `dolgorae` executables at the exact respective paths `bin/<project-id>`. Each tool repository owns its producer implementation and enrolls its canonical checkout when its approved producer commit is created.
+The frozen v1 producer contract supports one Aquarium Codex plugin artifact plus foreground tool executables at `bin/<project-id>`. The generic v2 `managed-service` contract adds one immutable bundle, development-safe public command, and producer-owned `libexec/aquarium-dev-service` controller.
+
+The controller owns any number of internal daemons and implements strict read-only `status`/`plan` plus exact-token `apply`; Aquarium never edits its LaunchAgent, registry, database, socket, or tool-specific runtime. Each tool repository owns its producer implementation and enrolls its canonical checkout only after its approved handoff commit is created.
 
 Until Dolgorae is enrolled, the launcher admits it through global fallback only. If neither development nor global Dolgorae exists, the invocation fails closed and requests `$aquarium:dev-setup`; there is no Dolgorae exception. Sanho alone is excluded from the required global-binary baseline.
 
