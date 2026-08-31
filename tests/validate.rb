@@ -757,7 +757,7 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        aquarium_dev_dossier.include?("make aquarium-dev-build") &&
        aquarium_dev_dossier.include?("~/.aquarium-dev/bin") &&
        aquarium_dev_dossier.include?("including `CODEX_HOME`") &&
-       aquarium_dev_dossier.include?("Dolgorae is not a development producer"),
+       aquarium_dev_dossier.include?("Dolgorae is an enrollable development producer"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(dolgorae_review_contract.include?("globally installed `dolgorae` command") &&
        dolgorae_review_contract.include?("outside `~/.aquarium` and `~/.aquarium-dev`") &&

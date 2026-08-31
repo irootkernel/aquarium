@@ -14,6 +14,7 @@ from pathlib import Path
 SUPPORTED_DEVELOPMENT_COMMANDS = frozenset(
     {"podway", "mulgae", "gaori", "sanho", "dolgorae"}
 )
+REQUIRED_GLOBAL_COMMANDS = frozenset({"podway", "mulgae", "gaori", "dolgorae"})
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -88,7 +89,10 @@ def global_executable(tool: str, environment: dict[str, str]) -> Path:
         search_entries.append(entry)
     selected = shutil.which(tool, path=os.pathsep.join(search_entries))
     if selected is None:
-        raise OSError(f"development and global executable are unavailable: {tool}")
+        message = f"development and global executable are unavailable: {tool}"
+        if tool in REQUIRED_GLOBAL_COMMANDS:
+            message += f"; request $aquarium:dev-setup for {tool}"
+        raise OSError(message)
     executable = Path(selected).resolve(strict=True)
     if (
         not executable.is_file()

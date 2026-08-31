@@ -10,9 +10,9 @@ The shipped `$aquarium:aquarium-dev` skill and its linked reference own implemen
 
 ## Goal
 
-Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, and Sanho through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
+Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
 
-Dolgorae is not a development producer. Independent Review uses the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches Codex directly through Orca without Dolgorae.
+Dolgorae is an enrollable development producer whose repository owns enrollment when its approved producer commit is created. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests dev-setup. Independent Review still uses only the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches Codex directly through Orca without Dolgorae.
 
 ## Success Criteria
 
@@ -22,7 +22,7 @@ Dolgorae is not a development producer. Independent Review uses the globally ins
 - Executable producers are exposed through stable `~/.aquarium-dev/bin` indirections backed by one atomic generation selector.
 - `aquarium-dev <tool> [args...]` admits only supported tools, prefers an available development generation, falls back only an absent tool to the caller's global PATH outside both Aquarium roots, and otherwise inherits the caller's environment, including `CODEX_HOME`.
 - Aquarium does not create or own a Codex home, authentication, plugin installation, or MCP configuration for the development channel.
-- Dolgorae is absent from producer identity, enrollment, artifact, and selector state in this checkpoint; an explicit launcher invocation may use a global installation, and its absence does not block other tools.
+- Dolgorae may be absent from enrollment, artifact, and selector state until its repository registers an approved producer commit, but its required global installation must exist for fallback. Missing required Podway, Mulgae, Gaori, or Dolgorae fails closed and requests dev-setup; Sanho is explicitly optional.
 - Development evidence remains distinct from stable installation, release, distribution, and release-QA evidence.
 
 ## Non-Goals
@@ -71,8 +71,8 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 | `TASK-008` | Implemented exact-main build scheduling and atomic publication. |
 | `TASK-009` | Implemented the original resolver and lease model, simplified by `TASK-031`. |
 | `TASK-010` | Implemented the original isolated Codex environment, superseded by `TASK-031`. |
-| `TASK-024` | Implemented the historical Dolgorae producer path, removed by `TASK-031`. |
-| `TASK-031` | Separates development and production roots, removes Codex ownership, adds development-first per-tool global fallback, keeps Dolgorae setup out of this checkpoint, and removes Dolgorae coupling from Orca Review. |
+| `TASK-024` | Implemented the historical Dolgorae producer path; current enrollment waits for the corrected tool-repository commit. |
+| `TASK-031` | Separates development and production roots, removes Codex ownership, adds development-first per-tool global fallback, admits optional Dolgorae enrollment, and removes Dolgorae coupling from Orca Review. |
 | `TASK-011` through `TASK-014` | Integrate Podway, Mulgae, Gaori, and Sanho producers. |
 | `TASK-015` | Cold-validates the complete corrected development channel. |
 
@@ -86,12 +86,12 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 - [x] Add a separately approved `~/.local/bin/aquarium-dev` launcher that inherits the caller's environment and prepends only the development bin directory.
 - [x] Prefer each available development executable independently, fall back only an absent tool to global PATH outside both Aquarium roots, and fail closed on invalid selected development state.
 - [x] Remove isolated Codex configuration, authentication, plugin installation, and MCP ownership from the manager and public workflow.
-- [x] Remove Dolgorae from supported producer identities, artifacts, selectors, runtime-copy, diagnosis, and cleanup paths while allowing a bounded global-only launcher fallback.
+- [x] Admit Dolgorae as an executable producer, require global fallback before registration, and request dev-setup when neither generation exists.
 - [x] Route Independent Review to the globally installed official Dolgorae v0.1.0 executable with immediate identity and capability checks.
 - [x] Route Orca Review directly to one fresh Orca-managed Codex worker without Dolgorae discovery, capture, launch, or settlement.
 - [x] Preserve historical decisions by superseding ADR-0007 with ADR-0008 instead of rewriting the old record.
 - [x] Pass focused unit, structural, and complete repository gates.
-- [x] Install and verify the user-local launcher on the approved host; Dolgorae setup is explicitly outside this corrective checkpoint.
+- [x] Install and verify the user-local launcher on the approved host; Dolgorae enrollment occurs only from its approved repository commit.
 - [ ] Migrate Aquarium enrollment and artifacts only from a clean committed candidate capable of reproducing the corrected contract.
 
 ### Do Not
@@ -103,7 +103,7 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 
 ## Remaining Producer Integration
 
-For each of Podway, Mulgae, Gaori, and Sanho:
+For each of Podway, Mulgae, Gaori, Sanho, and Dolgorae:
 
 - [ ] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
 - [ ] verify canonical enrollment, first build, post-commit update, direct PATH selection, and the relevant Aquarium consumer;
@@ -113,12 +113,12 @@ For each of Podway, Mulgae, Gaori, and Sanho:
 ## TASK-015: Cold Validation
 
 - [ ] Start from clean temporary user and repository state with no development enrollment.
-- [ ] Enroll Aquarium and the four external producers only through the skill workflow.
+- [ ] Enroll Aquarium and the five external producers only through the skill workflow.
 - [ ] Prove initial build, exact-SHA isolation, subsequent update, atomic current advancement, stable bin resolution, and superseded-generation cleanup.
 - [ ] Prove same-checkout idempotency and approved re-enrollment.
 - [ ] Prove missing producer, rejected manifest, build failure, missing checkout, corrupt artifact, and selector-drift diagnostics.
 - [ ] Prove the launcher preserves caller environment, prefers enrolled development executables, falls back missing tools independently, and rejects corrupt selected generations.
-- [ ] Prove Dolgorae remains absent from Orca Review and development producer state; validate its separate production review setup only when that setup is in scope.
+- [ ] Prove Dolgorae remains absent from Orca Review, its development generation is never used for production review, and its separate production review setup is validated only when that setup is in scope.
 - [ ] Run focused suites and the complete applicable Aquarium gate against the final exact candidates.
 
 ## Epic Acceptance

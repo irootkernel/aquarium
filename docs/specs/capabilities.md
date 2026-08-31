@@ -53,7 +53,7 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
-| `$aquarium:aquarium-dev` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout, publishes exact generations below `~/.aquarium-dev`, and installs the optional inherited-environment launcher | Enrollment, hook, build, and launcher installation remain separate effects; Codex configuration and Dolgorae are outside the channel |
+| `$aquarium:aquarium-dev` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout, publishes exact generations below `~/.aquarium-dev`, and installs the optional inherited-environment launcher | Enrollment, hook, build, and launcher installation remain separate effects; Codex configuration and production Dolgorae setup are outside the channel |
 | `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes Dolgorae plus supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, archive download, installation, configuration, repair, staging, and commit stay independent |
 | `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external manifest and applies single-repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |

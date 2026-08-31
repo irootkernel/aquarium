@@ -50,7 +50,9 @@ Run an enrolled executable explicitly:
 aquarium-dev <tool> [args...]
 ```
 
-The development producer contract supports one Aquarium Codex plugin artifact plus `podway`, `mulgae`, `gaori`, and `sanho` executables at the exact respective paths `bin/<project-id>`. Dolgorae has no Aquarium development enrollment or artifact in this checkpoint, but the launcher admits it as a global-only fallback command. A missing global Dolgorae affects only an explicit `aquarium-dev dolgorae ...` invocation and does not make the Aquarium development channel unhealthy.
+The development producer contract supports one Aquarium Codex plugin artifact plus `podway`, `mulgae`, `gaori`, `sanho`, and `dolgorae` executables at the exact respective paths `bin/<project-id>`. Each tool repository owns its producer implementation and enrolls its canonical checkout when its approved producer commit is created.
+
+Until Dolgorae is enrolled, the launcher admits it through global fallback only. If neither development nor global Dolgorae exists, the invocation fails closed and requests `$aquarium:dev-setup`; there is no Dolgorae exception. Sanho alone is excluded from the required global-binary baseline.
 
 ## State boundary
 

@@ -296,15 +296,28 @@ def test_launcher_rejects_commands_outside_development_channel(
     assert f"unsupported development command: {command}" in capsys.readouterr().err
 
 
-def test_missing_dolgorae_is_bounded_to_that_command(tmp_path, monkeypatch, capsys):
+def test_missing_required_tool_requests_dev_setup(tmp_path, monkeypatch, capsys):
     home = tmp_path / "home"
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     monkeypatch.setenv("PATH", str(tmp_path / "empty-global-bin"))
 
     assert launcher.main(["dolgorae", "--version"]) == 127
-    assert "development and global executable are unavailable: dolgorae" in (
-        capsys.readouterr().err
-    )
+    error = capsys.readouterr().err
+    assert "development and global executable are unavailable: dolgorae" in error
+    assert "request $aquarium:dev-setup for dolgorae" in error
+
+
+def test_missing_optional_sanho_does_not_request_dev_setup(
+    tmp_path, monkeypatch, capsys
+):
+    home = tmp_path / "home"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("PATH", str(tmp_path / "empty-global-bin"))
+
+    assert launcher.main(["sanho", "--version"]) == 127
+    error = capsys.readouterr().err
+    assert "development and global executable are unavailable: sanho" in error
+    assert "dev-setup" not in error
 
 
 def test_launcher_install_is_separately_approved_and_user_local(tmp_path, monkeypatch):

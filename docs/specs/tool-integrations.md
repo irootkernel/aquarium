@@ -41,7 +41,9 @@ Podway v0.2.7 workspace removal is a separately authorized lifecycle operation o
 
 ## Review and Check Adapters
 
-Independent Review resolves `dolgorae` from the current PATH and requires the official global v0.1.0 installation. Each invocation revalidates the executable bytes, machine version, and required capability digest immediately before use. Dolgorae is not an `aquarium-dev` producer, Aquarium creates no private runtime copy, and Orca Review does not use it.
+Independent Review resolves `dolgorae` from the current PATH and requires the official global v0.1.0 installation. Each invocation revalidates the executable bytes, machine version, and required capability digest immediately before use. Dolgorae may separately publish an `aquarium-dev` generation for explicit development commands, but Aquarium creates no production runtime copy, Independent Review never consumes that generation, and Orca Review does not use Dolgorae.
+
+Aquarium production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae executables. A missing required executable fails closed and routes to the tool-scoped `$aquarium:dev-setup` workflow. Sanho is explicitly optional and does not fail this binary baseline. Development generations never satisfy production readiness.
 
 Mulgae review is advisory. Aquarium requires complete capture coverage, passing CI decision, committed publication, a successful findings query, and zero locally verified unresolved findings before calling review clean.
 
