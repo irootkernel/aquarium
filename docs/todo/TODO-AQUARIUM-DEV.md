@@ -94,7 +94,7 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 - [x] Preserve historical decisions by superseding ADR-0007 with ADR-0008 instead of rewriting the old record.
 - [x] Pass focused unit, structural, and complete repository gates.
 - [x] Install and verify the user-local launcher on the approved host; Dolgorae enrollment occurs only from its approved repository commit.
-- [ ] Migrate Aquarium enrollment and artifacts only from a clean committed candidate capable of reproducing the corrected contract.
+- [x] Migrate Aquarium enrollment and artifacts only from a clean committed candidate capable of reproducing the corrected contract.
 
 ### Do Not
 
