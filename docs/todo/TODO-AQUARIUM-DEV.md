@@ -75,7 +75,8 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 | `TASK-010` | Implemented the original isolated Codex environment, superseded by `TASK-031`. |
 | `TASK-024` | Implemented the historical Dolgorae producer path; current enrollment waits for the corrected tool-repository commit. |
 | `TASK-031` | Separates development and production roots, removes Codex ownership, adds development-first foreground fallback plus fail-closed managed services, admits optional Dolgorae enrollment, and removes Dolgorae coupling from Orca Review. |
-| `TASK-011` through `TASK-014` | Integrate Podway, Mulgae, Gaori, and Sanho producers. |
+| `TASK-011` | Integrated Podway's persistent managed development service and explicit workspace mode contract. |
+| `TASK-012` through `TASK-014` | Integrate Mulgae, Gaori, and Sanho producers. |
 | `TASK-015` | Cold-validates the complete corrected development channel. |
 
 ## TASK-031: Separate Development and Production Environments
@@ -105,9 +106,16 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 
 ## Remaining Producer Integration
 
-`TASK-011` is blocked after Aquarium completed the generic managed-service consumer boundary. Podway must separately commit (1) its persistent Aquarium controller and `podwayd --dev` service and (2) explicit workspace production/development channel switching. Master owns the exact clean local-`main` handoff back to Aquarium. Until then, Podway enrollment and service activation remain unavailable and Aquarium does not simulate Podway's LaunchAgent, registry, database, or workspace transition.
+`TASK-011` accepted Podway's exact clean local-`main` v0.2.8 handoff after Aquarium completed the generic managed-service consumer boundary. Its producer-owned controller and persistent `podwayd --dev` service bind the stable development command to the same active runtime, support explicit workspace production/development mode switching, and remain isolated from the installed production daemon.
 
-For each of Podway, Mulgae, Gaori, Sanho, and Dolgorae:
+For Podway:
+
+- [x] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
+- [x] verify canonical enrollment, first build, post-commit update, direct stable-command selection, managed-service activation, and the relevant Aquarium consumer;
+- [x] preserve Podway's native service, runtime mode, workspace, recovery, and independent release ownership;
+- [x] reject the development artifact as official distribution evidence and preserve the installed production daemon.
+
+For each of Mulgae, Gaori, Sanho, and Dolgorae:
 
 - [ ] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
 - [ ] verify canonical enrollment, first build, post-commit update, direct PATH selection, and the relevant Aquarium consumer;
