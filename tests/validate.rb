@@ -106,7 +106,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[ai-fleet agentic design documentation deslop graph loop lora lore multi-agent orchestration ouroboros podway release qa workflow] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[ai-fleet agentic design documentation deslop graph humanizer korean loop lora lore multi-agent orchestration ouroboros podway release qa workflow writing] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.14", "plugin version must be 0.1.14")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -130,7 +130,7 @@ assert(readme_introduction.include?("engineering reliable software with AI Fleet
        readme_introduction.include?("not separate products or a rigid maturity model") &&
        readme_introduction.include?("Codex is Aquarium's primary agent runtime") &&
        readme_introduction.include?("rather than promising provider or framework neutrality") &&
-       readme_introduction.include?("Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop"),
+       readme_introduction.include?("Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai"),
        "README introduction must lead with Aquarium's AI Fleet engineering identity")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
@@ -187,6 +187,8 @@ sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
 gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
 deslop_catalog = tool_catalog[/^## Cursor Team Kit \/ Deslop\n.*?(?=^## )/m]
+humanizer_catalog = tool_catalog[/^## Humanizer\n.*?(?=^## )/m]
+im_not_ai_catalog = tool_catalog[/^## im-not-ai\n.*?(?=^## )/m]
 ouroboros_catalog = tool_catalog[/^## Ouroboros\n.*\z/m]
 epic_handler = PLUGIN.join("skills/epic-handler/SKILL.md").read
 epic_validator = PLUGIN.join("skills/epic-validator/SKILL.md").read
@@ -346,7 +348,9 @@ assert(dev_setup_bundle_manifest.include?("schema: aquarium.dev-setup-bundle/v1"
        dev_setup_bundle_manifest.include?("Do not put credentials"),
        "dev-setup-bundle manifest contract is incomplete")
 assert(dev_setup_bundle.include?("complete AGENTS.md operating contract and CLAUDE.md delegation proposal") &&
+       dev_setup_bundle.include?("Humanizer and im-not-ai remain shared installations") &&
        dev_setup_bundle.include?("missing commit-header convention") &&
+       dev_setup_bundle_manifest.include?("`humanizer` or `im-not-ai` is effective") &&
        dev_setup_bundle_manifest.include?("mandatory project-specific commit-message rule") &&
        dev_setup_bundle_manifest.include?("Applying the complete displayed diff remains separately approved"),
        "bundle AGENTS guidance must select the full operating contract without widening apply authority")
@@ -387,9 +391,10 @@ assert(dev_setup.include?("Dolgorae selection choice") &&
        dev_setup.include?("Sanho, Mulgae, Gaori, and Podway choices") &&
        dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
        "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
-assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, or Deslop source") &&
+assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, Deslop, Humanizer, or im-not-ai source") &&
        dev_setup.include?("temporary detached checkout") &&
        dev_setup.include?("one regular non-symlink installation") &&
+       dev_setup.include?("isolated temporary `CODEX_HOME`") &&
        dev_setup.include?("exact repository, roadmap, and task prompt"),
        "dev-setup must install third-party skills from exact upstream sources")
 proposal_index = dev_setup.index("Ask whether to prepare an evidence-based repository operating-guidance proposal")
@@ -666,7 +671,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v11
+  aquarium-dev-setup-inspection.v12
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
@@ -731,17 +736,18 @@ assert(!canonical_documentation.include?("/Users/") &&
 aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 6 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 7 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
        canonical_roadmap.include?("## EPIC-004: Release Aquarium v0.1.12") &&
        canonical_roadmap.include?("## EPIC-005: Adopt Dolgorae v0.1.0") &&
        canonical_roadmap.include?("## EPIC-006: Adopt Podway v0.2.7") &&
+       canonical_roadmap.include?("## EPIC-007: Adopt Upstream Document Humanizers") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 31 &&
-       roadmap_task_ids.uniq.sort == (1..31).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 31 &&
+       roadmap_task_ids.length == 32 &&
+       roadmap_task_ids.uniq.sort == (1..32).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 32 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -750,7 +756,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 6 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-006 and unique TASK-001 through TASK-031")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-007 and unique TASK-001 through TASK-032")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -827,9 +833,11 @@ assert(ROOT.join("PRIVACY.md").read.include?("The selected `ooo --version`") &&
        "privacy policy must disclose the local Ouroboros diagnosis boundary")
 assert(ROOT.join("PRIVACY.md").read.include?("Cursor Team Kit Deslop installation contacts GitHub and npm") &&
        ROOT.join("PRIVACY.md").read.include?("writes the upstream `SKILL.md` and MIT LICENSE") &&
-       ROOT.join("PRIVACY.md").read.include?("does not bundle Lora, Ouroboros, or Cursor Team Kit skill or documentation sources"),
+       ROOT.join("PRIVACY.md").read.include?("Humanizer installation contacts GitHub") &&
+       ROOT.join("PRIVACY.md").read.include?("im-not-ai installation contacts GitHub") &&
+       ROOT.join("PRIVACY.md").read.include?("does not bundle Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill or documentation sources"),
        "privacy policy must disclose third-party skill installation and no-vendoring boundaries")
-assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, or Cursor Team Kit skill and documentation sources") &&
+assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill and documentation sources") &&
        ROOT.join("TERMS.md").read.include?("users install approved upstream copies under their original license terms") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
@@ -954,6 +962,24 @@ assert(deslop_catalog &&
        deslop_catalog.include?("byte-identical") &&
        deslop_catalog.include?("no duplicate or symlink installation"),
        "Deslop must install with its license from one exact Cursor upstream commit")
+assert(humanizer_catalog &&
+       humanizer_catalog.include?("https://github.com/blader/humanizer") &&
+       humanizer_catalog.include?("supported `v2.11.1` release") &&
+       humanizer_catalog.include?("`~/.agents/skills/humanizer`") &&
+       humanizer_catalog.include?("frontmatter version `2.11.1`") &&
+       humanizer_catalog.include?("missing or extra paths"),
+       "Humanizer must use one exact stable v2 two-file upstream payload")
+assert(im_not_ai_catalog &&
+       im_not_ai_catalog.include?("https://github.com/epoko77-ai/im-not-ai") &&
+       im_not_ai_catalog.include?("supported `v2.3.2` release") &&
+       im_not_ai_catalog.include?("`./install.sh --codex-only --copy`") &&
+       im_not_ai_catalog.include?("require every write target to derive from the isolated temporary `CODEX_HOME`") &&
+       im_not_ai_catalog.include?("obtain separate approval for that upstream-code execution") &&
+       im_not_ai_catalog.include?("without `--force`") &&
+       im_not_ai_catalog.include?("isolated temporary `CODEX_HOME`") &&
+       im_not_ai_catalog.include?("`$CODEX_HOME/skills/humanize-korean`") &&
+       im_not_ai_catalog.include?("`name: humanize-korean`"),
+       "im-not-ai must materialize one exact stable v2 Codex payload in isolation")
 assert(tool_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
@@ -1024,7 +1050,7 @@ assert(tool_catalog.include?("migration_required=true") &&
        "Podway migration classification contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
-       tool_catalog.include?("v11 inspection") &&
+       tool_catalog.include?("v12 inspection") &&
        tool_catalog.include?("--include-podway") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")
@@ -3023,7 +3049,7 @@ assert(!readme.include?("$aquarium:deslop") &&
        readme.include?("upstream `$deslop` skill is a required prerequisite") &&
        readme.include?("## Thanks") &&
        readme.include?("does not vendor their skill or documentation sources") &&
-       readme.include?("Lora declares MIT in its README"),
+       readme.include?("Each project retains its own license terms"),
        "README must document external Deslop and thank all third-party skill sources")
 %w[
   https://github.com/irootkernel/sanho
@@ -3031,6 +3057,8 @@ assert(!readme.include?("$aquarium:deslop") &&
   https://github.com/irootkernel/gaori
   https://github.com/tmdgusya/lora
   https://github.com/cursor/plugins/tree/main/cursor-team-kit
+  https://github.com/blader/humanizer
+  https://github.com/epoko77-ai/im-not-ai
   https://github.com/irootkernel/podway
   https://github.com/Q00/ouroboros
 ].each do |url|

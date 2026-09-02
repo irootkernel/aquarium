@@ -108,13 +108,16 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$use-podway` directly for an explicitly requested Procedure v2 lifecycle, goal, diagnosis, recovery, cancellation, or discard operation. Route Procedure authoring to the separately installed `$create-podway-procedure` maintainer skill.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Use the separately installed upstream `$deslop` skill for task-owned cleanup when an Aquarium workflow requests it.
+- Use the separately installed upstream `$humanizer` skill once as the final prose pass for English human-authored documentation.
+- Use the separately installed upstream `$humanize-korean` skill once as the final prose pass for Korean human-authored documentation. Keep its `_workspace/` output untracked and remove it after applying the accepted text.
+- For either writing pass, preserve meaning, facts, code, commands, identifiers, URLs, citations, quotes, legal text, and generated content. Route mixed-language prose by block, and fail closed with the unchanged draft when the skill is unavailable or validation fails.
 - Keep `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, and disposable roots as local runtime evidence. Do not cite their paths or identities as durable evidence in tracked documentation or commit messages; use an approved tracked `aquarium.promoted-evidence/v1` package only when a downstream consumer genuinely requires retained evidence.
   Declare at most one custom root with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`. Promotion accepts only reviewed bounded non-sensitive structured evidence and never accepted reports, raw logs, excerpts, provider prose, runtime identities, or machine-specific paths.
 - Repository-specific rules in `Project Configuration` override these defaults.
 
 When `$aquarium:release-handler` is selected, inspect established changelog and release-note authorities. Preserve one existing unambiguous owner and propose the exact Project Configuration entry `Aquarium release notes: <repository-relative-path>`. When no owner exists, ask before proposing a new root `CHANGELOG.md`; never infer enrollment from a filename, create release history from commit subjects alone, or replace an established changelog. Keep the selected path regular, non-symlinked, tracked, and inside the repository.
 
-Omit `$use-*`, Lore, Deslop, or Aquarium workflow references whose corresponding skills are unavailable. A CLI alone does not justify a paired-skill reference. Put exact repository commands and stricter exceptions in `Project Configuration`; do not duplicate generic tool manuals, lifecycle procedures, recovery instructions, or Lore trailer vocabularies.
+Omit `$use-*`, Lore, Deslop, Humanizer, im-not-ai, or Aquarium workflow references whose corresponding skills are unavailable or not selected for project guidance. A CLI alone does not justify a paired-skill reference. Put exact repository commands and stricter exceptions in `Project Configuration`; do not duplicate generic tool manuals, lifecycle procedures, recovery instructions, or Lore trailer vocabularies.
 
 ## Reconcile Existing Instruction Files
 

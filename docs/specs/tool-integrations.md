@@ -14,12 +14,16 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Ouroboros | Supplies interview, PM, Seed, and QA leaves for explicit design workflows | `>=0.51.1,<0.52.0` | Existing `uv`; exact package version for installation | CLI, Codex rules and skills, MCP runtime, effective registration, and live exposure are independent |
 | Lora / Lore | Supplies `lore-commits` and `lore-query` skills | Latest stable tag, or disclosed full `main` SHA when no stable tag exists | Detached exact checkout and user-global Codex installation | Complete source and target trees must match; `lore-setup` is intentionally not installed |
 | Deslop | Supplies task refinement cleanup | No release line; disclosed full current upstream SHA | Detached Cursor Team Kit checkout, npm, and preserved MIT license | Only upstream `deslop` is installed; Aquarium does not vendor or customize it |
+| Humanizer | Final prose pass for English human-authored documentation | Exact supported release `v2.11.1` | Exact detached checkout; `SKILL.md` and LICENSE at `~/.agents/skills/humanizer` | Installation and project guidance are separate; structural inspection alone cannot prove upstream freshness |
+| im-not-ai | Final prose pass for Korean human-authored documentation | Exact supported release `v2.3.2` | Official Codex copy materialized in an isolated temporary `CODEX_HOME`, then installed in the active Codex skill root | `_workspace/` is removed after accepted text is applied; meaning and protected content must survive one fail-closed final pass |
 
 ## Installation and Freshness
 
 Selecting Dolgorae in `dev-setup` authorizes only a bounded official GitHub Release metadata lookup; archive download and installation require separate approvals. For Sanho, Mulgae, Gaori, and Podway, selection authorizes the metadata lookup plus a bounded comparison against four public upstream skill files. Neither path authorizes installation, replacement, another network endpoint, or any provider request.
 
 Every installation proposal identifies the exact source ref, target, network endpoints, files, checksums or digests, backup choice, expected mutation, and post-action verification. Existing modified or duplicate skill copies are never overwritten or deleted silently.
+
+Humanizer and im-not-ai require separately approved GitHub release lookup and installation actions. `dev-setup-bundle` prepares each selected user-global payload once, while target-level tool selection and `agents_guidance` decide whether English, Korean, both, or neither final-pass rule appears in a repository proposal.
 
 ## MCP Scope
 

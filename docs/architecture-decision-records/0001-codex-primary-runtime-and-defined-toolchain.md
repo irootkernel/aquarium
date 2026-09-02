@@ -12,7 +12,7 @@ Aquarium coordinates several specialized developer tools and upstream agent skil
 
 ## Decision
 
-Codex is Aquarium's primary workflow runtime. Aquarium integrates independently installed Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Lore, and Deslop through explicit supported interfaces and version ranges where declared.
+Codex is Aquarium's primary workflow runtime. Aquarium integrates independently installed Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Lore, Deslop, Humanizer, and im-not-ai through explicit supported interfaces and version ranges where declared.
 
 Aquarium does not vendor their implementation or documentation sources. Setup workflows inspect and install exact approved upstream distributions or skill files, preserve provenance, and keep provider use separately authorized. An installed binary, MCP registration, native configuration, live tool exposure, and release artifact are reported as separate readiness dimensions.
 

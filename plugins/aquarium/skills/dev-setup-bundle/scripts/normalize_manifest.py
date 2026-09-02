@@ -31,6 +31,8 @@ TOOLS = (
     "ouroboros",
     "lora",
     "deslop",
+    "humanizer",
+    "im-not-ai",
 )
 PROJECT_MCP_TOOLS = ("mulgae", "gaori")
 AGENTS_GUIDANCE = ("skip", "propose")

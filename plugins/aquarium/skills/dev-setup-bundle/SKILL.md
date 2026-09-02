@@ -31,7 +31,7 @@ Immediately before that confirmation, rerun the normalizer and require the manif
 
 Resolve the union of effective tools across ready targets. Resolve selected Dolgorae release metadata once. Compare each selected Sanho, Mulgae, Gaori, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
 
-Handle user-global CLIs, paired skills, Lora, Deslop, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Configure each selected global MCP at most once for the bundle.
+Handle user-global CLIs, paired skills, Lora, Deslop, Humanizer, im-not-ai, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Configure each selected global MCP at most once for the bundle.
 
 Follow every distinct proposal, backup, approval, stale-target check, checksum, version, and verification boundary in `dev-setup`; a bundle selection never groups or waives them.
 
@@ -42,6 +42,8 @@ If a shared action fails or is declined, mark every dependent target `partial`, 
 Process ready targets in manifest order. Pass `dev-setup` a normalized bundle handoff containing the requesting skill, manifest digest, target index, canonical Git root, effective tools, explicit local MCP overrides, and repository-guidance policy. Never pass the manifest path or ask `dev-setup` to read it.
 
 Use the normalized tools as `Install and configure` selections, treat their Mulgae and Gaori MCP registrations as global unless named by the target's normalized local override, and use the repository-guidance value as its preselected choice. `agents_guidance: propose` preselects preparation of the complete AGENTS.md operating contract and CLAUDE.md delegation proposal, not merely tool references.
+
+Humanizer and im-not-ai remain shared installations even when selected by only one target. For a target with `agents_guidance: propose`, include only the selected writing tools' language rules in the displayed repository-guidance diff. With `agents_guidance: skip`, install or diagnose the selected writing tools without changing repository instructions.
 
 Still show and separately approve every exact persistent action required by `dev-setup`. Ask only for unresolved identifiers or mandatory policy choices that repository state and the manifest selection cannot supply, such as a new Sanho project name, documentation repository URL, or missing commit-header convention.
 

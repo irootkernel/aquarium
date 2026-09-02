@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v11"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v12"
 DOLGORAE_VERSION = "v0.1.0"
 DOLGORAE_EXECUTABLE_SHA256 = (
     "6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8"
@@ -61,6 +61,30 @@ PODWAY_SKILL_FILES = (
     "references/goal.md",
     "references/recovery.md",
 )
+HUMANIZER_SKILL_FILES = (
+    "SKILL.md",
+    "LICENSE",
+)
+HUMANIZER_SUPPORTED_RELEASE = "v2.11.1"
+HUMANIZE_KOREAN_SKILL_FILES = (
+    "SKILL.md",
+    "LICENSE",
+    "references/ai-tell-taxonomy.md",
+    "references/baseline.json",
+    "references/baseline_v2.json",
+    "references/design-notes.md",
+    "references/diagnosis-rules.md",
+    "references/empirical-validation.md",
+    "references/metrics.py",
+    "references/metrics_v2.py",
+    "references/quick-rules.footer.md",
+    "references/quick-rules.header.md",
+    "references/quick-rules.md",
+    "references/rewriting-playbook.md",
+    "references/scholarship.md",
+    "references/web-service-spec.md",
+)
+IM_NOT_AI_SUPPORTED_RELEASE = "v2.3.2"
 PODWAY_PROCEDURES = (
     "aquarium-task-v2.yaml",
     "aquarium-goal-v2.yaml",
@@ -2203,6 +2227,12 @@ def skill_roots() -> list[Path]:
     return roots
 
 
+def effective_codex_skill_root() -> Path:
+    codex_home = os.environ.get("CODEX_HOME")
+    root = Path(codex_home).expanduser() if codex_home else Path.home() / ".codex"
+    return (root if root.is_absolute() else Path.cwd() / root) / "skills"
+
+
 def frontmatter_name(skill_path: Path) -> str | None:
     try:
         content = skill_path.read_text(encoding="utf-8")
@@ -2215,6 +2245,147 @@ def frontmatter_name(skill_path: Path) -> str | None:
         r"^name:\s*[\"']?([^\"'#\n]+?)[\"']?\s*$", match.group(1), re.MULTILINE
     )
     return name_match.group(1).strip() if name_match else None
+
+
+def frontmatter_version(skill_path: Path) -> str | None:
+    try:
+        content = skill_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    match = re.match(r"\A---\n(.*?)\n---(?:\n|\Z)", content, re.DOTALL)
+    if not match:
+        return None
+    version_match = re.search(
+        r"^(?:  )?version:\s*[\"']?([^\"'#\n]+?)[\"']?\s*$",
+        match.group(1),
+        re.MULTILINE,
+    )
+    return version_match.group(1).strip() if version_match else None
+
+
+def unexpected_skill_entries(
+    directory: Path, expected_files: tuple[str, ...]
+) -> list[str]:
+    expected_file_set = set(expected_files)
+    expected_directories = {
+        str(parent)
+        for relative_path in expected_files
+        for parent in Path(relative_path).parents
+        if str(parent) != "."
+    }
+    actual_files: set[str] = set()
+    actual_directories: set[str] = set()
+    unsafe_entries: set[str] = set()
+    if directory.is_symlink() or not directory.is_dir():
+        return ["<unsafe-or-unreadable>"]
+    try:
+        for root, directories, files in os.walk(directory, followlinks=False):
+            root_path = Path(root)
+            retained_directories = []
+            for name in directories:
+                path = root_path / name
+                relative = str(path.relative_to(directory))
+                if path.is_symlink():
+                    unsafe_entries.add(relative)
+                else:
+                    actual_directories.add(relative)
+                    retained_directories.append(name)
+            directories[:] = retained_directories
+            for name in files:
+                path = root_path / name
+                relative = str(path.relative_to(directory))
+                if path.is_symlink():
+                    unsafe_entries.add(relative)
+                else:
+                    actual_files.add(relative)
+    except OSError:
+        return ["<unsafe-or-unreadable>"]
+    return sorted(
+        unsafe_entries
+        | (actual_files - expected_file_set)
+        | (actual_directories - expected_directories)
+    )
+
+
+def inspect_writing_skill(
+    *,
+    skill_name: str,
+    expected_files: tuple[str, ...],
+    expected_target: Path,
+    supported_release: str,
+    require_version: bool,
+) -> dict[str, Any]:
+    agent_skill = inspect_agent_skill(skill_name, expected_files)
+    for installation in agent_skill["installations"]:
+        installation["unexpected_entries"] = (
+            ["<unsafe-or-unreadable>"]
+            if installation["symlinked"]
+            else unexpected_skill_entries(Path(installation["path"]), expected_files)
+        )
+    structurally_ready = bool(
+        agent_skill["status"] == "configured"
+        and len(agent_skill["installations"]) == 1
+        and Path(agent_skill["installations"][0]["path"]) == expected_target
+        and all(
+            not installation["unexpected_entries"]
+            for installation in agent_skill["installations"]
+        )
+    )
+    version = None
+    if (
+        len(agent_skill["installations"]) == 1
+        and not agent_skill["installations"][0]["symlinked"]
+    ):
+        installation = agent_skill["installations"][0]
+        skill_entry = next(
+            entry for entry in installation["files"] if entry["path"] == "SKILL.md"
+        )
+        if skill_entry["present"] and not skill_entry["symlinked"]:
+            version = frontmatter_version(Path(installation["path"]) / "SKILL.md")
+    version_supported = (
+        version == supported_release.removeprefix("v") if require_version else None
+    )
+    ready = structurally_ready and (version_supported is not False)
+    return {
+        "catalog_status": "active",
+        "setup_supported": True,
+        "installed": ready,
+        "complete_tree_verified": False,
+        "verification_scope": "structure_only",
+        "expected_target": str(expected_target),
+        "supported_release": supported_release,
+        "executable": None,
+        "version": version,
+        "version_supported": version_supported,
+        "status": (
+            "unverifiable"
+            if ready
+            else ("missing" if agent_skill["status"] == "missing" else "degraded")
+        ),
+        "agent_skill": agent_skill,
+        "configuration": [],
+        "probes": {},
+    }
+
+
+def inspect_humanizer() -> dict[str, Any]:
+    return inspect_writing_skill(
+        skill_name="humanizer",
+        expected_files=HUMANIZER_SKILL_FILES,
+        expected_target=Path.home() / ".agents/skills/humanizer",
+        supported_release=HUMANIZER_SUPPORTED_RELEASE,
+        require_version=True,
+    )
+
+
+def inspect_im_not_ai() -> dict[str, Any]:
+    return inspect_writing_skill(
+        skill_name="humanize-korean",
+        expected_files=HUMANIZE_KOREAN_SKILL_FILES,
+        expected_target=effective_codex_skill_root() / "humanize-korean",
+        supported_release=IM_NOT_AI_SUPPORTED_RELEASE,
+        require_version=False,
+    )
 
 
 def inspect_lora() -> dict[str, Any]:
@@ -2982,6 +3153,8 @@ def inspect(
         "gaori": inspect_gaori(repository, timeout_seconds),
         "lora": inspect_lora(),
         "deslop": inspect_deslop(),
+        "humanizer": inspect_humanizer(),
+        "im-not-ai": inspect_im_not_ai(),
     }
     if include_podway:
         tools["podway"] = inspect_podway(repository, timeout_seconds)

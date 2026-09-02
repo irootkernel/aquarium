@@ -36,12 +36,12 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, use these batches and component boundaries:
 
-- Ask about Sanho, Dolgorae, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
+- Ask about Sanho, Dolgorae, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, Humanizer, im-not-ai, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
 - For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
 - For Dolgorae, recommend the exact official v0.1.0 CLI while reporting release identity, executable checksum, platform, version envelope, and review admission independently. Dolgorae has no Aquarium paired skill or MCP registration.
 - For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
 - For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
-- For every paired or third-party skill, reject any symlink from the configured skill root through the required files before reading or hashing it. For Lora and Deslop, report every discovered user-global installation, frontmatter validity, duplicate or symlink state, and upstream freshness independently.
+- For every paired or third-party skill, reject any symlink from the configured skill root through the required files before reading or hashing it. For Lora, Deslop, Humanizer, and im-not-ai, report every discovered user-global installation, frontmatter validity, duplicate or symlink state, and upstream freshness independently.
 
 Disclose in the Dolgorae selection choice that either affirmative selection automatically contacts its official GitHub Releases metadata endpoint to confirm the exact supported release. This metadata lookup needs no separate approval and authorizes no archive download or installation. Disclose separately in the Sanho, Mulgae, Gaori, and Podway choices that either affirmative selection also downloads four public skill files from `raw.githubusercontent.com` for paired-skill comparison.
 
@@ -97,7 +97,7 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 For each selected tool:
 
-1. For Dolgorae, reuse the exact release metadata from its automatic bounded lookup. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, or any lookup outside those bounded comparisons, disclose the official repository and commit-metadata endpoint and obtain explicit ask/answer approval before resolving it; a lookup approval authorizes no installation or other mutation.
+1. For Dolgorae, reuse the exact release metadata from its automatic bounded lookup. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, Humanizer, im-not-ai, or any lookup outside those bounded comparisons, disclose the official repository and release- or commit-metadata endpoint and obtain explicit approval before resolving it; lookup approval authorizes no installation or other mutation.
 2. Show the exact resolved stable version and source provenance. If the automatic comparison was `freshness_unverifiable`, repeat the bounded comparison without separate approval before proposing a skill action, but obtain approval for any other lookup or download.
 3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
 4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
@@ -136,7 +136,7 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
-Use the v11 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.7 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
+Use the v12 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.7 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
 
 Treat `update_explanation` values such as `prior_canonical` and `podway_v0.2.5_workaround` only as bounded explanations for an offered canonical update. They never form a validity, ownership, migration, or readiness class. A tracked same-ID `valid_customization` is configured when the other Podway readiness requirements pass.
 
@@ -153,11 +153,21 @@ Managed-Procedure removal is a separate destructive proposal. Show the exact man
 
 ## Install Third-Party Skills From Exact Upstream Sources
 
-Aquarium does not bundle Lora, Lore, or Deslop source. For Lora or Deslop, read the selected catalog section, obtain approval for the disclosed GitHub lookup, resolve the exact upstream commit, and compare the complete installed target with a temporary detached checkout before proposing installation or replacement. Never install directly from a moving `main`, use a full commit SHA as an `npx skills` URL fragment, merge local and upstream files, or treat frontmatter validity as freshness proof.
+Aquarium does not bundle Lora, Lore, Deslop, Humanizer, or im-not-ai source. Read the selected catalog section, obtain approval for the disclosed GitHub lookup, resolve an exact upstream ref, and compare the complete installed target with a temporary detached checkout before proposing installation or replacement. Never install directly from a moving `main`, use a full commit SHA as an `npx skills` URL fragment, merge local and upstream files, or treat frontmatter validity as freshness proof.
+
+After lookup, disclose the exact command and temporary target and obtain separate approval before executing upstream code to materialize a comparison payload.
 
 For Lora, install only `lore-commits` and `lore-query` from the approved checkout through the catalog's local-source `npx skills add` command. After installation, compare the complete source and target file sets and every digest, rejecting extras and symlinks; structural inspector output alone never proves current source. Do not install `lore-setup`.
 
 For Deslop, install only `deslop` from the approved Cursor Team Kit checkout and preserve that checkout's upstream LICENSE beside the installed `SKILL.md`. Require byte-identical source files, `name: deslop`, one regular non-symlink installation, and no extra target files before reporting it current.
+
+Humanizer supports exactly `v2.11.1`, and im-not-ai supports exactly `v2.3.2`. Resolve each named release through official GitHub metadata and require the detached checkout `HEAD` to equal the resolved release commit.
+
+- Humanizer's complete payload is its root `SKILL.md` plus `LICENSE`, installed at `~/.agents/skills/humanizer`. Require `name: humanizer` and a v2 version matching the resolved tag.
+- Before materializing im-not-ai's official Codex payload, read the checked-out `install.sh` and require every write target to derive from the isolated temporary `CODEX_HOME`.
+  Disclose that exact `install.sh --codex-only --copy` command and temporary target and obtain separate execution approval, then run it without `--force`, add the checkout's root LICENSE, and compare that complete regular-file tree with the active Codex skill target, `$CODEX_HOME/skills/humanize-korean` or `~/.codex/skills/humanize-korean` when `CODEX_HOME` is unset. Require `name: humanize-korean`; never run the installer against the active Codex home.
+
+Do not invoke either writing skill, create a prose workspace, or rewrite repository documents during installation. Installation and repository guidance are independent choices. A structurally valid local tree remains `unverifiable` until it is compared byte-for-byte with the approved exact upstream payload.
 
 Keep source lookup, existing-target backup policy, installation or replacement, and Codex restart as separate disclosed boundaries. A scoped continuation from `task-handler` or `task-refine` selects only Deslop; after successful installation, return the exact repository, roadmap, and task prompt needed to resume the caller.
 
@@ -197,12 +207,19 @@ Handle root AGENTS.md and CLAUDE.md independently from tool setup:
 
 The first answer authorizes proposal preparation or diagnosis only. General setup approval, install approval, and the instruction to use this skill never authorize instruction-file mutation. The second approval covers only the exact displayed root AGENTS.md/CLAUDE.md diff; it never authorizes nested instruction files, staging, committing, or publication.
 
+When an installed and selected writing skill is included in an approved guidance proposal, add only its corresponding language rule.
+
+- Route English human-authored documentation through `$humanizer` and Korean human-authored documentation through `$humanize-korean` as the final prose pass. For mixed-language documents, route each prose block by its dominant language.
+- Preserve code, commands, identifiers, URLs, citations, quotes, legal text, generated content, and repository facts exactly. Run each applicable pass once after substantive editing, accept the result only when meaning and protected content remain intact, and fail closed with the unchanged draft plus the reason when the skill is unavailable or validation fails.
+- Treat im-not-ai's `_workspace/` as disposable local work: keep it untracked, remove it after the accepted text is applied, and never cite it as durable evidence.
+
 ## Report the Result
 
 Report:
 
 - selected, skipped, and planned tools;
 - resolved versions and sources;
+- Humanizer and im-not-ai installation, exact-upstream comparison, canonical target, project-guidance selection, and restart state separately;
 - each selected paired skill's comparison tag, exact `~/.agents/skills` target, `current`, `missing`, `different`, or `freshness_unverifiable` result, temporary-payload cleanup, and any installation or replacement decision;
 - selected backup policy, existing state backed up or deliberately left without a backup, backup verification and restoration paths when applicable, and the disclosed recovery boundary;
 - Sanho CLI, workspace, and `use-sanho` skill state separately;

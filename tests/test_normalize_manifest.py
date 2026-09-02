@@ -83,7 +83,7 @@ class NormalizeManifestTest(unittest.TestCase):
             f"""
             schema: aquarium.dev-setup-bundle/v1
             defaults:
-              tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop]
+              tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
               project_mcp: [mulgae, gaori]
               agents_guidance: skip
             targets:
@@ -131,8 +131,39 @@ class NormalizeManifestTest(unittest.TestCase):
                 "ouroboros",
                 "lora",
                 "deslop",
+                "humanizer",
+                "im-not-ai",
             ],
         )
+
+    def test_writing_skills_keep_installation_and_guidance_selection_separate(
+        self,
+    ) -> None:
+        manifest = self.write_manifest(
+            "writing-skills.yaml",
+            """
+            schema: aquarium.dev-setup-bundle/v1
+            defaults:
+              tools: [humanizer, im-not-ai]
+              project_mcp: []
+              agents_guidance: propose
+            targets:
+              - path: repository-a
+                exclude: [im-not-ai]
+              - path: repository-b
+                agents_guidance: skip
+            """,
+        )
+
+        result = self.run_script(manifest)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual(plan["targets"][0]["tools"], ["humanizer"])
+        self.assertEqual(plan["targets"][0]["agents_guidance"], "propose")
+        self.assertEqual(plan["targets"][1]["tools"], ["humanizer", "im-not-ai"])
+        self.assertEqual(plan["targets"][1]["agents_guidance"], "skip")
+        self.assertEqual(plan["shared_tools"], ["humanizer", "im-not-ai"])
 
     def test_manifest_change_changes_digest(self) -> None:
         manifest = self.write_manifest(

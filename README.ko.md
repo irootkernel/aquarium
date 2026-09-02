@@ -31,7 +31,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop 사이의 계약은 Aquarium이 소유하며, 각 계약은 도구를 언제 실행하고 무엇을 결정하게 하며 그 출력을 다음 단계의 증거로 어떻게 쓰는지를 정합니다.
+Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
 
 ## 설치
 
@@ -42,7 +42,7 @@ codex plugin add aquarium@root-kernel
 
 설치나 업그레이드 후 Codex를 재시작하고, `/hooks`에서 Aquarium의 roadmap commit guard를 명시적으로 신뢰하도록 설정합니다. 이 hook은 직접 실행한 shell commit을 잡아냅니다. 다만 완전한 강제 장치는 아니어서, 다른 도구가 간접적으로 만든 commit은 hook을 거치지 않을 수 있습니다.
 
-Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup`이 지원 도구의 상태를 진단하고, 각각 별도 승인을 받아 정확한 upstream source에서 설치하거나 복구합니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
+Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup`은 지원 도구를 진단하고, 각각 별도 승인을 받아 정확한 upstream source에서 설치하거나 복구합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓰도록 제안할 수 있습니다. 설치와 저장소 지침 변경은 서로 다른 결정입니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
 
 ## Development Channel
 
@@ -68,6 +68,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 fresh Codex worker 하나를 띄워 exact staged, HEAD, commit, range target을 review하도록 감독합니다. Dolgorae는 사용하지 않으며, Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
+- [Humanizer](https://github.com/blader/humanizer)는 영문 문서의 마지막 윤문을 맡고, [im-not-ai](https://github.com/epoko77-ai/im-not-ai)는 한글 문서에서 같은 역할을 합니다. 프로젝트마다 `dev-setup` 지침에서 두 규칙을 따로 선택할 수 있습니다.
 - [Ouroboros](https://github.com/Q00/ouroboros)는 명시적으로 호출한 다섯 가지 design workflow 안에서만 discovery, PM, Seed, QA를 제공합니다. 문서 적용, 승인, 저장소 authority는 Aquarium이 가집니다.
 
 이 도구들은 작업 구체화부터 문서 동기화까지 하나의 통제된 경로를 이룹니다. Aquarium은 그 사이를 연결해, 도구 하나의 성공이 프로젝트 완료로 오인되지 않게 합니다.
@@ -107,4 +108,4 @@ make test
 
 ## 감사의 말
 
-Aquarium이 기반으로 삼는 upstream skill을 제공해 준 Lora, Ouroboros, Cursor Team Kit에 감사드립니다. Aquarium은 이들의 skill이나 문서 source를 저장소에 내장하지 않습니다. Ouroboros와 Cursor Team Kit은 MIT LICENSE 파일을 제공하고, Lora는 README에 MIT를 명시합니다.
+Aquarium이 기반으로 삼는 upstream skill을 제공해 준 Lora, Ouroboros, Cursor Team Kit, Humanizer, im-not-ai에 감사드립니다. Aquarium은 이들의 skill이나 문서 source를 저장소에 내장하지 않으며, 각 프로젝트의 라이선스 조건을 따릅니다.

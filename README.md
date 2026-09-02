@@ -31,7 +31,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
 - **Work can pause, resume, and hand off.** `task-handler` and `epic-handler` support plan-only runs, explicit plan handoff to another agent, and resuming a matching session. A plan by itself creates no runtime state.
 
-Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, and Deslop. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
+Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
 
 ## Install
 
@@ -42,7 +42,7 @@ codex plugin add aquarium@root-kernel
 
 Restart Codex after installing or upgrading, then open `/hooks` and explicitly trust Aquarium's roadmap commit guard. The hook catches direct shell commits. It is not complete enforcement: commits created indirectly by another tool may not pass through it.
 
-Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup` checks the supported tools and proposes installs or repairs from their exact upstream sources, each behind its own approval. The upstream `$deslop` skill is a required prerequisite for task delivery.
+Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup` checks supported tools and proposes exact-upstream installation or repair, each behind its own approval. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. Installation and repository guidance remain separate decisions. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
 ## Development Channel
 
@@ -68,6 +68,7 @@ Foundations: `$aquarium:docs-setup` governs canonical documentation structure an
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md) uses the separately installed Orca runtime to launch and supervise one fresh Codex worker against an exact staged, HEAD, commit, or range target. It does not use Dolgorae, and Aquarium independently adjudicates the result.
 - [Sanho](https://github.com/irootkernel/sanho) syncs project documentation to its canonical documentation repository once Aquarium has settled what is ready to hand off.
 - [Lora](https://github.com/tmdgusya/lora) keeps decision context in Git trailers, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) supplies the upstream `deslop` cleanup skill used during task refinement.
+- [Humanizer](https://github.com/blader/humanizer) provides the final prose pass for English documentation, while [im-not-ai](https://github.com/epoko77-ai/im-not-ai) provides the corresponding Korean pass. Projects opt into either rule independently through `dev-setup` guidance.
 - [Ouroboros](https://github.com/Q00/ouroboros) contributes discovery, PM, Seed, and QA only inside the five explicitly invoked design workflows. Aquarium keeps document application, approval, and repository authority.
 
 Together they form one governed path from scoping to documentation sync, so one tool's success is never mistaken for project completion.
@@ -107,4 +108,4 @@ The gate needs Python 3.11 or newer, Ruby 3.3 or newer, and the pinned `requirem
 
 ## Thanks
 
-Thanks to Lora, Ouroboros, and Cursor Team Kit for the upstream skills Aquarium builds on. Aquarium does not vendor their skill or documentation sources. Ouroboros and Cursor Team Kit provide MIT LICENSE files, and Lora declares MIT in its README.
+Thanks to Lora, Ouroboros, Cursor Team Kit, Humanizer, and im-not-ai for the upstream skills Aquarium builds on. Aquarium does not vendor their skill or documentation sources. Each project retains its own license terms.

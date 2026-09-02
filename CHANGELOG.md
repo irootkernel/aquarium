@@ -8,11 +8,13 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent foreground tools, fail-closed producer-owned managed services, inherited caller environment, and direct Orca-managed Codex Review.
 - Adopt the official Dolgorae v0.1.0 Apple Silicon release for setup diagnosis and checksum-bound stable review launch.
+- Add exact-upstream Humanizer and im-not-ai setup with per-project English and Korean documentation guidance.
 
 ### Changed
 
 - Require an execution dossier for epics with at least three member tasks or three requirement-bearing canonical documents, while letting smaller semantically complete epics use repository-owned documentation and retaining shared dossiers until their final consumer closes.
 - Adopt Podway v0.2.7 as the minimum stable runtime and extend exact-artifact qualification to workspace removal safety and replay convergence.
+- Extend development setup inspection and bundle selection to keep writing-skill installation separate from repository guidance.
 
 ## v0.1.13 - 2026-08-28
 

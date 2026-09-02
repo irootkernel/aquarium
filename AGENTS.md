@@ -64,6 +64,8 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Treat `.podway/procedures/aquarium-*-v2.yaml` as the repository-local workflow evidence and routing authority.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.
 - Use the separately installed upstream `$deslop` skill for task-owned cleanup when an Aquarium workflow requests it.
+- Use the separately installed upstream `$humanizer` skill once as the final prose pass for English human-authored documentation.
+- Use the separately installed upstream `$humanize-korean` skill once as the final prose pass for Korean human-authored documentation. Preserve meaning and protected content, fail closed on an unavailable or invalid pass, keep `_workspace/` untracked, and remove it after applying the accepted text.
 
 ## Project Configuration
 
@@ -92,7 +94,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 
 ### Project-Specific Operating Rules
 
-- Aquarium does not vendor third-party Lora, Lore, Ouroboros, or Deslop sources. Preserve the exact-upstream installation and provenance boundaries in `dev-setup`.
+- Aquarium does not vendor third-party Lora, Lore, Ouroboros, Deslop, Humanizer, or im-not-ai sources. Preserve the exact-upstream installation and provenance boundaries in `dev-setup`.
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.
 - Preserve approval boundaries between diagnosis, network lookup, installation, native configuration, repository guidance, staging, commits, and publication.
 - Green phrase or schema validators prove only their bounded contracts. Add scenario-focused coverage when changing cross-skill handoffs or approval behavior.

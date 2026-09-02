@@ -33,6 +33,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-004 | Release Aquarium v0.1.12 | Completed |
 | EPIC-005 | Adopt Dolgorae v0.1.0 | Completed |
 | EPIC-006 | Adopt Podway v0.2.7 | Completed |
+| EPIC-007 | Adopt upstream document humanizers | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -142,3 +143,15 @@ Podway owns its release, distribution, workspace-removal implementation, and sou
 | --- | --- | --- | --- | --- |
 | TASK-029 | Align the Podway v0.2.7 support contract | Raise the stable runtime floor, preserve same-tag CLI, daemon, and skill identity, and define the explicit workspace-removal safety boundary. | Completed | External Podway v0.2.7 release |
 | TASK-030 | Qualify and close Podway v0.2.7 adoption | Verify the official artifact against canonical Procedures, existing lifecycle seams, fenced workspace removal, replay convergence, and final exact Aquarium candidates. | Completed | TASK-029 |
+
+## EPIC-007: Adopt Upstream Document Humanizers
+
+**Status:** `Completed`
+
+Adopt exact upstream Humanizer and im-not-ai releases as independently installed Codex skills, then let each repository opt into an evidence-preserving English and Korean documentation pass through `dev-setup` and `dev-setup-bundle`.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md), [bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-032 | Integrate upstream document humanizers | Add exact-release installation, structural diagnosis, project guidance, bundle selection, public disclosures, and regression coverage for Humanizer and im-not-ai. | Completed | None |

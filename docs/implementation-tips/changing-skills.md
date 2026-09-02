@@ -15,7 +15,7 @@ Skill changes are contract changes, even when the implementation is Markdown. Tr
 - Separate read-only discovery from network lookup, installation, native configuration, repository edits, provider transmission, Git mutation, and publication.
 - Make stale-approval conditions concrete. If the displayed diff, target SHA, tool version, or remote state changes, obtain approval again where required.
 - State the evidence boundary with the success path. A command exit, schema match, tool result, runtime observation, and distribution proof are different claims.
-- Preserve upstream ownership. Do not copy Lora, Lore, Ouroboros, Deslop, or tool implementation sources into Aquarium.
+- Preserve upstream ownership. Do not copy Lora, Lore, Ouroboros, Deslop, Humanizer, im-not-ai, or tool implementation sources into Aquarium.
 
 ## Shared Handoffs
 

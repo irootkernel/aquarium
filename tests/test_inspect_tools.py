@@ -670,6 +670,55 @@ class InspectToolsTest(unittest.TestCase):
             )
         return skill_directory
 
+    def install_humanizer_skill(
+        self,
+        root: Path | None = None,
+        *,
+        name: str = "humanizer",
+        version: str = "2.11.1",
+        include_license: bool = True,
+    ) -> Path:
+        skill_directory = (root or self.home / ".agents/skills") / "humanizer"
+        skill_directory.mkdir(parents=True)
+        skill_directory.joinpath("SKILL.md").write_text(
+            "---\n"
+            f"name: {name}\n"
+            "description: Test skill.\n"
+            "metadata:\n"
+            f'  version: "{version}"\n'
+            "---\n",
+            encoding="utf-8",
+        )
+        if include_license:
+            skill_directory.joinpath("LICENSE").write_text(
+                "MIT License\n", encoding="utf-8"
+            )
+        return skill_directory
+
+    def install_im_not_ai_skill(
+        self,
+        root: Path | None = None,
+        *,
+        name: str = "humanize-korean",
+        include_license: bool = True,
+    ) -> Path:
+        skill_directory = (root or self.codex_home / "skills") / "humanize-korean"
+        skill_directory.mkdir(parents=True)
+        for relative_path in inspect_tools.HUMANIZE_KOREAN_SKILL_FILES:
+            path = skill_directory / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if relative_path == "SKILL.md":
+                path.write_text(
+                    f"---\nname: {name}\ndescription: Test skill.\n---\n",
+                    encoding="utf-8",
+                )
+            elif relative_path == "LICENSE":
+                if include_license:
+                    path.write_text("MIT License\n", encoding="utf-8")
+            else:
+                path.write_text(f"# {path.name}\n", encoding="utf-8")
+        return skill_directory
+
     def install_agent_skill(
         self,
         skill_name: str,
@@ -801,7 +850,7 @@ class InspectToolsTest(unittest.TestCase):
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v11")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v12")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -820,6 +869,8 @@ class InspectToolsTest(unittest.TestCase):
         )
         self.assertEqual(payload["tools"]["lora"]["status"], "missing")
         self.assertEqual(payload["tools"]["deslop"]["status"], "missing")
+        self.assertEqual(payload["tools"]["humanizer"]["status"], "missing")
+        self.assertEqual(payload["tools"]["im-not-ai"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
 
     def test_dolgorae_requires_exact_official_machine_binary(self) -> None:
@@ -1012,6 +1063,167 @@ printf '%s\\n' '{"schema_version":1,"ok":true,"command":"version","invocation_id
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
+
+    def test_writing_skill_installations_are_structurally_unverifiable(self) -> None:
+        self.install_humanizer_skill()
+        self.install_im_not_ai_skill()
+
+        tools = json.loads(self.inspect().stdout)["tools"]
+
+        humanizer = tools["humanizer"]
+        self.assertTrue(humanizer["installed"])
+        self.assertEqual(humanizer["status"], "unverifiable")
+        self.assertEqual(humanizer["version"], "2.11.1")
+        self.assertTrue(humanizer["version_supported"])
+        self.assertEqual(humanizer["supported_release"], "v2.11.1")
+        self.assertEqual(
+            humanizer["expected_target"],
+            str(self.home / ".agents/skills/humanizer"),
+        )
+        self.assertEqual(
+            humanizer["agent_skill"]["installations"][0]["unexpected_entries"],
+            [],
+        )
+
+        im_not_ai = tools["im-not-ai"]
+        self.assertTrue(im_not_ai["installed"])
+        self.assertEqual(im_not_ai["status"], "unverifiable")
+        self.assertIsNone(im_not_ai["version"])
+        self.assertIsNone(im_not_ai["version_supported"])
+        self.assertEqual(im_not_ai["supported_release"], "v2.3.2")
+        self.assertEqual(
+            im_not_ai["expected_target"],
+            str(self.codex_home / "skills/humanize-korean"),
+        )
+        self.assertEqual(
+            im_not_ai["agent_skill"]["installations"][0]["unexpected_entries"],
+            [],
+        )
+
+    def test_writing_skill_extra_missing_and_symlinked_files_are_degraded(self) -> None:
+        humanizer = self.install_humanizer_skill()
+        humanizer.joinpath("README.md").write_text("extra\n", encoding="utf-8")
+        self.install_im_not_ai_skill(include_license=False)
+
+        tools = json.loads(self.inspect().stdout)["tools"]
+
+        self.assertEqual(tools["humanizer"]["status"], "degraded")
+        self.assertFalse(tools["humanizer"]["installed"])
+        self.assertEqual(
+            tools["humanizer"]["agent_skill"]["installations"][0]["unexpected_entries"],
+            ["README.md"],
+        )
+        self.assertEqual(tools["im-not-ai"]["status"], "degraded")
+        self.assertFalse(tools["im-not-ai"]["installed"])
+
+        shutil.rmtree(self.codex_home / "skills/humanize-korean")
+        source = self.install_im_not_ai_skill(root=self.base / "source-skills")
+        (self.codex_home / "skills").mkdir(parents=True, exist_ok=True)
+        (self.codex_home / "skills/humanize-korean").symlink_to(
+            source, target_is_directory=True
+        )
+        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+        self.assertEqual(im_not_ai["status"], "degraded")
+        self.assertTrue(im_not_ai["agent_skill"]["installations"][0]["symlinked"])
+
+    def test_writing_skill_duplicates_and_invalid_frontmatter_are_degraded(
+        self,
+    ) -> None:
+        self.install_humanizer_skill(name="wrong-name")
+        self.install_humanizer_skill(root=self.codex_home / "skills")
+
+        humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+
+        self.assertEqual(humanizer["status"], "degraded")
+        self.assertFalse(humanizer["installed"])
+        self.assertTrue(humanizer["agent_skill"]["duplicate"])
+        self.assertTrue(
+            any(
+                not installation["frontmatter_valid"]
+                for installation in humanizer["agent_skill"]["installations"]
+            )
+        )
+
+    def test_writing_skills_in_noncanonical_roots_are_degraded(self) -> None:
+        self.install_humanizer_skill(root=self.codex_home / "skills")
+        self.install_im_not_ai_skill(root=self.home / ".agents/skills")
+
+        tools = json.loads(self.inspect().stdout)["tools"]
+
+        self.assertEqual(tools["humanizer"]["status"], "degraded")
+        self.assertFalse(tools["humanizer"]["installed"])
+        self.assertEqual(tools["im-not-ai"]["status"], "degraded")
+        self.assertFalse(tools["im-not-ai"]["installed"])
+
+    def test_humanizer_requires_the_pinned_supported_release(self) -> None:
+        self.install_humanizer_skill(version="2.10.0")
+
+        humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+
+        self.assertFalse(humanizer["installed"])
+        self.assertFalse(humanizer["version_supported"])
+        self.assertEqual(humanizer["status"], "degraded")
+
+    def test_writing_skill_version_reader_rejects_a_special_skill_file(self) -> None:
+        skill_directory = self.home / ".agents/skills/humanizer"
+        skill_directory.mkdir(parents=True)
+        skill_directory.joinpath("SKILL.md").mkdir()
+        skill_directory.joinpath("LICENSE").write_text(
+            "MIT License\n", encoding="utf-8"
+        )
+
+        with mock.patch(
+            "inspect_tools.frontmatter_version",
+            side_effect=AssertionError("unsafe version read"),
+        ) as version_reader:
+            humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+
+        version_reader.assert_not_called()
+        self.assertFalse(humanizer["installed"])
+        self.assertEqual(humanizer["status"], "degraded")
+
+    def test_im_not_ai_target_follows_effective_codex_home(self) -> None:
+        self.install_im_not_ai_skill()
+
+        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+
+        self.assertEqual(
+            im_not_ai["expected_target"],
+            str(self.codex_home / "skills/humanize-korean"),
+        )
+        self.assertTrue(im_not_ai["installed"])
+
+    def test_im_not_ai_target_anchors_relative_codex_home_to_cwd(self) -> None:
+        relative_home = Path("relative-codex")
+        expected_home = self.base / relative_home
+        self.install_im_not_ai_skill(root=expected_home / "skills")
+        self.environment["CODEX_HOME"] = str(relative_home)
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.Path, "cwd", return_value=self.base),
+        ):
+            im_not_ai = inspect_tools.inspect_im_not_ai()
+
+        self.assertEqual(
+            im_not_ai["expected_target"],
+            str(expected_home / "skills/humanize-korean"),
+        )
+        self.assertTrue(im_not_ai["installed"])
+        self.assertEqual(im_not_ai["status"], "unverifiable")
+
+    def test_symlinked_writing_skill_root_is_not_walked(self) -> None:
+        external_home = self.base / "external-codex"
+        self.install_im_not_ai_skill(root=external_home / "skills")
+        symlink_home = self.base / "codex-link"
+        symlink_home.symlink_to(external_home, target_is_directory=True)
+        self.environment["CODEX_HOME"] = str(symlink_home)
+
+        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+
+        installation = im_not_ai["agent_skill"]["installations"][0]
+        self.assertTrue(installation["symlinked"])
+        self.assertEqual(installation["unexpected_entries"], ["<unsafe-or-unreadable>"])
 
     def test_symlinked_codex_home_is_not_traversed_for_skills(self) -> None:
         external_home = self.base / "external-codex"
@@ -2751,7 +2963,7 @@ printf '%s\\n' '{"schema_version":1,"ok":true,"command":"version","invocation_id
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v11")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v12")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 
