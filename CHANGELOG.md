@@ -16,6 +16,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Adopt Podway v0.2.7 as the minimum stable runtime and extend exact-artifact qualification to workspace removal safety and replay convergence.
 - Extend development setup inspection and bundle selection to keep writing-skill installation separate from repository guidance.
 
+### Fixed
+
+- Prevent roadmap commits from falling back to system or global Git identities, and pin both author and committer to the repository's local or worktree identity.
+
 ## v0.1.13 - 2026-08-28
 
 ### Removed

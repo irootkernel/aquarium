@@ -8,7 +8,7 @@
           {
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/hooks/task_commit_gate.py\"",
-            "timeout": 5,
+            "timeout": 10,
             "statusMessage": "Checking the Aquarium roadmap commit boundary"
           }
         ]

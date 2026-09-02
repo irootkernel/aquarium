@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -29,14 +31,35 @@ class TaskCommitGateTests(unittest.TestCase):
             )
         return repo
 
-    def run_hook(self, cwd: Path, command: str) -> dict[str, Any] | None:
+    def configure_identity(
+        self,
+        repo: Path,
+        *,
+        name: str = "Repository User",
+        email: str = "repository@example.invalid",
+        scope: str = "--local",
+    ) -> None:
+        subprocess.run(
+            ["git", "-C", repo, "config", scope, "user.name", name], check=True
+        )
+        subprocess.run(
+            ["git", "-C", repo, "config", scope, "user.email", email], check=True
+        )
+
+    def run_hook(
+        self, cwd: Path, command: str, env: dict[str, str] | None = None
+    ) -> dict[str, Any] | None:
         payload = {"tool_input": {"command": command}, "cwd": str(cwd)}
+        process_env = os.environ.copy()
+        if env:
+            process_env.update(env)
         result = subprocess.run(
             ["python3", HOOK],
             input=json.dumps(payload),
             text=True,
             capture_output=True,
             check=True,
+            env=process_env,
         )
         self.assertEqual(result.stderr, "")
         return json.loads(result.stdout) if result.stdout else None
@@ -49,15 +72,149 @@ class TaskCommitGateTests(unittest.TestCase):
 
     def test_direct_commit_in_roadmap_repository_is_denied(self) -> None:
         repo = self.make_repo("TASK-1 | In Progress\n")
-        self.assert_denied(self.run_hook(repo, "git commit -m 'work'"))
+        self.configure_identity(repo)
+        result = self.run_hook(repo, "git commit -m 'work'")
+        self.assert_denied(result)
+        reason = result["hookSpecificOutput"]["permissionDecisionReason"]
+        self.assertNotIn("Configure the repository identity", reason)
 
     def test_gate_marker_allows_task_commit(self) -> None:
         repo = self.make_repo("TASK-1 | In Review\n")
+        self.configure_identity(repo)
         result = self.run_hook(
             repo,
             "AQUARIUM_COMMIT_GATE=task-commit-v1 git commit -m 'work'",
         )
         self.assertIsNone(result)
+
+    def test_gate_marker_rejects_global_only_identity(self) -> None:
+        repo = self.make_repo("TASK-1 | In Review\n")
+        global_config = repo / "global.gitconfig"
+        global_config.write_text(
+            "[user]\n\tname = Global User\n\temail = global@example.invalid\n",
+            encoding="utf-8",
+        )
+        result = self.run_hook(
+            repo,
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 git commit -m work",
+            {"GIT_CONFIG_GLOBAL": str(global_config)},
+        )
+        self.assert_denied(result)
+        reason = result["hookSpecificOutput"]["permissionDecisionReason"]
+        self.assertIn("Configure the repository identity", reason)
+
+    def test_gate_marker_rejects_command_scope_identity(self) -> None:
+        repo = self.make_repo("TASK-1 | In Review\n")
+        result = self.run_hook(
+            repo,
+            "AQUARIUM_COMMIT_GATE=task-commit-v1 git commit -m work",
+            {
+                "GIT_CONFIG_COUNT": "2",
+                "GIT_CONFIG_KEY_0": "user.name",
+                "GIT_CONFIG_VALUE_0": "Command User",
+                "GIT_CONFIG_KEY_1": "user.email",
+                "GIT_CONFIG_VALUE_1": "command@example.invalid",
+            },
+        )
+        self.assert_denied(result)
+
+    def test_gate_marker_rejects_partial_or_empty_local_identity(self) -> None:
+        for key, value in (
+            ("user.name", "Repository User"),
+            ("user.email", "repository@example.invalid"),
+            ("user.name", ""),
+            ("user.email", ""),
+        ):
+            with self.subTest(key=key, value=value):
+                repo = self.make_repo("TASK-1 | In Review\n")
+                subprocess.run(
+                    ["git", "-C", repo, "config", "--local", key, value],
+                    check=True,
+                )
+                self.assert_denied(
+                    self.run_hook(
+                        repo,
+                        "AQUARIUM_COMMIT_GATE=task-commit-v1 git commit -m work",
+                    )
+                )
+
+    def test_gate_marker_allows_worktree_identity(self) -> None:
+        repo = self.make_repo("TASK-1 | In Review\n")
+        subprocess.run(
+            ["git", "-C", repo, "config", "extensions.worktreeConfig", "true"],
+            check=True,
+        )
+        self.configure_identity(repo, scope="--worktree")
+        self.assertIsNone(
+            self.run_hook(
+                repo,
+                "AQUARIUM_COMMIT_GATE=task-commit-v1 git commit -m work",
+            )
+        )
+
+    def test_pinned_identity_ignores_environment_and_config_overrides(self) -> None:
+        repo = self.make_repo("TASK-1 | In Review\n")
+        expected_name = "Repository User"
+        expected_email = "repository@example.invalid"
+        self.configure_identity(repo, name=expected_name, email=expected_email)
+        global_config = repo / "global.gitconfig"
+        global_config.write_text(
+            "[author]\n"
+            "\tname = Wrong Config Author\n"
+            "\temail = wrong-config-author@example.invalid\n"
+            "[committer]\n"
+            "\tname = Wrong Config Committer\n"
+            "\temail = wrong-config-committer@example.invalid\n",
+            encoding="utf-8",
+        )
+        command = " ".join(
+            [
+                "env",
+                "-u GIT_AUTHOR_NAME",
+                "-u GIT_AUTHOR_EMAIL",
+                "-u GIT_COMMITTER_NAME",
+                "-u GIT_COMMITTER_EMAIL",
+                "AQUARIUM_COMMIT_GATE=task-commit-v1",
+                "git",
+                f"-c user.name={shlex.quote(expected_name)}",
+                f"-c user.email={shlex.quote(expected_email)}",
+                f"-c author.name={shlex.quote(expected_name)}",
+                f"-c author.email={shlex.quote(expected_email)}",
+                f"-c committer.name={shlex.quote(expected_name)}",
+                f"-c committer.email={shlex.quote(expected_email)}",
+                "commit -qm work",
+            ]
+        )
+        self.assertIsNone(self.run_hook(repo, command))
+        process_env = os.environ.copy()
+        process_env.update(
+            {
+                "GIT_CONFIG_GLOBAL": str(global_config),
+                "GIT_AUTHOR_NAME": "Wrong Author",
+                "GIT_AUTHOR_EMAIL": "wrong-author@example.invalid",
+                "GIT_COMMITTER_NAME": "Wrong Committer",
+                "GIT_COMMITTER_EMAIL": "wrong-committer@example.invalid",
+            }
+        )
+        subprocess.run(command, cwd=repo, shell=True, check=True, env=process_env)
+        identity = (
+            subprocess.run(
+                ["git", "-C", repo, "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce"],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+            .stdout.rstrip(b"\n")
+            .split(b"\0")
+        )
+        self.assertEqual(
+            identity,
+            [
+                expected_name.encode(),
+                expected_email.encode(),
+                expected_name.encode(),
+                expected_email.encode(),
+            ],
+        )
 
     def test_repository_without_roadmap_is_untouched(self) -> None:
         repo = self.make_repo()

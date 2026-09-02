@@ -10,10 +10,11 @@ Create one authorized commit through a shared roadmap-aware boundary. Read [evid
 ## Establish the Commit Boundary
 
 1. Resolve the Git root and read all applicable instructions, commit conventions, branch and upstream state, staged, unstaged, untracked, and conflicted changes.
-2. Identify tracked roadmap candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
-3. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to reconcile the commit with active Aquarium work. The commit boundary itself does not mutate Podway, but the same Aquarium caller may record the verified post-commit disposition immediately afterward.
-4. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
-5. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
+2. Resolve effective `user.name` and `user.email` with their Git configuration scopes and origins. Require a non-empty winning value for each key from `local` or `worktree` scope; system, global, and command scope do not satisfy this repository-specific identity requirement even when their values match. Record the exact values, scopes, and origins as the commit identity snapshot. Do not create `.aquarium`, another identity file, or a duplicate configuration owner.
+3. Identify tracked roadmap candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
+4. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to reconcile the commit with active Aquarium work. The commit boundary itself does not mutate Podway, but the same Aquarium caller may record the verified post-commit disposition immediately afterward.
+5. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
+6. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
 
 When a commit belongs to active Podway-managed Aquarium work, require an explicit commit handoff from the current Aquarium execution context. Accept it regardless of which Aquarium skill started or advanced the session; never require returning to a prior skill. Do not offer an independent path around the managed workflow's approvals and evidence.
 
@@ -56,6 +57,7 @@ With an exact `$aquarium:release-handler` handoff, `intentional no-note` may inc
 
 Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged work; stop if the commit scope cannot be isolated safely. Immediately before committing, re-read the staged roadmap entry, `git diff --cached`, staged tree and blob identities, and full Git status. Confirm that:
 
+- the effective repository-specific `user.name` and `user.email`, including their scopes and origins, still match the commit identity snapshot;
 - the selected task relationship and approved terminal or unchanged-checkpoint status still match the user's answer;
 - the handler handoff's lifecycle or record edit, including an explicit absence, still matches the staged snapshot;
 - a declared unrelated commit contains no unintended task lifecycle transition;
@@ -80,15 +82,27 @@ Before committing in a Sanho-managed repository, reference `$use-sanho` and foll
 
 ## Commit Through the Gate
 
-Run exactly one direct commit with the hook marker scoped to that process:
+Bind the exact identity snapshot values to task-scoped `aquarium_commit_name` and `aquarium_commit_email` variables. Run exactly one direct commit with all author and committer environment overrides removed, all six Git identity keys pinned to the repository identity at command scope, and the hook marker scoped to that process:
 
 ```bash
-AQUARIUM_COMMIT_GATE=task-commit-v1 git commit ...
+env \
+  -u GIT_AUTHOR_NAME \
+  -u GIT_AUTHOR_EMAIL \
+  -u GIT_COMMITTER_NAME \
+  -u GIT_COMMITTER_EMAIL \
+  AQUARIUM_COMMIT_GATE=task-commit-v1 \
+  git -c user.name="$aquarium_commit_name" \
+      -c user.email="$aquarium_commit_email" \
+      -c author.name="$aquarium_commit_name" \
+      -c author.email="$aquarium_commit_email" \
+      -c committer.name="$aquarium_commit_name" \
+      -c committer.email="$aquarium_commit_email" \
+      commit ...
 ```
 
-The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push.
+The explicit `author.*` and `committer.*` pins prevent system, global, local, worktree, or conditional configuration from overriding the repository `user.*` snapshot. Do not pass `--author` or otherwise override the pinned author or committer identity. The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push.
 
-After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte, verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
+After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
 
 Report the commit ID, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
 

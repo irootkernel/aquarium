@@ -25,7 +25,7 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 | `$aquarium:task-document` | Delegated or explicit resume | Updates current specifications, architecture, handoffs, release-note decision, and review status | Does not use documentation as a Git log or execution transcript |
 | `$aquarium:task-review` | Delegated or explicit resume | Runs and locally adjudicates bounded Mulgae review for one complete task target | Provider findings remain advisory until verified locally |
 | `$aquarium:task-close` | Delegated or explicit resume | Selects the terminal task state, obtains final approval, and hands off any commit | Does not infer commit or publication authority |
-| `$aquarium:task-commit` | Commit request or delegated handoff | Reconciles roadmap lifecycle, exact staging scope, Lore context, Sanho checks, and one authorized commit | A commit never authorizes amend, push, merge, or release |
+| `$aquarium:task-commit` | Commit request or delegated handoff | Reconciles roadmap lifecycle, repository-specific Git identity, exact staging scope, Lore context, Sanho checks, and one authorized commit | A commit never authorizes amend, push, merge, or release |
 | `$aquarium:epic-handler` | Explicit | Orders one epic's tasks, completes task goals and commits, then audits and hardens the integrated epic | External prerequisites require exact committed revisions and independent evidence |
 
 Task delivery uses up to three remediation-eligible review rounds followed by a fourth confirmation-only round; any additional fix-and-confirmation round requires explicit user approval. Epic delivery uses bounded full-target review and remediation followed by one confirmation-only pass; clean evidence ends either loop immediately.

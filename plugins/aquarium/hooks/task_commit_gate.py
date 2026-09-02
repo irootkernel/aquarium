@@ -20,6 +20,18 @@ LIFECYCLE_PATTERN = re.compile(
 SEPARATOR_CHARS = frozenset(";&|\n")
 ASSIGNMENT_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=.*$", re.DOTALL)
 OPTIONS_WITH_VALUES = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
+REPOSITORY_IDENTITY_SCOPES = frozenset({"local", "worktree"})
+REPOSITORY_IDENTITY_KEYS = ("user.name", "user.email")
+MISSING_GATE_REASON = (
+    "This roadmap repository requires commits through $aquarium:task-commit. "
+    "Resume the active Aquarium handler or invoke that skill before committing."
+)
+MISSING_IDENTITY_REASON = (
+    "This roadmap repository requires $aquarium:task-commit with non-empty "
+    "user.name and user.email from Git local or worktree configuration. "
+    "Configure the repository identity, then resume the active Aquarium handler "
+    "or invoke that skill before committing."
+)
 
 
 def heredoc_specs(
@@ -549,6 +561,21 @@ def repository_root(cwd: Path) -> Path | None:
     return Path(os.fsdecode(output).strip()).resolve()
 
 
+def repository_has_commit_identity(root: Path) -> bool:
+    for key in REPOSITORY_IDENTITY_KEYS:
+        output = git_output(root, "config", "--null", "--show-scope", "--get", key)
+        if output is None:
+            return False
+        fields = output.split(b"\0")
+        if len(fields) != 3 or fields[-1] != b"":
+            return False
+        scope = os.fsdecode(fields[0])
+        value = os.fsdecode(fields[1])
+        if scope not in REPOSITORY_IDENTITY_SCOPES or not value.strip():
+            return False
+    return True
+
+
 def is_roadmap_repository(root: Path) -> bool:
     output = git_output(root, "ls-files", "-z")
     if output is None:
@@ -575,35 +602,30 @@ def is_roadmap_repository(root: Path) -> bool:
     return False
 
 
-def deny_payload() -> dict[str, Any]:
+def deny_payload(reason: str) -> dict[str, Any]:
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                "This roadmap repository requires commits through "
-                "$aquarium:task-commit. Resume the active Aquarium handler or "
-                "invoke that skill to reconcile task status before committing."
-            ),
+            "permissionDecisionReason": reason,
         }
     }
 
 
-def should_deny(payload: dict[str, Any]) -> bool:
+def denial_reason(payload: dict[str, Any]) -> str | None:
     command = payload.get("tool_input", {}).get("command")
     if not isinstance(command, str):
-        return False
+        return None
     cwd_value = payload.get("cwd")
     cwd = Path(cwd_value) if isinstance(cwd_value, str) else Path.cwd()
 
     heredoc_fragments = heredoc_substitution_fragments(command)
     command, fragments = executable_control_fragments(without_heredoc_bodies(command))
     fragments = heredoc_fragments + fragments
-    if any(
-        should_deny({"tool_input": {"command": fragment}, "cwd": str(cwd)})
-        for fragment in fragments
-    ):
-        return True
+    for fragment in fragments:
+        reason = denial_reason({"tool_input": {"command": fragment}, "cwd": str(cwd)})
+        if reason is not None:
+            return reason
 
     probe_base = cwd
     previous_separator: str | None = None
@@ -638,14 +660,19 @@ def should_deny(payload: dict[str, Any]) -> bool:
             previous_separator = separator
             continue
         probe_cwd, gated = invocation
-        if gated:
-            continue
         root = repository_root(probe_cwd)
         if root is not None and is_roadmap_repository(root):
-            return True
+            if not gated:
+                return MISSING_GATE_REASON
+            if not repository_has_commit_identity(root):
+                return MISSING_IDENTITY_REASON
         last_status = None
         previous_separator = separator
-    return False
+    return None
+
+
+def should_deny(payload: dict[str, Any]) -> bool:
+    return denial_reason(payload) is not None
 
 
 def main() -> int:
@@ -653,8 +680,12 @@ def main() -> int:
         payload = json.load(sys.stdin)
     except (json.JSONDecodeError, OSError):
         return 0
-    if isinstance(payload, dict) and should_deny(payload):
-        json.dump(deny_payload(), sys.stdout, separators=(",", ":"))
+    if isinstance(payload, dict):
+        reason = denial_reason(payload)
+    else:
+        reason = None
+    if reason is not None:
+        json.dump(deny_payload(reason), sys.stdout, separators=(",", ":"))
         sys.stdout.write("\n")
     return 0
 

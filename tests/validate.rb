@@ -2814,10 +2814,23 @@ assert(task_commit.include?("When a handler handoff includes one or more promote
        epic_handler.include?("When that run is gone, do not promote it") &&
        epic_handler.include?("without local runtime"),
        "all promoted evidence must use the common commit boundary with hardening-only live verification and legacy compatibility")
-assert(task_commit.include?("AQUARIUM_COMMIT_GATE=task-commit-v1 git commit") &&
+assert(task_commit.include?("Require a non-empty winning value for each key from `local` or `worktree` scope") &&
+       task_commit.include?("-u GIT_AUTHOR_NAME") &&
+       task_commit.include?("-u GIT_AUTHOR_EMAIL") &&
+       task_commit.include?("-u GIT_COMMITTER_NAME") &&
+       task_commit.include?("-u GIT_COMMITTER_EMAIL") &&
+       task_commit.include?('git -c user.name="$aquarium_commit_name"') &&
+       task_commit.include?('-c user.email="$aquarium_commit_email"') &&
+       task_commit.include?('-c author.name="$aquarium_commit_name"') &&
+       task_commit.include?('-c author.email="$aquarium_commit_email"') &&
+       task_commit.include?('-c committer.name="$aquarium_commit_name"') &&
+       task_commit.include?('-c committer.email="$aquarium_commit_email"') &&
+       task_commit.include?("%an%x00%ae%x00%cn%x00%ce") &&
+       task_commit.include?("Do not pass `--author`") &&
+       task_commit.include?("AQUARIUM_COMMIT_GATE=task-commit-v1") &&
        task_commit.include?("Never export it globally") &&
        task_commit.include?("indirect commits performed by other tools may not pass"),
-       "task-commit must scope and disclose the direct-command hook marker")
+       "task-commit must pin and verify repository-specific Git identity")
 assert(task_commit.include?("$lore-commits") &&
        task_commit.include?("git log -5 --format=fuller") &&
        task_commit.include?("$aquarium:dev-setup") &&
@@ -2890,8 +2903,12 @@ assert(hook_command == 'python3 "${PLUGIN_ROOT}/hooks/task_commit_gate.py"',
        "roadmap commit hook must resolve its script through PLUGIN_ROOT")
 assert(hook_script.read.include?('git_output(root, "ls-files", "-z")') &&
        hook_script.read.include?("AQUARIUM_COMMIT_GATE=task-commit-v1") &&
+       hook_script.read.include?("repository_has_commit_identity") &&
+       hook_script.read.include?('frozenset({"local", "worktree"})') &&
        !hook_script.read.match?(/https?:\/\//),
-       "roadmap commit hook must remain local and use the task-commit marker")
+       "roadmap commit hook must remain local and require repository identity")
+assert(pre_tool_hooks.first.fetch("hooks").first.fetch("timeout") >= 10,
+       "roadmap commit hook timeout must cover its bounded Git identity probes")
 assert(ROOT.join("README.md").read.include?("open `/hooks` and explicitly trust") &&
        ROOT.join("README.md").read.include?("indirectly by another tool may not pass") &&
        ROOT.join("PRIVACY.md").read.include?("reads up to two million characters") &&

@@ -36,9 +36,9 @@ The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1
 
 ## Roadmap Commit Hook
 
-`plugins/aquarium/hooks/task_commit_gate.py` is a trusted local Codex PreToolUse guard for direct shell `git commit` commands. It resolves the Git root, inventories tracked roadmap candidates, and denies a direct commit when an active roadmap lifecycle requires the `AQUARIUM_COMMIT_GATE=task-commit-v1` marker.
+`plugins/aquarium/hooks/task_commit_gate.py` is a trusted local Codex PreToolUse guard for direct shell `git commit` commands. It resolves the Git root, inventories tracked roadmap candidates, and denies a direct commit when an active roadmap lifecycle requires the `AQUARIUM_COMMIT_GATE=task-commit-v1` marker. A marked commit also requires non-empty effective `user.name` and `user.email` values from Git local or worktree configuration; system, global, and command-scope values are not repository identity.
 
-The hook is advisory rather than a security boundary. Indirect commits may bypass it, and the marker does not prove task ownership, correct lifecycle transition, safe staging, or user authorization; `task-commit` remains responsible for those checks.
+The hook is advisory rather than a security boundary. Indirect commits may bypass it, and the marker does not prove task ownership, correct lifecycle transition, safe staging, user authorization, or the final commit identity; `task-commit` remains responsible for pinning and verifying both author and committer.
 
 ## Interface Change Rules
 
