@@ -5,7 +5,7 @@ description: "Run one supervised immutable static review with a fresh Codex Revi
 
 # Independent Review
 
-Run the canonical Aquarium review contract with one fresh Codex Reviewer through Dolgorae. This path creates no Orca object and never falls back to Orca. Use `$aquarium:orca-review` when the user wants Orca to own and supervise the fresh Codex worker lifecycle.
+Run the canonical Aquarium review contract with one fresh Codex Reviewer through Dolgorae. This path creates no Orca object and never falls back to Orca. Use `$aquarium:orca-review` when the user wants Orca to own and supervise a fresh requested native reviewer lifecycle.
 
 ## Load the contracts
 

@@ -11,7 +11,7 @@ Skill changes are contract changes, even when the implementation is Markdown. Tr
 
 ## Preserve Contract Shape
 
-- Keep explicit invocation and implicit-handoff rules accurate in front matter. `task-commit` is the only current skill that permits implicit invocation.
+- Keep invocation and implicit-handoff rules accurate in front matter. `task-commit` is the only skill that permits implicit workflow execution; `orca-review` additionally permits discovery from an explicit target-and-reviewer request.
 - Separate read-only discovery from network lookup, installation, native configuration, repository edits, provider transmission, Git mutation, and publication.
 - Make stale-approval conditions concrete. If the displayed diff, target SHA, tool version, or remote state changes, obtain approval again where required.
 - State the evidence boundary with the success path. A command exit, schema match, tool result, runtime observation, and distribution proof are different claims.

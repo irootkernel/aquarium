@@ -54,7 +54,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나 조사가 미완료임을 보고하며, 수정 코드는 쓰지 않습니다.
 2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 epic의 task를 순서대로 수행한 뒤 epic 전체를 hardening합니다. Commit은 별도로 `$aquarium:task-commit`을 거치며 사용자가 승인합니다.
-3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 staged change, commit, range, task, epic, 특별 조사에 하나의 canonical static Codex review 계약을 적용합니다. `$aquarium:orca-review`는 같은 계약을 Orca가 관리하는 fresh Codex worker에 적용합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
+3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 staged change, commit, range, task, epic, 특별 조사에 하나의 canonical static Codex review 계약을 적용합니다. `$aquarium:orca-review`는 같은 target 의미를 유지하면서 현재 Orca worktree에서 요청한 reviewer를 새로 실행합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
 4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
 
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
@@ -65,7 +65,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
 - [Dolgorae](https://github.com/irootkernel/dolgorae)는 Independent Review가 사용하는 immutable capture와 checked review lifecycle을 제공합니다. 이 production review 경로에는 checksum이 고정된 공식 v0.1.0 Apple Silicon 실행 파일만 허용합니다.
-- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 fresh Codex worker 하나를 띄워 exact staged, HEAD, commit, range target을 review하도록 감독합니다. Dolgorae는 사용하지 않으며, Aquarium은 결과를 독립적으로 판정합니다.
+- [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 지정한 reviewer를 새로 실행합니다. Claude를 지정할 수도 있습니다. Reviewer는 현재 등록된 worktree에서 staged, HEAD, commit, range target을 검토하며, staged review는 `git diff --cached`를 직접 읽습니다. Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다. Claude가 생성하는 native session과 tool output은 `~/.claude` 아래에만 저장할 수 있습니다. 보고서가 Orca lifecycle message에 담기 어려울 만큼 길 때도 같은 경로만 사용합니다. 다른 reviewer는 파일을 출력할 수 없습니다. Dolgorae는 사용하지 않으며, Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
 - [Humanizer](https://github.com/blader/humanizer)는 영문 문서의 마지막 윤문을 맡고, [im-not-ai](https://github.com/epoko77-ai/im-not-ai)는 한글 문서에서 같은 역할을 합니다. 프로젝트마다 `dev-setup` 지침에서 두 규칙을 따로 선택할 수 있습니다.

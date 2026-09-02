@@ -84,7 +84,7 @@ Build the `aquarium-dev` development channel planned for v0.1.14 so Aquarium and
 
 **Status:** `Completed`
 
-Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The historical implementation also coupled `orca-review` target capture and settlement to Dolgorae while preserving Orca lifecycle ownership. `TASK-031` supersedes that Orca-side coupling: Independent Review retains the complete Dolgorae guarantees, while Orca Review uses Orca's native Codex worker lifecycle and a bounded exact-Git-target inspector.
+Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The historical implementation also coupled `orca-review` target capture and settlement to Dolgorae while preserving Orca lifecycle ownership. `TASK-031` superseded that Orca-side coupling by restoring native Orca execution while Independent Review retained the complete Dolgorae guarantees. The current Orca Review contract uses Orca's native requested-reviewer lifecycle in the current registered worktree.
 
 EPIC-003 completed against the then-current exact Dolgorae development generation and did not depend on EPIC-002's unfinished original producer tasks. Current production execution is governed by EPIC-005 and the global-release correction in `TASK-031`.
 
@@ -126,7 +126,7 @@ This adoption succeeds EPIC-003 without reopening it and does not complete the u
 | --- | --- | --- | --- | --- |
 | TASK-025 | Adopt the official Dolgorae v0.1.0 distribution | Pin the release tag, source commit, platform, archive, executable checksum, maturity, and ownership boundaries. | Completed | External Dolgorae v0.1.0 release |
 | TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, and fail-closed identity checks; private execution is later removed by TASK-031. | Completed | TASK-025 |
-| TASK-027 | Activate stable Dolgorae-backed reviews | Historically moved both review paths to the pinned stable release; TASK-031 retains it only for Independent Review and restores native Orca Codex execution. | Completed | TASK-026; EPIC-003 |
+| TASK-027 | Activate stable Dolgorae-backed reviews | Historically moved both review paths to the pinned stable release; TASK-031 retains it only for Independent Review and restores native Orca reviewer execution. | Completed | TASK-026; EPIC-003 |
 | TASK-028 | Qualify and close stable Dolgorae adoption | Verify the official artifact and complete code, workflow, documentation, privacy, and regression acceptance. | Completed | TASK-027 |
 
 ## EPIC-006: Adopt Podway v0.2.7

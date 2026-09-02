@@ -6,7 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent foreground tools, fail-closed producer-owned managed services, inherited caller environment, and direct Orca-managed Codex Review.
+- Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent foreground tools, fail-closed producer-owned managed services, inherited caller environment, and direct Orca-managed review.
 - Adopt the official Dolgorae v0.1.0 Apple Silicon release for setup diagnosis and checksum-bound stable review launch.
 - Add exact-upstream Humanizer and im-not-ai setup with per-project English and Korean documentation guidance.
 
@@ -19,6 +19,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Fixed
 
 - Prevent roadmap commits from falling back to system or global Git identities, and pin both author and committer to the repository's local or worktree identity.
+- Let Orca Review inspect staged changes directly in the current registered worktree with an explicitly requested native reviewer, including Claude, without a capture or repository-state fingerprint, while allowing Claude-owned native output and oversized reports only beneath `~/.claude`.
 
 ## v0.1.13 - 2026-08-28
 

@@ -25,7 +25,6 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
-	plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
 	plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py \
@@ -45,7 +44,6 @@ PYTHON_FILES := \
 	tests/unit/test_aquarium_dev_runtime_unit.py \
 	tests/unit/test_aquarium_dev_service_unit.py \
 	tests/unit/test_aquarium_dev_feasibility_unit.py \
-	tests/unit/test_inspect_orca_review_state_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \

@@ -24,7 +24,7 @@ The 23 skill entrypoints form four kinds of component:
 - Auditors produce read-only findings or readiness decisions, including `epic-validator`, `independent-review`, `orca-review`, and `release-qa`.
 - Setup skills inspect and optionally configure tools, documentation, and tests while preserving separate proposal and apply approvals.
 
-Only `task-commit` permits implicit invocation. All other entrypoints require an explicit matching request or an authorized parent-workflow handoff.
+`task-commit` permits implicit workflow invocation. `orca-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. All other entrypoints require their skill name or an authorized parent-workflow handoff.
 
 ## External Tool Boundary
 

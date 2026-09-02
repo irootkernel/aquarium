@@ -44,7 +44,7 @@ A new confirmation finding stops for user direction rather than entering an unbo
 
 The shared review contract accepts staged changes, `HEAD`, one commit, a two-dot or three-dot range, one roadmap task or epic resolved to Git, or an explicitly scoped special investigation. Dirty working-tree content is never silently added to a committed target.
 
-Independent review uses one fresh Codex. Orca review uses one selected supported provider under supervised Run and Task state. Both are static, run no tests or builds, and return findings for local verification rather than automatic remediation.
+Independent review uses one fresh Codex through Dolgorae. Orca review uses one requested native reviewer in the current registered worktree under supervised Run and Task state. For both workflows, `staged` means the current `HEAD`-to-index change reviewed through `git diff --cached`; their backend capture and lifecycle details remain independent. Both are static, run no tests or builds, and return findings for local verification rather than automatic remediation. Orca reviewers are prohibited from writing in the worktree. Claude may retain native state and an oversized report only beneath `~/.claude`, with every retained report path returned through the Orca lifecycle; other reviewers receive no filesystem-output exception.
 
 ## Set Up a Repository
 

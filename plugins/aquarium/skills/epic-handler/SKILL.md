@@ -72,7 +72,7 @@ Start or resume the matching prepared goal procedure only after approval, re-obs
 
 After step 7, complete the Podway session, verify its terminal outcome, and repeat the handoff checks. Record `handed_off` with the exact task commit SHA. When another member task remains, use the fresh eligible replacement template to atomically create its prepared session and re-observe before `begin`; after the final member task, leave the disposed terminal session for the audit transition below. Never replace a failed, non-terminal, undisposed, or insufficiently evidenced session.
 
-Use a fresh read-only subagent for an independent perspective when task risk or uncertainty merits it; do not substitute that review for Mulgae, do not invoke `$aquarium:independent-review`, which only the user starts, and do not let it impose the `$aquarium:task-handler` phase workflow.
+Use a fresh read-only subagent for an independent perspective when task risk or uncertainty merits it; do not substitute that review for Mulgae, do not invoke `$aquarium:independent-review` or `$aquarium:orca-review`, which only the user starts, and do not let it impose the `$aquarium:task-handler` phase workflow.
 
 Keep implementation, verification, review target, lifecycle, commit, publication, and live evidence distinct. Any code, test, canonical-documentation, or product-artifact change after verification or review makes affected evidence stale. The planned status-only roadmap transition and approved post-review promoted-evidence projection are the sole exceptions; the projection remains outside the review target and receives independent commit-boundary validation. Do not advance while any required gate or evidence remains incomplete.
 

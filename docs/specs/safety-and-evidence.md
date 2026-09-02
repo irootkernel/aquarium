@@ -34,7 +34,7 @@ Ignored runtime logs, excerpts, transcripts, reports, provider stdout or stderr,
 
 ## Review Evidence
 
-A review is operationally complete only when its target digest and kind are exact, coverage is complete, CI decision passes, publication is committed, the findings query succeeds, and every returned finding has a local disposition. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
+A task-owned Mulgae review is operationally complete only when its target digest and kind are exact, coverage is complete, CI decision passes, publication is committed, the findings query succeeds, and every returned finding has a local disposition. Independent Review and Orca Review use their separate backend result and lifecycle contracts. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
 
 Provider findings are hypotheses. Aquarium checks them against current requirements, code, callers, tests, and ownership before remediation or deferral. A changed target makes prior review evidence stale unless the owning contract explicitly permits the narrow change.
 

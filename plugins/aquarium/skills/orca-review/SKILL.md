@@ -1,11 +1,11 @@
 ---
 name: orca-review
-description: "Run one supervised static review of an exact Git target with a fresh Codex worker through the local Orca runtime. Use when the user explicitly invokes $aquarium:orca-review."
+description: "Run one supervised static review of a staged, HEAD, commit, or range target with a fresh requested reviewer through the local Orca runtime. Use when the user explicitly invokes $aquarium:orca-review or explicitly names a review target and reviewer, such as staged changes with Claude."
 ---
 
 # Orca Review
 
-Run the canonical Aquarium review contract with one fresh Codex worker owned and supervised entirely by Orca. This path does not discover, launch, capture through, settle through, or otherwise use Dolgorae.
+Run the canonical Aquarium review contract with one fresh requested reviewer owned and supervised entirely by Orca. This path does not discover, launch, capture through, settle through, or otherwise use Dolgorae.
 
 ## Load the contracts
 
@@ -15,42 +15,43 @@ Run the canonical Aquarium review contract with one fresh Codex worker owned and
 
 ## Establish the target
 
-Resolve one canonical Git root, one exact `head`, `commit`, or `range` source scope, and one review focus. A `task`, `epic`, or special request supplies authority and focus but must resolve to one of those three scopes. Read the roadmap and linked authority first. Ask only when the authority does not identify one unambiguous scope and revision.
+Resolve one canonical Git root, one `staged`, `head`, `commit`, or `range` source scope, one requested reviewer, and one review focus. A `task`, `epic`, or special request supplies authority and focus but must resolve to one of those four scopes. Read the roadmap and linked authority first. Ask only when the authority does not identify one unambiguous scope and applicable revision.
 
-Resolve the installed Aquarium plugin root, then run the independent-review target inspector in read-only mode with the matching selector:
+`staged` means the current `HEAD`-to-index change in Orca's registered worktree. Confirm through read-only Git inspection that `git diff --cached` is nonempty, and report staged, unstaged, untracked, ignored, and conflicted state without normalizing it. The reviewer reads the live staged target directly; do not capture, copy, hash, snapshot, or bind it to an alternate source representation.
 
-```text
-python3 <aquarium-plugin-root>/skills/independent-review/scripts/inspect_review_target.py \
-  --repository <exact-git-root> \
-  <--head|--commit REVISION|--range RANGE>
-```
+For `head`, `commit`, and `range`, resolve the requested revisions with ordinary read-only Git commands and preserve the meanings in [review-contract.md](../../references/review-contract.md). Current index and worktree changes remain excluded from those committed targets. Conflicts stop the review.
 
-Bind its complete JSON result, exact resolved Git identity, target digest, review focus, authority paths, and included and excluded state to the Orca Task. Inspect and report staged, unstaged, untracked, ignored, and conflicted state without mutation. Conflicts stop the review. Current index and worktree changes remain excluded from `head`, `commit`, and `range`.
+`workspace` and `dirty` remain outside this workflow. Use `$aquarium:independent-review` when one of those scopes is required. Never stage paths merely to manufacture an Orca Review target.
 
-`workspace`, `staged`, and `dirty` are not Orca Review source scopes because Orca has no immutable capture backend for mutable worktree or index bytes. Use `$aquarium:independent-review` when one of those scopes is required. Never stage exact paths merely to manufacture an Orca-review target.
+An explicit request naming the target and reviewer authorizes transmission of that target only. "Use orca-review with Claude to review the staged changes" and "Review the staged target with Claude" both select `staged` and the native Orca `claude` reviewer.
 
-An explicit invocation naming the exact target and Codex reviewer authorizes transmission of that target only. Otherwise prefer structured ask/answer to obtain a missing target; when unavailable, ask one focused question in ordinary conversation. Ask again only if the target, included paths, reviewer, or execution scope changes before Dispatch.
+If either the target or reviewer is missing, prefer structured ask/answer to obtain the missing selection; when unavailable, ask one focused question in ordinary conversation. Do not choose a default reviewer. Ask again only if the target, included paths, reviewer, or execution scope changes before Dispatch.
 
 ## Dispatch and supervise
 
-Resolve the installed Orca command and ready local runtime exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run, one review Task, and one fresh native Codex worker in Orca's registered `current` worktree with `worker-start --worktree current --agent codex`. Do not create a provider terminal, select another AI provider, create another worktree, or call Dolgorae.
+Resolve the installed Orca command and ready local runtime exactly as [orca-supervision.md](../../references/orca-supervision.md) requires. Create one Run, one review Task, and one fresh native reviewer in Orca's registered `current` worktree with `worker-start --task <task-id> --worktree current --agent <requested-reviewer>`. Pass `--agent claude` when Claude is explicitly requested. Do not create another worktree, a copied checkout, a temporary repository, or a Dolgorae operation.
 
-Immediately before worker start and Dispatch, run `scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot` and bind its complete JSON result as the coordinator-owned source-mutation baseline. Re-run the target inspector and require the same target digest and resolved identity.
+Place the declared target, review focus, authority paths, included and excluded state, and the following instructions in every Dispatch, regardless of target:
 
-Inject one Dispatch containing the exact target-inspector result and instructions to inspect only the selected target through immutable Git object reads. Tell the worker explicitly that this is review, not implementation. It must remain read-only; never create, modify, delete, or move a file; never alter the Git index or a ref; and never substitute excluded index or current-worktree bytes for the selected target.
+- This is review only.
+- Never create, edit, delete, move, format, or generate any file in the current registered worktree.
+- When the reviewer is Claude, it may create or update only Claude-owned session, transcript, and tool-output state beneath `~/.claude`. If the report is too large for the Orca lifecycle message, Claude may also create one unique private review directory beneath `~/.claude`, write only report files inside it, and return every retained report path. Other reviewers may not create output files. Never write under `/tmp` or anywhere else.
+- Read only the declared target. For `head`, `commit`, and `range`, obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes.
+- Do not modify the Git index, refs, configuration, or commits.
+- Do not run tests, builds, formatters, installers, authentication, or unrelated network operations.
+- Report only actionable findings with severity and exact `path:line`.
+- Return `APPROVE` when no actionable finding exists.
 
-Require the worker to run no tests or builds and no generators, formatters, or linters; perform no authentication, installation, update, or unrelated network operation; report only verified actionable findings; label execution-dependent claims `runtime unverified`; and complete the injected Orca lifecycle exactly once. If required evidence cannot be gathered under those restrictions, require a bounded confirmation need instead of a mutation.
+For `staged`, also require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply equivalent target-specific read instructions to `head`, `commit`, and `range`. Require the reviewer to complete the injected Orca lifecycle exactly once and label execution-dependent claims `runtime unverified`. If required evidence cannot be gathered under the restrictions, require a bounded confirmation need instead of a mutation.
 
 Supervise, settle, acknowledge, and recover only through the live Orca guides. Never retry automatically, switch reviewers, release an active worker, or reinterpret an operational failure as `APPROVE`.
-
-After one accepted completion and before adjudication, feed the complete baseline through non-expanding stdin to `scripts/inspect_repository_state.py --repository <exact-git-root> --compare`. Report the returned modified-file status and changed dimensions. No drift proves only the helper's bounded Git-observable state. HEAD or ref drift, worker-attributed drift, or unexplained drift is operationally incomplete and prevents `APPROVE`; report it without reverting anything.
 
 ## Adjudicate and report
 
 Independently verify every finding against the exact target and authority without changing files or running checks. Classify findings as Valid, Invalid, or Needs confirmation under the shared contract. A static functionality review can establish support in code and documentation but cannot prove runtime behavior.
 
-Return the applicable shared result envelope plus the Codex reviewer identity and separate Orca Run, Task, Dispatch, worker, acknowledgement, Delivery, and lifecycle status. Wrong scope, target drift, modified files, missing output, reviewer-identity mismatch, or incomplete Orca lifecycle prevents a clean verdict. Report `dolgorae_used: false`. Do not implement remediation.
+Return the applicable shared result envelope plus the requested reviewer identity and separate Orca Run, Task, Dispatch, worker, acknowledgement, Delivery, and lifecycle status. If Claude used the oversized-report exception, include every retained report path beneath `~/.claude`. Wrong scope, missing output, reviewer-identity mismatch, or incomplete Orca lifecycle prevents a clean verdict. Report `dolgorae_used: false`. Do not implement remediation.
 
 ## Mulgae semantic conformance
 
-When comparing a corresponding Mulgae review, require the same source-scope meaning, resolved Git identities, included and excluded disposition, and comparable whole-target digest. A mismatch fails closed. Never make Mulgae depend on Orca lifecycle internals or make Aquarium or Orca own Mulgae provider, extraction, adjudication, publication, archive, or settlement state.
+When comparing a corresponding Mulgae review, require the same user-facing source-scope meaning and included and excluded disposition. In particular, `staged` means the current `HEAD`-to-index change read through `git diff --cached`. Backend capture and lifecycle details do not need to match. Never make Mulgae depend on Orca lifecycle internals or make Aquarium or Orca own Mulgae provider, extraction, adjudication, publication, archive, or settlement state.

@@ -81,7 +81,7 @@ expected_skill_names = %w[
 ]
 assert(skill_paths.map { |path| path.dirname.basename.to_s } == expected_skill_names,
        "plugin skill set does not match the expected skills")
-implicit_invocation_skills = %w[task-commit]
+implicit_invocation_skills = %w[orca-review task-commit]
 
 skill_paths.each do |path|
   body = path.read
@@ -197,8 +197,7 @@ independent_review = PLUGIN.join("skills/independent-review/SKILL.md").read
 independent_review_script = PLUGIN.join("skills/independent-review/scripts/inspect_review_target.py")
 independent_review_script_body = independent_review_script.read
 orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
-orca_state_helper = PLUGIN.join("skills/orca-review/scripts/inspect_repository_state.py")
-orca_state_helper_body = orca_state_helper.read
+orca_review_agent = PLUGIN.join("skills/orca-review/agents/openai.yaml").read
 review_contract = PLUGIN.join("references/review-contract.md").read
 orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
@@ -791,10 +790,11 @@ assert(review_contract.include?("| `workspace` |") &&
        review_contract.include?("| `commit` |") &&
        review_contract.include?("| `range` |") &&
        review_contract.include?("Dolgorae's checked immutable capture") &&
-       review_contract.include?("Orca Review uses `independent-review/scripts/inspect_review_target.py`") &&
+       review_contract.include?("Current `HEAD`-to-index transition, reviewed through `git diff --cached`") &&
+       review_contract.include?("Orca Review does not capture, copy, snapshot, fingerprint, or digest-bind repository state") &&
        review_contract.include?("creates and accepts no Orca Run") &&
        review_contract.include?("performs no Dolgorae discovery"),
-       "review contract must preserve six target meanings and backend isolation")
+       "review contract must preserve six target meanings, staged Orca review, and backend isolation")
 assert(test_setup_contract.include?("aquarium-test-contract/v1") &&
        test_setup_contract.include?("AQTEST-001") &&
        test_setup_contract.include?("AQTEST-009") &&
@@ -842,11 +842,12 @@ assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros,
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
 assert(ROOT.join("PRIVACY.md").read.include?("may start the installed local Orca runtime") &&
-       ROOT.join("PRIVACY.md").read.include?("one declared exact source scope and Git identity") &&
+       ROOT.join("PRIVACY.md").read.include?("one declared source scope and applicable Git identity") &&
        ROOT.join("PRIVACY.md").read.include?("Independent Review sends the captured scope") &&
        ROOT.join("PRIVACY.md").read.include?("creates no Orca object") &&
        ROOT.join("PRIVACY.md").read.include?("it does not discover or use Dolgorae") &&
-       ROOT.join("PRIVACY.md").read.include?("fresh native Codex worker through Orca") &&
+       ROOT.join("PRIVACY.md").read.include?("reviewer named in the request through Orca") &&
+       ROOT.join("PRIVACY.md").read.include?("reads the live `git diff --cached` target directly") &&
        ROOT.join("PRIVACY.md").read.include?("same-user processes") &&
        ROOT.join("PRIVACY.md").read.include?("rather than an operating-system read sandbox") &&
        ROOT.join("PRIVACY.md").read.include?("only that bounded static review transmission") &&
@@ -2200,14 +2201,14 @@ assert(independent_review.include?("Do not seed suspected findings") &&
          "shared review contract target is missing: #{target}")
 end
 assert(review_contract.include?("Do not stage, edit, clean, stash, checkout") &&
-       review_contract.include?("never substitutes current index or worktree copies") &&
        review_contract.include?("same-user processes") &&
-       review_contract.include?("does not accept `workspace`, `staged`, or `dirty`") &&
+       review_contract.include?("For `staged`, the reviewer inspects `git diff --cached`") &&
+       review_contract.include?("`workspace` and `dirty` remain unsupported") &&
        review_contract.include?("Dolgorae's checked immutable capture"),
        "shared review contract must preserve backend-specific exact-target boundaries")
-assert(review_contract.include?("explicit invocation naming the exact target and reviewer authorizes transmission") &&
+assert(review_contract.include?("explicit request naming the target and reviewer authorizes transmission") &&
        review_contract.include?("`runtime unverified`") &&
-       review_contract.include?("Wrong scope, modified source state") &&
+       review_contract.include?("Wrong scope, missing required output") &&
        review_contract.include?("incomplete backend lifecycle is operationally incomplete"),
        "shared review contract must bind special requests, consent, static proof, and lifecycle status")
 
@@ -2234,69 +2235,123 @@ assert(independent_review_script_body.include?('"status"') &&
        independent_review_script_body.include?('"range_invalid"'),
        "independent-review target inspector must prove status, staged, commit, and range structure without mutation")
 
-assert(orca_review.include?("one fresh Codex worker owned and supervised entirely by Orca") &&
-       orca_review.include?("user explicitly invokes") &&
+assert(orca_review.include?("one fresh requested reviewer owned and supervised entirely by Orca") &&
        orca_review.include?("[review-contract.md](../../references/review-contract.md)") &&
        orca_review.include?("[orca-supervision.md](../../references/orca-supervision.md)") &&
-       orca_review.include?("worker-start --worktree current --agent codex"),
-       "orca-review must remain an explicit Orca-native Codex workflow")
+       orca_review.include?("worker-start --task <task-id> --worktree current --agent <requested-reviewer>") &&
+       orca_review.include?("Pass `--agent claude` when Claude is explicitly requested") &&
+       orca_review.include?("Review the staged target with Claude") &&
+       orca_review_agent.include?("allow_implicit_invocation: true"),
+       "orca-review must accept explicit staged natural-language requests and use the requested Orca reviewer")
 assert(!orca_review.include?("dolgorae-review-contract.md") &&
        !orca_review.include?("review-target.capture") &&
        !orca_review.include?("review-target.settle") &&
-       !orca_review.include?("create_provider_terminal.py") &&
-       !orca_review.include?("Claude Fable") &&
-       !orca_review.include?("Kimi") &&
-       !orca_review.include?("Agy") &&
-       !orca_review.include?("Cursor Agent"),
-       "orca-review must not depend on Dolgorae or a selectable provider layer")
+       !orca_review.include?("create_provider_terminal.py"),
+       "orca-review must not depend on Dolgorae or an Aquarium-owned provider launcher")
 assert(orca_review.include?("prefer structured ask/answer") &&
        orca_review.include?("ask one focused question in ordinary conversation") &&
+       orca_review.include?("If either the target or reviewer is missing") &&
+       orca_review.include?("Do not choose a default reviewer") &&
+       !orca_review.include?("retain Codex as the default") &&
        orca_review.include?("authorizes transmission of that target only") &&
        orca_supervision.include?("same operating-system user"),
-       "orca-review must preserve target selection, conversational fallback, and one consent boundary")
-assert(orca_review.include?("run no tests or builds") &&
+       "orca-review must require target and reviewer selection before its one consent boundary")
+assert(orca_review.include?("This is review only") &&
+       orca_review.include?("following instructions in every Dispatch, regardless of target") &&
+       orca_review.include?("For `staged`, also require inspection of `git diff --cached`, the relevant staged files, and their callers") &&
+       orca_review.include?("Never create, edit, delete, move, format, or generate any file in the current registered worktree") &&
+       orca_review.include?("only Claude-owned session, transcript, and tool-output state beneath `~/.claude`") &&
+       orca_review.include?("one unique private review directory beneath `~/.claude`, write only report files inside it, and return every retained report path") &&
+       orca_review.include?("Other reviewers may not create output files") &&
+       orca_review.include?("Never write under `/tmp` or anywhere else") &&
+       orca_review.include?("Read only the declared target") &&
+       orca_review.include?("obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes") &&
+       orca_review.include?("Do not modify the Git index, refs, configuration, or commits") &&
+       orca_review.include?("Do not run tests, builds, formatters, installers, authentication, or unrelated network operations") &&
+       orca_review.include?("Report only actionable findings with severity and exact `path:line`") &&
+       orca_review.include?("Return `APPROVE` when no actionable finding exists") &&
        orca_review.include?("`runtime unverified`") &&
        orca_review.include?("Valid, Invalid, or Needs confirmation") &&
        orca_review.include?("Never retry automatically, switch reviewers") &&
        orca_review.include?("separate Orca Run, Task, Dispatch, worker"),
-       "orca-review must remain static, adjudicated, and operationally bounded")
-assert(orca_review.include?("`head`, `commit`, or `range`") &&
-       orca_review.include?("<aquarium-plugin-root>/skills/independent-review/scripts/inspect_review_target.py") &&
+       "orca-review must provide the complete staged static-review prompt and bounded adjudication")
+assert(orca_review.include?("`staged`, `head`, `commit`, or `range`") &&
+       orca_review.include?("`staged` means the current `HEAD`-to-index change") &&
+       orca_review.include?("Confirm through read-only Git inspection that `git diff --cached` is nonempty") &&
        orca_review.include?("Use `$aquarium:independent-review`") &&
-       orca_review.include?("`workspace`, `staged`, and `dirty` are not Orca Review source scopes"),
-       "orca-review must use the bounded exact-Git inspector and reject mutable uncaptured scopes")
-assert(orca_review.include?("Re-run the target inspector") &&
-       orca_review.include?("never create, modify, delete, or move a file") &&
-       orca_review.include?("never alter the Git index or a ref") &&
-       orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --snapshot") &&
-       orca_review.include?("scripts/inspect_repository_state.py --repository <exact-git-root> --compare") &&
-       orca_review.include?("HEAD or ref drift, worker-attributed drift, or unexplained drift"),
-       "orca-review must preserve a supervised no-mutation boundary")
-assert(orca_state_helper.file? &&
-       orca_state_helper_body.include?('SCHEMA_VERSION = "aquarium-orca-review-repository-state/v1"') &&
-       orca_state_helper_body.include?('"for-each-ref"') &&
-       orca_state_helper_body.include?('["ls-files", "--stage", "-v", "-z"]') &&
-       orca_state_helper_body.include?('["ls-files", "--others", "--exclude-standard", "-z"]') &&
-       orca_state_helper_body.include?("tracked_files_identity") &&
-       orca_state_helper_body.scan('"--ignore-submodules=none"').length == 2 &&
-       orca_state_helper_body.include?('b"\\0tracked-files\\0"') &&
-       orca_state_helper_body.include?('"drift": bool(changed)') &&
-       orca_state_helper_body.include?("baseline fingerprint is invalid"),
-       "orca-review repository-state helper must compare bounded Git-observable state")
-assert(ROOT.join("PRIVACY.md").read.include?("fresh native Codex worker through Orca") &&
-       ROOT.join("PRIVACY.md").read.include?("not automatically reverted") &&
+       orca_review.include?("`workspace` and `dirty` remain outside this workflow"),
+       "orca-review must accept the live staged target without broadening workspace or dirty scope")
+assert(!PLUGIN.join("skills/orca-review/scripts/inspect_repository_state.py").exist? &&
+       !ROOT.join("tests/unit/test_inspect_orca_review_state_unit.py").exist? &&
+       !orca_review.include?("inspect_repository_state.py") &&
+       !orca_review.include?("target digest") &&
+       !orca_review.include?("pre/post") &&
+       review_contract.include?("obtains file content and diffs from the resolved revisions through read-only Git commands and never substitutes current index or worktree bytes") &&
+       review_contract.include?("Backend capture and lifecycle details do not need to match"),
+       "orca-review must not require a repository snapshot, fingerprint, or digest-binding ceremony")
+assert(independent_review.include?("dolgorae specialist review") &&
+       independent_review.include?("creates no Orca object") &&
+       task_review.include?("Reference `$use-mulgae`") &&
+       task_review.include?("start_review") &&
+       task_review.include?("run_review") &&
+       review_contract.include?("Mulgae remains operationally independent"),
+       "Independent Review and Mulgae must retain their native lifecycle ownership")
+assert(ROOT.join("PRIVACY.md").read.include?("reviewer named in the request through Orca") &&
+       ROOT.join("PRIVACY.md").read.include?("rather than a capture or repository-state fingerprint") &&
        ROOT.join("TERMS.md").read.include?("Orca Review uses the verified local Orca runtime and no Dolgorae component") &&
-       ROOT.join("TERMS.md").read.include?("invalidates a clean review verdict"),
-       "public policy must disclose Orca Review's direct Codex and no-mutation boundary")
+       ROOT.join("TERMS.md").read.include?("relies on explicit prompt restrictions and Orca supervision"),
+       "public policy must disclose Orca Review's direct requested-reviewer and prompt-only boundary")
 assert(orca_supervision.include?("execution backend for `$aquarium:orca-review`") &&
        orca_supervision.include?("original registered checkout") &&
-       orca_supervision.include?("Do not create or register a temporary repository snapshot") &&
-       orca_supervision.include?("--worktree current --agent codex") &&
-       orca_supervision.include?("Do not reuse a terminal, create a low-level provider terminal") &&
-       orca_supervision.include?("or use Dolgorae") &&
+       orca_supervision.include?("temporary repository, copied checkout, snapshot, or another Git worktree") &&
+       orca_supervision.include?("Require the user to select a reviewer before creating the Run or Task") &&
+       orca_supervision.include?("--worktree current --agent <requested-reviewer>") &&
+       orca_supervision.include?("Use `--agent claude` when Claude is requested") &&
+       orca_supervision.include?("Do not default to or substitute another reviewer") &&
+       !orca_supervision.include?("default to `--agent codex`") &&
+       orca_supervision.include?("Every Dispatch, regardless of target") &&
+       orca_supervision.include?("For `staged`, additionally require inspection of `git diff --cached`") &&
+       orca_supervision.include?("without weakening the common restrictions") &&
+       orca_supervision.include?("Require the reviewer to read only the declared target") &&
+       orca_supervision.include?("prohibit substituting current index or worktree bytes") &&
+       orca_supervision.include?("absolutely prohibit creating, editing, deleting, moving, formatting, or generating any file in the current registered worktree") &&
+       orca_supervision.include?("native session, transcript, and tool-output state beneath `~/.claude`") &&
+       orca_supervision.include?("one unique private review directory beneath `~/.claude`") &&
+       orca_supervision.include?("Other reviewers receive no filesystem-output exception") &&
+       orca_supervision.include?("Never allow output under `/tmp` or anywhere else") &&
+       orca_supervision.include?("Aquarium does not create or delete Claude state or treat it as repository state") &&
+       orca_supervision.include?("Do not reuse a terminal, create a low-level provider terminal, or use Dolgorae") &&
        orca_supervision.include?("cumulative 30-minute default liveness budget") &&
        orca_supervision.include?("current recovery and FIFO rules"),
-       "Orca supervision must bind native Codex execution and live lifecycle authority")
+       "Orca supervision must bind requested native reviewers to the current worktree and Orca lifecycle authority")
+assert(review_contract.include?("A Claude reviewer may create or update only Claude-owned session, transcript, and tool-output state beneath `~/.claude`") &&
+       review_contract.include?("Other reviewers receive no filesystem-output exception") &&
+       review_contract.include?("no Orca reviewer may write under `/tmp` or anywhere else") &&
+       review_contract.include?("This exception does not authorize a repository copy, capture, snapshot, source edit, Git mutation, or any other file write") &&
+       ROOT.join("PRIVACY.md").read.include?("Aquarium does not automatically remove Claude-owned files") &&
+       ROOT.join("TERMS.md").read.include?("only filesystem-output exception") &&
+       ROOT.join("README.md").read.include?("Claude may retain native session and tool output under `~/.claude`; oversized reports must use the same location") &&
+       ROOT.join("README.ko.md").read.include?("Claude가 생성하는 native session과 tool output은 `~/.claude` 아래에만 저장할 수 있습니다") &&
+       ROOT.join("docs/specs/tool-integrations.md").read.include?("only beneath `~/.claude`") &&
+       !orca_review.include?("one review directory directly under `/tmp`") &&
+       !orca_supervision.include?("one unique directory directly under `/tmp`"),
+       "Orca Review must confine Claude-owned output to ~/.claude and deny every other filesystem-output exception")
+assert(ROOT.join("PRIVACY.md").read.include?("Invoking `orca-review` by name or through an explicit request naming the review target and reviewer") &&
+       ROOT.join("PRIVACY.md").read.include?("Reviewers are prohibited from writing in the registered worktree") &&
+       ROOT.join("README.md").read.include?("Reviewers are prohibited from writing in the worktree") &&
+       ROOT.join("README.ko.md").read.include?("Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다") &&
+       ROOT.join("docs/specs/workflow-contracts.md").read.include?("Orca reviewers are prohibited from writing in the worktree"),
+       "public Orca Review documentation must disclose implicit selection and prompt-enforced write prohibition")
+assert(capability_catalog.include?("Both review workflows bind the reviewer to one declared source scope") &&
+       capability_catalog.include?("Independent Review additionally binds an immutable capture digest") &&
+       canonical_roadmap.include?("`TASK-031` superseded that Orca-side coupling by restoring native Orca execution") &&
+       canonical_roadmap.include?("The current Orca Review contract uses Orca's native requested-reviewer lifecycle"),
+       "capabilities and roadmap history must distinguish current Orca Review from immutable capture and TASK-031 scope")
+assert(epic_handler.include?("do not invoke `$aquarium:independent-review` or `$aquarium:orca-review`, which only the user starts") &&
+       epic_validator.include?("`$aquarium:independent-review`, or `$aquarium:orca-review`") &&
+       canonical_roadmap.include?("restores native Orca reviewer execution") &&
+       !canonical_roadmap.include?("restores native Orca Codex execution"),
+       "implicit Orca Review must remain user-started and roadmap history must not restore a Codex-only reviewer")
 
 assert(release_qa.include?("user explicitly invokes") &&
        release_qa.include?("The previous release is assumed to work") &&
@@ -2947,15 +3002,15 @@ assert(makefile.include?(".PHONY: test test-requirements test-prepare test-unit 
        "root Makefile must expose the serial common test contract")
 assert(makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py") &&
        makefile.include?("plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py") &&
-       makefile.include?("plugins/aquarium/skills/orca-review/scripts/inspect_repository_state.py") &&
        makefile.include?("tests/unit/test_inspect_release_notes_unit.py") &&
        makefile.include?("tests/unit/test_inspect_publication_state_unit.py") &&
-       makefile.include?("tests/unit/test_inspect_orca_review_state_unit.py") &&
        makefile.include?("plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py") &&
        makefile.include?("tests/unit/test_inspect_review_target_unit.py") &&
+       !makefile.include?("inspect_repository_state.py") &&
+       !makefile.include?("test_inspect_orca_review_state_unit.py") &&
        !makefile.include?("create_provider_terminal") &&
-       testing_document.include?("release-notes, publication-state, Orca Review repository-state, and independent-review target inspectors and helpers") &&
-       testing_document.include?("release-notes, publication-state, Orca Review repository-state, and independent-review target helpers' bounded structural states"),
+       testing_document.include?("release-notes, publication-state, and independent-review target inspectors and helpers") &&
+       testing_document.include?("release-notes, publication-state, and independent-review target helpers' bounded structural states"),
        "release and review helpers and tests must remain in the common test contract")
 assert(makefile.include?("test-podway-compat: test-requirements") &&
        makefile.include?('PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py') &&
@@ -2983,7 +3038,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
        testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
-       testing_document.include?("docs-setup, release-notes, publication-state, Orca Review repository-state, and independent-review target inspectors and helpers") &&
+       testing_document.include?("docs-setup, release-notes, publication-state, and independent-review target inspectors and helpers") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
        ROOT.join("README.md").read.include?("make test"),

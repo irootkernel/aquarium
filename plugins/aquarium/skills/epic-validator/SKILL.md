@@ -5,7 +5,7 @@ description: "Cold-validate one completed roadmap epic through a bounded direct 
 
 # Epic Validator
 
-Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Read [release-notes.md](../../references/release-notes.md). Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, or `$aquarium:independent-review`.
+Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Read [release-notes.md](../../references/release-notes.md). Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, `$aquarium:independent-review`, or `$aquarium:orca-review`.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md).
 
