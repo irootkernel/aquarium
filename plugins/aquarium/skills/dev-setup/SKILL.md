@@ -9,7 +9,7 @@ Configure selected development tools and evidence-based repository operating gui
 
 Read [podway-integration.md](../../references/podway-integration.md) only when the user explicitly selects Podway diagnosis or setup. Managed Aquarium Procedures or other repository state never select Podway by themselves.
 
-Do not use this skill to observe, cancel, discard, or reset a routine supported Procedure v2 current session. Return an exact standalone `$use-podway` lifecycle request naming the repository, operation, and any session ID supplied by the caller instead. Keep installation, daemon, workspace readiness, managed-Procedure changes, and `LEGACY_PROCEDURE_STATE_UNSUPPORTED` recovery in this skill; the legacy `podway reset --all` path is a setup-recovery exception, not normal session cleanup.
+Do not use this skill to observe, cancel, discard, or reset a routine supported Procedure v2 current session, or to plan or apply a workspace runtime-mode move. Return an exact standalone `$use-podway` lifecycle request naming the repository, operation, and any session ID or target mode supplied by the caller instead. Keep installation, daemon, workspace readiness, managed-Procedure changes, and `LEGACY_PROCEDURE_STATE_UNSUPPORTED` recovery in this skill; the legacy `podway reset --all` path is a setup-recovery exception, not normal session cleanup.
 
 ## Establish the Repository
 
@@ -124,7 +124,7 @@ For Gaori, support only stable `v0.1.14` through `v0.1.x`. Resolve one exact tag
 
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
-For Podway, support only stable `v0.2.7` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
+For Podway, support only stable `v0.2.8` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
 
 Keep release lookup, binary installation, user-scoped skill installation or replacement, LaunchAgent installation, repository initialization, managed-procedure installation or update, legacy-state recovery, and managed-Procedure removal as distinct proposed actions. None of these actions activates Podway for an Aquarium workflow.
 
@@ -136,7 +136,7 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
-Use the v12 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.7 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
+Use the v14 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.8 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
 
 Treat `update_explanation` values such as `prior_canonical` and `podway_v0.2.5_workaround` only as bounded explanations for an offered canonical update. They never form a validity, ownership, migration, or readiness class. A tracked same-ID `valid_customization` is configured when the other Podway readiness requirements pass.
 

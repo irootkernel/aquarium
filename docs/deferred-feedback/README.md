@@ -22,3 +22,10 @@ This index owns small actionable findings intentionally postponed from current w
 - Owner: `new-project` and `test-setup`.
 - Reason for deferral: the issue affects future greenfield roadmap quality but is independent of the current Aquarium implementation and active delivery work, so its contract and focused coverage can be changed separately.
 - Re-entry condition: resolve before the next greenfield `$aquarium:new-project` roadmap is adopted, with focused cross-skill coverage for documentation-only, EPIC-001 walking-skeleton, and later-vertical-slice scenarios.
+
+## DF-004: Restore successful Podway workspace-removal replay
+
+- Actionable issue: the official Podway v0.2.8 CLI resolves the deleted workspace configuration before reaching the daemon's `already_absent` path, so an identical post-success UUID-fenced replay returns nonretryable `WORKSPACE_CONFIG_INVALID` even though Podway's ADR, IPC schema, and daemon tests define `already_absent=true` convergence.
+- Owner: the Podway compatibility gate and integration documentation.
+- Reason for deferral: the first exact fenced removal succeeds, and Aquarium independently verifies that the isolated registry entry and `.podway` tree are absent while the Git worktree is preserved. The bounded v0.2.8 exception therefore does not weaken the initial destructive mutation boundary.
+- Re-entry condition: when an official Podway v0.2.9 artifact is available, require the replay to return `podway.workspace-removal-result/v1` with a null workspace UUID, `registry_entry_removed=false`, `podway_directory_removed=false`, and `already_absent=true`; then remove the v0.2.8 exception and its v4 error-terminal assertions and documentation.

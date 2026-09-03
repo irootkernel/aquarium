@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "7"
+version: "8"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for epic-wide audit, one automatic confirmation, user-directed follow-up, and validation closeout.
@@ -279,7 +279,8 @@ node_definitions:
     prompt: Is the latest epic snapshot ready for validation closeout?
     evidence_guidance:
       - Read the final audit, required checks, review ordinal and mode, exact Mulgae run, and roadmap states.
-      - Select no option while confirmation-needed-findings is non-zero. Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework final-review and evaluate this decision again.
+      - Select no option while confirmation-needed-findings is non-zero.
+      - Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework final-review and evaluate this decision again.
       - Use rework-required only for a remediation-eligible Medium-or-higher finding; confirmation-only Medium-or-higher work requires user-direction.
     options:
       - id: validated
@@ -559,6 +560,9 @@ graph:
             - medium-findings
             - low-findings
             - valid-finding-ids
+        - node: final-review
+          required: true
+          items:
             - finding-disposition-summary
       routes:
         validated:

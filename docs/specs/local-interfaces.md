@@ -6,9 +6,9 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `6` | `task-handler` | Plan, implementation, refinement, typed verification, Medium-or-higher re-review, Low disposition, goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `7` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with Low-only hardening deferral and a validation-bound closeout review exception |
-| `aquarium-validation-v2` | `7` | `epic-handler` and `epic-validator` | Baseline, guarded audit, Medium-or-higher remediation and re-review, local Low disposition, assessment, and closeout |
+| `aquarium-task-v2` | `7` | `task-handler` | Plan, implementation, refinement, typed verification, Medium-or-higher re-review, Low disposition, goal assessment, approval, and closeout |
+| `aquarium-goal-v2` | `8` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with Low-only hardening deferral and a validation-bound closeout review exception |
+| `aquarium-validation-v2` | `8` | `epic-handler` and `epic-validator` | Baseline, guarded audit, Medium-or-higher remediation and re-review, local Low disposition, assessment, and closeout |
 | `aquarium-design-v2` | `2` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout |
 | `aquarium-war-room-v2` | `2` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout |
 
@@ -18,7 +18,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v13` | Read-only normalized Git, optional official Dolgorae v0.1.x release verification, tool, skill, MCP, configuration, writing-skill structure, same-ID Podway-valid customization, and bounded readiness inspection |
+| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v14` | Read-only normalized Git, optional official Dolgorae v0.1.x release verification, tool, skill, MCP, configuration, writing-skill structure, same-ID Podway-valid customization, and bounded readiness inspection |
 | `dev-setup/scripts/verify_dolgorae_release.py` | Optional supported Dolgorae version and network timeout | `aquarium-dolgorae-release-verification.v1` | Bounded official GitHub Release identity verification for stable v0.1.1 through v0.1.x |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
@@ -27,7 +27,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `release-handler/scripts/inspect_release_notes.py` | Repository, expected version, and release baseline | `aquarium-release-notes-inspection/v1` | Inventories cumulative release-note enrollment and candidate delta |
 | `release-qa/scripts/manage_release_qa.py` | Versioned full-pass, preparation, admission, or finish JSON | `aquarium-release-qa-confirmation-record/v1`, `aquarium-release-qa-confirmation-manifest/v1`, `aquarium-release-qa-confirmation-claim/v1`, or `aquarium-release-qa-confirmation-result/v1` | Freezes complete QA matrices, derives exact remediation coverage, atomically admits one confirmation attempt, and validates its complete result |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v4` JSON on standard input | `aquarium-release-publication-state/v4` | Normalizes local, remote, tag, stable hosted Release, and exact or approved QA-neutral candidate binding supplied by the caller |
-| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v3` | Executes the exact v0.2.7 CLI and sibling daemon against all managed Procedures, declaration-limit failures, two fresh isolated runtime passes, and fenced workspace-removal rejection, success, and replay convergence |
+| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v4` | Executes the exact v0.2.8 CLI and sibling daemon in isolated `release-qa` mode against all managed Procedures, declaration-limit failures, two lifecycle passes, and fenced workspace-removal rejection, success, and bounded replay behavior |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
 

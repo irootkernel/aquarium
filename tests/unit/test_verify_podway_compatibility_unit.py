@@ -82,7 +82,7 @@ def test_procedure_result_rejects_an_unexpected_envelope() -> None:
         )
 
 
-def test_workspace_removal_contract_uses_v3_receipt() -> None:
+def test_workspace_removal_contract_uses_v4_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     completed = subprocess.CompletedProcess(
         ["podway"],
@@ -112,9 +112,190 @@ def test_workspace_removal_contract_uses_v3_receipt() -> None:
 
     assert result["already_absent"] is True
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v3"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v4"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.7"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.8"
+
+
+def test_workspace_removal_replay_accepts_only_the_v028_terminal() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    completed = subprocess.CompletedProcess(
+        ["podway"],
+        5,
+        stdout=json.dumps(
+            {
+                "schema": "podway.error/v1",
+                "command": "workspace.remove",
+                "code": "WORKSPACE_CONFIG_INVALID",
+                "retryable": False,
+            }
+        ).encode(),
+        stderr=b"",
+    )
+
+    assert runtime.workspace_removal_replay_error(completed)["code"] == (
+        "WORKSPACE_CONFIG_INVALID"
+    )
+
+
+@pytest.mark.parametrize(
+    ("returncode", "code", "retryable"),
+    [
+        (0, "WORKSPACE_CONFIG_INVALID", False),
+        (5, "WORKSPACE_NOT_INITIALIZED", False),
+        (5, "WORKSPACE_CONFIG_INVALID", True),
+    ],
+)
+def test_workspace_removal_replay_rejects_other_outcomes(
+    returncode: int, code: str, retryable: bool
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    completed = subprocess.CompletedProcess(
+        ["podway"],
+        returncode,
+        stdout=json.dumps(
+            {
+                "schema": "podway.error/v1",
+                "command": "workspace.remove",
+                "code": code,
+                "retryable": retryable,
+            }
+        ).encode(),
+        stderr=b"",
+    )
+
+    with pytest.raises(runtime.RuntimeQualificationError, match="bounded v0.2.8"):
+        runtime.workspace_removal_replay_error(completed)
+
+
+def test_managed_runtime_cleans_up_when_readiness_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_module = verify_podway_compatibility.podway_runtime_qualification
+    binary = tmp_path / "podway"
+    daemon = tmp_path / "podwayd"
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    for executable in (binary, daemon):
+        executable.write_bytes(b"fixture")
+        executable.chmod(0o755)
+
+    class ExitedProcess:
+        def poll(self) -> int:
+            return 0
+
+    monkeypatch.setattr(
+        runtime_module,
+        "bounded_process",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, b"", b""),
+    )
+    monkeypatch.setattr(
+        runtime_module.subprocess,
+        "Popen",
+        lambda *args, **kwargs: ExitedProcess(),
+    )
+    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+
+    def fail_readiness() -> None:
+        raise runtime_module.RuntimeQualificationError("readiness fixture failed")
+
+    monkeypatch.setattr(managed, "wait_ready", fail_readiness)
+
+    with pytest.raises(
+        runtime_module.RuntimeQualificationError, match="readiness fixture failed"
+    ):
+        managed.__enter__()
+
+    assert managed.root is not None
+    assert not managed.root.exists()
+
+
+def test_managed_runtime_cleans_up_when_setup_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_module = verify_podway_compatibility.podway_runtime_qualification
+    binary = tmp_path / "podway"
+    daemon = tmp_path / "podwayd"
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    for executable in (binary, daemon):
+        executable.write_bytes(b"fixture")
+        executable.chmod(0o755)
+
+    def fail_setup(
+        *args: object, **kwargs: object
+    ) -> subprocess.CompletedProcess[bytes]:
+        raise runtime_module.RuntimeQualificationError("setup fixture failed")
+
+    monkeypatch.setattr(runtime_module, "bounded_process", fail_setup)
+    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+
+    with pytest.raises(
+        runtime_module.RuntimeQualificationError, match="setup fixture failed"
+    ):
+        managed.__enter__()
+
+    assert managed.root is not None
+    assert not managed.root.exists()
+
+
+def test_managed_runtime_preserves_failure_before_snapshot_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_module = verify_podway_compatibility.podway_runtime_qualification
+    binary = tmp_path / "podway"
+    daemon = tmp_path / "podwayd"
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    for executable in (binary, daemon):
+        executable.write_bytes(b"fixture")
+        executable.chmod(0o755)
+
+    def fail_chmod(self: Path, mode: int) -> None:
+        raise OSError("chmod fixture failed")
+
+    monkeypatch.setattr(runtime_module.Path, "chmod", fail_chmod)
+    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+
+    with pytest.raises(OSError, match="chmod fixture failed"):
+        managed.__enter__()
+
+    assert managed.dev_home is None
+    assert managed.root is not None
+    assert not managed.root.exists()
+
+
+def test_managed_runtime_closes_log_and_cleans_up_when_daemon_start_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_module = verify_podway_compatibility.podway_runtime_qualification
+    binary = tmp_path / "podway"
+    daemon = tmp_path / "podwayd"
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    for executable in (binary, daemon):
+        executable.write_bytes(b"fixture")
+        executable.chmod(0o755)
+
+    monkeypatch.setattr(
+        runtime_module,
+        "bounded_process",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, b"", b""),
+    )
+
+    def fail_start(*args: object, **kwargs: object) -> None:
+        raise OSError("daemon fixture failed")
+
+    monkeypatch.setattr(runtime_module.subprocess, "Popen", fail_start)
+    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+
+    with pytest.raises(OSError, match="daemon fixture failed"):
+        managed.__enter__()
+
+    assert managed.log is not None
+    assert managed.log.closed
+    assert managed.root is not None
+    assert not managed.root.exists()
 
 
 def test_exact_binary_requires_an_absolute_path() -> None:

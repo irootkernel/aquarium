@@ -13,7 +13,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Require an execution dossier for epics with at least three member tasks or three requirement-bearing canonical documents, while letting smaller semantically complete epics use repository-owned documentation and retaining shared dossiers until their final consumer closes.
-- Adopt Podway v0.2.7 as the minimum stable runtime and extend exact-artifact qualification to workspace removal safety and replay convergence.
+- Adopt Podway v0.2.8 as the minimum stable runtime, require named-mode daemon readiness v3, qualify its official artifact across the managed Procedures and fenced workspace removal, and route destructive workspace runtime-mode moves through an explicit same-tag lifecycle handoff.
 - Extend development setup inspection and bundle selection to keep writing-skill installation separate from repository guidance.
 - Unify review finding adjudication and remediation across Independent Review, Mulgae, and Orca Review with authority-aware reporting, mandatory correction and re-review for Medium-or-higher issues, and proportionate Low dispositions.
 

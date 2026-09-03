@@ -34,6 +34,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-005 | Adopt Dolgorae v0.1.0 | Completed |
 | EPIC-006 | Adopt Podway v0.2.7 | Completed |
 | EPIC-007 | Adopt upstream document humanizers | Completed |
+| EPIC-008 | Adopt Podway v0.2.8 | In Review |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -155,3 +156,18 @@ Adopt exact upstream Humanizer and im-not-ai releases as independently installed
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-032 | Integrate upstream document humanizers | Add exact-release installation, structural diagnosis, project guidance, bundle selection, public disclosures, and regression coverage for Humanizer and im-not-ai. | Completed | None |
+
+## EPIC-008: Adopt Podway v0.2.8
+
+**Status:** `In Review`
+
+Adopt the official Podway v0.2.8 release as Aquarium's minimum stable runtime. The v0.2.8 contract adds named-mode daemon readiness v3 and keeps workspace runtime-mode changes behind explicit authorization. Qualification covers the revised task, goal, and validation Procedures together with the official artifact's fenced workspace-removal behavior.
+
+Podway owns its release, distribution, runtime-mode implementation, and source-distributed `use-podway` lifecycle guidance. Aquarium independently verifies the official artifact and diagnoses runtime-mode mismatches without changing modes. The v0.2.8 workspace-removal replay exception remains in deferred feedback until an official v0.2.9 artifact satisfies the documented convergence contract.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Local interfaces](../specs/local-interfaces.md), [Podway integration](../../plugins/aquarium/references/podway-integration.md), [Changing Procedures](../implementation-tips/changing-procedures.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-033 | Align the Podway v0.2.8 support contract | Raise the stable runtime floor, adopt named-mode daemon readiness, preserve explicit workspace-mode authorization, and update the managed Procedure review and rework seams. | Completed | External Podway v0.2.8 release |
+| TASK-034 | Qualify and close Podway v0.2.8 adoption | Verify the official artifact against the managed Procedures, lifecycle guards, runtime cleanup, fenced workspace removal, and final exact Aquarium candidate. | In Review | TASK-033 |

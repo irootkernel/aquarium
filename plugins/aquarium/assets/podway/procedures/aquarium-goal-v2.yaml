@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "7"
+version: "8"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -185,7 +185,8 @@ node_definitions:
     prompt: Does the current evidence support this goal?
     evidence_guidance:
       - Read the goal work, checks, Mulgae status, and finding dispositions.
-      - Select no option while confirmation-needed-findings is non-zero. Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework record-evidence and evaluate this decision again.
+      - Select no option while confirmation-needed-findings is non-zero.
+      - Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework record-evidence and evaluate this decision again.
     options:
       - id: supported
         label: Evidence supports goal
@@ -219,10 +220,6 @@ node_definitions:
               node: record-hardening-deferral
               item: hardening-deferral-state
             equals: recorded
-          - evidence:
-              node: record-hardening-deferral
-              item: hardening-deferral-finding-ids
-            non_empty: true
           - evidence:
               node: record-evidence
               item: confirmation-needed-findings
@@ -266,6 +263,23 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the selection using the recorded evidence.
+  authorized-rework-decision:
+    type: decision
+    title: Confirm additional rework authority
+    objective: Re-enter goal work only while the recorded additional review authorization remains current.
+    prompt: Is the additional remediation-and-review pass still authorized?
+    evidence_guidance:
+      - Read the current extra-review authorization and account for any later change before starting another bounded work pass.
+    options:
+      - id: proceed
+        label: Proceed with authorized rework
+        criteria: The user authorization remains current for exactly one additional remediation-and-review pass.
+      - id: reconsider
+        label: Reconsider authorization
+        criteria: The authorization is no longer current or its bounded scope must be reconsidered before work resumes.
+    reason:
+      required: true
+      prompt: Explain the current authorization state and bounded next action.
   goal-assessment:
     type: decision
     title: Assess the goal
@@ -382,7 +396,21 @@ graph:
           to: complete-work
           effect: rework
         authorized-rework:
+          to: decide-authorized-rework
+          effect: advance
+    - id: decide-authorized-rework
+      use: authorized-rework-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - extra-review-authorization
+      routes:
+        proceed:
           to: complete-work
+          effect: rework
+        reconsider:
+          to: record-evidence
           effect: rework
     - id: record-hardening-handoff
       use: hardening-deferral-disposition

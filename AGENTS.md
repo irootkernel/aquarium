@@ -109,10 +109,10 @@ Before release QA, reconcile every material change after the previous release wi
 
 Before either mode, inspect the worktree, the local and remote `main` commits, the exact release-candidate SHA, and existing tags and GitHub Releases. Stop on unrelated worktree changes, an ambiguous release target, or a conflicting tag or release rather than including or overwriting it.
 
-When the open release requires Podway v0.2.7 compatibility, verify the official Apple Silicon archive against its published checksum and run this additional exact-artifact gate before release QA:
+When the open release requires Podway v0.2.8 compatibility, verify the official Apple Silicon archive against its published checksum and run this additional exact-artifact gate before release QA:
 
 ```bash
-PODWAY_BIN=<absolute-path-to-extracted-v0.2.7-podway> make test-podway-compat
+PODWAY_BIN=<absolute-path-to-extracted-v0.2.8-podway> make test-podway-compat
 ```
 
 A local development binary is development-contract evidence only and cannot satisfy this distribution gate. In light mode, the required prior test confirmation must cover this result for the exact Aquarium candidate SHA; in full mode, run it in addition to the complete local release gate. Podway's own exact release-candidate gate remains authoritative for runtime record enforcement and Podway distribution readiness.

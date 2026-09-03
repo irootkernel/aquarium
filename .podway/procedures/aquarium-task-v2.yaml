@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "6"
+version: "7"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -219,7 +219,6 @@ node_definitions:
     prompt: Is the latest complete task target ready for goal assessment?
     evidence_guidance:
       - Read the review ordinal, mode, exact Mulgae run, findings dispositions, and current post-review verification evidence.
-      - Select no option while confirmation-needed-findings is non-zero. Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework review and evaluate this decision again.
       - Select no option while a confirmation-only review retains a valid Medium-or-higher finding and the user has not authorized the next correction-and-review round.
     options:
       - id: approved
@@ -238,10 +237,6 @@ node_definitions:
               node: review
               item: effective-low-findings
             equals: 0
-          - evidence:
-              node: review
-              item: confirmation-needed-findings
-            equals: 0
       - id: ci-failed
         label: CI failed
         criteria: The root review is operationally complete, its CI decision failed, and every finding that needs confirmation has been resolved before implementation rework.
@@ -250,10 +245,6 @@ node_definitions:
               node: review
               item: ci-decision
             equals: fail
-          - evidence:
-              node: review
-              item: confirmation-needed-findings
-            equals: 0
       - id: implementation-changes
         label: Implementation changes requested
         criteria: A remediation-eligible review whose CI passed has a valid implementation or refinement finding. Do not select this option for a confirmation-only hold without user authorization.
@@ -270,14 +261,6 @@ node_definitions:
               node: review
               item: unresolved-implementation-findings
             at_least: 1
-          - evidence:
-              node: review
-              item: effective-medium-or-higher-findings
-            at_least: 1
-          - evidence:
-              node: review
-              item: confirmation-needed-findings
-            equals: 0
       - id: documentation-changes
         label: Documentation changes requested
         criteria: A remediation-eligible review has no implementation finding and at least one documentation finding.
@@ -298,10 +281,6 @@ node_definitions:
               node: review
               item: unresolved-documentation-findings
             at_least: 1
-          - evidence:
-              node: review
-              item: confirmation-needed-findings
-            equals: 0
       - id: low-disposition
         label: Complete Low dispositions
         criteria: CI passed, no valid Medium-or-higher finding remains, and every valid Low finding can take one shared local disposition without another provider review.
@@ -318,13 +297,36 @@ node_definitions:
               node: review
               item: effective-low-findings
             at_least: 1
+    reason:
+      required: true
+      prompt: Explain the decision using the recorded review evidence.
+  review-confirmation-decision:
+    type: decision
+    title: Confirm review findings
+    objective: Admit review routing only after every finding has a supported validity disposition.
+    prompt: Have all findings that needed confirmation been resolved?
+    evidence_guidance:
+      - Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework review when any confirmation remains.
+    options:
+      - id: resolved
+        label: Findings confirmed
+        criteria: No finding still needs confirmation.
+        guards:
           - evidence:
               node: review
               item: confirmation-needed-findings
             equals: 0
+      - id: unresolved
+        label: Confirmation required
+        criteria: At least one finding still needs a supported validity disposition before review routing.
+        guards:
+          - evidence:
+              node: review
+              item: confirmation-needed-findings
+            at_least: 1
     reason:
       required: true
-      prompt: Explain the decision using the recorded review evidence.
+      prompt: Explain the selection using the recorded finding dispositions.
   low-disposition-record:
     type: action
     title: Record completed Low dispositions
@@ -476,7 +478,21 @@ graph:
           required: true
           items:
             - documentation-summary
-      next: decide-review
+      next: confirm-review-findings
+    - id: confirm-review-findings
+      use: review-confirmation-decision
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - confirmation-needed-findings
+      routes:
+        resolved:
+          to: decide-review
+          effect: advance
+        unresolved:
+          to: review
+          effect: rework
     - id: decide-review
       use: review-decision
       evidence_from:

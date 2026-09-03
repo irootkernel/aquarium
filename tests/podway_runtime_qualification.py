@@ -19,14 +19,15 @@ from typing import Any, Self
 OUTPUT_SCHEMA = "podway.output/v3"
 ERROR_SCHEMA = "podway.error/v1"
 OBSERVATION_SCHEMA = "podway.observation-result/v3"
-RUNTIME_SCHEMA = "podway.managed-dev-runtime/v2"
+RUNTIME_SCHEMA = "podway.managed-runtime/v3"
+RUNTIME_MODE = "release-qa"
 COMMAND_TIMEOUT_SECONDS = 20
 READINESS_TIMEOUT_SECONDS = 20
 PROCESS_EXIT_TIMEOUT_SECONDS = 10
 RUN_TIMEOUT_SECONDS = 240
 REPEAT_COUNT = 2
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:fc4d16da9877853d795c621ce5eaa445f94354d6ab52f4935c9e38a2318ce6c0"
+    "sha256:9f3ed3571cc45cf49e445f8e2d75be3396f533db054e5e5cac8339207b8fea0c"
 )
 
 SUCCESS_OPTIONS = {
@@ -40,6 +41,7 @@ SUCCESS_OPTIONS = {
     "decide-quality": "passed",
     "decide-review": "approved",
     "decide-verification": "passed",
+    "confirm-review-findings": "resolved",
     "assess-goal": "achieved",
 }
 
@@ -151,6 +153,24 @@ def error_code(completed: subprocess.CompletedProcess[bytes]) -> str:
     return code
 
 
+def workspace_removal_replay_error(
+    completed: subprocess.CompletedProcess[bytes],
+) -> dict[str, Any]:
+    payload = json_payload(completed)
+    if (
+        completed.returncode != 5
+        or payload.get("schema") != ERROR_SCHEMA
+        or payload.get("command") != "workspace.remove"
+        or payload.get("code") != "WORKSPACE_CONFIG_INVALID"
+        or payload.get("retryable") is not False
+    ):
+        raise RuntimeQualificationError(
+            "workspace removal replay did not return the bounded v0.2.8 "
+            "WORKSPACE_CONFIG_INVALID terminal"
+        )
+    return payload
+
+
 def private_directory(path: Path) -> None:
     path.mkdir(mode=0o700)
     path.chmod(0o700)
@@ -202,29 +222,36 @@ class ManagedRuntime:
         self.task_snapshot_immutable = False
 
     def __enter__(self) -> Self:
+        try:
+            return self._enter()
+        except BaseException as error:
+            self.__exit__(type(error), error, error.__traceback__)
+            raise
+
+    def _enter(self) -> Self:
         uid = os.geteuid()
         root = Path(
             tempfile.mkdtemp(prefix=f"podway-release-{uid}-", dir="/private/tmp")
         )
-        root.chmod(0o700)
         self.root = root
+        root.chmod(0o700)
         self.deadline = time.monotonic() + RUN_TIMEOUT_SECONDS
         self.account = root / "account"
-        self.dev_home = root / "dev"
+        self.dev_home = root
         self.sandbox = root / "sandbox"
         cache = root / "cache"
         temporary = root / "tmp"
         snapshot_id = sha256_file(self.daemon)[:16]
         snapshot = root / "snapshots" / snapshot_id
         private_directory(self.account)
-        private_directory(self.dev_home)
         private_directory(self.sandbox)
         private_directory(cache)
         private_directory(temporary)
         private_directory(root / "snapshots")
         private_directory(snapshot)
-        private_directory(self.account / ".podway")
-        private_directory(self.account / ".podway" / "run")
+        private_directory(root / "run")
+        private_directory(root / "state")
+        private_directory(root / "logs")
 
         self.snapshot_binary = snapshot / "podway"
         self.snapshot_daemon = snapshot / "podwayd"
@@ -234,20 +261,33 @@ class ManagedRuntime:
         self.snapshot_daemon.chmod(0o755)
         metadata = {
             "schema": RUNTIME_SCHEMA,
+            "metadata_version": 3,
             "purpose": "release-qualification",
-            "uid": uid,
-            "root": str(root),
-            "account_root": str(self.account),
-            "dev_home": str(self.dev_home),
-            "sandbox": str(self.sandbox),
-            "snapshot": {
-                "id": snapshot_id,
-                "directory": str(snapshot),
-                "podway": str(self.snapshot_binary),
-                "podwayd": str(self.snapshot_daemon),
-                "podway_sha256": sha256_file(self.snapshot_binary),
-                "podwayd_sha256": sha256_file(self.snapshot_daemon),
+            "euid": uid,
+            "canonical_root": str(root),
+            "mode": RUNTIME_MODE,
+            "paths": {
+                "lock": str(root / "run" / "podwayd.lock"),
+                "socket": str(root / "run" / "podwayd.sock"),
+                "service_state": str(root / "state" / "service.json"),
+                "registry": str(root / "state" / "workspaces.json"),
+                "recovery": str(root / "state" / "recovery.json"),
+                "log": str(root / "logs" / "podwayd.log"),
+                "bootstrap_log": str(root / "logs" / "podwayd-bootstrap.log"),
             },
+            "sandbox_root": str(self.sandbox),
+            "executables": {
+                "cli": {
+                    "path": str(self.snapshot_binary),
+                    "sha256": f"sha256:{sha256_file(self.snapshot_binary)}",
+                },
+                "daemon": {
+                    "path": str(self.snapshot_daemon),
+                    "sha256": f"sha256:{sha256_file(self.snapshot_daemon)}",
+                },
+                "controller": None,
+            },
+            "generation": None,
         }
         metadata_path = root / "runtime.json"
         metadata_path.write_text(
@@ -277,10 +317,10 @@ class ManagedRuntime:
             ["git", "commit", "--allow-empty", "-q", "-m", "qualification fixture"],
             cwd=self.sandbox,
         )
-        daemon_log = root / "podwayd.log"
+        daemon_log = root / "logs" / "qualification-harness.log"
         self.log = daemon_log.open("xb")
         self.process = subprocess.Popen(
-            [str(self.snapshot_daemon), "--dev"],
+            [str(self.snapshot_daemon), "--mode", RUNTIME_MODE],
             cwd=self.sandbox,
             env=self.environment,
             stdin=subprocess.DEVNULL,
@@ -357,8 +397,27 @@ class ManagedRuntime:
             if (
                 result.get("readiness_state") == "ready"
                 and result.get("readiness_stage") == "ready"
-                and result.get("daemon_version") == "0.2.7"
+                and result.get("mode") == RUNTIME_MODE
+                and result.get("daemon_version") == "0.2.8"
                 and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
+                and (
+                    result.get("in_flight_client_count") is None
+                    or (
+                        isinstance(result.get("in_flight_client_count"), int)
+                        and not isinstance(result.get("in_flight_client_count"), bool)
+                        and 0 <= result["in_flight_client_count"] <= 1024
+                    )
+                )
+                and (
+                    result.get("maintenance_operation_count") is None
+                    or (
+                        isinstance(result.get("maintenance_operation_count"), int)
+                        and not isinstance(
+                            result.get("maintenance_operation_count"), bool
+                        )
+                        and 0 <= result["maintenance_operation_count"] <= 10_000
+                    )
+                )
             ):
                 if self.daemon_pid is None:
                     raise RuntimeQualificationError(
@@ -381,7 +440,7 @@ class ManagedRuntime:
                         except OSError:
                             pass
         raise RuntimeQualificationError(
-            "daemon did not reach v0.2.7 verified readiness: "
+            "daemon did not reach v0.2.8 release-qa readiness: "
             f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
         )
 
@@ -393,7 +452,7 @@ class ManagedRuntime:
                 "name": "aquarium-release-qualification",
                 "pid": os.getpid(),
                 "product": "podway",
-                "version": "v0.2.7",
+                "version": "v0.2.8",
                 "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
             },
             "operation": "control",
@@ -425,41 +484,25 @@ class ManagedRuntime:
             response.get("schema") != OUTPUT_SCHEMA
             or response.get("command") != "daemon.status"
             or not isinstance(result, dict)
-            or result.get("schema") != "podway.daemon-status-result/v2"
+            or result.get("schema") != "podway.daemon-status-result/v3"
         ):
             raise RuntimeQualificationError("invalid daemon status response")
         return result
 
     def terminate(self) -> None:
-        assert self.snapshot_binary is not None
-        assert self.sandbox is not None
-        assert self.environment is not None
-        if self.socket.exists():
-            try:
-                bounded_process(
-                    [str(self.snapshot_binary), "--dev", "--json", "terminate"],
-                    cwd=self.sandbox,
-                    environment=self.environment,
-                    timeout_seconds=PROCESS_EXIT_TIMEOUT_SECONDS,
-                )
-            except RuntimeQualificationError:
-                pass
         if self.process is not None and self.process.poll() is None:
+            try:
+                os.killpg(self.process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
             try:
                 self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
             except subprocess.TimeoutExpired:
                 try:
-                    os.killpg(self.process.pid, signal.SIGTERM)
+                    os.killpg(self.process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-                try:
-                    self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
-                except subprocess.TimeoutExpired:
-                    try:
-                        os.killpg(self.process.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
+                self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
         if self.daemon_is_alive() and self.daemon_pid is not None:
             try:
                 os.kill(self.daemon_pid, signal.SIGTERM)
@@ -477,7 +520,7 @@ class ManagedRuntime:
             raise RuntimeQualificationError(
                 "release-qualification daemon survived shutdown"
             )
-        if self.socket.exists():
+        if self.dev_home is not None and self.socket.exists():
             raise RuntimeQualificationError(
                 "release-qualification socket survived shutdown"
             )
@@ -511,7 +554,7 @@ class ManagedRuntime:
                 "isolated runtime exceeded overall deadline"
             )
         return bounded_process(
-            [str(self.snapshot_binary), "--dev", *arguments],
+            [str(self.snapshot_binary), "--mode", RUNTIME_MODE, *arguments],
             cwd=self.sandbox,
             environment=self.environment,
             stdin=stdin,
@@ -674,38 +717,28 @@ class ManagedRuntime:
                 "workspace removal did not preserve the Git worktree boundary"
             )
 
-        converged = output_result(
-            self.raw(removal_arguments),
-            "workspace.remove",
-            "podway.workspace-removal-result/v1",
-        )
-        if converged != {
-            "schema": "podway.workspace-removal-result/v1",
-            "worktree_root": str(self.sandbox.resolve()),
-            "workspace_uuid": None,
-            "registry_entry_removed": False,
-            "podway_directory_removed": False,
-            "already_absent": True,
-        }:
-            raise RuntimeQualificationError(
-                "workspace removal did not converge after exact fenced replay"
-            )
+        replay = self.raw(removal_arguments, expected_exit=None)
+        workspace_removal_replay_error(replay)
+        post_removal_status = self.daemon_status_probe()
         if (
             podway_directory.exists()
             or not self.sandbox.is_dir()
             or not git_directory.exists()
             or sentinel.read_bytes() != sentinel_contents
+            or post_removal_status.get("registered_worktree_count") != 0
         ):
             raise RuntimeQualificationError(
-                "converged workspace removal crossed the Git worktree boundary"
+                "workspace removal replay did not preserve the verified terminal state"
             )
 
         return {
             "result_schema": "podway.workspace-removal-result/v1",
             "uuid_mismatch_rejected": True,
             "initial_removal_passed": True,
-            "replay_converged": True,
+            "replay_terminal_code": "WORKSPACE_CONFIG_INVALID",
+            "replay_postcondition_verified": True,
             "podway_directory_absent": True,
+            "registry_absent": True,
             "git_worktree_preserved": True,
         }
 
@@ -1388,7 +1421,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.7-run-{self.run_index}",
+                f"official-v0.2.8-run-{self.run_index}",
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
@@ -1461,6 +1494,8 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
             )
         receipts[-1]["cleanup"] = "passed"
     return {
+        "runtime_mode": RUNTIME_MODE,
+        "daemon_status_schema": "podway.daemon-status-result/v3",
         "runtime_repeat_count": REPEAT_COUNT,
         "runtime_procedure_count": 5,
         "failure_cleanup": "passed",

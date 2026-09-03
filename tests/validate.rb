@@ -185,6 +185,8 @@ agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md")
 root_agents = ROOT.join("AGENTS.md").read
 root_claude = ROOT.join("CLAUDE.md").read
 tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
+podway_integration = PLUGIN.join("references/podway-integration.md").read
+deferred_feedback = ROOT.join("docs/deferred-feedback/README.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
 gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
@@ -430,6 +432,7 @@ assert(dev_setup.include?("treat it as scoped intake"),
 assert(dev_setup.include?("Do not use for routine supported Procedure v2 session observation") &&
        dev_setup.include?("Reject a handoff whose only requested action is routine supported Procedure v2") &&
        dev_setup.include?("without starting broad setup discovery") &&
+       dev_setup.include?("workspace runtime-mode move") &&
        dev_setup.include?("legacy `podway reset --all` path is a setup-recovery exception"),
        "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
 assert(dev_setup.include?("Do not create or read `.aquarium`"),
@@ -657,6 +660,7 @@ capability_catalog = documentation_details.fetch("capabilities")
 assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
        capability_catalog.include?("raises the Podway minimum") &&
+       capability_catalog.include?("workspace removal and runtime-mode moves") &&
        capability_catalog.include?("CHANGELOG.md") &&
        capability_catalog.include?("release-status authority"),
        "capability catalog must inventory all Aquarium skills and defer release status to the CHANGELOG")
@@ -667,20 +671,23 @@ supported_tool_versions = [
   "Stable `v0.2.7` through `v0.2.x`",
   "Stable `v0.1.18` through `v0.1.x`",
   "Stable `v0.1.14` through `v0.1.x`",
-  "Stable `v0.2.7` through `v0.2.x`",
+  "Stable `v0.2.8` through `v0.2.x`",
   "`>=0.51.1,<0.52.0`"
 ]
 assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(version) } &&
        tool_integrations_doc.include?("Go `1.26.6+` only for installation") &&
        tool_integrations_doc.include?("No Aquarium release floor declared") &&
-       tool_integrations_doc.include?("No release line; disclosed full current upstream SHA"),
+       tool_integrations_doc.include?("No release line; disclosed full current upstream SHA") &&
+       tool_integrations_doc.include?("Moving an initialized workspace between Podway runtime modes") &&
+       tool_integrations_doc.include?("deletes all current and archived runtime history") &&
+       tool_integrations_doc.include?("separate approval immediately before apply"),
        "tool integration documentation must preserve supported versions and upstream boundaries")
 
 local_interfaces_doc = documentation_details.fetch("local-interfaces")
 procedure_declarations = {
-  "aquarium-task-v2" => "6",
-  "aquarium-goal-v2" => "7",
-  "aquarium-validation-v2" => "7",
+  "aquarium-task-v2" => "7",
+  "aquarium-goal-v2" => "8",
+  "aquarium-validation-v2" => "8",
   "aquarium-design-v2" => "2",
   "aquarium-war-room-v2" => "2"
 }
@@ -689,7 +696,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v13
+  aquarium-dev-setup-inspection.v14
   aquarium-dolgorae-release-verification.v1
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
@@ -699,7 +706,7 @@ documented_schema_ids = %w[
   aquarium-release-notes-inspection/v1
   aquarium-release-publication-observation/v4
   aquarium-release-publication-state/v4
-  aquarium-podway-compatibility.v3
+  aquarium-podway-compatibility.v4
   aquarium-release-qa-cluster-result/v1
   aquarium-release-qa-full-pass/v1
   aquarium-release-qa-confirmation-record/v1
@@ -755,7 +762,7 @@ assert(!canonical_documentation.include?("/Users/") &&
 aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 7 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 8 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
@@ -763,10 +770,11 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 7 &&
        canonical_roadmap.include?("## EPIC-005: Adopt Dolgorae v0.1.0") &&
        canonical_roadmap.include?("## EPIC-006: Adopt Podway v0.2.7") &&
        canonical_roadmap.include?("## EPIC-007: Adopt Upstream Document Humanizers") &&
+       canonical_roadmap.include?("## EPIC-008: Adopt Podway v0.2.8") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 32 &&
-       roadmap_task_ids.uniq.sort == (1..32).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 32 &&
+       roadmap_task_ids.length == 34 &&
+       roadmap_task_ids.uniq.sort == (1..34).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 34 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -775,7 +783,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 7 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-007 and unique TASK-001 through TASK-032")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-008 and unique TASK-001 through TASK-034")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -1004,13 +1012,15 @@ assert(im_not_ai_catalog &&
        im_not_ai_catalog.include?("`$CODEX_HOME/skills/humanize-korean`") &&
        im_not_ai_catalog.include?("`name: humanize-korean`"),
        "im-not-ai must materialize one exact stable v2 Codex payload in isolation")
-assert(tool_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
+assert(tool_catalog.include?("stable `v0.2.8` through `v0.2.x`") &&
        tool_catalog.include?("same exact tag") &&
        tool_catalog.include?("raw.githubusercontent.com/irootkernel/podway/<tag>/skills/use-podway/"),
        "Podway CLI, daemon, and use-podway must share the supported approved release")
 assert(tool_catalog.include?("shasum -a 256 -c"), "Podway checksum verification is missing")
 assert(tool_catalog.include?("podway.output/v3") &&
-       tool_catalog.include?("podway.daemon-status-result/v2") &&
+       tool_catalog.include?("podway.daemon-status-result/v3") &&
+       tool_catalog.include?("mode=prod") &&
+       tool_catalog.include?("null or bounded activity counts") &&
        tool_catalog.include?("readiness_state=ready") &&
        tool_catalog.include?("readiness_stage=ready") &&
        tool_catalog.include?("nonzero failed count") &&
@@ -1023,14 +1033,14 @@ assert(tool_catalog.include?("podway.output/v3") &&
        tool_catalog.include?("podway.session-reset-result/v1") &&
        tool_catalog.include?("podway.job-result/v4") &&
        tool_catalog.include?("podway.job-lookup-result/v4"),
-       "Podway v0.2.7 JSON contracts are missing")
+       "Podway v0.2.8 JSON contracts are missing")
 assert(tool_catalog.include?("prepared revision-0 session") &&
        tool_catalog.include?("session.begin") &&
        tool_catalog.include?("Terminal sessions expose a disposition template") &&
        tool_catalog.include?("plain `start`") &&
        tool_catalog.include?("Never infer a removed replacement flag") &&
        tool_catalog.include?("32 sessions"),
-       "Podway v0.2.7 prepared lifecycle and archival guidance is missing")
+       "Podway v0.2.8 prepared lifecycle and archival guidance is missing")
 assert(tool_catalog.include?("Treat that bounded inventory as readiness evidence only") &&
        tool_catalog.include?("Never use dev-setup to observe, cancel, discard, or reset") &&
        tool_catalog.include?("only session-state reset exception"),
@@ -1040,6 +1050,21 @@ assert(tool_catalog.include?("`workspace remove` is not a dev-setup repair") &&
        tool_catalog.include?("preserve the Git worktree") &&
        tool_catalog.include?("podway.workspace-removal-result/v1"),
        "Podway workspace removal must remain an explicit exact-worktree lifecycle boundary")
+assert(tool_catalog.include?("`workspace mode apply` is not a dev-setup repair") &&
+       tool_catalog.include?("tracked `.podway/config.yaml` rewrite") &&
+       tool_catalog.include?("complete runtime-history deletion") &&
+       tool_catalog.include?("keep the plan token ephemeral") &&
+       tool_catalog.include?("obtain separate approval immediately before apply"),
+       "Podway workspace mode moves must remain an explicit destructive lifecycle boundary")
+assert(podway_integration.include?("Neither a setup repair nor an Aquarium workflow may move an initialized workspace between runtime modes") &&
+       podway_integration.include?("Only an explicit request naming the exact worktree and target mode") &&
+       podway_integration.include?("Retain its exact token as sensitive ephemeral state") &&
+       podway_integration.include?("Any Git action on the changed configuration remains separately authorized"),
+       "Podway integration must route workspace mode moves through the same-tag lifecycle owner")
+assert(deferred_feedback.include?("`registry_entry_removed=false`") &&
+       deferred_feedback.include?("`podway_directory_removed=false`") &&
+       !deferred_feedback.include?("`removed=false`"),
+       "DF-004 must name the released workspace-removal result fields")
 assert(tool_catalog.include?("same approved command") &&
        tool_catalog.include?("no `--socket` override") &&
        tool_catalog.include?("prior launchd label to unload"),
@@ -1752,6 +1777,7 @@ expected_procedure_graphs = {
       "verify" => required_evidence.call("refine"),
       "decide-verification" => required_evidence.call("verify"),
       "review" => required_evidence.call("verify", "document"),
+      "confirm-review-findings" => required_evidence.call("review"),
       "decide-review" => required_evidence.call("review"),
       "record-low-disposition" => required_evidence.call("review"),
       "assess-goal" => required_evidence.call("record-plan", "prepare-implementation", "implement", "verify", "refine", "document", "review") + [["record-low-disposition", false]],
@@ -1765,7 +1791,8 @@ expected_procedure_graphs = {
       "verify" => { "next" => "decide-verification" },
       "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
-      "review" => { "next" => "decide-review" },
+      "review" => { "next" => "confirm-review-findings" },
+      "confirm-review-findings" => { "routes" => { "resolved" => %w[decide-review advance], "unresolved" => %w[review rework] } },
       "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[prepare-implementation rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework], "low-disposition" => %w[record-low-disposition advance] } },
       "record-low-disposition" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
@@ -1781,6 +1808,7 @@ expected_procedure_graphs = {
     "evidence" => {
       "record-hardening-deferral" => required_evidence.call("record-evidence"),
       "decide-evidence" => required_evidence.call("complete-work", "record-evidence", "record-hardening-deferral"),
+      "decide-authorized-rework" => required_evidence.call("record-evidence"),
       "record-hardening-handoff" => required_evidence.call("record-hardening-deferral"),
       "assess-goal" => [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", true], ["record-hardening-handoff", false]]
     },
@@ -1788,7 +1816,8 @@ expected_procedure_graphs = {
       "complete-work" => { "next" => "record-evidence" },
       "record-evidence" => { "next" => "record-hardening-deferral" },
       "record-hardening-deferral" => { "next" => "decide-evidence" },
-      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-handoff advance], "rework-required" => %w[complete-work rework], "authorized-rework" => %w[complete-work rework] } },
+      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-handoff advance], "rework-required" => %w[complete-work rework], "authorized-rework" => %w[decide-authorized-rework advance] } },
+      "decide-authorized-rework" => { "routes" => { "proceed" => %w[complete-work rework], "reconsider" => %w[record-evidence rework] } },
       "record-hardening-handoff" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
@@ -1803,7 +1832,8 @@ expected_procedure_graphs = {
       "re-audit" => required_evidence.call("remediate"),
       "decide-re-audit" => required_evidence.call("re-audit"),
       "final-review" => [["audit", true], ["re-audit", false]],
-      "decide-final-review" => required_evidence.call("final-review"),
+      # Podway v0.2.8 caps each evidence_from entry at 16 items; this duplicate source is intentional.
+      "decide-final-review" => [["final-review", true], ["final-review", true]],
       "await-user-direction" => [["final-review", true]],
       "record-low-disposition" => required_evidence.call("final-review"),
       "assess-goal" => [["capture-baseline", true], ["final-review", false], ["await-user-direction", false],
@@ -1895,7 +1925,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "7", "aquarium-goal-v2.yaml" => "7", "aquarium-task-v2.yaml" => "6", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
+  expected_version = { "aquarium-validation-v2.yaml" => "8", "aquarium-goal-v2.yaml" => "8", "aquarium-task-v2.yaml" => "7", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1984,20 +2014,24 @@ assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
        "task procedure must bind positive review ordinals and guarded typed verification evidence")
 assert(task_procedure_text.include?("leave confirmation-only Medium-or-higher findings undecided") &&
        task_procedure_text.include?("Select no option while a confirmation-only review retains a valid Medium-or-higher finding") &&
-       task_procedure_text.include?("Select no option while confirmation-needed-findings is non-zero") &&
-       task_procedure_text.include?("manually rework review and evaluate this decision again"),
+       task_procedure_text.include?("manually rework review when any confirmation remains"),
        "task procedure must represent the confirmation-only user hold")
 task_review_options = task_procedure.dig("node_definitions", "review-decision", "options").to_h { |option| [option.fetch("id"), option] }
-assert(task_review_options.fetch("ci-failed").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision confirmation-needed-findings] &&
-       task_review_options.fetch("ci-failed").fetch("guards").last.fetch("equals") == 0 &&
+task_confirmation_options = task_procedure.dig("node_definitions", "review-confirmation-decision", "options").to_h { |option| [option.fetch("id"), option] }
+assert(task_confirmation_options.fetch("resolved").fetch("guards").first.dig("evidence", "item") == "confirmation-needed-findings" &&
+       task_confirmation_options.fetch("resolved").fetch("guards").first.fetch("equals") == 0 &&
+       task_confirmation_options.fetch("unresolved").fetch("guards").first.dig("evidence", "item") == "confirmation-needed-findings" &&
+       task_confirmation_options.fetch("unresolved").fetch("guards").first.fetch("at_least") == 1,
+       "task procedure must resolve confirmation before ordinary review routing")
+assert(task_review_options.fetch("ci-failed").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision] &&
        task_review_options.fetch("approved").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
        task_review_options.fetch("implementation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
        task_review_options.fetch("documentation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision",
        "task procedure must route CI failure independently and require CI pass for finding-owned routes")
-assert(task_review_options.fetch("approved").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
-       task_review_options.fetch("implementation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
-       task_review_options.fetch("documentation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
-       task_review_options.fetch("low-disposition").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision effective-medium-or-higher-findings effective-low-findings confirmation-needed-findings] &&
+assert(task_review_options.fetch("approved").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision unresolved-valid-findings effective-low-findings] &&
+       task_review_options.fetch("implementation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision review-mode unresolved-implementation-findings] &&
+       task_review_options.fetch("documentation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision review-mode unresolved-implementation-findings unresolved-documentation-findings] &&
+       task_review_options.fetch("low-disposition").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision effective-medium-or-higher-findings effective-low-findings] &&
        review_item_index.call(task_procedure, "low-disposition-record").fetch("low-disposition-summary").fetch("prompt").include?("preceding review that predates changed bytes"),
        "task procedure must block unresolved confirmation and route Low findings without false review coverage")
 task_assess_review_items = task_procedure_nodes.fetch("assess-goal").fetch("evidence_from").find do |entry|
@@ -2064,7 +2098,7 @@ end.fetch("items")
 assert(%w[confirmation-needed-findings medium-or-higher-findings blocker-findings finding-disposition-summary].all? { |id| validation_direction_review_items.include?(id) } &&
        %w[confirmation-needed-findings medium-or-higher-findings blocker-findings finding-disposition-summary].all? { |id| validation_assess_review_items.include?(id) },
        "validation goal assessment must receive complete priority and disposition evidence")
-assert(validation_procedure.fetch("version") == "7" &&
+assert(validation_procedure.fetch("version") == "8" &&
        validation_procedure.dig("node_definitions", "closeout-record", "intent").include?("explicit no-change result") &&
        validation_closeout_items.fetch("closeout-summary").fetch("prompt").include?("verified reason no repository record is required") &&
        validation_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
@@ -2105,6 +2139,8 @@ assert(goal_deferral_items.fetch("hardening-deferral-state").fetch("required") =
        goal_deferral_items.fetch("hardening-deferral-run-id").fetch("required") == false &&
        goal_deferral_items.fetch("hardening-deferral-run-id").fetch("required_when").first.fetch("equals") == "recorded" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("type") == "list" &&
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("required_when").first.fetch("equals") == "recorded" &&
+       goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("min_items") == 1 &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("unique") == true &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200 &&
        goal_deferral_items.fetch("hardening-deferral-owner").fetch("required_when").first.fetch("equals") == "recorded" &&
@@ -2126,6 +2162,16 @@ assert(goal_evidence_options.fetch("rework-required").fetch("guards").map { |gua
        goal_evidence_options.fetch("supported").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
        goal_evidence_options.fetch("deferred-for-hardening").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings"),
        "goal procedure must separate ordinary rework from explicitly authorized additional rework and block unresolved confirmation")
+authorized_rework_definition = goal_procedure.dig("node_definitions", "authorized-rework-decision")
+authorized_rework_options = authorized_rework_definition.fetch("options").to_h { |option| [option.fetch("id"), option] }
+assert(goal_procedure_nodes.fetch("decide-evidence").fetch("routes").fetch("authorized-rework") == {"to" => "decide-authorized-rework", "effect" => "advance"} &&
+       authorized_rework_options.keys == %w[proceed reconsider] &&
+       authorized_rework_options.values.none? { |option| option.key?("guards") } &&
+       goal_procedure_nodes.fetch("decide-authorized-rework").fetch("routes") == {
+         "proceed" => {"to" => "complete-work", "effect" => "rework"},
+         "reconsider" => {"to" => "record-evidence", "effect" => "rework"}
+       },
+       "goal procedure must make both authorized rework checkpoint options reachable")
 assert(epic_handler.include?("Record `extra-review-authorization` as `pending` while waiting") &&
        epic_handler.include?("After explicit approval, change it to `authorized` through manual rework") &&
        epic_handler.include?("select `authorized-rework`") &&
@@ -3072,7 +3118,7 @@ end
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
-  assert(body.include?("stable `v0.2.7` through `v0.2.x`"),
+  assert(body.include?("stable `v0.2.8` through `v0.2.x`"),
          "Podway supported release line has drifted: #{name}")
 end
 
@@ -3164,12 +3210,13 @@ assert(makefile.include?("test-podway-compat: test-requirements") &&
        makefile.include?("tests/unit/test_verify_podway_compatibility_unit.py") &&
        testing_document.include?("external-artifact gate") &&
        testing_document.include?("development-contract evidence only") &&
-       testing_document.include?("two fresh isolated runtime roots") &&
+       testing_document.include?("two fresh isolated `release-qa` runtime roots") &&
        testing_document.include?("A third isolated root proves") &&
-       testing_document.include?("v3 JSON receipt") &&
-       root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.7-podway> make test-podway-compat") &&
+       testing_document.include?("v4 JSON receipt") &&
+       testing_document.include?("accepts Podway v0.2.8's nonretryable `WORKSPACE_CONFIG_INVALID` response only") &&
+       root_agents.include?("PODWAY_BIN=<absolute-path-to-extracted-v0.2.8-podway> make test-podway-compat") &&
        root_agents.include?("cannot satisfy this distribution gate"),
-       "Podway v0.2.7 compatibility must remain an exact-artifact release gate")
+       "Podway v0.2.8 compatibility must remain an exact-artifact release gate")
 assert(ROOT.join("README.md").read.include?("$aquarium:orca-review") &&
        ROOT.join("README.md").read.include?("[Orca Review]") &&
        ROOT.join("README.ko.md").read.include?("$aquarium:orca-review") &&

@@ -16,8 +16,10 @@ Do not edit an installed copy in a target repository as the source change. Updat
 4. Check recovery paths for sessions created by the previously supported Podway release. Never translate unknown interrupted work into an automatic replay.
 5. Verify the serialized asset bytes and relevant Podway compatibility scenarios.
 
+Podway v0.2.8 limits each `evidence_from` entry to 16 items. When one graph node needs more, split the items across entries for the same source node; `decide-final-review` in `aquarium-validation-v2` uses this split intentionally.
+
 ## Compatibility Evidence
 
-A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.7 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.7-podway> make test-podway-compat` against the exact Aquarium candidate.
+A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.8 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.8-podway> make test-podway-compat` against the exact Aquarium candidate.
 
 Procedure validators prove declaration and graph invariants only. Scenario tests must cover semantic changes such as cancellation races, stale sessions, result propagation, retry behavior, and owner handoffs.
