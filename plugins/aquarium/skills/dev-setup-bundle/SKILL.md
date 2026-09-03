@@ -15,7 +15,7 @@ Read [manifest.md](references/manifest.md), then read [the development setup ski
 2. Treat a nonzero result or an error envelope as a manifest-wide failure. Treat an `invalid` target in a successful plan as an isolated preflight failure and continue with the remaining `ready` targets.
 3. Never create, copy, edit, stage, or commit the manifest. Keep its absolute path and SHA-256 only for this request. Do not discover manifests, repositories, or tools outside the normalized plan.
 4. For every ready target, read applicable repository instructions and inspect branch, upstream, staged, unstaged, untracked, and conflict state. Preserve unrelated work. If an approved change overlaps existing work and cannot be applied exactly, fail that action for that target instead of overwriting it.
-5. Run the existing `inspect_tools.py` once for each ready target with `--include-podway`, `--include-ouroboros`, and `--require-mulgae-mcp` only when the normalized selection requires those dimensions. The inspector reports user-global, isolated project-local, and effective Mulgae and Gaori MCP state independently. Inspection is read-only evidence, not setup authority.
+5. Run the existing `inspect_tools.py` once for each ready target with `--verify-dolgorae-release`, `--include-podway`, `--include-ouroboros`, and `--require-mulgae-mcp` only when the normalized selection requires those dimensions. The inspector reports user-global, isolated project-local, and effective Mulgae and Gaori MCP state independently. Inspection is read-only evidence, not setup authority.
 
 ## Confirm the Normalized Selection
 

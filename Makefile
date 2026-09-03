@@ -17,6 +17,7 @@ export PYTEST_ADDOPTS
 PYTHON_FILES := \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
+	plugins/aquarium/skills/dev-setup/scripts/verify_dolgorae_release.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/dev_contract.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev_launcher.py \

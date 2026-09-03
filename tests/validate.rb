@@ -176,6 +176,8 @@ assert(marketplace_plugin.dig("policy", "authentication") == "ON_INSTALL",
 dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
 dev_setup_script_body = dev_setup_script.read
+dolgorae_release_script = PLUGIN.join("skills/dev-setup/scripts/verify_dolgorae_release.py")
+dolgorae_release_script_body = dolgorae_release_script.read
 dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
 dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
 dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
@@ -299,6 +301,22 @@ assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex as
 assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
 assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
 assert(dev_setup_script.file?, "dev-setup inspection script is missing")
+assert(dolgorae_release_script.file? &&
+       dev_setup.include?("--verify-dolgorae-release") &&
+       dev_setup_bundle.include?("--verify-dolgorae-release") &&
+       dolgorae_release_script_body.include?("aquarium-dolgorae-release-verification.v1") &&
+       dolgorae_release_script_body.include?("stable v0.1.1 through v0.1.x") &&
+       dolgorae_release_script_body.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
+       dolgorae_release_script_body.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
+       dolgorae_release_script_body.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
+       dolgorae_release_script_body.include?("MAX_RELEASE_PAGES = 10") &&
+       dev_setup.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
+       dev_setup.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
+       tool_catalog.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
+       tool_catalog.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
+       tool_catalog.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
+       dolgorae_release_script_body.include?("api.github.com/repos/irootkernel/dolgorae"),
+       "dev-setup must provide bounded official Dolgorae v0.1.x release verification")
 assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?("skill_root_symlinked") &&
        dev_setup_script_body.include?('entry["symlinked"]') &&
@@ -671,7 +689,8 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v12
+  aquarium-dev-setup-inspection.v13
+  aquarium-dolgorae-release-verification.v1
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
   aquarium.dev-setup-bundle/v1
@@ -774,9 +793,12 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(dolgorae_review_contract.include?("globally installed `dolgorae` command") &&
        dolgorae_review_contract.include?("outside `~/.aquarium` and `~/.aquarium-dev`") &&
-       dolgorae_review_contract.include?("47c95d0d060d9ee685a01bedbdeb5379515e2804") &&
-       dolgorae_review_contract.include?("6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8") &&
-       dolgorae_review_contract.include?("0c7f8bb7e6b6f86fd98eb5aec9cda1e6859fbc1da2f06b1c0e4a21ad2e5ff307") &&
+       dolgorae_review_contract.include?("v0.1.1 through v0.1.x") &&
+       dolgorae_review_contract.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
+       dolgorae_review_contract.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
+       dolgorae_review_contract.include?("a78d517445a6cd0a4cc032727ced37757be1e203801a1cc28958057e4867893c") &&
+       dolgorae_review_contract.include?("home/.dolgorae/controller-carriers") &&
+       dolgorae_review_contract.include?("without another network request") &&
        dolgorae_review_contract.include?("workspace`, `staged`, `dirty`, `head`, `commit`, and `range") &&
        dolgorae_review_contract.include?("dolgorae-specialist-review-tool-v2.schema.json") &&
        dolgorae_review_contract.include?("dolgorae-review-target-v1.schema.json") &&
@@ -2263,7 +2285,7 @@ assert(epic_handler.include?("do not invoke `$aquarium:independent-review`") &&
        "independent-review must remain user-invoked only")
 assert(independent_review.include?("[review-contract.md](../../references/review-contract.md)") &&
        independent_review.include?("[dolgorae-review-contract.md](../../references/dolgorae-review-contract.md)") &&
-       independent_review.include?("globally installed release candidate"),
+       independent_review.include?("frozen globally installed release candidate"),
        "independent-review must load the shared target and globally installed candidate contracts")
 assert(%w[workspace staged dirty head commit range].all? { |scope| independent_review.include?("`#{scope}`") } &&
        independent_review.include?("`task`, `epic`, or special request") &&

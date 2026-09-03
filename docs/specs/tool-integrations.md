@@ -5,7 +5,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Tool | Aquarium role | Supported identity | Platform or prerequisite | Important readiness boundary |
 | --- | --- | --- | --- | --- |
 | Codex | Primary agent runtime, plugin host, goals, MCP registrations, and hooks | Host-provided supported Codex | Repository and user configuration | Plugin availability, trusted hook state, goals, and MCP exposure remain distinct |
-| Dolgorae | Immutable source capture and checked Independent Review lifecycle | Exact official `v0.1.0` executable SHA-256 `6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8` | Native Apple Silicon macOS | Release metadata, archive, installed bytes, machine version, capability digest, and guarded review admission remain distinct |
+| Dolgorae | Immutable source capture and checked Independent Review lifecycle | Official stable `v0.1.1` through `v0.1.x`; dynamic release identity and v0.1.1-compatible capabilities | Native Apple Silicon macOS | Release metadata, archive, installed bytes, machine version, capability digest, and guarded review admission remain distinct |
 | Orca | Launches and supervises the requested static reviewer in a fresh session | No Aquarium release floor declared | Separately installed local Orca runtime | Run, Task, Dispatch, worker, Delivery, acknowledgement, and settlement must all be observed |
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.7` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `v0.1.18` through `v0.1.x` | Native Apple Silicon macOS; Go `1.26.6+` only for installation | CLI, Config v3, provider readiness, MCP scope, capture publication, findings query, and extraction quality are separate |
@@ -45,7 +45,7 @@ Podway v0.2.7 workspace removal is a separately authorized lifecycle operation o
 
 ## Review and Check Adapters
 
-Independent Review resolves `dolgorae` from the current PATH and requires the official global v0.1.0 installation. Each invocation revalidates the executable bytes, machine version, and required capability digest immediately before use. Dolgorae may separately publish an `aquarium-dev` generation for explicit development commands, but Aquarium creates no production runtime copy, Independent Review never consumes that generation, and Orca Review does not use Dolgorae.
+Independent Review resolves `dolgorae` from the current PATH and requires an official global stable v0.1.x installation at or above v0.1.1. It verifies official release metadata once at review start, freezes the release and local candidate identity, then revalidates the path, file identity, executable bytes, machine version, and compatible capabilities before each source-bearing operation without another network lookup. Dolgorae may separately publish an `aquarium-dev` generation for explicit development commands, but Aquarium creates no production runtime copy, Independent Review never consumes that generation, and Orca Review does not use Dolgorae.
 
 Aquarium production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae executables. A missing required executable fails closed and routes to the tool-scoped `$aquarium:dev-setup` workflow. Sanho is explicitly optional and does not fail this binary baseline. Development generations never satisfy production readiness.
 

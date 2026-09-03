@@ -24,9 +24,9 @@ Resolve one existing Dolgorae Reviewer profile from checked workspace configurat
 
 ## Admit the candidate
 
-Require the exact official Dolgorae v0.1.0 executable described by the consumer contract. Resolve and record its canonical path, release tag and source commit, regular-file device and inode, executable SHA-256, runtime version, and compact sorted capability digest. Revalidate the full candidate immediately before source-bearing launch.
+Require an official stable Dolgorae release from v0.1.1 through v0.1.x as described by the consumer contract. At review start, run the dev-setup inspector with `--verify-dolgorae-release`, freeze the verified release tag, source commit, asset identities, executable checksum, path, file identity, runtime version, and compact sorted capability digest, and make no further network lookup during that invocation.
 
-Require `command -v dolgorae` to resolve the exact globally installed release candidate and repeat the path, file identity, version, checksum, and capability checks immediately before launch. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission.
+Require `command -v dolgorae` to resolve the frozen globally installed release candidate and repeat the local path, file identity, version, checksum, and capability checks immediately before every source-bearing operation. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission. Reject v0.1.0, prereleases, source or development builds, and v0.2 or later releases.
 
 ## Run one fresh Reviewer
 

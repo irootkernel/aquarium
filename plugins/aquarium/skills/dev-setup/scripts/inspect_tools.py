@@ -17,11 +17,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v12"
-DOLGORAE_VERSION = "v0.1.0"
-DOLGORAE_EXECUTABLE_SHA256 = (
-    "6087b484cfd8d61d88ed69a5b84ab4a515ba2efaebe4fa282d51679536cccdb8"
-)
+SCRIPT_DIRECTORY = str(Path(__file__).resolve().parent)
+if SCRIPT_DIRECTORY not in sys.path:
+    sys.path.insert(0, SCRIPT_DIRECTORY)
+
+import verify_dolgorae_release as dolgorae_release
+
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v13"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -360,7 +362,7 @@ def supported_sanho_version(version: str | None) -> bool:
 
 
 def supported_dolgorae_version(version: str | None) -> bool:
-    return normalized_version(version) == DOLGORAE_VERSION.removeprefix("v")
+    return dolgorae_release.canonical_supported_tag(version) is not None
 
 
 def supported_gaori_version(version: str | None) -> bool:
@@ -1034,7 +1036,134 @@ def inspect_sanho(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     return tool
 
 
-def inspect_dolgorae(repository: Path, timeout_seconds: float) -> dict[str, Any]:
+def valid_dolgorae_envelope(
+    probe: dict[str, Any], raw_probe: dict[str, Any], command: str
+) -> bool:
+    envelope = probe.get("result")
+    return bool(
+        probe["ok"]
+        and not raw_probe["stderr"]
+        and isinstance(envelope, dict)
+        and set(envelope)
+        == {"schema_version", "ok", "command", "invocation_id", "data"}
+        and envelope.get("schema_version") == 1
+        and envelope.get("ok") is True
+        and envelope.get("command") == command
+        and isinstance(envelope.get("invocation_id"), str)
+        and DOLGORAE_INVOCATION_ID_RE.fullmatch(envelope["invocation_id"])
+    )
+
+
+def dolgorae_capabilities_compatible(data: Any, version: str) -> bool:
+    if not isinstance(data, dict):
+        return False
+    protocol_fields = (
+        "machine_protocol_version",
+        "event_protocol_version",
+        "rpc_protocol_version",
+        "timeline_protocol_version",
+        "event_projection_version",
+        "grpc_error_detail_version",
+    )
+    credential = data.get("controller_credential")
+    bounds = data.get("artifact_bounds")
+    lanes = data.get("lane_capabilities")
+    shared = lanes.get("shared_readonly") if isinstance(lanes, dict) else None
+    features = data.get("features")
+    interactions = data.get("interactions")
+    required_features = (
+        "controller_binding",
+        "operator_capability",
+        "operator_controller_reset",
+        "profile_diagnostics",
+        "profile_membership_repair",
+        "profile_server_migration",
+        "worker_controller_revalidation",
+    )
+    return bool(
+        data.get("dolgorae_version") == version
+        and all(data.get(field) == 1 for field in protocol_fields)
+        and data.get("minimum_rpc_client_version") == 1
+        and isinstance(data.get("maximum_rpc_client_version"), int)
+        and not isinstance(data["maximum_rpc_client_version"], bool)
+        and data["maximum_rpc_client_version"] >= 1
+        and isinstance(data.get("rpc_descriptor_sha256"), str)
+        and re.fullmatch(r"[0-9a-f]{64}", data["rpc_descriptor_sha256"])
+        and data.get("controller_carrier_root") == "home/.dolgorae/controller-carriers"
+        and isinstance(data.get("supported_transports"), list)
+        and "machine_cli" in data["supported_transports"]
+        and data.get("profile_launch_mode") == "dolgorae_owned_direct_executable"
+        and isinstance(data.get("control_modes"), list)
+        and "managed_agent" in data["control_modes"]
+        and isinstance(data.get("execution_lanes"), list)
+        and "shared_readonly" in data["execution_lanes"]
+        and isinstance(shared, dict)
+        and shared.get("writer_support") is False
+        and shared.get("codex_mode") == "plan"
+        and shared.get("command_execution") == "bounded_best_effort"
+        and isinstance(credential, dict)
+        and credential.get("schema_id")
+        == "https://dolgorae.local/schema/controller-credential/v1"
+        and credential.get("schema_version") == 1
+        and isinstance(credential.get("schema_sha256"), str)
+        and re.fullmatch(r"[0-9a-f]{64}", credential["schema_sha256"])
+        and credential.get("capability_byte_length") == 32
+        and credential.get("capability_encoding") == "base64url_no_padding"
+        and credential.get("same_uid") is True
+        and credential.get("regular_file") is True
+        and credential.get("symlinks") == "forbidden"
+        and credential.get("create_exclusive") is True
+        and credential.get("maximum_file_bytes") == 4096
+        and credential.get("client_descendant_pattern") == "<client>/<installation-id>/"
+        and credential.get("normalized_principal")
+        == "kind+subject_id_else_kind+instance_id"
+        and credential.get("initial_generation") == 1
+        and isinstance(credential.get("accepted_kinds"), list)
+        and "workflow_orchestrator" in credential["accepted_kinds"]
+        and isinstance(bounds, dict)
+        and bounds.get("digest") == "sha256"
+        and bounds.get("exact_byte_length") is True
+        and all(
+            isinstance(bounds.get(field), int)
+            and not isinstance(bounds[field], bool)
+            and bounds[field] > 0
+            for field in (
+                "maximum_artifact_bytes",
+                "maximum_chunk_bytes",
+                "maximum_inline_response_bytes",
+            )
+        )
+        and isinstance(bounds.get("visibility_classes"), list)
+        and {"observer", "controller_only"}.issubset(bounds["visibility_classes"])
+        and isinstance(features, dict)
+        and all(features.get(field) is True for field in required_features)
+        and isinstance(interactions, dict)
+        and all(
+            isinstance(interactions.get(field), int)
+            and not isinstance(interactions[field], bool)
+            and interactions[field] > 0
+            for field in ("maximum_response_bytes", "maximum_safe_payload_bytes")
+        )
+    )
+
+
+def is_arm64_macho(path: Path) -> bool:
+    try:
+        with path.open("rb") as executable:
+            header = executable.read(16)
+            return bool(
+                header[:8] == b"\xcf\xfa\xed\xfe\x0c\x00\x00\x01"
+                and header[12:16] == b"\x02\x00\x00\x00"
+            )
+    except OSError:
+        return False
+
+
+def inspect_dolgorae(
+    repository: Path,
+    timeout_seconds: float,
+    verify_official_release: bool = False,
+) -> dict[str, Any]:
     discovered = shutil.which("dolgorae")
     tool = base_tool("dolgorae")
     tool["version_supported"] = False
@@ -1046,33 +1175,69 @@ def inspect_dolgorae(repository: Path, timeout_seconds: float) -> dict[str, Any]
     }
     tool["symlinked"] = bool(discovered and Path(discovered).is_symlink())
     tool["regular_file"] = False
+    tool["safe_location"] = False
+    tool["arm64_macho"] = False
     tool["executable_sha256"] = None
     tool["official_executable"] = False
+    tool["file_identity"] = None
+    tool["identity_stable"] = False
+    tool["capability_sha256"] = None
+    tool["capabilities_compatible"] = False
+    tool["release_verification"] = {
+        "schema_version": dolgorae_release.SCHEMA_VERSION,
+        "status": "not_requested",
+    }
+
+    def verify_release(version: str | None) -> dict[str, Any]:
+        try:
+            return dolgorae_release.verify_release(version, timeout_seconds)
+        except dolgorae_release.ReleaseVerificationError as error:
+            return dolgorae_release.failure_result(error)
+
     if not discovered:
         tool["probes"]["version"] = skipped_probe("executable_missing")
+        tool["probes"]["capabilities"] = skipped_probe("executable_missing")
+        if verify_official_release:
+            tool["release_verification"] = verify_release(None)
         return tool
 
     executable = Path(discovered)
     try:
         executable_stat = executable.stat()
         tool["regular_file"] = stat.S_ISREG(executable_stat.st_mode)
+        resolved_executable = executable.resolve()
+        home = Path.home().resolve()
+        tool["safe_location"] = bool(
+            executable.is_absolute()
+            and not resolved_executable.is_relative_to(home / ".aquarium")
+            and not resolved_executable.is_relative_to(home / ".aquarium-dev")
+        )
         if (
             not tool["symlinked"]
             and tool["regular_file"]
+            and tool["safe_location"]
             and os.access(executable, os.X_OK)
         ):
             digest = hashlib.sha256(executable.read_bytes()).hexdigest()
             tool["executable_sha256"] = digest
-            tool["official_executable"] = digest == DOLGORAE_EXECUTABLE_SHA256
+            tool["arm64_macho"] = is_arm64_macho(executable)
+            tool["file_identity"] = {
+                "device": executable_stat.st_dev,
+                "inode": executable_stat.st_ino,
+            }
     except OSError:
         pass
 
     if (
         tool["symlinked"]
         or not tool["regular_file"]
+        or not tool["safe_location"]
         or not os.access(executable, os.X_OK)
     ):
         tool["probes"]["version"] = skipped_probe("executable_unsafe")
+        tool["probes"]["capabilities"] = skipped_probe("executable_unsafe")
+        if verify_official_release:
+            tool["release_verification"] = verify_release(None)
         tool["status"] = "degraded"
         return tool
 
@@ -1082,32 +1247,117 @@ def inspect_dolgorae(repository: Path, timeout_seconds: float) -> dict[str, Any]
     version_probe = parse_json_probe(raw_version_probe)
     normalized_probe_result = normalized_probe(version_probe)
     envelope = version_probe.get("result")
-    expected_keys = {"schema_version", "ok", "command", "invocation_id", "data"}
-    valid_envelope = bool(
-        version_probe["ok"]
-        and not raw_version_probe["stderr"]
-        and isinstance(envelope, dict)
-        and set(envelope) == expected_keys
-        and envelope.get("schema_version") == 1
-        and envelope.get("ok") is True
-        and envelope.get("command") == "version"
-        and isinstance(envelope.get("invocation_id"), str)
-        and DOLGORAE_INVOCATION_ID_RE.fullmatch(envelope["invocation_id"])
-        and envelope.get("data") == {"text": "dolgorae 0.1.0"}
+    valid_envelope = valid_dolgorae_envelope(
+        version_probe, raw_version_probe, "version"
     )
-    if valid_envelope:
-        tool["version"] = "0.1.0"
+    version_text = envelope.get("data") if isinstance(envelope, dict) else None
+    if (
+        valid_envelope
+        and isinstance(version_text, dict)
+        and set(version_text) == {"text"}
+    ):
+        match = re.fullmatch(
+            rf"dolgorae ({CANONICAL_SEMVER.pattern})", str(version_text["text"])
+        )
+        if match:
+            tool["version"] = normalized_version(match.group(1))
+        else:
+            valid_envelope = False
     else:
+        valid_envelope = False
+    if not valid_envelope:
         normalized_probe_result["ok"] = False
         normalized_probe_result["error_code"] = "unexpected_version_envelope"
     tool["probes"]["version"] = normalized_probe_result
     tool["version_supported"] = supported_dolgorae_version(tool["version"])
+
+    release = None
+    if verify_official_release and tool["version_supported"]:
+        tool["release_verification"] = verify_release(tool["version"])
+        if tool["release_verification"]["status"] == "verified":
+            release = tool["release_verification"]["release"]
+            tool["official_executable"] = (
+                tool["executable_sha256"] == release["executable_sha256"]
+            )
+    elif verify_official_release:
+        version_unknown = tool["version"] is None
+        tool["release_verification"] = dolgorae_release.failure_result(
+            dolgorae_release.ReleaseVerificationError(
+                "version_unknown" if version_unknown else "unsupported_version",
+                (
+                    "Dolgorae version could not be determined"
+                    if version_unknown
+                    else dolgorae_release.UNSUPPORTED_VERSION_MESSAGE
+                ),
+            )
+        )
+
+    raw_capabilities_probe = run_command(
+        [str(executable.resolve()), "runtime", "capabilities"],
+        repository,
+        timeout_seconds,
+    )
+    capabilities_probe = parse_json_probe(raw_capabilities_probe)
+    normalized_capabilities = normalized_probe(capabilities_probe)
+    capability_envelope = capabilities_probe.get("result")
+    capability_data = (
+        capability_envelope.get("data")
+        if isinstance(capability_envelope, dict)
+        else None
+    )
+    valid_capabilities_envelope = valid_dolgorae_envelope(
+        capabilities_probe, raw_capabilities_probe, "runtime.capabilities"
+    )
+    valid_capabilities = bool(
+        tool["version"]
+        and valid_capabilities_envelope
+        and dolgorae_capabilities_compatible(capability_data, tool["version"])
+    )
+    if valid_capabilities:
+        canonical = (
+            json.dumps(capability_data, sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
+            + b"\n"
+        )
+        tool["capability_sha256"] = hashlib.sha256(canonical).hexdigest()
+        tool["capabilities_compatible"] = True
+    else:
+        normalized_capabilities["ok"] = False
+        if "error_code" not in normalized_capabilities:
+            if not valid_capabilities_envelope:
+                normalized_capabilities["error_code"] = (
+                    "unexpected_capabilities_envelope"
+                )
+            elif not tool["version"]:
+                normalized_capabilities["error_code"] = "version_unknown"
+            else:
+                normalized_capabilities["error_code"] = "incompatible_capabilities"
+    tool["probes"]["capabilities"] = normalized_capabilities
+    try:
+        final_stat = executable.stat()
+        initial_identity = tool["file_identity"]
+        tool["identity_stable"] = bool(
+            isinstance(initial_identity, dict)
+            and final_stat.st_dev == initial_identity["device"]
+            and final_stat.st_ino == initial_identity["inode"]
+            and hashlib.sha256(executable.read_bytes()).hexdigest()
+            == tool["executable_sha256"]
+        )
+    except OSError:
+        tool["identity_stable"] = False
+    if not tool["identity_stable"]:
+        tool["official_executable"] = False
     tool["status"] = (
         "installed"
         if valid_envelope
         and tool["version_supported"]
         and tool["platform"]["supported"]
+        and tool["arm64_macho"]
         and tool["official_executable"]
+        and tool["identity_stable"]
+        and valid_capabilities
+        and release is not None
         else "degraded"
     )
     return tool
@@ -3142,11 +3392,16 @@ def inspect(
     include_podway: bool = False,
     include_ouroboros: bool = False,
     require_mulgae_mcp: bool = False,
+    verify_dolgorae_release: bool = False,
 ) -> dict[str, Any]:
     repository = resolve_repository(requested_path, timeout_seconds)
     tools = {
         "sanho": inspect_sanho(repository, timeout_seconds),
-        "dolgorae": inspect_dolgorae(repository, timeout_seconds),
+        "dolgorae": inspect_dolgorae(
+            repository,
+            timeout_seconds,
+            verify_official_release=verify_dolgorae_release,
+        ),
         "mulgae": inspect_mulgae(
             repository, timeout_seconds, require_mcp=require_mulgae_mcp
         ),
@@ -3189,6 +3444,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Include explicitly requested Ouroboros integration diagnostics",
     )
     parser.add_argument(
+        "--verify-dolgorae-release",
+        action="store_true",
+        help="Verify Dolgorae against bounded official GitHub Release metadata",
+    )
+    parser.add_argument(
         "--require-mulgae-mcp",
         action="store_true",
         help="Require an explicitly selected Mulgae MCP registration for status",
@@ -3221,6 +3481,7 @@ def main() -> int:
                 include_podway=arguments.include_podway,
                 include_ouroboros=arguments.include_ouroboros,
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
+                verify_dolgorae_release=arguments.verify_dolgorae_release,
             )
         )
         return 0
