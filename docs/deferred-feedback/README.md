@@ -15,3 +15,10 @@ This index owns small actionable findings intentionally postponed from current w
 - Owner: `task-commit` and its repository hook contract.
 - Reason for deferral: the finding is independent of EPIC-003 runtime review correctness and does not change the isolated committed bytes or their verification.
 - Re-entry condition: resolve before relying on the gate as an enforcement boundary by replacing the marker with authenticated workflow evidence and failing closed across supported shell invocation paths.
+
+## DF-003: Delay new-project test setup until a testable foundation exists
+
+- Actionable issue: `new-project` can place its required testing-foundation work unit first while a greenfield repository still contains only planning documents. Sequence that work after the language, toolchain, root test authority, and minimum executable public behavior exist: use the final task of EPIC-001 when that epic delivers a testable walking skeleton, otherwise place it immediately after the earliest vertical slice and before broader feature expansion. Make `test-setup` stop without creating empty handlers, placeholder tests, or a documentation-only facade when those prerequisites are absent.
+- Owner: `new-project` and `test-setup`.
+- Reason for deferral: the issue affects future greenfield roadmap quality but is independent of the current Aquarium implementation and active delivery work, so its contract and focused coverage can be changed separately.
+- Re-entry condition: resolve before the next greenfield `$aquarium:new-project` roadmap is adopted, with focused cross-skill coverage for documentation-only, EPIC-001 walking-skeleton, and later-vertical-slice scenarios.
