@@ -10,8 +10,9 @@ Run the canonical Aquarium review contract with one fresh requested reviewer own
 ## Load the contracts
 
 1. Read [review-contract.md](../../references/review-contract.md) completely.
-2. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
-3. Require the separately installed `$orca-cli` skill and apply its live version-matched guides.
+2. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
+3. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
+4. Require the separately installed `$orca-cli` skill and apply its live version-matched guides.
 
 ## Establish the target
 
@@ -48,9 +49,9 @@ Supervise, settle, acknowledge, and recover only through the live Orca guides. N
 
 ## Adjudicate and report
 
-Independently verify every finding against the exact target and authority without changing files or running checks. Classify findings as Valid, Invalid, or Needs confirmation under the shared contract. A static functionality review can establish support in code and documentation but cannot prove runtime behavior.
+Independently verify every finding against the exact target and authority without changing files or running checks. Preserve reported severity, classify validity as Valid, Invalid, or Needs confirmation, assign effective priority, and recommend a disposition under the shared contract. A static functionality review can establish support in code and documentation but cannot prove runtime behavior.
 
-Return the applicable shared result envelope plus the requested reviewer identity and separate Orca Run, Task, Dispatch, worker, acknowledgement, Delivery, and lifecycle status. If Claude used the oversized-report exception, include every retained report path beneath `~/.claude`. Wrong scope, missing output, reviewer-identity mismatch, or incomplete Orca lifecycle prevents a clean verdict. Report `dolgorae_used: false`. Do not implement remediation.
+This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the shared result, reviewer identity, remediation continuation, Orca object and lifecycle status, and any Claude oversized-report path beneath `~/.claude`. Wrong scope, output, reviewer identity, or lifecycle prevents a clean verdict. Report `dolgorae_used: false`.
 
 ## Mulgae semantic conformance
 

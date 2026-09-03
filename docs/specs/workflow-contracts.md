@@ -20,11 +20,11 @@ Git-backed shape workflows use `aquarium-design-v2`, except `war-room`, which us
 | Review | `task-review` | Complete target publication, successful findings query, and local adjudication |
 | Close | `task-close` | Explicit terminal status and optional exact commit handoff |
 
-`task-handler` owns phase ordering and postconditions. A code, test, canonical-documentation, or product-artifact change after verification or review makes the affected evidence stale, except for the explicitly allowed status-only roadmap transition and independently checked promoted-evidence projection.
+`task-handler` owns phase ordering and postconditions. A code, test, canonical-documentation, or product-artifact change after verification or review makes the affected evidence stale, except for the explicitly allowed status-only roadmap transition and independently checked promoted-evidence projection. A completed Low correction remains stale review coverage: its record states that the review predates the corrected bytes, and its shared disposition plus required local checks authorize advancement without provider re-review.
 
 With Podway selected, the handler creates or resumes one `aquarium-task-v2` session only after plan approval, begins the prepared session through its fenced mutation, mirrors the active goal in Codex, and records independently checked phase handoffs. Plan-only mode creates no runtime state; plan-handoff mode attaches one private session-bound artifact and stops before implementation.
 
-An operationally complete task review records `ci-decision` separately from its finding counts. CI failure uses `ci-failed`, records an explicit failure handoff, and then returns to implementation; after CI passes, implementation or refinement findings use `implementation-changes`, documentation-only findings use `documentation-changes`, and only a clean review may use `approved`. Incomplete review capture records no decision.
+An operationally complete task review records `ci-decision` separately from provider severity and local effective priority. CI failure uses `ci-failed`, records an explicit failure handoff, and then returns to implementation. Valid Medium-or-higher findings return to their owning phase, invalidate affected checks, and require a fresh complete-target review. Low findings instead take one proportionate local disposition: a self-evident correction with integrity checks, a bounded behavioral correction with a focused deterministic test, a canonical deferred-feedback entry for independent future risk, or a TODO candidate for structural work. Incomplete review capture records no decision.
 
 ## Deliver One Epic
 
@@ -38,13 +38,15 @@ Task-owned gaps reopen the owning task when the roadmap defines that path. Cross
 
 `epic-validator` reconstructs a completed epic from roadmap, Git, current tests, canonical documentation, and independently verifiable evidence. It runs a direct audit, groups confirmed gaps by owner, implements bounded remediation, and performs one automatic confirmation path.
 
-A new confirmation finding stops for user direction rather than entering an unbounded loop. A zero-finding audit creates no validation-record commit, and accepted runtime evidence never becomes roadmap history by default.
+A confirmation-only Medium-or-higher finding stops for a new bounded correction-and-review authorization rather than entering an unbounded loop or accepting risk. Eligible Low findings are handled locally without another provider review, with the preceding review identified as predating changed bytes. A zero-finding audit creates no validation-record commit, and accepted runtime evidence never becomes roadmap history by default.
 
 ## Review Targets
 
 The shared review contract accepts staged changes, `HEAD`, one commit, a two-dot or three-dot range, one roadmap task or epic resolved to Git, or an explicitly scoped special investigation. Dirty working-tree content is never silently added to a committed target.
 
-Independent review uses one fresh Codex through Dolgorae. Orca review uses one requested native reviewer in the current registered worktree under supervised Run and Task state. For both workflows, `staged` means the current `HEAD`-to-index change reviewed through `git diff --cached`; their backend capture and lifecycle details remain independent. Both are static, run no tests or builds, and return findings for local verification rather than automatic remediation. Orca reviewers are prohibited from writing in the worktree. Claude may retain native state and an oversized report only beneath `~/.claude`, with every retained report path returned through the Orca lifecycle; other reviewers receive no filesystem-output exception.
+Independent review uses one fresh Codex through Dolgorae's immutable capture. Mulgae also captures an immutable target, exposes only an isolated read-only provider workspace, removes temporary provider workspaces outside the project after use, and retains durable native state under `.mulgae/`. Its accepted result may arrive through a staged result file or standard output. Orca review instead uses one requested native reviewer in the current registered worktree under supervised Run and Task state. For all three workflows, user-facing source scope stays exact, but native capture, storage, transport, and lifecycle remain backend-owned and need not match.
+
+For Independent and Orca reviews, `staged` means the current `HEAD`-to-index change reviewed through `git diff --cached`. Both are static, run no tests or builds, and report adjudicated findings without remediation. Orca reviewers are prohibited from writing in the worktree. Claude may retain native state and an oversized report only beneath `~/.claude`, with every retained report path returned through the Orca lifecycle; other reviewers receive no filesystem-output exception. These restrictions are workflow contracts for same-user processes, not an operating-system sandbox.
 
 ## Set Up a Repository
 

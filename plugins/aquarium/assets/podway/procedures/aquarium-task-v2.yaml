@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "5"
+version: "6"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -175,6 +175,28 @@ node_definitions:
         choices:
           - pass
           - fail
+      - id: reported-severity-summary
+        type: text
+        prompt: Record finding IDs and provider-reported severities before local adjudication, or none.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: effective-medium-or-higher-findings
+        type: integer
+        prompt: Record the number of valid unresolved findings with effective priority Blocker, Critical, High, or Medium.
+        required: true
+        minimum: 0
+      - id: effective-low-findings
+        type: integer
+        prompt: Record the number of valid Low findings that require a completed shared disposition.
+        required: true
+        minimum: 0
+      - id: confirmation-needed-findings
+        type: integer
+        prompt: Record the number of findings whose validity still needs confirmation.
+        required: true
+        minimum: 0
       - id: unresolved-valid-findings
         type: integer
         prompt: Record the number of unresolved valid findings.
@@ -182,22 +204,23 @@ node_definitions:
         minimum: 0
       - id: unresolved-implementation-findings
         type: integer
-        prompt: Record the number of unresolved findings owned by implementation or refinement.
+        prompt: Record the number of unresolved Medium-or-higher findings owned by implementation or refinement.
         required: true
         minimum: 0
       - id: unresolved-documentation-findings
         type: integer
-        prompt: Record the number of unresolved findings owned by documentation.
+        prompt: Record the number of unresolved Medium-or-higher findings owned by documentation.
         required: true
         minimum: 0
   review-decision:
     type: decision
     title: Evaluate review
-    objective: Route an incomplete or remediation-eligible review to rework, approve only a clean review, and leave a confirmation-only review with valid findings undecided for user direction.
+    objective: Route Medium-or-higher findings to correction and re-review, Low findings to proportionate local disposition, approve only a clean review, and leave confirmation-only Medium-or-higher findings undecided for user direction.
     prompt: Is the latest complete task target ready for goal assessment?
     evidence_guidance:
       - Read the review ordinal, mode, exact Mulgae run, findings dispositions, and current post-review verification evidence.
-      - Select no option while a confirmation-only review retains a valid finding and the user has not authorized the next action.
+      - Select no option while confirmation-needed-findings is non-zero. Resolve each finding to Valid or Invalid with authorized evidence or bounded confirmation authority, then manually rework review and evaluate this decision again.
+      - Select no option while a confirmation-only review retains a valid Medium-or-higher finding and the user has not authorized the next correction-and-review round.
     options:
       - id: approved
         label: Review approved
@@ -213,20 +236,24 @@ node_definitions:
             equals: 0
           - evidence:
               node: review
-              item: unresolved-implementation-findings
+              item: effective-low-findings
             equals: 0
           - evidence:
               node: review
-              item: unresolved-documentation-findings
+              item: confirmation-needed-findings
             equals: 0
       - id: ci-failed
         label: CI failed
-        criteria: The root review is operationally complete, but its CI decision failed and requires implementation rework regardless of finding counts.
+        criteria: The root review is operationally complete, its CI decision failed, and every finding that needs confirmation has been resolved before implementation rework.
         guards:
           - evidence:
               node: review
               item: ci-decision
             equals: fail
+          - evidence:
+              node: review
+              item: confirmation-needed-findings
+            equals: 0
       - id: implementation-changes
         label: Implementation changes requested
         criteria: A remediation-eligible review whose CI passed has a valid implementation or refinement finding. Do not select this option for a confirmation-only hold without user authorization.
@@ -243,6 +270,14 @@ node_definitions:
               node: review
               item: unresolved-implementation-findings
             at_least: 1
+          - evidence:
+              node: review
+              item: effective-medium-or-higher-findings
+            at_least: 1
+          - evidence:
+              node: review
+              item: confirmation-needed-findings
+            equals: 0
       - id: documentation-changes
         label: Documentation changes requested
         criteria: A remediation-eligible review has no implementation finding and at least one documentation finding.
@@ -263,9 +298,45 @@ node_definitions:
               node: review
               item: unresolved-documentation-findings
             at_least: 1
+          - evidence:
+              node: review
+              item: confirmation-needed-findings
+            equals: 0
+      - id: low-disposition
+        label: Complete Low dispositions
+        criteria: CI passed, no valid Medium-or-higher finding remains, and every valid Low finding can take one shared local disposition without another provider review.
+        guards:
+          - evidence:
+              node: review
+              item: ci-decision
+            equals: pass
+          - evidence:
+              node: review
+              item: effective-medium-or-higher-findings
+            equals: 0
+          - evidence:
+              node: review
+              item: effective-low-findings
+            at_least: 1
+          - evidence:
+              node: review
+              item: confirmation-needed-findings
+            equals: 0
     reason:
       required: true
       prompt: Explain the decision using the recorded review evidence.
+  low-disposition-record:
+    type: action
+    title: Record completed Low dispositions
+    intent: Record proportionate Low handling without claiming that the provider reviewed corrected or newly recorded bytes.
+    items:
+      - id: low-disposition-summary
+        type: text
+        prompt: Record each finding ID, effective Low priority, selected disposition, affected paths, required local checks, canonical deferred-feedback or TODO owner when applicable, re-entry condition, and the preceding review that predates changed bytes.
+        required: true
+        min_length: 1
+        max_length: 7000
+        multiline: true
   goal-assessment:
     type: decision
     title: Assess the task goal
@@ -417,6 +488,10 @@ graph:
             - review-run-id
             - review-summary
             - ci-decision
+            - reported-severity-summary
+            - effective-medium-or-higher-findings
+            - effective-low-findings
+            - confirmation-needed-findings
             - unresolved-valid-findings
             - unresolved-implementation-findings
             - unresolved-documentation-findings
@@ -433,6 +508,21 @@ graph:
         documentation-changes:
           to: document
           effect: rework
+        low-disposition:
+          to: record-low-disposition
+          effect: advance
+    - id: record-low-disposition
+      use: low-disposition-record
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-run-id
+            - reported-severity-summary
+            - effective-medium-or-higher-findings
+            - effective-low-findings
+            - confirmation-needed-findings
+      next: assess-goal
     - id: assess-goal
       use: goal-assessment
       evidence_from:
@@ -469,9 +559,17 @@ graph:
             - review-run-id
             - review-summary
             - ci-decision
+            - reported-severity-summary
+            - effective-medium-or-higher-findings
+            - effective-low-findings
+            - confirmation-needed-findings
             - unresolved-valid-findings
             - unresolved-implementation-findings
             - unresolved-documentation-findings
+        - node: record-low-disposition
+          required: false
+          items:
+            - low-disposition-summary
       routes:
         achieved:
           to: record-outcome

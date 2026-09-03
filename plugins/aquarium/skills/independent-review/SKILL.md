@@ -10,8 +10,9 @@ Run the canonical Aquarium review contract with one fresh Codex Reviewer through
 ## Load the contracts
 
 1. Read [review-contract.md](../../references/review-contract.md) completely.
-2. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
-3. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
+2. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
+3. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
+4. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
 
 ## Establish the request
 
@@ -55,6 +56,6 @@ Reject late, stale, foreign-owner, lifecycle-mismatched, missing-evidence, tampe
 
 ## Adjudicate and report
 
-Independently check every finding against the immutable target, authority, production callers, persistence and concurrency boundaries, and existing tests without running checks or changing files. Classify findings as Valid, Invalid, or Needs confirmation.
+Independently check every finding against the immutable target, authority, production callers, persistence and concurrency boundaries, and existing tests without running checks or changing files. Preserve the reported severity, classify validity as Valid, Invalid, or Needs confirmation, assign effective priority, and recommend a disposition under the shared contract.
 
-Return the complete shared result envelope, exact candidate identity, Codex reviewer identity, Dolgorae backend state, capture and settlement evidence, separate technical and lifecycle verdicts, and an explicit `orca_objects_created: false`. Do not report completion from a process exit or prose-only reviewer response.
+This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the complete shared result envelope, exact candidate identity, Codex reviewer identity, Dolgorae backend state, capture and settlement evidence, separate technical and lifecycle verdicts, the bounded remediation continuation when needed, and an explicit `orca_objects_created: false`. Do not report completion from a process exit or prose-only reviewer response.

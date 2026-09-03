@@ -1,6 +1,6 @@
 # Static Review Contract
 
-Use this contract for one static, read-only review through `$aquarium:independent-review` or `$aquarium:orca-review`. The two workflows share target meaning, consent, reviewer restrictions, adjudication, and technical verdict rules, but each backend owns its own target acquisition and lifecycle.
+Use this contract for one static, read-only review through `$aquarium:independent-review` or `$aquarium:orca-review`. Read [finding-disposition.md](finding-disposition.md) as the shared adjudication and remediation policy. The two workflows share target meaning, consent, reviewer restrictions, adjudication, and technical verdict rules, but each backend owns its own target acquisition and lifecycle.
 
 ## Exact target
 
@@ -43,8 +43,8 @@ Independent Review follows Dolgorae's checked settlement and recovery contract. 
 
 ## Result contract
 
-Require only verified actionable findings. Each finding includes severity, exact `path:line`, triggering scenario, violated authority, impact, and smallest remediation. Omit praise, style preferences, speculation, and duplicates. Return `APPROVE` only when no actionable finding remains and the selected backend lifecycle is authoritative.
+Require only actionable finding candidates. Each finding includes reported severity, exact `path:line`, triggering scenario, violated authority, impact, and smallest remediation. Omit praise, style preferences, speculation, and duplicates. Return `APPROVE` only when no actionable finding remains and the selected backend lifecycle is authoritative.
 
-The coordinator independently checks every finding against the exact target and authority without running checks or changing files. Classify each as Valid, Invalid, or Needs confirmation; execution-dependent claims remain `runtime unverified`.
+The coordinator independently checks every finding against the exact target and authority without running checks or changing files. Preserve reported severity, classify validity as Valid, Invalid, or Needs confirmation, and assign an effective `Blocker`, `Critical`, `High`, `Medium`, or `Low` priority under the shared disposition contract; execution-dependent claims remain `runtime unverified`.
 
-Return source scope and applicable resolved identity, included and excluded state, review focus, reviewer and backend, technical verdict, adjudicated findings, rejected count, confirmation needs, and separate backend lifecycle status. Independent Review additionally returns its target digest, capture, manifest, source-mutation observation, target-integrity result, and Dolgorae settlement evidence. Orca Review additionally returns its Run, Task, Dispatch, worker, Delivery, acknowledgement, settlement evidence, and every retained oversized-report path. Wrong scope, missing required output, reviewer mismatch, or incomplete backend lifecycle is operationally incomplete and never `APPROVE`.
+Return source scope and applicable resolved identity, included and excluded state, review focus, reviewer and backend, technical verdict, adjudicated findings with reported severity, effective priority, validity, and disposition, rejected count, confirmation needs, and separate backend lifecycle status. Independent Review additionally returns its target digest, capture, manifest, source-mutation observation, target-integrity result, and Dolgorae settlement evidence. Orca Review additionally returns its Run, Task, Dispatch, worker, Delivery, acknowledgement, settlement evidence, and every retained oversized-report path. Wrong scope, missing required output, reviewer mismatch, or incomplete backend lifecycle is operationally incomplete and never `APPROVE`.

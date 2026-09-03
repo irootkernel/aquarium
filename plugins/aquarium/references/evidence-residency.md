@@ -62,7 +62,7 @@ Copy only the smallest reviewed, bounded, non-sensitive native artifact that sup
 
 Use repository-relative paths only. Redact a safe structured projection before staging or stop with an evidence gap when any prohibited content is necessary to interpret the payload.
 
-- Mulgae may contribute only a bounded structured JSON projection of verified target digest, capture kind, coverage, CI decision, publication status, structured extraction status, and locally adjudicated finding ID, severity, disposition, and affected repository-relative paths. Obtain the native digest from `target.content_sha256` in the final artifact identified by the exact-run status `final_artifact_uri`; no other digest field is authoritative.
+- Mulgae may contribute only a bounded structured JSON projection of verified target digest, capture kind, coverage, CI decision, publication status, structured extraction status, and locally adjudicated finding ID, reported severity, effective priority, validity, disposition, and affected repository-relative paths. Obtain the native digest from `target.content_sha256` in the final artifact identified by the exact-run status `final_artifact_uri`; no other digest field is authoritative.
   Accepted Markdown reports, finding descriptions or recommendations, evidence quotes, excerpts, transcripts, and extraction artifacts remain private runtime state.
 - Gaori may contribute only finalized redacted status or summary output that satisfies the common content restrictions above. Raw logs and excerpts remain original unredacted evidence and are never promoted.
 - Podway databases, history, recorded claims, and runtime handoff files are never promotion sources. Promote the native evidence or approved canonical document that Podway referenced instead.

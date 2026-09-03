@@ -24,7 +24,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 
 - **작업에는 identity가 있습니다.** 수행 대상 task나 epic은 roadmap 안에서 ID와 lifecycle 상태를 가집니다. Commit은 `task-commit`을 거치며, 사용자가 확인한 lifecycle 변경을 건너뛰지 않고 함께 기록합니다.
 - **수행은 단계와 gate로 나뉩니다.** `task-handler`는 task 하나를 plan부터 close까지 7단계로 진행합니다. Plan을 승인하기 전에는 아무것도 바꾸지 않습니다. 해당하는 모든 roadmap 요구사항은 현재 증거와 대응되어야 합니다. Closeout은 사용자의 명시적 승인을 기다립니다.
-- **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 roadmap, 코드, 테스트에 대해 로컬에서 검증하기 전까지 참고 의견(advisory)으로만 취급합니다.
+- **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 Aquarium이 로컬에서 타당성과 우선순위를 다시 판단하기 전까지 참고 의견(advisory)입니다. 승인된 handler는 유효한 Medium 이상 문제를 수정한 뒤 다시 review합니다. Low 문제는 범위에 따라 로컬에서 고치거나 deferred-feedback에 등록하고, 구조적인 작업이면 TODO 후보로 남깁니다.
 - **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
 - **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review와 remediation round는 정해진 예산 안에서만 돌고, cold validation은 새 gap이 더 발견되지 않으면 멈춥니다.
 - **불변식과 테스트는 계약입니다.** Release QA는 저장소가 자체적으로 등록한 active Design Gate가 있으면 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
@@ -63,7 +63,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 - [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`은 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
-- [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review해 참고용 finding을 냅니다. Aquarium은 finding을 하나씩 로컬에서 검증하고 remediation 범위를 제한합니다.
+- [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review합니다. Provider에는 immutable capture로 만든 격리된 read-only workspace만 보입니다. 임시 provider workspace는 사용 후 삭제되지만 capture와 report는 `.mulgae/` 아래에 남습니다. 결과는 staged file이나 standard output으로 전달됩니다. Aquarium은 finding의 타당성과 우선순위를 로컬에서 다시 판단합니다.
 - [Dolgorae](https://github.com/irootkernel/dolgorae)는 Independent Review가 사용하는 immutable capture와 checked review lifecycle을 제공합니다. 이 production review 경로에는 checksum이 고정된 공식 v0.1.0 Apple Silicon 실행 파일만 허용합니다.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 지정한 reviewer를 새로 실행합니다. Claude를 지정할 수도 있습니다. Reviewer는 현재 등록된 worktree에서 staged, HEAD, commit, range target을 검토하며, staged review는 `git diff --cached`를 직접 읽습니다. Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다. Claude가 생성하는 native session과 tool output은 `~/.claude` 아래에만 저장할 수 있습니다. 보고서가 Orca lifecycle message에 담기 어려울 만큼 길 때도 같은 경로만 사용합니다. 다른 reviewer는 파일을 출력할 수 없습니다. Dolgorae는 사용하지 않으며, Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.

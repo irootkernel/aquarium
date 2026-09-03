@@ -5,7 +5,7 @@ description: "Run and resolve Mulgae review for one complete roadmap task diff. 
 
 # Task Review
 
-Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. Always read [evidence-residency.md](../../references/evidence-residency.md). Require the handler-provided positive review ordinal, current goal revision, and `remediation-eligible` or `confirmation-only` mode when delegated; a direct invocation is one isolated remediation-eligible round with ordinal one and grants no later-round budget.
+Review only the complete implementation, tests, refinement, and review-state documentation for the task established by `$aquarium:task-handler`. Always read [evidence-residency.md](../../references/evidence-residency.md) and [finding-disposition.md](../../references/finding-disposition.md). Require the handler-provided positive review ordinal, current goal revision, and `remediation-eligible` or `confirmation-only` mode when delegated; a direct invocation is one isolated report-only round with ordinal one and grants no remediation or later-round budget.
 
 One invocation consumes one round only after one root `review` run reaches committed publication with complete coverage and a successful findings query, including a `request_changes` policy outcome or failing CI decision. Preflight, status, findings and excerpt reads, and Mulgae-internal retry or extraction do not consume another round.
 
@@ -35,8 +35,8 @@ mulgae findings --run r_... --severity low --output json
 ```
 
 The preflight payload must be `mulgae-review-preflight.v3`; every CLI command envelope must be `mulgae-command-result.v5`. Exit `1` is a policy outcome whose envelope still requires inspection. For any typed operational failure or allocated-but-uncertain run identity, inspect status once and stop instead of resubmitting the review.
-7. Treat every finding as an advisory hypothesis. Verify it against the roadmap, current code, and tests before changing anything.
-8. Verify and adjudicate every finding but do not change files. In `remediation-eligible` mode, return valid findings through the owning phase: to the handler when delegated, or to the invoking user with the exact `$aquarium:task-handler` continuation when invoked directly. In `confirmation-only` mode, return them unchanged for required user escalation.
+7. Treat every finding as an advisory hypothesis. Preserve its reported severity, verify it against the roadmap, current code, and tests, assign its effective priority, and select the applicable shared disposition.
+8. Adjudicate every finding but do not change files. In delegated `remediation-eligible` mode, return valid findings through the owning phase with required checks and re-review status. A direct invocation reports findings and the exact `$aquarium:task-handler` continuation without mutation. In `confirmation-only` mode, return Medium-or-higher findings for bounded user authorization and return eligible Low handling to the approved owning envelope without granting another provider review.
 9. Do not invoke `followup`, `delta`, `rerun`, or another root review inside this bounded invocation. Each is a separate immutable run and cannot bypass or substitute for the handler's next full-target review ordinal. On an incomplete or operationally failed run, follow recovery guidance and return without consuming a round or blindly resubmitting.
 
 ## Bound the Evidence
@@ -49,8 +49,8 @@ Do not count a cancelled lane, operational failure, incomplete capture, unavaila
 
 Mulgae retains complete provider stdout and stderr without a product byte ceiling. Keep raw transcripts, accepted reports, extraction artifacts, and credential-profile paths in private Mulgae runtime state.
 
-Verify every finding locally, but bound the orchestrator handoff to counts by severity and disposition plus at most 20 highest-severity records containing only finding ID, severity, disposition, and affected repository-relative paths.
+Verify every finding locally, but bound the orchestrator handoff to counts by reported severity, effective priority, validity, and disposition plus at most 20 highest-priority records containing only finding ID, reported severity, effective priority, validity, disposition, and affected repository-relative paths.
 
 When more remain, include the omitted count and authoritative run/findings identity or digest. Never include descriptions, quotes, credential-profile paths, or raw provider payloads.
 
-Return the exact target, goal revision, review ordinal and mode, preflight summary, run and session IDs, command exit codes, operational-completion status, CI decision, findings with dispositions, and remaining operational gaps to the orchestrator.
+Return the exact target, goal revision, review ordinal and mode, preflight summary, run and session IDs, command exit codes, operational-completion status, CI decision, adjudicated findings, whether the review predates any corrected bytes, missing authority, and remaining operational gaps to the orchestrator.

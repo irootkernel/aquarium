@@ -27,6 +27,7 @@ Produce a decision-complete plan containing:
 - requirement-to-verification matrix;
 - specifications, architecture, decision, implementation-tip, operations, public-documentation, rollout, and review impact;
 - exact repository-native verification commands;
+- review finding remediation, affected checks, exact restaging of already staged affected paths, and any provider re-review budget;
 - known permission, tool, provider, and environment gaps.
 
 Ask for explicit approval of the plan. Do not treat discussion, partial agreement, or approval of a different action as plan approval. If approval is refused, withheld, or given for a different action, stop, report the exact missing decision, and do not enter implementation.

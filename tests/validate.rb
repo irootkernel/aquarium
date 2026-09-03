@@ -199,6 +199,7 @@ independent_review_script_body = independent_review_script.read
 orca_review = PLUGIN.join("skills/orca-review/SKILL.md").read
 orca_review_agent = PLUGIN.join("skills/orca-review/agents/openai.yaml").read
 review_contract = PLUGIN.join("references/review-contract.md").read
+finding_disposition = PLUGIN.join("references/finding-disposition.md").read
 orca_supervision = PLUGIN.join("references/orca-supervision.md").read
 release_qa = PLUGIN.join("skills/release-qa/SKILL.md").read
 release_qa_helper = PLUGIN.join("skills/release-qa/scripts/manage_release_qa.py")
@@ -659,9 +660,9 @@ assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(v
 
 local_interfaces_doc = documentation_details.fetch("local-interfaces")
 procedure_declarations = {
-  "aquarium-task-v2" => "5",
-  "aquarium-goal-v2" => "6",
-  "aquarium-validation-v2" => "6",
+  "aquarium-task-v2" => "6",
+  "aquarium-goal-v2" => "7",
+  "aquarium-validation-v2" => "7",
   "aquarium-design-v2" => "2",
   "aquarium-war-room-v2" => "2"
 }
@@ -1254,7 +1255,7 @@ assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("never repeat `start_review`") &&
        task_review.include?("mulgae status --run r_... --output json") &&
        task_review.include?("mulgae findings --run r_... --severity low --output json") &&
-       task_review.include?("at most 20 highest-severity records") &&
+       task_review.include?("at most 20 highest-priority records") &&
        task_review.include?("complete provider stdout and stderr") &&
        task_review.include?("accepted Markdown report byte-for-byte") &&
        task_review.include?("private internal `002-extract` artifact") &&
@@ -1328,7 +1329,7 @@ assert(epic_handler.include?("at most two operationally complete Mulgae review r
        epic_handler.include?("Do not use `followup`, `delta`, or `rerun`") &&
        !epic_handler.include?("review the changed target again until no valid finding remains"),
        "epic-handler must bound member-task and epic-hardening review convergence")
-assert(epic_handler.include?("It does not authorize amend, push, PR or release changes"),
+assert(epic_handler.include?("It excludes amend, push, PR or release changes"),
        "epic-handler must preserve publication boundaries")
 assert(epic_handler.include?("$aquarium:task-commit") &&
        epic_handler.include?("Never commit independently"),
@@ -1352,9 +1353,10 @@ assert(epic_handler.include?("coverage_status=complete") && epic_handler.include
        epic_handler.include?("findings query succeeds") && epic_handler.include?("untracked, generated, and derived files"),
        "epic-handler must require complete Mulgae evidence")
 assert(epic_handler.include?("Commit and upstream publication are separate states") &&
-       epic_handler.include?("change after verification or review makes affected evidence stale") &&
-       epic_handler.include?("approved post-review promoted-evidence projection are the sole exceptions") &&
-       epic_handler.include?("projection remains outside the review target"),
+       epic_handler.include?("Post-review changes to code, tests, canonical documentation, or product artifacts stale affected evidence") &&
+       epic_handler.include?("only planned status transitions and independently checked promoted-evidence projections do not") &&
+       epic_handler.include?("A completed Low correction stays stale") &&
+       epic_handler.include?("review predates the corrected bytes"),
        "epic-handler must separate lifecycle evidence and invalidate stale review")
 assert(epic_handler.lines.length < 120, "epic-handler must remain orchestration-focused")
 
@@ -1392,7 +1394,7 @@ assert(epic_validator.include?("without starting a per-goal or follow-up review"
        epic_validator.include?("publication_status=committed") &&
        epic_validator.include?("findings query succeeds"),
        "epic-validator must avoid nested reviews and require complete whole-epic Mulgae evidence")
-assert(epic_validator.include?("next positive ordinal for the current validation goal revision") &&
+assert(epic_validator.include?("record the next positive ordinal") &&
        epic_validator.include?("exact committed run ID") &&
        epic_validator.include?("an unprovable ordinal stops before review") &&
        epic_validator.include?("Round one is `remediation-eligible`") &&
@@ -1400,18 +1402,19 @@ assert(epic_validator.include?("next positive ordinal for the current validation
        epic_validator.include?("never selects `hardening-deferral-eligible` mode"),
        "epic-validator must durably number cold whole-epic root reviews")
 assert(epic_validator.include?("Do not start a third review automatically") &&
-       epic_validator.include?("Critical or High findings block validation") &&
-       epic_validator.include?("One or more Medium findings stop with a recommendation") &&
+       epic_validator.include?("A valid Medium-or-higher finding blocks validation") &&
+       epic_validator.include?("Risk acceptance and deferral are unavailable") &&
+       epic_validator.include?("Resolve every `Needs confirmation` finding before selecting the final-review decision") &&
+       epic_validator.include?("manually rework `final-review`") &&
        epic_validator.include?("When only Low findings remain") &&
-       epic_validator.include?("wait for the user's choice") &&
-       epic_validator.include?("user-authorized-micro-fix") &&
-       epic_validator.include?("accepted-low") &&
-       epic_validator.include?("accepted-medium-risk") &&
+       epic_validator.include?("canonical deferred-feedback owner") &&
+       epic_validator.include?("structural work becomes a TODO candidate") &&
+       epic_validator.include?("preceding review must be recorded as predating those bytes") &&
        epic_validator.include?("Each user-authorized correction grants one remediation and one next-ordinal confirmation review only") &&
        !epic_validator.include?("repeat affected checks and review until complete") &&
        !epic_validator.include?("regroup and repeat the goal cycle"),
        "epic-validator must enforce one automatic confirmation and severity-based user direction")
-assert(epic_validator.include?("planned lifecycle or accepted-risk-only roadmap change and an approved post-review promoted-evidence projection are the sole exceptions") &&
+assert(epic_validator.include?("A completed Low disposition may use its required local checks without provider re-review") &&
        epic_validator.include?("projection remains outside the review target") &&
        epic_validator.include?("Treat a Mulgae review as operationally complete") &&
        epic_validator.include?("Classify that complete review as clean only when zero unresolved valid findings remain") &&
@@ -1728,7 +1731,8 @@ expected_procedure_graphs = {
       "decide-verification" => required_evidence.call("verify"),
       "review" => required_evidence.call("verify", "document"),
       "decide-review" => required_evidence.call("review"),
-      "assess-goal" => required_evidence.call("record-plan", "prepare-implementation", "implement", "verify", "refine", "document", "review"),
+      "record-low-disposition" => required_evidence.call("review"),
+      "assess-goal" => required_evidence.call("record-plan", "prepare-implementation", "implement", "verify", "refine", "document", "review") + [["record-low-disposition", false]],
       "approve-closeout" => required_evidence.call("assess-goal", "record-outcome")
     },
     "nodes" => {
@@ -1740,7 +1744,8 @@ expected_procedure_graphs = {
       "decide-verification" => { "routes" => { "passed" => %w[document advance], "failed" => %w[refine rework] } },
       "document" => { "next" => "review" },
       "review" => { "next" => "decide-review" },
-      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[prepare-implementation rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework] } },
+      "decide-review" => { "routes" => { "approved" => %w[assess-goal advance], "ci-failed" => %w[prepare-implementation rework], "implementation-changes" => %w[implement rework], "documentation-changes" => %w[document rework], "low-disposition" => %w[record-low-disposition advance] } },
+      "record-low-disposition" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[record-outcome advance], "not-achieved" => %w[record-outcome advance], "superseded" => %w[record-outcome advance] } },
       "record-outcome" => { "next" => "approve-closeout" },
       "approve-closeout" => { "routes" => { "approved" => %w[closeout advance], "changes-requested" => %w[refine rework] } },
@@ -1761,7 +1766,7 @@ expected_procedure_graphs = {
       "complete-work" => { "next" => "record-evidence" },
       "record-evidence" => { "next" => "record-hardening-deferral" },
       "record-hardening-deferral" => { "next" => "decide-evidence" },
-      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-handoff advance], "rework-required" => %w[complete-work rework] } },
+      "decide-evidence" => { "routes" => { "supported" => %w[assess-goal advance], "deferred-for-hardening" => %w[record-hardening-handoff advance], "rework-required" => %w[complete-work rework], "authorized-rework" => %w[complete-work rework] } },
       "record-hardening-handoff" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
       "closeout" => { "terminal" => true }
@@ -1770,7 +1775,7 @@ expected_procedure_graphs = {
   "aquarium-validation-v2.yaml" => {
     "id" => "aquarium-validation-v2",
     "entry" => "capture-baseline",
-    "manual_targets" => %w[audit remediate re-audit final-review micro-remediate],
+    "manual_targets" => %w[audit remediate re-audit final-review record-low-disposition],
     "evidence" => {
       "decide-gaps" => required_evidence.call("audit"),
       "re-audit" => required_evidence.call("remediate"),
@@ -1778,9 +1783,9 @@ expected_procedure_graphs = {
       "final-review" => [["audit", true], ["re-audit", false]],
       "decide-final-review" => required_evidence.call("final-review"),
       "await-user-direction" => [["final-review", true]],
+      "record-low-disposition" => required_evidence.call("final-review"),
       "assess-goal" => [["capture-baseline", true], ["final-review", false], ["await-user-direction", false],
-                        ["micro-remediate", false], ["record-accepted-low", false],
-                        ["record-accepted-medium-risk", false], ["record-stopped", false], ["record-incomplete", false]]
+                        ["record-low-disposition", false], ["record-stopped", false], ["record-incomplete", false]]
     },
     "nodes" => {
       "capture-baseline" => { "next" => "audit" },
@@ -1790,11 +1795,9 @@ expected_procedure_graphs = {
       "re-audit" => { "next" => "decide-re-audit" },
       "decide-re-audit" => { "routes" => { "clean" => %w[final-review advance], "gaps-found" => %w[remediate rework], "incomplete" => %w[record-incomplete advance] } },
       "final-review" => { "next" => "decide-final-review" },
-      "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework], "user-direction" => %w[await-user-direction advance], "incomplete" => %w[record-incomplete advance] } },
-      "await-user-direction" => { "routes" => { "fix-and-review" => %w[audit rework], "accept-low" => %w[record-accepted-low advance], "micro-fix" => %w[micro-remediate advance], "accept-medium-risk" => %w[record-accepted-medium-risk advance], "stop" => %w[record-stopped advance] } },
-      "micro-remediate" => { "next" => "assess-goal" },
-      "record-accepted-low" => { "next" => "assess-goal" },
-      "record-accepted-medium-risk" => { "next" => "assess-goal" },
+      "decide-final-review" => { "routes" => { "validated" => %w[assess-goal advance], "rework-required" => %w[audit rework], "low-disposition" => %w[record-low-disposition advance], "user-direction" => %w[await-user-direction advance], "incomplete" => %w[record-incomplete advance] } },
+      "await-user-direction" => { "routes" => { "fix-and-review" => %w[audit rework], "stop" => %w[record-stopped advance] } },
+      "record-low-disposition" => { "next" => "assess-goal" },
       "record-stopped" => { "next" => "assess-goal" },
       "record-incomplete" => { "next" => "assess-goal" },
       "assess-goal" => { "routes" => { "achieved" => %w[closeout advance], "not-achieved" => %w[closeout advance], "superseded" => %w[closeout advance] } },
@@ -1870,7 +1873,7 @@ expected_procedure_graphs.each do |filename, expected|
   procedure = YAML.safe_load(path.read, aliases: false)
   assert(procedure.fetch("schema") == "podway.procedure/v2", "managed procedure must use v2: #{filename}")
   assert(procedure.fetch("id") == expected.fetch("id"), "managed procedure ID mismatch: #{filename}")
-  expected_version = { "aquarium-validation-v2.yaml" => "6", "aquarium-goal-v2.yaml" => "6", "aquarium-task-v2.yaml" => "5", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
+  expected_version = { "aquarium-validation-v2.yaml" => "7", "aquarium-goal-v2.yaml" => "7", "aquarium-task-v2.yaml" => "6", "aquarium-design-v2.yaml" => "2", "aquarium-war-room-v2.yaml" => "2" }.fetch(filename)
   assert(procedure.fetch("version") == expected_version, "managed procedure version drifted: #{filename}")
   assert(procedure.fetch("goal_tracking") == true, "managed procedure must track goals: #{filename}")
   assert(procedure.dig("graph", "entry") == expected.fetch("entry"), "managed procedure entry drifted: #{filename}")
@@ -1922,7 +1925,7 @@ task_procedure_nodes = task_procedure.dig("graph", "nodes").each_with_object({})
   index[node.fetch("id")] = node
 end
 task_assess_evidence = task_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map { |entry| [entry.fetch("node"), entry.fetch("required")] }
-assert(task_assess_evidence == %w[record-plan prepare-implementation implement verify refine document review].map { |node| [node, true] },
+assert(task_assess_evidence == %w[record-plan prepare-implementation implement verify refine document review].map { |node| [node, true] } + [["record-low-disposition", false]],
        "task procedure assess-goal must draw required evidence from the full phase trail")
 assert(task_procedure_text.include?("must reach implementation through manual rework"),
        "task procedure must document the manual-rework escape to implementation")
@@ -1948,19 +1951,38 @@ assert(task_review_items.fetch("review-round").fetch("type") == "integer" &&
        task_review_items.fetch("review-run-id").fetch("type") == "text" &&
        task_review_items.fetch("ci-decision").fetch("type") == "choice" &&
        task_review_items.fetch("ci-decision").fetch("choices") == %w[pass fail] &&
+       task_review_items.fetch("reported-severity-summary").fetch("type") == "text" &&
+       task_review_items.fetch("effective-medium-or-higher-findings").fetch("minimum") == 0 &&
+       task_review_items.fetch("effective-low-findings").fetch("minimum") == 0 &&
+       task_review_items.fetch("confirmation-needed-findings").fetch("minimum") == 0 &&
+       !task_review_items.fetch("confirmation-needed-findings").key?("maximum") &&
        task_verification_items.fetch("verification-result").fetch("type") == "check_result" &&
        task_verification_items.fetch("verification-observations").fetch("required_when").first.dig("field") == "outcome" &&
        task_verification_options.all? { |option| option.fetch("guards").length == 1 },
        "task procedure must bind positive review ordinals and guarded typed verification evidence")
-assert(task_procedure_text.include?("leave a confirmation-only review with valid findings undecided") &&
-       task_procedure_text.include?("Select no option while a confirmation-only review retains a valid finding"),
+assert(task_procedure_text.include?("leave confirmation-only Medium-or-higher findings undecided") &&
+       task_procedure_text.include?("Select no option while a confirmation-only review retains a valid Medium-or-higher finding") &&
+       task_procedure_text.include?("Select no option while confirmation-needed-findings is non-zero") &&
+       task_procedure_text.include?("manually rework review and evaluate this decision again"),
        "task procedure must represent the confirmation-only user hold")
 task_review_options = task_procedure.dig("node_definitions", "review-decision", "options").to_h { |option| [option.fetch("id"), option] }
-assert(task_review_options.fetch("ci-failed").fetch("guards") == [{"evidence" => {"node" => "review", "item" => "ci-decision"}, "equals" => "fail"}] &&
+assert(task_review_options.fetch("ci-failed").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision confirmation-needed-findings] &&
+       task_review_options.fetch("ci-failed").fetch("guards").last.fetch("equals") == 0 &&
        task_review_options.fetch("approved").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
        task_review_options.fetch("implementation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision" &&
        task_review_options.fetch("documentation-changes").fetch("guards").first.dig("evidence", "item") == "ci-decision",
        "task procedure must route CI failure independently and require CI pass for finding-owned routes")
+assert(task_review_options.fetch("approved").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
+       task_review_options.fetch("implementation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
+       task_review_options.fetch("documentation-changes").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
+       task_review_options.fetch("low-disposition").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[ci-decision effective-medium-or-higher-findings effective-low-findings confirmation-needed-findings] &&
+       review_item_index.call(task_procedure, "low-disposition-record").fetch("low-disposition-summary").fetch("prompt").include?("preceding review that predates changed bytes"),
+       "task procedure must block unresolved confirmation and route Low findings without false review coverage")
+task_assess_review_items = task_procedure_nodes.fetch("assess-goal").fetch("evidence_from").find do |entry|
+  entry.fetch("node") == "review"
+end.fetch("items")
+assert(%w[reported-severity-summary effective-medium-or-higher-findings effective-low-findings confirmation-needed-findings].all? { |id| task_assess_review_items.include?(id) },
+       "task goal assessment must receive complete priority and confirmation evidence")
 assert(task_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
        task_closeout_items.fetch("promoted-evidence-references").fetch("required") == false &&
        task_closeout_items.fetch("promoted-evidence-references").fetch("min_items") == 0 &&
@@ -1985,17 +2007,42 @@ assert(validation_review_items.fetch("review-round").fetch("type") == "integer" 
        validation_review_items.fetch("final-review-result").fetch("type") == "check_result" &&
        validation_audit_items.fetch("audit-result").fetch("type") == "check_result" &&
        validation_audit_items.fetch("confirmed-gap-count").fetch("minimum") == 0 &&
-       %w[critical-findings high-findings medium-findings low-findings valid-finding-ids].all? { |id| validation_review_items.key?(id) } &&
+       %w[reported-severity-summary confirmation-needed-findings medium-or-higher-findings blocker-findings critical-findings high-findings medium-findings low-findings valid-finding-ids finding-disposition-summary].all? { |id| validation_review_items.key?(id) } &&
+       !validation_review_items.fetch("confirmation-needed-findings").key?("maximum") &&
+       %w[blocker-findings critical-findings high-findings medium-findings low-findings].all? { |id| validation_review_items.fetch(id).fetch("prompt").include?("effective priority") } &&
        validation_procedure_text.include?("Leave this decision unset until the user explicitly selects the next action") &&
        validation_procedure_text.include?("one remediation pass and one next-ordinal whole-epic confirmation review") &&
-       validation_procedure_text.include?("prior review covered its resulting bytes"),
-       "validation procedure must record severity, bounded follow-up, user direction, and honest micro-fix coverage")
-assert(validation_goal_options.fetch("achieved").include?("reached from validated, record-accepted-low, record-accepted-medium-risk, or micro-remediate") &&
+       validation_procedure_text.include?("Select no option while confirmation-needed-findings is non-zero") &&
+       validation_procedure_text.include?("manually rework final-review and evaluate this decision again") &&
+       validation_procedure_text.include?("provider reviewed corrected or newly recorded bytes"),
+       "validation procedure must record reprioritization, bounded follow-up, user direction, and honest Low coverage")
+validation_direction_options = validation_procedure.dig("node_definitions", "review-direction-decision", "options").map { |option| option.fetch("id") }
+validation_final_options = validation_procedure.dig("node_definitions", "final-review-decision", "options").to_h { |option| [option.fetch("id"), option] }
+assert(validation_direction_options == %w[fix-and-review stop] &&
+       validation_final_options.fetch("rework-required").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
+       validation_final_options.fetch("user-direction").fetch("guards").map { |guard| guard.dig("evidence", "item") }.last == "confirmation-needed-findings" &&
+       validation_final_options.fetch("user-direction").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("medium-or-higher-findings") &&
+       validation_final_options.fetch("validated").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
+       validation_final_options.fetch("low-disposition").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
+       validation_final_options.fetch("low-disposition").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("low-findings") &&
+       !validation_procedure_text.match?(/accept-low|accept-medium-risk|record-accepted|micro-fix/),
+       "validation procedure must forbid finding risk acceptance and route Low locally")
+assert(validation_goal_options.fetch("achieved").include?("reached from validated or record-low-disposition") &&
        validation_goal_options.fetch("not-achieved").include?("record-stopped or record-incomplete") &&
        validation_goal_options.fetch("not-achieved").include?("can never select achieved"),
        "validation procedure must forbid achieved closeout from incomplete or stopped dispositions")
 validation_closeout_items = review_item_index.call(validation_procedure, "closeout-record")
-assert(validation_procedure.fetch("version") == "6" &&
+validation_procedure_nodes = validation_procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
+validation_direction_review_items = validation_procedure_nodes.fetch("await-user-direction").fetch("evidence_from").find do |entry|
+  entry.fetch("node") == "final-review"
+end.fetch("items")
+validation_assess_review_items = validation_procedure_nodes.fetch("assess-goal").fetch("evidence_from").find do |entry|
+  entry.fetch("node") == "final-review"
+end.fetch("items")
+assert(%w[confirmation-needed-findings medium-or-higher-findings blocker-findings finding-disposition-summary].all? { |id| validation_direction_review_items.include?(id) } &&
+       %w[confirmation-needed-findings medium-or-higher-findings blocker-findings finding-disposition-summary].all? { |id| validation_assess_review_items.include?(id) },
+       "validation goal assessment must receive complete priority and disposition evidence")
+assert(validation_procedure.fetch("version") == "7" &&
        validation_procedure.dig("node_definitions", "closeout-record", "intent").include?("explicit no-change result") &&
        validation_closeout_items.fetch("closeout-summary").fetch("prompt").include?("verified reason no repository record is required") &&
        validation_closeout_items.fetch("promoted-evidence-references").fetch("type") == "list" &&
@@ -2016,11 +2063,18 @@ assert(goal_review_items.fetch("review-round").fetch("type") == "integer" &&
        goal_review_items.fetch("review-mode").fetch("choices") == %w[remediation-eligible hardening-deferral-eligible closeout-not-required] &&
        goal_review_items.fetch("review-run-id").fetch("type") == "text" &&
        goal_review_items.fetch("review-run-id").fetch("required") == false &&
-       goal_review_items.fetch("review-run-id").fetch("required_when").first.fetch("not_equals") == "closeout-not-required",
+       goal_review_items.fetch("review-run-id").fetch("required_when").first.fetch("not_equals") == "closeout-not-required" &&
+       goal_review_items.fetch("effective-medium-or-higher-findings").fetch("minimum") == 0 &&
+       goal_review_items.fetch("confirmation-needed-findings").fetch("minimum") == 0 &&
+       !goal_review_items.fetch("confirmation-needed-findings").key?("maximum") &&
+       goal_review_items.fetch("extra-review-authorization").fetch("choices") == %w[not-required pending authorized] &&
+       goal_review_items.fetch("finding-disposition-summary").fetch("type") == "text",
        "goal procedure must record member reviews while allowing only the final closeout exception")
 goal_procedure_text = procedures_directory.join("aquarium-goal-v2.yaml").read
 assert(goal_procedure_text.include?("Required checks and review are complete, CI passed") &&
-       goal_procedure_text.include?("Evidence or CI failed"),
+       goal_procedure_text.include?("Evidence or CI failed") &&
+       goal_procedure_text.include?("Select no option while confirmation-needed-findings is non-zero") &&
+       goal_procedure_text.include?("manually rework record-evidence and evaluate this decision again"),
        "goal procedure must require passing CI for support and route failure to rework")
 goal_deferral_items = review_item_index.call(goal_procedure, "hardening-deferral-record")
 assert(goal_deferral_items.fetch("hardening-deferral-state").fetch("required") == true &&
@@ -2031,6 +2085,7 @@ assert(goal_deferral_items.fetch("hardening-deferral-state").fetch("required") =
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("type") == "list" &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("unique") == true &&
        goal_deferral_items.fetch("hardening-deferral-finding-ids").fetch("max_items") == 200 &&
+       goal_deferral_items.fetch("hardening-deferral-owner").fetch("required_when").first.fetch("equals") == "recorded" &&
        goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("required") == false &&
        goal_deferral_items.fetch("hardening-deferral-evidence-path").fetch("max_length") == 1024 &&
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("required") == false &&
@@ -2038,14 +2093,40 @@ assert(goal_deferral_items.fetch("hardening-deferral-state").fetch("required") =
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("max_length") == 71 &&
        goal_deferral_items.fetch("hardening-deferral-evidence-sha256").fetch("multiline") == false &&
        goal_procedure_text.include?("verified staged aquarium.promoted-evidence/v1 manifest") &&
+       goal_procedure_text.include?("no valid Medium-or-higher finding remains") &&
+       goal_procedure_text.include?("canonical deferred-feedback owner") &&
        goal_procedure_text.include?("linked before this decision"),
        "goal procedure must retain local Mulgae identities and require durable promoted deferral evidence")
 goal_procedure_nodes = goal_procedure.dig("graph", "nodes").to_h { |node| [node.fetch("id"), node] }
+goal_evidence_options = goal_procedure.dig("node_definitions", "evidence-decision", "options").to_h { |option| [option.fetch("id"), option] }
+assert(goal_evidence_options.fetch("rework-required").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[review-mode effective-medium-or-higher-findings confirmation-needed-findings] &&
+       goal_evidence_options.fetch("authorized-rework").fetch("guards").map { |guard| guard.dig("evidence", "item") } == %w[review-mode extra-review-authorization effective-medium-or-higher-findings confirmation-needed-findings] &&
+       goal_evidence_options.fetch("supported").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings") &&
+       goal_evidence_options.fetch("deferred-for-hardening").fetch("guards").map { |guard| guard.dig("evidence", "item") }.include?("confirmation-needed-findings"),
+       "goal procedure must separate ordinary rework from explicitly authorized additional rework and block unresolved confirmation")
+assert(epic_handler.include?("Record `extra-review-authorization` as `pending` while waiting") &&
+       epic_handler.include?("After explicit approval, change it to `authorized` through manual rework") &&
+       epic_handler.include?("select `authorized-rework`") &&
+       epic_handler.include?("Before selecting an evidence decision, resolve every `Needs confirmation` finding"),
+       "epic-handler must record and consume explicit authority before an additional member-task review pass")
 goal_assess_evidence = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").map do |entry|
   [entry.fetch("node"), entry.fetch("required")]
 end
 assert(goal_assess_evidence == [["complete-work", true], ["record-evidence", true], ["record-hardening-deferral", true], ["record-hardening-handoff", false]],
        "goal procedure must assess required pre-decision deferral evidence and an optional adopted handoff")
+goal_assess_review_items = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").find do |entry|
+  entry.fetch("node") == "record-evidence"
+end.fetch("items")
+assert(%w[extra-review-authorization effective-medium-or-higher-findings effective-low-findings confirmation-needed-findings finding-disposition-summary].all? { |id| goal_assess_review_items.include?(id) },
+       "goal assessment must receive complete priority and disposition evidence")
+goal_handoff_items = goal_procedure_nodes.fetch("record-hardening-handoff").fetch("evidence_from").first.fetch("items")
+goal_assess_deferral_items = goal_procedure_nodes.fetch("assess-goal").fetch("evidence_from").find do |entry|
+  entry.fetch("node") == "record-hardening-deferral"
+end.fetch("items")
+assert(goal_handoff_items.include?("hardening-deferral-owner") &&
+       goal_assess_deferral_items.include?("hardening-deferral-owner") &&
+       review_item_index.call(goal_procedure, "hardening-deferral-disposition").fetch("hardening-handoff-summary").fetch("prompt").include?("canonical deferred-feedback owner"),
+       "goal procedure must propagate the canonical deferral owner through handoff and assessment")
 
 analysis_procedure_contract = lambda do |filename, quality_definition, semantic_definitions, count_ids, finding_ids|
   procedure = YAML.safe_load(procedures_directory.join(filename).read, aliases: false)
@@ -2141,6 +2222,8 @@ assert(task_review.include?("only `ci-decision=pass` with no unresolved valid fi
        "task-review must route CI and finding failures through their exact rework paths")
 assert(task_handler.include?("In rounds one through three") &&
        task_handler.include?("Round four is confirmation-only") &&
+       task_handler.include?("Resolve every `Needs confirmation` finding before selecting a review decision") &&
+       task_handler.include?("manually rework `review`") &&
        task_handler.include?("Reset the ordinal only for an explicitly approved new goal revision") &&
        task_handler.include?("Do not use `followup`, `delta`, or `rerun`") &&
        task_handler.include?("never use `latest`, objective inference, or an uncertain candidate") &&
@@ -2151,6 +2234,7 @@ assert(task_handler.include?("In rounds one through three") &&
        "task-handler must stop early and escalate after bounded Mulgae remediation")
 assert(task_handler.include?("A session created from an earlier version of this managed Procedure is not migrated") &&
        epic_handler.include?("Sessions created from an earlier version of this managed Procedure are not migrated") &&
+       epic_validator.include?("keeps its immutable snapshot and is not migrated in place") &&
        !task_handler.include?("Legacy Procedure v1") &&
        !epic_handler.include?("Existing immutable Procedure v1"),
        "handlers must describe compatibility by managed Procedure version rather than a stale v1 label")
@@ -2273,7 +2357,7 @@ assert(orca_review.include?("This is review only") &&
        orca_review.include?("`runtime unverified`") &&
        orca_review.include?("Valid, Invalid, or Needs confirmation") &&
        orca_review.include?("Never retry automatically, switch reviewers") &&
-       orca_review.include?("separate Orca Run, Task, Dispatch, worker"),
+       orca_review.include?("Orca object and lifecycle status"),
        "orca-review must provide the complete staged static-review prompt and bounded adjudication")
 assert(orca_review.include?("`staged`, `head`, `commit`, or `range`") &&
        orca_review.include?("`staged` means the current `HEAD`-to-index change") &&
@@ -2342,11 +2426,52 @@ assert(ROOT.join("PRIVACY.md").read.include?("Invoking `orca-review` by name or 
        ROOT.join("README.ko.md").read.include?("Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다") &&
        ROOT.join("docs/specs/workflow-contracts.md").read.include?("Orca reviewers are prohibited from writing in the worktree"),
        "public Orca Review documentation must disclose implicit selection and prompt-enforced write prohibition")
-assert(capability_catalog.include?("Both review workflows bind the reviewer to one declared source scope") &&
+assert(capability_catalog.include?("Both static review workflows bind the reviewer to one declared source scope") &&
        capability_catalog.include?("Independent Review additionally binds an immutable capture digest") &&
+       capability_catalog.include?("assigns validity plus an effective") &&
+       capability_catalog.include?("Depending on impact, a Low finding gets") &&
        canonical_roadmap.include?("`TASK-031` superseded that Orca-side coupling by restoring native Orca execution") &&
        canonical_roadmap.include?("The current Orca Review contract uses Orca's native requested-reviewer lifecycle"),
-       "capabilities and roadmap history must distinguish current Orca Review from immutable capture and TASK-031 scope")
+       "capabilities and roadmap history must distinguish current Orca Review and preserve the shared finding policy")
+assert(workflow_contracts_doc.include?("Low findings instead take one proportionate local disposition") &&
+       workflow_contracts_doc.include?("A completed Low correction remains stale review coverage") &&
+       workflow_contracts_doc.include?("A confirmation-only Medium-or-higher finding stops") &&
+       workflow_contracts_doc.include?("rather than entering an unbounded loop or accepting risk"),
+       "workflow specifications must preserve Medium blocking and proportionate Low dispositions")
+
+assert(review_contract.include?("[finding-disposition.md](finding-disposition.md)") &&
+       independent_review.include?("[finding-disposition.md](../../references/finding-disposition.md)") &&
+       orca_review.include?("[finding-disposition.md](../../references/finding-disposition.md)") &&
+       task_review.include?("[finding-disposition.md](../../references/finding-disposition.md)") &&
+       task_handler.include?("[finding-disposition.md](../../references/finding-disposition.md)") &&
+       epic_handler.include?("[finding-disposition.md](../../references/finding-disposition.md)") &&
+       epic_validator.include?("[finding-disposition.md](../../references/finding-disposition.md)"),
+       "all review consumers must load the shared finding disposition contract")
+assert(finding_disposition.include?("A standalone `$aquarium:independent-review`, direct `$aquarium:task-review`, or standalone `$aquarium:orca-review` is report-only") &&
+       finding_disposition.include?("effective priority as `Blocker`, `Critical`, `High`, `Medium`, or `Low`") &&
+       finding_disposition.include?("`Needs confirmation` is a temporary state") &&
+       finding_disposition.include?("obtain bounded confirmation authority") &&
+       finding_disposition.include?("does not consume a provider-review round unless the provider review itself runs again") &&
+       finding_disposition.include?("must be fixed, verified with every affected authorized check, and reviewed again") &&
+       finding_disposition.include?("`low-self-evident-fix`") &&
+       finding_disposition.include?("`low-bounded-fix`") &&
+       finding_disposition.include?("`low-deferred-feedback`") &&
+       finding_disposition.include?("`low-todo-candidate`") &&
+       finding_disposition.include?("exactly restaging already staged affected paths") &&
+       finding_disposition.include?("Do not add a previously unstaged correction path") &&
+       finding_disposition.include?("separate post-review disposition output") &&
+       finding_disposition.include?("only when the remediation envelope already covers it") &&
+       finding_disposition.include?("preceding review predates the corrected bytes"),
+       "shared disposition must enforce authority-aware Medium and Low handling")
+assert(independent_review.include?("This standalone workflow is report-only") &&
+       orca_review.include?("This standalone workflow is report-only") &&
+       task_review.include?("direct invocation is one isolated report-only round") &&
+       task_handler.include?("shared-policy finding remediation within the approved task") &&
+       epic_handler.include?("shared-policy remediation") &&
+       epic_validator.include?("shared-policy remediation"),
+       "standalone reviews must report while approved handlers may remediate")
+assert(task_handler.include?("[podway-integration.md](../../references/podway-integration.md)"),
+       "task-handler must link the Podway contract it requires agents to read")
 assert(epic_handler.include?("do not invoke `$aquarium:independent-review` or `$aquarium:orca-review`, which only the user starts") &&
        epic_validator.include?("`$aquarium:independent-review`, or `$aquarium:orca-review`") &&
        canonical_roadmap.include?("restores native Orca reviewer execution") &&
@@ -2776,8 +2901,8 @@ assert(task_review.include?("Select exactly one target that contains the complet
        "task-review must isolate one complete Mulgae target")
 assert(task_review.include?("Treat every finding as an advisory hypothesis"),
        "task-review must verify Mulgae findings")
-assert(task_review.include?("to the handler when delegated") &&
-       task_review.include?("to the invoking user with the exact `$aquarium:task-handler` continuation"),
+assert(task_review.include?("In delegated `remediation-eligible` mode") &&
+       task_review.include?("A direct invocation reports findings and the exact `$aquarium:task-handler` continuation"),
        "direct task-review must return remediation through the owning handler workflow")
 
 terminal_status_index = task_close.index("Treat `Completed`, `Blocked`, and `Deferred` as terminal")
@@ -2823,15 +2948,14 @@ assert(task_close.include?("Never select a terminal state") &&
        task_close.include?("Do not stage or commit independently"),
        "task-close must leave lifecycle choice to the user and commit execution to task-commit")
 
-promotion_index = epic_handler.index("Create and stage the smallest safe structured projection")
+promotion_index = epic_handler.index("For that deferral, create and stage the smallest safe structured projection")
 podway_deferral_index = epic_handler.index("record the exact run and finding IDs", promotion_index)
-deferral_decision_index = epic_handler.index("only then select the deferral decision", podway_deferral_index)
+deferral_decision_index = epic_handler.index("before selecting the deferral decision", podway_deferral_index)
 assert(promotion_index && deferral_decision_index && podway_deferral_index &&
        promotion_index < podway_deferral_index && podway_deferral_index < deferral_decision_index,
        "epic-handler must promote and verify evidence before selecting and recording a hardening deferral")
 assert(epic_validator.include?("zero or more promoted manifest path and digest pairs or their explicit absence") &&
-       epic_validator.include?("named consumer that requires durable accepted-risk evidence") &&
-       epic_validator.include?("this owning workflow verifies live native evidence") &&
+       epic_validator.include?("An approved promoted-evidence projection remains outside the review target") &&
        epic_handler.include?("zero or more promoted manifest path and digest pairs or their explicit absence"),
        "handler commit handoffs must support every approved promoted-evidence purpose")
 
