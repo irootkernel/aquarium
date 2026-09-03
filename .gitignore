@@ -9,6 +9,7 @@ __pycache__/
 .omx/
 .claude/
 .codex/
+.codegraph/
 
 /.mulgae/*
 !/.mulgae/config.yaml
