@@ -27,6 +27,7 @@ TOOLS = (
     "dolgorae",
     "mulgae",
     "gaori",
+    "sorage",
     "podway",
     "ouroboros",
     "lora",

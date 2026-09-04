@@ -15,13 +15,17 @@ Read [manifest.md](references/manifest.md), then read [the development setup ski
 2. Treat a nonzero result or an error envelope as a manifest-wide failure. Treat an `invalid` target in a successful plan as an isolated preflight failure and continue with the remaining `ready` targets.
 3. Never create, copy, edit, stage, or commit the manifest. Keep its absolute path and SHA-256 only for this request. Do not discover manifests, repositories, or tools outside the normalized plan.
 4. For every ready target, read applicable repository instructions and inspect branch, upstream, staged, unstaged, untracked, and conflict state. Preserve unrelated work. If an approved change overlaps existing work and cannot be applied exactly, fail that action for that target instead of overwriting it.
-5. Run the existing `inspect_tools.py` once for each ready target with `--verify-dolgorae-release`, `--include-podway`, `--include-ouroboros`, and `--require-mulgae-mcp` only when the normalized selection requires those dimensions. The inspector reports user-global, isolated project-local, and effective Mulgae and Gaori MCP state independently. Inspection is read-only evidence, not setup authority.
+5. Run the existing `inspect_tools.py` once for each ready target with `--verify-dolgorae-release`, `--include-podway`, `--include-ouroboros`, and `--require-mulgae-mcp` only when the normalized selection requires those dimensions. The inspector reports user-global, isolated project-local, and effective Mulgae and Gaori MCP state independently. This pre-confirmation inspection never adds `--include-sorage`; it reports a supported Sorage CLI's readiness as `not_inspected` without running native doctor or Project resolution commands.
 
 ## Confirm the Normalized Selection
 
 Show the manifest digest and an ordered matrix of ready and invalid targets, input paths, canonical Git roots, effective tools, explicit local MCP overrides, repository-guidance proposal policy, worktree state, and local readiness. Disclose that Mulgae and Gaori MCP are user-global by default and `project_mcp` is only an explicit per-target local override.
 
-Disclose that confirming a selection containing Dolgorae authorizes its bounded official GitHub Release metadata lookup, while Sanho, Mulgae, Gaori, or Podway also authorize the raw-file freshness comparison defined by `dev-setup`. Neither selection authorizes an archive download, installation, or replacement.
+Disclose that confirming a selection containing Dolgorae authorizes its bounded official GitHub Release metadata lookup, while Sanho, Mulgae, Gaori, Sorage, or Podway also authorize the raw-file freshness comparison defined by `dev-setup`. Sorage fetches one public skill file from `raw.githubusercontent.com`; each of the other four tools fetches four.
+
+Also disclose that each selected Sorage target will run native doctor and Project resolution after confirmation. These commands make no network request, but Project resolution opens Sorage's database through its native migration path and may update local database or journal state.
+
+Confirmation authorizes only these diagnostic side effects, not initialization, Project mutation, Handoff access, installation, or replacement.
 
 Use the host's structured ask/answer tool when available to confirm the normalized selection before any network comparison. A refusal stops the bundle without mutation. Confirmation is not approval for a CLI, skill, daemon, configuration, MCP registration, managed Procedure, root AGENTS.md/CLAUDE.md edit, or any other persistent action.
 
@@ -29,9 +33,9 @@ Immediately before that confirmation, rerun the normalizer and require the manif
 
 ## Prepare Shared Components Once
 
-Resolve the union of effective tools across ready targets. Resolve selected Dolgorae release metadata once. Compare each selected Sanho, Mulgae, Gaori, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
+Resolve the union of effective tools across ready targets. Resolve selected Dolgorae release metadata once. Compare each selected Sanho, Mulgae, Gaori, Sorage, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
 
-Handle user-global CLIs, paired skills, Lora, Deslop, Humanizer, im-not-ai, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Configure each selected global MCP at most once for the bundle.
+Handle user-global CLIs, paired skills, Lora, Deslop, Humanizer, im-not-ai, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Prepare a selected Sorage CLI and paired skill here, but defer initialization until the first selected target's readiness diagnosis. Configure each selected global MCP at most once for the bundle.
 
 Follow every distinct proposal, backup, approval, stale-target check, checksum, version, and verification boundary in `dev-setup`; a bundle selection never groups or waives them.
 
@@ -40,6 +44,10 @@ If a shared action fails or is declined, mark every dependent target `partial`, 
 ## Configure Targets in Order
 
 Process ready targets in manifest order. Pass `dev-setup` a normalized bundle handoff containing the requesting skill, manifest digest, target index, canonical Git root, effective tools, explicit local MCP overrides, and repository-guidance policy. Never pass the manifest path or ask `dev-setup` to read it.
+
+For each target that selects Sorage, let `dev-setup` rerun `inspect_tools.py --include-sorage` after the bundle confirmation and before proposing any Sorage action. Do not run this target-specific readiness diagnosis while preparing shared components or for a target that does not select Sorage.
+
+Use the first selected Sorage target's diagnosis to decide initialization. If it reports `initialization_required`, show and separately approve the exact initialization proposal, apply it once, and rerun that target's diagnosis. Every later Sorage target still gets its own diagnosis before Project or repository-local proposals; never infer its registration or `.sorage/` state from the first target.
 
 Use the normalized tools as `Install and configure` selections, treat their Mulgae and Gaori MCP registrations as global unless named by the target's normalized local override, and use the repository-guidance value as its preselected choice. `agents_guidance: propose` preselects preparation of the complete AGENTS.md operating contract and CLAUDE.md delegation proposal, not merely tool references.
 

@@ -23,7 +23,7 @@ if SCRIPT_DIRECTORY not in sys.path:
 
 import verify_dolgorae_release as dolgorae_release
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v14"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v15"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -39,6 +39,7 @@ CANONICAL_SEMVER = re.compile(
     rf"{CANONICAL_NUMERIC_COMPONENT}\."
     rf"{CANONICAL_NUMERIC_COMPONENT}(?:[-+][0-9A-Za-z.-]+)?"
 )
+SORAGE_ERROR_CODE = re.compile(r"[A-Z][A-Z0-9_]{0,63}")
 SANHO_SKILL_FILES = (
     "SKILL.md",
     "references/lifecycle.md",
@@ -62,6 +63,29 @@ PODWAY_SKILL_FILES = (
     "references/lifecycle.md",
     "references/goal.md",
     "references/recovery.md",
+)
+SORAGE_SKILL_FILES = ("SKILL.md",)
+SORAGE_DOCTOR_CATALOG = (
+    "home.permissions",
+    "config.schema",
+    "config.lock",
+    "vault.marker",
+    "vault.gitattributes",
+    "vault.writable",
+    "db.integrity",
+    "db.pendingIntents",
+    "db.migrations",
+    "artifacts.checksums",
+    "bindings.exist",
+    "bindings.nested",
+    "bindings.ambiguous",
+    "daemon.reachable",
+    "daemon.port",
+    "token.permissions",
+    "service.installed",
+    "backup.schedule",
+    "git.state",
+    "platform.tcc",
 )
 HUMANIZER_SKILL_FILES = (
     "SKILL.md",
@@ -382,6 +406,12 @@ def supported_mulgae_version(version: str | None) -> bool:
     return bool(match and int(match.group(1)) >= 18)
 
 
+def supported_sorage_version(version: str | None) -> bool:
+    if not version:
+        return False
+    return bool(re.fullmatch(rf"v?0\.1\.{CANONICAL_NUMERIC_COMPONENT}", version))
+
+
 def supported_mulgae_go_version(version: str | None) -> bool:
     if not version:
         return False
@@ -518,6 +548,26 @@ def tracked_by_git(
         timeout_seconds,
     )
     return probe["exit_code"] == 0
+
+
+def tracked_under_git(
+    repository: Path, relative_path: str, timeout_seconds: float
+) -> bool:
+    probe = run_command(
+        ["git", "ls-files", "--", relative_path], repository, timeout_seconds
+    )
+    return bool(probe["ok"] and probe.get("stdout", "").strip())
+
+
+def untracked_under_git(
+    repository: Path, relative_path: str, timeout_seconds: float
+) -> bool:
+    probe = run_command(
+        ["git", "ls-files", "--others", "--exclude-standard", "--", relative_path],
+        repository,
+        timeout_seconds,
+    )
+    return bool(probe["ok"] and probe.get("stdout", "").strip())
 
 
 def configuration_entry(
@@ -806,6 +856,154 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
     if safe:
         normalized["result"] = safe
     return normalized
+
+
+def sorage_envelope_data(
+    probe: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    if not isinstance(envelope, dict) or not isinstance(envelope.get("ok"), bool):
+        normalized["contract_valid"] = False
+        return normalized, None
+    if envelope["ok"] is False:
+        error = envelope.get("error")
+        code = error.get("code") if isinstance(error, dict) else None
+        valid_code = isinstance(code, str) and bool(SORAGE_ERROR_CODE.fullmatch(code))
+        normalized["contract_valid"] = valid_code
+        normalized["error_code"] = code if valid_code else "invalid_error"
+        return normalized, None
+    data = envelope.get("data")
+    normalized["contract_valid"] = isinstance(data, dict)
+    return normalized, data if isinstance(data, dict) else None
+
+
+def normalize_sorage_version(probe: dict[str, Any]) -> dict[str, Any]:
+    normalized = normalized_probe(probe)
+    result = probe.get("result")
+    version = result.get("version") if isinstance(result, dict) else None
+    normalized["contract_valid"] = bool(
+        probe.get("ok")
+        and isinstance(result, dict)
+        and result.get("name") == "sorage"
+        and isinstance(version, str)
+        and CANONICAL_SEMVER.fullmatch(version)
+    )
+    if normalized["contract_valid"]:
+        normalized["result"] = {"name": "sorage", "version": version}
+    return normalized
+
+
+def normalize_sorage_doctor(
+    probe: dict[str, Any],
+) -> tuple[dict[str, Any], bool | None, int | None]:
+    normalized, data = sorage_envelope_data(probe)
+    if data is None:
+        return normalized, None, None
+    checks = data.get("checks")
+    if not isinstance(checks, list) or len(checks) != len(SORAGE_DOCTOR_CATALOG):
+        normalized["contract_valid"] = False
+        return normalized, None, None
+    counts = {"ok": 0, "warning": 0, "blocking": 0}
+    for expected_id, check in zip(SORAGE_DOCTOR_CATALOG, checks, strict=False):
+        if not isinstance(check, dict):
+            normalized["contract_valid"] = False
+            return normalized, None, None
+        check_id = check.get("id")
+        severity = check.get("severity")
+        message = check.get("message")
+        recovery = check.get("recovery")
+        if (
+            check_id != expected_id
+            or not isinstance(severity, str)
+            or severity not in counts
+            or not isinstance(message, str)
+            or not message
+            or (
+                recovery is not None
+                and (
+                    not isinstance(recovery, dict)
+                    or not isinstance(recovery.get("suggestedCommand"), str)
+                    or not recovery["suggestedCommand"]
+                )
+            )
+        ):
+            normalized["contract_valid"] = False
+            return normalized, None, None
+        counts[severity] += 1
+    not_initialized = all(
+        check["severity"] == "blocking"
+        and isinstance(check.get("recovery"), dict)
+        and check["recovery"].get("suggestedCommand") == "sorage init"
+        for check in checks
+    )
+    expected_exit_code = 1 if counts["blocking"] else 0
+    if probe.get("timed_out") or probe.get("exit_code") != expected_exit_code:
+        normalized["contract_valid"] = False
+        return normalized, None, None
+    normalized["contract_valid"] = True
+    normalized["result"] = {
+        "check_count": len(checks),
+        "ok_count": counts["ok"],
+        "warning_count": counts["warning"],
+        "blocking_count": counts["blocking"],
+    }
+    return normalized, not not_initialized, counts["blocking"]
+
+
+def valid_sorage_project_slug(value: Any) -> bool:
+    return bool(
+        isinstance(value, str)
+        and value
+        and value == value.lower()
+        and not value.startswith("-")
+        and not value.endswith("-")
+        and all(character == "-" or character.isalnum() for character in value)
+    )
+
+
+def normalize_sorage_project_resolution(
+    probe: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    normalized, data = sorage_envelope_data(probe)
+    if data is None or not probe.get("ok"):
+        if data is not None:
+            normalized["contract_valid"] = False
+        return normalized, None
+    kind = data.get("kind")
+    if kind == "unregistered_workspace":
+        normalized["contract_valid"] = True
+        normalized["result"] = {"kind": kind}
+        return normalized, normalized["result"]
+    if kind != "registered_project":
+        normalized["contract_valid"] = False
+        return normalized, None
+    project = data.get("project")
+    binding = data.get("binding")
+    if not isinstance(project, dict) or not isinstance(binding, dict):
+        normalized["contract_valid"] = False
+        return normalized, None
+    slug = project.get("slug")
+    project_status = project.get("status")
+    binding_kind = binding.get("bindingKind")
+    if (
+        not valid_sorage_project_slug(slug)
+        or not isinstance(project_status, str)
+        or project_status not in {"active", "archived"}
+        or not isinstance(binding_kind, str)
+        or binding_kind not in {"git_repository", "directory"}
+    ):
+        normalized["contract_valid"] = False
+        return normalized, None
+    result = {
+        "kind": kind,
+        "project_slug": slug,
+        "project_status": project_status,
+        "binding_kind": binding_kind,
+    }
+    normalized["contract_valid"] = True
+    normalized["result"] = result
+    return normalized, result
 
 
 def skill_root_symlinked(root: Path) -> bool:
@@ -2240,6 +2438,159 @@ def inspect_mulgae(
     return tool
 
 
+def inspect_sorage(
+    repository: Path, timeout_seconds: float, include_readiness: bool = False
+) -> dict[str, Any]:
+    tool = base_tool("sorage")
+    tool["version_supported"] = False
+    tool["platform"] = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "supported": platform.system() == "Darwin"
+        and platform.machine() in {"arm64", "aarch64"},
+    }
+    tool["agent_skill"] = inspect_agent_skill("use-sorage", SORAGE_SKILL_FILES)
+    configuration = configuration_entry(
+        repository,
+        ".sorage/",
+        timeout_seconds,
+    )
+    configuration["tracked"] = tracked_under_git(repository, ".sorage", timeout_seconds)
+    configuration["unignored"] = untracked_under_git(
+        repository, ".sorage", timeout_seconds
+    )
+    configuration["tree_symlinked"] = managed_directory_tree_symlinked(
+        repository / ".sorage", repository
+    )
+    tool["configuration"] = [configuration]
+    tool["initialization_status"] = "not_applicable"
+    tool["project_registration"] = {
+        "status": "not_applicable",
+        "project_slug": None,
+        "project_status": None,
+        "binding_kind": None,
+    }
+    tool["readiness_status"] = "not_applicable"
+    if not tool["installed"]:
+        tool["probes"]["version"] = skipped_probe("executable_missing")
+        tool["probes"]["doctor"] = skipped_probe("executable_missing")
+        tool["probes"]["project_resolve"] = skipped_probe("executable_missing")
+        return tool
+
+    version_probe = json_probe(
+        [tool["executable"], "version", "--json"], repository, timeout_seconds
+    )
+    tool["probes"]["version"] = normalize_sorage_version(version_probe)
+    version_result = version_probe.get("result")
+    tool["version"] = (
+        version_from_probe(version_probe)
+        if isinstance(version_result, dict) and version_result.get("name") == "sorage"
+        else None
+    )
+    tool["version_supported"] = supported_sorage_version(tool["version"])
+    compatible = bool(
+        version_probe["ok"]
+        and tool["probes"]["version"]["contract_valid"]
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+    )
+    if not compatible:
+        tool["probes"]["doctor"] = skipped_probe("unsupported_runtime")
+        tool["probes"]["project_resolve"] = skipped_probe("unsupported_runtime")
+        tool["status"] = "degraded"
+        tool["readiness_status"] = "degraded"
+        return tool
+
+    if not include_readiness:
+        tool["probes"]["doctor"] = skipped_probe("not_requested")
+        tool["probes"]["project_resolve"] = skipped_probe("not_requested")
+        tool["initialization_status"] = "not_inspected"
+        tool["project_registration"]["status"] = "not_inspected"
+        tool["readiness_status"] = "not_inspected"
+        return tool
+
+    doctor_probe = json_probe(
+        [tool["executable"], "doctor", "--json"], repository, timeout_seconds
+    )
+    normalized_doctor, initialized, blocking_count = normalize_sorage_doctor(
+        doctor_probe
+    )
+    tool["probes"]["doctor"] = normalized_doctor
+    if initialized is False:
+        tool["initialization_status"] = "not_initialized"
+        tool["probes"]["project_resolve"] = skipped_probe("not_initialized")
+        tool["project_registration"]["status"] = "not_inspected"
+        tool["status"] = "installed"
+        tool["readiness_status"] = "initialization_required"
+        return tool
+    if initialized is not True or blocking_count is None:
+        tool["initialization_status"] = "unverifiable"
+        tool["probes"]["project_resolve"] = skipped_probe("initialization_unverifiable")
+        tool["project_registration"]["status"] = "not_inspected"
+        tool["status"] = "degraded"
+        tool["readiness_status"] = "degraded"
+        return tool
+
+    tool["initialization_status"] = "initialized"
+    if blocking_count:
+        tool["probes"]["project_resolve"] = skipped_probe("doctor_blocking")
+        tool["project_registration"]["status"] = "not_inspected"
+        tool["status"] = "degraded"
+        tool["readiness_status"] = "degraded"
+        return tool
+
+    resolution_probe = json_probe(
+        [
+            tool["executable"],
+            "project",
+            "resolve",
+            "--path",
+            str(repository),
+            "--json",
+        ],
+        repository,
+        timeout_seconds,
+    )
+    normalized_resolution, resolution = normalize_sorage_project_resolution(
+        resolution_probe
+    )
+    tool["probes"]["project_resolve"] = normalized_resolution
+    if resolution is None:
+        tool["project_registration"]["status"] = "unverifiable"
+        if normalized_resolution.get("contract_valid"):
+            tool["status"] = "installed"
+            tool["readiness_status"] = "resolution_error"
+        else:
+            tool["status"] = "degraded"
+            tool["readiness_status"] = "degraded"
+        return tool
+    if resolution["kind"] == "unregistered_workspace":
+        tool["project_registration"]["status"] = "unregistered"
+        tool["status"] = "installed"
+        tool["readiness_status"] = "registration_required"
+        return tool
+
+    tool["project_registration"] = {
+        "status": "registered",
+        "project_slug": resolution["project_slug"],
+        "project_status": resolution["project_status"],
+        "binding_kind": resolution["binding_kind"],
+    }
+    ready = bool(
+        resolution["project_status"] == "active"
+        and resolution["binding_kind"] == "git_repository"
+        and tool["agent_skill"]["status"] == "configured"
+        and configuration["ignored"]
+        and not configuration["tracked"]
+        and not configuration["unignored"]
+        and not configuration["symlinked"]
+        and not configuration["tree_symlinked"]
+    )
+    tool["status"] = "configured" if ready else "installed"
+    tool["readiness_status"] = "ready" if ready else "degraded"
+    return tool
+
+
 def classify_gaori_mcp_scope(
     raw_probe: dict[str, Any],
     probe: dict[str, Any],
@@ -3426,6 +3777,7 @@ def inspect(
     timeout_seconds: float,
     include_podway: bool = False,
     include_ouroboros: bool = False,
+    include_sorage: bool = False,
     require_mulgae_mcp: bool = False,
     verify_dolgorae_release: bool = False,
 ) -> dict[str, Any]:
@@ -3441,6 +3793,9 @@ def inspect(
             repository, timeout_seconds, require_mcp=require_mulgae_mcp
         ),
         "gaori": inspect_gaori(repository, timeout_seconds),
+        "sorage": inspect_sorage(
+            repository, timeout_seconds, include_readiness=include_sorage
+        ),
         "lora": inspect_lora(),
         "deslop": inspect_deslop(),
         "humanizer": inspect_humanizer(),
@@ -3467,6 +3822,11 @@ def parse_arguments() -> argparse.Namespace:
         type=float,
         default=10.0,
         help="Timeout for each read-only command",
+    )
+    parser.add_argument(
+        "--include-sorage",
+        action="store_true",
+        help="Include explicitly selected Sorage readiness diagnostics",
     )
     parser.add_argument(
         "--include-podway",
@@ -3515,6 +3875,7 @@ def main() -> int:
                 arguments.timeout_seconds,
                 include_podway=arguments.include_podway,
                 include_ouroboros=arguments.include_ouroboros,
+                include_sorage=arguments.include_sorage,
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
                 verify_dolgorae_release=arguments.verify_dolgorae_release,
             )

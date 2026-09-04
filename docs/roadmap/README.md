@@ -35,6 +35,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-006 | Adopt Podway v0.2.7 | Completed |
 | EPIC-007 | Adopt upstream document humanizers | Completed |
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
+| EPIC-009 | Adopt Sorage v0.1.x | In Progress |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -171,3 +172,18 @@ Podway owns its release, distribution, runtime-mode implementation, and source-d
 | --- | --- | --- | --- | --- |
 | TASK-033 | Align the Podway v0.2.8 support contract | Raise the stable runtime floor, adopt named-mode daemon readiness, preserve explicit workspace-mode authorization, and update the managed Procedure review and rework seams. | Completed | External Podway v0.2.8 release |
 | TASK-034 | Qualify and close Podway v0.2.8 adoption | Verify the official artifact against the managed Procedures, lifecycle guards, runtime cleanup, fenced workspace removal, and final exact Aquarium candidate. | Completed | TASK-033 |
+
+## EPIC-009: Adopt Sorage v0.1.x
+
+**Status:** `In Progress`
+
+Adopt Sorage as an optional local document-handoff integration. Aquarium diagnoses and installs the supported CLI and paired skill, initializes the local installation with a minimal profile, and registers each selected Git repository through an explicitly approved Project creation or binding. Sorage retains authority over Project identity, the managed Vault, Handoffs, reviews, retention, deletion, backup, and derived inbox state.
+
+The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.0. Sorage remains outside the production-binary baseline, Aquarium development channel, managed Procedures, and MCP scope.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-035 | Add Sorage setup and Project registration | Add bounded Sorage inspection, exact-release and paired-skill setup, minimal initialization, approved Project creation or binding, ignore safety, bundle selection, and agent guidance. | Completed | External Sorage v0.1.0 release |
+| TASK-036 | Qualify Sorage integration | Verify version, initialization, Project resolution, privacy, documentation, bundle, and failure contracts against isolated fixtures and the official v0.1.0 CLI. | In Review | TASK-035 |

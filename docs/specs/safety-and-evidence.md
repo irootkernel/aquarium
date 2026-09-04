@@ -27,7 +27,7 @@ An approved implementation envelope covers routine bounded decisions inside its 
 ## Evidence Classes
 
 - **Canonical evidence** is current code, tests, specifications, roadmap state, Git history, release metadata, and other repository-owned durable authority.
-- **Runtime evidence** is native Mulgae, Gaori, Podway, Orca, provider, or disposable-fixture output used during an active workflow.
+- **Runtime evidence** is native Mulgae, Gaori, Sorage, Podway, Orca, provider, or disposable-fixture output used during an active workflow.
 - **Promoted evidence** is an exceptional reviewed, bounded, non-sensitive structured projection created only for a named downstream consumer when canonical evidence cannot express the required fact clearly enough.
 
 Ignored runtime logs, excerpts, transcripts, reports, provider stdout or stderr, session identities, timestamps, usernames, home paths, credential paths, and Podway databases never become tracked documentation. A standard promoted package uses schema `aquarium.promoted-evidence/v1` below `evidence/aquarium/` unless repository guidance declares another relative root.

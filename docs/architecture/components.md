@@ -28,6 +28,6 @@ The 23 skill entrypoints form four kinds of component:
 
 ## External Tool Boundary
 
-Aquarium defines how an agent may inspect or invoke external tools; it does not absorb their implementation or state. Codex is the primary runtime. Podway owns Procedure execution state, Sanho owns protected Git mutation policy, Mulgae and Gaori own their review and test-run records, Orca owns delegated terminal execution, and upstream projects own their installed binaries and skill sources.
+Aquarium defines how an agent may inspect or invoke external tools; it does not absorb their implementation or state. Codex is the primary runtime. Podway owns Procedure execution state, Sanho owns protected Git mutation policy, Mulgae and Gaori own their review and test-run records, Sorage owns Project identity and document Handoffs, Orca owns delegated terminal execution, and upstream projects own their installed binaries and skill sources.
 
 This boundary keeps plugin upgrades independent from tool releases and prevents local runtime files from becoming package state.

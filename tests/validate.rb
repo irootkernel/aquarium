@@ -106,7 +106,7 @@ end
 
 manifest = JSON.parse(PLUGIN.join(".codex-plugin/plugin.json").read)
 assert(manifest.fetch("license") == "MIT", "plugin license must be MIT")
-assert((%w[ai-fleet agentic design documentation deslop graph humanizer korean loop lora lore multi-agent orchestration ouroboros podway release qa workflow writing] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
+assert((%w[ai-fleet agentic design documentation deslop graph humanizer korean loop lora lore multi-agent orchestration ouroboros podway release qa sorage workflow writing] - manifest.fetch("keywords")).empty?, "plugin discovery keywords are missing")
 assert(manifest.fetch("version") == "0.1.14", "plugin version must be 0.1.14")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 unless release_tag.empty?
@@ -130,7 +130,7 @@ assert(readme_introduction.include?("engineering reliable software with AI Fleet
        readme_introduction.include?("not separate products or a rigid maturity model") &&
        readme_introduction.include?("Codex is Aquarium's primary agent runtime") &&
        readme_introduction.include?("rather than promising provider or framework neutrality") &&
-       readme_introduction.include?("Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai"),
+       readme_introduction.include?("Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai"),
        "README introduction must lead with Aquarium's AI Fleet engineering identity")
 assert(manifest.dig("author", "url") == manifest.fetch("homepage"), "author URL must match the homepage")
 assert(manifest.dig("author", "email") == "cs@rootkernel.xyz", "support email is incorrect")
@@ -179,6 +179,10 @@ dev_setup_script_body = dev_setup_script.read
 dolgorae_release_script = PLUGIN.join("skills/dev-setup/scripts/verify_dolgorae_release.py")
 dolgorae_release_script_body = dolgorae_release_script.read
 dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
+dev_setup_bundle_preconfirmation = dev_setup_bundle[/^## Normalize Before Discovery\n.*?(?=^## Confirm the Normalized Selection)/m]
+dev_setup_bundle_configuration = dev_setup_bundle[/^## Configure Targets in Order\n.*?(?=^## Report the Bundle)/m]
+assert(dev_setup_bundle_preconfirmation && dev_setup_bundle_configuration,
+       "dev-setup-bundle Sorage sections are missing")
 dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
 dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
@@ -190,6 +194,7 @@ deferred_feedback = ROOT.join("docs/deferred-feedback/README.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
 mulgae_catalog = tool_catalog[/^## Mulgae\n.*?(?=^## )/m]
 gaori_catalog = tool_catalog[/^## Gaori\n.*?(?=^## )/m]
+sorage_catalog = tool_catalog[/^## Sorage\n.*?(?=^## )/m]
 deslop_catalog = tool_catalog[/^## Cursor Team Kit \/ Deslop\n.*?(?=^## )/m]
 humanizer_catalog = tool_catalog[/^## Humanizer\n.*?(?=^## )/m]
 im_not_ai_catalog = tool_catalog[/^## im-not-ai\n.*?(?=^## )/m]
@@ -338,10 +343,11 @@ assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
        dev_setup_script_body.include?("registration_not_supported_launcher") &&
        dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
        "dev-setup inspector must preserve exact tool arguments, isolated launchers, and paired-skill paths")
-assert(dev_setup.include?("default inspection omits Podway and Ouroboros completely") &&
+assert(dev_setup.include?("default inspection omits Sorage readiness, Podway, and Ouroboros completely") &&
+       dev_setup.include?("--include-sorage") &&
        dev_setup.include?("--include-podway") &&
        dev_setup.include?("--include-ouroboros"),
-       "dev-setup must probe Podway and Ouroboros only after explicit selection")
+       "dev-setup must probe Sorage readiness, Podway, and Ouroboros only after explicit selection")
 assert(dev_setup.include?("A `dev-setup-bundle` handoff is a preselected multi-tool setup request") &&
        dev_setup.include?("never the manifest path or contents") &&
        dev_setup.include?("already verified exact tag") &&
@@ -408,7 +414,7 @@ assert(ouroboros_catalog &&
        ouroboros_catalog.include?("do not contact a provider, initiate authentication, make a network request, or start an MCP server"),
        "Ouroboros catalog must diagnose CLI, Codex integration, runtime, and registration independently")
 assert(dev_setup.include?("Dolgorae selection choice") &&
-       dev_setup.include?("Sanho, Mulgae, Gaori, and Podway choices") &&
+       dev_setup.include?("Sanho, Mulgae, Gaori, Sorage, and Podway choices") &&
        dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
        "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
 assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, Deslop, Humanizer, or im-not-ai source") &&
@@ -446,7 +452,7 @@ assert(dev_setup.include?("Never read credential values in this skill, even afte
 assert(dev_setup.include?("When another copy exists, report the duplicate risk") &&
        dev_setup.include?("never create a known duplicate"),
        "dev-setup must not install a canonical paired skill beside a known alternate-root copy")
-selection_disclosure_index = dev_setup.index("Disclose separately in the Sanho, Mulgae, Gaori, and Podway choices")
+selection_disclosure_index = dev_setup.index("Disclose separately in the Sanho, Mulgae, Gaori, Sorage, and Podway choices")
 comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
 action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
 assert(selection_disclosure_index && comparison_index && action_approval_index &&
@@ -454,15 +460,16 @@ assert(selection_disclosure_index && comparison_index && action_approval_index &
        "dev-setup must disclose and perform selected-skill comparison before mutation approval")
 assert(dev_setup.include?("either `Install and configure` or `Diagnose only`") &&
        dev_setup.include?("Do not fetch or compare a skipped or not-yet-selected tool") &&
-       dev_setup.include?("do not widen a scoped continuation to the other three tools") &&
+       dev_setup.include?("do not widen a scoped continuation to the other tools") &&
        dev_setup.include?("except for the exact selected-skill freshness comparison authorized below"),
-       "dev-setup must compare only explicitly selected Sanho, Mulgae, Gaori, or Podway skills")
+       "dev-setup must compare only explicitly selected paired skills")
 assert(dev_setup.include?("newest non-draft, non-prerelease tag within the tool's supported release line") &&
        dev_setup.include?("For Sanho, Mulgae, and Gaori") &&
+       dev_setup.include?("For Sorage, fetch only `SKILL.md`") &&
        dev_setup.include?("For Podway") &&
        dev_setup.include?("references/goal.md") &&
        dev_setup.include?("create-podway-procedure") &&
-       dev_setup.include?("compute their SHA-256 digests") &&
+       dev_setup.include?("compute every SHA-256 digest") &&
        dev_setup.include?("Never execute fetched content"),
        "dev-setup must bound and verify the automatic skill payload")
 assert(dev_setup.include?("against exactly `~/.agents/skills/<skill-name>` as complete directory trees") &&
@@ -485,9 +492,9 @@ assert(dev_setup.include?("require it to match the absence or complete digest sn
        "dev-setup must invalidate stale skill approvals and clean temporary payloads")
 assert(tool_catalog.include?("No separate approval is required for those exact lookups") &&
        tool_catalog.include?("network operation outside these exceptions") &&
-       tool_catalog.scan("automatically fetched and verified").length == 4 &&
-       tool_catalog.scan("comparison fetch itself needs no separate approval").length == 4,
-       "tool catalog must apply the same bounded comparison exception to all four paired skills")
+       tool_catalog.scan("automatically fetched and verified").length == 5 &&
+       tool_catalog.scan("comparison fetch itself needs no separate approval").length == 5,
+       "tool catalog must apply the same bounded comparison exception to all five paired skills")
 backup_policy_index = dev_setup.index("Choose a Backup Policy for Existing State")
 assert(backup_policy_index && backup_policy_index < action_approval_index &&
        dev_setup.include?("Create and verify backups") &&
@@ -509,13 +516,13 @@ assert(tool_catalog.include?("every approved action that overwrites or removes")
        !tool_catalog.include?("preserve a recoverable sibling backup"),
        "tool replacement guidance must support the shared no-backup policy")
 assert(ROOT.join("README.md").read.include?("Dolgorae automatically queries its official GitHub Releases metadata") &&
-       ROOT.join("README.md").read.include?("four public skill files from `raw.githubusercontent.com` into ephemeral storage") &&
+       ROOT.join("README.md").read.include?("public paired-skill files from `raw.githubusercontent.com` into ephemeral storage") &&
        ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
        ROOT.join("README.ko.md").read.include?("official GitHub Releases metadata를 자동으로 조회") &&
-       ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다") &&
+       ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 paired-skill 파일을 임시 저장소로 내려받습니다") &&
        ROOT.join("PRIVACY.md").read.include?("Bounded read-only network operations may be authorized") &&
        ROOT.join("PRIVACY.md").read.include?("send no repository or local skill content") &&
-       ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 4,
+       ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 5,
        "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
 assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authorizes read-only release discovery") &&
        ROOT.join("README.md").read.include?("existing ambient authentication for private repositories") &&
@@ -671,6 +678,7 @@ supported_tool_versions = [
   "Stable `v0.2.7` through `v0.2.x`",
   "Stable `v0.1.18` through `v0.1.x`",
   "Stable `v0.1.14` through `v0.1.x`",
+  "Stable `v0.1.0` through `v0.1.x`",
   "Stable `v0.2.8` through `v0.2.x`",
   "`>=0.51.1,<0.52.0`"
 ]
@@ -696,7 +704,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v14
+  aquarium-dev-setup-inspection.v15
   aquarium-dolgorae-release-verification.v1
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
@@ -762,7 +770,7 @@ assert(!canonical_documentation.include?("/Users/") &&
 aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 8 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 9 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
@@ -771,10 +779,11 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 8 &&
        canonical_roadmap.include?("## EPIC-006: Adopt Podway v0.2.7") &&
        canonical_roadmap.include?("## EPIC-007: Adopt Upstream Document Humanizers") &&
        canonical_roadmap.include?("## EPIC-008: Adopt Podway v0.2.8") &&
+       canonical_roadmap.include?("## EPIC-009: Adopt Sorage v0.1.x") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 34 &&
-       roadmap_task_ids.uniq.sort == (1..34).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 34 &&
+       roadmap_task_ids.length == 36 &&
+       roadmap_task_ids.uniq.sort == (1..36).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 36 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -783,7 +792,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 8 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-008 and unique TASK-001 through TASK-034")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-009 and unique TASK-001 through TASK-036")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -866,9 +875,9 @@ assert(ROOT.join("PRIVACY.md").read.include?("Cursor Team Kit Deslop installatio
        ROOT.join("PRIVACY.md").read.include?("writes the upstream `SKILL.md` and MIT LICENSE") &&
        ROOT.join("PRIVACY.md").read.include?("Humanizer installation contacts GitHub") &&
        ROOT.join("PRIVACY.md").read.include?("im-not-ai installation contacts GitHub") &&
-       ROOT.join("PRIVACY.md").read.include?("does not bundle Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill or documentation sources"),
+       ROOT.join("PRIVACY.md").read.include?("does not bundle Sorage, Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill or documentation sources"),
        "privacy policy must disclose third-party skill installation and no-vendoring boundaries")
-assert(ROOT.join("TERMS.md").read.include?("does not bundle the Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill and documentation sources") &&
+assert(ROOT.join("TERMS.md").read.include?("does not bundle the Sorage, Lora, Ouroboros, Cursor Team Kit, Humanizer, or im-not-ai skill and documentation sources") &&
        ROOT.join("TERMS.md").read.include?("users install approved upstream copies under their original license terms") &&
        !ROOT.join("TERMS.md").read.include?("bundled `deslop`"),
        "terms must preserve upstream ownership without claiming a bundled Deslop copy")
@@ -1334,6 +1343,88 @@ assert(task_verify.include?("original documented test command directly") &&
 assert(ROOT.join("PRIVACY.md").read.include?("use-gaori") &&
        ROOT.join("PRIVACY.md").read.include?("intentionally unredacted"),
        "privacy policy must disclose Gaori skill installation and raw-log handling")
+
+assert(sorage_catalog, "Sorage tool catalog section is missing")
+assert(sorage_catalog.include?("stable `v0.1.0` through `v0.1.x`") &&
+       sorage_catalog.include?("sorage-<tag>-darwin-arm64") &&
+       sorage_catalog.include?("codesign --verify --strict") &&
+       sorage_catalog.include?("raw.githubusercontent.com/irootkernel/sorage/<tag>/skills/use-sorage/SKILL.md") &&
+       sorage_catalog.include?("before atomically moving it to `~/.agents/skills/use-sorage`") &&
+       sorage_catalog.include?("~/.agents/skills/use-sorage") &&
+       dev_setup.include?("stable `v0.1.0` through `v0.1.x`"),
+       "Sorage CLI and use-sorage must share the supported approved release")
+assert(sorage_catalog.include?("sorage init --non-interactive --json") &&
+       sorage_catalog.include?("sorage project resolve --path <canonical-git-root> --json") &&
+       sorage_catalog.include?("sorage project add --name <name> --slug <slug> --dir <canonical-git-root> --json") &&
+       sorage_catalog.include?("sorage project bind <existing-active-slug> --dir <canonical-git-root> --json") &&
+       sorage_catalog.include?("git rev-parse --git-path info/exclude") &&
+       sorage_catalog.include?("never edit the managed Vault directly"),
+       "Sorage initialization, Project registration, and Vault boundaries are incomplete")
+assert(dev_setup_script_body.include?("def supported_sorage_version") &&
+       dev_setup_script_body.include?("SORAGE_DOCTOR_CATALOG") &&
+       dev_setup_script_body.include?("def normalize_sorage_version") &&
+       dev_setup_script_body.include?("def normalize_sorage_doctor") &&
+       dev_setup_script_body.include?("def normalize_sorage_project_resolution") &&
+       dev_setup_script_body.include?('"sorage": inspect_sorage(') &&
+       dev_setup_script_body.include?("include_readiness=include_sorage") &&
+       dev_setup_script_body.include?('"--include-sorage"') &&
+       dev_setup_script_body.include?("configuration[\"unignored\"]") &&
+       dev_setup_script_body.include?("configuration[\"tree_symlinked\"]") &&
+       dev_setup_script_body.include?('"initialization_required"') &&
+       dev_setup_script_body.include?('"registration_required"') &&
+       dev_setup_script_body.include?('"resolution_error"'),
+       "dev-setup inspector must expose bounded Sorage readiness")
+assert(dev_setup.include?("name: use-sorage") &&
+       dev_setup.include?("Never add `--include-sorage` to this initial inspection") &&
+       dev_setup.include?("After showing that disclosure and receiving an affirmative Sorage selection") &&
+       dev_setup.include?("selected Sorage diagnostic side effects described above") &&
+       dev_setup.include?("registered Project through a containing `directory` binding") &&
+       sorage_catalog.include?("registered Project through a containing `directory` binding") &&
+       dev_setup.include?("obtain separate explicit approval before running it") &&
+       sorage_catalog.include?("obtain separate explicit approval before running it") &&
+       dev_setup.include?("complete documented regular-file set") &&
+       sorage_catalog.include?("bare `{name, version}` object") &&
+       sorage_catalog.include?("all 20 v0.1 catalog IDs") &&
+       sorage_catalog.include?("Doctor exits `0`") &&
+       sorage_catalog.include?("healthy supported CLI remains `installed`") &&
+       sorage_catalog.include?("A native resolution error is `resolution_error`") &&
+       tool_integrations_doc.include?("readiness_status: resolution_error") &&
+       sorage_catalog.include?("no tracked descendant") &&
+       sorage_catalog.include?("no symlinked `.sorage/` path"),
+       "Sorage contracts must distinguish version shape, doctor validity, CLI health, and repository readiness")
+assert(dev_setup_bundle.include?("--include-sorage") &&
+       !dev_setup_bundle_preconfirmation.include?("inspect_tools.py --include-sorage") &&
+       dev_setup_bundle_preconfirmation.include?("never adds `--include-sorage`") &&
+       !dev_setup_bundle_preconfirmation.include?("Sorage CLI, paired skill, and initialization once") &&
+       dev_setup_bundle_configuration.include?("inspect_tools.py --include-sorage") &&
+       dev_setup_bundle_configuration.include?("Use the first selected Sorage target's diagnosis to decide initialization") &&
+       dev_setup_bundle.include?("defer initialization until the first selected target's readiness diagnosis") &&
+       dev_setup_bundle.include?("Sorage fetches one public skill file") &&
+       dev_setup_bundle.include?("Project resolution opens Sorage's database through its native migration path") &&
+       dev_setup_bundle.include?("Sanho, Mulgae, Gaori, Sorage, or Podway paired skill once") &&
+       ROOT.join("PRIVACY.md").read.include?("Project resolution may apply migrations or update journal state") &&
+       ROOT.join("docs/specs/local-interfaces.md").read.include?("Default inventory leaves a supported Sorage CLI's readiness `not_inspected`") &&
+       ROOT.join("docs/specs/tool-integrations.md").read.include?("native Project resolution path opens and may migrate"),
+       "Sorage readiness probes must be selected explicitly with native local side effects disclosed")
+assert(evidence_residency.include?("`.sorage/**`") &&
+       evidence_residency.include?("Sorage managed Vault content, Handoffs, and derived `.sorage/INBOX.md` are never promotion sources"),
+       "shared evidence residency must keep Sorage managed content out of promoted evidence")
+assert(documentation_details.fetch("safety-and-evidence").include?("native Mulgae, Gaori, Sorage, Podway, Orca"),
+       "canonical evidence classes must classify Sorage output as runtime evidence")
+assert(agents_reference.include?("$use-sorage") &&
+       agents_reference.include?("session start and before every task") &&
+       agents_reference.include?("never edit the managed Vault") &&
+       root_agents.include?("$use-sorage"),
+       "AGENTS guidance must conditionally route Sorage through use-sorage")
+assert(dev_setup_bundle_manifest.include?("`sorage`") &&
+       dev_setup_bundle_manifest.include?("Project resolution") &&
+       dev_setup_bundle_manifest.include?("no Project name, slug, Vault path, or Sorage configuration") &&
+       !dev_setup_bundle_manifest.include?("project_mcp` field is an explicit local-scope override for Sorage"),
+       "setup bundles must select Sorage without inventing MCP or Project manifest state")
+assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-sorage") &&
+       ROOT.join("PRIVACY.md").read.include?("local managed Vault") &&
+       ROOT.join("PRIVACY.md").read.include?("never reads Handoff content"),
+       "privacy policy must disclose Sorage storage and setup boundaries")
 
 {
   "task-handler" => task_handler,

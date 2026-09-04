@@ -29,3 +29,10 @@ This index owns small actionable findings intentionally postponed from current w
 - Owner: the Podway compatibility gate and integration documentation.
 - Reason for deferral: the first exact fenced removal succeeds, and Aquarium independently verifies that the isolated registry entry and `.podway` tree are absent while the Git worktree is preserved. The bounded v0.2.8 exception therefore does not weaken the initial destructive mutation boundary.
 - Re-entry condition: when an official Podway v0.2.9 artifact is available, require the replay to return `podway.workspace-removal-result/v1` with a null workspace UUID, `registry_entry_removed=false`, `podway_directory_removed=false`, and `already_absent=true`; then remove the v0.2.8 exception and its v4 error-terminal assertions and documentation.
+
+## DF-005: Keep review reports centered on target findings
+
+- Actionable issue: `orca-review` can let an incidental reviewer execution-policy violation, such as writing a temporary file outside the repository, dominate the user-facing result even when the selected target, repository state, reviewer identity, complete report, and settled lifecycle remain trustworthy. Report the technical verdict and adjudicated target findings first. Record unrelated operational deviations separately, and let them block or replace the technical verdict only when they make target scope or integrity, reviewer identity, result completeness, repository state, or lifecycle settlement untrustworthy.
+- Owner: `orca-review`, the shared static review contract, and Orca supervision reporting.
+- Reason for deferral: the reporting defect is independent of the current Sorage integration findings and does not change the reviewed staged bytes or their technical disposition.
+- Re-entry condition: resolve before the next `orca-review` contract revision, with scenario coverage that distinguishes harmless out-of-repository output-policy deviations from violations that invalidate target integrity or authoritative settlement.

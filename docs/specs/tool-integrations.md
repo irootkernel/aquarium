@@ -10,6 +10,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.7` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `v0.1.18` through `v0.1.x` | Native Apple Silicon macOS; Go `1.26.6+` only for installation | CLI, Config v3, provider readiness, MCP scope, capture publication, findings query, and extraction quality are separate |
 | Gaori | Runs existing checks and compresses their output | Stable `v0.1.14` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
+| Sorage | Brokers local document handoffs between registered projects | Stable `v0.1.0` through `v0.1.x` | Native Apple Silicon macOS; matching optional `use-sorage` skill | CLI, initialization, Vault health, Project binding, skill, ignore state, and Handoff authority remain distinct |
 | Podway | Records Git-backed workflow goals, transitions, handoffs, and session lifecycle | Stable `v0.2.8` through `v0.2.x` | Native Apple Silicon macOS; matching CLI and daemon | CLI, daemon, workspace, managed Procedures, current session, and optional skill are separate readiness axes |
 | Ouroboros | Supplies interview, PM, Seed, and QA leaves for explicit design workflows | `>=0.51.1,<0.52.0` | Existing `uv`; exact package version for installation | CLI, Codex rules and skills, MCP runtime, effective registration, and live exposure are independent |
 | Lora / Lore | Supplies `lore-commits` and `lore-query` skills | Latest stable tag, or disclosed full `main` SHA when no stable tag exists | Detached exact checkout and user-global Codex installation | Complete source and target trees must match; `lore-setup` is intentionally not installed |
@@ -19,7 +20,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 
 ## Installation and Freshness
 
-Selecting Dolgorae in `dev-setup` authorizes only a bounded official GitHub Release metadata lookup; archive download and installation require separate approvals. For Sanho, Mulgae, Gaori, and Podway, selection authorizes the metadata lookup plus a bounded comparison against four public upstream skill files. Neither path authorizes installation, replacement, another network endpoint, or any provider request.
+Selecting Dolgorae in `dev-setup` authorizes only a bounded official GitHub Release metadata lookup; archive download and installation require separate approvals. For Sanho, Mulgae, Gaori, Sorage, and Podway, selection authorizes the metadata lookup plus a bounded comparison against the public upstream paired-skill files. Sorage has one file; each of the other four tools has four. Neither path authorizes installation, replacement, initialization, Project registration, another network endpoint, or any provider request.
 
 Every installation proposal identifies the exact source ref, target, network endpoints, files, checksums or digests, backup choice, expected mutation, and post-action verification. Existing modified or duplicate skill copies are never overwritten or deleted silently.
 
@@ -32,6 +33,22 @@ Mulgae and Gaori may use global or isolated project-local MCP registrations. Aqu
 Ouroboros supports either a direct selected `ooo mcp serve` registration or the canonical isolated `uvx --isolated --python >=3.12 --from ouroboros-ai[mcp] ouroboros mcp serve` form with Codex selectors. A valid isolated registration is evaluated from its own launcher contract rather than the base CLI environment.
 
 MCP registration correctness does not prove that the active Codex session has reloaded or exposes the expected tools. A restart may be required after skill or registration changes.
+
+Sorage has no supported MCP surface. Its official CLI and `use-sorage` skill own document discovery and Handoff operations.
+
+## Sorage Readiness
+
+Sorage is optional and does not join Aquarium's production-binary baseline. Its setup is ready only when a supported Apple Silicon CLI is initialized, the complete ordered v0.1 `doctor --json` catalog has no blocking check, the exact Git root resolves to an active `git_repository` Project binding, the whole `.sorage/` directory is ignored without tracked or symlinked content, and the selected same-tag `use-sorage` skill is structurally valid. Doctor warnings do not block the minimal local profile.
+
+A healthy supported CLI remains `installed` while these readiness conditions are incomplete. An unhealthy runtime, invalid command contract, or blocking doctor result is `degraded`, except that the exact uninitialized all-blocking catalog remains `installed` with `readiness_status: initialization_required`. Only complete readiness is `configured`.
+
+Only a successful unregistered result uses `registration_required`. A valid native Project resolution failure keeps the CLI `installed` with `readiness_status: resolution_error`; it cannot enter the Project creation or binding path.
+
+Default tool inventory checks only the Sorage version. After Sorage is selected, `--include-sorage` runs doctor and, when doctor has no blocking check, Project resolution. These commands make no network request, but the native Project resolution path opens and may migrate the local Sorage database; the selection disclosure covers only these diagnostic side effects.
+
+`dev-setup` uses `sorage init --non-interactive --json` as the separately approved default initialization. It does not enable the daemon, LaunchAgent, Vault Git repository, backup schedule, or remote push. Project creation and binding require an exact user-confirmed identity and separate approval, followed by a fresh resolution check. Aquarium never falls back to `--allow-unregistered` and never reads Handoff content during setup.
+
+After readiness, Aquarium delegates session-start and pre-task inbox/outbox discovery plus every fetch, review, revision, acceptance, retention, deletion, backup, and Vault operation to `use-sorage`. The managed Vault and derived `.sorage/INBOX.md` remain native Sorage state, not repository authority or Aquarium workflow evidence.
 
 ## Podway Readiness
 

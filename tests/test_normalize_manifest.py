@@ -83,7 +83,7 @@ class NormalizeManifestTest(unittest.TestCase):
             f"""
             schema: aquarium.dev-setup-bundle/v1
             defaults:
-              tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
+              tools: [dolgorae, mulgae, gaori, sorage, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
               project_mcp: [mulgae, gaori]
               agents_guidance: skip
             targets:
@@ -127,6 +127,7 @@ class NormalizeManifestTest(unittest.TestCase):
                 "dolgorae",
                 "mulgae",
                 "gaori",
+                "sorage",
                 "podway",
                 "ouroboros",
                 "lora",
@@ -429,6 +430,18 @@ class NormalizeManifestTest(unittest.TestCase):
                   - path: repository-a
                 """,
                 "invalid_mcp_selection",
+            ),
+            "sorage-mcp": (
+                """
+                schema: aquarium.dev-setup-bundle/v1
+                defaults:
+                  tools: [sorage]
+                  project_mcp: [sorage]
+                  agents_guidance: skip
+                targets:
+                  - path: repository-a
+                """,
+                "unsupported_value",
             ),
         }
         for name, (body, expected_code) in cases.items():

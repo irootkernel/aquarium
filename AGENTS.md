@@ -58,6 +58,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use each installed paired `$use-*` skill for its corresponding local tool operations and keep tool-specific lifecycle rules in that integration's canonical contract.
+- Use `$use-sorage` at session start and before every task when the repository is registered with Sorage; keep inbox, outbox, Handoff, review, retention, deletion, and Vault operations in that paired skill.
 - Aquarium is an orchestration plugin that helps integrated tools work together and makes their supported native capabilities readily usable. It is not a policy layer for weakening, second-guessing, or artificially constraining those tools.
 - Prefer each tool's current native contract and paired skill. Use the supported capabilities needed for the approved goal; do not invent Aquarium-only owners, quotas, retry caps, evidence caps, lifecycle restrictions, or extra approval gates.
 - A tool limitation must come from a higher-priority instruction, Master's explicit choice, repository authority, the tool's native contract, or a concrete safety, destructive-action, privacy, or external-mutation boundary. Otherwise remove the Aquarium-only restriction at its canonical contract instead of working around or disabling the native capability.
@@ -98,7 +99,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.
 - Preserve approval boundaries between diagnosis, network lookup, installation, native configuration, repository guidance, staging, commits, and publication.
 - Green phrase or schema validators prove only their bounded contracts. Add scenario-focused coverage when changing cross-skill handoffs or approval behavior.
-- Treat ignored Mulgae, Gaori, Podway, and disposable runtime artifacts as local workflow evidence, never tracked documentation authority. Promote only reviewed bounded non-sensitive structured evidence under the shared Aquarium evidence-residency contract when a durable downstream reference is necessary. Declare a custom root only with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`.
+- Treat ignored Mulgae, Gaori, Podway, derived Sorage, and disposable runtime artifacts as local workflow evidence, never tracked documentation authority. Promote only reviewed bounded non-sensitive structured evidence under the shared Aquarium evidence-residency contract when a durable downstream reference is necessary. Declare a custom root only with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`.
 - Preserve unrelated staged, unstaged, and untracked work. Do not include local runtime state or setup manifests in a task unless Master explicitly puts them in scope.
 
 ### Release Policy

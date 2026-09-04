@@ -15,8 +15,8 @@ Do not use this skill to observe, cancel, discard, or reset a routine supported 
 
 1. Resolve the requested working directory to one Git root.
 2. Read applicable instruction files and inspect the branch, upstream, staged, unstaged, and untracked state.
-3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Podway and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
-   When the current request explicitly selects Dolgorae, add `--verify-dolgorae-release`; when it selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects Mulgae MCP in either scope, add `--require-mulgae-mcp`. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
+3. Resolve this skill's directory (the directory containing this `SKILL.md`) and, when `python3` is available, run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`. This default inspection omits Sorage readiness, Podway, and Ouroboros completely and keeps an absent optional Mulgae MCP registration non-gating.
+   When the current request explicitly selects Dolgorae, add `--verify-dolgorae-release`; when it selects Podway, add `--include-podway`; when it selects Ouroboros, add `--include-ouroboros`; when it selects Mulgae MCP in either scope, add `--require-mulgae-mcp`. Never add `--include-sorage` to this initial inspection, even when the incoming request names Sorage. Rerun with the applicable flag when a component is selected later through ask/answer. Read the JSON as local diagnostic evidence, not as installation or mutation authority.
 
    When Aquarium production-binary readiness is in scope, include Podway, add `--verify-dolgorae-release`, and require supported global binaries for Podway, Mulgae, Gaori, and Dolgorae. A missing required binary is fail-closed readiness and must produce the exact tool-scoped setup proposal; it is never waived by an Aquarium development artifact. Sanho is explicitly excluded from this required binary baseline and remains optional.
 4. If `python3` is unavailable or the inspection script fails, report that gap and perform the same read-only discovery manually. Do not install Python as part of fallback diagnosis.
@@ -36,14 +36,20 @@ Use the host's structured ask/answer tool, normally `request_user_input`, whenev
 
 After read-only discovery, use these batches and component boundaries:
 
-- Ask about Sanho, Dolgorae, Mulgae, and Gaori first, then Podway, Ouroboros, Lora, upstream Deslop, Humanizer, im-not-ai, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
+- Ask about Sanho, Dolgorae, Mulgae, Gaori, and Sorage first, then Podway, Ouroboros, Lora, upstream Deslop, Humanizer, im-not-ai, and whether to prepare a repository operating-guidance proposal rooted in AGENTS.md.
 - For each tool offer `Install and configure`, `Diagnose only`, and `Skip`, adapting the wording to current state.
 - For Dolgorae, recommend the newest verified official stable v0.1.x CLI at or above v0.1.1 while reporting release identity, executable checksum, platform, version envelope, capabilities, and review admission independently. Dolgorae has no Aquarium paired skill or MCP registration.
-- For Sanho, Mulgae, Gaori, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
+- For Sanho, Mulgae, Gaori, Sorage, and Podway, recommend installing or upgrading the CLI and paired skill while reporting each component independently.
 - For Ouroboros, report the CLI, Codex rules and skills, MCP registration, and runtime readiness independently.
 - For every paired or third-party skill, reject any symlink from the configured skill root through the required files before reading or hashing it. For Lora, Deslop, Humanizer, and im-not-ai, report every discovered user-global installation, frontmatter validity, duplicate or symlink state, and upstream freshness independently.
 
-Disclose in the Dolgorae selection choice that either affirmative selection automatically contacts its official GitHub Releases metadata endpoint to resolve and verify one supported stable release. This metadata lookup needs no separate approval and authorizes no archive download or installation. Disclose separately in the Sanho, Mulgae, Gaori, and Podway choices that either affirmative selection also downloads four public skill files from `raw.githubusercontent.com` for paired-skill comparison.
+Disclose in the Dolgorae selection choice that either affirmative selection automatically contacts its official GitHub Releases metadata endpoint to resolve and verify one supported stable release. This metadata lookup needs no separate approval and authorizes no archive download or installation.
+
+Disclose separately in the Sanho, Mulgae, Gaori, Sorage, and Podway choices that either affirmative selection also downloads the documented public skill files from `raw.githubusercontent.com` for paired-skill comparison. Sorage has one skill file; each of the other four tools has four.
+
+Also disclose that selected Sorage readiness diagnosis runs native doctor and Project resolution commands against the local installation. These commands make no network request, but Project resolution opens Sorage's database through its native migration path and may update local database or journal state. The Sorage selection authorizes only these diagnostic side effects, not initialization, Project mutation, Handoff access, or any other persistent action.
+
+After showing that disclosure and receiving an affirmative Sorage selection, rerun the inspector with `--include-sorage`. An incoming request that already names Sorage establishes the tool's scope, but does not bypass this disclosure and confirmation boundary.
 
 When Mulgae or Gaori is selected, inspect its active user-global and isolated project-local MCP registrations independently. If neither is configured, offer `Configure global MCP` (recommended), `Configure project MCP`, and `Skip`. If a project-local registration exists, ask whether it is intentional; preserve it only when the user confirms local scope. Otherwise propose removal of only that named local registration. Never infer local intent from the presence of `.codex/config.toml` or another local MCP entry.
 
@@ -59,17 +65,17 @@ Otherwise keep the read-only discovery above, then ask only about the named tool
 
 Read [tool-catalog.md](references/tool-catalog.md) for every tool selected for diagnosis or setup.
 
-A selection expresses intent and authorizes only the disclosed bounded metadata lookup for Dolgorae or selected-skill freshness comparison for Sanho, Mulgae, Gaori, or Podway. It does not authorize an archive download, a command that writes persistent files, installation, skill replacement, hook changes, provider contact, or user-global mutation.
+A selection expresses intent and authorizes only the disclosed bounded metadata lookup for Dolgorae, selected-skill freshness comparison for Sanho, Mulgae, Gaori, Sorage, or Podway, and selected Sorage diagnostic side effects described above. It does not authorize any other archive download, command that writes persistent files, installation, skill replacement, hook change, provider contact, or user-global mutation.
 
 ## Compare Selected Agent Skills First
 
-Immediately after Sanho, Mulgae, Gaori, or Podway is selected as either `Install and configure` or `Diagnose only`, and before proposing any other network operation for that tool, compare its paired skill. Do not fetch or compare a skipped or not-yet-selected tool, and do not widen a scoped continuation to the other three tools.
+Immediately after Sanho, Mulgae, Gaori, Sorage, or Podway is selected as either `Install and configure` or `Diagnose only`, and before proposing any other network operation for that tool, compare its paired skill. Do not fetch or compare a skipped or not-yet-selected tool, and do not widen a scoped continuation to the other tools.
 
 Within one confirmed `dev-setup-bundle` request, accept the bundle owner's already verified exact tag, complete source file set, digests, endpoint provenance, ephemeral payload, and installed-target digest snapshot for a selected tool instead of repeating the comparison for each repository. Revalidate the payload and target snapshot before an approved action, use it only for the matching tool, and preserve every cleanup and stale-approval rule below.
 
-1. From the official GitHub Releases metadata, resolve the newest non-draft, non-prerelease tag within the tool's supported release line. For Sanho, Mulgae, and Gaori, fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. For Podway, fetch only `SKILL.md`, `references/lifecycle.md`, `references/goal.md`, and `references/recovery.md`.
+1. From the official GitHub Releases metadata, resolve the newest non-draft, non-prerelease tag within the tool's supported release line. For Sanho, Mulgae, and Gaori, fetch only `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. For Sorage, fetch only `SKILL.md`. For Podway, fetch only `SKILL.md`, `references/lifecycle.md`, `references/goal.md`, and `references/recovery.md`.
    Fetch the selected set for that tag from the catalog's `raw.githubusercontent.com` source into an ephemeral temporary directory. `create-podway-procedure` is a separate maintainer authoring dependency and is never installed, compared, or required by this workflow.
-2. Before comparing, require all four regular files, compute their SHA-256 digests, and verify the expected `name: use-sanho`, `name: use-mulgae`, `name: use-gaori`, or `name: use-podway` frontmatter. Reject redirects or responses that resolve outside the disclosed official endpoints. Never execute fetched content.
+2. Before comparing, require the selected tool's complete documented regular-file set, compute every SHA-256 digest, and verify the matching `name: use-sanho`, `name: use-mulgae`, `name: use-gaori`, `name: use-sorage`, or `name: use-podway` frontmatter. Reject redirects or responses that resolve outside the disclosed official endpoints. Never execute fetched content.
 3. Compare the verified source against exactly `~/.agents/skills/<skill-name>` as complete directory trees. Treat missing expected files, different bytes, invalid frontmatter, symlinks, and any extra local files as differences. Other Codex skill roots remain diagnostic evidence only; never update or remove another discovered copy through this automatic comparison.
 4. If the trees match exactly, report the source tag and `current` status without asking an update question. If the exact target is absent, first inspect the already discovered diagnostic roots. When another copy exists, report the duplicate risk and do not propose installation until the user separately chooses a removal or migration that leaves one canonical target; never create a known duplicate.
    Otherwise show the exact target and ask separately whether to install it. If the target differs, show the source tag, the complete file-set diff including additions and deletions, and ask separately whether to replace it after establishing the backup policy. One skill target requires one explicit installation or replacement approval; approval for another tool does not apply.
@@ -97,7 +103,7 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 For each selected tool:
 
-1. For Dolgorae, reuse the exact release metadata from its automatic bounded lookup. For Sanho, Mulgae, Gaori, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, Humanizer, im-not-ai, or any lookup outside those bounded comparisons, disclose the official repository and release- or commit-metadata endpoint and obtain explicit approval before resolving it; lookup approval authorizes no installation or other mutation.
+1. For Dolgorae, reuse the exact release metadata from its automatic bounded lookup. For Sanho, Mulgae, Gaori, Sorage, or Podway, reuse the exact version, source provenance, and verified payload from the automatic selected-skill comparison. Do not ask for a second lookup approval. For Lora, Deslop, Humanizer, im-not-ai, or any lookup outside those bounded comparisons, disclose the official repository and release- or commit-metadata endpoint and obtain explicit approval before resolving it; lookup approval authorizes no installation or other mutation.
 2. Show the exact resolved stable version and source provenance. If the automatic comparison was `freshness_unverifiable`, repeat the bounded comparison without separate approval before proposing a skill action, but obtain approval for any other lookup or download.
 3. Show the exact install and initialization commands, network endpoints, target paths, native files, ignore changes, expected side effects, and the active backup policy when existing state will be overwritten or removed.
 4. Identify existing state that will be preserved or lost and any command that might stage files or install hooks.
@@ -122,6 +128,32 @@ Never authenticate a provider, inspect a prior run, or start a Mulgae heartbeat,
 
 For Gaori, support only stable `v0.1.14` through `v0.1.x`. Resolve one exact tag and use it for both the CLI and `use-gaori` source. Keep CLI installation or upgrade, user-scoped skill installation or replacement, repository config and ignore changes, and global or project-local MCP configuration as separate approval boundaries. Treat missing, incomplete, invalid, and duplicate skill installations and missing MCP registration independently from CLI health. Never start a Gaori run or MCP test command during setup.
 
+For Sorage, support only stable `v0.1.0` through `v0.1.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both the CLI and `use-sorage` source. Verify the official `darwin-arm64` binary against its adjacent SHA-256 file and release manifest, require the manifest revision to equal the peeled tag commit, and verify the installed binary with `codesign --verify --strict` and `sorage version --json`. Disclose that the binary is ad-hoc signed and not notarized.
+
+Keep archive download, CLI installation or upgrade, user-scoped skill installation or replacement, initialization, Project registration or binding, Project unarchive, and ignore changes as separate approval boundaries. Sorage has no MCP setup surface.
+
+Diagnose Sorage with `sorage version --json`, `sorage doctor --json`, and `sorage project resolve --path <git-root> --json`. The version command returns a bare name/version object; doctor and Project commands return Sorage envelopes. Require the complete ordered v0.1 doctor catalog before interpreting initialization.
+
+Normalize only check counts and severities plus Project slug, status, and binding kind. Do not report Installation IDs, Workspace keys, request IDs, display names, Vault paths, binding paths, or doctor message text.
+
+A supported installation is ready only when it is initialized, doctor reports no blocking check, the exact Git root resolves to an active `git_repository` binding, the selected `use-sorage` skill is structurally valid, the whole `.sorage/` directory is ignored, and no `.sorage/` path is tracked or reached through a symlink. Doctor warnings do not block the minimal local profile.
+
+Report a healthy supported CLI as `installed` while initialization, registration, Project state, binding kind, skill, ignore, tracking, or symlink gaps keep `readiness_status` non-ready. Reserve `degraded` tool status for an unhealthy runtime, invalid command contract, or blocking doctor result other than the exact uninitialized catalog. Report that catalog as `installed` with `readiness_status: initialization_required`, and report `configured` only when readiness is complete.
+
+When Sorage is not initialized, propose `sorage init --non-interactive --json` with the exact effective home and default Vault paths. This minimal profile starts no daemon, installs no LaunchAgent, initializes no Vault Git repository, enables no backup, and configures no remote push. An invalid existing installation is repair, not initialization: report the native recovery and require a separate exact `--reconfigure` proposal instead of replacing files.
+
+After initialization, always resolve the exact Git root and preserve an active `git_repository` binding. Treat only a successful `unregistered_workspace` result as `registration_required`. In that case, disclose that `sorage project list --json` opens the same local database and may apply native migrations, then obtain separate explicit approval before running it. Only after that approved listing may you ask whether to create a new Project or bind the repository to an existing active Project.
+
+When resolution returns a registered Project through a containing `directory` binding, report a non-ready binding-kind gap and preserve it. Stop automatic setup for that repository, require a separate explicit native repair decision, and do not propose `project add` or `project bind` from that result.
+
+A native resolution error is `resolution_error`. Preserve its symbolic code, leave Project registration unverifiable, and do not propose `project add` or `project bind`.
+
+For a new Project, obtain the exact display name and immutable slug before showing `sorage project add --name <name> --slug <slug> --dir <git-root> --json`; never derive or guess either value silently. For an existing Project, show `sorage project bind <slug> --dir <git-root> --json`.
+
+An archived Project requires its own approved `sorage project unarchive <slug> --as-user --json` action. Never use `--allow-unregistered` as setup repair. Re-run Project resolution after every approved mutation and require the same Git common directory, active Project, and `git_repository` binding.
+
+Require `.sorage/` to be ignored before reporting readiness. Prefer the repository-local exclude path returned by `git rev-parse --git-path info/exclude`; offer a tracked `.gitignore` edit only when the user requests it. Show the exact edit and obtain separate approval. If `.sorage/` is already tracked, stop and report it instead of removing, untracking, or rewriting the derived marker. After readiness, leave inbox, outbox, Handoff, review, retention, Vault, backup, and deletion operations to `$use-sorage`; setup never reads Handoff titles or content.
+
 Approval for one tool does not authorize another. Never use `sudo`, `--force`, destructive cleanup, credential extraction, provider invocation, source transmission, staging, committing, or pushing unless the user separately grants that exact authority.
 
 For Podway, support only stable `v0.2.8` through `v0.2.x` on native Apple Silicon macOS. Resolve one exact tag and use it for both binaries and the `use-podway` source. Treat a missing, incomplete, invalid, or duplicate skill independently from CLI and repository readiness.
@@ -136,7 +168,7 @@ Never convert or delete Procedure v1 state automatically. On `LEGACY_PROCEDURE_S
 
 Treat tracked `root-kernel-task-v2.yaml`, `root-kernel-goal-v2.yaml`, and `root-kernel-validation-v2.yaml` files as a product-rename migration, not as Procedure v1 runtime state. Report `migration_required`, require any active old session to reach an explicitly chosen terminal disposition first, then propose removal of the old managed files and installation of the corresponding `aquarium-*` files as separate approved actions. Never convert, cancel, reset, or delete runtime history as part of this migration.
 
-Use the v14 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.8 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
+Use the v15 inspector's `migration_kinds.product_rename` only for the product rename. For each safe present managed file, require the expected filename and Procedure ID and use the selected Podway v0.2.8 binary's `procedure check --warnings-as-errors` and `procedure preview` results as the document-validity and identity authority. Report `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe`, or `unverifiable`; never add an Aquarium compatibility schema for graph, item, prompt, bound, or route differences.
 
 Treat `update_explanation` values such as `prior_canonical` and `podway_v0.2.5_workaround` only as bounded explanations for an offered canonical update. They never form a validity, ownership, migration, or readiness class. A tracked same-ID `valid_customization` is configured when the other Podway readiness requirements pass.
 
@@ -226,6 +258,7 @@ Report:
 - Dolgorae supported release, official metadata verification, platform, version envelope, compatible capabilities, executable checksum, and stable review admission separately;
 - Mulgae CLI and Doctor v2 compatibility, project Config v3, local configuration, provider identity, binary availability, provider CLI compatibility, configured and role-route readiness, `use-mulgae` skill, installation prerequisites, and global, local, and effective MCP scope separately;
 - Gaori CLI, repository config, `use-gaori` skill, and global, local, and effective MCP scope separately;
+- Sorage CLI, initialization, doctor severity counts, Project registration, binding kind, `.sorage/` ignore state, and `use-sorage` skill separately;
 - Podway CLI, daemon, workspace, Aquarium readiness, legacy-state detection, and `use-podway` skill state separately;
 - Ouroboros CLI and version support, Codex rules and skills, MCP runtime, effective registration, and live exposure separately;
 - commands run and their exit status;

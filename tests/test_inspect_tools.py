@@ -86,6 +86,7 @@ class InspectToolsTest(unittest.TestCase):
         timeout_seconds: float = NORMAL_PROBE_TIMEOUT_SECONDS,
         include_podway: bool = False,
         include_ouroboros: bool = False,
+        include_sorage: bool = False,
         require_mulgae_mcp: bool = False,
     ) -> subprocess.CompletedProcess[str]:
         arguments = [
@@ -98,6 +99,8 @@ class InspectToolsTest(unittest.TestCase):
             arguments.append("--include-podway")
         if include_ouroboros:
             arguments.append("--include-ouroboros")
+        if include_sorage:
+            arguments.append("--include-sorage")
         if require_mulgae_mcp:
             arguments.append("--require-mulgae-mcp")
         return self.run_script(*arguments)
@@ -916,6 +919,114 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
                     f"# {reference}\n", encoding="utf-8"
                 )
 
+    def install_sorage_skill(
+        self, root: Path | None = None, name: str = "use-sorage"
+    ) -> None:
+        skill_root = (root or self.codex_home / "skills") / "use-sorage"
+        skill_root.mkdir(parents=True, exist_ok=True)
+        skill_root.joinpath("SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: test\n---\n", encoding="utf-8"
+        )
+
+    def install_fake_sorage(
+        self,
+        *,
+        version: str = "v0.1.0",
+        initialized: bool = True,
+        registered: bool = True,
+        project_status: str = "active",
+        binding_kind: str = "git_repository",
+        malformed: bool = False,
+        blocking: bool = False,
+        doctor_checks: list[dict[str, object]] | None = None,
+        doctor_exit_code: int | None = None,
+        project_data: object | None = None,
+        project_error: str | None = None,
+    ) -> None:
+        if doctor_checks is None:
+            severity = "blocking" if blocking else "ok"
+            doctor_checks = [
+                {
+                    "id": check_id,
+                    "severity": severity if check_id == "home.permissions" else "ok",
+                    "message": "SORAGE_DOCTOR_PRIVATE_MESSAGE",
+                    **(
+                        {"recovery": {"suggestedCommand": "sorage init --reconfigure"}}
+                        if blocking and check_id == "home.permissions"
+                        else {}
+                    ),
+                }
+                for check_id in inspect_tools.SORAGE_DOCTOR_CATALOG
+            ]
+        if not initialized:
+            doctor_checks = [
+                {
+                    "id": check_id,
+                    "severity": "blocking",
+                    "message": "SORAGE_DOCTOR_PRIVATE_MESSAGE",
+                    "recovery": {"suggestedCommand": "sorage init"},
+                }
+                for check_id in inspect_tools.SORAGE_DOCTOR_CATALOG
+            ]
+        effective_doctor_exit_code = (
+            doctor_exit_code
+            if doctor_exit_code is not None
+            else 1
+            if not initialized or blocking
+            else 0
+        )
+        executable = self.bin_directory / "sorage"
+        executable.write_text(
+            textwrap.dedent(
+                f"""\
+                #!{sys.executable}
+                import json
+                import sys
+                from pathlib import Path
+
+                arguments = sys.argv[1:]
+                if arguments == ["version", "--json"]:
+                    print("not-json" if {malformed!r} else json.dumps({{"name": "sorage", "version": {version!r}}}))
+                    raise SystemExit(0)
+                if arguments == ["doctor", "--json"]:
+                    checks = {doctor_checks!r}
+                    print(json.dumps({{"ok": True, "data": {{"checks": checks}}, "meta": {{"requestId": "secret"}}}}))
+                    raise SystemExit({effective_doctor_exit_code!r})
+                if len(arguments) == 5 and arguments[:3] == ["project", "resolve", "--path"] and arguments[4] == "--json":
+                    Path({str(self.base / "sorage-project-resolve-path")!r}).write_text(arguments[3], encoding="utf-8")
+                    if {project_error is not None!r}:
+                        print(json.dumps({{"ok": False, "error": {{"code": {project_error!r}, "message": "SORAGE_PROJECT_PRIVATE_MESSAGE"}}}}))
+                        raise SystemExit(2)
+                    if {project_data is not None!r}:
+                        data = {project_data!r}
+                    elif not {registered!r}:
+                        data = {{"kind": "unregistered_workspace", "directory": "/private/repository", "workspaceKey": "secret"}}
+                    else:
+                        data = {{
+                            "kind": "registered_project",
+                            "project": {{"slug": "example", "status": {project_status!r}, "displayName": "Private Name"}},
+                            "binding": {{"bindingKind": {binding_kind!r}, "directory": "/private/repository/.git"}},
+                        }}
+                    print(json.dumps({{"ok": True, "data": data, "meta": {{"requestId": "secret"}}}}))
+                    raise SystemExit(0)
+                raise SystemExit(2)
+                """
+            ),
+            encoding="utf-8",
+        )
+        executable.chmod(0o755)
+
+    def assert_sorage_private_fields_absent(self, payload: dict[str, object]) -> None:
+        rendered = json.dumps(payload)
+        for private_value in (
+            "SORAGE_DOCTOR_PRIVATE_MESSAGE",
+            "SORAGE_PROJECT_PRIVATE_MESSAGE",
+            "Private Name",
+            "/private/repository",
+            "secret",
+        ):
+            self.assertNotIn(private_value, rendered)
+
     def install_mulgae_config(
         self, local_mode: int = 0o600, track_local: bool = False
     ) -> None:
@@ -991,7 +1102,7 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v14")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v15")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -1005,6 +1116,10 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
             payload["tools"]["mulgae"]["mcp_registration"]["status"], "unavailable"
         )
         self.assertEqual(payload["tools"]["gaori"]["agent_skill"]["status"], "missing")
+        self.assertEqual(payload["tools"]["sorage"]["status"], "missing")
+        self.assertEqual(
+            payload["tools"]["sorage"]["readiness_status"], "not_applicable"
+        )
         self.assertEqual(
             payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable"
         )
@@ -1013,6 +1128,689 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         self.assertEqual(payload["tools"]["humanizer"]["status"], "missing")
         self.assertEqual(payload["tools"]["im-not-ai"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
+
+    def test_sorage_supports_only_stable_v01_releases(self) -> None:
+        for version, supported in (
+            ("v0.1.0", True),
+            ("0.1.99", True),
+            ("v0.1.1-rc.1", False),
+            ("v0.0.9", False),
+            ("v0.2.0", False),
+        ):
+            with self.subTest(version=version):
+                self.assertEqual(
+                    inspect_tools.supported_sorage_version(version), supported
+                )
+
+    def test_sorage_default_inventory_defers_native_readiness_probes(self) -> None:
+        self.install_fake_sorage()
+        sorage = json.loads(self.inspect().stdout)["tools"]["sorage"]
+        platform_supported = platform.system() == "Darwin" and platform.machine() in {
+            "arm64",
+            "aarch64",
+        }
+        self.assertEqual(
+            sorage["status"], "installed" if platform_supported else "degraded"
+        )
+        self.assertEqual(
+            sorage["readiness_status"],
+            "not_inspected" if platform_supported else "degraded",
+        )
+        expected_reason = (
+            "not_requested" if platform_supported else "unsupported_runtime"
+        )
+        self.assertEqual(sorage["probes"]["doctor"]["reason"], expected_reason)
+        self.assertEqual(sorage["probes"]["project_resolve"]["reason"], expected_reason)
+
+    def test_sorage_helper_default_defers_native_readiness_probes(self) -> None:
+        self.install_fake_sorage()
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+        self.assertEqual(sorage["readiness_status"], "not_inspected")
+        self.assertEqual(sorage["probes"]["doctor"]["reason"], "not_requested")
+        self.assertEqual(sorage["probes"]["project_resolve"]["reason"], "not_requested")
+
+    def test_sorage_explicit_readiness_rejects_malformed_version_json(self) -> None:
+        self.install_fake_sorage(malformed=True)
+        sorage = json.loads(self.inspect(include_sorage=True).stdout)["tools"]["sorage"]
+        self.assertEqual(sorage["status"], "degraded")
+        self.assertEqual(sorage["probes"]["version"]["error_code"], "invalid_json")
+        self.assertEqual(sorage["probes"]["doctor"]["reason"], "unsupported_runtime")
+
+    def test_sorage_explicit_readiness_runs_native_probes_when_supported(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        sorage = json.loads(self.inspect(include_sorage=True).stdout)["tools"]["sorage"]
+        platform_supported = platform.system() == "Darwin" and platform.machine() in {
+            "arm64",
+            "aarch64",
+        }
+        if platform_supported:
+            self.assertEqual(
+                self.base.joinpath("sorage-project-resolve-path").read_text(
+                    encoding="utf-8"
+                ),
+                str(self.repository.resolve()),
+            )
+            self.assertEqual(sorage["status"], "configured")
+            self.assertEqual(sorage["readiness_status"], "ready")
+            self.assertEqual(sorage["initialization_status"], "initialized")
+            self.assertNotIn("reason", sorage["probes"]["doctor"])
+            self.assertNotIn("reason", sorage["probes"]["project_resolve"])
+        else:
+            self.assertEqual(sorage["status"], "degraded")
+            self.assertEqual(sorage["readiness_status"], "degraded")
+            self.assertEqual(
+                sorage["probes"]["doctor"]["reason"], "unsupported_runtime"
+            )
+            self.assertEqual(
+                sorage["probes"]["project_resolve"]["reason"],
+                "unsupported_runtime",
+            )
+
+    def test_sorage_ready_requires_registered_git_project_skill_and_ignore(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/INBOX.md").write_text(
+            "derived\n", encoding="utf-8"
+        )
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "configured")
+        self.assertEqual(sorage["readiness_status"], "ready")
+        self.assertEqual(sorage["initialization_status"], "initialized")
+        self.assertTrue(sorage["configuration"][0]["ignored"])
+        self.assertFalse(sorage["configuration"][0]["tracked"])
+        self.assertFalse(sorage["configuration"][0]["unignored"])
+        self.assertEqual(
+            sorage["project_registration"],
+            {
+                "status": "registered",
+                "project_slug": "example",
+                "project_status": "active",
+                "binding_kind": "git_repository",
+            },
+        )
+        self.assert_sorage_private_fields_absent(sorage)
+
+    def test_sorage_invalid_or_duplicate_skills_block_readiness(self) -> None:
+        for case in ("invalid", "duplicate"):
+            with self.subTest(case=case):
+                for root in (
+                    self.codex_home / "skills",
+                    self.home / ".agents/skills",
+                ):
+                    shutil.rmtree(root / "use-sorage", ignore_errors=True)
+                if case == "invalid":
+                    self.install_sorage_skill(name="wrong-name")
+                else:
+                    self.install_sorage_skill()
+                    self.install_sorage_skill(root=self.home / ".agents/skills")
+                self.install_fake_sorage()
+                self.repository.joinpath(".gitignore").write_text(
+                    ".sorage/\n", encoding="utf-8"
+                )
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["agent_skill"]["status"], "degraded")
+                self.assertEqual(
+                    sorage["agent_skill"]["duplicate"], case == "duplicate"
+                )
+                self.assertEqual(sorage["status"], "installed")
+                self.assertEqual(sorage["readiness_status"], "degraded")
+
+    def test_sorage_reports_initialization_and_registration_requirements(self) -> None:
+        cases = (
+            (
+                {"initialized": False},
+                "initialization_required",
+                "not_initialized",
+                "not_inspected",
+            ),
+            (
+                {"registered": False},
+                "registration_required",
+                "initialized",
+                "unregistered",
+            ),
+        )
+        for arguments, readiness, initialization, registration in cases:
+            with self.subTest(readiness=readiness):
+                self.install_fake_sorage(**arguments)
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["readiness_status"], readiness)
+                self.assertEqual(sorage["initialization_status"], initialization)
+                self.assertEqual(sorage["project_registration"]["status"], registration)
+                self.assertEqual(sorage["status"], "installed")
+                self.assert_sorage_private_fields_absent(sorage)
+
+    def test_sorage_separates_cli_health_from_project_readiness(self) -> None:
+        cases = (
+            (
+                {"blocking": True},
+                "degraded",
+                {
+                    "status": "not_inspected",
+                    "project_slug": None,
+                    "project_status": None,
+                    "binding_kind": None,
+                },
+            ),
+            (
+                {"project_status": "archived"},
+                "installed",
+                {
+                    "status": "registered",
+                    "project_slug": "example",
+                    "project_status": "archived",
+                    "binding_kind": "git_repository",
+                },
+            ),
+            (
+                {"binding_kind": "directory"},
+                "installed",
+                {
+                    "status": "registered",
+                    "project_slug": "example",
+                    "project_status": "active",
+                    "binding_kind": "directory",
+                },
+            ),
+        )
+        for arguments, status, project_registration in cases:
+            with self.subTest(arguments=arguments):
+                self.install_fake_sorage(**arguments)
+                self.install_sorage_skill()
+                self.repository.joinpath(".gitignore").write_text(
+                    ".sorage/\n", encoding="utf-8"
+                )
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["status"], status)
+                self.assertEqual(sorage["readiness_status"], "degraded")
+                self.assertEqual(sorage["project_registration"], project_registration)
+                self.assert_sorage_private_fields_absent(sorage)
+                if arguments.get("blocking"):
+                    self.assertEqual(
+                        sorage["probes"]["project_resolve"]["reason"],
+                        "doctor_blocking",
+                    )
+
+    def test_sorage_all_blocking_repair_catalog_is_not_uninitialized(self) -> None:
+        repair_checks = [
+            {
+                "id": check_id,
+                "severity": "blocking",
+                "message": "repair required",
+                "recovery": {"suggestedCommand": "sorage init --reconfigure"},
+            }
+            for check_id in inspect_tools.SORAGE_DOCTOR_CATALOG
+        ]
+        self.install_fake_sorage(
+            doctor_checks=repair_checks,
+            doctor_exit_code=1,
+        )
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["initialization_status"], "initialized")
+        self.assertEqual(sorage["project_registration"]["status"], "not_inspected")
+        self.assertEqual(sorage["status"], "degraded")
+        self.assertEqual(sorage["readiness_status"], "degraded")
+        self.assertEqual(
+            sorage["probes"]["project_resolve"]["reason"], "doctor_blocking"
+        )
+
+    def test_sorage_doctor_warnings_do_not_block_readiness(self) -> None:
+        warning_ids = {"daemon.reachable", "service.installed", "backup.schedule"}
+        doctor_checks = [
+            {
+                "id": check_id,
+                "severity": "warning" if check_id in warning_ids else "ok",
+                "message": "safe",
+            }
+            for check_id in inspect_tools.SORAGE_DOCTOR_CATALOG
+        ]
+        self.install_fake_sorage(doctor_checks=doctor_checks)
+        self.install_sorage_skill()
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+        self.assertEqual(sorage["status"], "configured")
+        self.assertEqual(sorage["readiness_status"], "ready")
+        self.assertEqual(sorage["probes"]["doctor"]["result"]["warning_count"], 3)
+
+    def test_sorage_rejects_malformed_doctor_contracts(self) -> None:
+        valid_checks = [
+            {"id": check_id, "severity": "ok", "message": "safe"}
+            for check_id in inspect_tools.SORAGE_DOCTOR_CATALOG
+        ]
+        cases = {
+            "partial_catalog": valid_checks[:-1],
+            "wrong_order": [valid_checks[1], valid_checks[0], *valid_checks[2:]],
+            "invalid_severity": [
+                *valid_checks[:2],
+                {"id": "config.lock", "severity": "fatal", "message": "safe"},
+                *valid_checks[3:],
+            ],
+            "non_string_severity": [
+                *valid_checks[:2],
+                {"id": "config.lock", "severity": [], "message": "safe"},
+                *valid_checks[3:],
+            ],
+            "invalid_recovery": [
+                {**valid_checks[0], "recovery": {"suggestedCommand": ""}},
+                *valid_checks[1:],
+            ],
+        }
+        for name, checks in cases.items():
+            with self.subTest(name=name):
+                self.install_fake_sorage(doctor_checks=checks)
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["status"], "degraded")
+                self.assertEqual(sorage["initialization_status"], "unverifiable")
+                self.assertEqual(
+                    sorage["project_registration"]["status"], "not_inspected"
+                )
+                self.assertFalse(sorage["probes"]["doctor"]["contract_valid"])
+
+    def test_sorage_rejects_invalid_project_fields_without_aborting(self) -> None:
+        cases = {
+            "path_bearing_slug": {
+                "kind": "registered_project",
+                "project": {"slug": "private/path", "status": "active"},
+                "binding": {"bindingKind": "git_repository"},
+            },
+            "uppercase_slug": {
+                "kind": "registered_project",
+                "project": {"slug": "Project", "status": "active"},
+                "binding": {"bindingKind": "git_repository"},
+            },
+            "project_status": {
+                "kind": "registered_project",
+                "project": {"slug": "example", "status": []},
+                "binding": {"bindingKind": "git_repository"},
+            },
+            "binding_kind": {
+                "kind": "registered_project",
+                "project": {"slug": "example", "status": "active"},
+                "binding": {"bindingKind": {}},
+            },
+        }
+        for name, project_data in cases.items():
+            with self.subTest(name=name):
+                self.install_fake_sorage(project_data=project_data)
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["status"], "degraded")
+                self.assertEqual(sorage["readiness_status"], "degraded")
+                self.assertEqual(
+                    sorage["project_registration"]["status"], "unverifiable"
+                )
+                self.assertFalse(sorage["probes"]["project_resolve"]["contract_valid"])
+
+    def test_sorage_accepts_native_unicode_project_slug_shape(self) -> None:
+        probe = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+            "result": {
+                "ok": True,
+                "data": {
+                    "kind": "registered_project",
+                    "project": {"slug": "웹-앱", "status": "active"},
+                    "binding": {"bindingKind": "git_repository"},
+                },
+            },
+        }
+        normalized, resolution = inspect_tools.normalize_sorage_project_resolution(
+            probe
+        )
+        self.assertTrue(normalized["contract_valid"])
+        self.assertEqual(resolution["project_slug"], "웹-앱")
+
+    def test_sorage_rejects_doctor_exit_code_mismatch(self) -> None:
+        self.install_fake_sorage(doctor_exit_code=1)
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+        self.assertEqual(sorage["status"], "degraded")
+        self.assertFalse(sorage["probes"]["doctor"]["contract_valid"])
+
+    def test_sorage_requires_dictionary_envelopes_and_nonempty_error_codes(
+        self,
+    ) -> None:
+        base = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+        }
+        list_data = {**base, "result": {"ok": True, "data": []}}
+        normalized, data = inspect_tools.sorage_envelope_data(list_data)
+        self.assertFalse(normalized["contract_valid"])
+        self.assertIsNone(data)
+
+        empty_error = {
+            **base,
+            "ok": False,
+            "exit_code": 2,
+            "result": {"ok": False, "error": {"code": ""}},
+        }
+        normalized, data = inspect_tools.sorage_envelope_data(empty_error)
+        self.assertFalse(normalized["contract_valid"])
+        self.assertEqual(normalized["error_code"], "invalid_error")
+        self.assertIsNone(data)
+
+        for code in ("private/path", "lowercase", "A" * 65):
+            with self.subTest(code=code):
+                unsafe_error = {
+                    **base,
+                    "ok": False,
+                    "exit_code": 2,
+                    "result": {"ok": False, "error": {"code": code}},
+                }
+                normalized, data = inspect_tools.sorage_envelope_data(unsafe_error)
+                self.assertFalse(normalized["contract_valid"])
+                self.assertEqual(normalized["error_code"], "invalid_error")
+                self.assertIsNone(data)
+
+        symbolic_error = {
+            **base,
+            "ok": False,
+            "exit_code": 2,
+            "result": {"ok": False, "error": {"code": "AMBIGUOUS_PROJECT"}},
+        }
+        normalized, data = inspect_tools.sorage_envelope_data(symbolic_error)
+        self.assertTrue(normalized["contract_valid"])
+        self.assertEqual(normalized["error_code"], "AMBIGUOUS_PROJECT")
+        self.assertIsNone(data)
+
+    def test_sorage_version_uses_the_bare_v010_contract(self) -> None:
+        base = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+        }
+        bare = {**base, "result": {"name": "sorage", "version": "v0.1.0"}}
+        enveloped = {
+            **base,
+            "result": {
+                "ok": True,
+                "data": {"name": "sorage", "version": "v0.1.0"},
+            },
+        }
+        self.assertTrue(inspect_tools.normalize_sorage_version(bare)["contract_valid"])
+        self.assertFalse(
+            inspect_tools.normalize_sorage_version(enveloped)["contract_valid"]
+        )
+
+    def test_sorage_directory_ignore_tracking_and_symlinks_block_readiness(
+        self,
+    ) -> None:
+        cases = (
+            "missing_skill",
+            "marker_only",
+            "partial_ignore",
+            "symlinked",
+            "descendant_symlinked",
+            "tracked",
+        )
+        for case in cases:
+            with self.subTest(case=case):
+                self.install_fake_sorage()
+                if case != "missing_skill":
+                    self.install_sorage_skill()
+                if case == "marker_only":
+                    self.repository.joinpath(".gitignore").write_text(
+                        ".sorage/INBOX.md\n", encoding="utf-8"
+                    )
+                elif case == "partial_ignore":
+                    self.repository.joinpath(".gitignore").write_text(
+                        ".sorage/*\n!.sorage/notes.md\n", encoding="utf-8"
+                    )
+                    self.repository.joinpath(".sorage").mkdir()
+                    self.repository.joinpath(".sorage/notes.md").write_text(
+                        "not derived\n", encoding="utf-8"
+                    )
+                else:
+                    self.repository.joinpath(".gitignore").write_text(
+                        ".sorage/\n", encoding="utf-8"
+                    )
+                if case == "tracked":
+                    self.repository.joinpath(".sorage").mkdir()
+                    self.repository.joinpath(".sorage/INBOX.md").write_text(
+                        "derived\n", encoding="utf-8"
+                    )
+                    self.git("add", "-f", ".sorage/INBOX.md")
+                elif case == "symlinked":
+                    external = self.base / "external-sorage"
+                    external.mkdir()
+                    self.repository.joinpath(".sorage").symlink_to(
+                        external, target_is_directory=True
+                    )
+                elif case == "descendant_symlinked":
+                    self.repository.joinpath(".sorage").mkdir()
+                    external = self.base / "external-marker"
+                    external.write_text("derived\n", encoding="utf-8")
+                    self.repository.joinpath(".sorage/INBOX.md").symlink_to(external)
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    sorage = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(sorage["status"], "installed")
+                self.assertEqual(sorage["readiness_status"], "degraded")
+                if case == "marker_only":
+                    self.assertFalse(sorage["configuration"][0]["ignored"])
+                if case == "partial_ignore":
+                    self.assertTrue(sorage["configuration"][0]["unignored"])
+                    self.repository.joinpath(".sorage/notes.md").unlink()
+                    self.repository.joinpath(".sorage").rmdir()
+                if case == "tracked":
+                    self.assertTrue(sorage["configuration"][0]["tracked"])
+                if case == "symlinked":
+                    self.assertTrue(sorage["configuration"][0]["symlinked"])
+                    self.repository.joinpath(".sorage").unlink()
+                if case == "descendant_symlinked":
+                    self.assertTrue(sorage["configuration"][0]["tree_symlinked"])
+                    self.repository.joinpath(".sorage/INBOX.md").unlink()
+                    self.repository.joinpath(".sorage").rmdir()
+
+    def test_sorage_rejects_invalid_project_resolution_and_unsupported_runtime(
+        self,
+    ) -> None:
+        self.install_fake_sorage(project_data=[])
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            invalid_resolution = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+        self.assertEqual(invalid_resolution["status"], "degraded")
+        self.assertEqual(
+            invalid_resolution["project_registration"]["status"], "unverifiable"
+        )
+
+        for error_code in (
+            "AMBIGUOUS_PROJECT",
+            "BINDING_DUPLICATE",
+            "PROJECT_SLUG_CONFLICT",
+            "VAULT_CONTAINMENT",
+        ):
+            with self.subTest(error_code=error_code):
+                self.install_fake_sorage(project_error=error_code)
+                with (
+                    mock.patch.dict(os.environ, self.environment, clear=True),
+                    mock.patch.object(
+                        inspect_tools.platform, "system", return_value="Darwin"
+                    ),
+                    mock.patch.object(
+                        inspect_tools.platform, "machine", return_value="arm64"
+                    ),
+                ):
+                    native_error = inspect_tools.inspect_sorage(
+                        self.repository,
+                        NORMAL_PROBE_TIMEOUT_SECONDS,
+                        include_readiness=True,
+                    )
+                self.assertEqual(native_error["status"], "installed")
+                self.assertEqual(native_error["readiness_status"], "resolution_error")
+                self.assertEqual(
+                    native_error["project_registration"]["status"], "unverifiable"
+                )
+                self.assertTrue(
+                    native_error["probes"]["project_resolve"]["contract_valid"]
+                )
+                self.assertEqual(
+                    native_error["probes"]["project_resolve"]["error_code"],
+                    error_code,
+                )
+                self.assert_sorage_private_fields_absent(native_error)
+
+        self.install_fake_sorage(version="v0.2.0")
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Linux"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="x86_64"),
+        ):
+            unsupported = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+        self.assertEqual(unsupported["status"], "degraded")
+        self.assertEqual(
+            unsupported["probes"]["doctor"]["reason"], "unsupported_runtime"
+        )
 
     def test_dolgorae_requires_verified_supported_machine_binary(self) -> None:
         capabilities = self.dolgorae_capabilities()
@@ -2115,8 +2913,40 @@ else:
             10.0,
             include_podway=False,
             include_ouroboros=False,
+            include_sorage=False,
             require_mulgae_mcp=False,
             verify_dolgorae_release=True,
+        )
+        self.assertEqual(json.loads(output.getvalue()), result)
+
+    def test_inspector_cli_routes_sorage_readiness_flag(self) -> None:
+        output = io.StringIO()
+        result = {"schema_version": inspect_tools.SCHEMA_VERSION}
+        with (
+            mock.patch.object(
+                sys,
+                "argv",
+                [
+                    "inspect_tools.py",
+                    "--repository",
+                    str(self.repository),
+                    "--include-sorage",
+                ],
+            ),
+            mock.patch.object(inspect_tools, "inspect", return_value=result) as inspect,
+            mock.patch.object(sys, "stdout", output),
+        ):
+            exit_code = inspect_tools.main()
+
+        self.assertEqual(exit_code, 0)
+        inspect.assert_called_once_with(
+            str(self.repository),
+            10.0,
+            include_podway=False,
+            include_ouroboros=False,
+            include_sorage=True,
+            require_mulgae_mcp=False,
+            verify_dolgorae_release=False,
         )
         self.assertEqual(json.loads(output.getvalue()), result)
 
@@ -4261,7 +5091,7 @@ else:
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v14")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v15")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 

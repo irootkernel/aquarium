@@ -10,7 +10,7 @@ Runtime normalization requires Python 3.10 or newer and PyYAML 6.x supplied by t
 schema: aquarium.dev-setup-bundle/v1
 
 defaults:
-  tools: [dolgorae, mulgae, gaori, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
+  tools: [dolgorae, mulgae, gaori, sorage, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
   project_mcp: []
   agents_guidance: skip
 
@@ -27,9 +27,11 @@ targets:
 
 The top-level mapping accepts exactly `schema`, `defaults`, and `targets`. `schema` must be `aquarium.dev-setup-bundle/v1`. `defaults` accepts exactly `tools`, `project_mcp`, and `agents_guidance`; all three are required. `targets` must be a non-empty sequence.
 
-Supported tools are `sanho`, `dolgorae`, `mulgae`, `gaori`, `podway`, `ouroboros`, `lora`, `deslop`, `humanizer`, and `im-not-ai`. `defaults.tools` may be empty only when every target gains at least one effective tool through `include`. A target accepts exactly `path`, `include`, `exclude`, `project_mcp_include`, `project_mcp_exclude`, and `agents_guidance`; only `path` is required, and omitted list overrides are empty.
+Supported tools are `sanho`, `dolgorae`, `mulgae`, `gaori`, `sorage`, `podway`, `ouroboros`, `lora`, `deslop`, `humanizer`, and `im-not-ai`. `defaults.tools` may be empty only when every target gains at least one effective tool through `include`. A target accepts exactly `path`, `include`, `exclude`, `project_mcp_include`, `project_mcp_exclude`, and `agents_guidance`; only `path` is required, and omitted list overrides are empty.
 
 For each target, effective tools are `defaults.tools` plus `include` minus `exclude`. Selected Mulgae and Gaori MCP registrations are user-global by default and are prepared once as shared components. The retained v1 `project_mcp` field is an explicit local-scope override: effective local overrides are `defaults.project_mcp` plus `project_mcp_include` minus `project_mcp_exclude`. Keep the default empty unless repositories intentionally require root-bound MCP registrations. The same value may not appear in both sides of one override, local MCP overrides support only `mulgae` and `gaori`, and every effective override must also be an effective tool. Each list must contain unique strings.
+
+Sorage CLI, paired-skill, and initialization preparation are shared across selected targets. Project resolution and any approved `project add` or `project bind` action remain target-specific; the manifest carries no Project name, slug, Vault path, or Sorage configuration. `dev-setup` obtains those identifiers and every mutation approval directly for each target.
 
 `agents_guidance` must be `skip` or `propose`. A target value overrides the default. `propose` preselects preparation of the complete `dev-setup` repository operating-guidance proposal: the root AGENTS.md structure, mandatory project-specific commit-message rule, evidence-based project index, applicable Aquarium references, and root CLAUDE.md delegation. When `humanizer` or `im-not-ai` is effective for that target, the proposal also includes its English or Korean final-pass rule. `skip` leaves those selected tools as shared installation or diagnosis work only. It does not supply a missing commit-header convention or resolve conflicting existing guidance; `dev-setup` asks for those decisions before finalizing the proposal. Applying the complete displayed diff remains separately approved.
 

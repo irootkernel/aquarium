@@ -25,13 +25,13 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **작업에는 identity가 있습니다.** 수행 대상 task나 epic은 roadmap 안에서 ID와 lifecycle 상태를 가집니다. Commit은 `task-commit`을 거치며, 사용자가 확인한 lifecycle 변경을 건너뛰지 않고 함께 기록합니다.
 - **수행은 단계와 gate로 나뉩니다.** `task-handler`는 task 하나를 plan부터 close까지 7단계로 진행합니다. Plan을 승인하기 전에는 아무것도 바꾸지 않습니다. 해당하는 모든 roadmap 요구사항은 현재 증거와 대응되어야 합니다. Closeout은 사용자의 명시적 승인을 기다립니다.
 - **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 Aquarium이 로컬에서 타당성과 우선순위를 다시 판단하기 전까지 참고 의견(advisory)입니다. 승인된 handler는 유효한 Medium 이상 문제를 수정한 뒤 다시 review합니다. Low 문제는 범위에 따라 로컬에서 고치거나 deferred-feedback에 등록하고, 구조적인 작업이면 TODO 후보로 남깁니다.
-- **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
+- **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact와 Sorage에서 파생된 artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
 - **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review와 remediation round는 정해진 예산 안에서만 돌고, cold validation은 새 gap이 더 발견되지 않으면 멈춥니다.
 - **불변식과 테스트는 계약입니다.** Release QA는 저장소가 자체적으로 등록한 active Design Gate가 있으면 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
+Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
 
 ## 설치
 
@@ -64,6 +64,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 - [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`은 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review합니다. Provider에는 immutable capture로 만든 격리된 read-only workspace만 보입니다. 임시 provider workspace는 사용 후 삭제되지만 capture와 report는 `.mulgae/` 아래에 남습니다. 결과는 staged file이나 standard output으로 전달됩니다. Aquarium은 finding의 타당성과 우선순위를 로컬에서 다시 판단합니다.
+- [Sorage](https://github.com/irootkernel/sorage)는 등록된 프로젝트 사이에서 로컬 문서 handoff를 중개합니다. Aquarium은 지원되는 Apple Silicon CLI와 paired `use-sorage` skill을 설치·진단하고, 별도 승인 후 로컬 초기화와 현재 Git 저장소 등록까지 수행할 수 있습니다. Inbox, outbox, review, revision, retention, deletion, Vault 작업은 paired skill이 맡습니다.
 - [Dolgorae](https://github.com/irootkernel/dolgorae)는 Independent Review에 필요한 immutable capture와 checked review lifecycle을 제공합니다. production review 경로에서는 공식 stable v0.1.x Apple Silicon 실행 파일 가운데 v0.1.1 이상만 검증을 거쳐 허용합니다.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 지정한 reviewer를 새로 실행합니다. Claude를 지정할 수도 있습니다. Reviewer는 현재 등록된 worktree에서 staged, HEAD, commit, range target을 검토하며, staged review는 `git diff --cached`를 직접 읽습니다. Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다. Claude가 생성하는 native session과 tool output은 `~/.claude` 아래에만 저장할 수 있습니다. 보고서가 Orca lifecycle message에 담기 어려울 만큼 길 때도 같은 경로만 사용합니다. 다른 reviewer는 파일을 출력할 수 없습니다. Dolgorae는 사용하지 않으며, Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
@@ -73,13 +74,13 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 이 도구들은 작업 구체화부터 문서 동기화까지 하나의 통제된 경로를 이룹니다. Aquarium은 그 사이를 연결해, 도구 하나의 성공이 프로젝트 완료로 오인되지 않게 합니다.
 
-`.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, disposable root의 runtime evidence는 local이며 삭제될 수 있습니다. Aquarium은 해당 경로나 identity를 tracked roadmap, repository handoff, commit message에서 evidence로 인용하지 않습니다. 영속적인 예외가 꼭 필요하면 검토된 bounded non-sensitive structured evidence만 repository evidence root, 기본값 `evidence/aquarium/`, 아래의 `aquarium.promoted-evidence/v1` package로 복사합니다.
+`.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, 파생 `.sorage/**`, disposable root의 runtime evidence는 local이며 삭제될 수 있습니다. Aquarium은 해당 경로나 identity를 tracked roadmap, repository handoff, commit message에서 evidence로 인용하지 않습니다. 영속적인 예외가 꼭 필요하면 검토된 bounded non-sensitive structured evidence만 repository evidence root, 기본값 `evidence/aquarium/`, 아래의 `aquarium.promoted-evidence/v1` package로 복사합니다.
 
 ## 운영 경계
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
 - `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
-- Setup이나 진단 대상으로 선택한 Dolgorae는 official GitHub Releases metadata를 자동으로 조회하지만 archive 다운로드와 설치에는 각각 별도 승인이 필요합니다. Sanho, Mulgae, Gaori, Podway는 설치된 `use-*` skill과 비교하기 위해 `raw.githubusercontent.com`에서 공개 skill 파일 4개를 임시 저장소로 내려받습니다. 선택하지 않은 도구와 그 밖의 network 작업은 포함되지 않으며, setup은 AI provider를 호출하지 않습니다.
+- Setup이나 진단 대상으로 선택한 Dolgorae는 official GitHub Releases metadata를 자동으로 조회하지만 archive 다운로드와 설치에는 각각 별도 승인이 필요합니다. Sanho, Mulgae, Gaori, Sorage, Podway는 설치된 `use-*` skill과 비교하기 위해 `raw.githubusercontent.com`에서 공개 paired-skill 파일을 임시 저장소로 내려받습니다. Sorage는 파일 1개, 나머지 네 도구는 파일 4개를 사용합니다. 선택하지 않은 도구와 그 밖의 network 작업은 포함되지 않으며, setup은 AI provider를 호출하지 않습니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서

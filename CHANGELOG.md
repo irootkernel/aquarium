@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.15 - Unreleased
 
+### Added
+
+- Add optional Sorage v0.1.x setup support for exact-release CLI and paired-skill diagnosis, minimal local initialization, approved Git repository registration, derived-marker ignore safety, bundle selection, and repository guidance.
+
 ## v0.1.14 - 2026-09-04
 
 ### Added

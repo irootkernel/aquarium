@@ -18,7 +18,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v14` | Read-only normalized Git, optional official Dolgorae v0.1.x release verification, tool, skill, MCP, configuration, writing-skill structure, same-ID Podway-valid customization, and bounded readiness inspection |
+| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional component flags | `aquarium-dev-setup-inspection.v15` | Read-only normalized Git, optional official Dolgorae v0.1.x release verification, tool, skill, MCP, configuration, Sorage initialization and Project registration, writing-skill structure, same-ID Podway-valid customization, and bounded readiness inspection |
 | `dev-setup/scripts/verify_dolgorae_release.py` | Optional supported Dolgorae version and network timeout | `aquarium-dolgorae-release-verification.v1` | Bounded official GitHub Release identity verification for stable v0.1.1 through v0.1.x |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
@@ -30,6 +30,14 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v4` | Executes the exact v0.2.8 CLI and sibling daemon in isolated `release-qa` mode against all managed Procedures, declaration-limit failures, two lifecycle passes, and fenced workspace-removal rejection, success, and bounded replay behavior |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
+
+The additive `tools.sorage` member reports the common tool fields plus `version_supported`, `platform`, `agent_skill`, `initialization_status`, `project_registration`, and `readiness_status`. It also reports directory-wide ignore, tracking and symlink state, and normalized `version`, `doctor`, and `project_resolve` probes. The version probe validates the bare v0.1 name/version object. Doctor and Project probes validate Sorage envelopes, and doctor state is accepted only for the complete ordered 20-check v0.1 catalog.
+
+The inspector exposes only doctor severity counts and the resolved Project slug, status, and binding kind. It excludes Installation IDs, Workspace keys, request IDs, display names, Vault and binding paths, check messages, Handoff metadata, and Artifact content.
+
+`status` describes supported CLI health and becomes `configured` only at complete readiness. `readiness_status` describes initialization, registration, and repository preparation. Default inventory leaves a supported Sorage CLI's readiness `not_inspected`; an unsupported version or platform is `degraded` without running a readiness probe.
+
+A successful unregistered result is `registration_required`. A valid native resolution failure is `resolution_error` and cannot authorize Project creation or binding. `--include-sorage` runs doctor after selection and runs Project resolution only when doctor has no blocking check. Version v15 introduces the `tools.sorage` member and its normalized readiness fields.
 
 `plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev.py` owns diagnose, enrollment, hook repair, build request, rebuild, worker, cleanup, launcher installation, and managed-service planning and application. Managed-service producers emit `aquarium-dev-producer-description/v2` and `aquarium-dev-artifact-manifest/v2`; their controllers emit `aquarium-dev-service-status/v1`, `aquarium-dev-service-plan/v1`, and `aquarium-dev-service-result/v1`. It has no Codex-configuration or production-tool setup operation. The installed `aquarium-dev` launcher accepts only a supported tool and arguments, falls back only an absent foreground tool to the caller's global `PATH` outside both Aquarium roots, and requires a matching ready managed service without production fallback while leaving the caller's environment unchanged.
 
