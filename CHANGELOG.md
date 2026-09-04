@@ -6,21 +6,20 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add the production-isolated `aquarium-dev` channel for exact local-main artifacts under `~/.aquarium-dev`, with safe enrollment, immutable publication, development-first per-tool resolution, global fallback for absent foreground tools, fail-closed producer-owned managed services, inherited caller environment, and direct Orca-managed review.
-- Adopt official Dolgorae v0.1.1 as the minimum stable Apple Silicon runtime and dynamically verify compatible stable v0.1.x releases for setup diagnosis and checksum-bound Independent Review.
-- Add exact-upstream Humanizer and im-not-ai setup with per-project English and Korean documentation guidance.
+- Add the production-isolated `aquarium-dev` channel for clean local-main artifacts, with explicit enrollment, immutable generations under `~/.aquarium-dev`, the caller's environment, per-tool foreground fallback, and fail-closed managed services.
+- Add official Dolgorae v0.1.1 support as the minimum Apple Silicon runtime for setup diagnosis and checksum-bound Independent Review, while accepting compatible stable v0.1.x releases.
+- Add exact-upstream Humanizer and im-not-ai installation, inspection, bundle selection, and opt-in English and Korean repository guidance.
 
 ### Changed
 
-- Require an execution dossier for epics with at least three member tasks or three requirement-bearing canonical documents, while letting smaller semantically complete epics use repository-owned documentation and retaining shared dossiers until their final consumer closes.
-- Adopt Podway v0.2.8 as the minimum stable runtime, require named-mode daemon readiness v3, qualify its official artifact across the managed Procedures and fenced workspace removal, and route destructive workspace runtime-mode moves through an explicit same-tag lifecycle handoff.
-- Extend development setup inspection and bundle selection to keep writing-skill installation separate from repository guidance.
-- Unify review finding adjudication and remediation across Independent Review, Mulgae, and Orca Review with authority-aware reporting, mandatory correction and re-review for Medium-or-higher issues, and proportionate Low dispositions.
+- Require execution dossiers only for epics with at least three member tasks or three requirement-bearing canonical documents, and retain shared dossiers until the final consumer closes.
+- Raise the minimum supported Podway version to v0.2.8, adopt named-mode daemon readiness v3, qualify managed Procedures and fenced workspace removal against the official artifact, and require explicit authorization for runtime-mode changes.
+- Apply one finding-disposition contract across Independent Review, Mulgae, and Orca Review, with mandatory correction and re-review for Medium-or-higher issues and explicit dispositions for Low issues.
 
 ### Fixed
 
-- Prevent roadmap commits from falling back to system or global Git identities, and pin both author and committer to the repository's local or worktree identity.
-- Let Orca Review inspect staged changes directly in the current registered worktree with an explicitly requested native reviewer, including Claude, without a capture or repository-state fingerprint, while allowing Claude-owned native output and oversized reports only beneath `~/.claude`.
+- Pin roadmap commit authors and committers to repository-local or worktree Git identities instead of falling back to system or global identities.
+- Let Orca Review inspect staged changes directly in the registered worktree with the requested native reviewer, while restricting Claude's native output to `~/.claude`.
 
 ## v0.1.13 - 2026-08-28
 
