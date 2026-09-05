@@ -44,7 +44,7 @@ def release_case(tmp_path: Path):
 
 
 def write_json(path: Path, value: object) -> Path:
-    path.write_text(json.dumps(value), encoding="utf-8")
+    path.write_bytes(qa.canonical_bytes(value))
     return path
 
 
@@ -154,6 +154,7 @@ def test_full_findings_round_trip_to_confirmation_pass(release_case):
                 "full_record": str(record),
                 "manifest": str(manifest),
                 "claim": begin["path"],
+                "claim_digest": begin["digest"],
                 "confirmation_root": str(confirmation),
                 "cluster_results": [str(confirmation_cluster)],
             },
@@ -222,7 +223,7 @@ def test_prepare_rejects_unmapped_surface_and_missing_finding(release_case):
     with pytest.raises(qa.EvidenceError, match="mappings"):
         qa.prepare_confirmation(base, str(evidence / "manifest.json"))
     base["changed_surface_mappings"] = [{"path": "surface.txt", "scenarios": ["S-1"]}]
-    with pytest.raises(qa.EvidenceError, match="verified finding"):
+    with pytest.raises(qa.EvidenceError, match="frozen finding-to-scenario"):
         qa.prepare_confirmation(base, str(evidence / "manifest.json"))
 
 
@@ -322,6 +323,7 @@ def test_finish_rejects_missing_inventory_and_source_mutation(release_case):
             "full_record": str(record),
             "manifest": str(manifest),
             "claim": begin["path"],
+            "claim_digest": begin["digest"],
             "confirmation_root": str(confirmation),
             "cluster_results": [],
         }
@@ -365,10 +367,130 @@ def test_finish_rejects_extra_or_reassigned_scenario(release_case):
                     "full_record": str(record),
                     "manifest": str(manifest),
                     "claim": begin["path"],
+                    "claim_digest": begin["digest"],
                     "confirmation_root": str(confirmation),
                     "cluster_results": [str(result_file)],
                 },
                 str(confirmation / "result.json"),
             )
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_authority_outputs_are_create_once_and_claim_is_exact(release_case):
+    repo, candidate, evidence = release_case
+    result = cluster(evidence, candidate)
+    record = evidence / "record.json"
+    spec = full_spec(repo, candidate, evidence, result)
+    qa.freeze_full(spec, str(record))
+    original = record.read_bytes()
+    with pytest.raises(qa.EvidenceError) as frozen:
+        qa.freeze_full(spec, str(record))
+    assert frozen.value.code == "output_exists"
+    assert record.read_bytes() == original
+
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    manifest_bytes = manifest.read_bytes()
+    with pytest.raises(qa.EvidenceError) as prepared:
+        prepare(repo, remediated, evidence, record)
+    assert prepared.value.code == "output_exists"
+    assert manifest.read_bytes() == manifest_bytes
+
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        claim = json.loads(Path(begin["path"]).read_text())
+        assert begin["digest"] == qa.digest(claim)
+        assert claim == {
+            "schema": qa.CLAIM_SCHEMA,
+            "full_record": str(record),
+            "full_record_digest": qa.digest(json.loads(record.read_text())),
+            "manifest": str(manifest),
+            "manifest_digest": qa.digest(json.loads(manifest.read_text())),
+            "full_candidate_sha": candidate,
+            "candidate_sha": remediated,
+            "full_evidence_root": str(evidence),
+            "confirmation_root": str(confirmation),
+            "confirmation_attempt": 1,
+        }
+        assert Path(begin["path"]).stat().st_mode & 0o777 == 0o600
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_prepare_requires_exact_finding_scenario_pairs(release_case):
+    repo, candidate, evidence = release_case
+    result = cluster(evidence, candidate)
+    payload = json.loads(result.read_text())
+    second = dict(payload["scenarios"][0])
+    second["id"] = "S-2"
+    payload["scenarios"].append(second)
+    payload["verified_findings"].append(
+        {"id": "F-2", "scenario_id": "S-2", "severity": "Low"}
+    )
+    write_json(result, payload)
+    record = evidence / "record.json"
+    qa.freeze_full(full_spec(repo, candidate, evidence, result), str(record))
+    remediated = remediate(repo)
+    request = {
+        "schema": qa.PREPARE_SCHEMA,
+        "repository": str(repo),
+        "full_record": str(record),
+        "candidate_sha": remediated,
+        "changed_surface_mappings": [{"path": "surface.txt", "scenarios": ["S-1"]}],
+        "finding_reproductions": [
+            {"finding_id": "F-1", "scenario_id": "S-2"},
+            {"finding_id": "F-2", "scenario_id": "S-1"},
+        ],
+    }
+    with pytest.raises(qa.EvidenceError) as mismatch:
+        qa.prepare_confirmation(request, str(evidence / "manifest.json"))
+    assert mismatch.value.code == "finding_reproduction_mismatch"
+
+
+def test_finish_rejects_wrong_claim_digest_before_result(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_path = confirmation / "result.json"
+        with pytest.raises(qa.EvidenceError) as mismatch:
+            qa.finish_confirmation(
+                {
+                    "schema": qa.FINISH_SCHEMA,
+                    "repository": str(repo),
+                    "full_record": str(record),
+                    "manifest": str(manifest),
+                    "claim": begin["path"],
+                    "claim_digest": "sha256:" + "0" * 64,
+                    "confirmation_root": str(confirmation),
+                    "cluster_results": [
+                        str(cluster(confirmation, remediated, outcome="pass"))
+                    ],
+                },
+                str(result_path),
+            )
+        assert mismatch.value.code == "claim_digest_mismatch"
+        assert not result_path.exists()
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)

@@ -37,7 +37,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
 | EPIC-009 | Adopt Sorage v0.1.x | In Progress |
 | EPIC-010 | Separate global and repository development setup | Completed |
-| EPIC-011 | Harden release QA confirmation integrity | Planned |
+| EPIC-011 | Harden release QA confirmation integrity | In Progress |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -206,7 +206,7 @@ The bundle manifest remains `aquarium.dev-setup-bundle/v1`: it prepares the glob
 
 ## EPIC-011: Harden Release QA Confirmation Integrity
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Make the sole post-remediation release QA confirmation a fail-closed, immutable, and exactly-once settlement. Bind every confirmation to the exact frozen full-pass record, remediation manifest, candidate, evidence root, claim, attempt, and original finding-to-scenario relationship so replacement, replay, inconsistent evidence, or concurrent settlement cannot produce a trusted verdict.
 
@@ -216,6 +216,6 @@ The hardened path applies only after a complete full-mode `FINDINGS` result. A n
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-038 | Freeze exact confirmation identity | Make the full record, remediation manifest, claim, and finding-to-scenario inventory create-once artifacts bound by exact digests and candidate identity. | Planned | None |
+| TASK-038 | Freeze exact confirmation identity | Make the full record, remediation manifest, claim, and finding-to-scenario inventory create-once artifacts bound by exact digests and candidate identity. | Completed | None |
 | TASK-039 | Enforce one-shot confirmation settlement | Admit one finish operation per exact claim, persist an immutable terminal PASS, FINDINGS, INCOMPLETE, or REJECTED attempt record, and fail closed on replay, concurrency, or interrupted settlement. | Planned | TASK-038 |
 | TASK-040 | Qualify confirmation integrity | Cover valid settlement, artifact replacement, claim replay, finding-scenario mismatch, rejected evidence, concurrency, and interruption with focused tests and align the release QA contract. | Planned | TASK-038, TASK-039 |

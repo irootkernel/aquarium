@@ -682,12 +682,12 @@ documented_schema_ids = %w[
   aquarium-podway-compatibility.v4
   aquarium-release-qa-cluster-result/v1
   aquarium-release-qa-full-pass/v1
-  aquarium-release-qa-confirmation-record/v1
-  aquarium-release-qa-confirmation-prepare/v1
-  aquarium-release-qa-confirmation-manifest/v1
-  aquarium-release-qa-confirmation-begin/v1
-  aquarium-release-qa-confirmation-claim/v1
-  aquarium-release-qa-confirmation-finish/v1
+  aquarium-release-qa-confirmation-record/v2
+  aquarium-release-qa-confirmation-prepare/v2
+  aquarium-release-qa-confirmation-manifest/v2
+  aquarium-release-qa-confirmation-begin/v2
+  aquarium-release-qa-confirmation-claim/v2
+  aquarium-release-qa-confirmation-finish/v2
   aquarium-release-qa-confirmation-result/v1
   aquarium-release-qa-error/v1
   aquarium-dev-producer-description/v2
@@ -2694,12 +2694,11 @@ assert(release_qa.include?("## Establish Design Gate Enrollment") &&
        "release-qa must combine gradual Design Gate enrollment with a separate release-delta matrix")
 assert(release_qa_helper.file? && release_qa_helper.executable? &&
        release_qa_helper_body.include?('CLUSTER_SCHEMA = "aquarium-release-qa-cluster-result/v1"') &&
-       release_qa_helper_body.include?('RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v1"') &&
-       release_qa_helper_body.include?('MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v1"') &&
-       release_qa_helper_body.include?('CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v1"') &&
+       release_qa_helper_body.include?('RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v2"') &&
+       release_qa_helper_body.include?('MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v2"') &&
+       release_qa_helper_body.include?('CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v2"') &&
        release_qa_helper_body.include?('RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v1"') &&
-       release_qa_helper_body.include?("os.O_EXCL") &&
-       release_qa_helper_body.include?("os.replace") &&
+       release_qa_helper_body.include?("os.link") &&
        release_qa_helper_body.include?('"merge-base", "--is-ancestor"') &&
        release_qa_helper_body.include?('"status", "--porcelain", "--untracked-files=all"') &&
        release_qa_helper_body.include?('"INCOMPLETE"') &&

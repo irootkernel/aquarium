@@ -52,7 +52,7 @@ Reject `confirmation` as `INCOMPLETE` if that exact reconciliation, the manifest
 
 In `full` mode, follow every section below and explore the complete Design Gate and release-delta matrices. In `confirmation` mode, do not rebuild or broaden those matrices. Preserve the project-derived cluster boundaries and scenario inventory from the frozen previous full-pass matrix, and dispatch fresh workers for every retained cluster.
 
-Do not admit confirmation from prose or a hand-copied manifest. Resolve this skill's directory and run `scripts/manage_release_qa.py begin-confirmation --input <begin.json>` before dispatch. The helper validates the canonical record and manifest, Git ancestry, exact clean local-main candidate, physical evidence roots, and atomically claims the sole attempt. Any nonzero result is `INCOMPLETE` and starts no worker.
+Do not admit confirmation from prose or a hand-copied manifest. Resolve this skill's directory and run `scripts/manage_release_qa.py begin-confirmation --input <begin.json>` before dispatch. The helper validates the canonical record and manifest, Git ancestry, exact clean local-main candidate, physical evidence roots, and atomically creates the sole claim. Preserve the returned claim path and digest; `finish-confirmation` requires both. Any nonzero result is `INCOMPLETE` and starts no worker.
 
 For each cluster, rerun every retained scenario and every verified finding reproduction. Require every remediation-changed surface to map to at least one retained scenario or finding reproduction, and return `INCOMPLETE` when that mapping or its evidence is missing because confirmation cannot add new coverage.
 
@@ -129,9 +129,9 @@ In `full` mode, store beneath the retained evidence root and return an authorita
 
 Before reporting the full verdict or applying remediation, run `scripts/manage_release_qa.py freeze-full --input <full-pass.json> --output <evidence-root>/confirmation-record.json`. The input supplies every worker result, the exact ordered commit matrix, every changed-path surface mapping, and Design Gate state.
 
-A nonzero result makes the pass `INCOMPLETE`; never reconstruct the record after remediation. The helper computes `INCOMPLETE` before `FINDINGS` before `PASS`, writes the canonical `aquarium-release-qa-confirmation-record/v1` atomically with private permissions, and freezes even a complete `FINDINGS` pass.
+A nonzero result makes the pass `INCOMPLETE`; never reconstruct the record after remediation. The helper computes `INCOMPLETE` before `FINDINGS` before `PASS`, writes the create-once canonical `aquarium-release-qa-confirmation-record/v2` with private permissions, and freezes even a complete `FINDINGS` pass.
 
-After an admitted confirmation finishes, run `scripts/manage_release_qa.py finish-confirmation --input <finish.json> --output <confirmation-root>/confirmation-result.json`. It requires every retained cluster and scenario exactly once with no extras, all finding reproductions, fresh in-root evidence, the unchanged clean candidate, and the matching attempt claim. Its `aquarium-release-qa-confirmation-result/v1` verdict is authoritative; a nonzero result or any missing evidence is `INCOMPLETE`.
+After an admitted confirmation finishes, run `scripts/manage_release_qa.py finish-confirmation --input <finish.json> --output <confirmation-root>/confirmation-result.json`. It requires every retained cluster and scenario exactly once with no extras, each exact frozen finding-to-scenario pair, fresh in-root evidence, the unchanged clean candidate, and the matching claim path and digest. Its `aquarium-release-qa-confirmation-result/v1` verdict is authoritative; a nonzero result or any missing evidence is `INCOMPLETE`.
 
 Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, authoritative frozen confirmation record, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
 

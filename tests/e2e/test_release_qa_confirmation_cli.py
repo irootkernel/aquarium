@@ -121,7 +121,7 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
     prepare_input = dump(
         evidence / "prepare-input.json",
         {
-            "schema": "aquarium-release-qa-confirmation-prepare/v1",
+            "schema": "aquarium-release-qa-confirmation-prepare/v2",
             "repository": str(repo),
             "full_record": str(record),
             "candidate_sha": remediated,
@@ -150,14 +150,15 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
         begin_input = dump(
             evidence / "begin-input.json",
             {
-                "schema": "aquarium-release-qa-confirmation-begin/v1",
+                "schema": "aquarium-release-qa-confirmation-begin/v2",
                 "repository": str(repo),
                 "full_record": str(record),
                 "manifest": str(manifest),
                 "confirmation_root": str(confirmation),
             },
         )
-        claim = run("begin-confirmation", "--input", str(begin_input))["path"]
+        claim_receipt = run("begin-confirmation", "--input", str(begin_input))
+        claim = claim_receipt["path"]
         second_value = json.loads(begin_input.read_text())
         second_value["confirmation_root"] = str(second)
         dump(begin_input, second_value)
@@ -169,11 +170,12 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
         finish_input = dump(
             confirmation / "finish-input.json",
             {
-                "schema": "aquarium-release-qa-confirmation-finish/v1",
+                "schema": "aquarium-release-qa-confirmation-finish/v2",
                 "repository": str(repo),
                 "full_record": str(record),
                 "manifest": str(manifest),
                 "claim": claim,
+                "claim_digest": claim_receipt["digest"],
                 "confirmation_root": str(confirmation),
                 "cluster_results": [str(result_file)],
             },

@@ -16,12 +16,12 @@ from typing import Any, NoReturn
 ERROR_SCHEMA = "aquarium-release-qa-error/v1"
 CLUSTER_SCHEMA = "aquarium-release-qa-cluster-result/v1"
 FULL_INPUT_SCHEMA = "aquarium-release-qa-full-pass/v1"
-RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v1"
-PREPARE_SCHEMA = "aquarium-release-qa-confirmation-prepare/v1"
-MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v1"
-BEGIN_SCHEMA = "aquarium-release-qa-confirmation-begin/v1"
-CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v1"
-FINISH_SCHEMA = "aquarium-release-qa-confirmation-finish/v1"
+RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v2"
+PREPARE_SCHEMA = "aquarium-release-qa-confirmation-prepare/v2"
+MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v2"
+BEGIN_SCHEMA = "aquarium-release-qa-confirmation-begin/v2"
+CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v2"
+FINISH_SCHEMA = "aquarium-release-qa-confirmation-finish/v2"
 RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v1"
 MAX_JSON_BYTES = 4 * 1024 * 1024
 OUTCOMES = {"pass", "finding", "gap"}
@@ -62,9 +62,20 @@ def digest(value: Any) -> str:
     return "sha256:" + hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
-def atomic_write(path_value: str | Path, value: Any) -> Path:
+def require_fields(value: dict[str, Any], field: str, expected: set[str]) -> None:
+    missing = expected - set(value)
+    additional = set(value) - expected
+    if missing or additional:
+        details = []
+        if missing:
+            details.append("missing " + ", ".join(sorted(missing)))
+        if additional:
+            details.append("additional " + ", ".join(sorted(additional)))
+        fail("schema_invalid", f"{field} has invalid fields: {'; '.join(details)}")
+
+
+def create_once_write(path_value: str | Path, value: Any) -> Path:
     path = Path(path_value)
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         os.fchmod(descriptor, 0o600)
@@ -72,8 +83,15 @@ def atomic_write(path_value: str | Path, value: Any) -> Path:
             target.write(canonical_bytes(value))
             target.flush()
             os.fsync(target.fileno())
-        os.replace(temporary, path)
-        path.chmod(0o600)
+        try:
+            os.link(temporary, path, follow_symlinks=False)
+        except FileExistsError:
+            fail("output_exists", f"immutable output already exists: {path}")
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
     finally:
         try:
             os.unlink(temporary)
@@ -443,7 +461,7 @@ def freeze_full(spec: dict[str, Any], output: str) -> dict[str, Any]:
         "verdict": verdict,
     }
     output_path = output_under(root, output, "output")
-    atomic_write(output_path, record)
+    create_once_write(output_path, record)
     return {
         "schema": RECORD_SCHEMA,
         "path": str(output_path.resolve()),
@@ -456,6 +474,26 @@ def load_record(path: str) -> tuple[dict[str, Any], str]:
     record = read_json(path)
     if record.get("schema") != RECORD_SCHEMA:
         fail("schema_invalid", f"record must use {RECORD_SCHEMA}")
+    require_fields(
+        record,
+        "record",
+        {
+            "schema",
+            "version",
+            "previous_release",
+            "baseline_sha",
+            "candidate_sha",
+            "candidate_tree",
+            "evidence_root",
+            "design_gate_state",
+            "clusters",
+            "commit_matrix",
+            "surface_matrix",
+            "verdict",
+        },
+    )
+    if Path(path).read_bytes() != canonical_bytes(record):
+        fail("record_tampered", "record bytes are not canonical")
     return record, digest(record)
 
 
@@ -553,6 +591,18 @@ def frozen_inventory(record: dict[str, Any]) -> list[dict[str, Any]]:
 def prepare_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
     if spec.get("schema") != PREPARE_SCHEMA:
         fail("schema_invalid", f"prepare input must use {PREPARE_SCHEMA}")
+    require_fields(
+        spec,
+        "prepare input",
+        {
+            "schema",
+            "repository",
+            "full_record",
+            "candidate_sha",
+            "changed_surface_mappings",
+            "finding_reproductions",
+        },
+    )
     repo = repository(spec.get("repository"))
     record, record_digest, root = validate_record(
         repo, text(spec.get("full_record"), "full_record")
@@ -599,17 +649,16 @@ def prepare_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
                 "scenario_id": text(item.get("scenario_id"), "scenario_id"),
             }
         )
-    expected_findings = {
-        finding["id"]
+    expected_reproductions = [
+        {"finding_id": finding["id"], "scenario_id": finding["scenario_id"]}
         for cluster in record["clusters"]
         for finding in cluster["verified_findings"]
-    }
-    if {item["finding_id"] for item in reproductions} != expected_findings or len(
-        reproductions
-    ) != len(expected_findings):
+    ]
+    expected_findings = {item["finding_id"] for item in expected_reproductions}
+    if reproductions != expected_reproductions:
         fail(
-            "finding_reproduction_incomplete",
-            "every verified finding must have exactly one reproduction",
+            "finding_reproduction_mismatch",
+            "finding reproductions must exactly match the frozen finding-to-scenario pairs",
         )
     if any(item["scenario_id"] not in known_scenarios for item in reproductions):
         fail(
@@ -646,7 +695,7 @@ def prepare_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
         "confirmation_attempt": 1,
     }
     output_path = output_under(root, output, "output")
-    atomic_write(output_path, manifest)
+    create_once_write(output_path, manifest)
     return {
         "schema": MANIFEST_SCHEMA,
         "path": str(output_path.resolve()),
@@ -664,6 +713,30 @@ def load_confirmation(
     manifest = read_json(text(spec.get("manifest"), "manifest"))
     if manifest.get("schema") != MANIFEST_SCHEMA:
         fail("schema_invalid", f"manifest must use {MANIFEST_SCHEMA}")
+    require_fields(
+        manifest,
+        "manifest",
+        {
+            "schema",
+            "version",
+            "previous_release",
+            "full_candidate_sha",
+            "candidate_sha",
+            "remediation_commits",
+            "remediation_range",
+            "full_record",
+            "full_record_digest",
+            "evidence_root",
+            "inventory",
+            "changed_surface_mappings",
+            "finding_reproductions",
+            "confirmation_attempt",
+        },
+    )
+    if Path(text(spec.get("manifest"), "manifest")).read_bytes() != canonical_bytes(
+        manifest
+    ):
+        fail("manifest_tampered", "manifest bytes are not canonical")
     if manifest.get("full_record_digest") != record_digest:
         fail("record_tampered", "manifest full-record digest does not match")
     if manifest.get("inventory") != frozen_inventory(record):
@@ -702,38 +775,35 @@ def load_confirmation(
         for cluster in record["clusters"]
         for scenario in cluster["scenarios"]
     }
-    known_findings = {
-        finding["id"]
+    expected_reproductions = [
+        {"finding_id": finding["id"], "scenario_id": finding["scenario_id"]}
         for cluster in record["clusters"]
         for finding in cluster["verified_findings"]
-    }
+    ]
+    known_findings = {item["finding_id"] for item in expected_reproductions}
     reproductions = manifest.get("finding_reproductions")
     if not isinstance(reproductions, list):
         fail(
             "finding_reproduction_invalid",
             "manifest finding reproductions are invalid",
         )
-    reproduction_findings: list[str] = []
     for item in reproductions:
         if not isinstance(item, dict):
             fail(
                 "finding_reproduction_invalid",
                 "manifest finding reproduction is invalid",
             )
-        finding_id = text(item.get("finding_id"), "manifest.finding_id")
+        text(item.get("finding_id"), "manifest.finding_id")
         scenario_id = text(item.get("scenario_id"), "manifest.scenario_id")
         if scenario_id not in known_scenarios:
             fail(
                 "finding_reproduction_invalid",
                 "manifest reproduction uses an unknown scenario",
             )
-        reproduction_findings.append(finding_id)
-    if set(reproduction_findings) != known_findings or len(
-        reproduction_findings
-    ) != len(known_findings):
+    if reproductions != expected_reproductions:
         fail(
-            "finding_reproduction_incomplete",
-            "manifest does not reproduce every finding exactly once",
+            "finding_reproduction_mismatch",
+            "manifest does not preserve the exact frozen finding-to-scenario pairs",
         )
     for item in mappings:
         if not set(item["scenarios"]).issubset(known_scenarios) or not set(
@@ -752,6 +822,11 @@ def load_confirmation(
 def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
     if spec.get("schema") != BEGIN_SCHEMA:
         fail("schema_invalid", f"begin input must use {BEGIN_SCHEMA}")
+    require_fields(
+        spec,
+        "begin input",
+        {"schema", "repository", "full_record", "manifest", "confirmation_root"},
+    )
     repo, _, record_digest, manifest, root = load_confirmation(spec)
     candidate = manifest["candidate_sha"]
     clean_exact_main(repo, candidate)
@@ -760,32 +835,50 @@ def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
         fail("evidence_root_invalid", "confirmation requires a fresh evidence root")
     claim = {
         "schema": CLAIM_SCHEMA,
+        "full_record": str(
+            Path(text(spec.get("full_record"), "full_record")).resolve()
+        ),
         "full_record_digest": record_digest,
+        "manifest": str(Path(text(spec.get("manifest"), "manifest")).resolve()),
         "manifest_digest": digest(manifest),
+        "full_candidate_sha": manifest["full_candidate_sha"],
         "candidate_sha": candidate,
+        "full_evidence_root": str(root),
         "confirmation_root": str(confirmation_root),
-        "status": "started",
+        "confirmation_attempt": 1,
     }
     claim_path = (
         root / f"confirmation-attempt-{record_digest.removeprefix('sha256:')}.json"
     )
     try:
-        descriptor = os.open(claim_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    except FileExistsError:
-        fail(
-            "confirmation_already_started",
-            "the sole confirmation attempt was already claimed",
-        )
-    with os.fdopen(descriptor, "wb") as target:
-        target.write(canonical_bytes(claim))
-        target.flush()
-        os.fsync(target.fileno())
+        create_once_write(claim_path, claim)
+    except EvidenceError as error:
+        if error.code == "output_exists":
+            fail(
+                "confirmation_already_started",
+                "the sole confirmation attempt was already claimed",
+            )
+        raise
     return {"schema": CLAIM_SCHEMA, "path": str(claim_path), "digest": digest(claim)}
 
 
 def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
     if spec.get("schema") != FINISH_SCHEMA:
         fail("schema_invalid", f"finish input must use {FINISH_SCHEMA}")
+    require_fields(
+        spec,
+        "finish input",
+        {
+            "schema",
+            "repository",
+            "full_record",
+            "manifest",
+            "claim",
+            "claim_digest",
+            "confirmation_root",
+            "cluster_results",
+        },
+    )
     repo, record, record_digest, manifest, full_root = load_confirmation(spec)
     clean_exact_main(repo, manifest["candidate_sha"])
     confirmation_root = physical_evidence_root(spec.get("confirmation_root"))
@@ -800,14 +893,44 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
     if resolved_claim_path != expected_claim_path:
         fail("claim_invalid", "claim path is not the sole canonical attempt claim")
     claim = read_json(str(claim_path))
+    require_fields(
+        claim,
+        "claim",
+        {
+            "schema",
+            "full_record",
+            "full_record_digest",
+            "manifest",
+            "manifest_digest",
+            "full_candidate_sha",
+            "candidate_sha",
+            "full_evidence_root",
+            "confirmation_root",
+            "confirmation_attempt",
+        },
+    )
+    if claim_path.read_bytes() != canonical_bytes(claim):
+        fail("claim_invalid", "confirmation claim bytes are not canonical")
+    claim_digest = text(spec.get("claim_digest"), "claim_digest")
+    if claim_digest != digest(claim):
+        fail("claim_digest_mismatch", "claim digest does not match the exact claim")
     if (
         claim.get("schema") != CLAIM_SCHEMA
         or claim.get("full_record_digest") != record_digest
     ):
         fail("claim_invalid", "confirmation claim does not bind the full record")
-    if claim.get("manifest_digest") != digest(manifest) or claim.get(
-        "confirmation_root"
-    ) != str(confirmation_root):
+    if (
+        claim.get("full_record")
+        != str(Path(text(spec.get("full_record"), "full_record")).resolve())
+        or claim.get("manifest")
+        != str(Path(text(spec.get("manifest"), "manifest")).resolve())
+        or claim.get("manifest_digest") != digest(manifest)
+        or claim.get("full_candidate_sha") != manifest["full_candidate_sha"]
+        or claim.get("candidate_sha") != manifest["candidate_sha"]
+        or claim.get("full_evidence_root") != str(full_root)
+        or claim.get("confirmation_root") != str(confirmation_root)
+        or claim.get("confirmation_attempt") != 1
+    ):
         fail(
             "claim_invalid",
             "confirmation claim does not bind this manifest and evidence root",
@@ -886,7 +1009,7 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
         "verdict": verdict,
     }
     output_path = output_under(confirmation_root, output, "output")
-    atomic_write(output_path, result)
+    create_once_write(output_path, result)
     return {
         "schema": RESULT_SCHEMA,
         "path": str(output_path.resolve()),
