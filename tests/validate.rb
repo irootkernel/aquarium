@@ -56,6 +56,7 @@ skill_paths = Dir[PLUGIN.join("skills/*/SKILL.md")].sort.map { |path| Pathname.n
 expected_skill_names = %w[
   aquarium-dev
   dev-setup-bundle
+  dev-setup-global
   dev-setup
   docs-setup
   epic-handler
@@ -176,19 +177,27 @@ assert(marketplace_plugin.dig("policy", "authentication") == "ON_INSTALL",
 dev_setup = PLUGIN.join("skills/dev-setup/SKILL.md").read
 dev_setup_script = PLUGIN.join("skills/dev-setup/scripts/inspect_tools.py")
 dev_setup_script_body = dev_setup_script.read
-dolgorae_release_script = PLUGIN.join("skills/dev-setup/scripts/verify_dolgorae_release.py")
+dev_setup_global = PLUGIN.join("skills/dev-setup-global/SKILL.md").read
+dev_setup_global_script = PLUGIN.join("skills/dev-setup-global/scripts/inspect_global_tools.py")
+dev_setup_global_script_body = dev_setup_global_script.read
+dolgorae_release_script = PLUGIN.join("skills/dev-setup-global/scripts/verify_dolgorae_release.py")
 dolgorae_release_script_body = dolgorae_release_script.read
 dev_setup_bundle = PLUGIN.join("skills/dev-setup-bundle/SKILL.md").read
-dev_setup_bundle_preconfirmation = dev_setup_bundle[/^## Normalize Before Discovery\n.*?(?=^## Confirm the Normalized Selection)/m]
-dev_setup_bundle_configuration = dev_setup_bundle[/^## Configure Targets in Order\n.*?(?=^## Report the Bundle)/m]
+dev_setup_bundle_preconfirmation = dev_setup_bundle[/^## Normalize and Confirm\n.*?(?=^## Prepare Global Components Once)/m]
+dev_setup_bundle_configuration = dev_setup_bundle[/^## Configure Targets in Order\n.*?(?=^## Report)/m]
 assert(dev_setup_bundle_preconfirmation && dev_setup_bundle_configuration,
        "dev-setup-bundle Sorage sections are missing")
+assert(dev_setup_bundle_preconfirmation.include?("before its authorized network comparisons or Sorage diagnostic side effects") &&
+       dev_setup_bundle_configuration.include?("disclose the bounded side effect before running the selected target diagnosis") &&
+       dev_setup_bundle.include?("maps each union member to one `--component <name>` inspector argument") &&
+       dev_setup_bundle.include?("runs no component outside that union"),
+       "dev-setup-bundle must gate Sorage diagnostic side effects before global and target diagnosis")
 dev_setup_bundle_manifest = PLUGIN.join("skills/dev-setup-bundle/references/manifest.md").read
 dev_setup_bundle_script = PLUGIN.join("skills/dev-setup-bundle/scripts/normalize_manifest.py")
 agents_reference = PLUGIN.join("skills/dev-setup/references/agents-guidance.md").read
 root_agents = ROOT.join("AGENTS.md").read
 root_claude = ROOT.join("CLAUDE.md").read
-tool_catalog = PLUGIN.join("skills/dev-setup/references/tool-catalog.md").read
+tool_catalog = PLUGIN.join("references/tool-catalog.md").read
 podway_integration = PLUGIN.join("references/podway-integration.md").read
 deferred_feedback = ROOT.join("docs/deferred-feedback/README.md").read
 sanho_catalog = tool_catalog[/^## Sanho\n.*?(?=^## )/m]
@@ -304,226 +313,177 @@ evidence_residency_path = PLUGIN.join("references/evidence-residency.md")
 assert(evidence_residency_path.file?, "shared evidence-residency contract is missing")
 evidence_residency = evidence_residency_path.read
 
-assert(dev_setup.include?("request_user_input"), "dev-setup must prefer Codex ask/answer")
-assert(dev_setup.include?("Podway"), "dev-setup description must trigger for Podway setup")
-assert(dev_setup.include?("scripts/inspect_tools.py"), "dev-setup must use deterministic local inspection")
-assert(dev_setup_script.file?, "dev-setup inspection script is missing")
+assert(dev_setup.include?("scripts/inspect_tools.py") &&
+       dev_setup.include?("AGENTS.md") &&
+       dev_setup.include?("CLAUDE.md") &&
+       dev_setup.include?("Never ask the user to choose `Install and configure`") &&
+       dev_setup_script_body.include?("verification_scope") &&
+       dev_setup_script_body.include?("presence_only") &&
+       dev_setup.include?("$aquarium:dev-setup-global"),
+       "dev-setup must automate repository diagnosis, own root guidance, and trust global skill presence")
+assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
+       dev_setup_script_body.include?("skill_root_symlinked") &&
+       dev_setup_script_body.include?("safe_managed_file_state") &&
+       dev_setup_script_body.include?("mcp_registration_probe") &&
+       dev_setup_script_body.include?('"preferred_scope": "global"') &&
+       dev_setup_script_body.include?("No MCP server named") &&
+       dev_setup_script_body.include?("ouroboros_isolated_launcher_matches"),
+       "dev-setup inspectors must retain deterministic skill, managed-file, and MCP safety guards")
+guidance_proposal_index = dev_setup.index("Inspect AGENTS.md and CLAUDE.md automatically")
+guidance_diff_index = dev_setup.index("Show one complete combined AGENTS.md and CLAUDE.md diff")
+guidance_apply_index = dev_setup.index("Apply only that exact diff")
+assert(guidance_proposal_index && guidance_diff_index && guidance_apply_index &&
+       guidance_proposal_index < guidance_diff_index && guidance_diff_index < guidance_apply_index,
+       "repository-guidance diagnosis, diff, and apply boundaries are not ordered")
+assert(dev_setup_global_script.file? &&
+       dev_setup_global_script_body.include?("aquarium-dev-setup-global-inspection.v1") &&
+       dev_setup_global_script_body.include?("inspect_agent_skill") &&
+       dev_setup_global_script_body.include?("inspect_lora") &&
+       dev_setup_global_script_body.include?("inspect_deslop") &&
+       dev_setup_global_script_body.include?("inspect_humanizer") &&
+       dev_setup_global_script_body.include?("inspect_im_not_ai") &&
+       dev_setup_global_script_body.include?("inspect_ouroboros") &&
+       dev_setup_global_script_body.include?("GLOBAL_COMPONENTS = (") &&
+       dev_setup_global_script_body.include?('"--component"') &&
+       dev_setup_global.include?("--verify-dolgorae-release") &&
+       dev_setup_global.include?("--include-sorage-initialization") &&
+       dev_setup_global.include?("add one `--component <name>` argument for each selected component in catalog order") &&
+       dev_setup_global.include?("run no unselected component probe") &&
+       dev_setup_global.include?("disclose the Sorage open-and-migrate diagnostic side effect") &&
+       dev_setup_global.include?("On a direct invocation without a component list") &&
+       dev_setup_global.include?("Do not ask the user to choose install, diagnose, or skip") &&
+       dev_setup_global.include?("Ouroboros update diagnosis") &&
+       dev_setup_global.include?("Do not read repository-local") &&
+       dev_setup_global.include?("AGENTS.md") &&
+       dev_setup_global.include?("CLAUDE.md"),
+       "dev-setup-global must own automatic global diagnosis and updates without repository scope")
+assert(dev_setup.include?("required user-global MCP registration is missing or degraded") &&
+       dev_setup.include?("required user-global service such as the Podway daemon is unavailable or not ready") &&
+       ROOT.join("docs/specs/local-interfaces.md").read.include?("recommendation `continue_with_dev_setup_global`") &&
+       tool_catalog.include?("`~/.agents/skills/lore-commits` and `~/.agents/skills/lore-query`") &&
+       dev_setup_bundle.include?("A refusal stops the bundle without mutation") &&
+       dev_setup_bundle.include?("A mismatch stops all remaining work and requires a fresh invocation"),
+       "setup continuations, canonical global skill targets, and bundle stop outcomes must be explicit")
+assert(dev_setup_global.include?("production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae") &&
+       ROOT.join("docs/specs/tool-integrations.md").read.include?("canonical `~/.agents/skills/use-sorage` path exists") &&
+       ROOT.join("docs/specs/tool-integrations.md").read.include?("Exact-upstream and same-tag skill validity belong to `dev-setup-global`") &&
+       ROOT.join("docs/todo/TODO-AQUARIUM-DEV.md").read.include?("requests `$aquarium:dev-setup-global`") &&
+       ROOT.join("docs/todo/TODO-AQUARIUM-DEV.md").read.include?("request `$aquarium:dev-setup-global` when neither generation exists") &&
+       ROOT.join("docs/specs/workflow-contracts.md").read.include?("delegates the union of selected global components once to `dev-setup-global`"),
+       "global setup ownership must stay aligned across Sorage, production readiness, and aquarium-dev routing")
+assert(dev_setup.include?("Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_tools.py") &&
+       dev_setup_bundle.include?("Resolve this skill's directory and run `python3 <skill-directory>/scripts/normalize_manifest.py") &&
+       independent_review.include?("inspect_global_tools.py --component dolgorae --verify-dolgorae-release") &&
+       !dev_setup_script_body.include?('tool["installation_prerequisites"] = inspect_mulgae_installation_prerequisites'),
+       "setup entrypoints must resolve their scripts and keep global installation diagnosis out of repository inspection")
+assert(dev_setup_global_script_body.include?("Path(root.anchor)") &&
+       dev_setup_script_body.include?("PODWAY_DAEMON_WAIT_SECONDS = 120.0") &&
+       dev_setup_script_body.include?("PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS = 125.0") &&
+       dev_setup_global_script_body.include?("inspect_canonical_agent_skill") &&
+       dev_setup_global_script_body.include?("normalize_podway_daemon_probe") &&
+       dev_setup_global_script_body.include?('environment_overrides={"GOTOOLCHAIN": "local"}'),
+       "global setup must isolate global probes, use canonical paired-skill roots, and preserve Podway readiness timeouts")
+global_network_authority_index = dev_setup_global.index("A direct invocation authorizes bounded read-only official metadata")
+global_network_disclosure_index = dev_setup_global.index("Disclose the official endpoints before contact")
+global_inspector_index = dev_setup_global.index("inspect_global_tools.py --verify-dolgorae-release")
+assert(global_network_authority_index && global_network_disclosure_index && global_inspector_index &&
+       global_network_authority_index < global_network_disclosure_index &&
+       global_network_disclosure_index < global_inspector_index,
+       "global setup must disclose authorized official endpoints before networked inspection")
+assert(dev_setup.include?("may inspect an owning global executable only through the bounded version, compatibility, and readiness probes") &&
+       dev_setup.include?("For a canonical user-global skill path") &&
+       dev_setup.include?("check only whether the path exists") &&
+       dev_setup.include?("exact-upstream compatibility") &&
+       dev_setup.include?("Sorage diagnosis reports `initialization_required` or `not_initialized`") &&
+       dev_setup.include?("missing, incompatible, degraded, or uninitialized global component"),
+       "repository setup must separate bounded CLI diagnosis from presence-only global skill trust")
+local_interfaces = ROOT.join("docs/specs/local-interfaces.md").read
+assert(local_interfaces.include?("The global v1 payload uses two component shapes") &&
+       local_interfaces.include?("repeatable `--component` option selects only the named components") &&
+       local_interfaces.include?("omitting it selects all supported global components") &&
+       local_interfaces.include?("invalid unless its component is selected") &&
+       local_interfaces.include?("single valid installation is the canonical `~/.agents/skills/<name>` target") &&
+       local_interfaces.include?("Lora, Deslop, Humanizer, im-not-ai, and Ouroboros remain flat component objects") &&
+       local_interfaces.include?("`--include-sorage-initialization` opts into `sorage doctor`") &&
+       local_interfaces.include?("exactly ten `trusted_global_skills` entries") &&
+       local_interfaces.include?('`verification_scope: "presence_only"`') &&
+       local_interfaces.include?("same presence-only object replaces `tools.<name>.agent_skill`") &&
+       local_interfaces.include?("excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros") &&
+       local_interfaces.include?("Podway `daemon` member exposes normalized") &&
+       local_interfaces.include?("matching CLI version and completed recovery inventory"),
+       "local interface docs must pin global v1 payload shapes and inspector side-effect boundaries")
+backup_policy_index = tool_catalog.index("Choose a Backup Policy for Existing State")
+backup_step_index = dev_setup_global.index("Establish the shared backup policy")
+action_approval_index = dev_setup_global.index("Obtain action-specific approval")
+assert(backup_policy_index && backup_step_index && action_approval_index &&
+       backup_step_index < action_approval_index &&
+       tool_catalog.include?("Create and verify backups") &&
+       tool_catalog.include?("Proceed without backups") &&
+       tool_catalog.include?("The policy does not authorize any mutation") &&
+       tool_catalog.include?("Never persist the choice") &&
+       tool_catalog.include?("does not recover local modifications") &&
+       tool_catalog.include?("Preparing and validating an incoming payload in a temporary location is not a backup") &&
+       dev_setup_global.include?("Use `Choose a Backup Policy for Existing State` in the shared tool catalog") &&
+       dev_setup.include?("Establish `Choose a Backup Policy for Existing State` from the shared tool catalog before the first action-specific approval"),
+       "both setup skills must apply the shared request-scoped backup choice and recovery boundary")
+assert(dev_setup_global.include?("Other Codex skill roots remain diagnostic evidence only") &&
+       dev_setup_global.include?("When another copy exists, report the duplicate risk") &&
+       dev_setup_global.include?("never create a known duplicate") &&
+       dev_setup_global.include?("until the user separately approves removal or migration of the alternate copy"),
+       "global setup must not install a canonical skill beside a known alternate-root copy")
+assert(tool_catalog.include?("Repository inspection diagnoses the supported CLI with the explicit `--include-sorage` path") &&
+       tool_catalog.include?("Global inspection always checks the version and uses `--include-sorage-initialization`") &&
+       tool_catalog.include?("Disclose this before running the selected Sorage diagnosis") &&
+       !tool_catalog.include?("Disclose this before the Sorage choice"),
+       "shared Sorage guidance must distinguish automatic global and repository diagnosis")
 assert(dolgorae_release_script.file? &&
-       dev_setup.include?("--verify-dolgorae-release") &&
-       dev_setup_bundle.include?("--verify-dolgorae-release") &&
        dolgorae_release_script_body.include?("aquarium-dolgorae-release-verification.v1") &&
        dolgorae_release_script_body.include?("stable v0.1.1 through v0.1.x") &&
        dolgorae_release_script_body.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
        dolgorae_release_script_body.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
        dolgorae_release_script_body.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
        dolgorae_release_script_body.include?("MAX_RELEASE_PAGES = 10") &&
-       dev_setup.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
-       dev_setup.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
+       dolgorae_release_script_body.include?("api.github.com/repos/irootkernel/dolgorae") &&
        tool_catalog.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
        tool_catalog.include?("8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2") &&
-       tool_catalog.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17") &&
-       dolgorae_release_script_body.include?("api.github.com/repos/irootkernel/dolgorae"),
-       "dev-setup must provide bounded official Dolgorae v0.1.x release verification")
-assert(dev_setup_script_body.include?('"arguments_match": arguments_match') &&
-       dev_setup_script_body.include?("skill_root_symlinked") &&
-       dev_setup_script_body.include?('entry["symlinked"]') &&
-       dev_setup_script_body.include?("safe_skill_file_state") &&
-       dev_setup_script_body.include?("safe_managed_file_state") &&
-       dev_setup_script_body.include?("mcp_registration_probe") &&
-       dev_setup_script_body.include?('"preferred_scope": "global"') &&
-       dev_setup_script_body.include?('"effective_scope"') &&
-       dev_setup_script_body.include?('{"CODEX_HOME": str(repository / ".codex")}') &&
-       dev_setup_script_body.include?("project_configuration_symlinked") &&
-       dev_setup_script_body.include?("re.fullmatch") &&
-       dev_setup_script_body.include?("No MCP server named") &&
-       dev_setup_script_body.include?("ouroboros_direct_launcher_matches") &&
-       dev_setup_script_body.include?('transport.get("args") == ["mcp", "serve"]') &&
-       dev_setup_script_body.include?("ouroboros_isolated_launcher_matches") &&
-       dev_setup_script_body.include?("isolated_launcher_configured") &&
-       dev_setup_script_body.include?("registration_not_supported_launcher") &&
-       dev_setup_script_body.include?('probe["reason"] = "registration_mismatch"'),
-       "dev-setup inspector must preserve exact tool arguments, isolated launchers, and paired-skill paths")
-assert(dev_setup.include?("default inspection omits Sorage readiness, Podway, and Ouroboros completely") &&
-       dev_setup.include?("--include-sorage") &&
-       dev_setup.include?("--include-podway") &&
-       dev_setup.include?("--include-ouroboros"),
-       "dev-setup must probe Sorage readiness, Podway, and Ouroboros only after explicit selection")
-assert(dev_setup.include?("A `dev-setup-bundle` handoff is a preselected multi-tool setup request") &&
-       dev_setup.include?("never the manifest path or contents") &&
-       dev_setup.include?("already verified exact tag") &&
-       dev_setup.include?("target result of `ready`, `partial`, `failed`, `declined`, or `skipped`"),
-       "dev-setup must accept bounded bundle handoffs without weakening setup authority")
-
-assert(dev_setup_bundle_script.file?, "dev-setup-bundle manifest normalizer is missing")
-assert(dev_setup_bundle.include?("python3 <skill-directory>/scripts/normalize_manifest.py --manifest <path>") &&
-       dev_setup_bundle.include?("Python 3.10 or newer and PyYAML 6.x") &&
-       dev_setup_bundle.include?("do not install or upgrade either dependency") &&
-       dev_setup_bundle.include?("do not parse the manifest approximately") &&
-       dev_setup_bundle.include?("canonical Git roots") &&
-       dev_setup_bundle.include?("continue with the remaining `ready` targets") &&
-       dev_setup_bundle.include?("Never pass the manifest path") &&
-       dev_setup_bundle.include?("Do not roll back successful actions automatically") &&
-       dev_setup_bundle.include?("Before the first mutation and before each later target"),
-       "dev-setup-bundle workflow must preserve manifest, continuation, and partial-failure boundaries")
-assert(dev_setup_bundle_manifest.include?("schema: aquarium.dev-setup-bundle/v1") &&
-       dev_setup_bundle_manifest.include?("defaults.tools` plus `include` minus `exclude`") &&
-       dev_setup_bundle_manifest.include?("retained v1 `project_mcp` field is an explicit local-scope override") &&
-       dev_setup_bundle_manifest.include?("project_mcp: []") &&
-       dev_setup_bundle_manifest.include?("same canonical Git root or shared Git common directory") &&
-       dev_setup_bundle_manifest.include?("YAML merge key") &&
-       dev_setup_bundle_manifest.include?("Do not put credentials"),
-       "dev-setup-bundle manifest contract is incomplete")
-assert(dev_setup_bundle.include?("complete AGENTS.md operating contract and CLAUDE.md delegation proposal") &&
-       dev_setup_bundle.include?("Humanizer and im-not-ai remain shared installations") &&
-       dev_setup_bundle.include?("missing commit-header convention") &&
-       dev_setup_bundle_manifest.include?("`humanizer` or `im-not-ai` is effective") &&
-       dev_setup_bundle_manifest.include?("mandatory project-specific commit-message rule") &&
-       dev_setup_bundle_manifest.include?("Applying the complete displayed diff remains separately approved"),
-       "bundle AGENTS guidance must select the full operating contract without widening apply authority")
-
-assert(dev_setup.include?(">=0.51.1,<0.52.0") &&
-       dev_setup.include?("uv tool install ouroboros-ai==<exact-version>") &&
-       dev_setup.include?("ooo codex refresh") &&
-       dev_setup.include?("ooo setup --runtime codex --non-interactive --mcp-mode auto") &&
-       dev_setup.include?("do not run `ooo codex refresh` first") &&
-       dev_setup.include?("refresh without full setup") &&
-       dev_setup.include?("must not call an Ouroboros provider"),
-       "dev-setup must separate pinned Ouroboros installation, mutually exclusive configuration paths, and provider authority")
-assert(ouroboros_catalog &&
-       ouroboros_catalog.include?("Do not run `ooo codex refresh` before full setup") &&
-       ouroboros_catalog.include?("rules-and-skills repair alternative"),
-       "Ouroboros catalog must avoid redundant refresh before full setup")
+       tool_catalog.include?("cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17"),
+       "global setup must preserve bounded official Dolgorae release verification")
 assert(ouroboros_catalog &&
        ouroboros_catalog.include?("ooo --version") &&
        ouroboros_catalog.include?("ooo codex doctor") &&
        ouroboros_catalog.include?("ooo mcp doctor --json") &&
        ouroboros_catalog.include?("codex mcp get ouroboros --json") &&
-       ouroboros_catalog.include?("Registration is `configured` only") &&
-       ouroboros_catalog.include?('args = ["mcp", "serve"]') &&
-       ouroboros_catalog.include?("canonical isolated Codex launcher") &&
-       ouroboros_catalog.include?("PATH-selected `uvx`") &&
-       ouroboros_catalog.include?("optional supported exact release pin") &&
-       ouroboros_catalog.include?("`OUROBOROS_AGENT_RUNTIME=codex`") &&
-       ouroboros_catalog.include?("`OUROBOROS_LLM_BACKEND=codex`") &&
-       ouroboros_catalog.include?("`--runtime codex --llm-backend codex`") &&
-       ouroboros_catalog.include?("registration environment keys outside those three selectors") &&
-       ouroboros_catalog.include?("live tool exposure remains separate host evidence") &&
-       ouroboros_catalog.include?("`missing` only for Codex's definite named-server-not-found response") &&
-       ouroboros_catalog.include?("never expose raw registration stderr") &&
-       ouroboros_catalog.include?("local and read-only") &&
-       ouroboros_catalog.include?("do not contact a provider, initiate authentication, make a network request, or start an MCP server"),
-       "Ouroboros catalog must diagnose CLI, Codex integration, runtime, and registration independently")
-assert(dev_setup.include?("Dolgorae selection choice") &&
-       dev_setup.include?("Sanho, Mulgae, Gaori, Sorage, and Podway choices") &&
-       dev_setup.include?("Ouroboros CLI and version support, Codex rules and skills, MCP runtime"),
-       "dev-setup must keep freshness authorization and Ouroboros reporting boundaries explicit")
-assert(dev_setup.include?("Aquarium does not bundle Lora, Lore, Deslop, Humanizer, or im-not-ai source") &&
-       dev_setup.include?("temporary detached checkout") &&
-       dev_setup.include?("one regular non-symlink installation") &&
-       dev_setup.include?("isolated temporary `CODEX_HOME`") &&
-       dev_setup.include?("exact repository, roadmap, and task prompt"),
-       "dev-setup must install third-party skills from exact upstream sources")
-proposal_index = dev_setup.index("Ask whether to prepare an evidence-based repository operating-guidance proposal")
-diff_index = dev_setup.index("display the exact root AGENTS.md and CLAUDE.md paths")
-apply_index = dev_setup.index("Apply exactly this diff")
-assert(proposal_index && diff_index && apply_index && proposal_index < diff_index && diff_index < apply_index,
-       "repository-guidance proposal and apply approvals are not ordered")
-assert(dev_setup.include?("If either changed, discard the approval") &&
-       dev_setup.include?("second approval covers only the exact displayed root AGENTS.md/CLAUDE.md diff"),
-       "combined instruction-file stale approval guard is missing")
-assert(dev_setup.include?("the directory containing this `SKILL.md`"),
-       "dev-setup must resolve its bundled references relative to its own skill directory")
-assert(dev_setup.include?("treat it as scoped intake"),
-       "dev-setup must scope a narrow request instead of widening it")
-assert(dev_setup.include?("Do not use for routine supported Procedure v2 session observation") &&
-       dev_setup.include?("Reject a handoff whose only requested action is routine supported Procedure v2") &&
-       dev_setup.include?("without starting broad setup discovery") &&
-       dev_setup.include?("workspace runtime-mode move") &&
-       dev_setup.include?("legacy `podway reset --all` path is a setup-recovery exception"),
-       "dev-setup must reject routine Procedure v2 lifecycle cleanup but keep legacy recovery")
-assert(dev_setup.include?("Do not create or read `.aquarium`"),
-       "dev-setup must not create shadow orchestration state")
-assert(dev_setup.include?("Never read credential values in this skill, even after setup approval") &&
-       dev_setup.include?("Do not open `.env*`, authentication, key, token, secret, or credential files") &&
-       dev_setup.include?("For either `Show proposal` or `Diagnose only`") &&
-       dev_setup.include?("Diagnosis reports coverage and conflicts without drafting or mutation") &&
-       agents_reference.include?("Diagnosis uses its structure and evidence rules without drafting"),
-       "dev-setup must keep credential values unread and diagnose-only guidance non-drafting")
-assert(dev_setup.include?("When another copy exists, report the duplicate risk") &&
-       dev_setup.include?("never create a known duplicate"),
-       "dev-setup must not install a canonical paired skill beside a known alternate-root copy")
-selection_disclosure_index = dev_setup.index("Disclose separately in the Sanho, Mulgae, Gaori, Sorage, and Podway choices")
-comparison_index = dev_setup.index("## Compare Selected Agent Skills First")
-action_approval_index = dev_setup.index("Obtain separate explicit ask/answer approval for the displayed action")
-assert(selection_disclosure_index && comparison_index && action_approval_index &&
-       selection_disclosure_index < comparison_index && comparison_index < action_approval_index,
-       "dev-setup must disclose and perform selected-skill comparison before mutation approval")
-assert(dev_setup.include?("either `Install and configure` or `Diagnose only`") &&
-       dev_setup.include?("Do not fetch or compare a skipped or not-yet-selected tool") &&
-       dev_setup.include?("do not widen a scoped continuation to the other tools") &&
-       dev_setup.include?("except for the exact selected-skill freshness comparison authorized below"),
-       "dev-setup must compare only explicitly selected paired skills")
-assert(dev_setup.include?("newest non-draft, non-prerelease tag within the tool's supported release line") &&
-       dev_setup.include?("For Sanho, Mulgae, and Gaori") &&
-       dev_setup.include?("For Sorage, fetch only `SKILL.md`") &&
-       dev_setup.include?("For Podway") &&
-       dev_setup.include?("references/goal.md") &&
-       dev_setup.include?("create-podway-procedure") &&
-       dev_setup.include?("compute every SHA-256 digest") &&
-       dev_setup.include?("Never execute fetched content"),
-       "dev-setup must bound and verify the automatic skill payload")
-assert(dev_setup.include?("against exactly `~/.agents/skills/<skill-name>` as complete directory trees") &&
-       dev_setup.include?("any extra local files as differences") &&
-       dev_setup.include?("Other Codex skill roots remain diagnostic evidence only"),
-       "dev-setup must compare the exact user skill target without mutating duplicate roots")
-assert(dev_setup.include?("`current` status without asking an update question") &&
-       dev_setup.include?("ask separately whether to install it") &&
-       dev_setup.include?("complete file-set diff including additions and deletions") &&
-       dev_setup.include?("One skill target requires one explicit installation or replacement approval"),
-       "dev-setup must distinguish matching, missing, and drifted selected skills")
-assert(dev_setup.include?("report `freshness_unverifiable`") &&
-       dev_setup.include?("Do not propose an installation or replacement from an unverified payload") &&
-       dev_setup.include?("every other network operation retain their normal disclosure and explicit approval requirements"),
-       "dev-setup must fail freshness checks closed without widening the approval exception")
-assert(dev_setup.include?("require it to match the absence or complete digest snapshot") &&
-       dev_setup.include?("If it changed, discard the approval") &&
-       dev_setup.include?("Clean up every ephemeral payload") &&
-       dev_setup.include?("each selected paired skill's comparison tag"),
-       "dev-setup must invalidate stale skill approvals and clean temporary payloads")
-assert(tool_catalog.include?("No separate approval is required for those exact lookups") &&
-       tool_catalog.include?("network operation outside these exceptions") &&
+       ouroboros_catalog.include?("uv tool install ouroboros-ai==<exact-version>") &&
+       dev_setup_global.include?("Ouroboros package changes") &&
+       dev_setup_global.include?("Ouroboros setup or refresh"),
+       "global setup must diagnose and update Ouroboros components independently")
+assert(ouroboros_catalog.include?("Do not run `ooo codex refresh` before full setup") &&
+       ouroboros_catalog.include?("rules-and-skills repair alternative"),
+       "Ouroboros catalog must preserve mutually exclusive full-setup and refresh ordering")
+assert(dev_setup_global.include?("exact supported release tag or disclosed full commit SHA") &&
+       dev_setup_global.include?("complete regular-file trees") &&
+       dev_setup_global.include?("missing or extra files") &&
+       dev_setup_global.include?("freshness_unverifiable") &&
+       dev_setup_global.include?("shared backup policy") &&
+       dev_setup_global.include?("Obtain action-specific approval") &&
        tool_catalog.scan("automatically fetched and verified").length == 5 &&
        tool_catalog.scan("comparison fetch itself needs no separate approval").length == 5,
-       "tool catalog must apply the same bounded comparison exception to all five paired skills")
-backup_policy_index = dev_setup.index("Choose a Backup Policy for Existing State")
-assert(backup_policy_index && backup_policy_index < action_approval_index &&
-       dev_setup.include?("Create and verify backups") &&
-       dev_setup.include?("Proceed without backups") &&
-       dev_setup.include?("current setup request") &&
-       dev_setup.include?("The policy does not authorize any mutation") &&
-       dev_setup.include?("Do not ask about backups for diagnosis or a new installation") &&
-       dev_setup.include?("Never persist the choice") &&
-       dev_setup.include?("existing state backed up or deliberately left without a backup"),
-       "dev-setup must keep backup choice request-scoped and separate from mutation approval")
-assert(dev_setup.include?("does not recover local modifications") &&
-       dev_setup.include?("private configuration, untracked files, and runtime history may be permanently lost") &&
-       dev_setup.include?("incoming payload in a temporary location is not a backup"),
-       "dev-setup must disclose no-backup recovery limits without skipping payload validation")
+       "global setup must retain exact-upstream, backup, and per-action approval boundaries")
 assert(tool_catalog.include?("every approved action that overwrites or removes") &&
        tool_catalog.include?("no retained copy of the replaced state") &&
        tool_catalog.include?("incoming payload staging is not a backup") &&
        tool_catalog.scan("follow the shared backup policy").length >= 4 &&
        !tool_catalog.include?("preserve a recoverable sibling backup"),
-       "tool replacement guidance must support the shared no-backup policy")
-assert(ROOT.join("README.md").read.include?("Dolgorae automatically queries its official GitHub Releases metadata") &&
-       ROOT.join("README.md").read.include?("public paired-skill files from `raw.githubusercontent.com` into ephemeral storage") &&
-       ROOT.join("README.md").read.include?("Unselected tools and other network operations are not covered") &&
-       ROOT.join("README.ko.md").read.include?("official GitHub Releases metadata를 자동으로 조회") &&
-       ROOT.join("README.ko.md").read.include?("`raw.githubusercontent.com`에서 공개 paired-skill 파일을 임시 저장소로 내려받습니다") &&
-       ROOT.join("PRIVACY.md").read.include?("Bounded read-only network operations may be authorized") &&
-       ROOT.join("PRIVACY.md").read.include?("send no repository or local skill content") &&
-       ROOT.join("PRIVACY.md").read.scan("selected-skill freshness comparison contacts GitHub automatically").length == 5,
-       "public documentation must disclose automatic selected-skill comparison and its privacy boundary")
+       "tool replacement guidance must preserve the selected backup-policy contract")
+assert(dev_setup_bundle.include?("$aquarium:dev-setup-global") &&
+       dev_setup_bundle.include?("$aquarium:dev-setup") &&
+       dev_setup_bundle.include?("and Ouroboros component at most once") &&
+       dev_setup_bundle_manifest.include?("aquarium.dev-setup-bundle/v1") &&
+       dev_setup_bundle_script.file? &&
+       dev_setup_bundle.include?("normalize_manifest.py --manifest <path>") &&
+       dev_setup_bundle.include?("Never create, copy, edit, stage, or commit the manifest") &&
+       dev_setup_bundle.include?("Do not roll back successful actions"),
+       "dev-setup-bundle must preserve v1 while splitting global and repository setup")
 assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authorizes read-only release discovery") &&
        ROOT.join("README.md").read.include?("existing ambient authentication for private repositories") &&
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-qa` automatically queries") &&
@@ -532,6 +492,10 @@ assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authoriz
        ROOT.join("PRIVACY.md").read.include?("creates no tracked or temporary resume manifest") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
        "public documentation must disclose release-handler and release-qa network boundaries")
+assert(ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `dev-setup-global` without a component list automatically contacts") &&
+       ROOT.join("PRIVACY.md").read.include?("These reads send no repository or local skill content") &&
+       ROOT.join("PRIVACY.md").read.scan("contacts GitHub automatically").length == 5,
+       "public documentation must preserve global setup freshness network boundaries")
 assert(test_setup_script.file?, "test-setup structural inspector is missing")
 assert(test_setup_script_body.include?("aquarium-test-setup-inspection.v1") &&
        test_setup_script_body.include?('"semantic_scope": "not_evaluated"') &&
@@ -664,7 +628,7 @@ assert(ops_index.start_with?("# Aquarium Operations\n") &&
        "Aquarium operations index must expose its operational surface and runbook sections")
 
 capability_catalog = documentation_details.fetch("capabilities")
-assert(capability_catalog.include?("Aquarium exposes 24 skills") &&
+assert(capability_catalog.include?("Aquarium exposes 25 skills") &&
        expected_skill_names.all? { |name| capability_catalog.include?("`$aquarium:#{name}`") } &&
        capability_catalog.include?("raises the Podway minimum") &&
        capability_catalog.include?("workspace removal and runtime-mode moves") &&
@@ -704,7 +668,8 @@ assert(procedure_declarations.all? do |procedure_id, version|
        end,
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
-  aquarium-dev-setup-inspection.v15
+  aquarium-dev-setup-inspection.v16
+  aquarium-dev-setup-global-inspection.v1
   aquarium-dolgorae-release-verification.v1
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
@@ -770,7 +735,7 @@ assert(!canonical_documentation.include?("/Users/") &&
 aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 9 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 10 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
@@ -780,10 +745,11 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 9 &&
        canonical_roadmap.include?("## EPIC-007: Adopt Upstream Document Humanizers") &&
        canonical_roadmap.include?("## EPIC-008: Adopt Podway v0.2.8") &&
        canonical_roadmap.include?("## EPIC-009: Adopt Sorage v0.1.x") &&
+       canonical_roadmap.include?("## EPIC-010: Separate Global and Repository Development Setup") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 36 &&
-       roadmap_task_ids.uniq.sort == (1..36).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 36 &&
+       roadmap_task_ids.length == 37 &&
+       roadmap_task_ids.uniq.sort == (1..37).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 37 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -792,7 +758,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 9 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-009 and unique TASK-001 through TASK-036")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-010 and unique TASK-001 through TASK-037")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -809,6 +775,8 @@ assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        aquarium_dev_dossier.include?("Dolgorae is an enrollable development producer"),
        "active roadmap work dossiers must own their detailed acceptance contracts")
 assert(dolgorae_review_contract.include?("globally installed `dolgorae` command") &&
+       dolgorae_review_contract.include?("inspect_global_tools.py --component dolgorae --verify-dolgorae-release") &&
+       dolgorae_review_contract.include?("must not run another global component probe") &&
        dolgorae_review_contract.include?("outside `~/.aquarium` and `~/.aquarium-dev`") &&
        dolgorae_review_contract.include?("v0.1.1 through v0.1.x") &&
        dolgorae_review_contract.include?("4c8a1c5860b142293d4353eaa58fd751dcb3980e") &&
@@ -1108,7 +1076,7 @@ assert(tool_catalog.include?("migration_required=true") &&
        "Podway migration classification contract is missing")
 assert(tool_catalog.include?("readiness_status=not_configured") &&
        tool_catalog.include?("readiness_status=ready") &&
-       tool_catalog.include?("v12 inspection") &&
+       tool_catalog.include?("Repository inspection omits Podway") &&
        tool_catalog.include?("--include-podway") &&
        !tool_catalog.include?("integration_status"),
        "Podway setup diagnostics must expose readiness without activation semantics")
@@ -1122,9 +1090,10 @@ assert(tool_catalog.include?("mulgae-doctor-result.v2") &&
        !tool_catalog.include?("provider_static_admission") &&
        !tool_catalog.include?("live_review"),
        "Mulgae setup diagnostics must use Doctor v2 and preserve Codex output capability")
-assert(dev_setup.include?("Do not expose static admission, heartbeat") &&
-       dev_setup.include?("Never authenticate a provider, inspect a prior run") &&
-       dev_setup.include?("--require-mulgae-mcp"),
+assert(tool_catalog.include?("Do not gate or report setup on static evidence, heartbeat") &&
+       dev_setup.include?("Never stage, commit, push, authenticate a provider") &&
+       dev_setup.include?("`--require-mulgae-mcp`") &&
+       dev_setup_script_body.include?("--require-mulgae-mcp"),
        "Mulgae setup reporting must preserve offline and optional-MCP boundaries")
 assert(ROOT.join("README.md").read.include?("provides local execution memory") &&
        !ROOT.join("README.md").read.include?("durable local execution memory") &&
@@ -1153,11 +1122,13 @@ assert(ROOT.join("README.md").read.include?("Evidence has a residence") &&
        root_agents.include?("Aquarium evidence root: <repository-relative-path>"),
        "public privacy and agent guidance must preserve evidence residency and promotion boundaries")
 assert(gaori_catalog, "Gaori tool catalog section is missing")
+assert(dev_setup_global.include?("../../references/tool-catalog.md") &&
+       dev_setup_global.include?("Sanho, Dolgorae, Mulgae, Gaori, Sorage, and Podway user-global CLIs"),
+       "dev-setup-global must route every supported global CLI through the shared tool catalog")
 assert(gaori_catalog.include?("gaori version --json"), "Gaori JSON version probe is missing")
 assert(gaori_catalog.include?("stable `v0.1.14` through `v0.1.x`") &&
        gaori_catalog.include?("same exact tag") &&
-       gaori_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/") &&
-       dev_setup.include?("stable `v0.1.14` through `v0.1.x`"),
+       gaori_catalog.include?("raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/"),
        "Gaori CLI and use-gaori must share the supported approved release")
 assert(gaori_catalog.include?("gaori --json config check") &&
        gaori_catalog.include?("gaori --json config check --sample <raw-log>") &&
@@ -1185,8 +1156,7 @@ assert(gaori_catalog.include?("[mcp_servers.gaori]") &&
 assert(sanho_catalog, "Sanho tool catalog section is missing")
 assert(sanho_catalog.include?("stable `v0.2.7` through `v0.2.x`") &&
        sanho_catalog.include?("same exact tag") &&
-       sanho_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/") &&
-       dev_setup.include?("stable `v0.2.7` through `v0.2.x`"),
+       sanho_catalog.include?("raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/"),
        "Sanho CLI and use-sanho must share the supported approved release")
 assert(sanho_catalog.include?("sanho check --require-clean") &&
        sanho_catalog.include?("sanho diff --refresh") &&
@@ -1207,13 +1177,13 @@ assert(sanho_catalog.include?("sanho log") &&
 assert(agents_reference.include?("$use-sanho") &&
        agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
        "AGENTS guidance must conditionally reference use-sanho")
-assert(dev_setup.include?("CLI installation or upgrade") &&
-       dev_setup.include?("user-scoped skill installation or replacement") &&
-       dev_setup.include?("separate approval boundaries"),
-       "dev-setup must separate Sanho CLI, skill, workspace, and repair approvals")
-assert(dev_setup.include?("use-gaori") &&
-       dev_setup.include?("global or project-local MCP configuration") &&
-       dev_setup.include?("Never start a Gaori run or MCP test command during setup"),
+assert(dev_setup_global.include?("archive download") &&
+       dev_setup_global.include?("skill installation or replacement") &&
+       dev_setup_global.include?("distinct actions"),
+       "dev-setup-global must separate Sanho CLI, skill, workspace, and repair approvals")
+assert(dev_setup.include?("Gaori repository config") &&
+       dev_setup.include?("project MCP") &&
+       dev_setup.include?("start a review or test"),
        "dev-setup must separate Gaori CLI, skill, config, and MCP boundaries")
 assert(agents_reference.include?("$use-gaori") &&
        agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
@@ -1224,8 +1194,7 @@ assert(mulgae_catalog.include?("stable `v0.1.18` through `v0.1.x`") &&
        mulgae_catalog.include?("Go `1.26.6` or newer") &&
        mulgae_catalog.include?("same exact tag") &&
        mulgae_catalog.include?("raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/") &&
-       mulgae_catalog.include?("~/.agents/skills/use-mulgae") &&
-       dev_setup.include?("stable `v0.1.18` through `v0.1.x`"),
+       mulgae_catalog.include?("~/.agents/skills/use-mulgae"),
        "Mulgae CLI and use-mulgae must share the supported approved release and user scope")
 assert(mulgae_catalog.include?(".mulgae/local.yaml") &&
        mulgae_catalog.include?("mode-`0600`") &&
@@ -1284,11 +1253,11 @@ assert(mulgae_catalog.include?("[mcp_servers.mulgae]") &&
        mulgae_catalog.include?("`start_review`, `await_review`, `cancel_review`") &&
        mulgae_catalog.include?("preserve any larger existing value"),
        "Mulgae global-first MCP setup and local cleanup guidance is incomplete")
-assert(dev_setup.include?("use-mulgae") &&
-       dev_setup.include?("project Config v3 and ignore changes") &&
-       dev_setup.include?("Codex credential-profile mapping") &&
-       dev_setup.include?("start a Mulgae heartbeat, review, qualification, preflight capture, live provider request") &&
-       dev_setup.include?("source transmission, or MCP server during setup"),
+assert(dev_setup_global.include?("use-mulgae") &&
+       dev_setup.include?("Mulgae Config v3") &&
+       dev_setup.include?("local configuration") &&
+       dev_setup_global.include?("Do not install provider CLIs, authenticate") &&
+       dev_setup.include?("Never stage, commit, push, authenticate a provider, transmit source"),
        "dev-setup must separate Mulgae CLI, skill, Config v3, Codex profile, and MCP boundaries")
 assert(agents_reference.include?("$use-mulgae") &&
        agents_reference.include?("A CLI alone does not justify a paired-skill reference"),
@@ -1301,6 +1270,12 @@ assert(agents_reference.include?("$use-mulgae") &&
   "epic-validator" => epic_validator,
 }.each do |name, body|
   assert(body.include?("$use-mulgae"), "#{name} must route Mulgae reviews through use-mulgae")
+end
+{ "task-review" => task_review, "epic-handler" => epic_handler, "epic-validator" => epic_validator }.each do |name, body|
+  assert(body.include?("When the skill is unavailable") &&
+         body.include?("When a required project MCP is missing") &&
+         body.include?("Otherwise report the unavailable integration once"),
+         "#{name} must state all three Mulgae fallback branches explicitly")
 end
 assert(task_review.include?("use the CLI fallback below") &&
        task_review.include?("Do not start a second MCP server") &&
@@ -1321,7 +1296,7 @@ assert(task_review.include?("use the CLI fallback below") &&
 assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-mulgae") &&
        ROOT.join("PRIVACY.md").read.include?("complete provider stdout and stderr") &&
        ROOT.join("PRIVACY.md").read.include?("auth.json") &&
-       ROOT.join("PRIVACY.md").read.include?("does not run reviews, start the MCP server"),
+       ROOT.join("PRIVACY.md").read.include?("Neither setup skill runs reviews, starts the MCP server"),
        "privacy policy must disclose Mulgae skill installation and MCP boundaries")
 
 {
@@ -1350,8 +1325,7 @@ assert(sorage_catalog.include?("stable `v0.1.0` through `v0.1.x`") &&
        sorage_catalog.include?("codesign --verify --strict") &&
        sorage_catalog.include?("raw.githubusercontent.com/irootkernel/sorage/<tag>/skills/use-sorage/SKILL.md") &&
        sorage_catalog.include?("before atomically moving it to `~/.agents/skills/use-sorage`") &&
-       sorage_catalog.include?("~/.agents/skills/use-sorage") &&
-       dev_setup.include?("stable `v0.1.0` through `v0.1.x`"),
+       sorage_catalog.include?("~/.agents/skills/use-sorage"),
        "Sorage CLI and use-sorage must share the supported approved release")
 assert(sorage_catalog.include?("sorage init --non-interactive --json") &&
        sorage_catalog.include?("sorage project resolve --path <canonical-git-root> --json") &&
@@ -1374,38 +1348,14 @@ assert(dev_setup_script_body.include?("def supported_sorage_version") &&
        dev_setup_script_body.include?('"registration_required"') &&
        dev_setup_script_body.include?('"resolution_error"'),
        "dev-setup inspector must expose bounded Sorage readiness")
-assert(dev_setup.include?("name: use-sorage") &&
-       dev_setup.include?("Never add `--include-sorage` to this initial inspection") &&
-       dev_setup.include?("After showing that disclosure and receiving an affirmative Sorage selection") &&
-       dev_setup.include?("selected Sorage diagnostic side effects described above") &&
-       dev_setup.include?("registered Project through a containing `directory` binding") &&
-       sorage_catalog.include?("registered Project through a containing `directory` binding") &&
-       dev_setup.include?("obtain separate explicit approval before running it") &&
-       sorage_catalog.include?("obtain separate explicit approval before running it") &&
-       dev_setup.include?("complete documented regular-file set") &&
-       sorage_catalog.include?("bare `{name, version}` object") &&
-       sorage_catalog.include?("all 20 v0.1 catalog IDs") &&
-       sorage_catalog.include?("Doctor exits `0`") &&
-       sorage_catalog.include?("healthy supported CLI remains `installed`") &&
-       sorage_catalog.include?("A native resolution error is `resolution_error`") &&
-       tool_integrations_doc.include?("readiness_status: resolution_error") &&
-       sorage_catalog.include?("no tracked descendant") &&
-       sorage_catalog.include?("no symlinked `.sorage/` path"),
-       "Sorage contracts must distinguish version shape, doctor validity, CLI health, and repository readiness")
-assert(dev_setup_bundle.include?("--include-sorage") &&
-       !dev_setup_bundle_preconfirmation.include?("inspect_tools.py --include-sorage") &&
-       dev_setup_bundle_preconfirmation.include?("never adds `--include-sorage`") &&
-       !dev_setup_bundle_preconfirmation.include?("Sorage CLI, paired skill, and initialization once") &&
-       dev_setup_bundle_configuration.include?("inspect_tools.py --include-sorage") &&
-       dev_setup_bundle_configuration.include?("Use the first selected Sorage target's diagnosis to decide initialization") &&
-       dev_setup_bundle.include?("defer initialization until the first selected target's readiness diagnosis") &&
-       dev_setup_bundle.include?("Sorage fetches one public skill file") &&
-       dev_setup_bundle.include?("Project resolution opens Sorage's database through its native migration path") &&
-       dev_setup_bundle.include?("Sanho, Mulgae, Gaori, Sorage, or Podway paired skill once") &&
-       ROOT.join("PRIVACY.md").read.include?("Project resolution may apply migrations or update journal state") &&
-       ROOT.join("docs/specs/local-interfaces.md").read.include?("Default inventory leaves a supported Sorage CLI's readiness `not_inspected`") &&
-       ROOT.join("docs/specs/tool-integrations.md").read.include?("native Project resolution path opens and may migrate"),
-       "Sorage readiness probes must be selected explicitly with native local side effects disclosed")
+assert(dev_setup_global.include?("use-sorage") &&
+       dev_setup_global.include?("minimal user-global initialization") &&
+       dev_setup.include?("Sorage Project binding") &&
+       dev_setup.include?("deferred as an execution-phase prerequisite") &&
+       dev_setup_bundle.include?("Prepare Global Components Once") &&
+       dev_setup_bundle.include?("Configure Targets in Order") &&
+       ROOT.join("PRIVACY.md").read.include?("neither runs in Plan Mode"),
+       "Sorage setup must split global initialization from repository binding and defer side-effectful Plan Mode probes")
 assert(evidence_residency.include?("`.sorage/**`") &&
        evidence_residency.include?("Sorage managed Vault content, Handoffs, and derived `.sorage/INBOX.md` are never promotion sources"),
        "shared evidence residency must keep Sorage managed content out of promoted evidence")
@@ -1422,7 +1372,7 @@ assert(dev_setup_bundle_manifest.include?("`sorage`") &&
        !dev_setup_bundle_manifest.include?("project_mcp` field is an explicit local-scope override for Sorage"),
        "setup bundles must select Sorage without inventing MCP or Project manifest state")
 assert(ROOT.join("PRIVACY.md").read.include?("~/.agents/skills/use-sorage") &&
-       ROOT.join("PRIVACY.md").read.include?("local managed Vault") &&
+       ROOT.join("PRIVACY.md").read.include?("default managed Vault") &&
        ROOT.join("PRIVACY.md").read.include?("never reads Handoff content"),
        "privacy policy must disclose Sorage storage and setup boundaries")
 
@@ -1598,7 +1548,7 @@ assert(task_handler.include?("re-enter the earliest phase that owns the requeste
        "task-handler must route rework to the owning phase")
 assert(task_handler.include?("Do not create or read `.aquarium`"),
        "task-handler must not create shadow orchestration state")
-assert(task_handler.include?("missing or unhealthy tooling or readiness prerequisite") &&
+assert(task_handler.include?("missing or unhealthy global CLI") &&
        task_handler.include?("Do not classify a healthy conflicting Procedure v2 session as a setup prerequisite"),
        "task-handler must not reinterpret a healthy session conflict as setup readiness")
 assert(task_handler.lines.length < 114, "task-handler must remain orchestration-focused")
@@ -1784,7 +1734,9 @@ assert(podway_contract.include?("Select Podway by default for every Git-backed i
 assert(podway_contract.include?("current Aquarium invocation selects Podway by default") &&
        podway_contract.include?("invisible to that workflow"),
        "Podway availability must remain separate from handler selection")
-assert(podway_contract.include?("choose between repair") &&
+assert(podway_contract.include?("route a missing or unsupported global Podway CLI, daemon, or `use-podway` skill to `$aquarium:dev-setup-global`") &&
+       podway_contract.include?("route repository configuration or managed-Procedure gaps to `$aquarium:dev-setup`") &&
+       podway_contract.include?("exact routed repair or an explicit opt-out") &&
        podway_contract.include?("Do not silently fall back"),
        "Podway readiness failures must require a repair-or-opt-out decision")
 assert(podway_contract.include?("only when the current Aquarium invocation is about to start a different Podway session") &&
@@ -1814,7 +1766,8 @@ assert(podway_contract.include?("None of these dispositions commits work, change
   assert(body.include?("Use Podway by default") &&
          body.include?("explicit pre-session opt-out") &&
          body.include?("On degraded readiness") &&
-         body.include?("`$aquarium:dev-setup` repair") &&
+         body.include?("global Podway CLI, daemon, or `use-podway` skill to `$aquarium:dev-setup-global`") &&
+         body.include?("repository configuration or managed-Procedure gaps to `$aquarium:dev-setup`") &&
          body.include?("Only when starting a different session") &&
          body.include?("explicit preserve, lifecycle, delete, or eligible-replace choice") &&
          body.include?("Never route by skill owner") &&
@@ -2376,6 +2329,7 @@ assert(task_handler.include?("only after an `achieved` goal assessment") &&
        "task-handler must gate success on the goal assessment and skip decisions on holds")
 assert(task_review.include?("only `ci-decision=pass` with no unresolved valid finding and no file change supports `approved`") &&
        task_review.include?("selects `ci-failed` through its explicit failure handoff") &&
+       task_review.include?("keep the task in review and return an exact continuation request naming the routed skill") &&
        task_handler.include?("re-enters the dominating `prepare-implementation` action") &&
        task_handler.include?("records the exact CI failure handoff there"),
        "task-review must route CI and finding failures through their exact rework paths")
@@ -3205,7 +3159,6 @@ approval_precondition = "Do not create a goal, edit files, invoke providers, sta
 end
 
 {
-  "dev-setup SKILL" => dev_setup,
   "dev-setup tool catalog" => tool_catalog,
   "Podway integration contract" => podway_contract
 }.each do |name, body|
@@ -3321,7 +3274,7 @@ assert(testing_document.include?("aquarium-test-contract/v1") &&
        !testing_document.match?(/\b20\d{2}-\d{2}-\d{2}\b/) &&
        !testing_document.include?("Last revalidated") &&
        !testing_document.include?("against functional candidate") &&
-       testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_testing.py") &&
+       testing_document.include?("tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py") &&
        testing_document.include?("docs-setup, release-notes, publication-state, and independent-review target inspectors and helpers") &&
        root_agents.include?("`Makefile` is the executable test authority") &&
        root_agents.include?("RELEASE_TAG=v<version> make test") &&
@@ -3333,6 +3286,15 @@ assert(inspect_testing_tests.include?("import pytest") &&
        !inspect_testing_tests.match?(/class\s+\w+\(unittest\.TestCase\)/) &&
        !inspect_testing_tests.include?("self.assert"),
        "the new inspector integration suite must remain native pytest")
+inspect_global_tests = ROOT.join("tests/test_inspect_global_tools.py").read
+assert(inspect_global_tests.include?("import pytest") &&
+       inspect_global_tests.include?("test_dolgorae_scope_skips_unselected_component_probes") &&
+       inspect_global_tests.include?("test_global_lora_and_deslop_accept_agents_canonical_root") &&
+       inspect_global_tests.include?("test_invalid_component_scope_returns_json_error") &&
+       !inspect_global_tests.match?(/^import unittest$/) &&
+       !inspect_global_tests.match?(/class\s+\w+\(unittest\.TestCase\)/) &&
+       !inspect_global_tests.include?("self.assert"),
+       "the global inspector integration suite must remain native pytest")
 gaori_commands = YAML.safe_load(ROOT.join(".gaori/tester.yaml").read, aliases: false).fetch("commands")
 expected_gaori_handlers = {
   "test" => ["make", "test"],
@@ -3349,6 +3311,7 @@ readme = ROOT.join("README.md").read
 korean_readme = ROOT.join("README.ko.md").read
 readme_skill_names = %w[
   dev-setup-bundle
+  dev-setup-global
   dev-setup
   docs-setup
   epic-handler
@@ -3384,6 +3347,12 @@ assert(readme.include?("https://home.rootkernel.xyz"), "README homepage is missi
 assert(readme.include?("[Canonical documentation](docs/README.md)") &&
        korean_readme.include?("[Canonical documentation](docs/README.md)"),
        "README files must link to the canonical documentation index")
+assert(readme.include?("`$aquarium:dev-setup-global` checks and updates user-global tools") &&
+       readme.include?("`$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md and CLAUDE.md") &&
+       korean_readme.include?("`$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트") &&
+       korean_readme.include?("`$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md, CLAUDE.md를 관리") &&
+       korean_readme.include?("`dev-setup-global`을 명시적으로 호출하면 모든 지원 global component의 official metadata"),
+       "public setup guidance must preserve the global and repository ownership split in both languages")
 assert(readme.include?("mailto:cs@rootkernel.xyz"), "README support email is missing")
 assert(readme.include?("codex plugin marketplace add irootkernel/aquarium --ref main"),
        "README marketplace install command is missing")

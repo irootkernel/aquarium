@@ -32,6 +32,7 @@ Aquarium does not vendor their implementation or documentation sources. Setup wo
 ## References
 
 - [Development setup skill](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+- [Global development setup skill](../../plugins/aquarium/skills/dev-setup-global/SKILL.md)
 - [Ouroboros integration](../../plugins/aquarium/references/ouroboros-integration.md)
 - [Public product overview](../../README.md)
 - [Privacy policy](../../PRIVACY.md)

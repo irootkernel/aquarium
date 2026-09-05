@@ -1,0 +1,6 @@
+interface:
+  display_name: "Global Development Setup"
+  short_description: "Maintain Aquarium user-global tools and skills"
+  default_prompt: "Use $aquarium:dev-setup-global to diagnose and update my user-global development tools."
+policy:
+  allow_implicit_invocation: false

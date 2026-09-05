@@ -1,6 +1,6 @@
 # Repository Operating Guidance
 
-Use this reference only after the user selects `Show proposal` or `Diagnose only` for repository guidance. Diagnosis uses its structure and evidence rules without drafting; only `Show proposal` authorizes proposal preparation. A proposal creates or reconciles a repository operating contract and is not limited to tool guidance.
+Use this reference whenever root repository guidance is in scope. Diagnose AGENTS.md and CLAUDE.md automatically. If the files already satisfy the contract, report no change; otherwise prepare the smallest complete proposal without asking the user to choose a diagnostic mode. A proposal creates or reconciles a repository operating contract and is not limited to tool guidance.
 
 The five-part core behavior below is adapted, rather than copied verbatim, from the Karpathy-inspired guidance at `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The bundled structure and this repository's instructions are the proposal authority.
 
@@ -97,7 +97,8 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:epic-validator` to cold-validate and remediate one completed roadmap epic.
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow.
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, or incomplete-investigation proposal.
-- Use `$aquarium:dev-setup` to diagnose or configure development tooling and repository operating guidance.
+- Use `$aquarium:dev-setup-global` to diagnose, install, or update user-global development tools, paired skills, services, and global MCP state.
+- Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and operating guidance.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$aquarium:release-handler` for one stable release lifecycle and `$aquarium:release-qa` for its exact committed-candidate scenario verification.
@@ -151,15 +152,13 @@ Do not edit nested AGENTS.md, nested CLAUDE.md, or other agent instruction forma
 
 ## Diagnose, Propose, and Apply
 
-For `Diagnose only`, report the presence and coverage of the required structure, missing commit-message authority, duplicated or conflicting guidance, CLAUDE.md delegation state, and the local evidence available for project indexing. Do not draft or mutate files.
-
-For `Show proposal`:
+Report the presence and coverage of the required structure, missing commit-message authority, duplicated or conflicting guidance, CLAUDE.md delegation state, and the local evidence available for project indexing. An explicit diagnosis-only request stops after this report and suppresses a proposal. Otherwise, when a verified gap exists:
 
 1. Record the exact root AGENTS.md and CLAUDE.md paths and their current bytes, object hashes, or explicit absence.
 2. Resolve every conflict and the mandatory commit-message rule before presenting an applicable proposal.
 3. Show one complete combined diff for both files, labeling retained repository rules through their final placement.
 4. Explain ambiguous text left unchanged and every fact omitted for lack of authority.
-5. Ask whether to `Apply exactly this diff`, `Revise proposal`, or `Do not apply`.
+5. Ask for approval to apply the exact displayed diff. The user may instead request revision or decline it.
 6. Immediately before writing, re-read both targets and require them to match the snapshots used for the proposal. A change to either target invalidates approval for the combined diff.
 7. Apply only the approved diff, then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, retained overrides, and unrelated content.
 

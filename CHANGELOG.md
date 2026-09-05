@@ -7,6 +7,12 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Added
 
 - Add optional Sorage v0.1.x setup support for exact-release CLI and paired-skill diagnosis, minimal local initialization, approved Git repository registration, derived-marker ignore safety, bundle selection, and repository guidance.
+- Add `dev-setup-global` for automatic user-global CLI, skill, service, MCP, and Ouroboros diagnosis and updates.
+
+### Changed
+
+- Make `dev-setup` automatically diagnose evidenced repository configuration, propose only necessary changes, and retain ownership of root AGENTS.md and CLAUDE.md while trusting canonical global skill presence.
+- Preserve setup bundle v1 while preparing global components once and applying repository configuration in target order.
 
 ## v0.1.14 - 2026-09-04
 

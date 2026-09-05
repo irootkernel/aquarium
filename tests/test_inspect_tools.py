@@ -17,7 +17,12 @@ from typing import Self
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
+GLOBAL_SCRIPT_DIRECTORY = ROOT / "plugins/aquarium/skills/dev-setup-global/scripts"
+sys.path.insert(0, str(GLOBAL_SCRIPT_DIRECTORY))
 SCRIPT = ROOT / "plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py"
+GLOBAL_SCRIPT = (
+    ROOT / "plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py"
+)
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
@@ -85,7 +90,6 @@ class InspectToolsTest(unittest.TestCase):
         repository: Path | None = None,
         timeout_seconds: float = NORMAL_PROBE_TIMEOUT_SECONDS,
         include_podway: bool = False,
-        include_ouroboros: bool = False,
         include_sorage: bool = False,
         require_mulgae_mcp: bool = False,
     ) -> subprocess.CompletedProcess[str]:
@@ -97,13 +101,29 @@ class InspectToolsTest(unittest.TestCase):
         ]
         if include_podway:
             arguments.append("--include-podway")
-        if include_ouroboros:
-            arguments.append("--include-ouroboros")
         if include_sorage:
             arguments.append("--include-sorage")
         if require_mulgae_mcp:
             arguments.append("--require-mulgae-mcp")
         return self.run_script(*arguments)
+
+    def inspect_global(
+        self, timeout_seconds: float = NORMAL_PROBE_TIMEOUT_SECONDS
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(GLOBAL_SCRIPT),
+                "--repository",
+                str(self.repository),
+                "--timeout-seconds",
+                str(timeout_seconds),
+            ],
+            env=self.environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
 
     def mulgae_mcp_fixture(self, name: str) -> dict[str, object]:
         fixtures = json.loads(MULGAE_MCP_FIXTURES.read_text(encoding="utf-8"))
@@ -1102,20 +1122,41 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v15")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v16")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
         )
+        self.assertEqual(
+            set(payload["trusted_global_skills"]),
+            {
+                "use-sanho",
+                "use-mulgae",
+                "use-gaori",
+                "use-sorage",
+                "use-podway",
+                "lore-commits",
+                "lore-query",
+                "deslop",
+                "humanizer",
+                "humanize-korean",
+            },
+        )
+        self.assertTrue(
+            all(
+                skill["verification_scope"] == "presence_only"
+                for skill in payload["trusted_global_skills"].values()
+            )
+        )
+        self.assertEqual(set(payload["tools"]), {"sanho", "mulgae", "gaori", "sorage"})
         self.assertEqual(payload["tools"]["sanho"]["status"], "missing")
-        self.assertEqual(payload["tools"]["dolgorae"]["status"], "missing")
-        self.assertEqual(payload["tools"]["sanho"]["agent_skill"]["status"], "missing")
+        self.assertFalse(payload["tools"]["sanho"]["agent_skill"]["present"])
         self.assertEqual(payload["tools"]["mulgae"]["status"], "missing")
-        self.assertEqual(payload["tools"]["mulgae"]["agent_skill"]["status"], "missing")
+        self.assertFalse(payload["tools"]["mulgae"]["agent_skill"]["present"])
         self.assertEqual(
             payload["tools"]["mulgae"]["mcp_registration"]["status"], "unavailable"
         )
-        self.assertEqual(payload["tools"]["gaori"]["agent_skill"]["status"], "missing")
+        self.assertFalse(payload["tools"]["gaori"]["agent_skill"]["present"])
         self.assertEqual(payload["tools"]["sorage"]["status"], "missing")
         self.assertEqual(
             payload["tools"]["sorage"]["readiness_status"], "not_applicable"
@@ -1123,10 +1164,6 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         self.assertEqual(
             payload["tools"]["gaori"]["mcp_registration"]["status"], "unavailable"
         )
-        self.assertEqual(payload["tools"]["lora"]["status"], "missing")
-        self.assertEqual(payload["tools"]["deslop"]["status"], "missing")
-        self.assertEqual(payload["tools"]["humanizer"]["status"], "missing")
-        self.assertEqual(payload["tools"]["im-not-ai"]["status"], "missing")
         self.assertNotIn("podway", payload["tools"])
 
     def test_sorage_supports_only_stable_v01_releases(self) -> None:
@@ -1187,7 +1224,7 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         self,
     ) -> None:
         self.install_fake_sorage()
-        self.install_sorage_skill()
+        self.install_sorage_skill(root=self.home / ".agents/skills")
         self.repository.joinpath(".gitignore").write_text(
             ".sorage/\n", encoding="utf-8"
         )
@@ -1296,6 +1333,49 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
                 )
                 self.assertEqual(sorage["status"], "installed")
                 self.assertEqual(sorage["readiness_status"], "degraded")
+
+    def test_default_sorage_readiness_trusts_canonical_skill_presence(self) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill(root=self.home / ".agents/skills", name="wrong-name")
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+
+        completed = self.inspect(include_sorage=True)
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        sorage = json.loads(completed.stdout)["tools"]["sorage"]
+        self.assertEqual(sorage["readiness_status"], "ready")
+        self.assertEqual(
+            sorage["agent_skill"],
+            {
+                "canonical_path": str(self.home / ".agents/skills/use-sorage"),
+                "present": True,
+                "verification_scope": "presence_only",
+            },
+        )
+
+    def test_dangling_canonical_sorage_skill_does_not_satisfy_readiness(self) -> None:
+        self.install_fake_sorage()
+        skill_root = self.home / ".agents/skills"
+        skill_root.mkdir(parents=True)
+        skill_root.joinpath("use-sorage").symlink_to(
+            self.base / "missing-use-sorage", target_is_directory=True
+        )
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+
+        completed = self.inspect(include_sorage=True)
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertFalse(payload["trusted_global_skills"]["use-sorage"]["present"])
+        sorage = payload["tools"]["sorage"]
+        self.assertEqual(sorage["status"], "installed")
+        self.assertEqual(sorage["readiness_status"], "degraded")
 
     def test_sorage_reports_initialization_and_registration_requirements(self) -> None:
         cases = (
@@ -2888,36 +2968,30 @@ else:
             json.loads(output.getvalue())["error"]["code"], "unsupported_version"
         )
 
-    def test_inspector_cli_routes_dolgorae_release_verification_flag(self) -> None:
-        output = io.StringIO()
-        result = {"schema_version": inspect_tools.SCHEMA_VERSION}
-        with (
-            mock.patch.object(
-                sys,
-                "argv",
-                [
-                    "inspect_tools.py",
-                    "--repository",
-                    str(self.repository),
-                    "--verify-dolgorae-release",
-                ],
-            ),
-            mock.patch.object(inspect_tools, "inspect", return_value=result) as inspect,
-            mock.patch.object(sys, "stdout", output),
-        ):
-            exit_code = inspect_tools.main()
+    def test_removed_global_flags_are_rejected(self) -> None:
+        for flag in ("--verify-dolgorae-release", "--include-ouroboros"):
+            with self.subTest(flag=flag):
+                output = io.StringIO()
+                with (
+                    mock.patch.object(
+                        sys,
+                        "argv",
+                        [
+                            "inspect_tools.py",
+                            "--repository",
+                            str(self.repository),
+                            flag,
+                        ],
+                    ),
+                    mock.patch.object(sys, "stdout", output),
+                ):
+                    exit_code = inspect_tools.main()
 
-        self.assertEqual(exit_code, 0)
-        inspect.assert_called_once_with(
-            str(self.repository),
-            10.0,
-            include_podway=False,
-            include_ouroboros=False,
-            include_sorage=False,
-            require_mulgae_mcp=False,
-            verify_dolgorae_release=True,
-        )
-        self.assertEqual(json.loads(output.getvalue()), result)
+                self.assertEqual(exit_code, 2)
+                self.assertEqual(
+                    json.loads(output.getvalue())["error"]["code"],
+                    "invalid_arguments",
+                )
 
     def test_inspector_cli_routes_sorage_readiness_flag(self) -> None:
         output = io.StringIO()
@@ -2943,10 +3017,8 @@ else:
             str(self.repository),
             10.0,
             include_podway=False,
-            include_ouroboros=False,
             include_sorage=True,
             require_mulgae_mcp=False,
-            verify_dolgorae_release=False,
         )
         self.assertEqual(json.loads(output.getvalue()), result)
 
@@ -2993,7 +3065,7 @@ else:
         self.assertEqual(tools["sanho"]["version"], "v0.2.7")
         self.assertTrue(tools["sanho"]["version_supported"])
         self.assertEqual(tools["sanho"]["status"], "configured")
-        self.assertEqual(tools["sanho"]["agent_skill"]["status"], "missing")
+        self.assertFalse(tools["sanho"]["agent_skill"]["present"])
         self.assertNotIn("secret-project", completed.stdout)
         self.assertNotIn("git@example.invalid", completed.stdout)
         self.assertNotIn("secret detail", completed.stdout)
@@ -3017,7 +3089,7 @@ else:
             else "degraded"
         )
         self.assertEqual(tools["mulgae"]["status"], expected_mulgae_status)
-        self.assertEqual(tools["mulgae"]["agent_skill"]["status"], "missing")
+        self.assertFalse(tools["mulgae"]["agent_skill"]["present"])
         self.assertEqual(tools["mulgae"]["mcp_registration"]["status"], "unavailable")
         mulgae_configuration = {
             entry["path"]: entry for entry in tools["mulgae"]["configuration"]
@@ -3037,7 +3109,7 @@ else:
         self.assertEqual(tools["gaori"]["version"], "0.1.14")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
-        self.assertEqual(tools["gaori"]["agent_skill"]["status"], "missing")
+        self.assertFalse(tools["gaori"]["agent_skill"]["present"])
         self.assertEqual(tools["gaori"]["mcp_registration"]["status"], "unavailable")
         self.assertTrue(tools["gaori"]["probes"]["config_check"]["ok"])
         gaori_configuration = {
@@ -3046,15 +3118,6 @@ else:
         self.assertFalse(gaori_configuration[".gaori/tester.yaml"]["ignored"])
         self.assertFalse(gaori_configuration[".gaori/tester/rules/"]["ignored"])
         self.assertTrue(gaori_configuration[".gaori/toolchain.yaml"]["ignored"])
-        self.assertEqual(tools["lora"]["status"], "unverifiable")
-        self.assertFalse(tools["lora"]["complete_tree_verified"])
-        self.assertTrue(tools["lora"]["lore_setup_present"])
-        self.assertFalse(tools["lora"]["skills"]["lore-commits"]["duplicate"])
-        self.assertFalse(tools["lora"]["skills"]["lore-query"]["symlinked"])
-        self.assertEqual(tools["deslop"]["status"], "unverifiable")
-        self.assertTrue(tools["deslop"]["installed"])
-        self.assertFalse(tools["deslop"]["complete_tree_verified"])
-        self.assertEqual(tools["deslop"]["verification_scope"], "structure_only")
 
     def test_deslop_installation_with_extra_file_is_degraded(self) -> None:
         skill_directory = self.install_deslop_skill()
@@ -3062,7 +3125,7 @@ else:
             "unexpected\n", encoding="utf-8"
         )
 
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
 
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
@@ -3073,14 +3136,14 @@ else:
 
     def test_deslop_invalid_frontmatter_is_degraded(self) -> None:
         self.install_deslop_skill(name="wrong-name")
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertFalse(deslop["agent_skill"]["installations"][0]["frontmatter_valid"])
 
     def test_deslop_incomplete_installation_is_degraded(self) -> None:
         (self.codex_home / "skills/deslop").mkdir(parents=True)
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertFalse(
@@ -3089,7 +3152,7 @@ else:
 
     def test_deslop_installation_without_license_is_degraded(self) -> None:
         self.install_deslop_skill(include_license=False)
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertFalse(
@@ -3099,7 +3162,7 @@ else:
     def test_deslop_duplicate_installations_are_degraded(self) -> None:
         self.install_deslop_skill()
         self.install_deslop_skill(root=self.home / ".agents/skills")
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["duplicate"])
@@ -3110,7 +3173,7 @@ else:
         target_root = self.codex_home / "skills"
         target_root.mkdir(parents=True, exist_ok=True)
         target_root.joinpath("deslop").symlink_to(source, target_is_directory=True)
-        deslop = json.loads(self.inspect().stdout)["tools"]["deslop"]
+        deslop = json.loads(self.inspect_global().stdout)["tools"]["deslop"]
         self.assertEqual(deslop["status"], "degraded")
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
@@ -3119,7 +3182,7 @@ else:
         self.install_humanizer_skill()
         self.install_im_not_ai_skill()
 
-        tools = json.loads(self.inspect().stdout)["tools"]
+        tools = json.loads(self.inspect_global().stdout)["tools"]
 
         humanizer = tools["humanizer"]
         self.assertTrue(humanizer["installed"])
@@ -3156,7 +3219,7 @@ else:
         humanizer.joinpath("README.md").write_text("extra\n", encoding="utf-8")
         self.install_im_not_ai_skill(include_license=False)
 
-        tools = json.loads(self.inspect().stdout)["tools"]
+        tools = json.loads(self.inspect_global().stdout)["tools"]
 
         self.assertEqual(tools["humanizer"]["status"], "degraded")
         self.assertFalse(tools["humanizer"]["installed"])
@@ -3173,7 +3236,7 @@ else:
         (self.codex_home / "skills/humanize-korean").symlink_to(
             source, target_is_directory=True
         )
-        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
         self.assertEqual(im_not_ai["status"], "degraded")
         self.assertTrue(im_not_ai["agent_skill"]["installations"][0]["symlinked"])
 
@@ -3183,7 +3246,7 @@ else:
         self.install_humanizer_skill(name="wrong-name")
         self.install_humanizer_skill(root=self.codex_home / "skills")
 
-        humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+        humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
 
         self.assertEqual(humanizer["status"], "degraded")
         self.assertFalse(humanizer["installed"])
@@ -3199,7 +3262,7 @@ else:
         self.install_humanizer_skill(root=self.codex_home / "skills")
         self.install_im_not_ai_skill(root=self.home / ".agents/skills")
 
-        tools = json.loads(self.inspect().stdout)["tools"]
+        tools = json.loads(self.inspect_global().stdout)["tools"]
 
         self.assertEqual(tools["humanizer"]["status"], "degraded")
         self.assertFalse(tools["humanizer"]["installed"])
@@ -3209,7 +3272,7 @@ else:
     def test_humanizer_requires_the_pinned_supported_release(self) -> None:
         self.install_humanizer_skill(version="2.10.0")
 
-        humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+        humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
 
         self.assertFalse(humanizer["installed"])
         self.assertFalse(humanizer["version_supported"])
@@ -3227,7 +3290,7 @@ else:
             "inspect_tools.frontmatter_version",
             side_effect=AssertionError("unsafe version read"),
         ) as version_reader:
-            humanizer = json.loads(self.inspect().stdout)["tools"]["humanizer"]
+            humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
 
         version_reader.assert_not_called()
         self.assertFalse(humanizer["installed"])
@@ -3236,7 +3299,7 @@ else:
     def test_im_not_ai_target_follows_effective_codex_home(self) -> None:
         self.install_im_not_ai_skill()
 
-        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
 
         self.assertEqual(
             im_not_ai["expected_target"],
@@ -3270,7 +3333,7 @@ else:
         symlink_home.symlink_to(external_home, target_is_directory=True)
         self.environment["CODEX_HOME"] = str(symlink_home)
 
-        im_not_ai = json.loads(self.inspect().stdout)["tools"]["im-not-ai"]
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
 
         installation = im_not_ai["agent_skill"]["installations"][0]
         self.assertTrue(installation["symlinked"])
@@ -3283,7 +3346,9 @@ else:
         symlink_home.symlink_to(external_home, target_is_directory=True)
         self.environment["CODEX_HOME"] = str(symlink_home)
 
-        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+        skill = json.loads(self.inspect_global().stdout)["tools"]["gaori"][
+            "paired_skill"
+        ]
 
         self.assertEqual(skill["status"], "degraded")
         installation = skill["installations"][0]
@@ -3298,7 +3363,9 @@ else:
         linked_parent.symlink_to(external_home, target_is_directory=True)
         self.environment["CODEX_HOME"] = str(linked_parent / "nested")
 
-        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+        skill = json.loads(self.inspect_global().stdout)["tools"]["gaori"][
+            "paired_skill"
+        ]
 
         self.assertEqual(skill["status"], "degraded")
         installation = skill["installations"][0]
@@ -3314,7 +3381,9 @@ else:
         jump.symlink_to(external / "child", target_is_directory=True)
         self.environment["CODEX_HOME"] = str(jump / "..")
 
-        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+        skill = json.loads(self.inspect_global().stdout)["tools"]["gaori"][
+            "paired_skill"
+        ]
 
         self.assertEqual(skill["status"], "degraded")
         self.assertTrue(skill["installations"][0]["symlinked"])
@@ -3744,13 +3813,10 @@ else:
                 else:
                     self.install_podway_skill()
                     self.install_podway_skill(root=self.home / ".agents/skills")
-                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
-                    "podway"
-                ]
-                self.assertEqual(podway["agent_skill"]["status"], "degraded")
-                self.assertEqual(podway["readiness_status"], "not_configured")
+                podway = json.loads(self.inspect_global().stdout)["tools"]["podway"]
+                self.assertEqual(podway["paired_skill"]["status"], "degraded")
                 self.assertEqual(
-                    podway["agent_skill"]["duplicate"], case == "duplicate"
+                    podway["paired_skill"]["duplicate"], case == "duplicate"
                 )
 
     def test_unhealthy_daemon_doctor_or_procedure_is_degraded(self) -> None:
@@ -4006,11 +4072,11 @@ else:
     def test_sanho_skill_is_reported_independently_from_cli_health(self) -> None:
         self.install_fake_tools()
         self.repository.joinpath(".sanho.json").write_text("{}\n", encoding="utf-8")
-        self.install_sanho_skill()
-        sanho = json.loads(self.inspect().stdout)["tools"]["sanho"]
-        self.assertEqual(sanho["status"], "configured")
-        self.assertEqual(sanho["agent_skill"]["status"], "configured")
-        installation = sanho["agent_skill"]["installations"][0]
+        self.install_sanho_skill(root=self.home / ".agents/skills")
+        sanho = json.loads(self.inspect_global().stdout)["tools"]["sanho"]
+        self.assertEqual(sanho["cli"]["status"], "installed")
+        self.assertEqual(sanho["paired_skill"]["status"], "configured")
+        installation = sanho["paired_skill"]["installations"][0]
         self.assertTrue(installation["frontmatter_valid"])
         self.assertTrue(all(item["present"] for item in installation["files"]))
         self.assertTrue(all(item["sha256"] for item in installation["files"]))
@@ -4028,13 +4094,13 @@ else:
                 else:
                     self.install_sanho_skill()
                     self.install_sanho_skill(root=self.home / ".agents/skills")
-                skill = json.loads(self.inspect().stdout)["tools"]["sanho"][
-                    "agent_skill"
+                skill = json.loads(self.inspect_global().stdout)["tools"]["sanho"][
+                    "paired_skill"
                 ]
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
-    def test_mulgae_version_and_installation_prerequisites_are_explicit(self) -> None:
+    def test_mulgae_version_support_is_explicit(self) -> None:
         cases = (
             ("v0.1.14", False, "degraded"),
             ("v0.1.15", False, "degraded"),
@@ -4062,22 +4128,6 @@ else:
                     )
                 self.assertEqual(mulgae["version_supported"], supported)
                 self.assertEqual(mulgae["status"], status)
-
-        for version, observed_version, supported in (
-            ("go1.26.5", "go1.26.5", False),
-            ("go1.26.6", "go1.26.6", True),
-            ("go1.26.06", None, False),
-            ("go01.26.6", None, False),
-            ("go1.27.0", "go1.27.0", True),
-        ):
-            with self.subTest(go_version=version):
-                for executable in self.bin_directory.iterdir():
-                    executable.unlink()
-                self.install_fake_tools(go_version=version)
-                mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-                go = mulgae["installation_prerequisites"]["go"]
-                self.assertEqual(go["version"], observed_version)
-                self.assertEqual(go["supported"], supported)
 
     def test_mulgae_config_v3_pair_and_private_policy_are_verified(self) -> None:
         self.install_fake_tools()
@@ -4153,10 +4203,13 @@ else:
         run_command = inspect_tools.run_command
 
         def record_command(
-            arguments: list[str], cwd: Path, timeout_seconds: float
+            arguments: list[str],
+            cwd: Path,
+            timeout_seconds: float,
+            environment_overrides: dict[str, str] | None = None,
         ) -> dict[str, object]:
             commands.append(arguments)
-            return run_command(arguments, cwd, timeout_seconds)
+            return run_command(arguments, cwd, timeout_seconds, environment_overrides)
 
         with (
             mock.patch.dict(os.environ, self.environment),
@@ -4180,6 +4233,7 @@ else:
                 ("doctor", "--output", "json"),
             },
         )
+        self.assertFalse(any(Path(arguments[0]).name == "go" for arguments in commands))
 
     def test_mulgae_shared_only_config_reports_local_bootstrap_gap(self) -> None:
         self.install_fake_tools()
@@ -4226,11 +4280,11 @@ else:
 
     def test_mulgae_skill_is_independent_from_cli_and_mcp_health(self) -> None:
         self.install_mulgae_skill(root=self.home / ".agents/skills")
-        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-        self.assertEqual(mulgae["status"], "missing")
-        self.assertEqual(mulgae["agent_skill"]["status"], "configured")
-        self.assertEqual(mulgae["mcp_registration"]["status"], "unavailable")
-        installation = mulgae["agent_skill"]["installations"][0]
+        mulgae = json.loads(self.inspect_global().stdout)["tools"]["mulgae"]
+        self.assertEqual(mulgae["cli"]["status"], "missing")
+        self.assertEqual(mulgae["paired_skill"]["status"], "configured")
+        self.assertEqual(mulgae["global_mcp"]["status"], "unavailable")
+        installation = mulgae["paired_skill"]["installations"][0]
         self.assertTrue(installation["frontmatter_valid"])
         self.assertIn("/.agents/skills/use-mulgae", installation["path"])
         self.assertTrue(all(item["present"] for item in installation["files"]))
@@ -4248,8 +4302,8 @@ else:
                 else:
                     self.install_mulgae_skill()
                     self.install_mulgae_skill(root=self.home / ".agents/skills")
-                skill = json.loads(self.inspect().stdout)["tools"]["mulgae"][
-                    "agent_skill"
+                skill = json.loads(self.inspect_global().stdout)["tools"]["mulgae"][
+                    "paired_skill"
                 ]
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
@@ -4365,7 +4419,7 @@ else:
                 self.assertEqual(registration["effective_scope"], "global")
                 self.assertEqual(registration["global"]["status"], "degraded")
                 self.assertEqual(
-                    registration["recommendation"], "repair_global_registration"
+                    registration["recommendation"], "continue_with_dev_setup_global"
                 )
 
     def test_global_mcp_probe_failure_is_not_treated_as_local_proof(self) -> None:
@@ -4678,7 +4732,7 @@ else:
         self.assertEqual(mulgae["mcp_registration"]["codex_version"], "0.149.0")
         self.assertEqual(
             mulgae["mcp_registration"]["recommendation"],
-            "install_global_registration",
+            "continue_with_dev_setup_global",
         )
         self.assertEqual(mulgae["probes"]["doctor"]["reason"], "configuration_missing")
         if platform.system() == "Darwin" and platform.machine() in {"arm64", "aarch64"}:
@@ -4827,12 +4881,12 @@ else:
         self.assertNotIn("credential-marker", completed.stdout)
 
     def test_gaori_skill_is_independent_from_cli_and_mcp_health(self) -> None:
-        self.install_gaori_skill()
-        gaori = json.loads(self.inspect().stdout)["tools"]["gaori"]
-        self.assertEqual(gaori["status"], "missing")
-        self.assertEqual(gaori["agent_skill"]["status"], "configured")
-        self.assertEqual(gaori["mcp_registration"]["status"], "unavailable")
-        installation = gaori["agent_skill"]["installations"][0]
+        self.install_gaori_skill(root=self.home / ".agents/skills")
+        gaori = json.loads(self.inspect_global().stdout)["tools"]["gaori"]
+        self.assertEqual(gaori["cli"]["status"], "missing")
+        self.assertEqual(gaori["paired_skill"]["status"], "configured")
+        self.assertEqual(gaori["global_mcp"]["status"], "unavailable")
+        installation = gaori["paired_skill"]["installations"][0]
         self.assertTrue(installation["frontmatter_valid"])
         self.assertTrue(all(item["present"] for item in installation["files"]))
         self.assertTrue(all(item["sha256"] for item in installation["files"]))
@@ -4849,8 +4903,8 @@ else:
                 else:
                     self.install_gaori_skill()
                     self.install_gaori_skill(root=self.home / ".agents/skills")
-                skill = json.loads(self.inspect().stdout)["tools"]["gaori"][
-                    "agent_skill"
+                skill = json.loads(self.inspect_global().stdout)["tools"]["gaori"][
+                    "paired_skill"
                 ]
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
@@ -4924,7 +4978,9 @@ else:
             source / "use-gaori", target_is_directory=True
         )
 
-        skill = json.loads(self.inspect().stdout)["tools"]["gaori"]["agent_skill"]
+        skill = json.loads(self.inspect_global().stdout)["tools"]["gaori"][
+            "paired_skill"
+        ]
 
         self.assertEqual(skill["status"], "degraded")
         self.assertTrue(skill["installations"][0]["symlinked"])
@@ -4943,8 +4999,8 @@ else:
             external, target_is_directory=True
         )
 
-        completed = self.inspect()
-        skill = json.loads(completed.stdout)["tools"]["gaori"]["agent_skill"]
+        completed = self.inspect_global()
+        skill = json.loads(completed.stdout)["tools"]["gaori"]["paired_skill"]
 
         self.assertNotIn("credential-value-must-not-be-read", completed.stdout)
         self.assertEqual(skill["status"], "degraded")
@@ -4964,7 +5020,7 @@ else:
         self.assertEqual(gaori["mcp_registration"]["reason"], "registration_not_found")
         self.assertEqual(
             gaori["mcp_registration"]["recommendation"],
-            "install_global_registration",
+            "continue_with_dev_setup_global",
         )
 
     def test_worktree_counts_staged_unstaged_and_untracked_files(self) -> None:
@@ -5016,7 +5072,7 @@ else:
         invalid_directory.joinpath("SKILL.md").write_text(
             "---\nname: wrong-name\ndescription: Test skill.\n---\n", encoding="utf-8"
         )
-        completed = self.inspect()
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         lora = json.loads(completed.stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
@@ -5026,7 +5082,7 @@ else:
     def test_incomplete_lora_installation_is_degraded(self) -> None:
         self.install_lora_skill("lore-commits")
         (self.codex_home / "skills/lore-query").mkdir(parents=True)
-        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        lora = json.loads(self.inspect_global().stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
         self.assertFalse(
@@ -5037,7 +5093,7 @@ else:
         for name in ("lore-commits", "lore-query"):
             self.install_lora_skill(name)
         self.install_lora_skill("lore-query", root=self.home / ".agents/skills")
-        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        lora = json.loads(self.inspect_global().stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
         self.assertTrue(lora["skills"]["lore-query"]["duplicate"])
@@ -5049,7 +5105,7 @@ else:
         target_root = self.codex_home / "skills"
         target_root.mkdir(parents=True, exist_ok=True)
         target_root.joinpath("lore-query").symlink_to(source, target_is_directory=True)
-        lora = json.loads(self.inspect().stdout)["tools"]["lora"]
+        lora = json.loads(self.inspect_global().stdout)["tools"]["lora"]
         self.assertEqual(lora["status"], "degraded")
         self.assertFalse(lora["installed"])
         self.assertTrue(lora["skills"]["lore-query"]["symlinked"])
@@ -5091,7 +5147,7 @@ else:
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v15")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v16")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertEqual(payload["error"]["message"], "invalid command-line arguments")
 
@@ -5288,6 +5344,48 @@ else:
         podway_inspector.assert_not_called()
         self.assertNotIn("podway", payload["tools"])
 
+    def test_default_inspection_never_calls_global_skill_inspector(self) -> None:
+        skill_root = self.home / ".agents/skills"
+        for name in (
+            "use-sanho",
+            "use-mulgae",
+            "use-gaori",
+            "use-sorage",
+            "use-podway",
+        ):
+            directory = skill_root / name
+            directory.mkdir(parents=True)
+            directory.joinpath("SKILL.md").write_text(
+                "invalid global content\n", encoding="utf-8"
+            )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(
+                inspect_tools,
+                "inspect_agent_skill",
+                side_effect=AssertionError("global skill content was inspected"),
+            ) as skill_inspector,
+        ):
+            payload = inspect_tools.inspect(
+                str(self.repository),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_podway=True,
+            )
+
+        skill_inspector.assert_not_called()
+        for tool, skill in (
+            ("sanho", "use-sanho"),
+            ("mulgae", "use-mulgae"),
+            ("gaori", "use-gaori"),
+            ("sorage", "use-sorage"),
+            ("podway", "use-podway"),
+        ):
+            self.assertEqual(
+                payload["tools"][tool]["agent_skill"],
+                payload["trusted_global_skills"][skill],
+            )
+
     def test_default_inspection_does_not_call_ouroboros_inspector(self) -> None:
         with mock.patch("inspect_tools.inspect_ouroboros") as ouroboros_inspector:
             payload = inspect_tools.inspect(
@@ -5324,7 +5422,7 @@ else:
         self.install_fake_tools(
             ouroboros_version="0.51.1", ouroboros_mcp_mode="configured"
         )
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["version"], "0.51.1")
@@ -5348,7 +5446,7 @@ else:
                     ouroboros_mcp_doctor_ok=False,
                     ouroboros_mcp_mode=mode,
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
@@ -5361,7 +5459,7 @@ else:
 
     def test_ouroboros_accepts_isolated_launcher_without_base_cli(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="isolated")
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertFalse(ouroboros["installed"])
@@ -5394,7 +5492,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.15", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5410,7 +5508,7 @@ else:
             ouroboros_mcp_doctor_malformed=True,
             ouroboros_mcp_mode="isolated-wrong-package",
         )
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5434,7 +5532,7 @@ else:
                     ouroboros_mcp_doctor_ok=mcp_ok,
                     ouroboros_mcp_mode="configured",
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["codex_integration"]["status"], codex_status)
@@ -5450,7 +5548,7 @@ else:
                     ouroboros_version_ok=version_ok,
                     ouroboros_mcp_mode="configured",
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertFalse(ouroboros["version_supported"])
@@ -5463,7 +5561,7 @@ else:
             ouroboros_mcp_doctor_malformed=True,
             ouroboros_mcp_mode="configured",
         )
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_runtime"]["status"], "degraded")
@@ -5484,7 +5582,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5499,7 +5597,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 registration = json.loads(completed.stdout)["tools"]["ouroboros"][
                     "mcp_registration"
                 ]
@@ -5520,11 +5618,10 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect(
-                    include_ouroboros=True,
+                completed = self.inspect_global(
                     timeout_seconds=(
                         0.05 if mode == "timeout" else NORMAL_PROBE_TIMEOUT_SECONDS
-                    ),
+                    )
                 )
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 self.assertNotIn("secret registration failure", completed.stdout)
@@ -5537,7 +5634,7 @@ else:
 
     def test_missing_ouroboros_still_inspects_codex_registration(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="configured")
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertFalse(ouroboros["installed"])
@@ -5560,7 +5657,7 @@ else:
         ):
             with self.subTest(mode=mode):
                 self.install_fake_tools(ouroboros_mcp_mode=mode)
-                completed = self.inspect(include_ouroboros=True)
+                completed = self.inspect_global()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertFalse(ouroboros["installed"])
@@ -5575,7 +5672,7 @@ else:
         self,
     ) -> None:
         self.install_fake_tools(ouroboros_version="0.51.1")
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
@@ -5591,7 +5688,7 @@ else:
         self.assertEqual(ouroboros["status"], "degraded")
 
     def test_explicit_ouroboros_inspection_reports_independent_components(self) -> None:
-        completed = self.inspect(include_ouroboros=True)
+        completed = self.inspect_global()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["supported_range"], ">=0.51.1,<0.52.0")

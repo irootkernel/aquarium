@@ -4,7 +4,7 @@ Read this reference whenever `task-handler`, `epic-handler`, `epic-validator`, `
 
 Reference `$use-podway` when it is installed and valid, and follow it for current Procedure v2 command grammar, state loops, lifecycle, goal, and recovery mechanics. Route Procedure authoring to the separately installed `$create-podway-procedure` maintainer skill. Aquarium defines when its workflows request a Podway session and how they map evidence; Podway remains authoritative for session lifecycle, archival, and deletion mechanics.
 
-If the optional skill is unavailable or invalid on the default path, report that once and use the bounded mechanics below. When repository guidance requires it, stop and route the exact gap to `$aquarium:dev-setup` instead of falling back.
+If the optional skill is unavailable or invalid on the default path, report that once and use the bounded mechanics below. When repository guidance requires it, stop and route the exact global skill gap to `$aquarium:dev-setup-global` instead of falling back.
 
 ## Select Per Workflow
 
@@ -27,7 +27,7 @@ Unless the workflow is already opted out, verify that Podway is ready for Aquari
 - `.podway/procedures/aquarium-design-v2.yaml`;
 - `.podway/procedures/aquarium-war-room-v2.yaml`.
 
-These components describe availability and readiness only; the current Aquarium invocation selects Podway by default. When readiness is incomplete or degraded, stop and ask the user to choose between repair through `$aquarium:dev-setup` and an explicit opt-out for this workflow. Do not silently fall back or reinterpret the workflow as opted out.
+These components describe availability and readiness only; the current Aquarium invocation selects Podway by default. When readiness is incomplete or degraded, route a missing or unsupported global Podway CLI, daemon, or `use-podway` skill to `$aquarium:dev-setup-global`, and route repository configuration or managed-Procedure gaps to `$aquarium:dev-setup`. Stop and ask the user to choose the exact routed repair or an explicit opt-out for this workflow. Do not silently fall back or reinterpret the workflow as opted out.
 
 Neither a setup repair nor an Aquarium workflow may invoke `workspace remove`. That command deletes the selected worktree's complete `.podway` tree and belongs only to the same-tag `$use-podway` flow after an explicit exact-worktree request, complete deletion disclosure, fresh root and workspace-UUID validation, and a `podway.workspace-removal-result/v1` success. It preserves the Git worktree and grants no daemon uninstall, log purge, Git cleanup, commit, or publication authority.
 

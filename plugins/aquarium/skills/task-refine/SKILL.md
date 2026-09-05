@@ -9,7 +9,7 @@ Refine only the implementation-checked task-owned diff established by `$aquarium
 
 ## Deslop
 
-Load and follow the separately installed upstream `$deslop` skill against only the task-owned diff from its verified baseline. Aquarium's established baseline, task scope, unrelated-work preservation, verification, and reporting requirements override generic upstream assumptions. If `$deslop` is unavailable or invalid, stop and return an exact `$aquarium:dev-setup` continuation request; never reconstruct or skip it. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.
+Load and follow the separately installed upstream `$deslop` skill against only the task-owned diff from its verified baseline. Aquarium's established baseline, task scope, unrelated-work preservation, verification, and reporting requirements override generic upstream assumptions. If `$deslop` is unavailable or invalid, stop and return an exact `$aquarium:dev-setup-global` continuation request; never reconstruct or skip it. When the task has no task-owned code change, record deslop and optimization as not applicable with evidence.
 
 ## Establish the Staged Baseline
 

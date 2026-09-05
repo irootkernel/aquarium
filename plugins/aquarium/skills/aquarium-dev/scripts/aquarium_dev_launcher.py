@@ -204,7 +204,7 @@ def global_executable(tool: str, environment: dict[str, str]) -> Path:
     if selected is None:
         message = f"development and global executable are unavailable: {tool}"
         if tool in REQUIRED_GLOBAL_COMMANDS:
-            message += f"; request $aquarium:dev-setup for {tool}"
+            message += f"; request $aquarium:dev-setup-global for {tool}"
         raise OSError(message)
     executable = Path(selected).resolve(strict=True)
     if (

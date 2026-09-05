@@ -1,6 +1,6 @@
 # Capability Catalog
 
-Aquarium exposes 24 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
+Aquarium exposes 25 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
 
 ## Design and Discovery
 
@@ -56,8 +56,9 @@ Release QA has a full mode and a bounded confirmation mode. Any substantive cand
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
 | `$aquarium:aquarium-dev` | Explicit development-channel request | Diagnoses and enrolls one supported canonical checkout, publishes exact foreground or managed-service generations below `~/.aquarium-dev`, and installs the optional inherited-environment launcher | Enrollment, hook, build, managed-service activation, and launcher installation remain separate effects; producers retain daemon ownership, and Codex configuration plus production Dolgorae setup are outside the channel |
-| `$aquarium:dev-setup` | Explicit setup or repair request | Diagnoses and proposes Dolgorae plus supported tools, paired skills, MCP scopes, Podway readiness, and repository guidance | Diagnosis, lookup, archive download, installation, configuration, repair, staging, and commit stay independent |
-| `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external manifest and applies single-repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
+| `$aquarium:dev-setup-global` | Explicit global setup, update, or scoped prerequisite repair | Diagnoses every selected user-global CLI, paired skill, service, global MCP registration, third-party writing or Lore skill, and Ouroboros component | Read-only freshness lookup, download, installation, replacement, configuration, and provider authority remain independent |
+| `$aquarium:dev-setup` | Explicit repository setup or repair request | Automatically diagnoses evidenced repository configuration, project MCP, Podway readiness, and root AGENTS.md/CLAUDE.md guidance, then proposes only verified gaps | It trusts canonical global skill presence and never installs, compares, or updates global installation state; selected Sorage diagnosis may still trigger the disclosed native open-and-migrate path in `~/.sorage` |
+| `$aquarium:dev-setup-bundle` | Explicit manifest | Normalizes one external v1 manifest, prepares its global union once, and applies repository setup sequentially across named Git roots | It performs no implicit workspace discovery and persists no central bundle state |
 | `$aquarium:docs-setup` | Explicit | Audits, adopts, bootstraps, or migrates canonical documentation roles and roadmap identity | It never stages, commits, publishes, or turns structural inspection into semantic proof |
 | `$aquarium:test-setup` | Explicit | Audits and configures the common Make or Bun test contract and evidence-backed legacy waivers | Applying test files does not authorize side-effectful E2E execution |
 

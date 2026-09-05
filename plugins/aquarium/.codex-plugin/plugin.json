@@ -57,7 +57,7 @@
     "termsOfServiceURL": "https://github.com/irootkernel/aquarium/blob/main/TERMS.md",
     "defaultPrompt": [
       "Use $aquarium:new-project, $aquarium:new-feature, $aquarium:refactor, or $aquarium:war-room for explicit design work.",
-      "Use $aquarium:task-handler or $aquarium:epic-handler for delivery, $aquarium:release-handler for releases, and $aquarium:dev-setup, $aquarium:docs-setup, or $aquarium:test-setup for setup."
+      "Use $aquarium:task-handler or $aquarium:epic-handler for delivery, $aquarium:release-handler for releases, and $aquarium:dev-setup-global, $aquarium:dev-setup, $aquarium:docs-setup, or $aquarium:test-setup for setup."
     ],
     "brandColor": "#10C4BE"
   }

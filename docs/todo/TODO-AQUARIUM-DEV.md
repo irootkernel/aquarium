@@ -12,7 +12,7 @@ The shipped `$aquarium:aquarium-dev` skill and its linked reference own implemen
 
 Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
 
-Dolgorae is an enrollable development producer whose repository owns enrollment when its approved producer commit is created. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests dev-setup. Independent Review still uses only the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
+Dolgorae is an enrollable development producer whose repository owns enrollment when its approved producer commit is created. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. Independent Review still uses only the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
 
 ## Success Criteria
 
@@ -89,7 +89,7 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 - [x] Add a separately approved `~/.local/bin/aquarium-dev` launcher that inherits the caller's environment and prepends only the development bin directory.
 - [x] Prefer each available development command independently, fall back only an absent foreground tool to global PATH outside both Aquarium roots, and fail closed on invalid selected or managed-service state.
 - [x] Remove isolated Codex configuration, authentication, plugin installation, and MCP ownership from the manager and public workflow.
-- [x] Admit Dolgorae as an executable producer, require global fallback before registration, and request dev-setup when neither generation exists.
+- [x] Admit Dolgorae as an executable producer, require global fallback before registration, and request `$aquarium:dev-setup-global` when neither generation exists.
 - [x] Route Independent Review to the globally installed official Dolgorae v0.1.0 executable with immediate identity and capability checks.
 - [x] Route Orca Review directly to one fresh Orca-managed Codex worker without Dolgorae discovery, capture, launch, or settlement.
 - [x] Preserve historical decisions by superseding ADR-0007 with ADR-0008 instead of rewriting the old record.

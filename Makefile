@@ -17,7 +17,8 @@ export PYTEST_ADDOPTS
 PYTHON_FILES := \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
-	plugins/aquarium/skills/dev-setup/scripts/verify_dolgorae_release.py \
+	plugins/aquarium/skills/dev-setup-global/scripts/verify_dolgorae_release.py \
+	plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/dev_contract.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev.py \
 	plugins/aquarium/skills/aquarium-dev/scripts/aquarium_dev_launcher.py \
@@ -31,6 +32,7 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py \
 	plugins/aquarium/skills/test-setup/scripts/inspect_testing.py \
 	tests/test_inspect_docs.py \
+	tests/test_inspect_global_tools.py \
 	tests/test_inspect_tools.py \
 	tests/test_inspect_testing.py \
 	tests/test_normalize_manifest.py \
@@ -86,7 +88,7 @@ test-unit: test-requirements
 	$(PYTHON) -m pytest tests/unit
 
 test-int: test-requirements
-	$(PYTHON) -m pytest tests/test_inspect_docs.py tests/test_inspect_testing.py
+	$(PYTHON) -m pytest tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py
 	$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 
 test-e2e: test-requirements

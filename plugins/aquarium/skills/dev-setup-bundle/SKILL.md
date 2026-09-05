@@ -1,64 +1,42 @@
 ---
 name: dev-setup-bundle
-description: "Apply Aquarium development-tool setup across multiple Git repositories from one external YAML manifest. Use when the user explicitly invokes $aquarium:dev-setup-bundle with a manifest path. Do not use for single-repository setup or implicit workspace discovery; use $aquarium:dev-setup."
+description: "Apply Aquarium global and repository development setup across explicit Git repositories. Use when the user explicitly invokes $aquarium:dev-setup-bundle with an aquarium.dev-setup-bundle/v1 manifest path. Do not use for one repository or implicit workspace discovery."
 ---
 
 # Development Setup Bundle
 
-Apply the existing `dev-setup` contract to an explicit ordered set of Git repositories without turning the manifest into project state or widening any installation approval.
+Normalize one explicit external manifest, prepare its user-global components once through `$aquarium:dev-setup-global`, and configure repository components in target order through `$aquarium:dev-setup`.
 
-Read [manifest.md](references/manifest.md), then read [the development setup skill](../dev-setup/SKILL.md). Read only the selected sections of [the tool catalog](../dev-setup/references/tool-catalog.md) after the manifest is normalized.
+Read [manifest.md](references/manifest.md), [the global setup skill](../dev-setup-global/SKILL.md), [the repository setup skill](../dev-setup/SKILL.md), and only the selected sections of [the shared tool catalog](../../references/tool-catalog.md).
 
-## Normalize Before Discovery
+## Normalize and Confirm
 
-1. Require an explicit manifest path. Require Python 3.10 or newer and PyYAML 6.x, resolve this skill's directory, and run `python3 <skill-directory>/scripts/normalize_manifest.py --manifest <path>`. If either runtime dependency is missing or unsupported, stop before network access or mutation; do not install or upgrade either dependency as a side effect and do not parse the manifest approximately.
-2. Treat a nonzero result or an error envelope as a manifest-wide failure. Treat an `invalid` target in a successful plan as an isolated preflight failure and continue with the remaining `ready` targets.
-3. Never create, copy, edit, stage, or commit the manifest. Keep its absolute path and SHA-256 only for this request. Do not discover manifests, repositories, or tools outside the normalized plan.
-4. For every ready target, read applicable repository instructions and inspect branch, upstream, staged, unstaged, untracked, and conflict state. Preserve unrelated work. If an approved change overlaps existing work and cannot be applied exactly, fail that action for that target instead of overwriting it.
-5. Run the existing `inspect_tools.py` once for each ready target with `--verify-dolgorae-release`, `--include-podway`, `--include-ouroboros`, and `--require-mulgae-mcp` only when the normalized selection requires those dimensions. The inspector reports user-global, isolated project-local, and effective Mulgae and Gaori MCP state independently. This pre-confirmation inspection never adds `--include-sorage`; it reports a supported Sorage CLI's readiness as `not_inspected` without running native doctor or Project resolution commands.
+1. Require an explicit manifest path, Python 3.10 or newer, and PyYAML 6.x. Resolve this skill's directory and run `python3 <skill-directory>/scripts/normalize_manifest.py --manifest <path>`. Do not install dependencies or parse the manifest approximately.
+2. Never create, copy, edit, stage, or commit the manifest. Preserve its absolute path and SHA-256 only for this request.
+3. Inspect applicable instructions and worktree state for every ready target. Invalid targets remain isolated failures.
+4. Show the normalized digest, ordered targets, effective tools, local MCP overrides, guidance policy, and worktree state. Confirm this exact selection before its authorized network comparisons or Sorage diagnostic side effects. A refusal stops the bundle without mutation.
+5. Immediately before confirmation and before the first mutation or each later target, rerun normalization and require the original digest and target identities to match. A mismatch stops all remaining work and requires a fresh invocation.
 
-## Confirm the Normalized Selection
+Confirmation authorizes only the global skill's documented bounded official metadata and raw-file reads plus disclosed non-network Sorage diagnostics outside Plan Mode. It never authorizes installation, replacement, initialization, repository mutation, Handoff access, staging, commit, or publication.
 
-Show the manifest digest and an ordered matrix of ready and invalid targets, input paths, canonical Git roots, effective tools, explicit local MCP overrides, repository-guidance proposal policy, worktree state, and local readiness. Disclose that Mulgae and Gaori MCP are user-global by default and `project_mcp` is only an explicit per-target local override.
+## Prepare Global Components Once
 
-Disclose that confirming a selection containing Dolgorae authorizes its bounded official GitHub Release metadata lookup, while Sanho, Mulgae, Gaori, Sorage, or Podway also authorize the raw-file freshness comparison defined by `dev-setup`. Sorage fetches one public skill file from `raw.githubusercontent.com`; each of the other four tools fetches four.
+Pass the normalized `shared_tools` union, manifest digest, and requesting skill to `$aquarium:dev-setup-global`. The global skill maps each union member to one `--component <name>` inspector argument and runs no component outside that union. This preserves `aquarium.dev-setup-bundle/v1`: existing tool names continue to select both their global and repository portions where applicable.
 
-Also disclose that each selected Sorage target will run native doctor and Project resolution after confirmation. These commands make no network request, but Project resolution opens Sorage's database through its native migration path and may update local database or journal state.
+Prepare each selected global CLI, paired skill, global MCP registration, daemon, Sorage initialization, third-party writing or Lore skill, and Ouroboros component at most once. Preserve every exact proposal, backup, approval, stale-target, verification, and cleanup boundary from `dev-setup-global`.
 
-Confirmation authorizes only these diagnostic side effects, not initialization, Project mutation, Handoff access, installation, or replacement.
-
-Use the host's structured ask/answer tool when available to confirm the normalized selection before any network comparison. A refusal stops the bundle without mutation. Confirmation is not approval for a CLI, skill, daemon, configuration, MCP registration, managed Procedure, root AGENTS.md/CLAUDE.md edit, or any other persistent action.
-
-Immediately before that confirmation, rerun the normalizer and require the manifest digest, target order, canonical repositories, and selections to match. Any change invalidates the displayed selection and requires a new preflight.
-
-## Prepare Shared Components Once
-
-Resolve the union of effective tools across ready targets. Resolve selected Dolgorae release metadata once. Compare each selected Sanho, Mulgae, Gaori, Sorage, or Podway paired skill once and reuse the verified exact tag, file set, digests, and ephemeral payload throughout this bundle request. Resolve other approved upstream sources once. Never refetch merely because another target selects the same tool.
-
-Handle user-global CLIs, paired skills, Lora, Deslop, Humanizer, im-not-ai, the Podway daemon, Ouroboros package, Codex and runtime components, and selected Mulgae or Gaori global MCP registrations before repository-local actions. Prepare a selected Sorage CLI and paired skill here, but defer initialization until the first selected target's readiness diagnosis. Configure each selected global MCP at most once for the bundle.
-
-Follow every distinct proposal, backup, approval, stale-target check, checksum, version, and verification boundary in `dev-setup`; a bundle selection never groups or waives them.
-
-If a shared action fails or is declined, mark every dependent target `partial`, `failed`, or `declined` as appropriate, but continue actions and targets that do not depend on it. Keep the verified payload until its last applicable action, then remove it as required by `dev-setup`.
+If a shared action fails or is declined, record the dependent targets as partial, failed, or declined while continuing independent components and targets.
 
 ## Configure Targets in Order
 
-Process ready targets in manifest order. Pass `dev-setup` a normalized bundle handoff containing the requesting skill, manifest digest, target index, canonical Git root, effective tools, explicit local MCP overrides, and repository-guidance policy. Never pass the manifest path or ask `dev-setup` to read it.
+For each ready target, pass `$aquarium:dev-setup` the requesting skill, manifest digest, target index, canonical Git root, complete effective tool list, explicit local MCP overrides, and guidance policy. The repository skill interprets the list as target intent and never repeats global installation or freshness work.
 
-For each target that selects Sorage, let `dev-setup` rerun `inspect_tools.py --include-sorage` after the bundle confirmation and before proposing any Sorage action. Do not run this target-specific readiness diagnosis while preparing shared components or for a target that does not select Sorage.
+- Process only repository portions: workspace/configuration readiness, project MCP, Sorage Project binding and ignore state, Podway managed Procedures, and AGENTS.md/CLAUDE.md guidance.
+- `agents_guidance: propose` requests the complete repository guidance proposal. `skip` suppresses that proposal. Effective Humanizer and im-not-ai selections still determine target-specific writing rules without repeating their global setup.
+- Ask only for identifiers or conflicts that repository evidence and the manifest cannot decide. Do not ask each target to select install, diagnose, or skip.
+- In Plan Mode, defer Sorage doctor and Project resolution because their native migration path may write local state. Outside Plan Mode, disclose the bounded side effect before running the selected target diagnosis.
+- Do not roll back successful actions, retry unchanged failures, stage, commit, push, invoke providers, start reviews or tests, or activate a Podway workflow.
 
-Use the first selected Sorage target's diagnosis to decide initialization. If it reports `initialization_required`, show and separately approve the exact initialization proposal, apply it once, and rerun that target's diagnosis. Every later Sorage target still gets its own diagnosis before Project or repository-local proposals; never infer its registration or `.sorage/` state from the first target.
+## Report
 
-Use the normalized tools as `Install and configure` selections, treat their Mulgae and Gaori MCP registrations as global unless named by the target's normalized local override, and use the repository-guidance value as its preselected choice. `agents_guidance: propose` preselects preparation of the complete AGENTS.md operating contract and CLAUDE.md delegation proposal, not merely tool references.
-
-Humanizer and im-not-ai remain shared installations even when selected by only one target. For a target with `agents_guidance: propose`, include only the selected writing tools' language rules in the displayed repository-guidance diff. With `agents_guidance: skip`, install or diagnose the selected writing tools without changing repository instructions.
-
-Still show and separately approve every exact persistent action required by `dev-setup`. Ask only for unresolved identifiers or mandatory policy choices that repository state and the manifest selection cannot supply, such as a new Sanho project name, documentation repository URL, or missing commit-header convention.
-
-An unexpected failure, declined action, lifecycle conflict, or overlapping worktree change affects only that action and its dependent readiness. Record the actual state and continue with the next independent action or target. Do not roll back successful actions automatically, retry an unchanged failed mutation, stage, commit, push, invoke providers, start reviews or tests, or activate a Podway workflow.
-
-Before the first mutation and before each later target, rerun the normalizer and require the original manifest digest and normalized target identity to match. A manifest change stops all remaining work and requires a fresh invocation.
-
-## Report the Bundle
-
-Report shared actions once, then every target as `ready`, `partial`, `failed`, `declined`, or `skipped`. Include commands and exit status, changed native paths, verification evidence, preserved worktree state, unmet dependencies, failure or refusal reasons, cleanup status, and the exact next request needed to resume each unfinished target. State staging, commit, push, and publication status separately.
+Report global actions once, then every target as `ready`, `partial`, `failed`, `declined`, or `skipped`. Include the manifest digest, commands and exits, changed paths, verification, preserved worktree state, unmet dependencies, cleanup, and exact resumption requests. State staging, commit, push, and publication separately.

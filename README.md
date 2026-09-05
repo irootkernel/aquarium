@@ -42,7 +42,7 @@ codex plugin add aquarium@root-kernel
 
 Restart Codex after installing or upgrading, then open `/hooks` and explicitly trust Aquarium's roadmap commit guard. The hook catches direct shell commits. It is not complete enforcement: commits created indirectly by another tool may not pass through it.
 
-Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup` checks supported tools and proposes exact-upstream installation or repair, each behind its own approval. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. Installation and repository guidance remain separate decisions. The upstream `$deslop` skill is a required prerequisite for task delivery.
+Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup-global` checks and updates user-global tools from exact upstream sources, while `$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md and CLAUDE.md. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
 ## Development Channel
 
@@ -57,7 +57,7 @@ The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported t
 3. **Validate** — `$aquarium:epic-validator` re-checks a completed epic from a clean start and fixes the gaps it confirms. `$aquarium:independent-review` gives staged changes, commits, ranges, tasks, epics, and special investigations one canonical static Codex review contract. `$aquarium:orca-review` preserves those target meanings while running the reviewer you requested in the current Orca worktree. Aquarium checks every returned finding locally.
 4. **Release** — `$aquarium:release-handler` settles cumulative notes, delegates exact-candidate scenarios to `$aquarium:release-qa`, runs the repository gate, publishes with separate approval, and opens the next planned version.
 
-Foundations: `$aquarium:docs-setup` governs canonical documentation structure and roadmap IDs. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup` checks and configures the toolchain and the repository's agent guidance. `$aquarium:dev-setup-bundle` applies that setup to several repositories from one manifest.
+Foundations: `$aquarium:docs-setup` governs canonical documentation structure and roadmap IDs. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup-global` maintains user-global tools; `$aquarium:dev-setup` automatically diagnoses repository configuration and agent guidance, proposing changes only when needed. `$aquarium:dev-setup-bundle` delegates those two scopes across several repositories from one v1 manifest.
 
 ## How the Ecosystem Connects
 
@@ -80,7 +80,7 @@ Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, der
 
 - Invoking a workflow grants only the effects its skill documents. Installation, authentication, source transmission, tests, staging, commits, pushes, publication, and destructive lifecycle actions each need separate authority.
 - Invoking `release-handler` authorizes read-only release discovery and orchestration only; commits, pushes, tags, hosted Releases, destructive replacement, and the post-release next-cycle commit remain separate approvals. Its delegated `release-qa` pass may use existing ambient authentication for private repositories, remediate verified findings locally once, and never upload source or handle credentials.
-- When selected for setup or diagnosis, Dolgorae automatically queries its official GitHub Releases metadata; downloading or installing its archive still requires separate approval. Sanho, Mulgae, Gaori, Sorage, and Podway also download their public paired-skill files from `raw.githubusercontent.com` into ephemeral storage for comparison with the installed `use-*` skill. Sorage has one file; each of the other four tools has four. Unselected tools and other network operations are not covered, and setup never calls an AI provider.
+- Explicitly invoking `dev-setup-global` checks every supported global component and authorizes bounded official metadata and public paired-skill freshness reads. Dolgorae uses GitHub Releases metadata; Sanho, Mulgae, Gaori, Sorage, and Podway compare public `raw.githubusercontent.com` files in ephemeral storage. Scoped continuations check only their named components. Downloads for installation, mutations, and provider calls remain separately controlled.
 - Aquarium creates no central project-state file. [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md) hold the complete data and authority contracts.
 
 ## References

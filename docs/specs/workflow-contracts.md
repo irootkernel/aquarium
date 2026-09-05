@@ -50,9 +50,9 @@ For Independent and Orca reviews, `staged` means the current `HEAD`-to-index cha
 
 ## Set Up a Repository
 
-`dev-setup`, `docs-setup`, and `test-setup` begin with conservative read-only inspection. They classify current state, present exact proposed changes, snapshot affected targets, and apply only the approved diff or action before rerunning the inspector and repository-native checks.
+`dev-setup-global`, `dev-setup`, `docs-setup`, and `test-setup` begin with conservative read-only inspection. They classify current state, present exact proposed changes, snapshot affected targets, and apply only the approved diff or action before rerunning the inspector and applicable checks. `dev-setup-global` owns user-global components, while `dev-setup` owns repository tooling and operating guidance.
 
-`dev-setup-bundle` accepts one external `aquarium.dev-setup-bundle/v1` manifest, normalizes defaults and explicit target selection, confirms the resulting plan, prepares shared components once, and invokes single-repository setup in manifest order. It does not discover repositories or persist bundle state.
+`dev-setup-bundle` accepts one external `aquarium.dev-setup-bundle/v1` manifest, normalizes defaults and explicit target selection, confirms the resulting plan, delegates the union of selected global components once to `dev-setup-global`, and invokes single-repository setup in manifest order. It does not discover repositories or persist bundle state.
 
 ## Release a Stable Version
 

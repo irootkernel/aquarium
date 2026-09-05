@@ -12,7 +12,7 @@ Run the canonical Aquarium review contract with one fresh Codex Reviewer through
 1. Read [review-contract.md](../../references/review-contract.md) completely.
 2. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
 3. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
-4. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
+4. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup-global`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
 
 ## Establish the request
 
@@ -24,7 +24,7 @@ Resolve one existing Dolgorae Reviewer profile from checked workspace configurat
 
 ## Admit the candidate
 
-Require an official stable Dolgorae release from v0.1.1 through v0.1.x as described by the consumer contract. At review start, run the dev-setup inspector with `--verify-dolgorae-release`, freeze the verified release tag, source commit, asset identities, executable checksum, path, file identity, runtime version, and compact sorted capability digest, and make no further network lookup during that invocation.
+Require an official stable Dolgorae release from v0.1.1 through v0.1.x as described by the consumer contract. At review start, run `inspect_global_tools.py --component dolgorae --verify-dolgorae-release`, freeze the verified release tag, source commit, asset identities, executable checksum, path, file identity, runtime version, and compact sorted capability digest, and make no further network lookup during that invocation.
 
 Require `command -v dolgorae` to resolve the frozen globally installed release candidate and repeat the local path, file identity, version, checksum, and capability checks immediately before every source-bearing operation. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission. Reject v0.1.0, prereleases, source or development builds, and v0.2 or later releases.
 

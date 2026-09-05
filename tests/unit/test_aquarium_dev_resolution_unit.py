@@ -335,7 +335,7 @@ def test_missing_required_tool_requests_dev_setup(tmp_path, monkeypatch, capsys)
     assert launcher.main(["dolgorae", "--version"]) == 127
     error = capsys.readouterr().err
     assert "development and global executable are unavailable: dolgorae" in error
-    assert "request $aquarium:dev-setup for dolgorae" in error
+    assert "request $aquarium:dev-setup-global for dolgorae" in error
 
 
 def test_missing_optional_sanho_does_not_request_dev_setup(

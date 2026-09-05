@@ -64,7 +64,7 @@ Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged
 - the reviewed implementation, approved lifecycle or record decision, and any approved post-review promoted-evidence packages equal the staged diff;
 - unrelated pre-existing staged content is absent from the intended commit.
 
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository-required IDs and prefixes override Lore, which never grants commit authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup` continuation request. Otherwise report its absence once, inspect `git log -5 --format=fuller`, and match the recurring subject, body, and trailer structure; inspect all commits when fewer than five exist and use a concise imperative subject when none exist.
+Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository-required IDs and prefixes override Lore, which never grants commit authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup-global` continuation request. Otherwise report its absence once, inspect `git log -5 --format=fuller`, and match the recurring subject, body, and trailer structure; inspect all commits when fewer than five exist and use a concise imperative subject when none exist.
 
 When a handler handoff includes one or more promoted-evidence packages:
 
@@ -78,7 +78,7 @@ When the same handoff also includes a hardening deferral, reference `$use-mulgae
 
 Never add new `Mulgae-Deferred-Run` or `Mulgae-Deferred-Finding` trailers. Do not copy finding descriptions, recommendations, severities, paths, reports, provider or model identities, runtime identities, or private native artifacts into the commit message. When the handoff explicitly says that no promoted evidence applies, add no `Aquarium-Evidence` trailer.
 
-Before committing in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available. If unavailable and required, stop and route to `$aquarium:dev-setup`; otherwise use the repository-required check or minimal `sanho status --json` fallback. Sanho status never grants commit authority.
+Before committing in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available. If unavailable and required, stop and route the global skill gap to `$aquarium:dev-setup-global`; otherwise use the repository-required check or minimal `sanho status --json` fallback. Sanho status never grants commit authority.
 
 ## Commit Through the Gate
 

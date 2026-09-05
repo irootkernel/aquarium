@@ -20,11 +20,11 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 
 ## Installation and Freshness
 
-Selecting Dolgorae in `dev-setup` authorizes only a bounded official GitHub Release metadata lookup; archive download and installation require separate approvals. For Sanho, Mulgae, Gaori, Sorage, and Podway, selection authorizes the metadata lookup plus a bounded comparison against the public upstream paired-skill files. Sorage has one file; each of the other four tools has four. Neither path authorizes installation, replacement, initialization, Project registration, another network endpoint, or any provider request.
+Explicitly invoking `dev-setup-global` without a component list selects every supported user-global component and authorizes its bounded official metadata and raw-file freshness reads. A scoped continuation selects only its named components. Dolgorae uses official GitHub Release metadata; Sanho, Mulgae, Gaori, Sorage, and Podway also compare their public upstream paired-skill files. Neither path authorizes installation, replacement, initialization, Project registration, another network endpoint, or any provider request.
 
 Every installation proposal identifies the exact source ref, target, network endpoints, files, checksums or digests, backup choice, expected mutation, and post-action verification. Existing modified or duplicate skill copies are never overwritten or deleted silently.
 
-Humanizer and im-not-ai require separately approved GitHub release lookup and installation actions. `dev-setup-bundle` prepares each selected user-global payload once, while target-level tool selection and `agents_guidance` decide whether English, Korean, both, or neither final-pass rule appears in a repository proposal.
+Humanizer and im-not-ai are diagnosed and updated by `dev-setup-global`; installation actions remain separately approved. `dev-setup-bundle` prepares each selected user-global payload once, while target-level tool selection and `agents_guidance` decide whether English, Korean, both, or neither final-pass rule appears in a repository proposal.
 
 ## MCP Scope
 
@@ -38,15 +38,15 @@ Sorage has no supported MCP surface. Its official CLI and `use-sorage` skill own
 
 ## Sorage Readiness
 
-Sorage is optional and does not join Aquarium's production-binary baseline. Its setup is ready only when a supported Apple Silicon CLI is initialized, the complete ordered v0.1 `doctor --json` catalog has no blocking check, the exact Git root resolves to an active `git_repository` Project binding, the whole `.sorage/` directory is ignored without tracked or symlinked content, and the selected same-tag `use-sorage` skill is structurally valid. Doctor warnings do not block the minimal local profile.
+Sorage is optional and does not join Aquarium's production-binary baseline. Its setup is ready only when a supported Apple Silicon CLI is initialized, the complete ordered v0.1 `doctor --json` catalog has no blocking check, the exact Git root resolves to an active `git_repository` Project binding, the whole `.sorage/` directory is ignored without tracked or symlinked content, and the canonical `~/.agents/skills/use-sorage` path exists. Exact-upstream and same-tag skill validity belong to `dev-setup-global`. Doctor warnings do not block the minimal local profile.
 
 A healthy supported CLI remains `installed` while these readiness conditions are incomplete. An unhealthy runtime, invalid command contract, or blocking doctor result is `degraded`, except that the exact uninitialized all-blocking catalog remains `installed` with `readiness_status: initialization_required`. Only complete readiness is `configured`.
 
 Only a successful unregistered result uses `registration_required`. A valid native Project resolution failure keeps the CLI `installed` with `readiness_status: resolution_error`; it cannot enter the Project creation or binding path.
 
-Default tool inventory checks only the Sorage version. After Sorage is selected, `--include-sorage` runs doctor and, when doctor has no blocking check, Project resolution. These commands make no network request, but the native Project resolution path opens and may migrate the local Sorage database; the selection disclosure covers only these diagnostic side effects.
+Global inventory checks the Sorage version and paired skill without opening repository state. Outside Plan Mode, `dev-setup-global` discloses the native open-and-migrate side effect before adding `--include-sorage-initialization` to run `sorage doctor`; this applies to both unscoped diagnosis and a scoped Sorage continuation. Repository `--include-sorage` diagnosis runs doctor and, when doctor has no blocking check, Project resolution only outside Plan Mode. These commands make no network request, but the native open-and-migrate path may update the local database or journal.
 
-`dev-setup` uses `sorage init --non-interactive --json` as the separately approved default initialization. It does not enable the daemon, LaunchAgent, Vault Git repository, backup schedule, or remote push. Project creation and binding require an exact user-confirmed identity and separate approval, followed by a fresh resolution check. Aquarium never falls back to `--allow-unregistered` and never reads Handoff content during setup.
+`dev-setup-global` uses `sorage init --non-interactive --json` as the separately approved default initialization. It does not enable the daemon, LaunchAgent, Vault Git repository, backup schedule, or remote push. `dev-setup` owns Project creation and binding, which require an exact user-confirmed identity and separate approval followed by a fresh resolution check. Aquarium never falls back to `--allow-unregistered` and never reads Handoff content during setup.
 
 After readiness, Aquarium delegates session-start and pre-task inbox/outbox discovery plus every fetch, review, revision, acceptance, retention, deletion, backup, and Vault operation to `use-sorage`. The managed Vault and derived `.sorage/INBOX.md` remain native Sorage state, not repository authority or Aquarium workflow evidence.
 
@@ -54,7 +54,7 @@ After readiness, Aquarium delegates session-start and pre-task inbox/outbox disc
 
 Aquarium readiness requires a supported stable CLI and matching daemon, a healthy initialized workspace, tracked `.podway/config.yaml` and `.podway/.gitignore`, and all five managed Procedure paths as tracked regular non-symlink files with the expected filename and Procedure ID that pass `procedure check --warnings-as-errors`. Each file may contain canonical bytes or a Podway-valid same-ID local customization.
 
-The bounded production-mode `daemon wait-ready` result is healthy when its `podway.daemon-status-result/v3` payload reports `mode=prod`, readiness state and stage are `ready`, activity counts are null or bounded, and the closed recovery inventory reports every worktree completed. A nonzero failed count may represent quarantined completed recovery and does not by itself degrade readiness. A prepared, running, incomplete, or undisposed terminal session is a lifecycle conflict owned by the matching workflow or `$use-podway`, not a setup repair.
+Both inspectors use the catalog's fixed 120-second production-mode `daemon wait-ready` probe with at least five seconds of process-exit headroom. A healthy result requires a matching CLI and daemon version and a `podway.daemon-status-result/v3` payload with `mode=prod`, a supported Apple Silicon target, reachability, running status, readiness state and stage set to `ready`, null or bounded activity counts, and a closed recovery inventory whose completed count equals its total. A nonzero failed count may represent quarantined completed recovery and does not by itself degrade readiness. A prepared, running, incomplete, or undisposed terminal session is a lifecycle conflict owned by the matching workflow or `$use-podway`, not a setup repair.
 
 The exact v0.2.5 compatibility transformation is migration evidence only. Any other source mismatch is divergence, and an active Procedure snapshot is never migrated in place.
 
@@ -66,7 +66,7 @@ Moving an initialized workspace between Podway runtime modes requires separate a
 
 Independent Review resolves `dolgorae` from the current PATH and requires an official global stable v0.1.x installation at or above v0.1.1. It verifies official release metadata once at review start, freezes the release and local candidate identity, then revalidates the path, file identity, executable bytes, machine version, and compatible capabilities before each source-bearing operation without another network lookup. Dolgorae may separately publish an `aquarium-dev` generation for explicit development commands, but Aquarium creates no production runtime copy, Independent Review never consumes that generation, and Orca Review does not use Dolgorae.
 
-Aquarium production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae executables. A missing required executable fails closed and routes to the tool-scoped `$aquarium:dev-setup` workflow. Sanho is explicitly optional and does not fail this binary baseline. Development generations never satisfy production readiness.
+Aquarium production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae executables. A missing required executable fails closed and routes to the tool-scoped `$aquarium:dev-setup-global` workflow. Sanho is explicitly optional and does not fail this binary baseline. Development generations never satisfy production readiness.
 
 Mulgae review is advisory. Aquarium requires complete capture coverage, passing CI decision, committed publication, a successful findings query, and zero locally verified unresolved findings before calling review clean.
 

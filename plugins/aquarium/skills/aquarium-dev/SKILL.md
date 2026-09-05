@@ -74,7 +74,7 @@ The frozen v1 producer contract supports one Aquarium Codex plugin artifact plus
 
 The controller owns any number of internal daemons and implements strict read-only `status`/`plan` plus exact-token `apply`; Aquarium never edits its LaunchAgent, registry, database, socket, or tool-specific runtime. Each tool repository owns its producer implementation and enrolls its canonical checkout only after its approved handoff commit is created.
 
-Until Dolgorae is enrolled, the launcher admits it through global fallback only. If neither development nor global Dolgorae exists, the invocation fails closed and requests `$aquarium:dev-setup`; there is no Dolgorae exception. Sanho alone is excluded from the required global-binary baseline.
+Until Dolgorae is enrolled, the launcher admits it through global fallback only. If neither development nor global Dolgorae exists, the invocation fails closed and requests `$aquarium:dev-setup-global`; there is no Dolgorae exception. Sanho alone is excluded from the required global-binary baseline.
 
 ## State boundary
 

@@ -36,6 +36,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-007 | Adopt upstream document humanizers | Completed |
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
 | EPIC-009 | Adopt Sorage v0.1.x | In Progress |
+| EPIC-010 | Separate global and repository development setup | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -122,7 +123,7 @@ Adopt the exact official Dolgorae v0.1.0 Apple Silicon release as Aquarium's sta
 
 This adoption succeeds EPIC-003 without reopening it and does not complete the unrelated Podway, Mulgae, Gaori, or Sanho producer work still blocking EPIC-002.
 
-**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -150,9 +151,9 @@ Podway owns its release, distribution, workspace-removal implementation, and sou
 
 **Status:** `Completed`
 
-Adopt exact upstream Humanizer and im-not-ai releases as independently installed Codex skills, then let each repository opt into an evidence-preserving English and Korean documentation pass through `dev-setup` and `dev-setup-bundle`.
+Adopt exact upstream Humanizer and im-not-ai releases as independently installed Codex skills, then let each repository opt into an evidence-preserving English and Korean documentation pass through `dev-setup-global`, `dev-setup`, and `dev-setup-bundle`.
 
-**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md), [bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md)
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md), [bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -181,9 +182,23 @@ Adopt Sorage as an optional local document-handoff integration. Aquarium diagnos
 
 The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.0. Sorage remains outside the production-binary baseline, Aquarium development channel, managed Procedures, and MCP scope.
 
-**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-035 | Add Sorage setup and Project registration | Add bounded Sorage inspection, exact-release and paired-skill setup, minimal initialization, approved Project creation or binding, ignore safety, bundle selection, and agent guidance. | Completed | External Sorage v0.1.0 release |
 | TASK-036 | Qualify Sorage integration | Verify version, initialization, Project resolution, privacy, documentation, bundle, and failure contracts against isolated fixtures and the official v0.1.0 CLI. | In Review | TASK-035 |
+
+## EPIC-010: Separate Global and Repository Development Setup
+
+**Status:** `Completed`
+
+Separate user-global installation and update work from repository setup. `dev-setup-global` now owns exact-upstream CLI and skill maintenance, global MCP and services, writing and Lore skills, and Ouroboros updates. `dev-setup` automatically diagnoses evidenced repository configuration and remains the owner of root AGENTS.md and CLAUDE.md guidance without inspecting global skill contents.
+
+The bundle manifest remains `aquarium.dev-setup-bundle/v1`: it prepares the global union once and delegates repository configuration to `dev-setup` in target order.
+
+**Canonical Outcomes:** [Capabilities](../specs/capabilities.md), [tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-037 | Split global development setup from repository setup | Add automatic global diagnosis and updates, narrow repository setup to local configuration and root guidance, preserve bundle v1 routing, and enforce the boundary with deterministic inspectors and regression coverage. | Completed | None |

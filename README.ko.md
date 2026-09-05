@@ -42,7 +42,7 @@ codex plugin add aquarium@root-kernel
 
 설치나 업그레이드 후 Codex를 재시작하고, `/hooks`에서 Aquarium의 roadmap commit guard를 명시적으로 신뢰하도록 설정합니다. 이 hook은 직접 실행한 shell commit을 잡아냅니다. 다만 완전한 강제 장치는 아니어서, 다른 도구가 간접적으로 만든 commit은 hook을 거치지 않을 수 있습니다.
 
-Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup`은 지원 도구를 진단하고, 각각 별도 승인을 받아 정확한 upstream source에서 설치하거나 복구합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓰도록 제안할 수 있습니다. 설치와 저장소 지침 변경은 서로 다른 결정입니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
+Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트합니다. `$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md, CLAUDE.md를 관리합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓸 수 있습니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
 
 ## Development Channel
 
@@ -57,7 +57,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:independent-review`는 staged change, commit, range, task, epic, 특별 조사에 하나의 canonical static Codex review 계약을 적용합니다. `$aquarium:orca-review`는 같은 target 의미를 유지하면서 현재 Orca worktree에서 요청한 reviewer를 새로 실행합니다. Aquarium은 반환된 finding을 모두 로컬에서 확인합니다.
 4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
 
-기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup`은 toolchain과 저장소의 에이전트 운영 지침을 진단하고 설정합니다. `$aquarium:dev-setup-bundle`은 manifest 하나로 여러 저장소에 같은 setup을 적용합니다.
+기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup-global`은 user-global 도구를 관리하고, `$aquarium:dev-setup`은 repository 설정과 에이전트 운영 지침을 자동 진단해 필요한 변경만 제안합니다. `$aquarium:dev-setup-bundle`은 v1 manifest 하나에서 두 범위를 나눠 처리합니다.
 
 ## 생태계가 연결되는 방식
 
@@ -80,7 +80,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
 - `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
-- Setup이나 진단 대상으로 선택한 Dolgorae는 official GitHub Releases metadata를 자동으로 조회하지만 archive 다운로드와 설치에는 각각 별도 승인이 필요합니다. Sanho, Mulgae, Gaori, Sorage, Podway는 설치된 `use-*` skill과 비교하기 위해 `raw.githubusercontent.com`에서 공개 paired-skill 파일을 임시 저장소로 내려받습니다. Sorage는 파일 1개, 나머지 네 도구는 파일 4개를 사용합니다. 선택하지 않은 도구와 그 밖의 network 작업은 포함되지 않으며, setup은 AI provider를 호출하지 않습니다.
+- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component의 official metadata와 공개 paired-skill 최신성을 제한적으로 조회합니다. Dolgorae는 GitHub Releases metadata를 사용하고 Sanho, Mulgae, Gaori, Sorage, Podway는 `raw.githubusercontent.com` 파일을 임시 저장소에서 비교합니다. Scoped continuation은 이름이 지정된 component만 확인하며 설치용 다운로드, 변경, provider 호출은 별도 경계를 유지합니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서

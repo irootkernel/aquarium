@@ -32,6 +32,7 @@ Multi-repository development setup accepts an explicit external `aquarium.dev-se
 ## References
 
 - [Development setup skill](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+- [Global development setup skill](../../plugins/aquarium/skills/dev-setup-global/SKILL.md)
 - [Bundle setup skill](../../plugins/aquarium/skills/dev-setup-bundle/SKILL.md)
 - [Documentation governance](../../plugins/aquarium/references/documentation-governance.md)
 - [Repository operating rules](../../AGENTS.md)
