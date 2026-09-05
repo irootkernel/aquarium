@@ -735,7 +735,7 @@ assert(!canonical_documentation.include?("/Users/") &&
 aquarium_dev_dossier = documentation_details.fetch("aquarium-dev-dossier")
 dolgorae_review_contract = PLUGIN.join("references/dolgorae-review-contract.md").read
 roadmap_task_ids = canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|/).map { |row| row[/TASK-[0-9]{3,}/] }
-assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 10 &&
+assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 11 &&
        canonical_roadmap.include?("## EPIC-001: Adopt Podway v0.2.6") &&
        canonical_roadmap.include?("## EPIC-002: Build the Aquarium Development Environment") &&
        canonical_roadmap.include?("## EPIC-003: Activate Dolgorae-backed Reviews") &&
@@ -746,10 +746,11 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 10 &&
        canonical_roadmap.include?("## EPIC-008: Adopt Podway v0.2.8") &&
        canonical_roadmap.include?("## EPIC-009: Adopt Sorage v0.1.x") &&
        canonical_roadmap.include?("## EPIC-010: Separate Global and Repository Development Setup") &&
+       canonical_roadmap.include?("## EPIC-011: Harden Release QA Confirmation Integrity") &&
        canonical_roadmap.match?(/^\*\*Status:\*\* `(Planned|In Progress|In Review|Completed|Deferred|Blocked)`$/) &&
-       roadmap_task_ids.length == 37 &&
-       roadmap_task_ids.uniq.sort == (1..37).map { |number| "TASK-%03d" % number }.sort &&
-       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 37 &&
+       roadmap_task_ids.length == 40 &&
+       roadmap_task_ids.uniq.sort == (1..40).map { |number| "TASK-%03d" % number }.sort &&
+       canonical_roadmap.scan(/^\| TASK-[0-9]{3,} \|.*\| (?:Planned|In Progress|In Review|Completed|Deferred|Blocked) \|/).length == 40 &&
        !canonical_roadmap.include?("TODO-RELEASE-v0-1-12.md") &&
        canonical_roadmap.include?("TODO-AQUARIUM-DEV.md") &&
        !canonical_roadmap.include?("TODO-DOLGORAE-REVIEWS.md") &&
@@ -758,7 +759,7 @@ assert(canonical_roadmap.scan(/^## EPIC-[0-9]{3,}: /).length == 10 &&
        canonical_roadmap.include?("**Canonical Outcomes:** [v0.1.12 release notes]") &&
        !canonical_roadmap.include?("### TASK-") &&
        !canonical_roadmap.include?("/Users/"),
-       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-010 and unique TASK-001 through TASK-037")
+       "Aquarium roadmap must remain a concise lifecycle index for EPIC-001 through EPIC-011 and unique TASK-001 through TASK-040")
 assert(!todo_index.include?("TODO-RELEASE-v0-1-12.md") &&
        todo_index.include?("TODO-AQUARIUM-DEV.md") &&
        !todo_index.include?("TODO-DOLGORAE-REVIEWS.md") &&

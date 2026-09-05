@@ -37,6 +37,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
 | EPIC-009 | Adopt Sorage v0.1.x | In Progress |
 | EPIC-010 | Separate global and repository development setup | Completed |
+| EPIC-011 | Harden release QA confirmation integrity | Planned |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -202,3 +203,19 @@ The bundle manifest remains `aquarium.dev-setup-bundle/v1`: it prepares the glob
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-037 | Split global development setup from repository setup | Add automatic global diagnosis and updates, narrow repository setup to local configuration and root guidance, preserve bundle v1 routing, and enforce the boundary with deterministic inspectors and regression coverage. | Completed | None |
+
+## EPIC-011: Harden Release QA Confirmation Integrity
+
+**Status:** `Planned`
+
+Make the sole post-remediation release QA confirmation a fail-closed, immutable, and exactly-once settlement. Bind every confirmation to the exact frozen full-pass record, remediation manifest, candidate, evidence root, claim, attempt, and original finding-to-scenario relationship so replacement, replay, inconsistent evidence, or concurrent settlement cannot produce a trusted verdict.
+
+The hardened path applies only after a complete full-mode `FINDINGS` result. A normal full-mode `PASS`, release metadata handling, release publication, and the scenario execution policy remain unchanged.
+
+**Detailed SOT:** [Release QA confirmation integrity dossier](../todo/TODO-RELEASE-QA-CONFIRMATION-INTEGRITY.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-038 | Freeze exact confirmation identity | Make the full record, remediation manifest, claim, and finding-to-scenario inventory create-once artifacts bound by exact digests and candidate identity. | Planned | None |
+| TASK-039 | Enforce one-shot confirmation settlement | Admit one finish operation per exact claim, persist an immutable terminal PASS, FINDINGS, INCOMPLETE, or REJECTED attempt record, and fail closed on replay, concurrency, or interrupted settlement. | Planned | TASK-038 |
+| TASK-040 | Qualify confirmation integrity | Cover valid settlement, artifact replacement, claim replay, finding-scenario mismatch, rejected evidence, concurrency, and interruption with focused tests and align the release QA contract. | Planned | TASK-038, TASK-039 |
