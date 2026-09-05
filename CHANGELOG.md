@@ -16,7 +16,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
-- Make post-remediation release QA confirmation artifacts immutable and bind each one-shot settlement to the exact claim, candidate, and finding-to-scenario inventory.
+- Make post-remediation release QA confirmation artifacts immutable, compute each verdict from the submitted evidence bytes bound to its admission, reject malformed admissions and overlong terminal basenames deterministically, and preserve recovery across reordered scenarios, output-parent aliases, pre-admission claim receipts, pending settlement inspection, and transient helper failures without reopening an admitted attempt.
 
 ## v0.1.14 - 2026-09-04
 

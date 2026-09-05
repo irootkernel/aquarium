@@ -148,24 +148,26 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
     confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
     second = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
     try:
-        begin_input = dump(
-            evidence / "begin-input.json",
-            {
-                "schema": "aquarium-release-qa-confirmation-begin/v2",
-                "repository": str(repo),
-                "full_record": str(record),
-                "manifest": str(manifest),
-                "confirmation_root": str(confirmation),
-            },
-        )
+        begin_value = {
+            "schema": "aquarium-release-qa-confirmation-begin/v2",
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "confirmation_root": str(confirmation),
+        }
+        begin_input = dump(evidence / "begin-input.json", begin_value)
         claim_receipt = run("begin-confirmation", "--input", str(begin_input))
         claim = claim_receipt["path"]
+        repeated = run("begin-confirmation", "--input", str(begin_input))
+        assert repeated == claim_receipt
+
         second_value = json.loads(begin_input.read_text())
         second_value["confirmation_root"] = str(second)
         dump(begin_input, second_value)
         error = run("begin-confirmation", "--input", str(begin_input), expected=2)
         assert error["schema"] == "aquarium-release-qa-error/v1"
-        assert error["error"]["code"] == "confirmation_already_started"
+        assert error["error"]["code"] == "claim_invalid"
+        dump(begin_input, begin_value)
 
         result_file = cluster(confirmation, remediated, "pass")
         finish_input = dump(
@@ -204,6 +206,10 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
         assert terminal["claim_digest"] == claim_receipt["digest"]
         assert terminal["diagnostic"] is None
         assert len(list(confirmation.glob("settlement-admission-*.json"))) == 1
+        settled_begin = run(
+            "begin-confirmation", "--input", str(begin_input), expected=2
+        )
+        assert settled_begin["error"]["code"] == "confirmation_already_started"
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
         shutil.rmtree(second, ignore_errors=True)

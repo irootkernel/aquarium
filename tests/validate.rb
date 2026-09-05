@@ -2713,7 +2713,14 @@ assert(release_qa.include?("scripts/manage_release_qa.py freeze-full") &&
        release_qa.include?("aquarium-release-qa-cluster-result/v1") &&
        release_qa.include?("aquarium-release-qa-confirmation-settlement-admission/v1") &&
        release_qa.include?("never reconstruct the record after remediation") &&
-       release_qa.include?("every retained cluster and scenario exactly once with no extras"),
+       release_qa.include?("returns the same successful claim receipt") &&
+       release_qa.include?("begin fails with `confirmation_already_started`") &&
+       release_qa.include?("must reuse the admitted `--output`") &&
+       release_qa.include?("uses those verified bytes to compute the terminal verdict") &&
+       release_qa.include?("applies a 240-byte limit to the terminal basename") &&
+       release_qa.include?("malformed snapshot shape settles as `REJECTED`") &&
+       release_qa.include?("freshly derived snapshot still matches the admission") &&
+       release_qa.include?("every retained cluster and stable scenario ID exactly once with no extras"),
        "release-qa must route frozen records and confirmation through its deterministic helper")
 
 assert(release_handler.include?("Explicit invocation authorizes read-only release discovery") &&

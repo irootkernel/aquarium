@@ -25,6 +25,7 @@ FINISH_SCHEMA = "aquarium-release-qa-confirmation-finish/v2"
 ADMISSION_SCHEMA = "aquarium-release-qa-confirmation-settlement-admission/v1"
 RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v2"
 MAX_JSON_BYTES = 4 * 1024 * 1024
+MAX_OUTPUT_BASENAME_BYTES = 240
 OUTCOMES = {"pass", "finding", "gap"}
 
 
@@ -236,11 +237,21 @@ def evidence_file(root: Path, value: Any, field: str) -> str:
 
 
 def output_under(root: Path, value: str, field: str) -> Path:
-    path = Path(value)
+    raw = text(value, field)
+    basename = os.path.basename(raw)
+    if basename in {"", ".", ".."}:
+        fail("output_invalid", f"{field} must name a file")
+    if len(os.fsencode(basename)) > MAX_OUTPUT_BASENAME_BYTES:
+        fail(
+            "output_invalid",
+            f"{field} basename exceeds {MAX_OUTPUT_BASENAME_BYTES} bytes",
+        )
+    path = Path(raw)
     if not path.is_absolute() or path.is_symlink():
         fail("output_invalid", f"{field} must be an absolute non-symlink path")
     try:
-        relative_parent = path.parent.resolve(strict=True).relative_to(root)
+        resolved_parent = path.parent.resolve(strict=True)
+        relative_parent = resolved_parent.relative_to(root)
     except (OSError, ValueError):
         fail(
             "output_outside_root", f"{field} must be beneath its physical evidence root"
@@ -250,7 +261,13 @@ def output_under(root: Path, value: str, field: str) -> Path:
         current = current / component
         if current.is_symlink():
             fail("output_invalid", f"{field} has symlink ancestry")
-    return path
+    return resolved_parent / basename
+
+
+def settlement_admission_path(confirmation_root: Path, claim_digest: str) -> Path:
+    return confirmation_root / (
+        "settlement-admission-" + claim_digest.removeprefix("sha256:") + ".json"
+    )
 
 
 def clean_exact_main(repo: Path, candidate: str) -> None:
@@ -859,10 +876,32 @@ def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
         create_once_write(claim_path, claim)
     except EvidenceError as error:
         if error.code == "output_exists":
-            fail(
-                "confirmation_already_started",
-                "the sole confirmation attempt was already claimed",
+            existing_claim = read_json(str(claim_path))
+            require_fields(existing_claim, "claim", set(claim))
+            if claim_path.read_bytes() != canonical_bytes(existing_claim):
+                fail(
+                    "claim_invalid",
+                    "existing confirmation claim bytes are not canonical",
+                )
+            if existing_claim != claim:
+                fail(
+                    "claim_invalid",
+                    "existing confirmation claim does not match this request",
+                )
+            existing_digest = digest(existing_claim)
+            admission_path = settlement_admission_path(
+                confirmation_root, existing_digest
             )
+            if admission_path.is_symlink() or admission_path.exists():
+                fail(
+                    "confirmation_already_started",
+                    "the confirmation claim already has a settlement admission",
+                )
+            return {
+                "schema": CLAIM_SCHEMA,
+                "path": str(claim_path),
+                "digest": existing_digest,
+            }
         raise
     return {"schema": CLAIM_SCHEMA, "path": str(claim_path), "digest": digest(claim)}
 
@@ -943,14 +982,29 @@ def load_claim(
     )
 
 
-def snapshot_file(root: Path, value: Any, field: str) -> dict[str, str]:
+def snapshot_bytes(root: Path, value: Any, field: str) -> tuple[str, bytes]:
     path = evidence_file(root, value, field)
     if Path(path).stat().st_size > MAX_JSON_BYTES:
         fail("input_too_large", f"{field} exceeds {MAX_JSON_BYTES} bytes")
     raw = Path(path).read_bytes()
     if len(raw) > MAX_JSON_BYTES:
         fail("input_too_large", f"{field} exceeds {MAX_JSON_BYTES} bytes")
+    return path, raw
+
+
+def snapshot_file(root: Path, value: Any, field: str) -> dict[str, str]:
+    path, raw = snapshot_bytes(root, value, field)
     return {"path": path, "digest": bytes_digest(raw)}
+
+
+def json_object_from_bytes(raw: bytes, path: str) -> dict[str, Any]:
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as error:
+        fail("input_invalid", f"cannot read JSON input {path}: {type(error).__name__}")
+    if not isinstance(value, dict):
+        fail("input_invalid", f"JSON input must contain one object: {path}")
+    return value
 
 
 def snapshot_submission(
@@ -960,10 +1014,14 @@ def snapshot_submission(
     try:
         paths = string_list(spec.get("cluster_results"), "cluster_results")
         for path_value in paths:
-            cluster_snapshot = snapshot_file(
+            cluster_path, cluster_bytes = snapshot_bytes(
                 confirmation_root, path_value, "cluster_results[]"
             )
-            cluster_value = read_json(cluster_snapshot["path"])
+            cluster_snapshot = {
+                "path": cluster_path,
+                "digest": bytes_digest(cluster_bytes),
+            }
+            cluster_value = json_object_from_bytes(cluster_bytes, cluster_path)
             evidence_snapshots: list[dict[str, str]] = []
             scenarios = cluster_value.get("scenarios")
             if not isinstance(scenarios, list):
@@ -1079,34 +1137,84 @@ def terminal_receipt(path: Path, result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def validate_admission_snapshot_shape(admission: dict[str, Any]) -> None:
+    clusters = admission.get("cluster_results")
+    snapshot_error = admission.get("snapshot_error")
+    if not isinstance(clusters, list):
+        fail("admission_invalid", "admission cluster_results must be a list")
+    for cluster in clusters:
+        if not isinstance(cluster, dict) or set(cluster) != {
+            "path",
+            "digest",
+            "evidence",
+        }:
+            fail("admission_invalid", "admission cluster snapshot has invalid fields")
+        if not isinstance(cluster.get("path"), str) or not isinstance(
+            cluster.get("digest"), str
+        ):
+            fail("admission_invalid", "admission cluster snapshot is malformed")
+        evidence_items = cluster.get("evidence")
+        if not isinstance(evidence_items, list):
+            fail("admission_invalid", "admission evidence snapshots must be a list")
+        for evidence in evidence_items:
+            if (
+                not isinstance(evidence, dict)
+                or set(evidence) != {"path", "digest"}
+                or not isinstance(evidence.get("path"), str)
+                or not isinstance(evidence.get("digest"), str)
+            ):
+                fail("admission_invalid", "admission evidence snapshot is malformed")
+    if snapshot_error is not None and (
+        not isinstance(snapshot_error, dict)
+        or set(snapshot_error) != {"code", "message"}
+        or not isinstance(snapshot_error.get("code"), str)
+        or not isinstance(snapshot_error.get("message"), str)
+    ):
+        fail("admission_invalid", "admission snapshot_error is malformed")
+
+
 def verify_submission_snapshot(
     admission: dict[str, Any], confirmation_root: Path
-) -> None:
-    try:
-        for cluster in admission["cluster_results"]:
-            current = snapshot_file(
+) -> list[dict[str, Any]]:
+    validate_admission_snapshot_shape(admission)
+    cluster_values: list[dict[str, Any]] = []
+    for cluster in admission["cluster_results"]:
+        try:
+            cluster_path, cluster_bytes = snapshot_bytes(
                 confirmation_root, cluster["path"], "cluster_results[]"
             )
-            if current != {"path": cluster["path"], "digest": cluster["digest"]}:
-                fail("settlement_evidence_changed", "admitted cluster evidence changed")
-            for evidence in cluster["evidence"]:
-                if (
-                    snapshot_file(
-                        confirmation_root, evidence["path"], "scenario.evidence[]"
-                    )
-                    != evidence
-                ):
-                    fail(
-                        "settlement_evidence_changed",
-                        "admitted scenario evidence changed",
-                    )
-    except EvidenceError as error:
-        if error.code == "settlement_evidence_changed":
-            raise
-        fail(
-            "settlement_evidence_changed",
-            f"admitted evidence is unavailable: {error.code}",
-        )
+        except EvidenceError as error:
+            fail(
+                "settlement_evidence_changed",
+                f"admitted cluster evidence is unavailable: {error.code}",
+            )
+        if (
+            cluster_path != cluster["path"]
+            or bytes_digest(cluster_bytes) != cluster["digest"]
+        ):
+            fail("settlement_evidence_changed", "admitted cluster evidence changed")
+        try:
+            cluster_values.append(json_object_from_bytes(cluster_bytes, cluster_path))
+        except EvidenceError as error:
+            fail(
+                "admission_invalid",
+                f"admitted cluster snapshot is invalid: {error.code}",
+            )
+        for evidence in cluster["evidence"]:
+            try:
+                current = snapshot_file(
+                    confirmation_root, evidence["path"], "scenario.evidence[]"
+                )
+            except EvidenceError as error:
+                fail(
+                    "settlement_evidence_changed",
+                    f"admitted scenario evidence is unavailable: {error.code}",
+                )
+            if current != evidence:
+                fail(
+                    "settlement_evidence_changed", "admitted scenario evidence changed"
+                )
+    return cluster_values
 
 
 def validate_settlement(
@@ -1114,16 +1222,12 @@ def validate_settlement(
     record: dict[str, Any],
     manifest: dict[str, Any],
     confirmation_root: Path,
-    cluster_paths: list[str],
+    cluster_values: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], str]:
     clean_exact_main(repo, manifest["candidate_sha"])
     results = [
-        validate_cluster(
-            read_json(evidence_file(confirmation_root, path, "cluster_results[]")),
-            confirmation_root,
-            manifest["candidate_sha"],
-        )
-        for path in cluster_paths
+        validate_cluster(value, confirmation_root, manifest["candidate_sha"])
+        for value in cluster_values
     ]
     expected_clusters = {cluster["id"]: cluster for cluster in record["clusters"]}
     actual_clusters = {cluster["id"]: cluster for cluster in results}
@@ -1137,15 +1241,17 @@ def validate_settlement(
     outcomes: list[str] = []
     for cluster_id, expected in expected_clusters.items():
         expected_ids = [item["id"] for item in expected["scenarios"]]
-        actual_ids = [item["id"] for item in actual_clusters[cluster_id]["scenarios"]]
-        if actual_ids != expected_ids or len(actual_ids) != len(set(actual_ids)):
+        fresh_scenarios = actual_clusters[cluster_id]["scenarios"]
+        actual_by_id = {item["id"]: item for item in fresh_scenarios}
+        if len(actual_by_id) != len(fresh_scenarios) or set(actual_by_id) != set(
+            expected_ids
+        ):
             fail(
                 "confirmation_inventory_mismatch",
-                "confirmation scenario inventory or order differs from the frozen record",
+                "confirmation scenario inventory differs from the frozen record",
             )
-        for frozen, fresh in zip(
-            expected["scenarios"], actual_clusters[cluster_id]["scenarios"], strict=True
-        ):
+        for frozen in expected["scenarios"]:
+            fresh = actual_by_id[frozen["id"]]
             for field in (
                 "sources",
                 "procedure",
@@ -1212,9 +1318,12 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
         _,
     ) = load_claim(spec)
     output_path = output_under(confirmation_root, output, "output")
-    admission_path = confirmation_root / (
-        "settlement-admission-" + claim_digest.removeprefix("sha256:") + ".json"
-    )
+    admission_path = settlement_admission_path(confirmation_root, claim_digest)
+    if (
+        output_path.parent == admission_path.parent
+        and output_path.name.casefold() == admission_path.name.casefold()
+    ):
+        fail("output_invalid", "terminal output must differ from its admission path")
     submission_digest = digest(spec)
     snapshots, snapshot_error = snapshot_submission(spec, confirmation_root)
     admission = {
@@ -1237,18 +1346,30 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
         "cluster_results": snapshots,
         "snapshot_error": snapshot_error,
     }
-    if output_path == admission_path:
-        fail("output_invalid", "terminal output must differ from its admission path")
-    if admission_path.exists():
+
+    def reject_replay(existing_admission: dict[str, Any]) -> NoReturn:
+        admitted_output = Path(
+            text(existing_admission.get("output"), "admission.output")
+        )
+        if not admitted_output.exists():
+            fail(
+                "settlement_pending",
+                "claim has an admitted finish submission without a terminal record at "
+                f"{admitted_output}",
+            )
+        fail("settlement_replay", "claim already admitted another finish submission")
+
+    def load_existing_admission() -> dict[str, Any]:
         existing_admission = read_json(str(admission_path))
         if admission_path.read_bytes() != canonical_bytes(existing_admission):
             fail("admission_invalid", "settlement admission bytes are not canonical")
         require_fields(existing_admission, "settlement admission", set(admission))
         if admission_binding(existing_admission) != admission_binding(admission):
-            fail(
-                "settlement_replay", "claim already admitted another finish submission"
-            )
-        admission = existing_admission
+            reject_replay(existing_admission)
+        return existing_admission
+
+    if admission_path.exists():
+        admission = load_existing_admission()
     else:
         if output_path.exists():
             fail("output_exists", f"immutable output already exists: {output_path}")
@@ -1257,27 +1378,30 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
         except EvidenceError as error:
             if error.code != "output_exists":
                 raise
-            existing_admission = read_json(str(admission_path))
-            require_fields(existing_admission, "settlement admission", set(admission))
-            if admission_binding(existing_admission) != admission_binding(admission):
-                fail(
-                    "settlement_replay",
-                    "claim already admitted another finish submission",
-                )
-            admission = existing_admission
+            admission = load_existing_admission()
     if output_path.exists():
         return terminal_receipt(output_path, load_terminal(output_path, admission))
 
     result: dict[str, Any]
     try:
+        validate_admission_snapshot_shape(admission)
+        cluster_values: list[dict[str, Any]] = []
+        if admission["snapshot_error"] is None:
+            cluster_values = verify_submission_snapshot(admission, confirmation_root)
+        if (
+            admission["cluster_results"] != snapshots
+            or admission["snapshot_error"] != snapshot_error
+        ):
+            fail(
+                "admission_invalid",
+                "settlement admission evidence does not match the exact request",
+            )
         if admission["snapshot_error"] is not None:
             diagnostic = admission["snapshot_error"]
             result = settlement_result(admission, [], "REJECTED", diagnostic)
         else:
-            verify_submission_snapshot(admission, confirmation_root)
-            cluster_paths = [item["path"] for item in admission["cluster_results"]]
             clusters, verdict = validate_settlement(
-                repo, record, manifest, confirmation_root, cluster_paths
+                repo, record, manifest, confirmation_root, cluster_values
             )
             result = settlement_result(admission, clusters, verdict, None)
     except EvidenceError as error:
@@ -1289,16 +1413,6 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
             [],
             verdict,
             {"code": error.code, "message": str(error)},
-        )
-    except Exception as error:  # noqa: BLE001 -- persist a stable terminal failure
-        result = settlement_result(
-            admission,
-            [],
-            "REJECTED",
-            {
-                "code": "internal_error",
-                "message": f"settlement failed: {type(error).__name__}",
-            },
         )
     try:
         create_once_write(output_path, result)
