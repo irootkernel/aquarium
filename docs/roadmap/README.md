@@ -37,7 +37,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
 | EPIC-009 | Adopt Sorage v0.1.x | In Progress |
 | EPIC-010 | Separate global and repository development setup | Completed |
-| EPIC-011 | Harden release QA confirmation integrity | In Review |
+| EPIC-011 | Harden release QA confirmation integrity | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -206,13 +206,13 @@ The bundle manifest remains `aquarium.dev-setup-bundle/v1`: it prepares the glob
 
 ## EPIC-011: Harden Release QA Confirmation Integrity
 
-**Status:** `In Review`
+**Status:** `Completed`
 
 Make the sole post-remediation release QA confirmation a fail-closed, immutable, and exactly-once settlement. Bind every confirmation to the exact frozen full-pass record, remediation manifest, candidate, evidence root, claim, attempt, and original finding-to-scenario relationship so replacement, replay, inconsistent evidence, or concurrent settlement cannot produce a trusted verdict.
 
 The hardened path applies only after a complete full-mode `FINDINGS` result. A normal full-mode `PASS`, release metadata handling, release publication, and the scenario execution policy remain unchanged.
 
-**Detailed SOT:** [Release QA confirmation integrity dossier](../todo/TODO-RELEASE-QA-CONFIRMATION-INTEGRITY.md)
+**Canonical Outcomes:** [Release QA workflow](../../plugins/aquarium/skills/release-qa/SKILL.md), [local interfaces](../specs/local-interfaces.md), [workflow contracts](../specs/workflow-contracts.md), [privacy disclosure](../../PRIVACY.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

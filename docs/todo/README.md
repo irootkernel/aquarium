@@ -9,7 +9,6 @@ Before an epic becomes `Completed`, its final closeout must classify and promote
 ## Adopted Roadmap Work Dossiers
 
 - [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) provides the detailed contract for `EPIC-002`, `TASK-005` through `TASK-015`, historical `TASK-024`, and corrective `TASK-031`.
-- [Release QA confirmation integrity dossier](TODO-RELEASE-QA-CONFIRMATION-INTEGRITY.md) provides the detailed contract for `EPIC-011` and `TASK-038` through `TASK-040`.
 
 ## Unadopted TODO Candidates
 
