@@ -111,18 +111,18 @@ Ship the hardened contract before the next release QA confirmation. The change d
 
 ### TASK-038: Freeze Exact Confirmation Identity
 
-- [ ] Replace overwrite-capable authority outputs with create-once writes and explicit existing-target diagnostics.
-- [ ] Bind the manifest and claim to exact upstream digests, candidate identities, evidence roots, and attempt number.
-- [ ] Derive and enforce the canonical exact finding-to-scenario mapping.
-- [ ] Version changed schemas and update focused preparation and begin coverage.
+- [x] Replace overwrite-capable authority outputs with create-once writes and explicit existing-target diagnostics.
+- [x] Bind the manifest and claim to exact upstream digests, candidate identities, evidence roots, and attempt number.
+- [x] Derive and enforce the canonical exact finding-to-scenario mapping.
+- [x] Version changed schemas and update focused preparation and begin coverage.
 
 ### TASK-039: Enforce One-Shot Confirmation Settlement
 
-- [ ] Atomically admit one finish operation for the exact claim.
-- [ ] Persist one immutable PASS, FINDINGS, INCOMPLETE, or REJECTED terminal attempt record.
-- [ ] Consume claims on every admitted outcome, converge exact-request recovery, and reject changed replay or divergent concurrent settlement.
-- [ ] Fail closed on interrupted settlement while allowing only exact-input deterministic recovery or readback of an already written terminal record.
-- [ ] Return stable structured diagnostics for every rejection boundary.
+- [x] Atomically admit one finish operation for the exact claim.
+- [x] Persist one immutable PASS, FINDINGS, INCOMPLETE, or REJECTED terminal attempt record.
+- [x] Consume claims on every admitted outcome, converge exact-request recovery, and reject changed replay or divergent concurrent settlement.
+- [x] Fail closed on interrupted settlement while allowing only exact-input deterministic recovery or readback of an already written terminal record.
+- [x] Return stable structured diagnostics for every rejection boundary.
 
 ### TASK-040: Qualify Confirmation Integrity
 

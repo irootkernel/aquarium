@@ -688,7 +688,8 @@ documented_schema_ids = %w[
   aquarium-release-qa-confirmation-begin/v2
   aquarium-release-qa-confirmation-claim/v2
   aquarium-release-qa-confirmation-finish/v2
-  aquarium-release-qa-confirmation-result/v1
+  aquarium-release-qa-confirmation-settlement-admission/v1
+  aquarium-release-qa-confirmation-result/v2
   aquarium-release-qa-error/v1
   aquarium-dev-producer-description/v2
   aquarium-dev-artifact-manifest/v2
@@ -2697,7 +2698,8 @@ assert(release_qa_helper.file? && release_qa_helper.executable? &&
        release_qa_helper_body.include?('RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v2"') &&
        release_qa_helper_body.include?('MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v2"') &&
        release_qa_helper_body.include?('CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v2"') &&
-       release_qa_helper_body.include?('RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v1"') &&
+       release_qa_helper_body.include?('ADMISSION_SCHEMA = "aquarium-release-qa-confirmation-settlement-admission/v1"') &&
+       release_qa_helper_body.include?('RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v2"') &&
        release_qa_helper_body.include?("os.link") &&
        release_qa_helper_body.include?('"merge-base", "--is-ancestor"') &&
        release_qa_helper_body.include?('"status", "--porcelain", "--untracked-files=all"') &&
@@ -2708,6 +2710,7 @@ assert(release_qa.include?("scripts/manage_release_qa.py freeze-full") &&
        release_qa.include?("scripts/manage_release_qa.py begin-confirmation") &&
        release_qa.include?("scripts/manage_release_qa.py finish-confirmation") &&
        release_qa.include?("aquarium-release-qa-cluster-result/v1") &&
+       release_qa.include?("aquarium-release-qa-confirmation-settlement-admission/v1") &&
        release_qa.include?("never reconstruct the record after remediation") &&
        release_qa.include?("every retained cluster and scenario exactly once with no extras"),
        "release-qa must route frozen records and confirmation through its deterministic helper")

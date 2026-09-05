@@ -131,7 +131,13 @@ Before reporting the full verdict or applying remediation, run `scripts/manage_r
 
 A nonzero result makes the pass `INCOMPLETE`; never reconstruct the record after remediation. The helper computes `INCOMPLETE` before `FINDINGS` before `PASS`, writes the create-once canonical `aquarium-release-qa-confirmation-record/v2` with private permissions, and freezes even a complete `FINDINGS` pass.
 
-After an admitted confirmation finishes, run `scripts/manage_release_qa.py finish-confirmation --input <finish.json> --output <confirmation-root>/confirmation-result.json`. It requires every retained cluster and scenario exactly once with no extras, each exact frozen finding-to-scenario pair, fresh in-root evidence, the unchanged clean candidate, and the matching claim path and digest. Its `aquarium-release-qa-confirmation-result/v1` verdict is authoritative; a nonzero result or any missing evidence is `INCOMPLETE`.
+After an admitted confirmation finishes, run `scripts/manage_release_qa.py finish-confirmation --input <finish.json> --output <confirmation-root>/confirmation-result.json`.
+
+It authenticates the matching claim path and digest before consuming the attempt, then creates one claim-keyed `aquarium-release-qa-confirmation-settlement-admission/v1` artifact that freezes the canonical finish request and submitted evidence digests. Validation requires every retained cluster and scenario exactly once with no extras, each exact frozen finding-to-scenario pair, fresh in-root evidence, and the unchanged clean candidate.
+
+The admission converges on one create-once `aquarium-release-qa-confirmation-result/v2` terminal record with `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED`. A rejected admitted submission consumes the claim. A changed request or divergent concurrent contender is replay and cannot replace the admission or terminal record.
+
+An exact retry may read the existing terminal result or resume an interrupted settlement only while every admitted evidence byte remains unchanged; unavailable or changed bytes settle as `INCOMPLETE` and require a new full release QA pass. A malformed request that cannot authenticate the exact claim is rejected before admission. Any nonzero helper result is `INCOMPLETE` for the release workflow even when its immutable terminal record says `REJECTED`.
 
 Return the intended version, previous release or confirmed first-release state, candidate SHA, commit range, Design Gate enrollment state, active-gate matrix, commit-to-scenario release-delta matrix, authoritative frozen confirmation record, scenario commands and outcomes, source-repository status, retained `/tmp` evidence root, verified findings, and evidence gaps.
 

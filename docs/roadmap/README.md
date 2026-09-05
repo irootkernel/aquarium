@@ -217,5 +217,5 @@ The hardened path applies only after a complete full-mode `FINDINGS` result. A n
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-038 | Freeze exact confirmation identity | Make the full record, remediation manifest, claim, and finding-to-scenario inventory create-once artifacts bound by exact digests and candidate identity. | Completed | None |
-| TASK-039 | Enforce one-shot confirmation settlement | Admit one finish operation per exact claim, persist an immutable terminal PASS, FINDINGS, INCOMPLETE, or REJECTED attempt record, and fail closed on replay, concurrency, or interrupted settlement. | Planned | TASK-038 |
+| TASK-039 | Enforce one-shot confirmation settlement | Admit one finish operation per exact claim, persist an immutable terminal PASS, FINDINGS, INCOMPLETE, or REJECTED attempt record, and fail closed on replay, concurrency, or interrupted settlement. | Completed | TASK-038 |
 | TASK-040 | Qualify confirmation integrity | Cover valid settlement, artifact replacement, claim replay, finding-scenario mismatch, rejected evidence, concurrency, and interruption with focused tests and align the release QA contract. | Planned | TASK-038, TASK-039 |

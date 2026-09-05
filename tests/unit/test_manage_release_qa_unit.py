@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -162,6 +163,16 @@ def test_full_findings_round_trip_to_confirmation_pass(release_case):
         )
         assert result["verdict"] == "PASS"
         assert result_path.stat().st_mode & 0o777 == 0o600
+        terminal = json.loads(result_path.read_text())
+        admission_path = confirmation / (
+            "settlement-admission-" + begin["digest"].removeprefix("sha256:") + ".json"
+        )
+        admission = json.loads(admission_path.read_text())
+        assert admission["schema"] == qa.ADMISSION_SCHEMA
+        assert terminal["schema"] == qa.RESULT_SCHEMA
+        assert terminal["claim_digest"] == begin["digest"]
+        assert terminal["admission_digest"] == qa.digest(admission)
+        assert terminal["diagnostic"] is None
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
 
@@ -301,7 +312,7 @@ def test_evidence_rejects_symlink_and_out_of_root(release_case, tmp_path):
         )
 
 
-def test_finish_rejects_missing_inventory_and_source_mutation(release_case):
+def test_finish_rejection_consumes_claim_and_changed_retry_is_replay(release_case):
     repo, candidate, evidence = release_case
     record, _ = freeze(repo, candidate, evidence)
     remediated = remediate(repo)
@@ -327,14 +338,21 @@ def test_finish_rejects_missing_inventory_and_source_mutation(release_case):
             "confirmation_root": str(confirmation),
             "cluster_results": [],
         }
-        with pytest.raises(qa.EvidenceError):
+        result_path = confirmation / "result.json"
+        with pytest.raises(qa.EvidenceError) as rejected:
             qa.finish_confirmation(request, str(confirmation / "result.json"))
+        assert rejected.value.code == "field_invalid"
+        terminal = json.loads(result_path.read_text())
+        assert terminal["verdict"] == "REJECTED"
+        assert terminal["clusters"] == []
+        assert terminal["diagnostic"]["code"] == "field_invalid"
         (repo / "dirty.txt").write_text("dirty", encoding="utf-8")
         request["cluster_results"] = [
             str(cluster(confirmation, remediated, outcome="pass"))
         ]
-        with pytest.raises(qa.EvidenceError, match="not clean"):
+        with pytest.raises(qa.EvidenceError) as replay:
             qa.finish_confirmation(request, str(confirmation / "result.json"))
+        assert replay.value.code == "settlement_replay"
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
 
@@ -492,5 +510,228 @@ def test_finish_rejects_wrong_claim_digest_before_result(release_case):
             )
         assert mismatch.value.code == "claim_digest_mismatch"
         assert not result_path.exists()
+        assert not list(confirmation.glob("settlement-admission-*.json"))
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
+    ("outcome", "expected"),
+    [("pass", "PASS"), ("finding", "FINDINGS"), ("gap", "INCOMPLETE")],
+)
+def test_finish_persists_every_non_rejected_terminal_outcome(
+    release_case, outcome, expected
+):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome=outcome)
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        result_path = confirmation / "result.json"
+        first = qa.finish_confirmation(request, str(result_path))
+        second = qa.finish_confirmation(request, str(result_path))
+        assert first == second
+        assert first["verdict"] == expected
+        assert json.loads(result_path.read_text())["verdict"] == expected
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_finish_recovers_exact_submission_after_interruption(release_case, monkeypatch):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        original = qa.validate_settlement
+
+        def interrupt(*_args, **_kwargs):
+            raise KeyboardInterrupt
+
+        monkeypatch.setattr(qa, "validate_settlement", interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            qa.finish_confirmation(request, str(confirmation / "result.json"))
+        assert list(confirmation.glob("settlement-admission-*.json"))
+        assert not (confirmation / "result.json").exists()
+        monkeypatch.setattr(qa, "validate_settlement", original)
+        assert (
+            qa.finish_confirmation(request, str(confirmation / "result.json"))[
+                "verdict"
+            ]
+            == "PASS"
+        )
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_finish_changed_evidence_after_interruption_is_incomplete(
+    release_case, monkeypatch
+):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        original = qa.validate_settlement
+        monkeypatch.setattr(
+            qa,
+            "validate_settlement",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+        with pytest.raises(KeyboardInterrupt):
+            qa.finish_confirmation(request, str(confirmation / "result.json"))
+        monkeypatch.setattr(qa, "validate_settlement", original)
+        (confirmation / "scenario.txt").write_text("replacement\n", encoding="utf-8")
+        receipt = qa.finish_confirmation(request, str(confirmation / "result.json"))
+        assert receipt["verdict"] == "INCOMPLETE"
+        terminal = json.loads((confirmation / "result.json").read_text())
+        assert terminal["diagnostic"]["code"] == "settlement_evidence_changed"
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_rejected_evidence_cannot_be_corrected_with_same_request(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        invalid = json.loads(result_file.read_text())
+        invalid["scenarios"][0]["id"] = "S-wrong"
+        write_json(result_file, invalid)
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        output = str(confirmation / "result.json")
+        with pytest.raises(qa.EvidenceError) as rejected:
+            qa.finish_confirmation(request, output)
+        assert rejected.value.code == "confirmation_inventory_mismatch"
+        cluster(confirmation, remediated, outcome="pass")
+        with pytest.raises(qa.EvidenceError) as still_rejected:
+            qa.finish_confirmation(request, output)
+        assert still_rejected.value.code == "confirmation_inventory_mismatch"
+        assert json.loads(Path(output).read_text())["verdict"] == "REJECTED"
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+def test_concurrent_exact_finish_converges_on_one_terminal(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        output = str(confirmation / "result.json")
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            receipts = list(
+                executor.map(
+                    lambda _: qa.finish_confirmation(request, output), range(2)
+                )
+            )
+        assert receipts[0] == receipts[1]
+        assert receipts[0]["verdict"] == "PASS"
+        assert len(list(confirmation.glob("settlement-admission-*.json"))) == 1
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)

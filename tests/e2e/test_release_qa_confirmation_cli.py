@@ -188,6 +188,21 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
             str(confirmation / "result.json"),
         )
         assert result["verdict"] == "PASS"
+        assert result["schema"] == "aquarium-release-qa-confirmation-result/v2"
+        assert (
+            run(
+                "finish-confirmation",
+                "--input",
+                str(finish_input),
+                "--output",
+                str(confirmation / "result.json"),
+            )
+            == result
+        )
+        terminal = json.loads((confirmation / "result.json").read_text())
+        assert terminal["claim_digest"] == claim_receipt["digest"]
+        assert terminal["diagnostic"] is None
+        assert len(list(confirmation.glob("settlement-admission-*.json"))) == 1
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
         shutil.rmtree(second, ignore_errors=True)

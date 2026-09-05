@@ -14,6 +14,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Make `dev-setup` automatically diagnose evidenced repository configuration, propose only necessary changes, and retain ownership of root AGENTS.md and CLAUDE.md while trusting canonical global skill presence.
 - Preserve setup bundle v1 while preparing global components once and applying repository configuration in target order.
 
+### Fixed
+
+- Make post-remediation release QA confirmation artifacts immutable and bind each one-shot settlement to the exact claim, candidate, and finding-to-scenario inventory.
+
 ## v0.1.14 - 2026-09-04
 
 ### Added
