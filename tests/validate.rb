@@ -490,6 +490,7 @@ assert(ROOT.join("README.md").read.include?("Invoking `release-handler` authoriz
        ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `release-handler` performs the same bounded read-only release discovery") &&
        ROOT.join("PRIVACY.md").read.include?("material release-delta source and documentation surfaces") &&
        ROOT.join("PRIVACY.md").read.include?("creates no tracked or temporary resume manifest") &&
+       ROOT.join("PRIVACY.md").read.include?("settlement admission, and terminal result") &&
        ROOT.join("PRIVACY.md").read.include?("unavailable access leaves the QA result incomplete"),
        "public documentation must disclose release-handler and release-qa network boundaries")
 assert(ROOT.join("PRIVACY.md").read.include?("Explicitly invoking `dev-setup-global` without a component list automatically contacts") &&

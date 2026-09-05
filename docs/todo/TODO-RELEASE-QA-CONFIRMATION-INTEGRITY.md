@@ -126,21 +126,21 @@ Ship the hardened contract before the next release QA confirmation. The change d
 
 ### TASK-040: Qualify Confirmation Integrity
 
-- [ ] Exercise the valid end-to-end confirmation path with exact artifact and digest assertions.
-- [ ] Cover record, manifest, claim, admission, and result replacement attempts.
-- [ ] Cover empty, oversized, wrong-type, missing, duplicate, additional, and boundary-value fields for every changed schema; run the complete matrix twice consecutively offline and assert identical structured pre-admission rejection, artifact state, no claim consumption when exact identity cannot be established, and no traceback.
-- [ ] Cover wrong finding-scenario pairing, sequential replay, concurrent finish, and rejected-then-corrected replay.
-- [ ] Synchronize concurrency cases with deterministic barriers rather than timing sleeps, enumerate both contender orderings, run the focused concurrency command twice consecutively offline, and require the same admission and terminal bytes in every run.
-- [ ] Interrupt deterministically before admission, after admission, during exact-request recovery, and after terminal creation; exercise every boundary twice and assert respectively no admission, one consumed admission, deterministic convergence, or immutable terminal readback.
-- [ ] Verify clean exact-candidate enforcement, verdict precedence, structured output, permissions, and source-worktree preservation.
-- [ ] Align the release QA skill, workflow contract, test authority, and release notes when user-visible behavior warrants an entry.
-- [ ] Run focused checks, `git --no-pager diff --check`, and the broader repository gate justified by the final changed surface.
+- [x] Exercise the valid end-to-end confirmation path with exact artifact and digest assertions.
+- [x] Cover record, manifest, claim, admission, and result replacement attempts.
+- [x] Cover empty, oversized, wrong-type, missing, duplicate, additional, and boundary-value fields for every changed schema; run the complete matrix twice consecutively offline and assert identical structured pre-admission rejection, artifact state, no claim consumption when exact identity cannot be established, and no traceback.
+- [x] Cover wrong finding-scenario pairing, sequential replay, concurrent finish, and rejected-then-corrected replay.
+- [x] Synchronize concurrency cases with deterministic barriers rather than timing sleeps, enumerate both contender orderings, run the focused concurrency command twice consecutively offline, and require the same admission and terminal bytes in every run.
+- [x] Interrupt deterministically before admission, after admission, during exact-request recovery, and after terminal creation; exercise every boundary twice and assert respectively no admission, one consumed admission, deterministic convergence, or immutable terminal readback.
+- [x] Verify clean exact-candidate enforcement, verdict precedence, structured output, permissions, and source-worktree preservation.
+- [x] Align the release QA skill, workflow contract, test authority, and release notes when user-visible behavior warrants an entry.
+- [x] Run focused checks, `git --no-pager diff --check`, and the broader repository gate justified by the final changed surface.
 
 ## Epic Acceptance
 
-- [ ] `TASK-038` through `TASK-040` are `Completed` in the canonical roadmap.
-- [ ] One exact claim admits no more than one settlement and has one immutable terminal or visibly incomplete attempt record.
-- [ ] Every original finding is bound to its exact frozen scenario throughout preparation and settlement.
-- [ ] Replacement, replay, concurrency, mismatch, rejection, and interruption scenarios fail closed with stable structured diagnostics.
-- [ ] The valid confirmation path and unchanged full-pass path pass their applicable regression and repository-standard checks.
+- [x] `TASK-038` through `TASK-040` are `Completed` in the canonical roadmap.
+- [x] One exact claim admits no more than one settlement and has one immutable terminal or visibly incomplete attempt record.
+- [x] Every original finding is bound to its exact frozen scenario throughout preparation and settlement.
+- [x] Replacement, replay, concurrency, mismatch, rejection, and interruption scenarios fail closed with stable structured diagnostics.
+- [x] The valid confirmation path and unchanged full-pass path pass their applicable regression and repository-standard checks.
 - [ ] Durable behavior is promoted to canonical release QA and workflow documentation, this epic links those `Canonical Outcomes`, and this temporary dossier is removed under the documented closeout lifecycle.

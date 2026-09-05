@@ -17,6 +17,7 @@ def run(*arguments: str, expected: int = 0) -> dict:
         [str(SCRIPT), *arguments], capture_output=True, text=True, check=False
     )
     assert completed.returncode == expected, completed.stdout + completed.stderr
+    assert "Traceback" not in completed.stdout + completed.stderr
     return json.loads(completed.stdout)
 
 
@@ -225,3 +226,37 @@ def test_cli_returns_structured_error_for_invalid_schema(tmp_path: Path):
             "message": "freeze input must use aquarium-release-qa-full-pass/v1",
         },
     }
+
+
+@pytest.mark.parametrize("content", ["", "[]", "{broken"])
+def test_cli_rejects_empty_wrong_type_and_malformed_json_without_traceback(
+    tmp_path: Path, content: str
+):
+    request = tmp_path / "request.json"
+    request.write_text(content, encoding="utf-8")
+    response = run(
+        "freeze-full",
+        "--input",
+        str(request),
+        "--output",
+        str(tmp_path / "output.json"),
+        expected=2,
+    )
+    assert response["schema"] == "aquarium-release-qa-error/v1"
+    assert response["error"]["code"] == "input_invalid"
+
+
+def test_cli_rejects_oversized_json_without_creating_output(tmp_path: Path):
+    request = tmp_path / "request.json"
+    request.write_text(" " * (4 * 1024 * 1024 + 1), encoding="utf-8")
+    output = tmp_path / "output.json"
+    response = run(
+        "freeze-full",
+        "--input",
+        str(request),
+        "--output",
+        str(output),
+        expected=2,
+    )
+    assert response["error"]["code"] == "input_too_large"
+    assert not output.exists()
