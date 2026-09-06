@@ -188,7 +188,7 @@ The supported line is official stable v0.1.x on native Apple Silicon macOS, star
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-035 | Add Sorage setup and Project registration | Add bounded Sorage inspection, exact-release and paired-skill setup, minimal initialization, approved Project creation or binding, ignore safety, bundle selection, and agent guidance. | Completed | External Sorage v0.1.0 release |
-| TASK-036 | Qualify Sorage integration | Verify version, initialization, Project resolution, privacy, documentation, bundle, and failure contracts against isolated fixtures and the official v0.1.0 CLI. | In Review | TASK-035 |
+| TASK-036 | Qualify Sorage integration | Verify version, initialization, Project resolution, privacy, documentation, bundle, and failure contracts against isolated fixtures and the official v0.1.0 CLI. | Completed | TASK-035 |
 
 ## EPIC-010: Separate Global and Repository Development Setup
 
