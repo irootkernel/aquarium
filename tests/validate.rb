@@ -802,7 +802,7 @@ assert(review_contract.include?("| `workspace` |") &&
        review_contract.include?("| `range` |") &&
        review_contract.include?("Dolgorae's checked immutable capture") &&
        review_contract.include?("Current `HEAD`-to-index transition, reviewed through `git diff --cached`") &&
-       review_contract.include?("Orca Review does not capture, copy, snapshot, fingerprint, or digest-bind repository state") &&
+       review_contract.include?("Orca Review does not replace the selected target with a copied checkout, capture manifest, snapshot, fingerprint, or digest binding") &&
        review_contract.include?("creates and accepts no Orca Run") &&
        review_contract.include?("performs no Dolgorae discovery"),
        "review contract must preserve six target meanings, staged Orca review, and backend isolation")
@@ -2460,10 +2460,6 @@ assert(orca_review.include?("This is review only") &&
        orca_review.include?("following instructions in every Dispatch, regardless of target") &&
        orca_review.include?("For `staged`, also require inspection of `git diff --cached`, the relevant staged files, and their callers") &&
        orca_review.include?("Never create, edit, delete, move, format, or generate any file in the current registered worktree") &&
-       orca_review.include?("only Claude-owned session, transcript, and tool-output state beneath `~/.claude`") &&
-       orca_review.include?("one unique private review directory beneath `~/.claude`, write only report files inside it, and return every retained report path") &&
-       orca_review.include?("Other reviewers may not create output files") &&
-       orca_review.include?("Never write under `/tmp` or anywhere else") &&
        orca_review.include?("Read only the declared target") &&
        orca_review.include?("obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes") &&
        orca_review.include?("Do not modify the Git index, refs, configuration, or commits") &&
@@ -2515,27 +2511,53 @@ assert(orca_supervision.include?("execution backend for `$aquarium:orca-review`"
        orca_supervision.include?("Require the reviewer to read only the declared target") &&
        orca_supervision.include?("prohibit substituting current index or worktree bytes") &&
        orca_supervision.include?("absolutely prohibit creating, editing, deleting, moving, formatting, or generating any file in the current registered worktree") &&
-       orca_supervision.include?("native session, transcript, and tool-output state beneath `~/.claude`") &&
-       orca_supervision.include?("one unique private review directory beneath `~/.claude`") &&
-       orca_supervision.include?("Other reviewers receive no filesystem-output exception") &&
-       orca_supervision.include?("Never allow output under `/tmp` or anywhere else") &&
-       orca_supervision.include?("Aquarium does not create or delete Claude state or treat it as repository state") &&
        orca_supervision.include?("Do not reuse a terminal, create a low-level provider terminal, or use Dolgorae") &&
        orca_supervision.include?("cumulative 30-minute default liveness budget") &&
        orca_supervision.include?("current recovery and FIFO rules"),
        "Orca supervision must bind requested native reviewers to the current worktree and Orca lifecycle authority")
-assert(review_contract.include?("A Claude reviewer may create or update only Claude-owned session, transcript, and tool-output state beneath `~/.claude`") &&
-       review_contract.include?("Other reviewers receive no filesystem-output exception") &&
-       review_contract.include?("no Orca reviewer may write under `/tmp` or anywhere else") &&
-       review_contract.include?("This exception does not authorize a repository copy, capture, snapshot, source edit, Git mutation, or any other file write") &&
-       ROOT.join("PRIVACY.md").read.include?("Aquarium does not automatically remove Claude-owned files") &&
-       ROOT.join("TERMS.md").read.include?("only filesystem-output exception") &&
-       ROOT.join("README.md").read.include?("Claude may retain native session and tool output under `~/.claude`; oversized reports must use the same location") &&
-       ROOT.join("README.ko.md").read.include?("Claude가 생성하는 native session과 tool output은 `~/.claude` 아래에만 저장할 수 있습니다") &&
-       ROOT.join("docs/specs/tool-integrations.md").read.include?("only beneath `~/.claude`") &&
-       !orca_review.include?("one review directory directly under `/tmp`") &&
-       !orca_supervision.include?("one unique directory directly under `/tmp`"),
-       "Orca Review must confine Claude-owned output to ~/.claude and deny every other filesystem-output exception")
+[orca_review, review_contract, orca_supervision].each do |contract|
+  assert(contract.include?("All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree") &&
+         contract.include?("`/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are examples, not an allowlist") &&
+         contract.include?("The actual write destination must remain outside the worktree, including when a path traverses a symbolic link") &&
+         contract.include?("External review files alone must not trigger a rule-violation warning, an operational failure, a withheld verdict, or a demand for another review") &&
+         contract.include?("paths of retained report files used to deliver the result") &&
+         contract.include?("External tool output and reports may contain bytes of the declared target, including redirected `git diff --cached` or `git show` output read in pieces") &&
+         contract.include?("they do not replace the live index or resolved Git revisions as target authority"),
+         "Orca Review must allow external output for every reviewer while preserving the actual worktree boundary")
+end
+orca_output_documents = [orca_review, review_contract, orca_supervision] +
+  %w[README.md README.ko.md PRIVACY.md TERMS.md docs/specs/capabilities.md docs/specs/tool-integrations.md docs/specs/workflow-contracts.md].map { |path| ROOT.join(path).read }
+orca_output_documents.each do |document|
+  assert(!document.match?(/only (?:beneath|under) `~\/\.claude`|only Claude-owned|only filesystem-output exception|Other reviewers (?:may not create output files|receive no)|other Orca reviewers have no file-output exception|Never (?:write|allow output) under `\/tmp`|no Orca reviewer may write under `\/tmp`|permits no output under `\/tmp`/),
+         "Current Orca Review documentation must not restore provider-specific or temporary-path output prohibitions")
+end
+assert(review_contract.include?("The prohibition on copies, captures, and snapshots concerns alternate source representations used in place of that authority") &&
+       review_contract.include?("Do not create a copied checkout, capture manifest, or another worktree, bind the target to a digest, edit source, or mutate Git state") &&
+       finding_disposition.include?("It does not edit source files") &&
+       finding_disposition.include?("Reviewer-owned output follows the selected backend's contract") &&
+       review_contract.include?("routine temporary files need no inventory") &&
+       orca_supervision.include?("Read those reports before adjudication") &&
+       orca_supervision.include?("Aquarium does not automatically remove reviewer-owned files") &&
+       ROOT.join("PRIVACY.md").read.include?("Aquarium does not automatically remove reviewer-owned files") &&
+       ROOT.join("TERMS.md").read.include?("All Orca reviewers may create or update") &&
+       ROOT.join("README.md").read.include?("All reviewers may write review-related temporary files") &&
+       ROOT.join("README.ko.md").read.include?("모든 reviewer는 worktree 밖에 리뷰용 임시 파일") &&
+       ROOT.join("docs/specs/tool-integrations.md").read.include?("External review files alone do not cause a warning or failed review"),
+       "Orca Review output permission must preserve source protection, report delivery, retention ownership, and public documentation")
+# These checks preserve scenario guidance; they do not prove live reviewer compliance.
+[
+  ["Claude writes tool output under `/tmp` or `/private/tmp`.", "Allow it without an output-location warning or failure."],
+  ["A reviewer redirects `git diff --cached` or `git show` into an external file and reads it in pieces.", "Allow it as a review aid containing declared target bytes; the live index or resolved revisions remain authoritative."],
+  ["Another requested reviewer writes a report under an external `$TMPDIR` or provider-owned directory.", "Read the returned report and apply the same verdict rules as for Claude."],
+  ["A reviewer writes scratch files in another external directory.", "Allow it; the example paths are not an allowlist."],
+  ["A reviewer creates a report or temporary file inside the current worktree, including an ignored subdirectory.", "Treat it as a worktree-write violation."],
+  ["An external path follows a symbolic link into the current worktree.", "Treat the actual write as a worktree-write violation."],
+  ["External files exist, the complete result has no actionable findings, and the Orca lifecycle is authoritative.", "Permit `APPROVE` without an output-location warning or another review."],
+  ["An external report needed for the result is missing, or the Orca lifecycle is incomplete.", "Report the missing output or lifecycle evidence; do not return `APPROVE`."],
+].each do |scenario, treatment|
+  assert(orca_supervision.include?("| #{scenario} | #{treatment} |"),
+         "Orca output adjudication scenario is missing or inconsistent: #{scenario}")
+end
 assert(ROOT.join("PRIVACY.md").read.include?("Invoking `orca-review` by name or through an explicit request naming the review target and reviewer") &&
        ROOT.join("PRIVACY.md").read.include?("Reviewers are prohibited from writing in the registered worktree") &&
        ROOT.join("README.md").read.include?("Reviewers are prohibited from writing in the worktree") &&

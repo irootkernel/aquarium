@@ -18,7 +18,7 @@ Run the canonical Aquarium review contract with one fresh requested reviewer own
 
 Resolve one canonical Git root, one `staged`, `head`, `commit`, or `range` source scope, one requested reviewer, and one review focus. A `task`, `epic`, or special request supplies authority and focus but must resolve to one of those four scopes. Read the roadmap and linked authority first. Ask only when the authority does not identify one unambiguous scope and applicable revision.
 
-`staged` means the current `HEAD`-to-index change in Orca's registered worktree. Confirm through read-only Git inspection that `git diff --cached` is nonempty, and report staged, unstaged, untracked, ignored, and conflicted state without normalizing it. The reviewer reads the live staged target directly; do not capture, copy, hash, snapshot, or bind it to an alternate source representation.
+`staged` means the current `HEAD`-to-index change in Orca's registered worktree. Confirm through read-only Git inspection that `git diff --cached` is nonempty, and report staged, unstaged, untracked, ignored, and conflicted state without normalizing it. The reviewer reads the live staged target directly; do not replace it with a copied checkout, capture manifest, snapshot, or digest binding. External tool output remains a review aid under the Dispatch rules below.
 
 For `head`, `commit`, and `range`, resolve the requested revisions with ordinary read-only Git commands and preserve the meanings in [review-contract.md](../../references/review-contract.md). Current index and worktree changes remain excluded from those committed targets. Conflicts stop the review.
 
@@ -36,7 +36,8 @@ Place the declared target, review focus, authority paths, included and excluded 
 
 - This is review only.
 - Never create, edit, delete, move, format, or generate any file in the current registered worktree.
-- When the reviewer is Claude, it may create or update only Claude-owned session, transcript, and tool-output state beneath `~/.claude`. If the report is too large for the Orca lifecycle message, Claude may also create one unique private review directory beneath `~/.claude`, write only report files inside it, and return every retained report path. Other reviewers may not create output files. Never write under `/tmp` or anywhere else.
+- All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree. `/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are examples, not an allowlist. The actual write destination must remain outside the worktree, including when a path traverses a symbolic link. Return the paths of retained report files used to deliver the result.
+- External tool output and reports may contain bytes of the declared target, including redirected `git diff --cached` or `git show` output read in pieces. These files are review aids; they do not replace the live index or resolved Git revisions as target authority.
 - Read only the declared target. For `head`, `commit`, and `range`, obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes.
 - Do not modify the Git index, refs, configuration, or commits.
 - Do not run tests, builds, formatters, installers, authentication, or unrelated network operations.
@@ -51,7 +52,9 @@ Supervise, settle, acknowledge, and recover only through the live Orca guides. N
 
 Independently verify every finding against the exact target and authority without changing files or running checks. Preserve reported severity, classify validity as Valid, Invalid, or Needs confirmation, assign effective priority, and recommend a disposition under the shared contract. A static functionality review can establish support in code and documentation but cannot prove runtime behavior.
 
-This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the shared result, reviewer identity, remediation continuation, Orca object and lifecycle status, and any Claude oversized-report path beneath `~/.claude`. Wrong scope, output, reviewer identity, or lifecycle prevents a clean verdict. Report `dolgorae_used: false`.
+This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the shared result, reviewer identity, remediation continuation, Orca object and lifecycle status, and the paths of retained report files used to deliver the result. Report `dolgorae_used: false`.
+
+External review files alone must not trigger a rule-violation warning, an operational failure, a withheld verdict, or a demand for another review. Wrong scope, missing required output, reviewer identity mismatch, or incomplete lifecycle prevents a clean verdict.
 
 ## Mulgae semantic conformance
 

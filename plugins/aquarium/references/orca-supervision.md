@@ -14,8 +14,27 @@ Every Dispatch, regardless of target, must tell the reviewer that this is review
 
 For `staged`, additionally require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply the corresponding target-specific read instructions to `head`, `commit`, and `range` without weakening the common restrictions.
 
-Tell the reviewer to return the complete result through the Orca lifecycle message when it fits. A Claude reviewer may create or update only its native session, transcript, and tool-output state beneath `~/.claude`. If its report is too large, allow Claude to create one unique private review directory beneath `~/.claude` and write only report files inside it. Require a concise lifecycle result and every retained report path. Other reviewers receive no filesystem-output exception. Never allow output under `/tmp` or anywhere else. Aquarium does not create or delete Claude state or treat it as repository state, capture evidence, or lifecycle authority.
+Include the shared output permission in every Dispatch: All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree. `/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are examples, not an allowlist. The actual write destination must remain outside the worktree, including when a path traverses a symbolic link.
+
+Include this distinction in every Dispatch: External tool output and reports may contain bytes of the declared target, including redirected `git diff --cached` or `git show` output read in pieces. These files are review aids; they do not replace the live index or resolved Git revisions as target authority.
+
+Tell the reviewer to return the complete result through the Orca lifecycle message when it fits. Any reviewer may deliver a large report through external files with a concise lifecycle result and the paths of retained report files used to deliver the result. Read those reports before adjudication. Routine temporary files need no inventory. Aquarium does not automatically remove reviewer-owned files or treat them as repository state, capture evidence, or lifecycle authority. External review files alone must not trigger a rule-violation warning, an operational failure, a withheld verdict, or a demand for another review.
 
 Use event-driven waits for `worker_done`, `escalation`, and `question`, with a cumulative 30-minute default liveness budget and a user update at least once per minute. A checkpoint timeout inside the budget is not failure. At budget exhaustion inspect authoritative worker state once, keep an active or unproven worker intact, and require explicit user direction for more waiting or cancellation.
 
 After one accepted `worker_done`, read the complete authoritative transcript, settle the worker through the current guide, process the complete Delivery, and acknowledge it only after required release or retention succeeds. Follow the live guide's current recovery and FIFO rules rather than duplicating a fixed batch-drain protocol here. Never retry, replace, switch reviewer, release an active worker, or reinterpret an operational failure as a technical verdict.
+
+## Output adjudication examples
+
+These examples assume the declared worktree is elsewhere. File location does not replace finding adjudication or Orca lifecycle checks.
+
+| Scenario | Required treatment |
+| --- | --- |
+| Claude writes tool output under `/tmp` or `/private/tmp`. | Allow it without an output-location warning or failure. |
+| A reviewer redirects `git diff --cached` or `git show` into an external file and reads it in pieces. | Allow it as a review aid containing declared target bytes; the live index or resolved revisions remain authoritative. |
+| Another requested reviewer writes a report under an external `$TMPDIR` or provider-owned directory. | Read the returned report and apply the same verdict rules as for Claude. |
+| A reviewer writes scratch files in another external directory. | Allow it; the example paths are not an allowlist. |
+| A reviewer creates a report or temporary file inside the current worktree, including an ignored subdirectory. | Treat it as a worktree-write violation. |
+| An external path follows a symbolic link into the current worktree. | Treat the actual write as a worktree-write violation. |
+| External files exist, the complete result has no actionable findings, and the Orca lifecycle is authoritative. | Permit `APPROVE` without an output-location warning or another review. |
+| An external report needed for the result is missing, or the Orca lifecycle is incomplete. | Report the missing output or lifecycle evidence; do not return `APPROVE`. |
