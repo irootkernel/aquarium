@@ -25,7 +25,9 @@ python3 <skill-directory>/scripts/aquarium_dev.py enroll \
   --repository <git-root> --approve-enrollment --approve-hook
 ```
 
-Add `--approve-reenrollment` only for an approved checkout transfer or same-checkout legacy-manager migration. Re-enrollment removes only the exact recorded Aquarium marker block. Missing, duplicate, changed, symbolic, external, or ambiguous hook state fails closed.
+Add `--approve-reenrollment` only for an approved checkout transfer or same-checkout legacy-manager migration. This includes replacing a recorded hook that backgrounds `request` with the synchronous admission block. Use the updated manager with all three enrollment flags; `repair-hook` does not migrate an older block. Read-only diagnosis reports an intact older block as `outdated`; `owned` requires the current manager block.
+
+Re-enrollment removes only the exact recorded Aquarium marker block. Missing, duplicate, changed, symbolic, external, or ambiguous hook state fails closed.
 
 Install the explicit launcher only after approval:
 
@@ -44,7 +46,11 @@ A v2 managed-service producer executes only after its producer-owned controller 
 
 Use `diagnose` again after every effect. Hook repair uses `repair-hook --approve-hook`; a build uses `rebuild --approve-build`. Never edit enrollment JSON, hook markers, `current` selectors, or stable `bin` indirections manually.
 
-The native hook queues one exact completed local-main SHA. The manager builds that commit in an isolated exact checkout and seals the immutable generation. Foreground producers atomically advance `current/<project-id>`. Managed-service builds first advance `pending/<project-id>`; their old command/controller/service pair stays current until an independently approved, token-fenced controller apply succeeds.
+The native hook silently skips feature branches and detached HEAD. On local main it synchronously queues one exact completed SHA, then starts a detached build worker. The commit waits for admission and worker launch, not the build. Admission or worker-launch errors remain visible on stderr; they do not undo the commit. A worker-launch failure preserves the queued request. If saving its diagnostic fails, stderr retains the original error and explains the storage failure.
+
+Producer description and build-target probes each time out after 30 seconds with bounded process cleanup. An approved rebuild removes its exact matching request after successful publication. See the [development contract](references/development-contract.md) for storage errors and recovery.
+
+The manager builds that commit in an isolated exact checkout and seals the immutable generation. Foreground producers atomically advance `current/<project-id>`. Managed-service builds first advance `pending/<project-id>`; their old command/controller/service pair stays current until an independently approved, token-fenced controller apply succeeds.
 
 Executable consumers use one stable `bin/<project-id>` indirection and generation lease; managed-service consumers additionally hold the shared service-generation lock. Aquarium plugin artifacts remain available under `current/aquarium` for separately authorized consumers but are never installed into a Codex home by this workflow.
 

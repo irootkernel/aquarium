@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import stat
 import subprocess
 import sys
@@ -241,6 +242,124 @@ def test_same_checkout_migration_restores_hook_and_record_on_failure(
 
     assert hook.read_bytes() == before_hook
     assert enrollment.read_bytes() == before_record
+
+
+@pytest.mark.parametrize("failure", (None, "changed", "duplicate", "missing", "write"))
+def test_migrate_recorded_background_hook(tmp_path, monkeypatch, failure):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    hook = repository / ".git/hooks/post-commit"
+    foreign = "#!/bin/sh\nprintf 'foreign hook\\n'\n"
+    hook.write_text(foreign)
+    hook.chmod(0o750)
+    command = shlex.join(
+        [
+            str(Path(sys.executable).resolve()),
+            str(CLI.resolve()),
+            "request",
+            "--repository",
+            str(repository),
+        ]
+    )
+    old_block = (
+        f"# BEGIN AQUARIUM DEV v1\n{command} >/dev/null 2>&1 &\n# END AQUARIUM DEV v1\n"
+    )
+    with monkeypatch.context() as patch:
+        patch.setattr(dev_manager, "marker_block", lambda *_: old_block)
+        dev_manager.enroll(
+            repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=False,
+        )
+    record = host_root / "enrollments/aquarium.json"
+    before_repair = (hook.read_bytes(), record.read_bytes())
+    diagnosis = run_cli(host_root, "diagnose", "--repository", repository)
+    assert diagnosis.returncode == 0
+    assert json.loads(diagnosis.stdout)["details"]["hook"] == "outdated"
+    rejected = run_cli(
+        host_root, "repair-hook", "--repository", repository, "--approve-hook"
+    )
+    assert rejected.returncode == 1
+    assert json.loads(rejected.stderr)["error"]["code"] == "hook_conflict"
+    assert (hook.read_bytes(), record.read_bytes()) == before_repair
+    if failure == "changed":
+        hook.write_text(hook.read_text().replace("2>&1 &", "2>&1 & # edited"))
+    elif failure == "duplicate":
+        hook.write_text(hook.read_text() + old_block)
+    elif failure == "missing":
+        hook.write_text(foreign)
+    before_hook, before_record = hook.read_bytes(), record.read_bytes()
+    if failure in {"changed", "duplicate", "missing"}:
+        diagnosis = run_cli(host_root, "diagnose", "--repository", repository)
+        assert diagnosis.returncode == 0
+        assert json.loads(diagnosis.stdout)["details"]["hook"] == "stale"
+        assert (hook.read_bytes(), record.read_bytes()) == (before_hook, before_record)
+    with pytest.raises(dev_manager.ManagerError, match="older Aquarium hook block"):
+        dev_manager.enroll(
+            repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=False,
+        )
+    assert hook.read_bytes() == before_hook
+    assert record.read_bytes() == before_record
+
+    if failure == "write":
+        original_write = dev_manager._atomic_write
+
+        def fail_record(path, content, mode):
+            if path == record and content != before_record.decode():
+                raise OSError("injected enrollment write failure")
+            return original_write(path, content, mode)
+
+        monkeypatch.setattr(dev_manager, "_atomic_write", fail_record)
+    if failure:
+        with pytest.raises((dev_manager.ManagerError, OSError)):
+            dev_manager.enroll(
+                repository,
+                host_root,
+                CLI,
+                approve_enrollment=True,
+                approve_hook=True,
+                approve_reenrollment=True,
+            )
+        assert hook.read_bytes() == before_hook
+        assert record.read_bytes() == before_record
+    else:
+        status, _ = dev_manager.enroll(
+            repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=True,
+        )
+        assert status == "success"
+        content = hook.read_text()
+        assert content == foreign + dev_manager.marker_block(repository, CLI)
+        assert old_block not in content
+        assert json.loads(record.read_text())["hook_block"] == dev_manager.marker_block(
+            repository, CLI
+        )
+        diagnosis = run_cli(host_root, "diagnose", "--repository", repository)
+        assert json.loads(diagnosis.stdout)["details"]["hook"] == "owned"
+        migrated = (hook.read_bytes(), record.read_bytes())
+        status, _ = dev_manager.enroll(
+            repository,
+            host_root,
+            CLI,
+            approve_enrollment=True,
+            approve_hook=True,
+            approve_reenrollment=False,
+        )
+        assert status == "no-change"
+        assert (hook.read_bytes(), record.read_bytes()) == migrated
+    assert stat.S_IMODE(hook.stat().st_mode) == 0o750
 
 
 def test_reenrollment_requires_approval_and_transfers_only_owned_block(tmp_path):

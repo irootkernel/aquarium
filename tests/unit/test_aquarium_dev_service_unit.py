@@ -316,3 +316,39 @@ def test_launcher_requires_matching_ready_managed_service(
     observed.clear()
     assert launcher.main(["gaori", "status"]) == 127
     assert not observed
+
+
+def test_rebuild_recovery_clears_request_without_activating_service(
+    tmp_path, monkeypatch
+):
+    host_root = tmp_path / "host"
+    (host_root / "artifacts/gaori").mkdir(parents=True)
+    git_sha = "1" * 40
+    staging, manifest = managed_staging(tmp_path, git_sha)
+    checkout = tmp_path / "checkout"
+    description = {"project_id": "gaori"}
+    monkeypatch.setattr(
+        dev_manager,
+        "_require_enrolled_checkout",
+        lambda *args, **kwargs: (checkout, {}, description, git_sha),
+    )
+    monkeypatch.setattr(
+        dev_manager, "_validated_build", lambda *args: (staging, manifest)
+    )
+    request_path = host_root / "queue/gaori" / f"{git_sha}.json"
+    dev_manager._atomic_json(
+        request_path,
+        {
+            "schema": dev_manager.QUEUE_SCHEMA,
+            "project_id": "gaori",
+            "git_sha": git_sha,
+            "checkout": str(checkout),
+        },
+    )
+    status, result = dev_manager.rebuild(checkout, host_root, approve_build=True)
+    assert status == "success"
+    assert result["pending"] == str(host_root / "pending/gaori")
+    assert not request_path.exists()
+    assert not (host_root / "current/gaori").exists()
+    assert not (host_root / "bin/gaori").exists()
+    assert not (host_root / "runtime/gaori").exists()

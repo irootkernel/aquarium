@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import signal
 import stat
 import subprocess
@@ -20,7 +21,10 @@ from dev_manager import ManagerError, process_queue, queue_request
 
 
 @pytest.fixture(autouse=True)
-def clear_managed_immutable_flags(tmp_path):
+def isolate_development_state(tmp_path, monkeypatch):
+    home = tmp_path / "isolated-home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
     yield
     for current, directories, files in os.walk(tmp_path):
         os.chflags(current, 0)
@@ -438,6 +442,232 @@ def test_duplicate_requests_coalesce_and_worker_publishes_once(tmp_path):
     assert not list((host_root / "queue/aquarium").glob("*.json"))
 
 
+def test_worker_start_failure_reports_and_preserves_admitted_request(
+    tmp_path, monkeypatch, capsys
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    original_popen = subprocess.Popen
+    admitted = []
+
+    def fail_worker(command, **kwargs):
+        if "worker" not in command:
+            return original_popen(command, **kwargs)
+        requests = list((host_root / "queue/aquarium").glob("*.json"))
+        assert len(requests) == 1
+        admitted.append(json.loads(requests[0].read_text()))
+        assert kwargs["start_new_session"] is True
+        assert kwargs["close_fds"] is True
+        for stream in ("stdin", "stdout", "stderr"):
+            assert kwargs[stream] == subprocess.DEVNULL
+        raise OSError("injected worker launch failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(subprocess, "Popen", fail_worker)
+        patch.setattr(
+            sys,
+            "argv",
+            [
+                str(CLI),
+                "--host-root",
+                str(host_root),
+                "request",
+                "--repository",
+                str(repository),
+            ],
+        )
+        assert aquarium_dev.main() == 1
+    output = capsys.readouterr()
+    assert not output.out
+    error = json.loads(output.err)["error"]
+    assert error["code"] == "worker_failed"
+    assert error["git_sha"] == admitted[0]["git_sha"]
+    diagnostic = json.loads(
+        (host_root / "diagnostics/aquarium/latest.json").read_text()
+    )
+    assert diagnostic["code"] == "worker_failed"
+    assert diagnostic["git_sha"] == error["git_sha"]
+    assert list((host_root / "queue/aquarium").glob("*.json"))
+    _, details = process_queue("aquarium", host_root)
+    assert details["published"] == 1
+
+
+def wait_for_path(path: Path, timeout: float = 15) -> None:
+    deadline = time.monotonic() + timeout
+    while not path.exists():
+        assert time.monotonic() < deadline, f"Timed out waiting for {path}"
+        time.sleep(0.01)
+
+
+@pytest.mark.parametrize("legacy_hook", (False, True), ids=("synchronous", "legacy"))
+def test_short_lived_commit_caller_admits_before_detaching_worker(
+    tmp_path, monkeypatch, legacy_hook
+):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    repository = create_repository(tmp_path / "repository")
+    host_root = home / ".aquarium-dev"
+    request_ready = tmp_path / "request-ready"
+    admission_release = tmp_path / "admission-release"
+    build_ready = tmp_path / "build-ready"
+    build_release = tmp_path / "build-release"
+    worker_pid = tmp_path / "worker-pid"
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", "blocked")
+    monkeypatch.setenv("AQUARIUM_TEST_BUILD_READY", str(build_ready))
+    monkeypatch.setenv("AQUARIUM_TEST_BUILD_RELEASE", str(build_release))
+    wrapper = tmp_path / "request.py"
+    wrapper.write_text(
+        f"""import sys
+import time
+from pathlib import Path
+sys.path.insert(0, {str(SCRIPT_DIR)!r})
+import aquarium_dev
+import subprocess
+original_popen = subprocess.Popen
+def record_worker(command, **kwargs):
+    process = original_popen(command, **kwargs)
+    if 'worker' in command:
+        Path({str(worker_pid)!r}).write_text(str(process.pid))
+    return process
+subprocess.Popen = record_worker
+Path({str(request_ready)!r}).write_text('ready')
+deadline = time.monotonic() + 15
+while not Path({str(admission_release)!r}).exists():
+    if time.monotonic() >= deadline:
+        raise SystemExit('Admission barrier timed out')
+    time.sleep(0.01)
+raise SystemExit(aquarium_dev.main())
+"""
+    )
+    dev_manager.enroll(
+        repository,
+        host_root,
+        wrapper,
+        approve_enrollment=True,
+        approve_hook=True,
+        approve_reenrollment=False,
+    )
+    hook = repository / ".git/hooks/post-commit"
+    if legacy_hook:
+        command = shlex.join(
+            [
+                str(Path(sys.executable).resolve()),
+                str(wrapper),
+                "request",
+                "--repository",
+                str(repository),
+            ]
+        )
+        hook.write_text(f"#!/bin/sh\n{command} >/dev/null 2>&1 &\n")
+    (repository / "source.txt").write_text("committed\n")
+    subprocess.run(["git", "-C", repository, "add", "source.txt"], check=True)
+    caller = subprocess.Popen(
+        ["git", "-C", repository, "commit", "-q", "-m", "exercise admission"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    caller_group_cleaned = False
+    worker_completed = False
+    try:
+        wait_for_path(request_ready)
+        if legacy_hook:
+            stdout, stderr = caller.communicate(timeout=5)
+            assert caller.returncode == 0, stderr
+            os.killpg(caller.pid, signal.SIGKILL)
+            caller_group_cleaned = True
+            assert not list((host_root / "queue/aquarium").glob("*.json"))
+            assert not (host_root / "diagnostics/aquarium/latest.json").exists()
+            assert not build_ready.exists()
+            return
+        with pytest.raises(subprocess.TimeoutExpired):
+            caller.wait(timeout=0.2)
+        admission_release.touch()
+        stdout, stderr = caller.communicate(timeout=15)
+        assert caller.returncode == 0, stderr
+        assert not stdout
+        assert not stderr
+        sha = subprocess.check_output(
+            ["git", "-C", repository, "rev-parse", "HEAD"], text=True
+        ).strip()
+        request = host_root / "queue/aquarium" / f"{sha}.json"
+        assert json.loads(request.read_text())["git_sha"] == sha
+        wait_for_path(build_ready)
+        try:
+            os.killpg(caller.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        caller_group_cleaned = True
+        assert not (host_root / "current/aquarium").exists()
+        build_release.touch()
+        current = host_root / "current/aquarium"
+        wait_for_path(current)
+        assert current.resolve().name == sha
+        assert (
+            current / "plugin/payload.txt"
+        ).read_text() == f"artifact {sha} committed\n"
+        deadline = time.monotonic() + 15
+        while request.exists():
+            assert time.monotonic() < deadline, "Worker did not finish the request"
+            time.sleep(0.01)
+        worker_completed = True
+    finally:
+        build_release.touch()
+        if not caller_group_cleaned:
+            try:
+                os.killpg(caller.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        caller.communicate(timeout=5)
+        if worker_pid.exists() and not worker_completed:
+            try:
+                os.killpg(int(worker_pid.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+def test_generated_hook_reports_admission_failure_and_preserves_commit(
+    tmp_path, monkeypatch
+):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    repository = create_repository(tmp_path / "repository")
+    host_root = home / ".aquarium-dev"
+    hook = repository / ".git/hooks/post-commit"
+    hook.write_text("#!/bin/sh\nset -e\n")
+    hook.chmod(0o755)
+    enroll(repository, host_root)
+    with hook.open("a") as stream:
+        stream.write("printf 'foreign hook continued\\n' >&2\n")
+    (repository / "source.txt").write_text("committed\n")
+    subprocess.run(["git", "-C", repository, "add", "source.txt"], check=True)
+    (repository / "untracked").touch()
+    commit = subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "-m", "admission fails"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert commit.returncode == 0
+    assert '"code": "dirty_worktree"' in commit.stderr
+    assert "the Git commit was created" in commit.stderr
+    assert "foreign hook continued" in commit.stderr
+    sha = subprocess.check_output(
+        ["git", "-C", repository, "rev-parse", "HEAD"], text=True
+    ).strip()
+    diagnostic = json.loads(
+        (host_root / "diagnostics/aquarium/latest.json").read_text()
+    )
+    assert diagnostic["git_sha"] == sha
+    assert diagnostic["code"] == "dirty_worktree"
+    assert not list((host_root / "queue/aquarium").glob("*.json"))
+
+
 def test_worker_retains_failed_request_and_reports_failure(tmp_path, monkeypatch):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"
@@ -634,3 +864,348 @@ def test_request_rejects_dirty_checkout_and_runs_asynchronously(tmp_path):
             break
         time.sleep(0.05)
     assert (host_root / "current/aquarium").is_symlink()
+
+
+@pytest.mark.parametrize("branch", ("feature", "detached"))
+def test_hook_skips_non_main_but_explicit_request_rejects(tmp_path, branch):
+    repository = create_repository(tmp_path / "repository")
+    host_root = Path.home() / ".aquarium-dev"
+    enroll(repository, host_root)
+    arguments = (
+        ["checkout", "--detach"] if branch == "detached" else ["checkout", "-b", branch]
+    )
+    subprocess.run(
+        ["git", "-C", repository, *arguments], check=True, capture_output=True
+    )
+    request_marker = tmp_path / "request-ran"
+    request_script = tmp_path / "request.py"
+    request_script.write_text(
+        f"from pathlib import Path\nPath({str(request_marker)!r}).touch()\n"
+    )
+    hook = repository / ".git/hooks/post-commit"
+    hook.write_text(
+        "#!/bin/sh\nset -eu\n"
+        + dev_manager.marker_block(repository, request_script)
+        + "printf 'foreign continued\\n' >&2\n"
+    )
+    result = subprocess.run(
+        ["git", "-C", repository, "commit", "-q", "--allow-empty", "-m", "non-main"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stderr == "foreign continued\n"
+    assert not request_marker.exists()
+    assert not (host_root / "queue").exists()
+    assert not (host_root / "diagnostics").exists()
+    rejected = run_cli(host_root, "request", "--repository", repository)
+    assert rejected.returncode == 1
+    assert payload(rejected)["error"]["code"] == "not_local_main"
+
+
+def test_request_reports_queue_existence_check_failure(tmp_path, monkeypatch, capsys):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    git_sha = subprocess.check_output(
+        ["git", "-C", repository, "rev-parse", "HEAD"], text=True
+    ).strip()
+    target = host_root / "queue/aquarium" / f"{git_sha}.json"
+    original_exists = Path.exists
+    original_popen = subprocess.Popen
+
+    def fail_exists(path):
+        if path == target:
+            raise PermissionError("queue stat denied")
+        return original_exists(path)
+
+    def reject_worker(command, **kwargs):
+        assert "worker" not in command, "worker started before durable admission"
+        return original_popen(command, **kwargs)
+
+    monkeypatch.setattr(Path, "exists", fail_exists)
+    monkeypatch.setattr(subprocess, "Popen", reject_worker)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(CLI),
+            "--host-root",
+            str(host_root),
+            "request",
+            "--repository",
+            str(repository),
+        ],
+    )
+    assert aquarium_dev.main() == 1
+    output = capsys.readouterr()
+    assert not output.out
+    response = json.loads(output.err)
+    assert response["schema"] == "aquarium-dev-error/v1"
+    error = response["error"]
+    assert error["code"] == "worker_failed"
+    assert "queue stat denied" in error["message"]
+    assert error["git_sha"] == git_sha
+    assert not original_exists(target)
+    diagnostic = json.loads(
+        (host_root / "diagnostics/aquarium/latest.json").read_text()
+    )
+    assert diagnostic["code"] == error["code"]
+    assert diagnostic["git_sha"] == git_sha
+
+
+@pytest.mark.parametrize("failure", ("queue", "worker"))
+def test_request_reports_primary_error_when_diagnostic_storage_fails(
+    tmp_path, monkeypatch, capsys, failure
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    original_write = dev_manager._atomic_json
+    original_popen = subprocess.Popen
+
+    def fail_write(path, value):
+        if "diagnostics" in path.parts:
+            raise OSError("diagnostic storage unavailable")
+        if failure == "queue" and "queue" in path.parts:
+            raise OSError("queue storage unavailable")
+        return original_write(path, value)
+
+    def fail_worker(command, **kwargs):
+        if "worker" in command:
+            assert failure == "worker", "worker started before durable admission"
+            raise OSError("worker launch unavailable")
+        return original_popen(command, **kwargs)
+
+    monkeypatch.setattr(dev_manager, "_atomic_json", fail_write)
+    monkeypatch.setattr(subprocess, "Popen", fail_worker)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(CLI),
+            "--host-root",
+            str(host_root),
+            "request",
+            "--repository",
+            str(repository),
+        ],
+    )
+    assert aquarium_dev.main() == 1
+    output = capsys.readouterr()
+    assert not output.out
+    error = json.loads(output.err)["error"]
+    assert error["code"] == "worker_failed"
+    assert f"{failure} " in error["message"]
+    assert "diagnostic storage unavailable" in error["message"]
+    assert "Traceback" not in output.err
+    assert bool(list((host_root / "queue/aquarium").glob("*.json"))) == (
+        failure == "worker"
+    )
+
+
+@pytest.mark.parametrize("probe", ("describe", "build"))
+def test_producer_probe_timeout_terminates_child_and_reports_error(
+    tmp_path, monkeypatch, probe
+):
+    repository = create_repository(tmp_path / "repository")
+    pid_path = tmp_path / "probe.pid"
+    script = tmp_path / "hang.py"
+    script.write_text(
+        "import os, time\nfrom pathlib import Path\n"
+        + f"Path({str(pid_path)!r}).write_text(str(os.getpid()))\ntime.sleep(60)\n"
+    )
+    makefile = repository / "Makefile"
+    command = shlex.join([sys.executable, str(script)])
+    contents = makefile.read_text()
+    if probe == "describe":
+        contents = contents.replace(
+            "aquarium-dev-describe:\n", f"aquarium-dev-describe:\n\t@{command}\n"
+        )
+    else:
+        # Recursive recipes run even under make -n.
+        contents = contents.replace("\t@python3 producer.py", f"\t+@{command}")
+    makefile.write_text(contents)
+    monkeypatch.setattr(dev_manager, "PRODUCER_PROBE_TIMEOUT_SECONDS", 0.5)
+    monkeypatch.setattr(dev_manager, "PROCESS_TERMINATION_GRACE_SECONDS", 0.1)
+    started = time.monotonic()
+    with pytest.raises(ManagerError) as failure:
+        dev_manager._describe(repository)
+    assert failure.value.code == "producer_build_timeout"
+    assert f"aquarium-dev-{probe}" in failure.value.message
+    assert time.monotonic() - started < 3
+    child_pid = int(pid_path.read_text())
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.01)
+    else:
+        pytest.fail("producer probe child survived timeout cleanup")
+
+
+@pytest.mark.parametrize("mode", ("success", "checksum"))
+def test_rebuild_consumes_only_matching_request_after_publication(
+    tmp_path, monkeypatch, mode
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, request = queue_request(repository, host_root, CLI, spawn_worker=False)
+    target = Path(request["queued"])
+    other = target.with_name("0" * 40 + ".json")
+    other.write_text("{}")
+    original = target.read_bytes()
+    monkeypatch.setenv("AQUARIUM_TEST_MODE", mode)
+    if mode == "success":
+        dev_manager.rebuild(repository, host_root, approve_build=True)
+        assert not target.exists()
+        assert (host_root / "current/aquarium").resolve().name == request["git_sha"]
+    else:
+        with pytest.raises(ManagerError):
+            dev_manager.rebuild(repository, host_root, approve_build=True)
+        assert target.read_bytes() == original
+    assert other.read_text() == "{}"
+
+
+@pytest.mark.parametrize("content", ("malformed", "different-checkout", "symlink"))
+def test_rebuild_preserves_unmatched_queue_state(tmp_path, content):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, details = queue_request(repository, host_root, CLI, spawn_worker=False)
+    target = Path(details["queued"])
+    request = json.loads(target.read_text())
+    if content == "malformed":
+        target.write_text("{")
+    elif content == "different-checkout":
+        request["checkout"] = str(tmp_path / "another")
+        target.write_text(json.dumps(request))
+    else:
+        foreign = tmp_path / "foreign-request"
+        foreign.write_bytes(target.read_bytes())
+        target.unlink()
+        target.symlink_to(foreign)
+    original = target.read_bytes()
+    dev_manager.rebuild(repository, host_root, approve_build=True)
+    assert target.read_bytes() == original
+    assert target.is_symlink() == (content == "symlink")
+
+
+def test_rebuild_reports_publication_success_when_queue_cleanup_fails(
+    tmp_path, monkeypatch
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    _, details = queue_request(repository, host_root, CLI, spawn_worker=False)
+    target = Path(details["queued"])
+    original_unlink = Path.unlink
+
+    def fail_cleanup(path, *args, **kwargs):
+        if path == target:
+            raise OSError("queue cleanup unavailable")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", fail_cleanup)
+    with pytest.raises(ManagerError) as failure:
+        dev_manager.rebuild(repository, host_root, approve_build=True)
+    assert failure.value.code == "publication_failed"
+    assert "was published" in failure.value.message
+    assert target.exists()
+    assert (host_root / "current/aquarium").resolve().name == details["git_sha"]
+
+
+def test_hook_branch_lookup_failure_is_visible_and_preserves_foreign_commands(tmp_path):
+    hook = tmp_path / "hook.sh"
+    hook.write_text(
+        "#!/bin/sh\nset -eu\n"
+        + dev_manager.marker_block(tmp_path / "missing-repository", CLI)
+        + "printf 'foreign continued\\n' >&2\n"
+    )
+    result = subprocess.run(["sh", hook], capture_output=True, text=True, check=False)
+    assert result.returncode == 0
+    assert "Aquarium could not inspect the Git branch" in result.stderr
+    assert result.stderr.endswith("foreign continued\n")
+
+
+@pytest.mark.parametrize("probe", ("describe", "build"))
+def test_request_reports_producer_probe_start_failure(
+    tmp_path, monkeypatch, capsys, probe
+):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    enroll(repository, host_root)
+    original_popen = subprocess.Popen
+    failed_commands = []
+
+    def fail_probe(command, **kwargs):
+        assert "worker" not in command, "worker started after a failed producer probe"
+        if command[0] == "make" and f"aquarium-dev-{probe}" in command:
+            failed_commands.append(command)
+            raise OSError("producer probe cannot start")
+        return original_popen(command, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", fail_probe)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(CLI),
+            "--host-root",
+            str(host_root),
+            "request",
+            "--repository",
+            str(repository),
+        ],
+    )
+    assert aquarium_dev.main() == 1
+    assert len(failed_commands) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    result = json.loads(output.err)
+    assert result["schema"] == "aquarium-dev-error/v1"
+    assert result["error"]["code"] == "producer_contract_missing"
+    assert result["error"]["message"] == "producer probe cannot start"
+    assert not (host_root / "queue").exists()
+
+
+def test_request_reports_symbolic_ref_failure(tmp_path, monkeypatch, capsys):
+    repository = create_repository(tmp_path / "repository")
+    host_root = tmp_path / "host"
+    original_run_git = dev_manager.run_git
+    branch_queries = []
+
+    def fail_branch(checkout, *arguments, **kwargs):
+        if arguments[0] == "symbolic-ref":
+            branch_queries.append(arguments)
+            return subprocess.CompletedProcess(
+                arguments, 128, "", "cannot read symbolic HEAD\n"
+            )
+        return original_run_git(checkout, *arguments, **kwargs)
+
+    monkeypatch.setattr(dev_manager, "run_git", fail_branch)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(CLI),
+            "--host-root",
+            str(host_root),
+            "request",
+            "--repository",
+            str(repository),
+        ],
+    )
+    assert aquarium_dev.main() == 1
+    assert len(branch_queries) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    result = json.loads(output.err)
+    assert result["schema"] == "aquarium-dev-error/v1"
+    assert result["error"]["code"] == "not_git_root"
+    assert result["error"]["message"] == "cannot read symbolic HEAD"
+    assert not (host_root / "queue").exists()

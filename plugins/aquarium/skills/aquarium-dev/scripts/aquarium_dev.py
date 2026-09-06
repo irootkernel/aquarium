@@ -84,7 +84,9 @@ def main() -> int:
     arguments = parser().parse_args()
     try:
         if arguments.command == "diagnose":
-            details = diagnose(arguments.repository, arguments.host_root)
+            details = diagnose(
+                arguments.repository, arguments.host_root, Path(__file__)
+            )
             result(
                 "diagnose",
                 "diagnosed",

@@ -16,6 +16,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Wait for development-build request admission in generated `post-commit` hooks before returning, keep request failures visible, and detach only the build worker. Preserve queued requests when worker launch fails and support migration of recorded background-request hooks through approved re-enrollment. Producer probes now time out, non-main hooks skip requests, legacy hooks report outdated, and approved recovery clears matching queued requests. Queue and diagnostic storage errors preserve structured failure reporting.
 - Make post-remediation release QA confirmation artifacts immutable, compute each verdict from the submitted evidence bytes bound to its admission, reject malformed admissions and overlong terminal basenames deterministically, and preserve recovery across reordered scenarios, output-parent aliases, pre-admission claim receipts, pending settlement inspection, and transient helper failures without reopening an admitted attempt.
 
 ## v0.1.14 - 2026-09-04

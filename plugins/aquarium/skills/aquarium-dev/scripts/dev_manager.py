@@ -37,6 +37,7 @@ MARKER_END = "# END AQUARIUM DEV v1"
 MANIFEST_NAME = ".aquarium-manifest.json"
 QUEUE_SCHEMA = "aquarium-dev-build-request/v1"
 DIAGNOSTIC_SCHEMA = "aquarium-dev-diagnostic/v1"
+PRODUCER_PROBE_TIMEOUT_SECONDS = 30
 PRODUCER_BUILD_TIMEOUT_SECONDS = 600
 PROCESS_TERMINATION_GRACE_SECONDS = 5
 SERVICE_CONTROLLER_TIMEOUT_SECONDS = 60
@@ -134,7 +135,17 @@ def _repository_identity(repository: Path) -> tuple[Path, str, str, bool]:
             "Run from the root of a non-linked primary checkout.",
             "diagnose",
         )
-    branch = run_git(resolved, "symbolic-ref", "--short", "HEAD").stdout.strip()
+    branch_result = run_git(
+        resolved, "symbolic-ref", "--quiet", "--short", "HEAD", check=False
+    )
+    if branch_result.returncode not in (0, 1):
+        raise ManagerError(
+            "not_git_root",
+            branch_result.stderr.strip() or "Cannot read the Git branch.",
+            "Restore the canonical Git checkout.",
+            "diagnose",
+        )
+    branch = branch_result.stdout.strip() if branch_result.returncode == 0 else ""
     if branch != "main":
         raise ManagerError(
             "not_local_main",
@@ -156,14 +167,45 @@ def _repository_identity(repository: Path) -> tuple[Path, str, str, bool]:
     return resolved, branch, git_sha, dirty
 
 
+def _probe_producer(
+    repository: Path, arguments: list[str], project_id: str | None = None
+) -> subprocess.CompletedProcess[str]:
+    try:
+        process = subprocess.Popen(
+            arguments,
+            cwd=repository,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+    except OSError as error:
+        raise ManagerError(
+            "producer_contract_missing",
+            str(error),
+            "Restore the producer Make targets and retry.",
+            "diagnose",
+            project_id,
+        ) from error
+    try:
+        stdout, stderr = process.communicate(timeout=PRODUCER_PROBE_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as error:
+        _terminate_process_bounded(process)
+        raise ManagerError(
+            "producer_build_timeout",
+            f"Producer probe exceeded {PRODUCER_PROBE_TIMEOUT_SECONDS} seconds: {shlex.join(arguments)}",
+            "Repair the blocked producer probe, then retry the request or approved rebuild.",
+            "diagnose",
+            project_id,
+        ) from error
+    except BaseException:
+        _terminate_process_bounded(process)
+        raise
+    return subprocess.CompletedProcess(arguments, process.returncode, stdout, stderr)
+
+
 def _describe(repository: Path) -> dict[str, Any]:
-    result = subprocess.run(
-        ["make", "-s", "aquarium-dev-describe"],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _probe_producer(repository, ["make", "-s", "aquarium-dev-describe"])
     if result.returncode != 0:
         raise ManagerError(
             "producer_contract_missing",
@@ -181,12 +223,10 @@ def _describe(repository: Path) -> dict[str, Any]:
             "Repair aquarium-dev-describe to emit one supported description.",
             "diagnose",
         ) from error
-    probe = subprocess.run(
+    probe = _probe_producer(
+        repository,
         ["make", "-n", "aquarium-dev-build", f"AQUARIUM_DEV_OUTPUT={repository}"],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=False,
+        description["project_id"],
     )
     if probe.returncode != 0:
         raise ManagerError(
@@ -222,7 +262,24 @@ def marker_block(repository: Path, manager_script: Path) -> str:
             os.fspath(repository),
         )
     )
-    return f"{MARKER_START}\n{command} >/dev/null 2>&1 &\n{MARKER_END}\n"
+    return (
+        f"{MARKER_START}\n"
+        "(\n"
+        f"if aquarium_dev_branch=$(git -C {shlex.quote(os.fspath(repository))} symbolic-ref --quiet --short HEAD); then\n"
+        '    if [ "$aquarium_dev_branch" = main ]; then\n'
+        f"        if ! {command} >/dev/null; then\n"
+        "            printf '%s\\n' 'Aquarium development-build request failed; "
+        "the Git commit was created. Inspect the error above before retrying.' >&2\n"
+        "        fi\n"
+        "    fi\n"
+        "else\n"
+        "    aquarium_dev_branch_status=$?\n"
+        '    if [ "$aquarium_dev_branch_status" -ne 1 ]; then\n'
+        "        printf '%s\\n' 'Aquarium could not inspect the Git branch; the commit was created. Inspect the error above.' >&2\n"
+        "    fi\n"
+        "fi\n"
+        f")\n{MARKER_END}\n"
+    )
 
 
 def _read_hook(hook: Path) -> tuple[str, int]:
@@ -339,7 +396,7 @@ def _remove_recorded_block(enrollment: dict[str, Any]) -> None:
         raise ManagerError(
             "hook_conflict",
             "The previously owned hook block no longer matches enrollment metadata.",
-            "Restore the recorded hook or approve a bounded manual repair.",
+            "Stop: the recorded hook is missing or changed. Escalate the ownership conflict before any repair.",
             "hook",
             enrollment["project_id"],
         )
@@ -540,8 +597,12 @@ def resolved_project_diagnosis(host_root: Path) -> list[dict[str, Any]]:
     return projects
 
 
-def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
+def diagnose(
+    repository: Path, host_root: Path, manager_script: Path | None = None
+) -> dict[str, Any]:
     require_supported_host()
+    if manager_script is None:
+        manager_script = Path(__file__).with_name("aquarium_dev.py")
     checkout, branch, git_sha, dirty = _repository_identity(repository)
     description = _describe(checkout)
     project_id = description["project_id"]
@@ -555,9 +616,18 @@ def diagnose(repository: Path, host_root: Path) -> dict[str, Any]:
             "healthy" if Path(enrollment["checkout"]) == checkout else "other-checkout"
         )
         if enrollment_state == "healthy":
-            hook_state = (
-                "owned" if enrollment["hook_block"] in hook_content else "stale"
-            )
+            hook_state = "stale"
+            if (
+                hook_content.count(MARKER_START) == 1
+                and hook_content.count(MARKER_END) == 1
+                and hook_content.count(enrollment["hook_block"]) == 1
+            ):
+                hook_state = (
+                    "owned"
+                    if enrollment["hook_block"]
+                    == marker_block(checkout, manager_script)
+                    else "outdated"
+                )
     current = {"state": "absent"}
     if enrollment_state == "healthy":
         try:
@@ -638,7 +708,7 @@ def enroll(
     approve_hook: bool,
     approve_reenrollment: bool,
 ) -> tuple[str, dict[str, Any]]:
-    diagnosis = diagnose(repository, host_root)
+    diagnosis = diagnose(repository, host_root, manager_script)
     project_id = diagnosis["description"]["project_id"]
     if not approve_enrollment:
         raise ManagerError(
@@ -659,7 +729,7 @@ def enroll(
             diagnosis["git_sha"],
         )
     with _enrollment_lock(host_root, project_id):
-        diagnosis = diagnose(repository, host_root)
+        diagnosis = diagnose(repository, host_root, manager_script)
         if diagnosis["description"]["project_id"] != project_id:
             raise ManagerError(
                 "enrollment_broken",
@@ -754,7 +824,7 @@ def repair_hook(
     *,
     approve_hook: bool,
 ) -> tuple[str, dict[str, Any]]:
-    diagnosis = diagnose(repository, host_root)
+    diagnosis = diagnose(repository, host_root, manager_script)
     project_id = diagnosis["description"]["project_id"]
     if not approve_hook:
         raise ManagerError(
@@ -765,7 +835,7 @@ def repair_hook(
             project_id,
         )
     with _enrollment_lock(host_root, project_id):
-        diagnosis = diagnose(repository, host_root)
+        diagnosis = diagnose(repository, host_root, manager_script)
         enrollment = read_enrollment(host_root, project_id)
         if enrollment is None or Path(enrollment["checkout"]) != Path(
             diagnosis["checkout"]
@@ -782,7 +852,7 @@ def repair_hook(
             raise ManagerError(
                 "hook_conflict",
                 "Recorded hook ownership does not match this manager generation.",
-                "Re-enroll through the explicit transfer workflow.",
+                "Use approved re-enrollment only when the exact recorded block is intact; otherwise escalate the hook ownership conflict.",
                 "hook",
                 project_id,
             )
@@ -1710,18 +1780,21 @@ def apply_managed_service(
 def _write_diagnostic(host_root: Path, error: ManagerError) -> None:
     if error.project_id is None:
         return
-    _atomic_json(
-        host_root / "diagnostics" / error.project_id / "latest.json",
-        {
-            "schema": DIAGNOSTIC_SCHEMA,
-            "project_id": error.project_id,
-            "git_sha": error.git_sha,
-            "stage": error.stage,
-            "code": error.code,
-            "message": error.message[:1000],
-            "action": error.action[:1000],
-        },
-    )
+    try:
+        _atomic_json(
+            host_root / "diagnostics" / error.project_id / "latest.json",
+            {
+                "schema": DIAGNOSTIC_SCHEMA,
+                "project_id": error.project_id,
+                "git_sha": error.git_sha,
+                "stage": error.stage,
+                "code": error.code,
+                "message": error.message[:1000],
+                "action": error.action[:1000],
+            },
+        )
+    except OSError as diagnostic_error:
+        error.message = f"{error.message[:1000]} Diagnostic could not be saved: {str(diagnostic_error)[:500]}"
 
 
 def _publisher_lock(host_root: Path, project_id: str):
@@ -1913,7 +1986,31 @@ def _build_current(repository: Path, host_root: Path) -> tuple[str, dict[str, An
                 git_sha,
             )
         staging, manifest = _validated_build(checkout, host_root, description, git_sha)
-        return _publish(host_root, staging, manifest)
+        result = _publish(host_root, staging, manifest)
+        request_path = host_root / "queue" / project_id / f"{git_sha}.json"
+        try:
+            if request_path.is_file() and not request_path.is_symlink():
+                try:
+                    request = json.loads(request_path.read_text(encoding="utf-8"))
+                except (ValueError, UnicodeError):
+                    request = None
+                if request == {
+                    "schema": QUEUE_SCHEMA,
+                    "project_id": project_id,
+                    "git_sha": git_sha,
+                    "checkout": str(checkout),
+                }:
+                    request_path.unlink(missing_ok=True)
+        except OSError as error:
+            raise ManagerError(
+                "publication_failed",
+                f"The generation was published, but its queued request could not be cleared: {error}",
+                "Restore queue access and retry the approved rebuild to finish request cleanup.",
+                "schedule",
+                project_id,
+                git_sha,
+            ) from error
+        return result
 
 
 def rebuild(
@@ -1955,26 +2052,51 @@ def queue_request(
         "git_sha": git_sha,
         "checkout": str(checkout),
     }
-    status = "no-change" if target.exists() else "success"
-    if not target.exists():
-        _atomic_json(target, request)
-    if spawn_worker:
-        subprocess.Popen(
-            [
-                os.fspath(Path(os.sys.executable).resolve()),
-                os.fspath(manager_script.resolve()),
-                "--host-root",
-                os.fspath(host_root),
-                "worker",
-                "--project-id",
-                project_id,
-            ],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            close_fds=True,
+    try:
+        exists = target.exists()
+        status = "no-change" if exists else "success"
+        if not exists:
+            _atomic_json(target, request)
+    except OSError as error:
+        wrapped = ManagerError(
+            "worker_failed",
+            f"The development build request could not be queued: {error}",
+            "Restore queue storage access and retry the request.",
+            "schedule",
+            project_id,
+            git_sha,
         )
+        _write_diagnostic(host_root, wrapped)
+        raise wrapped from error
+    if spawn_worker:
+        try:
+            subprocess.Popen(
+                [
+                    os.fspath(Path(os.sys.executable).resolve()),
+                    os.fspath(manager_script.resolve()),
+                    "--host-root",
+                    os.fspath(host_root),
+                    "worker",
+                    "--project-id",
+                    project_id,
+                ],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+                close_fds=True,
+            )
+        except OSError as error:
+            wrapped = ManagerError(
+                "worker_failed",
+                f"The development build request was queued, but its worker could not start: {error}",
+                "Inspect the reported error and run an approved rebuild to recover the preserved request.",
+                "schedule",
+                project_id,
+                git_sha,
+            )
+            _write_diagnostic(host_root, wrapped)
+            raise wrapped from error
     return status, {
         "project_id": project_id,
         "git_sha": git_sha,
@@ -2112,7 +2234,7 @@ def process_queue(project_id: str, host_root: Path) -> tuple[str, dict[str, Any]
                 wrapped = ManagerError(
                     "worker_failed",
                     str(error),
-                    "Inspect the worker diagnostic and retry the preserved request.",
+                    "Inspect the reported error and run an approved rebuild to recover the preserved request.",
                     "schedule",
                     project_id,
                 )
