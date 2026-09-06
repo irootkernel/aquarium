@@ -43,6 +43,8 @@ A local development binary provides development-contract evidence only. For dist
 
 The test environment requires the exact Python development dependencies in `requirements.txt`. Every handler checks the selected environment before executing and fails with an installation command when Python, pytest, PyYAML, Ruff, or an exact dependency version is unavailable. Handlers never install dependencies implicitly.
 
+The global inspector tests use temporary Codex homes, synthetic package assets, and local executable fixtures to check home discovery, CLI probe reuse, independent artifact health, MCP home binding, package pins, and partial readiness. PyPI responses are mocked, so the standard gate remains offline. The asset-probe test checks the native rendered-rules contract separately from raw skill bytes; a successful aggregate doctor cannot substitute for either comparison.
+
 ## Gaori Mapping
 
 Gaori is optional evidence compression. Each command wraps one authoritative Make handler, and the wrapped process exit code remains authoritative.

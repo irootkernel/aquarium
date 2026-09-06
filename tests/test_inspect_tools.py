@@ -125,6 +125,25 @@ class InspectToolsTest(unittest.TestCase):
             text=True,
         )
 
+    def inspect_ouroboros_probe(
+        self, timeout_seconds: float = 30.0
+    ) -> subprocess.CompletedProcess[str]:
+        # Exercise the shared launcher/doctor leaf; global v2 aggregation has its
+        # own multi-home tests in test_inspect_global_tools.py.
+        code = (
+            "import json, sys; from pathlib import Path; "
+            "sys.path.insert(0, sys.argv[1]); import inspect_tools; "
+            "print(json.dumps({'tools': {'ouroboros': "
+            "inspect_tools.inspect_ouroboros(Path('/'), float(sys.argv[2]))}}))"
+        )
+        return subprocess.run(
+            [sys.executable, "-c", code, str(SCRIPT.parent), str(timeout_seconds)],
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def mulgae_mcp_fixture(self, name: str) -> dict[str, object]:
         fixtures = json.loads(MULGAE_MCP_FIXTURES.read_text(encoding="utf-8"))
         replacements = {
@@ -650,7 +669,7 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
                         elif mode == "isolated-wrong-package":
                             args[4] = "ouroboros-ai"
                         elif mode == "isolated-unsupported-pin":
-                            args[4] = "ouroboros-ai[mcp]==0.52.0"
+                            args[4] = "ouroboros-ai[mcp]==0.54.0"
                         elif mode == "isolated-old-pin":
                             args[4] = "ouroboros-ai[mcp]==0.51.0"
                         elif mode == "isolated-extra-arg":
@@ -5400,7 +5419,10 @@ else:
             "0.51.1": True,
             "v0.51.9": True,
             "0.50.9": False,
-            "0.52.0": False,
+            "0.52.0": True,
+            "0.53.0": True,
+            "0.54.0": False,
+            "0.53.0rc1": False,
         }
         for version, supported in expected.items():
             with self.subTest(version=version):
@@ -5422,7 +5444,7 @@ else:
         self.install_fake_tools(
             ouroboros_version="0.51.1", ouroboros_mcp_mode="configured"
         )
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["version"], "0.51.1")
@@ -5446,7 +5468,7 @@ else:
                     ouroboros_mcp_doctor_ok=False,
                     ouroboros_mcp_mode=mode,
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "configured")
@@ -5459,7 +5481,7 @@ else:
 
     def test_ouroboros_accepts_isolated_launcher_without_base_cli(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="isolated")
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertFalse(ouroboros["installed"])
@@ -5492,7 +5514,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.15", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5508,7 +5530,7 @@ else:
             ouroboros_mcp_doctor_malformed=True,
             ouroboros_mcp_mode="isolated-wrong-package",
         )
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5532,7 +5554,7 @@ else:
                     ouroboros_mcp_doctor_ok=mcp_ok,
                     ouroboros_mcp_mode="configured",
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["codex_integration"]["status"], codex_status)
@@ -5541,14 +5563,14 @@ else:
                 self.assertEqual(ouroboros["status"], "degraded")
 
     def test_ouroboros_version_failures_and_unsupported_versions_degrade(self) -> None:
-        for version, version_ok in (("0.52.0", True), ("0.51.1", False)):
+        for version, version_ok in (("0.54.0", True), ("0.51.1", False)):
             with self.subTest(version=version, version_ok=version_ok):
                 self.install_fake_tools(
                     ouroboros_version=version,
                     ouroboros_version_ok=version_ok,
                     ouroboros_mcp_mode="configured",
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertFalse(ouroboros["version_supported"])
@@ -5561,7 +5583,7 @@ else:
             ouroboros_mcp_doctor_malformed=True,
             ouroboros_mcp_mode="configured",
         )
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_runtime"]["status"], "degraded")
@@ -5582,7 +5604,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertEqual(ouroboros["mcp_registration"]["status"], "degraded")
@@ -5597,7 +5619,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 registration = json.loads(completed.stdout)["tools"]["ouroboros"][
                     "mcp_registration"
                 ]
@@ -5618,7 +5640,7 @@ else:
                 self.install_fake_tools(
                     ouroboros_version="0.51.1", ouroboros_mcp_mode=mode
                 )
-                completed = self.inspect_global(
+                completed = self.inspect_ouroboros_probe(
                     timeout_seconds=(
                         0.05 if mode == "timeout" else NORMAL_PROBE_TIMEOUT_SECONDS
                     )
@@ -5634,7 +5656,7 @@ else:
 
     def test_missing_ouroboros_still_inspects_codex_registration(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="configured")
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertFalse(ouroboros["installed"])
@@ -5657,7 +5679,7 @@ else:
         ):
             with self.subTest(mode=mode):
                 self.install_fake_tools(ouroboros_mcp_mode=mode)
-                completed = self.inspect_global()
+                completed = self.inspect_ouroboros_probe()
                 self.assertEqual(completed.returncode, 0, completed.stderr)
                 ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
                 self.assertFalse(ouroboros["installed"])
@@ -5672,7 +5694,7 @@ else:
         self,
     ) -> None:
         self.install_fake_tools(ouroboros_version="0.51.1")
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
         self.assertEqual(ouroboros["mcp_registration"]["status"], "unverifiable")
@@ -5688,10 +5710,10 @@ else:
         self.assertEqual(ouroboros["status"], "degraded")
 
     def test_explicit_ouroboros_inspection_reports_independent_components(self) -> None:
-        completed = self.inspect_global()
+        completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
-        self.assertEqual(ouroboros["supported_range"], ">=0.51.1,<0.52.0")
+        self.assertEqual(ouroboros["supported_range"], ">=0.51.1,<0.54.0")
         self.assertEqual(ouroboros["status"], "missing")
         self.assertEqual(ouroboros["codex_integration"]["status"], "missing")
         self.assertEqual(ouroboros["mcp_runtime"]["status"], "missing")

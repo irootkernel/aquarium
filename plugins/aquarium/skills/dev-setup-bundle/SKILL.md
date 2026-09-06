@@ -23,7 +23,7 @@ Confirmation authorizes only the global skill's documented bounded official meta
 
 Pass the normalized `shared_tools` union, manifest digest, and requesting skill to `$aquarium:dev-setup-global`. The global skill maps each union member to one `--component <name>` inspector argument and runs no component outside that union. This preserves `aquarium.dev-setup-bundle/v1`: existing tool names continue to select both their global and repository portions where applicable.
 
-Prepare each selected global CLI, paired skill, global MCP registration, daemon, Sorage initialization, third-party writing or Lore skill, and Ouroboros component at most once. Preserve every exact proposal, backup, approval, stale-target, verification, and cleanup boundary from `dev-setup-global`.
+Prepare each selected global CLI, paired skill, global MCP registration, daemon, Sorage initialization, third-party writing or Lore skill, and Ouroboros component at most once. For Ouroboros, this means one CLI upgrade and one integration update per distinct discovered Codex home, not one installation per repository. Preserve every exact proposal, backup, approval, stale-target, verification, and cleanup boundary from `dev-setup-global`.
 
 If a shared action fails or is declined, record the dependent targets as partial, failed, or declined while continuing independent components and targets.
 

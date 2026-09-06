@@ -11,7 +11,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v1"
+from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
+
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v2"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -306,6 +308,8 @@ def inspect_global(
     verify_dolgorae_release: bool,
     include_sorage_initialization: bool = False,
     components: tuple[str, ...] | None = None,
+    codex_homes: tuple[str, ...] = (),
+    verify_ouroboros_release: bool = False,
 ) -> dict[str, Any]:
     inspector = load_inspector()
     root = resolve_working_directory(repository)
@@ -422,7 +426,18 @@ def inspect_global(
         tools[name] = entry
 
     if "ouroboros" in requested_components:
-        tools["ouroboros"] = inspector.inspect_ouroboros(neutral_cwd, timeout_seconds)
+        try:
+            tools["ouroboros"] = inspect_ouroboros(
+                inspector,
+                neutral_cwd,
+                timeout_seconds,
+                codex_homes,
+                verify_ouroboros_release,
+            )
+        except InvalidCodexHome as error:
+            raise InspectionError(
+                "invalid_codex_home", "Codex home is unavailable or invalid"
+            ) from error
     if "lora" in requested_components:
         tools["lora"] = inspector.inspect_lora()
     if "deslop" in requested_components:
@@ -468,6 +483,17 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Include the selected local Sorage initialization diagnostic",
     )
+    parser.add_argument(
+        "--codex-home",
+        action="append",
+        default=[],
+        help="Additional Ouroboros Codex home to inspect; repeat for multiple homes",
+    )
+    parser.add_argument(
+        "--verify-ouroboros-release",
+        action="store_true",
+        help="Compare Ouroboros with official PyPI stable releases",
+    )
     arguments = parser.parse_args()
     if (
         not math.isfinite(arguments.timeout_seconds)
@@ -478,6 +504,8 @@ def parse_arguments() -> argparse.Namespace:
             "invalid_arguments",
             "--timeout-seconds is outside the supported range",
         )
+    if any(not value.strip() for value in arguments.codex_home):
+        raise InspectionError("invalid_arguments", "--codex-home must not be blank")
     selected_components = set(arguments.component or GLOBAL_COMPONENTS)
     if arguments.verify_dolgorae_release and "dolgorae" not in selected_components:
         raise InspectionError(
@@ -488,6 +516,12 @@ def parse_arguments() -> argparse.Namespace:
         raise InspectionError(
             "invalid_arguments",
             "--include-sorage-initialization requires the sorage component",
+        )
+    if (
+        arguments.codex_home or arguments.verify_ouroboros_release
+    ) and "ouroboros" not in selected_components:
+        raise InspectionError(
+            "invalid_arguments", "Ouroboros options require the ouroboros component"
         )
     arguments.component = tuple(
         name for name in GLOBAL_COMPONENTS if name in selected_components
@@ -510,6 +544,8 @@ def main() -> int:
                 arguments.verify_dolgorae_release,
                 arguments.include_sorage_initialization,
                 arguments.component,
+                tuple(arguments.codex_home),
+                arguments.verify_ouroboros_release,
             )
         )
         return 0

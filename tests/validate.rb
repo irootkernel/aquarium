@@ -336,7 +336,7 @@ assert(guidance_proposal_index && guidance_diff_index && guidance_apply_index &&
        guidance_proposal_index < guidance_diff_index && guidance_diff_index < guidance_apply_index,
        "repository-guidance diagnosis, diff, and apply boundaries are not ordered")
 assert(dev_setup_global_script.file? &&
-       dev_setup_global_script_body.include?("aquarium-dev-setup-global-inspection.v1") &&
+       dev_setup_global_script_body.include?("aquarium-dev-setup-global-inspection.v2") &&
        dev_setup_global_script_body.include?("inspect_agent_skill") &&
        dev_setup_global_script_body.include?("inspect_lora") &&
        dev_setup_global_script_body.include?("inspect_deslop") &&
@@ -398,12 +398,12 @@ assert(dev_setup.include?("may inspect an owning global executable only through 
        dev_setup.include?("missing, incompatible, degraded, or uninitialized global component"),
        "repository setup must separate bounded CLI diagnosis from presence-only global skill trust")
 local_interfaces = ROOT.join("docs/specs/local-interfaces.md").read
-assert(local_interfaces.include?("The global v1 payload uses two component shapes") &&
+assert(local_interfaces.include?("The global v2 payload separates shared components") &&
        local_interfaces.include?("repeatable `--component` option selects only the named components") &&
        local_interfaces.include?("omitting it selects all supported global components") &&
        local_interfaces.include?("invalid unless its component is selected") &&
        local_interfaces.include?("single valid installation is the canonical `~/.agents/skills/<name>` target") &&
-       local_interfaces.include?("Lora, Deslop, Humanizer, im-not-ai, and Ouroboros remain flat component objects") &&
+       local_interfaces.include?("Lora, Deslop, Humanizer, and im-not-ai remain flat component objects") &&
        local_interfaces.include?("`--include-sorage-initialization` opts into `sorage doctor`") &&
        local_interfaces.include?("exactly ten `trusted_global_skills` entries") &&
        local_interfaces.include?('`verification_scope: "presence_only"`') &&
@@ -411,7 +411,7 @@ assert(local_interfaces.include?("The global v1 payload uses two component shape
        local_interfaces.include?("excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros") &&
        local_interfaces.include?("Podway `daemon` member exposes normalized") &&
        local_interfaces.include?("matching CLI version and completed recovery inventory"),
-       "local interface docs must pin global v1 payload shapes and inspector side-effect boundaries")
+       "local interface docs must pin global v2 payload shapes and inspector side-effect boundaries")
 backup_policy_index = tool_catalog.index("Choose a Backup Policy for Existing State")
 backup_step_index = dev_setup_global.index("Establish the shared backup policy")
 action_approval_index = dev_setup_global.index("Obtain action-specific approval")
@@ -457,6 +457,20 @@ assert(ouroboros_catalog &&
        dev_setup_global.include?("Ouroboros package changes") &&
        dev_setup_global.include?("Ouroboros setup or refresh"),
        "global setup must diagnose and update Ouroboros components independently")
+ouroboros_global_script = PLUGIN.join("skills/dev-setup-global/scripts/inspect_ouroboros.py").read
+assert(dev_setup_global_script_body.include?('"--codex-home"') &&
+       dev_setup_global_script_body.include?('"--verify-ouroboros-release"') &&
+       ouroboros_global_script.include?("load_packaged_codex_rules") &&
+       ouroboros_global_script.include?('"current_home_readiness"') &&
+       ouroboros_global_script.include?('"all_discovered_homes_readiness"') &&
+       ouroboros_global_script.include?('"legacy_shared_skills"') &&
+       ouroboros_global_script.include?('"not_observed"') &&
+       ouroboros_catalog.include?("Propose all discovered homes by default") &&
+       ouroboros_catalog.include?("Never install Ouroboros skills into `~/.agents/skills`") &&
+       ouroboros_catalog.include?("`--mcp-mode auto` may preserve a user-managed mismatch") &&
+       ouroboros_catalog.include?("`--mcp-mode stdio`") &&
+       ouroboros_contract.include?("Seed QA is advisory"),
+       "Ouroboros setup must separate CLI, home artifacts, binding, freshness, and native repair outcomes")
 assert(ouroboros_catalog.include?("Do not run `ooo codex refresh` before full setup") &&
        ouroboros_catalog.include?("rules-and-skills repair alternative"),
        "Ouroboros catalog must preserve mutually exclusive full-setup and refresh ordering")
@@ -645,7 +659,7 @@ supported_tool_versions = [
   "Stable `v0.1.14` through `v0.1.x`",
   "Stable `v0.1.0` through `v0.1.x`",
   "Stable `v0.2.8` through `v0.2.x`",
-  "`>=0.51.1,<0.52.0`"
+  "`>=0.51.1,<0.54.0`"
 ]
 assert(supported_tool_versions.all? { |version| tool_integrations_doc.include?(version) } &&
        tool_integrations_doc.include?("Go `1.26.6+` only for installation") &&
@@ -670,7 +684,7 @@ assert(procedure_declarations.all? do |procedure_id, version|
        "local interface documentation must preserve every managed Procedure ID and version")
 documented_schema_ids = %w[
   aquarium-dev-setup-inspection.v16
-  aquarium-dev-setup-global-inspection.v1
+  aquarium-dev-setup-global-inspection.v2
   aquarium-dolgorae-release-verification.v1
   aquarium-docs-inspection/v2
   aquarium-test-setup-inspection.v1
@@ -1654,7 +1668,7 @@ assert(epic_handler.include?("use the discovered canonical document set collecti
        !task_handler.include?("`$aquarium:docs-setup` `adopt`") &&
        !task_plan.include?("`$aquarium:docs-setup` `adopt`"),
        "handlers and validator must accept small distributed SOTs and never route dossier creation to docs-setup")
-assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.52.0`") &&
+assert(ouroboros_contract.include?("Support only Ouroboros `>=0.51.1,<0.54.0`") &&
        ouroboros_contract.include?("blocks these Ouroboros-assisted workflows") &&
        ouroboros_contract.include?("Use the canonical work identity directly without a skill-name prefix") &&
        ouroboros_contract.include?("No Aquarium skill owns the session") &&

@@ -75,7 +75,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v1"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v2"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
@@ -83,9 +83,11 @@ class TestInspectGlobalTools:
         assert payload["tools"]["sorage"]["cli"]["status"] == "missing"
         assert "status" in payload["tools"]["dolgorae"]
         assert "installation_prerequisites" in payload["tools"]["mulgae"]
-        for name in ("lora", "deslop", "humanizer", "im-not-ai", "ouroboros"):
+        for name in ("lora", "deslop", "humanizer", "im-not-ai"):
             assert "status" in payload["tools"][name]
             assert "cli" not in payload["tools"][name]
+        assert "homes" in payload["tools"]["ouroboros"]
+        assert "cli" in payload["tools"]["ouroboros"]
         assert set(payload["tools"]) == {
             "sanho",
             "dolgorae",
@@ -195,6 +197,9 @@ class TestInspectGlobalTools:
                 inspect_global_tools, "load_inspector", return_value=inspector
             ),
             mock.patch.object(
+                inspect_global_tools, "inspect_ouroboros", return_value={}
+            ) as inspect_ouroboros_global,
+            mock.patch.object(
                 inspect_global_tools,
                 "inspect_versioned_cli",
                 return_value=cli,
@@ -217,8 +222,8 @@ class TestInspectGlobalTools:
         ):
             inspect_global_tools.inspect_global(str(self.repository), 3.5, True)
 
-        inspector.inspect_ouroboros.assert_called_once_with(
-            Path(self.repository.anchor), 3.5
+        inspect_ouroboros_global.assert_called_once_with(
+            inspector, Path(self.repository.anchor), 3.5, (), False
         )
         inspector.inspect_dolgorae.assert_called_once_with(
             Path(self.repository.anchor),
@@ -739,6 +744,8 @@ class TestInspectGlobalTools:
             False,
             True,
             inspect_global_tools.GLOBAL_COMPONENTS,
+            (),
+            False,
         )
         assert json.loads(output.getvalue()) == result
 
@@ -776,6 +783,8 @@ class TestInspectGlobalTools:
             True,
             False,
             ("dolgorae", "podway"),
+            (),
+            False,
         )
         assert json.loads(output.getvalue()) == result
 
@@ -807,3 +816,903 @@ class TestInspectGlobalTools:
 
         assert completed.returncode == 2
         assert json.loads(completed.stdout)["error"]["code"] == "invalid_arguments"
+
+
+@pytest.fixture
+def ouroboros_homes(tmp_path, monkeypatch):
+    import hashlib
+
+    import inspect_ouroboros
+
+    home = tmp_path / "user"
+    current = home / ".codex-hsy"
+    default = home / ".codex"
+    bin_dir = tmp_path / "bin"
+    for path in (current, default, bin_dir):
+        path.mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("CODEX_HOME", str(current))
+    monkeypatch.setenv("PATH", str(bin_dir) + ":/usr/bin:/bin")
+    log = tmp_path / "commands.jsonl"
+    monkeypatch.setenv("PROBE_LOG", str(log))
+    source = {
+        "rules/ouroboros.md": b"rules from the package\n",
+        "skills/ouroboros-auto/SKILL.md": b"---\nname: auto\n---\nupstream\n",
+    }
+    expected = {
+        path: hashlib.sha256(content).hexdigest() for path, content in source.items()
+    }
+    monkeypatch.setattr(inspect_ouroboros, "packaged_assets", lambda *args: expected)
+    program = """
+import json, os, sys, tomllib
+from pathlib import Path
+name = Path(sys.argv[0]).name
+home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+with open(os.environ["PROBE_LOG"], "a") as stream:
+    stream.write(json.dumps({"name": name, "args": sys.argv[1:], "home": str(home), "cwd": os.getcwd()}) + "\\n")
+if name == "ooo":
+    if sys.argv[1:] == ["--version"]:
+        print("Ouroboros version 0.53.0")
+    elif sys.argv[1:] == ["codex", "doctor"]:
+        sys.exit(1 if (home / "doctor-failed").exists() else 0)
+    elif sys.argv[1:] == ["mcp", "doctor", "--json"]:
+        print("[]")
+    else:
+        sys.exit(2)
+elif name == "codex":
+    if not (home / "config.toml").exists():
+        print("No MCP server named 'ouroboros' found.", file=sys.stderr)
+        sys.exit(1)
+    entry = tomllib.loads((home / "config.toml").read_text())["mcp_servers"]["ouroboros"]
+    print(json.dumps({"name": "ouroboros", "enabled": True, "transport": {"type": "stdio", **entry}}))
+"""
+    for name in ("ooo", "codex", "uvx"):
+        path = bin_dir / name
+        path.write_text(f"#!{sys.executable}\n" + program)
+        path.chmod(0o755)
+
+    def install(target, binding=None, pin="0.53.0"):
+        target.mkdir(parents=True, exist_ok=True)
+        for relative, contents in source.items():
+            path = target / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(contents)
+        env = {"OUROBOROS_AGENT_RUNTIME": "codex", "OUROBOROS_LLM_BACKEND": "codex"}
+        if binding != "absent":
+            env["CODEX_HOME"] = str(binding or target)
+        args = [
+            "--isolated",
+            "--python",
+            ">=3.12",
+            "--from",
+            "ouroboros-ai[mcp]" + (f"=={pin}" if pin else ""),
+            "ouroboros",
+            "mcp",
+            "serve",
+        ]
+        (target / "config.toml").write_text(
+            "[mcp_servers.ouroboros]\ncommand = "
+            + json.dumps(str(bin_dir / "uvx"))
+            + "\nargs = "
+            + json.dumps(args)
+            + "\n[mcp_servers.ouroboros.env]\n"
+            + "".join(f"{key} = {json.dumps(value)}\n" for key, value in env.items())
+        )
+
+    install(current)
+    install(default)
+    return inspect_ouroboros, home, current, default, log, install, source
+
+
+def inspect_home_fixture(fixture):
+    module = fixture[0]
+    return module.inspect_ouroboros(inspect_global_tools.load_inspector(), Path("/"), 5)
+
+
+def test_ouroboros_reads_each_home_and_probes_cli_once(ouroboros_homes):
+    _, _, current, default, log, _, _ = ouroboros_homes
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["current_home"] == str(current)
+    assert result["all_discovered_homes_readiness"] == "configured"
+    assert {row["home"] for row in result["homes"]} == {str(current), str(default)}
+    assert all(
+        row["live_runtime"]["status"] == "not_observed" for row in result["homes"]
+    )
+    calls = [json.loads(line) for line in log.read_text().splitlines()]
+    assert sum(call["args"] == ["--version"] for call in calls) == 1
+    assert all(call["cwd"] == "/" for call in calls)
+    assert {call["home"] for call in calls if call["name"] == "codex"} == {
+        str(current),
+        str(default),
+    }
+    assert not any(call["args"] == ["mcp", "doctor", "--json"] for call in calls)
+
+
+def test_ouroboros_other_home_failure_does_not_block_current(ouroboros_homes):
+    _, _, current, default, _, _, _ = ouroboros_homes
+    (default / "skills/ouroboros-auto/SKILL.md").unlink()
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["status"] == result["current_home_readiness"] == "configured"
+    assert result["all_discovered_homes_readiness"] == "degraded"
+    assert result["homes"][1]["rules"]["status"] == "configured"
+    assert result["homes"][1]["skills"]["status"] == "missing"
+    (current / "rules/ouroboros.md").write_text("outdated")
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["homes"][0]["rules"]["status"] == "different"
+    assert result["homes"][0]["skills"]["status"] == "configured"
+
+
+@pytest.mark.parametrize(
+    "binding,reason",
+    [
+        ("other", "home_mismatch"),
+        ("absent", "home_not_explicit"),
+        ("relative", "home_invalid"),
+    ],
+)
+def test_ouroboros_successful_doctor_cannot_hide_home_mismatch(
+    ouroboros_homes, binding, reason
+):
+    _, _, current, default, _, install, _ = ouroboros_homes
+    install(current, default if binding == "other" else binding)
+    result = inspect_home_fixture(ouroboros_homes)
+    row = result["homes"][0]
+    assert row["codex_integration"]["status"] == "configured"
+    assert row["mcp_registration"]["status"] == "configured"
+    assert row["home_binding"]["reason"] == reason
+    assert row["status"] == "degraded"
+    # An auto setup which preserves this entry changes no evidence. An explicit
+    # replacement binds to the current home and permits configuration readiness.
+    assert inspect_home_fixture(ouroboros_homes)["status"] == "degraded"
+    install(current)
+    assert inspect_home_fixture(ouroboros_homes)["status"] == "configured"
+
+
+@pytest.mark.parametrize(
+    "pin,status", [(None, "unverifiable"), ("0.51.17", "different")]
+)
+def test_ouroboros_runtime_package_is_independent(ouroboros_homes, pin, status):
+    _, _, current, _, _, install, _ = ouroboros_homes
+    install(current, pin=pin)
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["cli"]["version"] == "0.53.0"
+    assert result["homes"][0]["runtime_package"]["status"] == status
+    assert result["status"] == "degraded"
+
+
+def test_ouroboros_discovers_only_home_candidates_and_merges_aliases(
+    ouroboros_homes, monkeypatch
+):
+    module, home, current, default, _, install, _ = ouroboros_homes
+    for name in (".codex-tools", ".codexbar"):
+        (home / name).mkdir()
+    (home / ".codex-tools" / "config.toml").mkdir()
+    other = home / ".codex-work"
+    install(other)
+    alias = home / ".codex-alias"
+    alias.symlink_to(other, target_is_directory=True)
+    custom = home / "custom"
+    active, homes, failures = module.discover_homes((str(custom),))
+    assert not failures
+    assert active == current
+    assert set(homes) == {current, default, other, custom}
+    monkeypatch.delenv("CODEX_HOME")
+    assert module.discover_homes()[0] == default
+    monkeypatch.chdir(home)
+    monkeypatch.setenv("CODEX_HOME", "custom")
+    assert module.discover_homes()[0] == custom
+    invalid = home / "file"
+    invalid.touch()
+    with pytest.raises(ValueError):
+        module.discover_homes((str(invalid),))
+
+
+def test_ouroboros_shared_skills_are_migration_evidence_only(ouroboros_homes):
+    _, home, current, _, _, _, source = ouroboros_homes
+    shared = home / ".agents/skills/ouroboros-auto"
+    shared.mkdir(parents=True)
+    shared.joinpath("SKILL.md").write_bytes(source["skills/ouroboros-auto/SKILL.md"])
+    current.joinpath("skills/ouroboros-auto/SKILL.md").unlink()
+    before = shared.joinpath("SKILL.md").read_bytes()
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["legacy_shared_skills"] == [str(shared)]
+    assert result["homes"][0]["skills"]["status"] == "missing"
+    assert shared.joinpath("SKILL.md").read_bytes() == before
+
+
+def test_ouroboros_case_alias_merges_by_identity_and_matches_binding(
+    ouroboros_homes, monkeypatch
+):
+    module, home, current, default, _, install, _ = ouroboros_homes
+    alias = home / ".Codex-HSY"
+    original = Path.stat
+
+    def case_insensitive_stat(path, *args, **kwargs):
+        return original(current if path == alias else path, *args, **kwargs)
+
+    # Model the same-directory identity supplied by a case-insensitive filesystem.
+    # This exercises both discovery and MCP binding on case-sensitive CI hosts too.
+    monkeypatch.setattr(Path, "stat", case_insensitive_stat)
+    monkeypatch.setenv("CODEX_HOME", str(alias))
+    active, homes, failures = module.discover_homes((str(current),))
+    assert active == alias
+    assert homes == [alias, default]
+    assert not failures
+    monkeypatch.setenv("CODEX_HOME", str(current))
+    install(current, binding=alias)
+    active, homes, failures = module.discover_homes((str(alias),))
+    assert active == current
+    assert homes == [current, default]
+    assert not failures
+    result = inspect_home_fixture(ouroboros_homes)
+    assert len(result["homes"]) == 2
+    assert result["homes"][0]["home_binding"]["reason"] == "home_matches"
+    assert result["all_discovered_homes_readiness"] == "configured"
+
+
+@pytest.mark.parametrize("relative", ["rules", "skills", "skills/ouroboros-auto"])
+def test_ouroboros_unreadable_artifact_directory_is_not_missing(
+    ouroboros_homes, monkeypatch, relative
+):
+    _, _, current, default, _, _, _ = ouroboros_homes
+    original = os.scandir
+
+    def scandir(path):
+        if Path(path) == current / relative:
+            raise PermissionError("private directory failure")
+        return original(path)
+
+    monkeypatch.setattr(os, "scandir", scandir)
+    result = inspect_home_fixture(ouroboros_homes)
+    row = result["homes"][0]
+    affected = relative.split("/")[0]
+    healthy = "rules" if affected == "skills" else "skills"
+    assert row[affected] == {"status": "unverifiable", "reason": "artifact_read_failed"}
+    assert row[healthy]["status"] == "configured"
+    assert row["mcp_registration"]["status"] == "configured"
+    assert (
+        next(row for row in result["homes"] if row["home"] == str(default))["status"]
+        == "configured"
+    )
+    assert result["current_home_readiness"] == "degraded"
+
+
+def test_ouroboros_unreadable_discovery_artifacts_keep_home_failure(
+    ouroboros_homes, monkeypatch
+):
+    module, home, _, _, _, _, _ = ouroboros_homes
+    candidate = home / ".codex-work"
+    (candidate / "rules").mkdir(parents=True)
+    original = os.scandir
+
+    def scandir(path):
+        if Path(path) == candidate / "rules":
+            raise PermissionError("private directory failure")
+        return original(path)
+
+    monkeypatch.setattr(os, "scandir", scandir)
+    _, homes, failures = module.discover_homes()
+    assert candidate in homes
+    assert failures == {candidate: "home_inspection_failed"}
+
+
+def test_ouroboros_symlinked_artifacts_and_extra_files_are_gaps(ouroboros_homes):
+    _, _, current, _, _, _, _ = ouroboros_homes
+    extra = current / "skills/ouroboros-auto/extra.txt"
+    extra.write_text("extra")
+    assert inspect_home_fixture(ouroboros_homes)["homes"][0]["skills"]["extra"] == [
+        "skills/ouroboros-auto/extra.txt"
+    ]
+    extra.unlink()
+    extra.symlink_to(current / "rules/ouroboros.md")
+    assert (
+        inspect_home_fixture(ouroboros_homes)["homes"][0]["skills"]["status"]
+        == "unsafe"
+    )
+
+
+def test_ouroboros_artifacts_do_not_inherit_aggregate_doctor_failure(ouroboros_homes):
+    _, _, current, _, _, _, _ = ouroboros_homes
+    (current / "doctor-failed").touch()
+    row = inspect_home_fixture(ouroboros_homes)["homes"][0]
+    assert row["codex_integration"]["status"] == "degraded"
+    assert row["rules"]["status"] == row["skills"]["status"] == "configured"
+
+
+@pytest.mark.parametrize(
+    "installed,latest,status",
+    [
+        ("0.51.15", "0.53.0", "update_available"),
+        ("0.53.0", "0.54.0", "current"),
+        (None, "0.53.0", "missing"),
+    ],
+)
+def test_ouroboros_freshness_distinguishes_supported_and_latest(
+    monkeypatch, installed, latest, status
+):
+    import inspect_ouroboros
+
+    releases = {
+        name: [{"yanked": False}] for name in ("0.51.17", "0.53.0", latest, "0.55.0rc1")
+    }
+    releases["0.55.0"] = [{"yanked": True}]
+    payload = {"info": {"name": "ouroboros-ai"}, "releases": releases}
+    response = mock.MagicMock()
+    response.__enter__.return_value = response
+    response.geturl.return_value = inspect_ouroboros.PYPI_URL
+    response.read.return_value = json.dumps(payload).encode()
+    monkeypatch.setattr(
+        inspect_ouroboros.urllib.request, "urlopen", lambda *args, **kwargs: response
+    )
+    result = inspect_ouroboros.release_freshness(
+        inspect_global_tools.load_inspector(), ouroboros_cli_observation(installed), 1
+    )
+    assert result["status"] == status
+    assert result["latest_supported"] == "0.53.0"
+    assert result["latest_stable"] == latest
+    assert result["compatibility_review_required"] == (latest == "0.54.0")
+
+
+def test_ouroboros_freshness_failure_and_opt_in(ouroboros_homes, monkeypatch):
+    module = ouroboros_homes[0]
+    fetch = mock.Mock(side_effect=OSError("network secret"))
+    monkeypatch.setattr(module.urllib.request, "urlopen", fetch)
+    assert inspect_home_fixture(ouroboros_homes)["freshness"]["status"] == "not_checked"
+    fetch.assert_not_called()
+    result = module.release_freshness(
+        inspect_global_tools.load_inspector(), ouroboros_cli_observation("0.53.0"), 1
+    )
+    assert result["status"] == "freshness_unverifiable"
+    assert "secret" not in json.dumps(result)
+
+
+@pytest.mark.parametrize(
+    "option", [["--codex-home", "/tmp/home"], ["--verify-ouroboros-release"]]
+)
+def test_ouroboros_flags_require_selected_component(option):
+    completed = subprocess.run(
+        [sys.executable, str(GLOBAL_SCRIPT), "--component", "lora", *option],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 2
+    assert json.loads(completed.stdout)["error"]["code"] == "invalid_arguments"
+
+
+@pytest.mark.parametrize(
+    "failure", ["version", "path", "digest", "incomplete", "unavailable"]
+)
+def test_ouroboros_package_asset_probe_fails_closed(tmp_path, failure):
+    import inspect_ouroboros
+
+    (tmp_path / "python").touch()
+    cli = {
+        "installed": True,
+        "version_supported": True,
+        "executable": str(tmp_path / "ooo"),
+        "version": "0.53.0",
+    }
+    result = {
+        "version": "0.53.0",
+        "artifacts": {
+            "rules/ouroboros.md": "a" * 64,
+            "skills/ouroboros-auto/SKILL.md": "b" * 64,
+        },
+    }
+    if failure == "version":
+        result["version"] = "0.51.17"
+    elif failure == "path":
+        result["artifacts"]["skills/../../outside"] = "a" * 64
+    elif failure == "digest":
+        result["artifacts"]["rules/ouroboros.md"] = "invalid"
+    elif failure == "incomplete":
+        result["artifacts"].pop("rules/ouroboros.md")
+    inspector = mock.Mock()
+    inspector.json_probe.return_value = {
+        "ok": failure != "unavailable",
+        "result": result,
+    }
+    assert inspect_ouroboros.packaged_assets(inspector, cli, Path("/"), 1) is None
+    assert (
+        inspect_ouroboros.inspect_artifacts(tmp_path, "rules", None)["status"]
+        == "unverifiable"
+    )
+
+
+def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v2_shape(
+    ouroboros_homes, tmp_path
+):
+    _, _, current, default, _, install, _ = ouroboros_homes
+    custom = tmp_path / "custom-home"
+    install(custom)
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--codex-home",
+            str(custom),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stdout
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v2"
+    result = payload["tools"]["ouroboros"]
+    assert {row["home"] for row in result["homes"]} == {
+        str(current),
+        str(default),
+        str(custom),
+    }
+    assert result["freshness"]["status"] == "not_checked"
+    # This fixture intentionally lacks the uv-tool package interpreter. CLI
+    # success must not turn unavailable package comparison into healthy skills.
+    assert all(row["skills"]["status"] == "unverifiable" for row in result["homes"])
+
+
+def test_ouroboros_asset_manifest_uses_native_rendered_rules(
+    tmp_path, monkeypatch, capsys
+):
+    import hashlib
+    import importlib.metadata
+    import runpy
+    from types import ModuleType, SimpleNamespace
+
+    import inspect_ouroboros
+
+    rule = tmp_path / "ouroboros.md"
+    rule.write_text("unrendered source")
+    skill = tmp_path / "auto"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text("upstream skill")
+    assets = SimpleNamespace(
+        rules_path=rule,
+        managed_artifacts=[
+            SimpleNamespace(
+                source_path=rule, relative_install_path=Path("rules/ouroboros.md")
+            ),
+            SimpleNamespace(
+                source_path=skill, relative_install_path=Path("skills/ouroboros-auto")
+            ),
+        ],
+    )
+    context = mock.MagicMock()
+    context.__enter__.return_value = assets
+    module = ModuleType("ouroboros.codex.artifacts")
+    module.resolve_packaged_codex_assets = lambda: context
+    module.load_packaged_codex_rules = lambda: (
+        "rendered rules with native runtime guidance"
+    )
+    monkeypatch.setitem(sys.modules, "ouroboros.codex.artifacts", module)
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "0.53.0")
+    script = tmp_path / "asset_probe.py"
+    script.write_text(inspect_ouroboros.ASSET_PROBE)
+    runpy.run_path(str(script))
+    result = json.loads(capsys.readouterr().out)
+    assert (
+        result["artifacts"]["rules/ouroboros.md"]
+        == hashlib.sha256(module.load_packaged_codex_rules().encode()).hexdigest()
+    )
+    assert (
+        result["artifacts"]["skills/ouroboros-auto/SKILL.md"]
+        == hashlib.sha256(b"upstream skill").hexdigest()
+    )
+
+
+def ouroboros_cli_observation(version, *, installed=True, ok=True):
+    return {
+        "installed": installed and version is not None,
+        "version": version,
+        "probes": {"version": {"ok": ok}},
+    }
+
+
+@pytest.mark.parametrize("phase", ["connect", "read"])
+def test_ouroboros_http_failure_preserves_global_results(
+    ouroboros_homes, monkeypatch, phase
+):
+    import http.client
+
+    module = ouroboros_homes[0]
+    response = mock.MagicMock()
+    response.__enter__.return_value = response
+    response.geturl.return_value = module.PYPI_URL
+    if phase == "connect":
+        fetch = mock.Mock(side_effect=http.client.BadStatusLine("private proxy data"))
+    else:
+        response.read.side_effect = http.client.IncompleteRead(b"private response data")
+        fetch = mock.Mock(return_value=response)
+    monkeypatch.setattr(module.urllib.request, "urlopen", fetch)
+    output = io.StringIO()
+    with (
+        mock.patch.object(
+            sys,
+            "argv",
+            [
+                "inspect_global_tools.py",
+                "--component",
+                "ouroboros",
+                "--component",
+                "deslop",
+                "--verify-ouroboros-release",
+            ],
+        ),
+        mock.patch.object(sys, "stdout", output),
+    ):
+        assert inspect_global_tools.main() == 0
+    payload = json.loads(output.getvalue())
+    assert "deslop" in payload["tools"]
+    result = payload["tools"]["ouroboros"]
+    assert result["all_discovered_homes_readiness"] == "configured"
+    assert result["freshness"]["status"] == "freshness_unverifiable"
+    assert result["freshness"]["reason"] == "release_metadata_unverifiable"
+    assert "private proxy data" not in output.getvalue()
+    assert "private response data" not in output.getvalue()
+
+
+@pytest.mark.parametrize("default_active", [False, True])
+def test_ouroboros_invalid_active_home_preserves_other_results(
+    ouroboros_homes, monkeypatch, default_active
+):
+    _, home, _, default, log, _, _ = ouroboros_homes
+    if default_active:
+        import shutil
+
+        shutil.rmtree(default)
+        invalid = default
+        monkeypatch.delenv("CODEX_HOME")
+    else:
+        invalid = home / "invalid-home"
+        monkeypatch.setenv("CODEX_HOME", str(invalid))
+    invalid.write_text("not a directory")
+    # The CLI entrypoint exercises the real home/leaf wiring without a package fixture.
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--component",
+            "deslop",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout
+    payload = json.loads(completed.stdout)
+    assert "deslop" in payload["tools"]
+    result = payload["tools"]["ouroboros"]
+    assert result["current_home_readiness"] == "degraded"
+    assert result["homes"][0]["reason"] == "home_not_a_directory"
+    assert all(
+        result["homes"][0][key]["status"] == "unverifiable"
+        for key in (
+            "rules",
+            "skills",
+            "codex_integration",
+            "mcp_registration",
+            "mcp_runtime",
+            "home_binding",
+            "runtime_package",
+        )
+    )
+    calls = [json.loads(line) for line in log.read_text().splitlines()]
+    assert sum(call["args"] == ["--version"] for call in calls) == 1
+    assert not any(
+        call["home"] == str(invalid) and call["args"] != ["--version"] for call in calls
+    )
+    assert any(
+        call["name"] == "codex" and call["home"] != str(invalid) for call in calls
+    )
+    # Package assets are available in the in-process fixture: the independent home stays ready.
+    result = inspect_home_fixture(ouroboros_homes)
+    assert any(row["status"] == "configured" for row in result["homes"][1:])
+    assert result["all_discovered_homes_readiness"] == "degraded"
+    assert invalid.read_text() == "not a directory"
+
+
+@pytest.mark.parametrize("value", ["", " ", "\t\n"])
+def test_ouroboros_blank_home_rejected_before_probes(ouroboros_homes, value):
+    module, _, _, _, log, _, _ = ouroboros_homes
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--codex-home",
+            value,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert json.loads(completed.stdout)["error"]["code"] == "invalid_arguments"
+    assert not log.exists()
+    with pytest.raises(ValueError, match="blank"):
+        module.discover_homes((value,))
+
+
+def test_ouroboros_explicit_file_home_remains_input_error(ouroboros_homes):
+    _, home, _, _, log, _, _ = ouroboros_homes
+    invalid = home / "file"
+    invalid.touch()
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--codex-home",
+            str(invalid),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert json.loads(completed.stdout)["error"]["code"] == "invalid_codex_home"
+    assert not log.exists()
+
+
+def test_ouroboros_relative_home_preserves_spaces_and_missing_target(
+    ouroboros_homes, monkeypatch
+):
+    _, home, _, _, _, _, _ = ouroboros_homes
+    monkeypatch.chdir(home)
+    requested = " custom home "
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--codex-home",
+            requested,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0
+    rows = json.loads(completed.stdout)["tools"]["ouroboros"]["homes"]
+    assert any(
+        row["home"] == str(home / requested) and row["status"] == "degraded"
+        for row in rows
+    )
+    assert not (home / requested).exists()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["nonzero", "timeout", "unparseable", "missing", "current", "older", "unsupported"],
+)
+def test_ouroboros_freshness_uses_cli_probe_evidence(
+    ouroboros_homes, monkeypatch, failure
+):
+    module, _, _, _, _, _, _ = ouroboros_homes
+    inspector = inspect_global_tools.load_inspector()
+    real_run = inspector.run_command
+    version = {"older": "0.51.17", "unsupported": "0.54.0"}.get(failure, "0.53.0")
+
+    def run(command, *args, **kwargs):
+        if command[1:] == ["--version"]:
+            return {
+                "attempted": True,
+                "ok": failure not in {"nonzero", "timeout"},
+                "exit_code": None
+                if failure == "timeout"
+                else 1
+                if failure == "nonzero"
+                else 0,
+                "timed_out": failure == "timeout",
+                "stdout": "unknown"
+                if failure == "unparseable"
+                else f"Ouroboros version {version}",
+                "stderr": "",
+            }
+        return real_run(command, *args, **kwargs)
+
+    monkeypatch.setattr(inspector, "run_command", run)
+    if failure == "missing":
+        real_which = inspector.shutil.which
+        monkeypatch.setattr(
+            inspector.shutil,
+            "which",
+            lambda name: None if name == "ooo" else real_which(name),
+        )
+    response = mock.MagicMock()
+    response.__enter__.return_value = response
+    response.geturl.return_value = module.PYPI_URL
+    response.read.return_value = json.dumps(
+        {"info": {"name": "ouroboros-ai"}, "releases": {"0.53.0": [{"yanked": False}]}}
+    ).encode()
+    monkeypatch.setattr(
+        module.urllib.request, "urlopen", mock.Mock(return_value=response)
+    )
+    result = module.inspect_ouroboros(inspector, Path("/"), 5, verify_release=True)
+    freshness = result["freshness"]
+    assert freshness["latest_supported"] == "0.53.0"
+    expected = {
+        "missing": "missing",
+        "current": "current",
+        "older": "update_available",
+        "unsupported": "incompatible",
+    }.get(failure, "freshness_unverifiable")
+    assert freshness["status"] == expected
+    if failure in {"nonzero", "timeout", "unparseable"}:
+        assert freshness["reason"] == "cli_version_unverifiable"
+        assert result["current_home_readiness"] == "degraded"
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_ouroboros_unresolvable_home_isolated_or_rejected(
+    ouroboros_homes, monkeypatch, explicit
+):
+    _, _, _, default, log, _, _ = ouroboros_homes
+    # This user name cannot be resolved by expanduser; no user-global path is touched.
+    invalid = "~aquarium-test-nonexistent-user-827415/home"
+    arguments = [
+        sys.executable,
+        str(GLOBAL_SCRIPT),
+        "--component",
+        "ouroboros",
+        "--component",
+        "deslop",
+        "--component",
+        "im-not-ai",
+    ]
+    if explicit:
+        arguments += ["--codex-home", invalid]
+    else:
+        monkeypatch.setenv("CODEX_HOME", invalid)
+    completed = subprocess.run(arguments, capture_output=True, text=True, check=False)
+    payload = json.loads(completed.stdout)
+    if explicit:
+        assert completed.returncode == 2
+        assert payload["error"]["code"] == "invalid_codex_home"
+        assert not log.exists()
+        return
+    assert completed.returncode == 0, completed.stdout
+    assert "deslop" in payload["tools"]
+    assert payload["tools"]["im-not-ai"]["status"] == "unverifiable"
+    assert payload["tools"]["im-not-ai"]["expected_target"] is None
+    result = payload["tools"]["ouroboros"]
+    assert result["current_home"] == invalid
+    assert result["homes"][0]["reason"] == "home_resolution_failed"
+    assert result["current_home_readiness"] == "degraded"
+    calls = [json.loads(line) for line in log.read_text().splitlines()]
+    assert sum(call["args"] == ["--version"] for call in calls) == 1
+    assert not any(
+        call["home"] == invalid and call["args"] != ["--version"] for call in calls
+    )
+    result = inspect_home_fixture(ouroboros_homes)
+    assert (
+        next(row for row in result["homes"] if row["home"] == str(default))["status"]
+        == "configured"
+    )
+
+
+def test_ouroboros_unresolvable_launcher_keeps_independent_components(ouroboros_homes):
+    _, _, current, default, _, _, _ = ouroboros_homes
+    config = current / "config.toml"
+    original = config.read_text()
+    command_line = next(
+        line for line in original.splitlines() if line.startswith("command =")
+    )
+    config.write_text(
+        original.replace(
+            command_line, 'command = "~aquarium-test-nonexistent-user-827415/uvx"'
+        )
+    )
+    result = inspect_home_fixture(ouroboros_homes)
+    row = result["homes"][0]
+    assert row["status"] == "degraded"
+    assert row["mcp_registration"]["status"] != "configured"
+    assert row["rules"]["status"] == row["skills"]["status"] == "configured"
+    assert (
+        next(row for row in result["homes"] if row["home"] == str(default))["status"]
+        == "configured"
+    )
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(GLOBAL_SCRIPT),
+            "--component",
+            "ouroboros",
+            "--component",
+            "deslop",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout
+    assert "deslop" in json.loads(completed.stdout)["tools"]
+
+
+@pytest.mark.parametrize("phase", ["discovery", "artifact", "leaf"])
+def test_ouroboros_home_permission_failure_preserves_global_payload(
+    ouroboros_homes, monkeypatch, phase
+):
+    _, _, current, default, log, _, _ = ouroboros_homes
+    if phase == "discovery":
+        original = Path.stat
+
+        def stat(path, *args, **kwargs):
+            if path == current / "config.toml":
+                raise PermissionError("private filesystem failure")
+            return original(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "stat", stat)
+    elif phase == "artifact":
+        original = Path.is_symlink
+
+        def is_symlink(path):
+            if path == current / "rules":
+                raise PermissionError("private filesystem failure")
+            return original(path)
+
+        monkeypatch.setattr(Path, "is_symlink", is_symlink)
+    else:
+        inspector = inspect_global_tools.load_inspector()
+        original = inspector.inspect_ouroboros
+
+        def inspect(repository, timeout_seconds, **kwargs):
+            if kwargs["codex_home"] == current:
+                raise PermissionError("private filesystem failure")
+            return original(repository, timeout_seconds, **kwargs)
+
+        monkeypatch.setattr(inspector, "inspect_ouroboros", inspect)
+        monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    output = io.StringIO()
+    with (
+        mock.patch.object(
+            sys,
+            "argv",
+            [
+                "inspect_global_tools.py",
+                "--component",
+                "ouroboros",
+                "--component",
+                "deslop",
+            ],
+        ),
+        mock.patch.object(sys, "stdout", output),
+    ):
+        assert inspect_global_tools.main() == 0
+    payload = json.loads(output.getvalue())
+    assert "deslop" in payload["tools"]
+    assert "private filesystem failure" not in output.getvalue()
+    result = payload["tools"]["ouroboros"]
+    assert result["cli"]["version"] == "0.53.0"
+    assert (
+        result["current_home_readiness"]
+        == result["all_discovered_homes_readiness"]
+        == "degraded"
+    )
+    assert (
+        next(row for row in result["homes"] if row["home"] == str(default))["status"]
+        == "configured"
+    )
+    row = result["homes"][0]
+    if phase == "artifact":
+        assert row["rules"]["reason"] == "artifact_read_failed"
+        assert (
+            row["skills"]["status"] == row["mcp_registration"]["status"] == "configured"
+        )
+    else:
+        assert row["reason"] == "home_inspection_failed"
+    calls = [json.loads(line) for line in log.read_text().splitlines()]
+    assert sum(call["args"] == ["--version"] for call in calls) == 1
+    if phase == "discovery":
+        assert not any(
+            call["home"] == str(current) and call["args"] != ["--version"]
+            for call in calls
+        )

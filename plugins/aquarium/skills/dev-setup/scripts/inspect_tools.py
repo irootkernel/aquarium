@@ -183,7 +183,7 @@ OUROBOROS_RUNTIME_SELECTOR_KEYS = {
     "OUROBOROS_RUNTIME",
 }
 OUROBOROS_MCP_PACKAGE = re.compile(
-    rf"ouroboros-ai\[mcp\](?:==(0\.51\.{CANONICAL_NUMERIC_COMPONENT}))?"
+    rf"ouroboros-ai\[mcp\](?:==({CANONICAL_NUMERIC_COMPONENT}\.{CANONICAL_NUMERIC_COMPONENT}\.{CANONICAL_NUMERIC_COMPONENT}))?"
 )
 
 
@@ -439,8 +439,8 @@ def supported_mulgae_go_version(version: str | None) -> bool:
 def supported_ouroboros_version(version: str | None) -> bool:
     if not version:
         return False
-    match = re.fullmatch(rf"v?0\.51\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 1)
+    match = re.fullmatch(rf"v?0\.(51|52|53)\.({CANONICAL_NUMERIC_COMPONENT})", version)
+    return bool(match and (int(match.group(1)) > 51 or int(match.group(2)) >= 1))
 
 
 def ouroboros_version_from_output(output: str) -> str | None:
@@ -632,13 +632,16 @@ def normalized_probe(probe: dict[str, Any]) -> dict[str, Any]:
 def resolved_executable(command: Any) -> Path | None:
     if not isinstance(command, str) or not command:
         return None
-    candidate = Path(command).expanduser()
-    if candidate.is_absolute():
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return candidate.resolve()
+    try:
+        candidate = Path(command).expanduser()
+        if candidate.is_absolute():
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return candidate.resolve()
+            return None
+        discovered = shutil.which(command)
+        return Path(discovered).resolve() if discovered else None
+    except (OSError, ValueError, RuntimeError):
         return None
-    discovered = shutil.which(command)
-    return Path(discovered).resolve() if discovered else None
 
 
 def ouroboros_direct_launcher_matches(
@@ -686,7 +689,7 @@ def ouroboros_isolated_launcher_matches(transport: Any) -> bool:
         return False
     if "_OUROBOROS_NESTED" in env:
         return False
-    if set(env) - OUROBOROS_RUNTIME_SELECTOR_KEYS:
+    if set(env) - (OUROBOROS_RUNTIME_SELECTOR_KEYS | {"CODEX_HOME"}):
         return False
     if any(
         env.get(key) not in {None, "codex"} for key in OUROBOROS_RUNTIME_SELECTOR_KEYS
@@ -3014,7 +3017,10 @@ def skill_roots() -> list[Path]:
     candidates: list[Path] = []
     codex_home = os.environ.get("CODEX_HOME")
     if codex_home:
-        candidates.append(Path(codex_home).expanduser().joinpath("skills"))
+        try:
+            candidates.append(Path(codex_home).expanduser().joinpath("skills"))
+        except (OSError, ValueError, RuntimeError):
+            pass
     candidates.extend(
         [Path.home().joinpath(".codex/skills"), Path.home().joinpath(".agents/skills")]
     )
@@ -3110,7 +3116,7 @@ def inspect_writing_skill(
     *,
     skill_name: str,
     expected_files: tuple[str, ...],
-    expected_target: Path,
+    expected_target: Path | None,
     supported_release: str,
     require_version: bool,
 ) -> dict[str, Any]:
@@ -3151,14 +3157,16 @@ def inspect_writing_skill(
         "installed": ready,
         "complete_tree_verified": False,
         "verification_scope": "structure_only",
-        "expected_target": str(expected_target),
+        "expected_target": str(expected_target)
+        if expected_target is not None
+        else None,
         "supported_release": supported_release,
         "executable": None,
         "version": version,
         "version_supported": version_supported,
         "status": (
             "unverifiable"
-            if ready
+            if ready or expected_target is None
             else ("missing" if agent_skill["status"] == "missing" else "degraded")
         ),
         "agent_skill": agent_skill,
@@ -3178,13 +3186,20 @@ def inspect_humanizer() -> dict[str, Any]:
 
 
 def inspect_im_not_ai() -> dict[str, Any]:
-    return inspect_writing_skill(
+    try:
+        target = effective_codex_skill_root() / "humanize-korean"
+    except (OSError, ValueError, RuntimeError):
+        target = None
+    result = inspect_writing_skill(
         skill_name="humanize-korean",
         expected_files=HUMANIZE_KOREAN_SKILL_FILES,
-        expected_target=effective_codex_skill_root() / "humanize-korean",
+        expected_target=target,
         supported_release=IM_NOT_AI_SUPPORTED_RELEASE,
         require_version=False,
     )
+    if target is None:
+        result["reason"] = "home_resolution_failed"
+    return result
 
 
 def inspect_lora() -> dict[str, Any]:
@@ -3334,9 +3349,58 @@ def inspect_deslop() -> dict[str, Any]:
     }
 
 
-def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any]:
+def inspect_ouroboros_cli(repository: Path, timeout_seconds: float) -> dict[str, Any]:
     tool = base_tool("ooo")
-    tool["supported_range"] = ">=0.51.1,<0.52.0"
+    tool["version_supported"] = False
+    tool["probes"]["version"] = skipped_probe("executable_missing")
+    if tool["installed"]:
+        version_raw = run_command(
+            [tool["executable"], "--version"], repository, timeout_seconds
+        )
+        tool["version"] = ouroboros_version_from_output(
+            f"{version_raw.get('stdout', '')}\n{version_raw.get('stderr', '')}"
+        )
+        tool["version_supported"] = version_raw["ok"] and supported_ouroboros_version(
+            tool["version"]
+        )
+        tool["probes"]["version"] = {
+            key: version_raw[key]
+            for key in ("attempted", "ok", "exit_code", "timed_out")
+        }
+    return tool
+
+
+def inspect_ouroboros(
+    repository: Path,
+    timeout_seconds: float,
+    *,
+    codex_home: Path | None = None,
+    cli_observation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    tool = (
+        dict(cli_observation)
+        if cli_observation is not None
+        else inspect_ouroboros_cli(repository, timeout_seconds)
+    )
+    tool["supported_range"] = ">=0.51.1,<0.54.0"
+    environment = {"CODEX_HOME": str(codex_home)} if codex_home else None
+    tool["home_binding"] = {
+        "status": "unverifiable",
+        "reason": "registration_unavailable",
+    }
+    tool["runtime_package"] = {"status": "unverifiable", "version": None}
+    if codex_home is not None and codex_home.exists() and not codex_home.is_dir():
+        reason = "home_not_a_directory"
+        tool["status"] = "degraded"
+        for key in ("codex_integration", "mcp_registration", "mcp_runtime"):
+            tool[key] = {"status": "unverifiable", "probe": skipped_probe(reason)}
+        tool["home_binding"] = {"status": "unverifiable", "reason": reason}
+        tool["runtime_package"] = {
+            "status": "unverifiable",
+            "version": None,
+            "reason": reason,
+        }
+        return tool
     codex = shutil.which("codex")
     direct_runtime_configured = False
     isolated_runtime_configured = False
@@ -3351,6 +3415,7 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             ],
             repository,
             timeout_seconds,
+            environment_overrides=environment,
         )
         tool["mcp_registration"] = classify_ouroboros_registration(
             registration_raw, tool["executable"]
@@ -3362,6 +3427,54 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             if isinstance(registration_result, dict)
             else None
         )
+        if isinstance(registration_transport, dict):
+            registered_env = registration_transport.get("env", {})
+            registered_home = (
+                registered_env.get("CODEX_HOME")
+                if isinstance(registered_env, dict)
+                else None
+            )
+            if codex_home is not None:
+                if registered_home is None:
+                    tool["home_binding"] = {
+                        "status": "unverifiable",
+                        "reason": "home_not_explicit",
+                    }
+                elif (
+                    isinstance(registered_home, str)
+                    and Path(registered_home).is_absolute()
+                ):
+                    try:
+                        matches = (
+                            Path(registered_home).resolve() == codex_home.resolve()
+                        )
+                        if not matches:
+                            try:
+                                matches = Path(registered_home).samefile(codex_home)
+                            except FileNotFoundError:
+                                matches = False
+                        tool["home_binding"] = {
+                            "status": "configured" if matches else "degraded",
+                            "reason": "home_matches" if matches else "home_mismatch",
+                        }
+                    except (OSError, ValueError, RuntimeError):
+                        tool["home_binding"] = {
+                            "status": "degraded",
+                            "reason": "home_invalid",
+                        }
+                else:
+                    tool["home_binding"] = {
+                        "status": "degraded",
+                        "reason": "home_invalid",
+                    }
+            args = registration_transport.get("args", [])
+            if isinstance(args, list) and len(args) > 4 and isinstance(args[4], str):
+                package = OUROBOROS_MCP_PACKAGE.fullmatch(args[4])
+                if package:
+                    tool["runtime_package"] = {
+                        "status": "pinned" if package.group(1) else "unverifiable",
+                        "version": package.group(1),
+                    }
         direct_runtime_configured = tool["mcp_registration"][
             "status"
         ] == "configured" and ouroboros_direct_launcher_matches(
@@ -3412,21 +3525,11 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             }
         return tool
 
-    version_raw = run_command(
-        [tool["executable"], "--version"], repository, timeout_seconds
-    )
-    tool["version"] = ouroboros_version_from_output(
-        f"{version_raw.get('stdout', '')}\n{version_raw.get('stderr', '')}"
-    )
-    tool["version_supported"] = version_raw["ok"] and supported_ouroboros_version(
-        tool["version"]
-    )
-    tool["probes"]["version"] = {
-        key: version_raw[key] for key in ("attempted", "ok", "exit_code", "timed_out")
-    }
-
     codex_doctor = run_command(
-        [tool["executable"], "codex", "doctor"], repository, timeout_seconds
+        [tool["executable"], "codex", "doctor"],
+        repository,
+        timeout_seconds,
+        environment_overrides=environment,
     )
     tool["codex_integration"] = {
         "status": "configured" if codex_doctor["ok"] else "degraded",
@@ -3448,6 +3551,7 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             [tool["executable"], "mcp", "doctor", "--json"],
             repository,
             timeout_seconds,
+            environment_overrides=environment,
         )
         tool["mcp_runtime"] = {
             "status": "configured" if mcp_doctor["ok"] else "degraded",
@@ -3465,8 +3569,16 @@ def inspect_ouroboros(repository: Path, timeout_seconds: float) -> dict[str, Any
             "probe": skipped_probe(runtime_reason),
         }
 
+    if direct_runtime_configured:
+        tool["runtime_package"] = {"status": "selected_cli", "version": tool["version"]}
+    if (
+        tool["runtime_package"]["status"] == "pinned"
+        and tool["runtime_package"]["version"] != tool["version"]
+    ):
+        tool["runtime_package"]["status"] = "different"
     components_ready = (
         tool["version_supported"]
+        and (codex_home is None or tool["home_binding"]["status"] == "configured")
         and tool["codex_integration"]["status"] == "configured"
         and tool["mcp_runtime"]["status"] == "configured"
         and tool["mcp_registration"]["status"] == "configured"

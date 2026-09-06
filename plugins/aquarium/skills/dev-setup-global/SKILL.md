@@ -14,6 +14,9 @@ Read the selected sections of [the shared tool catalog](../../references/tool-ca
 1. On a direct invocation without a component list, select every supported global component. On a scoped continuation, select only the named components and their direct prerequisites.
 2. A direct invocation authorizes bounded read-only official metadata and raw-file freshness requests for all selected components. A scoped continuation authorizes only its selected sources. Disclose the official endpoints before contact.
 3. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_global_tools.py --verify-dolgorae-release` on a direct unscoped invocation. For a scoped continuation, add one `--component <name>` argument for each selected component in catalog order, add `--verify-dolgorae-release` only when Dolgorae is selected, and run no unselected component probe.
+
+   When Ouroboros is selected, also add `--verify-ouroboros-release`; pass any explicitly supplied extra homes with repeatable `--codex-home <path>`. Use the catalog's home discovery and per-home readiness contract.
+
    Outside Plan Mode, disclose the Sorage open-and-migrate diagnostic side effect, then add `--include-sorage-initialization` when Sorage is selected. The same disclosure applies to a scoped Sorage continuation.
 4. Treat `--repository <existing-directory>` only as a compatibility input. Validate that it is an existing directory, but never use it as command or configuration scope, so diagnosis also works outside a Git worktree.
 5. Diagnose local installation, supported version, canonical target, exact-upstream tree, duplicate and symlink state, paired-skill compatibility, services, global MCP, and Ouroboros integration independently.
@@ -39,11 +42,11 @@ Use one exact supported release tag or disclosed full commit SHA according to th
 
 For each selected paired or third-party skill, compare the verified source with its canonical target. Treat missing or extra files, different bytes, invalid frontmatter, symlinks, and duplicate installations as independent gaps.
 
-Other Codex skill roots remain diagnostic evidence only. When another copy exists, report the duplicate risk and never create a known duplicate. Do not propose installation at the canonical target until the user separately approves removal or migration of the alternate copy so that one canonical target remains.
+Apply this duplicate rule to shared-location skills. Ouroboros uses the per-home contract below. Other Codex skill roots remain diagnostic evidence only. When another copy exists, report the duplicate risk and never create a known duplicate. Do not propose installation at the canonical target until the user separately approves removal or migration of the alternate copy so that one canonical target remains.
 
 `dev-setup` trusting an existing canonical path is not freshness evidence.
 
-Ouroboros update diagnosis resolves one exact supported `ouroboros-ai` version and compares it with the installed CLI while keeping package, Codex artifacts, MCP runtime, registration, and live exposure independent. Never cross the supported release range automatically.
+Ouroboros update diagnosis reports installed, latest stable, and latest supported versions. Its CLI is user-global; rules, skills, and MCP registration belong to each Codex home. Propose all discovered homes by default. Never install its skills into `~/.agents/skills` or classify valid copies in different homes as duplicates. Keep current-home readiness, all-discovered-home readiness, package freshness, and live runtime evidence separate. Never cross the supported release range automatically.
 
 ## Respect Host Mode and Approval Boundaries
 
@@ -55,7 +58,7 @@ Before every persistent action:
 
 1. Show the exact command, endpoints, targets, changed paths, expected side effects, and verification.
 2. Establish the shared backup policy before the first overwrite or removal.
-3. Obtain action-specific approval.
+3. Obtain action-specific approval. For Ouroboros, one exact proposal and approval may cover the CLI upgrade, all listed home updates, MCP adjustments, and identified legacy migration. Do not repeat approval for covered actions.
 4. Re-read the target and invalidate approval if its snapshot changed.
 5. Execute only the approved action and verify through the owning CLI and exact tree comparison.
 
@@ -63,11 +66,11 @@ Before every persistent action:
 
 Use `Choose a Backup Policy for Existing State` in the shared tool catalog for every overwrite or removal. The shared policy owns the request-scoped choice, loss and recovery disclosure, restoration evidence, and the rule that preparing an incoming payload is not a backup.
 
-Never use `sudo`, `--force`, destructive cleanup, provider invocation, source transmission, staging, committing, or pushing. Tell the user when Codex must restart.
+Never use `sudo`, `--force`, unapproved removal, provider invocation, source transmission, staging, committing, or pushing. Tell the user when Codex must restart.
 
 ## Bundle Intake
 
-Accept a bounded `dev-setup-bundle` handoff containing the manifest digest and union of selected global components. Prepare each global component at most once, preserve all per-action approvals, and return independent results for the bundle's target processing. Never read the manifest or infer repositories.
+Accept a bounded `dev-setup-bundle` handoff containing the manifest digest and union of selected global components. Prepare each global component at most once. For Ouroboros, prepare the CLI once and integration once per distinct Codex home. Preserve all per-action approvals and return independent results for the bundle's target processing. Never read the manifest or infer repositories.
 
 ## Report
 
