@@ -36,7 +36,24 @@ An exact release-handler settlement, retarget, release-state transition, or next
 
 ## Release Settlement
 
-Before release QA, compare every commit and material changed surface after the previous release with the open section. For a user-confirmed first release with no stable tag or completed section, use the complete reachable history and current public surface instead. Merge duplicates and add, edit, or remove entries only before establishing the exact QA candidate. Obtain approval for the complete changelog diff and commit it through the repository's normal boundary.
+Before release QA, compare every commit and material changed surface after the previous release with the open section. For a user-confirmed first release with no stable tag or completed section, use the complete reachable history and current public surface instead. Apply the following criteria only to the intended version's open section:
+
+- Preserve completed release sections byte-for-byte.
+- Merge duplicate or overlapping entries into concise final shipped outcomes. Several commits may map to one entry.
+- Remove intermediate claims superseded or fully reverted within this release cycle. Preserve every material difference from the previous release, including compatibility, security, privacy, operational effects, and required user actions that remain in the candidate.
+- Group related outcomes within `Added`, `Changed`, `Fixed`, and `Removed` without following commit order. Keep distinct impacts clear when combining entries.
+- Support each retained entry with the candidate code and contract. Record evidence for omissions in the release review, outside the changelog; an omission may cover an internal-only change or an intermediate change with no remaining independent shipped outcome.
+
+Use these cases to check the settlement against the previous release and candidate:
+
+| Release-cycle changes | Settled notes |
+| --- | --- |
+| Several commits fix the same shipped failure | One entry describes the final fix and any distinct remaining impact. |
+| New A is introduced, replaced by B, and B is corrected before release | Describe final B and its impact relative to the previous release; omit the intermediate A and B repair history. |
+| New A is introduced and fully reverted before release | Omit A only when no material shipped effect or required user action remains. |
+| A existed in the previous release and is removed in this cycle | Retain its removal and any required migration action. |
+
+Merge duplicates and add, edit, or remove entries only before establishing the exact QA candidate. Obtain approval for the complete changelog diff and commit it through the repository's normal boundary. Consolidating notes never removes commits or material changed surfaces from QA coverage.
 
 After release QA passes, preserve every entry byte-for-byte. The release commit may replace `Unreleased` with the publication date and update deterministic links or version metadata. Any substantive entry change creates a new candidate and requires release QA again.
 

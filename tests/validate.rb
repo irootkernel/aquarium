@@ -2877,6 +2877,23 @@ assert(release_notes_contract.include?("Aquarium release notes: <repository-rela
        release_notes_contract.include?("at most two Markdown source lines") &&
        release_notes_contract.include?("substantive entry change creates a new candidate"),
        "shared release-notes contract must define enrollment, commit decisions, and QA stability")
+assert(release_notes_contract.include?("Preserve completed release sections byte-for-byte") &&
+       release_notes_contract.include?("superseded or fully reverted within this release cycle") &&
+       release_notes_contract.include?("required user actions that remain in the candidate") &&
+       release_notes_contract.include?("without following commit order") &&
+       release_notes_contract.include?("Consolidating notes never removes commits or material changed surfaces from QA coverage") &&
+       release_handler.include?("Apply the shared release-notes settlement criteria") &&
+       release_handler.include?("Obtain approval before applying it"),
+       "release settlement must preserve published history and final impacts before candidate approval")
+assert(release_qa.include?("whether invoked directly or by release-handler") &&
+       release_qa.include?("Several commits may map to one entry") &&
+       release_qa.include?("even when its note is merged or omitted") &&
+       release_qa.include?("omissions are supported by evidence") &&
+       release_qa.include?("no stale intermediate claim") &&
+       release_qa.include?("completed release sections are byte-identical to the baseline") &&
+       release_qa.include?("without making wording or ordering preferences findings") &&
+       release_qa.include?("structural inspector does not establish semantic correctness"),
+       "release QA must verify settled outcomes without reducing delta coverage or treating style as a defect")
 assert(release_qa.include?("release-handler inspector") &&
        release_qa.include?("Do not edit the changelog during QA") &&
        task_document.include?("settle exactly one release-note decision before review") &&

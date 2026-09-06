@@ -92,7 +92,15 @@ Map every commit and material changed surface to one or more release-delta scena
 
 Give every user-visible or operationally risky change at least one executable scenario. Static inspection is sufficient only when the changed contract has no executable behavior. Record exclusions with exact evidence instead of silently sampling them away.
 
-When release notes are enrolled, map every changelog entry to the exact delta surface it describes and every material user-visible, compatibility, security, privacy, or operational delta to one concise entry. Confirm that intentional omissions are actually internal-only, completed release text is unchanged, and the open section contains no claim outside the candidate delta.
+When release notes are enrolled, apply the shared release-notes settlement criteria whether invoked directly or by release-handler. Map every open-section entry to the exact delta surfaces it describes and every material final user-visible, compatibility, security, privacy, or operational outcome to a concise entry.
+
+Several commits may map to one entry; entry order need not follow commit order. Keep every commit and material changed surface in the release-delta matrix even when its note is merged or omitted.
+
+Verify that omissions are supported by evidence: the change is internal-only, or it was superseded or fully reverted within this cycle with no remaining independent shipped outcome. Check final behavior against the previous release, or the current public surface for a confirmed first release.
+
+Preserve required user actions and all material remaining impacts. Confirm that completed release sections are byte-identical to the baseline and the open section contains no stale intermediate claim or claim outside the candidate delta.
+
+Report incorrect shipped claims, material omissions, lost required user actions, or changes to completed release text as findings. Suggest consolidation for redundant entries that remain accurate without making wording or ordering preferences findings. The structural inspector does not establish semantic correctness.
 
 Do not edit the changelog during QA. A substantive note edit after `PASS` creates a new candidate; only the enclosing release workflow may later change the open heading to the publication date without changing entry bytes.
 
