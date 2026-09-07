@@ -7,6 +7,8 @@ description: "Diagnose and configure Aquarium repository-local tooling and root 
 
 Diagnose the repository first, propose only changes supported by repository evidence, and leave user-global installation and updates to `$aquarium:dev-setup-global`.
 
+This skill owns root AGENTS.md and CLAUDE.md guidance. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
+
 Read [podway-integration.md](../../references/podway-integration.md) only when Podway is selected by the request, repository guidance, or an Aquarium readiness requirement. Read the applicable sections of [the shared tool catalog](../../references/tool-catalog.md) for every repository component in scope. Read [agents-guidance.md](references/agents-guidance.md) whenever root operating guidance is in scope.
 
 Do not use this skill for routine supported Procedure v2 observation, cancellation, discard, reset, or workspace runtime-mode moves. Route those operations to `$use-podway`. Keep repository initialization, managed Procedure readiness, product-rename migration, and `LEGACY_PROCEDURE_STATE_UNSUPPORTED` recovery here.
@@ -16,8 +18,8 @@ Do not use this skill for routine supported Procedure v2 observation, cancellati
 1. Resolve the requested working directory to one Git root and inspect applicable instructions, branch, upstream, staged, unstaged, untracked, and conflict state.
 2. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`, adding only the flags required for repository components selected by explicit request, repository files or guidance, or an Aquarium readiness contract. Add `--include-podway` for Podway readiness, `--include-sorage` for the disclosed Sorage readiness diagnostic, and `--require-mulgae-mcp` when repository authority requires Mulgae MCP readiness to affect status.
 3. Select only evidenced repository components: Sanho workspace state; Mulgae Config v3, local configuration, bootstrap or refresh, and project MCP; Gaori repository config, active rules, ignore policy, and project MCP; Sorage Project binding and `.sorage/` ignore or tracking safety; Podway workspace, managed Procedures, migrations, and legacy recovery; and root AGENTS.md and CLAUDE.md operating guidance.
-4. Treat an absent optional component with no repository evidence as out of scope, not missing. An explicit component request adds that component to scope.
-5. Never ask the user to choose `Install and configure`, `Diagnose only`, or `Skip`, and never ask whether to `Show proposal`, `Diagnose only`, or `Skip`. Diagnosis is automatic. If a selected component is ready, report no change; if it has a gap, prepare the smallest exact proposal.
+4. Treat an absent optional tool component with no repository evidence as out of scope, not missing. An explicit component request adds that component to scope. General setup includes root guidance even when the files are absent. A request limited to a tool or a scoped continuation stays within that component and its direct prerequisites; it does not add a full guidance review. Honor explicit guidance exclusions, including bundle `agents_guidance: skip`.
+5. Never ask the user to choose `Install and configure`, `Diagnose only`, or `Skip`, and never ask whether to `Show proposal`, `Diagnose only`, or `Skip`. Diagnosis is automatic. For tool configuration, report no change when ready and otherwise prepare the smallest exact proposal. For guidance, follow the whole-file review below.
 
 If Python is unavailable or inspection fails, report the gap and perform the same read-only discovery manually. Do not install Python as a side effect.
 
@@ -53,17 +55,17 @@ An explicit diagnosis-only request suppresses mutation proposals. A scoped conti
 
 ## Reconcile Repository Guidance
 
-Inspect AGENTS.md and CLAUDE.md automatically when the user requests guidance work or repository evidence shows that their setup contract is incomplete or conflicting. Diagnose existing guidance before drafting.
+Review the complete AGENTS.md and CLAUDE.md during general setup or an explicit guidance request. Reuse verified repository facts while assessing structure, behavior, duplication, and project-specific constraints. An explicit diagnosis-only request reports findings without drafting a proposal.
 
 When a change is needed:
 
-1. Preserve repository-specific and stricter user-authored rules.
-2. Build the required structure and mandatory commit-message authority from repository evidence.
+1. Preserve the meaning of repository-specific rules, applicable stricter constraints, unrelated content, and tool-managed blocks. Resolve actual semantic conflicts with the user.
+2. Reorganize the full instruction body around the standard in `agents-guidance.md`, including its seven core behaviors and mandatory commit-message authority. Rewrite and consolidate common prose, move rules to their proper sections, and remove duplication; do not limit the proposal to small additions or preserve the old arrangement for its own sake.
 3. Include tool references only for evidenced repository integrations and canonical global skills that exist. Do not inspect those global skill contents.
 4. Show one complete combined AGENTS.md and CLAUDE.md diff.
-5. Apply only that exact diff after approval and a fresh target snapshot check.
+5. Apply only that exact diff under authorization that covers it and after a fresh target snapshot check. Use existing approval when it covers the displayed changes; otherwise obtain approval once.
 
-When both files already satisfy the contract, report no change without presenting a choice. Guidance approval never authorizes tool setup, staging, commit, or publication.
+When the full review establishes that both files already satisfy the standard in structure and meaning, report no change. Equivalent wording does not require a rewrite. Guidance approval never authorizes tool setup, staging, commit, or publication.
 
 ## Bundle and Continuation Intake
 

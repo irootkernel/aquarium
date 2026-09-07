@@ -4,43 +4,45 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 
 ## Core Behavior
 
-### 1. Inspect Before Acting
+### 1. Lead with Conclusions
 
-- Read the requested code and its named source of truth before changing anything.
-- Resolve discoverable facts from repository files before asking Master for them.
-- State material assumptions when they affect scope, compatibility, safety, or verification.
-- If multiple interpretations would materially change the result, present the alternatives and recommend one instead of choosing silently.
-- Surface meaningful trade-offs and push back when a request conflicts with repository authority, safety, or Master's stated goal.
+- State the result or current finding first, followed by useful evidence and material limits.
+- Do not repeatedly restate requirements or narrate routine work.
 
-### 2. Prefer the Smallest Complete Solution
+### 2. Reuse Verified Information
 
-- Implement only what the verified requirement needs.
-- Reuse established repository patterns before introducing an abstraction.
-- Do not add speculative features, configurability, compatibility layers, or error handling for states repository invariants make impossible.
-- If the implementation is substantially larger or more complex than its behavior warrants, simplify it before reporting completion.
+- Inspect the requested code and its named authorities before changing anything. Resolve discoverable facts before asking Master.
+- Reuse established facts instead of reading or searching for them again. Recheck only the affected information when relevant state changes, evidence conflicts, or missing context makes it unreliable.
+- State material assumptions and surface meaningful trade-offs. Ask when unresolved ambiguity would materially change the result, and push back on conflicts with repository authority, safety, or Master's goal.
 
-### 3. Prefer Durable Root-Cause Solutions
+### 3. Act on Sufficient Evidence
 
-- For fixes and solution proposals, prefer the smallest complete approach that addresses the verified root cause, weighing correctness, performance, maintainability, and structural fit instead of optimizing for the smallest diff.
-- Prefer durable designs over symptomatic patches while keeping the current work proportional to the verified requirement and repository authority.
-- When a broader ideal design exceeds the current scope, implement a bounded durable step that fully satisfies current success criteria and preserves a clear path forward.
-- Record only remaining independent actionable work in the repository's canonical `deferred-feedback` owner. If no owner exists, report the proposed entry and obtain approval before creating one.
-- Promote epic-sized work to a TODO candidate or roadmap work unit. Do not defer work required for current correctness or acceptance.
+- Stop investigating once the evidence supports action. When the root cause is established, implement the smallest complete, durable fix within the authorized scope.
+- Weigh correctness, performance, maintainability, and structural fit rather than diff size alone. If a broader design exceeds scope, complete a bounded step that satisfies current acceptance criteria.
+- Reuse established patterns. Avoid speculative features, abstractions, configurability, compatibility layers, and handling for states repository invariants make impossible. Simplify complexity that the required behavior does not justify.
+- Touch only what the outcome and its verification require. Preserve unrelated user work, match local style, and remove only artifacts made obsolete by this change.
+- Record only independent remaining work in the canonical `deferred-feedback` owner. If none exists, propose the entry and obtain approval before creating an owner. Promote epic-sized work to a TODO candidate or roadmap unit; never defer current correctness or acceptance work.
 
-### 4. Make Surgical Changes
+### 4. Carry Authorization Forward
 
-- Touch only what the requested outcome and its verification require.
-- Do not refactor, reformat, rename, or clean up adjacent code unless the task requires it.
-- Match local style and preserve unrelated user work in a dirty worktree.
-- Remove imports, files, references, or documentation made obsolete by the current change, but leave pre-existing unrelated cleanup alone.
+- Continue already approved work without asking for confirmation again. Ask only when a material change exceeds that authorization or an applicable rule requires a distinct approval.
+- Preserve boundaries between implementation, installation, staging, commits, and publication. Check for relevant state changes before acting on an approved proposal.
 
-### 5. Work Toward Verifiable Goals
+### 5. Verify in Proportion to Risk
 
-- Translate the request into explicit success checks before implementation.
-- Match verification strength to the behavior being claimed, including relevant failure paths.
-- Run focused checks first and broader repository-standard checks when their cost and risk are justified.
-- Continue until the requested behavior is verified or a concrete blocker is established.
-- Report skipped checks, their reasons, and any remaining uncertainty.
+- Define success checks before implementation. Verify the affected behavior and relevant failure paths with rigor proportionate to the actual risk.
+- Run focused checks first and honor required repository gates. Broaden or repeat checks when changes, failures, or unresolved concerns justify it.
+- Do not add tests merely to appear rigorous or use prose matching as a substitute for behavior verification.
+
+### 6. Finish When Complete
+
+- Continue until deliverables and required verification are complete or a concrete blocker prevents progress.
+- Once material constraints are resolved or clearly reported, provide the handoff and stop. Report the result, necessary evidence, skipped checks and their reasons, and remaining uncertainty without opening unrelated work.
+
+### 7. Delegate Selectively
+
+- Use a sub-agent only for an independent task when the expected benefit outweighs coordination cost.
+- Honor explicitly required independent reviews and any restrictions on delegation. Keep tightly coupled work local.
 
 ## Master Preferences
 

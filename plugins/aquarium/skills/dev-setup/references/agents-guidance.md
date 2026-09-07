@@ -1,12 +1,14 @@
 # Repository Operating Guidance
 
-Use this reference whenever root repository guidance is in scope. Diagnose AGENTS.md and CLAUDE.md automatically. If the files already satisfy the contract, report no change; otherwise prepare the smallest complete proposal without asking the user to choose a diagnostic mode. A proposal creates or reconciles a repository operating contract and is not limited to tool guidance.
+This reference is the `dev-setup` standard for root AGENTS.md and CLAUDE.md. General setup always reviews the complete instruction body against it and prepares a full reorganization where needed. Tool-limited requests and scoped continuations stay within their requested component and direct prerequisites. Honor explicit guidance exclusions, including `agents_guidance: skip`; diagnosis-only requests report findings without drafting a proposal.
 
-The five-part core behavior below is adapted, rather than copied verbatim, from the Karpathy-inspired guidance at `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The bundled structure and this repository's instructions are the proposal authority.
+Aim for the standard's full structure and behavior while preserving project-specific meaning. Rewrite, regroup, and consolidate common guidance as needed. If the complete review establishes that the files already meet the standard, report no change; equivalent wording alone is not a reason to rewrite.
+
+The scope and root-cause principles incorporate guidance adapted from `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The seven-part core behavior below and this repository's instructions are the proposal authority.
 
 ## Required Structure
 
-Use this order for a new file and reconcile an existing file toward it when content can be moved without changing its meaning:
+Use this order for both new and existing files. Reorganize the complete body to fit it while retaining the meaning of project-specific rules and applicable stricter constraints:
 
 ```markdown
 # AGENTS.md
@@ -15,37 +17,45 @@ Use this order for a new file and reconcile an existing file toward it when cont
 
 ## Core Behavior
 
-### 1. Inspect Before Acting
+### 1. Lead with Conclusions
 
-- Resolve repository facts and named authorities before implementation.
-- State material assumptions, surface trade-offs, and ask when unresolved ambiguity would materially change the result.
-- Push back when a request conflicts with repository authority, safety, or the user's stated goal.
+- State the result or current finding first, followed by useful evidence and material limits.
+- Do not repeatedly restate requirements or narrate routine work.
 
-### 2. Prefer the Smallest Complete Solution
+### 2. Reuse Verified Information
 
-- Implement only the verified requirement and reuse established patterns.
-- Avoid speculative features, abstractions, configurability, and compatibility layers.
-- Simplify an implementation whose size or complexity is not justified by its behavior.
+- Inspect the requested code and its named authorities before changing anything. Resolve discoverable facts before asking Master.
+- Reuse established facts instead of reading or searching for them again. Recheck only the affected information when relevant state changes, evidence conflicts, or missing context makes it unreliable.
+- State material assumptions and surface meaningful trade-offs. Ask when unresolved ambiguity would materially change the result, and push back on conflicts with repository authority, safety, or Master's goal.
 
-### 3. Prefer Durable Root-Cause Solutions
+### 3. Act on Sufficient Evidence
 
-- For fixes and solution proposals, prefer the smallest complete approach that addresses the verified root cause, weighing correctness, performance, maintainability, and structural fit instead of optimizing for the smallest diff.
-- Prefer durable designs over symptomatic patches while keeping the current work proportional to the verified requirement and repository authority.
-- When a broader ideal design exceeds the current scope, implement a bounded durable step that fully satisfies current success criteria and preserves a clear path forward.
-- Record only remaining independent actionable work in the repository's canonical `deferred-feedback` owner. If no owner exists, report the proposed entry and obtain approval before creating one.
-- Promote epic-sized work to a TODO candidate or roadmap work unit. Do not defer work required for current correctness or acceptance.
+- Stop investigating once the evidence supports action. When the root cause is established, implement the smallest complete, durable fix within the authorized scope.
+- Weigh correctness, performance, maintainability, and structural fit rather than diff size alone. If a broader design exceeds scope, complete a bounded step that satisfies current acceptance criteria.
+- Reuse established patterns. Avoid speculative features, abstractions, configurability, compatibility layers, and handling for states repository invariants make impossible. Simplify complexity that the required behavior does not justify.
+- Touch only what the outcome and its verification require. Preserve unrelated user work, match local style, and remove only artifacts made obsolete by this change.
+- Record only independent remaining work in the canonical `deferred-feedback` owner. If none exists, propose the entry and obtain approval before creating an owner. Promote epic-sized work to a TODO candidate or roadmap unit; never defer current correctness or acceptance work.
 
-### 4. Make Surgical Changes
+### 4. Carry Authorization Forward
 
-- Touch only what the requested outcome and its verification require.
-- Preserve unrelated work and match local style.
-- Remove only artifacts made obsolete by the current change.
+- Continue already approved work without asking for confirmation again. Ask only when a material change exceeds that authorization or an applicable rule requires a distinct approval.
+- Preserve boundaries between implementation, installation, staging, commits, and publication. Check for relevant state changes before acting on an approved proposal.
 
-### 5. Work Toward Verifiable Goals
+### 5. Verify in Proportion to Risk
 
-- Define success checks before implementation.
-- Match verification strength to the claimed behavior and relevant failure paths.
-- Continue until the result is verified or a concrete blocker is established; report skipped checks and remaining uncertainty.
+- Define success checks before implementation. Verify the affected behavior and relevant failure paths with rigor proportionate to the actual risk.
+- Run focused checks first and honor required repository gates. Broaden or repeat checks when changes, failures, or unresolved concerns justify it.
+- Do not add tests merely to appear rigorous or use prose matching as a substitute for behavior verification.
+
+### 6. Finish When Complete
+
+- Continue until deliverables and required verification are complete or a concrete blocker prevents progress.
+- Once material constraints are resolved or clearly reported, provide the handoff and stop. Report the result, necessary evidence, skipped checks and their reasons, and remaining uncertainty without opening unrelated work.
+
+### 7. Delegate Selectively
+
+- Use a sub-agent only for an independent task when the expected benefit outweighs coordination cost.
+- Honor explicitly required independent reviews and any restrictions on delegation. Keep tightly coupled work local.
 
 ## Master Preferences
 
@@ -76,7 +86,7 @@ Every applied AGENTS.md must contain all four top-level sections and all three `
 
 ## Build the Project Configuration From Evidence
 
-Before drafting, inspect the root `AGENTS.md` and `CLAUDE.md`, README files, task runners such as Makefiles or package scripts, manifests, CI configuration, roadmap and specification indexes, generated-file notices, and other repository-local authorities that materially affect agent work. Use recent commit subjects only as evidence of a possible convention, never as authority by themselves.
+Before drafting, establish the relevant facts from root `AGENTS.md` and `CLAUDE.md`, README files, task runners such as Makefiles or package scripts, manifests, CI configuration, roadmap and specification indexes, generated-file notices, and other repository-local authorities that materially affect agent work. Reuse facts already verified during setup; read or search further only to resolve a gap, conflict, or relevant state change. Use recent commit subjects only as evidence of a possible convention, never as authority by themselves.
 
 Keep the index compact and point to authorities rather than copying domain design into AGENTS.md. Include only facts that affect navigation or decisions:
 
@@ -132,7 +142,7 @@ Classify existing AGENTS.md and substantive CLAUDE.md text as:
 - an actual conflict or ambiguity requiring a focused user decision;
 - unrelated content that must remain unchanged.
 
-Merge clear duplicates without weakening them. Preserve stricter rules and user-authored content. Moving content into the required hierarchy is allowed only in the displayed proposal and must not change its meaning. Do not rewrite a file merely for formatting or insert generated markers.
+Use this classification to rebuild the instruction body around the required hierarchy. Rewrite common guidance to express the seven core behaviors, merge duplicates without weakening them, and place project-specific rules under `Project Configuration`. Preserve the meaning of user-authored rules and applicable stricter constraints; ask only about actual semantic conflicts. Preserve unrelated content and tool-managed blocks, including their markers. Do not add generated markers or rewrite equivalent wording solely to match the template byte-for-byte.
 
 AGENTS.md is the canonical instruction body. Handle root CLAUDE.md as follows:
 
@@ -153,14 +163,28 @@ Do not edit nested AGENTS.md, nested CLAUDE.md, or other agent instruction forma
 
 ## Diagnose, Propose, and Apply
 
-Report the presence and coverage of the required structure, missing commit-message authority, duplicated or conflicting guidance, CLAUDE.md delegation state, and the local evidence available for project indexing. An explicit diagnosis-only request stops after this report and suppresses a proposal. Otherwise, when a verified gap exists:
+Report the complete review's findings: standard structure and behavior coverage, missing commit-message authority, duplicated or conflicting guidance, CLAUDE.md delegation state, and the evidence for project indexing. An explicit diagnosis-only request stops after this report. Otherwise, when reorganization is needed:
 
 1. Record the exact root AGENTS.md and CLAUDE.md paths and their current bytes, object hashes, or explicit absence.
 2. Resolve every conflict and the mandatory commit-message rule before presenting an applicable proposal.
 3. Show one complete combined diff for both files, labeling retained repository rules through their final placement.
 4. Explain ambiguous text left unchanged and every fact omitted for lack of authority.
-5. Ask for approval to apply the exact displayed diff. The user may instead request revision or decline it.
+5. Use existing authorization when it covers the exact displayed diff; otherwise ask for approval once. The user may request revision or decline it.
 6. Immediately before writing, re-read both targets and require them to match the snapshots used for the proposal. A change to either target invalidates approval for the combined diff.
 7. Apply only the approved diff, then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, retained overrides, and unrelated content.
 
 Proposal approval covers only the exact displayed root instruction-file diff. It does not authorize nested-file edits, tool setup, staging, committing, or publication.
+
+## Manual Verification Scenarios
+
+These scenarios describe expected outcomes for Master's separate verification of skill changes. They are not recorded results, and structural checks do not prove them.
+
+| Scenario | Expected behavior |
+| --- | --- |
+| General setup with fragmented or repetitive guidance | Review the complete body and propose one combined diff that reorganizes it around the standard, even when tool configuration is healthy. |
+| Guidance already meets the standard | Finish the full review and report no change; do not rewrite equivalent wording. |
+| Project-specific constraints or tool-managed blocks | Preserve their meaning and managed content; ask only about actual semantic conflicts. |
+| Substantive CLAUDE.md | Retain every non-duplicate or stricter rule in the combined proposal before replacing it with delegation. |
+| Tool-limited request, scoped continuation, or guidance `skip` | Keep the requested scope without adding a whole-file guidance proposal. |
+| Diagnosis-only request | Report the review findings without drafting or applying a proposal. |
+| Approved proposal or changed target snapshot | Reuse approval for the unchanged diff; if either target changes, invalidate the combined approval and prepare a current proposal. |
