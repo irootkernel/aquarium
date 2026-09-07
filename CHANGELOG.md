@@ -22,6 +22,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Schedule new-project test setup after executable product behavior exists and stop setup when implementation prerequisites are missing.
 - Install and diagnose Ouroboros integrations independently in each Codex home, with per-home MCP binding and readiness plus supported-version upgrade guidance.
 - Allow all Orca reviewers to write review-related files outside the current worktree without output-location warnings or failed reviews, while preserving worktree and Git protections.
 - Wait for development-build request admission in generated `post-commit` hooks before returning, keep request failures visible, and detach only the build worker. Preserve queued requests when worker launch fails and support migration of recorded background-request hooks through approved re-enrollment. Producer probes now time out, non-main hooks skip requests, legacy hooks report outdated, and approved recovery clears matching queued requests. Queue and diagnostic storage errors preserve structured failure reporting.

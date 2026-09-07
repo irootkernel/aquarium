@@ -2,6 +2,32 @@
 
 `TESTING.md` enrolls a repository in `aquarium-test-contract/v1`. The executable handler remains authoritative; disagreement between the document and the Makefile or package scripts is a blocking contract defect.
 
+## Setup Prerequisites
+
+`new-project` schedules the testing-foundation work unit after the implementation that provides all of the following. `test-setup` checks that they exist before proposing configuration:
+
+- Product source in the chosen implementation language, with an established toolchain recorded in build or dependency configuration.
+- Repository-supported commands that build, run, or test the actual implementation. These may use the language's native tools or the repository's existing package manager. A Make or Bun root authority, the five common test entrypoints, and a complete test suite need not exist yet; creating or adapting them is setup work.
+- Minimum executable product behavior exposed through a public interface, with a defined observable result that meaningful tests can exercise. Inspect the implementation and its public usage evidence; manifests, empty commands, and planning documents alone do not prove this condition.
+
+If any prerequisite is missing or cannot be verified, `test-setup` reports the gap and the implementation or evidence needed before another explicit invocation. It stops without proposing or creating handlers, tests, environment configuration, or `TESTING.md`. Do not implement a placeholder product to satisfy setup, create passing no-op tests, or substitute a documentation-only facade. Unimplemented product behavior cannot justify `not applicable` or a legacy waiver.
+
+Once the prerequisites are present, missing test coverage and root orchestration belong in the normal setup proposal. An existing npm, pnpm, or Yarn project proceeds to the audit and `AQTEST-008` waiver decision; its package manager alone does not trigger the prerequisite stop or grant a waiver. Structural inspection remains conservative evidence only; it does not evaluate whether the product behavior is meaningful or testable, and it does not authorize executing the product.
+
+### Manual Cross-Skill Scenarios
+
+Master verifies these scenarios through the actual skills. These are expected outcomes, not recorded test results; structural validation does not prove them.
+
+| Scenario | Expected `new-project` roadmap | Expected `test-setup` behavior |
+| --- | --- | --- |
+| The repository contains only planning documents. | Place the testing-foundation work after tasks that supply the prerequisites, never ahead of the implementation. | Report missing prerequisites and re-entry conditions without proposing or writing setup files. Adding only a manifest or empty handler must not change the decision. |
+| `EPIC-001` delivers a testable walking skeleton. | Make testing-foundation its final task, dependent on the skeleton implementation; subsequent feature expansion depends on setup. | Stop before the prerequisites exist. Once they exist, propose meaningful tests and common entrypoints even if the full test contract is absent. |
+| The earliest testable vertical slice arrives after `EPIC-001`. | Place testing-foundation immediately after that slice and before broader feature expansion, with explicit dependencies. | Stop while only planning or incomplete scaffolding exists; proceed with the normal proposal after the slice supplies all prerequisites. |
+| A ready product has source, toolchain, native build or run commands, and defined public behavior, but no root Makefile or test suite. | For a new project, keep setup after the task that provides that behavior. An existing project's standalone setup needs no new roadmap. | Read the relevant product source and public-interface definitions under the same symlink, sensitive-file, and output-redaction rules. Propose the missing root authority and meaningful tests without executing the product during prerequisite inspection. |
+| An existing TypeScript product has executable behavior and npm, pnpm, or Yarn commands. | Not applicable to greenfield roadmap creation. | Proceed to the contract audit and the explicit `AQTEST-008` waiver decision. Do not stop merely because Make or Bun orchestration is absent, and do not retain the package manager without the required waiver approval. |
+
+In the ready scenarios, verify that `test-setup` still requires approval of the exact proposed diff and preserves its separate authorization boundary for effectful E2E execution. The prerequisite implementation retains its own verification; the later setup work does not excuse untested product changes.
+
 ## Rules
 
 | ID | Requirement | Waiver |

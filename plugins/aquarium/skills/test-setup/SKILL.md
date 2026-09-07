@@ -13,12 +13,14 @@ Read [contract.md](references/contract.md), then read the applicable sections of
 
 1. Resolve one Git root and read every applicable instruction file.
 2. Inspect HEAD, branch, upstream, staged, unstaged, untracked, and conflicted state. Preserve unrelated work.
-3. Require the supplied repository root itself to be a regular non-symlink directory. Read only regular non-symlink root Makefiles, package manifests and lockfiles, test configuration, CI, existing test suites, public usage documentation, non-secret environment setup, and root `TESTING.md` when present. Reject any symlinked authority or ancestor before reading it.
+3. Require the supplied repository root itself to be a regular non-symlink directory. Read only regular non-symlink root Makefiles, package manifests and lockfiles, test configuration, CI, existing test suites, public usage documentation, non-secret environment setup, root `TESTING.md` when present, and repository product source and public-interface definitions needed to assess the setup prerequisites. Reject any symlinked input or ancestor before reading it. Reading product source does not authorize executing it.
    Never open `.env*`, authentication, key, token, secret, credential stores, or credential-named paths. Do not emit raw authority contents or inline credential values from ordinary source, test, manifest, or Make files read for structural inspection. Derive variable names only from non-secret documentation or templates proven to contain placeholders, or from redacted output of the owning tool; report a gap when values would be required.
 4. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_testing.py --repository <git-root>`. Treat its JSON as conservative structural evidence only: it does not execute Make, Bun, tests, formatters, package hooks, or arbitrary project code and cannot prove test semantics or waiver equivalence.
 5. If Python is unavailable or the inspection fails, report the gap and perform the same read-only inspection manually. Do not install a runtime or dependency as a fallback.
 
 Classify the root as `make`, `typescript-bun`, or `polyglot-make`. A TypeScript subproject does not displace a polyglot repository's root Make authority. If multiple plausible product roots remain after inspection, ask the user to select the intended root before drafting changes.
+
+Check the shared [setup prerequisites](references/contract.md#setup-prerequisites) against the implementation and its public usage evidence before auditing for a setup proposal. If any prerequisite is absent or unverifiable, stop without proposing or applying setup files. Report the missing evidence, the implementation needed, and when to invoke `test-setup` again. The inspector's selected profile and structural status do not establish product readiness.
 
 ## Audit the Contract
 

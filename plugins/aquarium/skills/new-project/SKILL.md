@@ -15,6 +15,8 @@ Select `single-scope` when one implementation owner has one roadmap. Select `mul
 
 The PRD owns product intent; each created dossier owns temporary implementation scope and acceptance until closeout. Use the shared default `EPIC-NNN` and per-roadmap `TASK-NNN` contract. Do not add a repository-local Aquarium state file or documentation validator.
 
-Include an initial testing-foundation work unit that establishes `aquarium-test-contract/v1` through a later explicit `$aquarium:test-setup` invocation; a new project is not eligible for a legacy waiver.
+Include a testing-foundation work unit that establishes `aquarium-test-contract/v1` through a later explicit `$aquarium:test-setup` invocation. Read the shared [setup prerequisites](../test-setup/references/contract.md#setup-prerequisites) and make the work unit depend on the implementation that supplies them. If `EPIC-001` delivers a testable walking skeleton, place this work unit as its final task. Otherwise place it immediately after the earliest vertical slice that supplies the prerequisites and before broader feature expansion.
+
+Record the tasks that establish the prerequisites and the evidence required to accept them in the roadmap. Make subsequent feature expansion depend on the testing-foundation work unit. Planning documents alone do not satisfy those dependencies. Keep tests needed to verify the preceding implementation in its own tasks. A new project is not eligible for a legacy waiver.
 
 Run upstream `$qa` on the draft, adjudicate every issue, then present the exact paths and complete proposed diff. Apply documents only after explicit approval and snapshot recheck. Report resulting paths, validation, unresolved decisions, and the exact next explicit skill; do not begin delivery.
