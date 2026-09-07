@@ -11,6 +11,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Raise the minimum Mulgae version to v0.1.19 and consume command-result v6.
+- Delegate Gaori and Mulgae asynchronous lifecycles to their upstream skills.
+- Separate execution completion from evidence quality and approval.
+- Count exact composite recovery within its original review round.
 - Raise the minimum Gaori version to v0.1.16, preserve asynchronous MCP awaiting during timing queries, diagnose the optional `use-gaori-status` skill independently, and support Experimental Dart and Patrol parser selection from verified commands.
 - Make `dev-setup` automatically diagnose evidenced repository configuration, propose only necessary changes, and retain ownership of root AGENTS.md and CLAUDE.md while trusting canonical global skill presence.
 - Preserve setup bundle v1 while preparing global components once and applying repository configuration in target order.

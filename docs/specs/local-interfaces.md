@@ -6,9 +6,9 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `7` | `task-handler` | Plan, implementation, refinement, typed verification, Medium-or-higher re-review, Low disposition, goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `8` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with Low-only hardening deferral and a validation-bound closeout review exception |
-| `aquarium-validation-v2` | `8` | `epic-handler` and `epic-validator` | Baseline, guarded audit, Medium-or-higher remediation and re-review, local Low disposition, assessment, and closeout |
+| `aquarium-task-v2` | `8` | `task-handler` | Plan, implementation, refinement, typed verification, Medium-or-higher re-review, Low disposition, goal assessment, approval, and closeout |
+| `aquarium-goal-v2` | `9` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with Low-only hardening deferral and a validation-bound closeout review exception |
+| `aquarium-validation-v2` | `9` | `epic-handler` and `epic-validator` | Baseline, guarded audit, Medium-or-higher remediation and re-review, local Low disposition, assessment, and closeout |
 | `aquarium-design-v2` | `2` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout |
 | `aquarium-war-room-v2` | `2` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout |
 

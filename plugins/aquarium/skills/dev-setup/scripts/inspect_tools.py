@@ -34,7 +34,7 @@ SCHEMA_VERSION = "aquarium-dev-setup-inspection.v17"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v5"
+MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v6"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
@@ -130,17 +130,20 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
         "6bb336f321a83bba429c4173942eb977000014c627245839b3434da7d1055602",
         "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9",
         "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
         "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
     },
     "aquarium-goal-v2.yaml": {
+        "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
         "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
         "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3",
         "8ca12a8ba36e9dd035bc70c903b8a5a0a9e4fd6db00cf75e2448f66082ab6ac6",
     },
     "aquarium-validation-v2.yaml": {
+        "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
         "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",
         "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
     },
@@ -416,7 +419,7 @@ def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 18)
+    return bool(match and int(match.group(1)) >= 19)
 
 
 def supported_sorage_version(version: str | None) -> bool:

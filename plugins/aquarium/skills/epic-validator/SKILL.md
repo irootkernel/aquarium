@@ -5,6 +5,8 @@ description: "Cold-validate one completed roadmap epic through a bounded direct 
 
 # Epic Validator
 
+Read [mulgae-review-contract.md](../../references/mulgae-review-contract.md) for Aquarium review inputs, terminal evidence, recovery acceptance, and round counting.
+
 Validate a completed epic independently of how it was delivered. Audit first, remediate the first confirmed findings once, run one confirmation review, and require user direction before any further correction or review. Read [release-notes.md](../../references/release-notes.md). Do not invoke `$aquarium:task-handler`, `$aquarium:epic-handler`, their phase skills, `$aquarium:independent-review`, or `$aquarium:orca-review`.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md).
@@ -39,11 +41,11 @@ Accept that opt-out only before the first managed-session mutation. Afterward cl
 
 Do not create a goal, edit files, invoke providers, stage, commit, or alter external state before approval.
 
-When a selected long or noisy check is routed through Gaori, reference `$use-gaori` and follow it when available. If it is missing and repository policy requires it, stop and route to `$aquarium:dev-setup-global`; otherwise run the repository's original documented command directly and report that evidence compression was unavailable. Never infer an unknown original command, and keep command result, extraction quality, and acceptance authority separate throughout audits and remediation.
+When a selected check uses Gaori, read [gaori-integration.md](../../references/gaori-integration.md). Delegate native execution to `$use-gaori` and consume the exact command result and evidence through that contract, including prerequisite routing and optional direct-command fallback.
 
-Before each Mulgae review, reference `$use-mulgae` and follow it. When the skill is unavailable and repository policy requires it, stop and route the gap to `$aquarium:dev-setup-global`. When a required project MCP is missing, route the gap to `$aquarium:dev-setup`. Otherwise report the unavailable integration once, use the configured CLI fallback, and preserve preflight, run, publication, and findings evidence. Never start a second MCP server or blindly retry an uncertain review mutation.
+Before each Mulgae review, supply the complete target, goal revision, ordinal, mode, and approved scope through the shared Mulgae contract. Delegate native execution and recovery to `$use-mulgae`; use the shared prerequisite routing and consume only established terminal evidence.
 
-For each complete whole-epic root review, record the next positive ordinal, exact committed run ID, finding IDs, reported severity, effective priority, validity, and disposition. Round one is `remediation-eligible`; round two and every user-authorized later review are `confirmation-only`. On resumption, reconstruct the ordinal from verbose validation Procedure history and exact run IDs; an unprovable ordinal stops before review. Cold validation never selects `hardening-deferral-eligible` mode.
+For each complete whole-epic root or verified composite review, record the next positive ordinal, exact committed run ID, finding IDs, reported severity, effective priority, validity, and disposition. Round one is `remediation-eligible`; round two and every user-authorized later review are `confirmation-only`. On resumption, reconstruct the ordinal from verbose validation Procedure history and exact run IDs with verified original-root lineage; an unprovable ordinal stops before review. Cold validation never selects `hardening-deferral-eligible` mode.
 
 ## Audit the Epic Directly
 
@@ -52,7 +54,7 @@ Run the audit without an active goal and without source mutation:
 1. Build a requirement-to-owner-to-production-to-test-to-document matrix across every member task. Trace runtime wiring, consumers, persistence, concurrency, migrations, generated artifacts, failure and recovery behavior, operational guidance, external dependencies, roadmap consistency, repository-defined dossier disposition when applicable, and coverage by the completed epic's canonical sources.
 2. Inspect current code and evidence directly. Run only repository-authorized checks needed for the epic claim. Keep current agent-run, explicit user-run, unavailable, forbidden, stale, external, live, commit, and upstream publication evidence distinct; narrow green checks do not prove uncovered requirements.
 3. Run Mulgae on one exact latest epic target that excludes unrelated work and includes every epic-owned staged, unstaged, untracked, generated, and derived file.
-4. Treat a Mulgae review as operationally complete only when `coverage_status=complete`, `ci_decision=pass`, `publication_status=committed`, and the findings query succeeds. Classify that complete review as clean only when zero unresolved valid findings remain; otherwise apply the bounded remediation or explicit disposition rules below. Provider success or exit status alone is insufficient.
+4. Accept a full-target root or its verified composite under the shared Mulgae contract, counting each original root once. Treat a Mulgae review as operationally complete under the shared contract, independently of CI outcome and finding adjudication. Classify that complete review as clean only when `ci_decision=pass` and zero unresolved valid findings remain; otherwise apply the bounded remediation or explicit disposition rules below. Provider success or exit status alone is insufficient.
    Record `structured_extraction_status` independently as `structured`, `mixed`, or `reports_only`. `reports_only` is not itself a failure and does not replace or relax any completion condition above; the accepted reports remain authoritative, and every extracted finding remains an advisory hypothesis that requires local verification.
 5. Verify every candidate finding against current authority and implementation. Record only confirmed gaps; do not turn review hypotheses into work automatically.
 
@@ -85,7 +87,7 @@ Verify the returned commit snapshot, residue, and hook evidence before completin
 
 After all initial remediation goals complete, discard the prior matrix, findings, checks, and review result. With no active goal, repeat the direct audit and run exactly one round-two whole-epic Mulgae confirmation review from the latest committed snapshot. Do not start a third review automatically.
 
-If round two is incomplete, stop without retry. If it has no valid finding, continue. A valid Medium-or-higher finding blocks validation; ask for one correction-and-review budget or stop. Risk acceptance and deferral are unavailable. When only Low findings remain, handle them inside the approved envelope. Self-evident fixes receive integrity checks, bounded behavioral fixes receive a focused test, future risks go to the canonical deferred-feedback owner, and structural work becomes a TODO candidate. State that the review predates changed bytes.
+If round two is incomplete, follow supported exact recovery within the approved envelope; otherwise stop without resubmitting the review. If CI passes and it has no valid finding, continue. A failed CI decision remains a verification gap even without findings; return it to its owning check or implementation within the approved remediation envelope, or stop for direction when no further remediation and review are authorized. A valid Medium-or-higher finding blocks validation; ask for one correction-and-review budget or stop. Risk acceptance and deferral are unavailable. When only Low findings remain, handle them inside the approved envelope. Self-evident fixes receive integrity checks, bounded behavioral fixes receive a focused test, future risks go to the canonical deferred-feedback owner, and structural work becomes a TODO candidate. State that the review predates changed bytes.
 
 Resolve every `Needs confirmation` finding before selecting the final-review decision. Use existing read-only evidence first. If resolution requires a check, run it only when the approved validation envelope already authorizes it; otherwise leave the decision unset and ask for bounded confirmation authority. Reclassify the same finding as `Valid` or `Invalid`, manually rework `final-review`, and evaluate the decision again. Do not consume another review ordinal unless the provider review runs again.
 
@@ -95,7 +97,7 @@ With Podway active, record each remediation group, fresh audit, reported severit
 
 When an external blocker is resolved, revalidate its exact committed revision and evidence before restarting the audit. Product or canonical-document changes make affected evidence stale. A completed Low disposition may use its required local checks without provider re-review, but the preceding review must be recorded as predating those bytes. An approved promoted-evidence projection remains outside the review target and receives commit-boundary validation.
 
-Declare completion only when every required check has current passing evidence, whole-epic Mulgae evidence is operationally complete, every member task and the epic have roadmap-defined successful states, no epic-owned residue remains, and one of these closeout conditions holds:
+Declare completion only when every required check has current passing evidence, whole-epic Mulgae evidence is operationally complete with passing CI, every member task and the epic have roadmap-defined successful states, no epic-owned residue remains, and one of these closeout conditions holds:
 
 - The fresh Codex audit and latest review are clean.
 - No valid Medium-or-higher finding remains, and every Low finding has a completed `low-self-evident-fix`, `low-bounded-fix`, `low-deferred-feedback`, or `low-todo-candidate` record with the required local evidence.

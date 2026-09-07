@@ -40,7 +40,13 @@ Task-owned gaps reopen the owning task when the roadmap defines that path. Cross
 
 A confirmation-only Medium-or-higher finding stops for a new bounded correction-and-review authorization rather than entering an unbounded loop or accepting risk. Eligible Low findings are handled locally without another provider review, with the preceding review identified as predating changed bytes. A zero-finding audit creates no validation-record commit, and accepted runtime evidence never becomes roadmap history by default.
 
+## Native Check and Review Execution
+
+`use-gaori` and `use-mulgae` own asynchronous execution and native lifecycle decisions. Aquarium phase skills pass exact authorized inputs and consume terminal evidence through the [Gaori integration contract](../../plugins/aquarium/references/gaori-integration.md) and the Mulgae contract below. Pending invocations and cancellation acknowledgements do not satisfy phase postconditions.
+
 ## Review Targets
+
+The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns v6 response consumption, asynchronous waiting, and exact recovery accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next full-target review; recovery of an older capture cannot prove corrected bytes.
 
 The shared review contract accepts staged changes, `HEAD`, one commit, a two-dot or three-dot range, one roadmap task or epic resolved to Git, or an explicitly scoped special investigation. Dirty working-tree content is never silently added to a committed target.
 

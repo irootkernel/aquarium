@@ -302,8 +302,8 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.7",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.18",
-        mulgae_output_schema: str = "mulgae-command-result.v5",
+        mulgae_version: str = "v0.1.19",
+        mulgae_output_schema: str = "mulgae-command-result.v6",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
         mulgae_mcp_mode: str | None = None,
@@ -3100,7 +3100,7 @@ else:
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.18")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.19")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -3622,22 +3622,65 @@ else:
         self.assertEqual(entry["preview"]["procedure_id"], "custom-task-v2")
         self.assertEqual(podway["readiness_status"], "degraded")
 
+    def test_prior_canonical_digest_preserves_readiness_and_local_bytes(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        prior_digests = {
+            "aquarium-task-v2.yaml": "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
+            "aquarium-goal-v2.yaml": "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
+            "aquarium-validation-v2.yaml": "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
+        }
+        managed = self.repository.resolve() / ".podway/procedures"
+        before = {name: (managed / name).read_bytes() for name in prior_digests}
+        file_sha256 = inspect_tools.file_sha256
+
+        def installed_digest(path: Path) -> str | None:
+            if path.parent == managed and path.name in prior_digests:
+                return prior_digests[path.name]
+            return file_sha256(path)
+
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+            mock.patch("inspect_tools.file_sha256", side_effect=installed_digest),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        for entry in podway["managed_procedures"]:
+            name = Path(entry["path"]).name
+            if name not in prior_digests:
+                continue
+            with self.subTest(procedure=name):
+                self.assertEqual(entry["update_explanation"], "prior_canonical")
+                self.assertEqual(entry["source_state"], "valid_customization")
+                self.assertFalse(entry["matches_source"])
+                self.assertEqual((managed / name).read_bytes(), before[name])
+        self.assertEqual(podway["readiness_status"], "ready")
+        self.assertEqual(podway["status"], "configured")
+        self.assertFalse(podway["migration_required"])
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
                     "6bb336f321a83bba429c4173942eb977000014c627245839b3434da7d1055602",
                     "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9",
                     "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
                     "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
                     "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
                     "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3",
                     "8ca12a8ba36e9dd035bc70c903b8a5a0a9e4fd6db00cf75e2448f66082ab6ac6",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
                     "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",
                     "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
                 },
@@ -4055,7 +4098,7 @@ else:
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.18")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.19")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -4126,10 +4169,13 @@ else:
             ("v0.1.15", False, "degraded"),
             ("v0.1.16", False, "degraded"),
             ("v0.1.17", False, "degraded"),
-            ("v0.1.18", True, "installed"),
-            ("v0.1.018", False, "degraded"),
-            ("v0.1.0018", False, "degraded"),
-            ("v0.1.18-rc.1", False, "degraded"),
+            ("v0.1.18", False, "degraded"),
+            ("v0.1.19", True, "installed"),
+            ("0.1.19", True, "installed"),
+            ("v0.1.20", True, "installed"),
+            ("v0.1.019", False, "degraded"),
+            ("v0.1.0019", False, "degraded"),
+            ("v0.1.19-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -4288,15 +4334,23 @@ else:
         self.assertEqual(config["reason_codes"], ["config_yaml_invalid"])
 
     def test_mulgae_legacy_command_envelope_is_unsupported_not_fabricated(self) -> None:
-        self.install_fake_tools(mulgae_output_schema="mulgae-command-result.v4")
-        self.install_mulgae_config()
-        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-        self.assertEqual(mulgae["status"], "degraded")
-        probe = mulgae["probes"]["doctor"]
-        self.assertTrue(probe["ok"])
-        self.assertEqual(probe["error_code"], "unsupported_output_schema")
-        self.assertEqual(mulgae["health"]["doctor_contract"], "unsupported")
-        self.assertEqual(mulgae["health"]["config_v3"]["status"], "unverifiable")
+        for schema in (
+            "mulgae-command-result.v4",
+            "mulgae-command-result.v5",
+            "mulgae-command-result.v7",
+        ):
+            with self.subTest(schema=schema):
+                self.install_fake_tools(mulgae_output_schema=schema)
+                self.install_mulgae_config()
+                mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+                self.assertEqual(mulgae["status"], "degraded")
+                probe = mulgae["probes"]["doctor"]
+                self.assertTrue(probe["ok"])
+                self.assertEqual(probe["error_code"], "unsupported_output_schema")
+                self.assertEqual(mulgae["health"]["doctor_contract"], "unsupported")
+                self.assertEqual(
+                    mulgae["health"]["config_v3"]["status"], "unverifiable"
+                )
 
     def test_mulgae_skill_is_independent_from_cli_and_mcp_health(self) -> None:
         self.install_mulgae_skill(root=self.home / ".agents/skills")
@@ -4617,7 +4671,7 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v5",
+                    "schema_version": "mulgae-command-result.v6",
                     "result": {
                         "kind": secret,
                         "readiness": secret,
@@ -5351,7 +5405,7 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v5",
+                    "schema_version": "mulgae-command-result.v6",
                     "result": {
                         "kind": "diagnosed",
                         "doctor": {"schema_version": "mulgae-doctor-result.v2"},

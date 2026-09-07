@@ -34,13 +34,13 @@ Ignored runtime logs, excerpts, transcripts, reports, provider stdout or stderr,
 
 ## Review Evidence
 
-A task-owned Mulgae review is operationally complete only when its target digest and kind are exact, coverage is complete, CI decision passes, publication is committed, the findings query succeeds, and every returned finding has a local disposition. Independent Review and Orca Review use their separate backend result and lifecycle contracts. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
+A task-owned Mulgae review is operationally complete only when its target digest and kind are exact, coverage is complete, publication is committed, the findings query succeeds, and native status is terminal. The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) counts each original root once, including completion through a verified composite. CI failure still consumes that round. Approval separately requires passing CI and the owning workflow's completed finding dispositions. Independent Review and Orca Review use their separate backend result and lifecycle contracts. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
 
 Provider findings are hypotheses. Aquarium checks them against current requirements, code, callers, tests, and ownership before remediation or deferral. A changed target makes prior review evidence stale unless the owning contract explicitly permits the narrow change.
 
 ## Check Evidence
 
-Repository instructions and task runners select required commands. Gaori may wrap a known command but never chooses an unknown gate, changes authorization, or replaces the child exit code.
+Repository instructions and task runners select required commands. Gaori may wrap a known command but never chooses an unknown gate, changes authorization, or replaces the child exit code. The [Gaori integration contract](../../plugins/aquarium/references/gaori-integration.md) separates that result from execution and extraction failures and from Aquarium acceptance. A Gaori internal error or unknown outcome is not successful verification; `no_match` alone is not a failed check.
 
 Skipped, forbidden, missing, or side-effectful checks remain explicit gaps. A missing prerequisite fails a complete enrolled gate rather than becoming a successful skip.
 
