@@ -4,7 +4,7 @@ Skill changes are contract changes, even when the implementation is Markdown. Tr
 
 ## Before Editing
 
-1. Read the complete owning `SKILL.md`, its directly linked references, the matching Procedure if one exists, and the relevant validator assertions.
+1. Read the complete owning `SKILL.md`, its directly linked references, and the matching Procedure if one exists.
 2. Identify whether the rule belongs in one entrypoint or a shared reference. Put cross-skill semantics in one shared owner and keep entrypoints focused on routing and lifecycle order.
 3. Trace callers and consumers. A leaf skill can be correct in isolation while breaking an orchestrator's handoff or approval boundary.
 4. Confirm the public disclosure impact in the root README, privacy policy, terms, testing contract, and changelog.
@@ -25,4 +25,6 @@ For cross-repository work, carry the exact repository and commit identity. A dow
 
 ## Verification
 
-Run the focused checks for the changed skill and its helpers first. Then run `ruby tests/validate.rb` to catch cross-skill and documentation drift. Scenario-focused tests are required when changing approval behavior, recovery, cross-skill handoffs, or claims that a phrase-only validator cannot exercise.
+Run `ruby tests/validate.rb` for package structure and local references. Run focused Python tests when executable helpers change. Keep these checks minimal: do not encode skill sentences, ordering, whitespace, or private source fragments as assertions.
+
+Master performs skill functional verification separately after updates. Report which multi-step workflows, decision points, recommendations, approval boundaries, recovery paths, and handoffs need manual verification. Do not add an automated LLM gate or treat a passing structural check as a functional result.

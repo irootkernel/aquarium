@@ -81,7 +81,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - `plugins/aquarium/skills/*/SKILL.md` and their linked references own workflow behavior; keep conditional detail in references instead of expanding every entrypoint.
 - `plugins/aquarium/assets/podway/procedures/` owns the Procedure sources installed into target repositories.
 - `Makefile` is the executable test authority, and `TESTING.md` owns the enrolled `aquarium-test-contract/v1` stage, framework, environment, diagnostic, and waiver mapping.
-- `tests/validate.rb` checks cross-skill, procedure, documentation, and release-contract invariants. Python pytest unit and E2E tests cover isolated logic and black-box inspector scenarios; the approved legacy `unittest` integration suites cover executable inspection, commit-gate, and bundle-normalization boundaries.
+- `tests/validate.rb` checks package metadata, parseable data, local references, basic Procedure structure, and release-version identity. Python tests cover executable helpers' inputs, outputs, errors, and filesystem safety. Neither proves skill behavior.
 - `README.md`, `PRIVACY.md`, and `TERMS.md` are public product documentation and must stay aligned with shipped behavior.
 - Use the commands in the release policy below as the complete release gate. For an ordinary change, run the focused subset that covers the changed files and `git --no-pager diff --check`.
 
@@ -99,7 +99,8 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Aquarium does not vendor third-party Lora, Lore, Ouroboros, Deslop, Humanizer, or im-not-ai sources. Preserve the exact-upstream installation and provenance boundaries in `dev-setup-global`; `dev-setup` trusts canonical global skill presence and owns repository guidance.
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.
 - Preserve approval boundaries between diagnosis, network lookup, installation, native configuration, repository guidance, staging, commits, and publication.
-- Green phrase or schema validators prove only their bounded contracts. Add scenario-focused coverage when changing cross-skill handoffs or approval behavior.
+- Keep Ruby and Python validation minimal. Check objective structure and executable code behavior only; do not pin skill prose, word order, line wrapping, blank lines, diagnostic sentences, private helper names, or source-code fragments. Do not add text matching as a substitute for skill verification.
+- Master performs skill functional verification separately after skill updates, including multi-step execution, decisions, recommendations, approval boundaries, and cross-skill handoffs. Do not add automated LLM evaluations to `make test` or claim that its success verifies these behaviors. Report the affected manual checks and leave their outcome unverified until Master provides it.
 - Treat ignored Mulgae, Gaori, Podway, derived Sorage, and disposable runtime artifacts as local workflow evidence, never tracked documentation authority. Promote only reviewed bounded non-sensitive structured evidence under the shared Aquarium evidence-residency contract when a durable downstream reference is necessary. Declare a custom root only with the exact Project Configuration entry `Aquarium evidence root: <repository-relative-path>`; otherwise use `evidence/aquarium/`.
 - Preserve unrelated staged, unstaged, and untracked work. Do not include local runtime state or setup manifests in a task unless Master explicitly puts them in scope.
 

@@ -161,6 +161,73 @@ class TestInspectGlobalTools:
         assert paired_skill["status"] == "configured"
         assert paired_skill["installations"][0]["path"] == str(agents_skill)
 
+    @pytest.mark.parametrize(
+        "case",
+        ["valid", "missing", "partial", "invalid", "duplicate", "alternate", "symlink"],
+    )
+    def test_gaori_status_skill_is_independent(self, case: str) -> None:
+        inspector = inspect_global_tools.load_inspector()
+        execution = self.home / ".agents/skills/use-gaori"
+        for name in inspector.GAORI_SKILL_FILES:
+            path = execution / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("---\nname: use-gaori\n---\n", encoding="utf-8")
+        canonical = self.home / ".agents/skills/use-gaori-status"
+        alternate = self.codex_home / "skills/use-gaori-status"
+        if case != "missing":
+            target = alternate if case == "alternate" else canonical
+            target.mkdir(parents=True)
+            if case != "partial":
+                name = "wrong-name" if case == "invalid" else "use-gaori-status"
+                target.joinpath("SKILL.md").write_text(
+                    f"---\nname: {name}\n---\n", encoding="utf-8"
+                )
+            if case == "duplicate":
+                alternate.mkdir(parents=True)
+                alternate.joinpath("SKILL.md").write_bytes(
+                    canonical.joinpath("SKILL.md").read_bytes()
+                )
+            if case == "symlink":
+                external = self.base / "external.md"
+                canonical.joinpath("SKILL.md").rename(external)
+                canonical.joinpath("SKILL.md").symlink_to(external)
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            payload = inspect_global_tools.inspect_global(
+                str(self.repository), 1.0, False, components=("gaori",)
+            )
+        assert set(payload["tools"]) == {"gaori"}
+        gaori = payload["tools"]["gaori"]
+        assert gaori["paired_skill"]["status"] == "configured"
+        assert gaori["cli"]["status"] == "missing"
+        status_skill = gaori["status_skill"]
+        expected = (
+            "configured"
+            if case == "valid"
+            else "missing"
+            if case == "missing"
+            else "degraded"
+        )
+        assert status_skill["status"] == expected
+        assert status_skill["duplicate"] is (case == "duplicate")
+        assert status_skill["canonical_path"] == str(canonical)
+        if case == "valid":
+            files = status_skill["installations"][0]["files"]
+            assert len(files) == 1
+            assert files[0]["path"] == "SKILL.md"
+            assert files[0]["sha256"]
+
+    def test_project_gaori_status_skill_trusts_only_presence(self) -> None:
+        canonical = self.home / ".agents/skills/use-gaori-status"
+        canonical.mkdir(parents=True)
+        canonical.joinpath("SKILL.md").write_text("invalid content", encoding="utf-8")
+        payload = self.run_inspector(PROJECT_SCRIPT)
+        assert payload["trusted_global_skills"]["use-gaori-status"] == {
+            "canonical_path": str(canonical),
+            "present": True,
+            "verification_scope": "presence_only",
+        }
+
     def test_global_ouroboros_probe_uses_neutral_working_directory(self) -> None:
         inspector = mock.MagicMock()
         inspector.SANHO_SKILL_FILES = ()
@@ -594,7 +661,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v16"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v17"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -650,7 +717,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v16"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v17"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(

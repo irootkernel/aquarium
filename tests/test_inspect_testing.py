@@ -77,30 +77,25 @@ class TestInspectTesting:
             """,
         )
 
-    def write_make_contract(self) -> None:
+    def write_make_contract(
+        self, commands: dict[str, str] | None = None, preamble: str = ""
+    ) -> None:
+        recipes = {
+            "test": "\n".join(
+                f"$(MAKE) {stage}" for stage in inspect_testing.MAKE_STAGES
+            ),
+            **{stage: "@true" for stage in inspect_testing.MAKE_STAGES},
+            **(commands or {}),
+        }
         self.write(
             "Makefile",
-            """\
-            .PHONY: test test-prepare test-unit test-int test-e2e
-
-            test:
-            \t$(MAKE) test-prepare
-            \t$(MAKE) test-unit
-            \t$(MAKE) test-int
-            \t$(MAKE) test-e2e
-
-            test-prepare:
-            \t@true
-
-            test-unit:
-            \t@true
-
-            test-int:
-            \t@true
-
-            test-e2e:
-            \t@true
-            """,
+            preamble
+            + ".PHONY: test test-prepare test-unit test-int test-e2e\n\n"
+            + "\n\n".join(
+                name + ":\n" + "\n".join("\t" + line for line in recipe.splitlines())
+                for name, recipe in recipes.items()
+            )
+            + "\n",
         )
 
     def write_bun_adapter(self) -> None:
@@ -218,6 +213,300 @@ class TestInspectTesting:
         assert result["make"]["aggregate_recursive_calls"] == list(
             inspect_testing.MAKE_STAGES
         )
+
+    def test_unrelated_make_configuration_preserves_stage_behavior(self) -> None:
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write_make_contract(
+            {
+                "test": "@printf 'Running tests\\n'\n"
+                + "\n".join(
+                    f"$(MAKE) '{stage}'" for stage in inspect_testing.MAKE_STAGES
+                ),
+                "test-unit": "$(PYTHON) -m 'pytest' tests/unit",
+                "test-int": "$(PYTHON) -m pytest tests/integration",
+            },
+            preamble="FILES := one.py \\\n  two.py\n"
+            "ifneq ($(wildcard .venv/bin/python),)\nPYTHON := .venv/bin/python\n"
+            "else # fallback\nPYTHON := python3\nendif # interpreter\n"
+            "define UNUSED_MESSAGE\nnot a rule\nendef # message\n"
+            "BUN ?= bun\nUNUSED = $(info not expanded)\n"
+            "unrelated: BUN = false\n",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["make"]["output_unverifiable"] is False
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == parsers["test-int"] == "pytest"
+
+    def test_make_read_time_output_affects_parser_but_not_stage_order(self) -> None:
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write_make_contract(
+            {"test-unit": "pytest unit", "test-int": "pytest integration"},
+            preamble="$(info Building tests)\n",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["make"]["output_unverifiable"] is True
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == parsers["test-int"] == "generic"
+
+    @pytest.mark.parametrize(
+        ("declarations", "expected"),
+        [
+            ("PYTHON := false\nPYTHON := python3\n", "pytest"),
+            ("ifdef OPTIONAL_RUNNER\nPYTHON := python3\nendif # optional\n", "generic"),
+        ],
+    )
+    def test_runner_resolution_uses_effective_definitions(
+        self, declarations: str, expected: str
+    ) -> None:
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write_make_contract(
+            {
+                "test-unit": "$(PYTHON) -m pytest unit",
+                "test-int": "python3 -m pytest integration",
+            },
+            preamble=declarations,
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == expected
+        assert parsers["test-int"] == "pytest"
+
+    @pytest.mark.parametrize("unconditional", [False, True])
+    def test_conditional_phony_does_not_prove_unconditional_execution(
+        self, unconditional: bool
+    ) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text()
+        declaration, rest = content.split("\n", 1)
+        makefile.write_text(
+            "ifdef STRICT\n"
+            + declaration
+            + "\nendif # strict\n"
+            + rest
+            + ("\n" + declaration + "\n" if unconditional else "")
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == (
+            "conforming" if unconditional else "unverifiable"
+        )
+        for target in result["make"]["targets"].values():
+            assert target["phony"] is unconditional
+            assert (
+                target["definitions"][0]["execution_unverifiable"] is not unconditional
+            )
+        codes = {item["code"] for item in result["findings"]}
+        assert ("make_target_execution_unverifiable" in codes) is not unconditional
+        assert "make_target_not_phony" not in codes
+
+    def test_rule_comment_cannot_supply_an_inline_recipe(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text()
+            .replace("test:\n", "test: # all stages; fail fast\n")
+            .replace("test-unit:\n\t@true", "test-unit: ; @printf '# unit; ready\\n'")
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["make"]["aggregate_mode"] == "recursive_recipe"
+        assert (
+            result["make"]["targets"]["test"]["definitions"][0]["recipe_command_count"]
+            == 4
+        )
+        assert (
+            result["make"]["targets"]["test-unit"]["definitions"][0][
+                "recipe_command_count"
+            ]
+            == 1
+        )
+
+    def test_conditional_phony_is_local_to_one_shared_rule_target(self) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        makefile.write_text(
+            makefile.read_text()
+            .replace(
+                ".PHONY: test test-prepare test-unit test-int test-e2e",
+                ".PHONY: test test-prepare test-int test-e2e\n"
+                "ifdef STRICT\n.PHONY: test-unit\nendif",
+            )
+            .replace("test-unit:\n\t@true\n\ntest-int:", "test-unit test-int:")
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        targets = result["make"]["targets"]
+        assert targets["test-unit"]["definitions"][0]["execution_unverifiable"] is True
+        assert targets["test-int"]["definitions"][0]["execution_unverifiable"] is False
+
+    @pytest.mark.parametrize(
+        "runner",
+        ["ginkgo", "bun run vitest run", "bun test", "dart test", "flutter test"],
+    )
+    def test_joined_runner_commands_retain_framework_evidence(
+        self, runner: str
+    ) -> None:
+        command = f"{runner} unit && {runner} integration"
+        self.write_make_contract({"test-unit": command, "test-int": command})
+        language = "go"
+        if runner == "ginkgo":
+            self.write_ginkgo_evidence()
+        elif runner.startswith("bun"):
+            language = "typescript"
+            self.write_bun_adapter()
+            self.write_bun_package()
+            package = json.loads((self.repository / "package.json").read_text())
+            for stage in ("test:unit", "test:int"):
+                package["scripts"][stage] = command
+            self.write("package.json", json.dumps(package))
+        else:
+            language = "flutter" if runner.startswith("flutter") else "dart"
+            self.write(
+                "pubspec.yaml",
+                "dev_dependencies:\n  "
+                + (
+                    "flutter_test:\n    sdk: flutter\n"
+                    if language == "flutter"
+                    else "test: ^1.25.0\n"
+                ),
+            )
+        self.enroll("typescript-bun" if language == "typescript" else "make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        entry = self.framework(result, language)
+        if runner == "bun test":
+            assert "bun-test" in entry["detected"]
+            assert entry["status"] == "waiver_required"
+        else:
+            assert entry["status"] == "canonical"
+            assert entry["unit_int_parser"] != "generic"
+
+    @pytest.mark.parametrize("prerequisite", ["ready:\n", "ready: ready\n"])
+    def test_prerequisite_output_is_followed_without_executing_it(
+        self, prerequisite: str
+    ) -> None:
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write_make_contract(
+            {"test-unit": "pytest unit", "test-int": "pytest integration"}
+        )
+        path = self.repository / "Makefile"
+        path.write_text(
+            path.read_text().replace("test-unit:\n", "test-unit: ready\n")
+            + prerequisite
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == (
+            "generic" if "ready: ready" in prerequisite else "pytest"
+        )
+        assert parsers["test-int"] == "pytest"
+
+    @pytest.mark.parametrize(
+        ("aggregate", "valid"),
+        [
+            (
+                'bun run "test:prepare"&&bun run test:unit &&\n bun run test:int&&bun run test:e2e',
+                True,
+            ),
+            (
+                "bun run test:unit && bun run test:prepare && bun run test:int && bun run test:e2e",
+                False,
+            ),
+            (
+                "bun run test:prepare; bun run test:unit; bun run test:int; bun run test:e2e",
+                False,
+            ),
+            (
+                "bun run test:prepare && bun run test:unit && bun run test:int && bun run test:e2e && bun run test:e2e",
+                False,
+            ),
+        ],
+    )
+    def test_bun_aggregate_checks_execution_order_and_failure_propagation(
+        self, aggregate: str, valid: bool
+    ) -> None:
+        self.write_bun_package()
+        self.write_bun_adapter()
+        package = json.loads((self.repository / "package.json").read_text())
+        package["scripts"]["test"] = aggregate
+        self.write("package.json", json.dumps(package))
+        self.enroll("typescript-bun")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == (
+            "conforming" if valid else "nonconforming"
+        )
+        assert (
+            "bun_aggregate_invalid" in {item["code"] for item in result["findings"]}
+        ) is not valid
+
+    def test_testing_document_accepts_structured_markdown_declarations(self) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        content = (
+            path.read_text()
+            .replace("## Contract", "## contract ##")
+            .replace(
+                "Contract: aquarium-test-contract/v1\nProfile: make",
+                "- **Contract:** `aquarium-test-contract/v1`\n- **Profile:** `make`",
+            )
+            .replace(
+                "Fixture commands.",
+                "```sh\nmake test\n```",
+            )
+        )
+        path.write_text(content)
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["testing_document"]["profile"] == "make"
+
+    @pytest.mark.parametrize(
+        "example",
+        [
+            "<!-- Contract: aquarium-test-contract/v1 -->",
+            "```text\nContract: aquarium-test-contract/v1\n```",
+        ],
+    )
+    def test_document_examples_do_not_enroll_the_repository(self, example: str) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(
+            path.read_text().replace("Contract: aquarium-test-contract/v1", example)
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert "testing_contract_unregistered" in {
+            item["code"] for item in result["findings"]
+        }
 
     def test_symlinked_root_makefile_is_not_read(self) -> None:
         external = self.repository.parent / "credentials.make"
@@ -546,6 +835,35 @@ class TestInspectTesting:
             result["frameworks"]["gaori"]["stage_parser_defaults"]["test-int"]
             == "generic"
         )
+
+    @pytest.mark.parametrize(
+        ("unit_command", "canonical"),
+        [
+            ("@echo unit\n$(PYTHON) -m pytest tests/unit\n@printf 'done\\n'", True),
+            ("@echo unit && $(PYTHON) -m pytest tests/unit && printf 'done\\n'", True),
+            ("@echo pytest tests/unit", False),
+        ],
+    )
+    def test_python_logging_preserves_framework_evidence(
+        self, unit_command: str, canonical: bool
+    ) -> None:
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.write_make_contract(
+            {"test-unit": unit_command, "test-int": "$(PYTHON) -m pytest tests/int"},
+            preamble="PYTHON := python3\n",
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        framework = self.framework(result, "python")
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+
+        assert result["structural_status"] == (
+            "conforming" if canonical else "unverifiable"
+        )
+        assert framework["status"] == ("canonical" if canonical else "waiver_required")
+        assert parsers["test-unit"] == "generic"
+        assert parsers["test-int"] == "pytest"
 
     def test_python_mixed_frameworks_require_waiver_and_map_stage_parsers(self) -> None:
         self.write(
@@ -1719,6 +2037,8 @@ class TestInspectTesting:
         result = inspect_testing.inspect_repository(self.repository)
 
         assert result["structural_status"] == "unverifiable"
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == parsers["test-int"] == "generic"
 
     def test_pytest_ini_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1736,6 +2056,8 @@ class TestInspectTesting:
         result = inspect_testing.inspect_repository(self.repository)
 
         assert result["structural_status"] == "unverifiable"
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert parsers["test-unit"] == parsers["test-int"] == "generic"
 
     def test_quoted_pyproject_collect_only_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -1945,20 +2267,20 @@ class TestInspectTesting:
         assert result["structural_status"] == "nonconforming"
         assert result["bun"]["make_cycles"] == ["test:unit"]
 
-    def test_make_recipe_continuation_is_unverifiable(self) -> None:
-        self.write_make_contract()
-        makefile = self.repository / "Makefile"
-        content = makefile.read_text(encoding="utf-8").replace(
-            "test-unit:\n\t@true",
-            "test-unit:\n\tpython3 -m pytest --collect-\\\n\t  only",
+    def test_continued_collection_only_command_does_not_prove_execution(self) -> None:
+        self.write_make_contract(
+            {
+                "test-unit": "python3 -m pytest \\\n  --collect-only",
+                "test-int": "python3 -m pytest tests",
+            }
         )
-        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
         self.enroll("make")
 
         result = inspect_testing.inspect_repository(self.repository)
 
         assert result["structural_status"] == "unverifiable"
-        assert result["make"]["global_shell_semantics"]
+        assert self.framework(result, "python")["status"] == "waiver_required"
 
     def test_dynamic_make_authorities_are_unverifiable(self) -> None:
         additions = (
@@ -1971,10 +2293,6 @@ class TestInspectTesting:
             "MAKE := true\n",
             "export PYTEST_ADDOPTS\n",
             "undefine MAKE\n",
-            "test-unit:\n\t$(eval DYNAMIC := true)\n",
-            "PYTHON ?= python3\n",
-            "CARGO ?= cargo\n",
-            "BUN ?= bun\n",
         )
         for addition in additions:
             with case(addition=addition):
@@ -1989,7 +2307,17 @@ class TestInspectTesting:
                 result = inspect_testing.inspect_repository(self.repository)
 
                 assert result["structural_status"] == "unverifiable"
-                assert result["make"]["global_shell_semantics"]
+
+    def test_recipe_eval_cannot_prove_fail_fast(self) -> None:
+        self.write_make_contract(
+            {"test-prepare": "$(eval SHELL := /usr/bin/true)\nfalse"}
+        )
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "unverifiable"
+        assert result["make"]["aggregate_mode"] == "unverifiable"
 
     def test_symlinked_legacy_lock_authority_is_rejected(self) -> None:
         self.write_bun_package()
@@ -2108,12 +2436,14 @@ class TestInspectTesting:
         assert framework["unit_int_parser"] == "generic"
         assert framework["waiver_required"]
 
-    def test_rust_with_cargo_test_runners_is_canonical(self) -> None:
+    @pytest.mark.parametrize("separator", ["\n\t", " && "])
+    def test_rust_with_cargo_test_runners_is_canonical(self, separator: str) -> None:
         self.write_make_contract()
         makefile = self.repository.joinpath("Makefile")
         content = makefile.read_text(encoding="utf-8")
         content = content.replace(
-            "test-unit:\n\t@true", "test-unit:\n\tcargo test --lib"
+            "test-unit:\n\t@true",
+            "test-unit:\n\tcargo test --lib" + separator + "cargo test --bins",
         )
         content = content.replace(
             "test-int:\n\t@true", "test-int:\n\tcargo test --test integration"
@@ -2191,7 +2521,7 @@ class TestInspectTesting:
             item["code"] for item in result["findings"]
         }
 
-    def test_dart_and_flutter_pending_gaori_parsers_are_explicit(self) -> None:
+    def test_dart_and_flutter_experimental_gaori_parsers_are_explicit(self) -> None:
         self.write_make_contract()
         makefile = self.repository.joinpath("Makefile")
         content = makefile.read_text(encoding="utf-8")
@@ -2209,8 +2539,8 @@ class TestInspectTesting:
         dart = self.framework(dart_result, "dart")
 
         assert dart["status"] == "canonical"
-        assert dart["unit_int_parser"] == "generic"
-        assert dart["parser_support"] == "pending-dart-test"
+        assert dart["unit_int_parser"] == "dart-test"
+        assert dart["parser_support"] == "experimental"
 
         self.write(
             "pubspec.yaml",
@@ -2235,7 +2565,20 @@ class TestInspectTesting:
         assert flutter["status"] == "canonical"
         assert flutter["unit_int_parser"] == "flutter-test"
         assert flutter["e2e_parser"] == "generic"
-        assert flutter["e2e_parser_support"] == "pending-patrol"
+        assert flutter["e2e_parser_support"] == "supported"
+
+        content = makefile.read_text(encoding="utf-8").replace(
+            "test-e2e:\n\t@true", "test-e2e:\n\tpatrol test"
+        )
+        makefile.write_text(content, encoding="utf-8")
+        patrol_result = inspect_testing.inspect_repository(self.repository)
+        flutter = self.framework(patrol_result, "flutter")
+        assert flutter["e2e_parser"] == "patrol"
+        assert flutter["e2e_parser_support"] == "experimental"
+        assert (
+            patrol_result["frameworks"]["gaori"]["parser_availability"]
+            == "not_evaluated"
+        )
 
     def test_dart_dependency_without_runner_is_not_canonical(self) -> None:
         self.write_make_contract()
@@ -2247,6 +2590,149 @@ class TestInspectTesting:
 
         assert result["structural_status"] == "unverifiable"
         assert framework["status"] == "waiver_required"
+        assert framework["unit_int_parser"] == "generic"
+
+    @pytest.mark.parametrize("runner", ["dart", "patrol"])
+    @pytest.mark.parametrize(
+        "suffix", [" --help", " && other-test", " || true", " &", "\n\tother-test"]
+    )
+    def test_experimental_parser_requires_unmixed_test_output(
+        self, runner: str, suffix: str
+    ) -> None:
+        self.write_make_contract()
+        if runner == "dart":
+            self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
+            stages = ("test-unit", "test-int")
+        else:
+            self.write(
+                "pubspec.yaml",
+                "dependencies:\n  flutter:\n    sdk: flutter\n"
+                "dev_dependencies:\n  flutter_test:\n    sdk: flutter\n  patrol: ^4.0.0\n",
+            )
+            stages = ("test-e2e",)
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text(encoding="utf-8")
+        for stage in stages:
+            content = content.replace(
+                f"{stage}:\n\t@true", f"{stage}:\n\t{runner} test{suffix}"
+            )
+        makefile.write_text(content, encoding="utf-8")
+        self.enroll("make")
+        result = inspect_testing.inspect_repository(self.repository)
+        entry = self.framework(result, "dart" if runner == "dart" else "flutter")
+        field = "unit_int_parser" if runner == "dart" else "e2e_parser"
+        assert entry[field] == "generic"
+
+    def test_runner_formatting_preserves_execution_and_parser(self) -> None:
+        self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
+        self.write_make_contract(
+            {
+                "test-unit": "@'dart'  test \\\n  'tests/unit' # unit suite",
+                "test-int": 'dart\t"test" tests/integration',
+            }
+        )
+        self.enroll("make")
+        result = inspect_testing.inspect_repository(self.repository)
+        assert result["structural_status"] == "conforming"
+        assert self.framework(result, "dart")["unit_int_parser"] == "dart-test"
+
+    def test_package_script_with_another_command_has_mixed_output(self) -> None:
+        self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
+        self.write(
+            "package.json",
+            json.dumps(
+                {
+                    "scripts": {
+                        "test:unit": "dart test\nother-test",
+                        "test:int": "dart test",
+                    }
+                }
+            ),
+        )
+        result = inspect_testing.inspect_repository(self.repository)
+        assert self.framework(result, "dart")["unit_int_parser"] == "generic"
+
+    @pytest.mark.parametrize("runner", ["dart", "patrol"])
+    @pytest.mark.parametrize(
+        "indirect_output", ["prerequisite", "conditional", "include", "unrelated"]
+    )
+    def test_parser_requires_complete_make_stage_output(
+        self, runner: str, indirect_output: str
+    ) -> None:
+        self.write_make_contract()
+        if runner == "dart":
+            self.write("pubspec.yaml", "dev_dependencies:\n  test: ^1.25.0\n")
+            stages = ("test-unit", "test-int")
+        else:
+            self.write(
+                "pubspec.yaml",
+                "dependencies:\n  flutter:\n    sdk: flutter\n"
+                "dev_dependencies:\n  flutter_test:\n    sdk: flutter\n  patrol: ^4.0.0\n",
+            )
+            stages = ("test-e2e",)
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text(encoding="utf-8")
+        if runner == "patrol":
+            for stage in ("test-unit", "test-int"):
+                content = content.replace(
+                    f"{stage}:\n\t@true", f"{stage}:\n\tflutter test"
+                )
+        for stage in stages:
+            content = content.replace(
+                f"{stage}:\n\t@true", f"{stage}:\n\t{runner} test"
+            )
+        stage = stages[0]
+        if indirect_output == "prerequisite":
+            content = content.replace(f"{stage}:\n", f"{stage}: other-output\n")
+        elif indirect_output == "conditional":
+            content = content.replace(
+                f"{stage}:\n\t{runner} test",
+                f"{stage}:\n\t{runner} test\nifeq (1,1)\n\t@echo extra\nendif",
+            )
+        elif indirect_output == "include":
+            content += "\ninclude extra.mk\n"
+            self.write("extra.mk", f"{stage}: other-output\n")
+        else:
+            content += "\nunrelated: other-output\n"
+        content += "\n.PHONY: other-output\nother-output:\n\t@echo extra\n"
+        makefile.write_text(content, encoding="utf-8")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        entry = self.framework(result, "dart" if runner == "dart" else "flutter")
+        field = "unit_int_parser" if runner == "dart" else "e2e_parser"
+        expected = "dart-test" if runner == "dart" else "patrol"
+        assert entry[field] == (
+            expected if indirect_output == "unrelated" else "generic"
+        )
+        if indirect_output != "unrelated":
+            assert (
+                result["frameworks"]["gaori"]["stage_parser_defaults"][stage]
+                == "generic"
+            )
+        if indirect_output in {"prerequisite", "unrelated"}:
+            assert result["structural_status"] == "conforming"
+
+    def test_python_stage_parser_does_not_override_unproven_make_output(self) -> None:
+        self.write_make_contract()
+        self.write("pyproject.toml", "[tool.pytest.ini_options]\n")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        makefile = self.repository / "Makefile"
+        content = makefile.read_text(encoding="utf-8")
+        for stage in ("test-unit", "test-int"):
+            content = content.replace(
+                f"{stage}:\n\t@true", f"{stage}:\n\tpython3 -m pytest tests"
+            )
+        content = content.replace("test-unit:\n", "test-unit: other-output\n")
+        content += "\n.PHONY: other-output\nother-output:\n\t@echo extra\n"
+        makefile.write_text(content, encoding="utf-8")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+        parsers = result["frameworks"]["gaori"]["stage_parser_defaults"]
+        assert self.framework(result, "python")["unit_int_parser"] == "generic"
+        assert parsers["test-unit"] == "generic"
+        assert parsers["test-int"] == "pytest"
 
     def test_included_targets_are_unverifiable_not_assumed_missing(self) -> None:
         self.write("Makefile", "include tests.mk\n")

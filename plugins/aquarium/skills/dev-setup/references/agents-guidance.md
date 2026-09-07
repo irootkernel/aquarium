@@ -105,6 +105,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$use-sanho` at an authorized commit or push boundary in a Sanho-managed repository, or for an explicitly requested Sanho operation.
 - Use `$use-mulgae` for an authorized Mulgae review, run inspection, finding follow-up, configuration diagnosis, cleanup plan, or recovery.
 - Use `$use-gaori` when a selected long or noisy check is routed through Gaori or existing Gaori evidence must be inspected.
+- Use `$use-gaori-status` for Gaori-calculated duration, outcome history, and detailed timing explanations. Keep test execution and one-off live estimates with `$use-gaori`; a missing status skill does not block a selected check.
 - Use `$use-sorage` at session start and before every task in a Sorage-enabled repository. Resolve every inbox, outbox, Handoff, review, retention, deletion, and Vault operation through that paired skill; never edit the managed Vault or derived `.sorage/INBOX.md` directly.
 - Let Aquarium workflows use Podway by default for Git-backed work unless the current user opts out before the first managed-session mutation. No Aquarium skill owns a Podway session; only when starting a different session should the workflow ask whether to preserve, finish, delete, or replace the existing one.
 - Use `$use-podway` directly for an explicitly requested Procedure v2 lifecycle, goal, diagnosis, recovery, cancellation, or discard operation. Route Procedure authoring to the separately installed `$create-podway-procedure` maintainer skill.

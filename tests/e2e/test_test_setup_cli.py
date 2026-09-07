@@ -100,6 +100,47 @@ def test_cli_reports_a_conforming_python_repository(tmp_path: Path) -> None:
     assert payload["detected_languages"] == ["python"]
     assert payload["structural_status"] == "conforming"
     assert payload["findings"] == []
+    assert payload["make"]["output_unverifiable"] is False
+    assert all(
+        definition["execution_unverifiable"] is False
+        for target in payload["make"]["targets"].values()
+        for definition in target["definitions"]
+    )
+
+
+def test_cli_preserves_contract_across_make_layout_changes(tmp_path: Path) -> None:
+    write_conforming_repository(tmp_path)
+    makefile = tmp_path / "Makefile"
+    makefile.write_text(
+        "FILES := first.py \\\n  second.py\n"
+        + makefile.read_text().replace("python3 -m pytest", "'python3' -m 'pytest'")
+    )
+
+    completed = run_inspector(tmp_path)
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 0
+    assert payload["structural_status"] == "conforming"
+    assert (
+        payload["frameworks"]["gaori"]["stage_parser_defaults"]["test-unit"] == "pytest"
+    )
+
+
+def test_cli_does_not_evaluate_make_expansions(tmp_path: Path) -> None:
+    write_conforming_repository(tmp_path)
+    makefile = tmp_path / "Makefile"
+    marker = tmp_path / "inspector-must-not-create"
+    makefile.write_text(f"PROBE := $(shell touch {marker})\n" + makefile.read_text())
+    before = {path.name: path.read_bytes() for path in tmp_path.iterdir()}
+
+    completed = run_inspector(tmp_path)
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 0
+    assert payload["semantic_scope"] == "not_evaluated"
+    assert payload["make"]["output_unverifiable"] is True
+    assert {path.name: path.read_bytes() for path in tmp_path.iterdir()} == before
+    assert not marker.exists()
 
 
 def test_cli_reports_missing_contract_entrypoints_without_mutation(

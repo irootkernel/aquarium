@@ -374,6 +374,10 @@ def inspect_global(
         raw_tools[name]["agent_skill"] = inspect_canonical_agent_skill(
             inspector, skill_name, files
         )
+    if "gaori" in raw_tools:
+        raw_tools["gaori"]["status_skill"] = inspect_canonical_agent_skill(
+            inspector, "use-gaori-status", inspector.GAORI_STATUS_SKILL_FILES
+        )
     if "mulgae" in raw_tools:
         raw_tools["mulgae"]["installation_prerequisites"] = (
             inspector.inspect_mulgae_installation_prerequisites(
@@ -397,6 +401,8 @@ def inspect_global(
         entry: dict[str, Any] = {"cli": cli_component(raw)}
         if "agent_skill" in raw:
             entry["paired_skill"] = raw["agent_skill"]
+        if "status_skill" in raw:
+            entry["status_skill"] = raw["status_skill"]
         if "global_mcp" in raw:
             entry["global_mcp"] = raw["global_mcp"]
         if "installation_prerequisites" in raw:

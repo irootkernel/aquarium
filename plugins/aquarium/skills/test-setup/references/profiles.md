@@ -16,7 +16,7 @@ test:
 	$(MAKE) test-e2e
 ```
 
-Do not express the four stages as prerequisites: `make -j` may run them concurrently. Assignments to `MAKEFLAGS`, `MFLAGS`, or `GNUMAKEFLAGS` and custom global shell semantics make fail-fast behavior unverifiable unless a future inspector proves them harmless. Additional logging is allowed, but additional test gates belong inside one of the four handlers rather than beside them in `test`.
+Do not express the four stages as prerequisites: `make -j` may run them concurrently. Assignments to `MAKEFLAGS`, `MFLAGS`, or `GNUMAKEFLAGS` and custom global shell semantics make fail-fast behavior unverifiable unless the inspector proves them harmless. Recursive calls may use equivalent quoting, whitespace, or shell line continuations. Plain `echo` and `printf` logging is allowed; additional test gates belong inside one of the four handlers rather than beside them in `test`.
 
 ## TypeScript and Bun
 
@@ -67,7 +67,7 @@ New Dart unit and integration layers use `package:test`. New Flutter unit, widge
 
 ## Gaori Parser Mapping
 
-Gaori is an optional evidence-compression adapter, not a test gate. The wrapped command's exit code remains authoritative. When Gaori is already selected for a repository, verify installed labels with the read-only `gaori parsers list`; do not install, update, or execute a test merely to complete this mapping.
+Gaori is an optional evidence-compression adapter, not a test gate. The wrapped command's exit code remains authoritative. When Gaori is already selected for a repository, verify installed labels with the read-only `gaori --json parsers list` and inspect support tiers and output families with `gaori --json parsers catalog`; do not install, update, or execute a test merely to complete this mapping.
 
 Map parsers by command output, not source language:
 
@@ -80,7 +80,9 @@ Map parsers by command output, not source language:
 | Cargo test | `cargo-test` |
 | Flutter test | `flutter-test` |
 | Playwright | `playwright` |
-| Dart `package:test` | `generic` until an installed `dart-test` parser is verified |
-| Patrol | `generic` until an installed `patrol` parser is verified |
+| Dart `package:test` | `dart-test` (Experimental), after verifying the installed label and command output |
+| Patrol | `patrol` (Experimental), after verifying the installed label and command output |
+
+The static inspector proposes these labels only for evidenced runner commands and leaves installed availability `not_evaluated`. It considers each stage's reachable prerequisite output and execution uncertainty. Unrelated declarations and formatting do not affect the recommendation. Unresolved includes, dynamic rules, or Make output emitted while reading the file can affect every stage. A framework's combined unit/integration recommendation may be `generic` while one independently known stage retains its specialized parser. Experimental extraction may require manual confirmation and never changes the command result. `dotnet-test` and `gradle-test` are also Experimental.
 
 A single Gaori command has one parser. Use `generic` when a stage mixes output formats, or add language-specific Gaori leaf commands that each call one existing handler without changing the five common entrypoints. Never select a specialized parser merely because its language matches: a specialized miss does not fall back to `generic`.

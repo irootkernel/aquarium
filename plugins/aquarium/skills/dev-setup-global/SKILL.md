@@ -27,7 +27,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 ## Owned Components
 
 - Sanho, Dolgorae, Mulgae, Gaori, Sorage, and Podway user-global CLIs.
-- `use-sanho`, `use-mulgae`, `use-gaori`, `use-sorage`, and `use-podway` under `~/.agents/skills`.
+- `use-sanho`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, and `use-podway` under `~/.agents/skills`.
 - Mulgae and Gaori user-global MCP registrations.
 - Podway's per-user production daemon and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.

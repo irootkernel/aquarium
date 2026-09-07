@@ -30,7 +30,7 @@ except ModuleNotFoundError as error:
         raise
     dolgorae_release = None
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v16"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v17"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -61,6 +61,7 @@ GAORI_SKILL_FILES = (
     "references/authoring.md",
     "references/recovery.md",
 )
+GAORI_STATUS_SKILL_FILES = ("SKILL.md",)
 MULGAE_SKILL_FILES = (
     "SKILL.md",
     "references/lifecycle.md",
@@ -408,7 +409,7 @@ def supported_gaori_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 14)
+    return bool(match and int(match.group(1)) >= 16)
 
 
 def supported_mulgae_version(version: str | None) -> bool:
@@ -3968,6 +3969,7 @@ def inspect(
             "use-sanho": Path.home() / ".agents/skills/use-sanho",
             "use-mulgae": Path.home() / ".agents/skills/use-mulgae",
             "use-gaori": Path.home() / ".agents/skills/use-gaori",
+            "use-gaori-status": Path.home() / ".agents/skills/use-gaori-status",
             "use-sorage": Path.home() / ".agents/skills/use-sorage",
             "use-podway": Path.home() / ".agents/skills/use-podway",
             "lore-commits": Path.home() / ".agents/skills/lore-commits",

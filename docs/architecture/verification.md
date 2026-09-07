@@ -6,14 +6,16 @@ Aquarium verification is local and layered. Each layer has a bounded claim, and 
 
 | Layer | Main authority | Claim |
 | --- | --- | --- |
-| Static cross-contract validation | [`tests/validate.rb`](../../tests/validate.rb) | Required files, links, schema identifiers, Procedure declarations, and release invariants agree without pinning prose wording |
+| Package structure validation | [`tests/validate.rb`](../../tests/validate.rb) | Package metadata and data parse, local references resolve, basic Procedure structure is valid, and release versions agree |
 | Python unit tests | `tests/test_*.py` | Inspector, normalizer, observer, and helper logic behaves in isolated cases |
 | Python E2E tests | `tests/e2e/` | Local scripts behave correctly against black-box repository fixtures |
-| Approved legacy integration suites | `tests/integration/` | Executable inspection, commit-gate, and bundle-normalization boundaries remain compatible |
+| Approved legacy integration suites | [`tests/test_inspect_tools.py`](../../tests/test_inspect_tools.py), [`tests/test_task_commit_gate.py`](../../tests/test_task_commit_gate.py), [`tests/test_normalize_manifest.py`](../../tests/test_normalize_manifest.py) | Executable inspection, commit-gate, and bundle-normalization boundaries remain compatible |
 | Aggregate development gate | [`Makefile`](../../Makefile) | The enrolled preparation, unit, integration, and E2E stages pass for the candidate |
 | Exact release gate | Repository release policy | Version metadata, release notes, candidate SHA, compatibility artifacts, and publication state satisfy the selected release mode |
 
 [`TESTING.md`](../../TESTING.md) owns the meaning, environment, frameworks, diagnostic mapping, and waivers for these stages.
+
+Ruby and Python checks cover package structure and executable helper behavior. Master separately verifies skill behavior after skill updates; the automated gate does not evaluate skill prose or run LLM evaluations.
 
 ## Determinism and Effects
 

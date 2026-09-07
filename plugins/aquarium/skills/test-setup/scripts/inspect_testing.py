@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import configparser
+import fnmatch
 import json
 import math
 import re
@@ -32,12 +33,7 @@ MAKE_TARGETS = ("test", "test-prepare", "test-unit", "test-int", "test-e2e")
 MAKE_STAGES = MAKE_TARGETS[1:]
 BUN_SCRIPTS = ("test", "test:prepare", "test:unit", "test:int", "test:e2e")
 BUN_STAGES = BUN_SCRIPTS[1:]
-EXPECTED_BUN_AGGREGATE = " && ".join(f"bun run {name}" for name in BUN_STAGES)
 TARGET_PATTERN = re.compile(r"^([^\s:#=][^:=]*?):(?![=])(.*)$")
-RECURSIVE_MAKE_PATTERN = re.compile(
-    r"^\s*[@+]*\s*(?:\$\(MAKE\)|\$\{MAKE\})(?:\s+--no-print-directory)?\s+"
-    r"(test(?:-[A-Za-z0-9_-]+)?)\s*$"
-)
 PINNED_BUN_PATTERN = re.compile(r"^bun@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 GO_GINKGO_MODULE = "github.com/onsi/ginkgo/v2"
 GO_GOMEGA_MODULE = "github.com/onsi/gomega"
@@ -481,7 +477,9 @@ def stage_commands(
         ("test-int", "test:int"),
         ("test-e2e", "test:e2e"),
     ):
-        if commands[stage]:
+        if commands[stage] and not bun_adapter_matches(
+            commands[stage], script_name, make_variable_values(repository)
+        ):
             continue
         script = scripts.get(script_name)
         if isinstance(script, str) and script.strip():
@@ -489,49 +487,170 @@ def stage_commands(
     return commands
 
 
+def shell_sequence(command: str) -> list[list[str]] | None:
+    """Read simple commands joined by &&, without evaluating shell or Make code."""
+    command = command.strip()
+    fragments: list[str] = []
+    start = index = 0
+    quote = ""
+    while index < len(command):
+        char = command[index]
+        if char == "\\" and quote != "'":
+            index += 2
+            continue
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "\"'":
+            quote = char
+        elif char == "#" and (index == 0 or command[index - 1].isspace()):
+            end = command.find("\n", index)
+            if end != -1 and command[end:].strip():
+                return None
+            command = command[:index]
+            break
+        elif char == "$":
+            reference = re.match(r"\$\([A-Za-z_][A-Za-z0-9_]*\)", command[index:])
+            if reference:
+                index += len(reference.group())
+                continue
+        elif command.startswith("&&", index):
+            fragments.append(command[start:index])
+            index += 2
+            while index < len(command) and command[index].isspace():
+                index += 1
+            start = index
+            continue
+        elif char in ";&|()<>\n\r":
+            return None
+        index += 1
+    fragments.append(command[start:])
+    try:
+        words = [
+            shlex.split(fragment.replace("\\\n", ""), comments=True)
+            for fragment in fragments
+        ]
+    except ValueError:
+        return None
+    return words if all(words) else None
+
+
+def recipe_sequence(command: str) -> list[list[str]] | None:
+    prefix = re.match(r"^[@+-]*", command.lstrip()).group()
+    if "-" in prefix:
+        return None
+    return shell_sequence(command.lstrip()[len(prefix) :])
+
+
 def command_preserves_failure(command: str) -> bool:
-    stripped = command.lstrip()
-    prefix = re.match(r"^[@+-]*", stripped)
-    if prefix and "-" in prefix.group(0):
-        return False
-    backgrounded = re.search(r"(?<!&)&(?!&)", command)
-    return (
-        "|" not in command
-        and ";" not in command
-        and "<" not in command
-        and ">" not in command
-        and backgrounded is None
-        and not OPAQUE_PARAMETER_DEFAULT.search(command)
+    return recipe_sequence(command) is not None and not OPAQUE_PARAMETER_DEFAULT.search(
+        command
     )
 
 
 def command_executes_tests(command: str) -> bool:
-    normalized = normalize_shell_token_joins(command)
-    without_runner = re.sub(
-        r"^\s*[@+]*\s*\$[({][A-Za-z_][A-Za-z0-9_]*[)}]\s+",
-        "",
-        normalized,
-        count=1,
+    sequence = recipe_sequence(command)
+    if sequence is None:
+        return False
+    for words in sequence:
+        normalized = " ".join(words)
+        without_runner = re.sub(
+            r"^\$[({][A-Za-z_][A-Za-z0-9_]*[)}]\s+", "", normalized, count=1
+        )
+        if (
+            INFORMATION_ONLY_ARGUMENT.search(normalized)
+            or INFORMATION_ONLY_SUBCOMMAND.search(normalized)
+            or OPAQUE_SHELL_EXPANSION.search(without_runner)
+        ):
+            return False
+    return True
+
+
+def command_has_runner(pattern: str, command: str) -> bool:
+    sequence = recipe_sequence(command)
+    return bool(sequence) and any(
+        re.search(pattern, " ".join(words)) for words in sequence
     )
-    return (
-        not INFORMATION_ONLY_ARGUMENT.search(normalized)
-        and not INFORMATION_ONLY_SUBCOMMAND.search(normalized)
-        and not OPAQUE_SHELL_EXPANSION.search(without_runner)
+
+
+def commands_use_only_runner(commands: list[str], runner: str) -> bool:
+    expected = runner.split()
+    return bool(commands) and all(
+        command_preserves_failure(command)
+        and command_executes_tests(command)
+        and all(
+            words[: len(expected)] == expected for words in recipe_sequence(command)
+        )
+        for command in commands
     )
 
 
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
     definitions: dict[str, list[str]] = {}
+    branches: list[tuple[dict[str, list[str]], list[dict[str, list[str]]], bool]] = []
+    define_depth = 0
     content = read_optional_text(repository / "Makefile", repository)
-    for line in content.splitlines():
+    for _, line in make_logical_lines(content):
         if line.startswith("\t"):
             continue
+        stripped = line.split("#", 1)[0].strip()
+        definition = re.match(
+            r"(?:override\s+)?define\s+([A-Za-z_][A-Za-z0-9_]*)", stripped
+        )
+        if definition:
+            define_depth += 1
+            if define_depth == 1:
+                definitions[definition[1]] = [f"$({definition[1]})"]
+            continue
+        if define_depth:
+            if stripped == "endef":
+                define_depth -= 1
+            continue
+        if re.match(r"(?:ifeq|ifneq|ifdef|ifndef)\b", stripped):
+            branches.append((dict(definitions), [], False))
+            continue
+        if re.match(r"else\b", stripped) and branches:
+            initial, alternatives, has_else = branches[-1]
+            alternatives.append(definitions)
+            branches[-1] = (initial, alternatives, has_else or stripped == "else")
+            definitions = dict(initial)
+            continue
+        if stripped == "endif" and branches:
+            initial, alternatives, has_else = branches.pop()
+            alternatives.append(definitions)
+            if not has_else:
+                alternatives.append(initial)
+            definitions = {
+                name: list(
+                    {
+                        value
+                        for branch in alternatives
+                        for value in branch.get(name, [f"$({name})"])
+                    }
+                )
+                for name in set().union(*(branch.keys() for branch in alternatives))
+            }
+            continue
+        bare = re.fullmatch(
+            r"(?:export|unexport|undefine)\s+([A-Za-z_][A-Za-z0-9_]*)", stripped
+        )
+        if bare and (stripped.startswith("undefine") or bare[1] not in definitions):
+            definitions[bare[1]] = [f"$({bare[1]})"]
         match = re.match(
-            r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?=|\+=|:=|=)\s*(.*?)\s*$",
-            line,
+            r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(\?=|\+=|:=|=)\s*(.*?)\s*$",
+            line.split("#", 1)[0],
         )
         if match:
-            definitions.setdefault(match.group(1), []).append(match.group(2))
+            name, operator, value = match.groups()
+            if operator == "?=":
+                definitions.setdefault(name, [value, f"$({name})"])
+            elif operator == "+=":
+                definitions[name] = [
+                    f"{previous} {value}".strip()
+                    for previous in definitions.get(name, [""])
+                ]
+            else:
+                definitions[name] = [value]
 
     def resolve(value: str, seen: frozenset[str]) -> set[str]:
         reference = re.search(r"\$\(([^)]+)\)|\$\{([^}]+)\}", value)
@@ -755,7 +874,10 @@ def python_authority_declares_pytest(path: Path, repository: Path) -> bool:
 def command_matches_python_runner(
     command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
 ) -> bool:
-    match = pattern.search(command)
+    sequence = recipe_sequence(command)
+    if sequence is None or len(sequence) != 1:
+        return False
+    match = pattern.search(" ".join(sequence[0]))
     if (
         not match
         or not command_preserves_failure(command)
@@ -775,9 +897,10 @@ def command_matches_python_runner(
 def command_contains_python_runner(
     command: str, pattern: re.Pattern[str], variables: dict[str, set[str]]
 ) -> bool:
-    return any(
-        command_matches_python_runner(fragment.strip(), pattern, variables)
-        for fragment in re.split(r"&&", command)
+    sequence = recipe_sequence(command)
+    return sequence is not None and any(
+        command_matches_python_runner(shlex.join(words), pattern, variables)
+        for words in sequence
     )
 
 
@@ -819,6 +942,44 @@ def python_stage_parser(
     return None
 
 
+def stage_output_parser(commands: list[str], variables: dict[str, set[str]]) -> str:
+    families: set[str] = set()
+    for command in commands:
+        sequence = recipe_sequence(command)
+        if not sequence or not command_executes_tests(command):
+            return "generic"
+        for words in sequence:
+            text = shlex.join(words)
+            if command_matches_python_runner(text, PYTEST_COMMAND_PATTERN, variables):
+                families.add("pytest")
+                continue
+            if words[0] in {"$(CARGO)", "${CARGO}"} and runner_variable_is(
+                text, "CARGO", "cargo", variables
+            ):
+                words = ["cargo", *words[1:]]
+            if words[:1] == ["cargo"] and len(words) > 1 and words[1].startswith("+"):
+                words = [words[0], *words[2:]]
+            if words[:2] == ["bun", "run"]:
+                words = words[2:]
+            family = next(
+                (
+                    label
+                    for prefix, label in (
+                        (["ginkgo"], "ginkgo"),
+                        (["cargo", "test"], "cargo-test"),
+                        (["vitest"], "vitest"),
+                        (["flutter", "test"], "flutter-test"),
+                        (["dart", "test"], "dart-test"),
+                        (["patrol", "test"], "patrol"),
+                    )
+                    if words[: len(prefix)] == prefix
+                ),
+                "generic",
+            )
+            families.add(family)
+    return families.pop() if len(families) == 1 else "generic"
+
+
 def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) -> bool:
     ignored = {".git", ".tox", ".venv", "node_modules", "vendor", "venv"}
     for path in repository.rglob(f"*{suffix}"):
@@ -841,7 +1002,10 @@ def source_contains(repository: Path, suffix: str, patterns: tuple[str, ...]) ->
 
 
 def inspect_frameworks(
-    repository: Path, languages: list[str], package: dict[str, Any] | None
+    repository: Path,
+    languages: list[str],
+    package: dict[str, Any] | None,
+    make_result: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     entries: list[dict[str, Any]] = []
     findings: list[dict[str, str]] = []
@@ -879,7 +1043,7 @@ def inspect_frameworks(
             and any(
                 command_preserves_failure(command)
                 and command_executes_tests(command)
-                and re.search(r"^\s*[@+]*\s*ginkgo(?:\s|$)", command)
+                and command_has_runner(r"^ginkgo(?:\s|$)", command)
                 for command in commands[stage]
             )
             for stage in ("test-unit", "test-int")
@@ -964,7 +1128,10 @@ def inspect_frameworks(
             stage: python_stage_parser(commands[stage], make_variables)
             for stage in ("test-unit", "test-int")
         }
-        if pytest_control_only_configuration(repository, make_variables):
+        pytest_control_only = pytest_control_only_configuration(
+            repository, make_variables
+        )
+        if pytest_control_only:
             stage_parsers = {stage: None for stage in stage_parsers}
         has_pytest_command = "pytest" in stage_parsers.values()
         has_unittest_command = any(
@@ -1028,7 +1195,7 @@ def inspect_frameworks(
             isinstance(command, str)
             and command_preserves_failure(command)
             and command_executes_tests(command)
-            and re.search(r"^\s*bun\s+test(?:\s|$)", command)
+            and command_has_runner(r"^bun\s+test(?:\s|$)", command)
             for command in unit_int_scripts
         ):
             detected.append("bun-test")
@@ -1045,7 +1212,7 @@ def inspect_frameworks(
             isinstance(command, str)
             and command_preserves_failure(command)
             and command_executes_tests(command)
-            and bool(re.search(r"^\s*(?:bun\s+run\s+)?vitest(?:\s|$)", command))
+            and command_has_runner(r"^(?:bun\s+run\s+)?vitest(?:\s|$)", command)
             for command in unit_int_scripts
         )
         unsupported_python_unit_int = any(
@@ -1092,7 +1259,7 @@ def inspect_frameworks(
         runs_cargo_test = all(
             commands[stage]
             and any(
-                re.search(
+                command_has_runner(
                     r"^\s*[@+]*\s*(?:cargo|\$\(CARGO\)|\$\{CARGO\})(?:\s+\+\S+)?\s+test(?:\s|$)",
                     command,
                 )
@@ -1131,7 +1298,7 @@ def inspect_frameworks(
                 and any(
                     command_preserves_failure(command)
                     and command_executes_tests(command)
-                    and re.search(r"^\s*[@+]*\s*flutter\s+test(?:\s|$)", command)
+                    and command_has_runner(r"^flutter\s+test(?:\s|$)", command)
                     for command in commands[stage]
                 )
                 for stage in ("test-unit", "test-int")
@@ -1148,8 +1315,15 @@ def inspect_frameworks(
                 status,
                 "flutter-test" if status == "canonical" else "generic",
             )
-            entry["e2e_parser"] = "generic"
-            entry["e2e_parser_support"] = "pending-patrol"
+            entry["e2e_parser"] = (
+                "patrol"
+                if "patrol" in detected
+                and commands_use_only_runner(commands["test-e2e"], "patrol test")
+                else "generic"
+            )
+            entry["e2e_parser_support"] = (
+                "experimental" if entry["e2e_parser"] == "patrol" else "supported"
+            )
             entries.append(entry)
         else:
             has_test = bool(re.search(r"(?m)^\s*test:\s*", pubspec))
@@ -1158,20 +1332,29 @@ def inspect_frameworks(
                 and any(
                     command_preserves_failure(command)
                     and command_executes_tests(command)
-                    and re.search(r"^\s*[@+]*\s*dart\s+test(?:\s|$)", command)
+                    and command_has_runner(r"^dart\s+test(?:\s|$)", command)
                     for command in commands[stage]
                 )
                 for stage in ("test-unit", "test-int")
             )
             status = "canonical" if has_test and runs_dart_test else "waiver_required"
+            dart_parser = (
+                "dart-test"
+                if status == "canonical"
+                and all(
+                    commands_use_only_runner(commands[stage], "dart test")
+                    for stage in ("test-unit", "test-int")
+                )
+                else "generic"
+            )
             entries.append(
                 framework_entry(
                     "dart",
                     ["package:test"],
                     ["package:test"] if has_test else [],
                     status,
-                    "generic",
-                    "pending-dart-test",
+                    dart_parser,
+                    "experimental" if dart_parser == "dart-test" else "supported",
                 )
             )
 
@@ -1185,8 +1368,41 @@ def inspect_frameworks(
                 )
             )
 
+    unproven_stages: set[str] = set()
+    output_commands = dict(commands)
+    if make_result["present"]:
+        targets, _, _ = parse_makefile(
+            read_optional_text(repository / "Makefile", repository)
+        )
+        for stage in commands:
+            definitions = (
+                make_result.get("targets", {}).get(stage, {}).get("definitions", [])
+            )
+            if (
+                make_result.get("global_shell_semantics", True)
+                or make_result.get("authority_includes_unresolved", True)
+                or len(definitions) != 1
+                or not definitions[0]["recipe_command_count"]
+                or definitions[0]["execution_unverifiable"]
+                or make_result.get("output_unverifiable", True)
+            ):
+                unproven_stages.add(stage)
+                continue
+            reachable = make_stage_commands(targets, stage)
+            if reachable is None:
+                unproven_stages.add(stage)
+            elif definitions[0]["prerequisite_count"]:
+                output_commands[stage] = reachable
     specialized = [entry["unit_int_parser"] for entry in entries]
     unit_int_parser = specialized[0] if len(specialized) == 1 else "generic"
+    for entry in entries:
+        if unproven_stages & {"test-unit", "test-int"}:
+            entry["unit_int_parser"] = "generic"
+            entry["parser_support"] = "supported"
+        if "test-e2e" in unproven_stages and "e2e_parser" in entry:
+            entry["e2e_parser"] = "generic"
+            entry["e2e_parser_support"] = "supported"
+
     stage_parser_defaults = {
         "test": "generic",
         "test-prepare": "generic",
@@ -1194,11 +1410,37 @@ def inspect_frameworks(
         "test-int": unit_int_parser,
         "test-e2e": "inspect_e2e_runner",
     }
-    if len(entries) == 1 and entries[0]["language"] == "python":
+    if (
+        len(entries) == 1
+        and entries[0]["language"] == "python"
+        and not pytest_control_only
+    ):
         for stage in ("test-unit", "test-int"):
             detected_parser = python_stage_parser(commands[stage], make_variables)
             if detected_parser is not None:
                 stage_parser_defaults[stage] = detected_parser
+    for stage in ("test-unit", "test-int"):
+        if stage_parser_defaults[stage] != "generic":
+            stage_parser_defaults[stage] = stage_output_parser(
+                output_commands[stage], make_variables
+            )
+    for entry in entries:
+        if entry["unit_int_parser"] != "generic" and any(
+            stage_parser_defaults[stage] != entry["unit_int_parser"]
+            for stage in ("test-unit", "test-int")
+        ):
+            entry["unit_int_parser"] = "generic"
+            entry["parser_support"] = "supported"
+        if entry.get("e2e_parser", "generic") != "generic":
+            entry["e2e_parser"] = stage_output_parser(
+                output_commands["test-e2e"], make_variables
+            )
+            if entry["e2e_parser"] == "generic":
+                entry["e2e_parser_support"] = "supported"
+        if "e2e_parser" in entry:
+            stage_parser_defaults["test-e2e"] = entry["e2e_parser"]
+    for stage in unproven_stages:
+        stage_parser_defaults[stage] = "generic"
     gaori = {
         "config_path": str(repository / ".gaori/tester.yaml"),
         "config_present": safe_repository_file(
@@ -1231,78 +1473,142 @@ def read_package(repository: Path) -> tuple[dict[str, Any] | None, dict[str, Any
     return value, result
 
 
+def make_logical_lines(content: str) -> list[tuple[int, str]]:
+    lines = content.splitlines()
+    logical: list[tuple[int, str]] = []
+    index = 0
+    while index < len(lines):
+        number = index + 1
+        line = lines[index]
+        recipe = line.startswith("\t")
+        while line.endswith("\\") and index + 1 < len(lines):
+            index += 1
+            following = lines[index]
+            if recipe:
+                line += "\n" + following.removeprefix("\t")
+            else:
+                line = line[:-1].rstrip() + " " + following.lstrip()
+        logical.append((number, line))
+        index += 1
+    return logical
+
+
 def parse_makefile(
     content: str,
 ) -> tuple[dict[str, list[dict[str, Any]]], set[str], list[str]]:
-    lines = content.splitlines()
     targets: dict[str, list[dict[str, Any]]] = {}
     phony: set[str] = set()
+    conditional_phony: set[str] = set()
     includes: list[str] = []
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        stripped = line.strip()
+    scoped_variables: list[str] = []
+    active: dict[str, Any] | None = None
+    conditional_depth = 0
+    define_depth = 0
+    for number, line in make_logical_lines(content):
+        stripped = line.split("#", 1)[0].strip()
+        if define_depth:
+            if stripped == "endef":
+                define_depth -= 1
+            elif re.match(r"(?:override\s+)?define\b", stripped):
+                define_depth += 1
+            continue
+        if re.match(r"(?:override\s+)?define\b", stripped):
+            define_depth += 1
+            active = None
+            continue
+        if not stripped or stripped.startswith("#"):
+            continue
+        if line.startswith("\t"):
+            if active is not None:
+                active["recipe"].append(line[1:].strip())
+                active["execution_unverifiable"] |= conditional_depth > 0
+            continue
+        if re.match(r"(?:ifeq|ifneq|ifdef|ifndef)\b", stripped):
+            conditional_depth += 1
+            continue
+        if re.match(r"(?:else|endif)\b", stripped):
+            if stripped == "endif":
+                conditional_depth = max(0, conditional_depth - 1)
+            continue
+        active = None
         if not line.startswith("\t") and re.match(r"^-?include\s+", stripped):
             includes.append(stripped)
         if not line.startswith("\t") and stripped.startswith(".PHONY:"):
-            declaration = stripped
-            while declaration.endswith("\\") and index + 1 < len(lines):
-                index += 1
-                declaration = declaration[:-1] + " " + lines[index].strip()
-            phony.update(declaration.split(":", 1)[1].split())
-            index += 1
-            continue
-        if line.startswith("\t") or not stripped or stripped.startswith("#"):
-            index += 1
+            destination = conditional_phony if conditional_depth else phony
+            destination.update(stripped.split(":", 1)[1].split())
             continue
         match = TARGET_PATTERN.match(line)
         if not match:
-            index += 1
+            continue
+        if re.match(
+            r"\s*(?:(?:override|export)\s+)*[A-Za-z_.][A-Za-z0-9_.]*\s*[:?+]?=",
+            match.group(2),
+        ):
+            scoped_variables.extend(match.group(1).split())
             continue
         names = [name for name in match.group(1).split() if "%" not in name]
-        prerequisites = match.group(2).split(";", 1)[0].strip()
+        prerequisites = match.group(2).split(";", 1)[0].split("#", 1)[0].strip()
         recipe: list[str] = []
-        cursor = index + 1
-        if ";" in match.group(2):
+        if ";" in match.group(2).split("#", 1)[0]:
             inline = match.group(2).split(";", 1)[1].strip()
             if inline:
                 recipe.append(inline)
-        while cursor < len(lines):
-            candidate = lines[cursor]
-            if candidate.startswith("\t"):
-                command = candidate[1:].strip()
-                if command and not command.startswith("#"):
-                    recipe.append(command)
-                cursor += 1
-                continue
-            if not candidate.strip() or candidate.lstrip().startswith("#"):
-                cursor += 1
-                continue
-            break
+        active = {
+            "line": number,
+            "prerequisites": prerequisites.split() if prerequisites else [],
+            "recipe": recipe,
+            "execution_unverifiable": conditional_depth > 0,
+        }
         for name in names:
-            targets.setdefault(name, []).append(
-                {
-                    "line": index + 1,
-                    "prerequisites": prerequisites.split() if prerequisites else [],
-                    "recipe": recipe,
-                }
-            )
-        index = cursor
+            targets.setdefault(name, []).append(active)
+    for name, definitions in targets.items():
+        definitions = [dict(definition) for definition in definitions]
+        targets[name] = definitions
+        for definition in definitions:
+            definition["phony_unverifiable"] = name in conditional_phony - phony
+            definition["execution_unverifiable"] |= definition["phony_unverifiable"]
+        if any(
+            fnmatch.fnmatchcase(name, pattern.replace("%", "*"))
+            for pattern in scoped_variables
+        ):
+            for definition in definitions:
+                definition["execution_unverifiable"] = True
     return targets, phony, includes
+
+
+def make_stage_commands(
+    targets: dict[str, list[dict[str, Any]]],
+    name: str,
+    seen: frozenset[str] = frozenset(),
+) -> list[str] | None:
+    definitions = targets.get(name, [])
+    if (
+        name in seen
+        or len(definitions) != 1
+        or definitions[0]["execution_unverifiable"]
+    ):
+        return None
+    definition = definitions[0]
+    commands: list[str] = []
+    for prerequisite in definition["prerequisites"]:
+        if prerequisite == "|":
+            continue
+        inherited = make_stage_commands(targets, prerequisite, seen | {name})
+        if inherited is None:
+            return None
+        commands.extend(inherited)
+    return commands + definition["recipe"]
 
 
 def bun_adapter_matches(
     recipe: list[str], script: str, variables: dict[str, set[str]]
 ) -> bool:
-    if len(recipe) != 1:
-        return False
-    pattern = re.compile(
-        rf"^[+@]*\s*(?:bun|\$\(BUN\)|\$\{{BUN\}})\s+run\s+{re.escape(script)}\s*$"
-    )
     return (
-        command_preserves_failure(recipe[0])
+        len(recipe) == 1
+        and command_preserves_failure(recipe[0])
         and command_executes_tests(recipe[0])
-        and bool(pattern.fullmatch(recipe[0]))
+        and recipe_sequence(recipe[0])
+        in ([[runner, "run", script]] for runner in ("bun", "$(BUN)", "${BUN}"))
         and runner_variable_is(recipe[0], "BUN", "bun", variables)
     )
 
@@ -1331,6 +1637,11 @@ def inspect_makefile(
         return result, findings
 
     targets, phony, includes = parse_makefile(content)
+    declarations = "\n".join(
+        line.split("#", 1)[0]
+        for _, line in make_logical_lines(content)
+        if not line.startswith("\t")
+    )
     make_variables = make_variable_values(repository)
     pytest_addopts_bare_export = bool(
         re.search(
@@ -1341,16 +1652,16 @@ def inspect_makefile(
     result["global_shell_semantics"] = bool(
         re.search(r"(?m)^\s*\.(?:ONESHELL|IGNORE)\s*:", content)
         or re.search(r"(?m)^\s*\.RECIPEPREFIX\s*[:?+]?=", content)
-        or re.search(
-            r"(?m)^[^#\t\n][^:\n]*:\s*(?:(?:override|export)\s+)*[A-Za-z_][A-Za-z0-9_]*\s*[:?+]?=",
-            content,
+        or re.search(r"(?m)^\s*\$\((?:eval|call|foreach|if)\b", declarations)
+        or any(
+            re.search(r"[:!]=.*\$\(eval\b", line) for line in declarations.splitlines()
         )
-        or re.search(r"\$\((?:eval|call|foreach|if)\b", content)
-        or re.search(
-            r"(?m)^\s*(?:(?:override|export)\s+)*(?:BUN|CARGO|PYTHON|RUFF)\s*\?=",
-            content,
+        # Recipe expansion can change global execution settings before the shell runs.
+        or any(
+            re.search(r"\$[({]eval\b", command)
+            for name in MAKE_TARGETS
+            for command in (make_stage_commands(targets, name) or [])
         )
-        or re.search(r"(?m)^\s*(?:ifeq|ifneq|ifdef|ifndef|else|endif)\b", content)
         or re.search(
             r"(?m)^\s*(?:override\s+)?define\s+(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\b",
             content,
@@ -1360,13 +1671,17 @@ def inspect_makefile(
             content,
         )
         or pytest_addopts_bare_export
-        or "\\\n" in content
         or re.search(
             r"(?m)^\s*(?:override\s+)?(?:export\s+)?(?:SHELL|\.SHELLFLAGS|MAKE|MAKEFLAGS|MFLAGS|GNUMAKEFLAGS)\s*[:?+]?=",
             content,
         )
     )
     result["authority_includes_unresolved"] = bool(includes)
+    result["output_unverifiable"] = any(
+        re.search(r"\$[({](?:info|warning|error|shell)\b", line)
+        and (line.lstrip().startswith("$") or re.search(r"[:!]=", line))
+        for line in declarations.splitlines()
+    )
     result["targets"] = {}
     missing = []
     duplicates = []
@@ -1377,6 +1692,7 @@ def inspect_makefile(
                 "line": definition["line"],
                 "prerequisite_count": len(definition["prerequisites"]),
                 "recipe_command_count": len(definition["recipe"]),
+                "execution_unverifiable": definition["execution_unverifiable"],
             }
             for definition in definitions
         ]
@@ -1385,11 +1701,21 @@ def inspect_makefile(
             "phony": name in phony,
             "definitions": public_definitions,
         }
+        if any(definition["execution_unverifiable"] for definition in definitions):
+            findings.append(
+                finding(
+                    "make_target_execution_unverifiable",
+                    "unverifiable",
+                    f"{name} has conditional execution, conditional phony status, or unresolved target-specific variables.",
+                )
+            )
         if not definitions:
             missing.append(name)
         elif len(definitions) > 1:
             duplicates.append(name)
-        if name not in phony:
+        if name not in phony and not any(
+            definition["phony_unverifiable"] for definition in definitions
+        ):
             findings.append(
                 finding(
                     "make_target_not_phony", "error", f"{name} is not declared phony."
@@ -1415,7 +1741,11 @@ def inspect_makefile(
         )
 
     if not missing and not duplicates:
-        if result["global_shell_semantics"] or result["authority_includes_unresolved"]:
+        if (
+            result["global_shell_semantics"]
+            or result["authority_includes_unresolved"]
+            or targets["test"][0]["execution_unverifiable"]
+        ):
             result["aggregate_mode"] = "unverifiable"
             findings.append(
                 finding(
@@ -1435,8 +1765,12 @@ def inspect_makefile(
             adapter_ok = True
             for target, script in adapter_map.items():
                 definition = targets[target][0]
-                matches = not definition["prerequisites"] and bun_adapter_matches(
-                    definition["recipe"], script, make_variables
+                matches = (
+                    not definition["prerequisites"]
+                    and bun_adapter_matches(
+                        definition["recipe"], script, make_variables
+                    )
+                    and not definition["execution_unverifiable"]
                 )
                 result["targets"][target]["bun_adapter"] = matches
                 adapter_ok = adapter_ok and matches
@@ -1453,13 +1787,25 @@ def inspect_makefile(
                 )
         else:
             aggregate = targets["test"][0]
-            recursive_calls = [
-                match.group(1)
-                for command in aggregate["recipe"]
-                for match in [RECURSIVE_MAKE_PATTERN.match(command)]
-                if match is not None
-            ]
-            only_recursive_calls = len(aggregate["recipe"]) == len(recursive_calls)
+            recursive_calls = []
+            only_recursive_calls = True
+            for command in aggregate["recipe"]:
+                sequence = recipe_sequence(command)
+                if sequence is None:
+                    only_recursive_calls = False
+                    continue
+                for words in sequence:
+                    if words[0] in {"$(MAKE)", "${MAKE}"}:
+                        arguments = words[1:]
+                        if arguments[:1] == ["--no-print-directory"]:
+                            arguments = arguments[1:]
+                        if len(arguments) == 1 and arguments[0] in MAKE_STAGES:
+                            recursive_calls.append(arguments[0])
+                            continue
+                    if words[0] not in {"echo", "printf"} or any(
+                        "$" in word or "`" in word for word in words[1:]
+                    ):
+                        only_recursive_calls = False
             result["aggregate_recursive_calls"] = recursive_calls
             if aggregate["prerequisites"]:
                 result["aggregate_mode"] = "prerequisites"
@@ -1478,7 +1824,7 @@ def inspect_makefile(
                     finding(
                         "make_aggregate_order_unverifiable",
                         "unverifiable",
-                        "The literal recursive stage order is not the four-stage contract.",
+                        "Cannot establish serial, fail-fast execution of the four stages.",
                     )
                 )
     return result, findings
@@ -1523,8 +1869,9 @@ def inspect_bun(
             missing.append(name)
     result["scripts"] = script_status
     aggregate = scripts.get("test") if isinstance(scripts.get("test"), str) else ""
-    normalized = " ".join(aggregate.split())
-    result["aggregate_serial"] = normalized == EXPECTED_BUN_AGGREGATE
+    result["aggregate_serial"] = shell_sequence(aggregate) == [
+        ["bun", "run", name] for name in BUN_STAGES
+    ]
 
     def calls_make(value: str) -> bool:
         normalized_shell_words = normalize_shell_token_joins(value)
@@ -1649,38 +1996,57 @@ def inspect_testing_document(
         return result, findings
     try:
         content = path.read_text(encoding="utf-8")
+        content = re.sub(r"(?s)<!--.*?-->", "", content)
+        # Examples do not enroll a repository or satisfy required sections.
+        visible_lines: list[str] = []
+        fence = ""
+        for line in content.splitlines():
+            marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+            if marker:
+                if not fence:
+                    fence = marker.group(1)
+                elif marker.group(1)[0] == fence[0] and len(marker.group(1)) >= len(
+                    fence
+                ):
+                    fence = ""
+                continue
+            if not fence:
+                visible_lines.append(line)
+            elif line.strip():
+                visible_lines.append("    [code example]")
+        content = "\n".join(visible_lines)
         section_content: dict[str, str] = {}
         result["sections"] = {}
         for heading in TESTING_HEADINGS:
             section = re.search(
-                rf"(?ms)^##\s+{re.escape(heading)}\s*$\n(.*?)(?=^##\s+|\Z)",
+                rf"(?ims)^ {{0,3}}##[ \t]+{re.escape(heading)}[ \t]*#*[ \t]*\n(.*?)(?=^ {{0,3}}##[ \t]+|\Z)",
                 content,
             )
             body = section.group(1).strip() if section else ""
             section_content[heading] = body
             result["sections"][heading] = bool(body)
-        contract_content = section_content["Contract"]
+        contract_content = re.sub(r"[`*_]", "", section_content["Contract"])
         result["contract_registered"] = bool(
             re.search(
-                rf"(?im)^\s*(?:[-*]\s*)?Contract:\s*`?{re.escape(CONTRACT_MARKER)}`?\s*$",
+                rf"(?im)^\s*(?:[-+]\s*)?Contract:\s*{re.escape(CONTRACT_MARKER)}\s*$",
                 contract_content,
             )
             or re.search(
-                rf"(?i)\bis enrolled in\s+`{re.escape(CONTRACT_MARKER)}`",
+                rf"(?i)\b(?:enrolled|registered)\s+(?:in|under|with)\s+{re.escape(CONTRACT_MARKER)}(?![\w/.-])",
                 contract_content,
             )
         )
         explicit_profile = re.search(
-            r"(?im)^\s*(?:[-*]\s*)?Profile:\s*`?(make|typescript-bun|polyglot-make)`?\s*$",
+            r"(?im)^\s*(?:[-+]\s*)?Profile:\s*(make|typescript-bun|polyglot-make)\s*$",
             contract_content,
         )
         prose_profile = re.search(
-            r"(?i)`(make|typescript-bun|polyglot-make)`\s+profile\b",
+            r"(?i)(?<![\w-])(make|typescript-bun|polyglot-make)\s+profile\b",
             contract_content,
         )
         profile_match = explicit_profile or prose_profile
         if profile_match:
-            result["profile"] = profile_match.group(1)
+            result["profile"] = profile_match.group(1).lower()
     except (OSError, UnicodeError):
         findings.append(
             finding(
@@ -1735,7 +2101,7 @@ def inspect_repository(repository: Path) -> dict[str, Any]:
         repository, package, package_result, required=profile == "typescript-bun"
     )
     framework_result, framework_findings = inspect_frameworks(
-        repository, languages, package
+        repository, languages, package, make_result
     )
     document_result, document_findings = inspect_testing_document(repository, profile)
     findings = make_findings + bun_findings + framework_findings + document_findings

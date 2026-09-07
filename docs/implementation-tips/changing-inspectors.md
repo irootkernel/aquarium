@@ -19,6 +19,8 @@ Bundle normalization is allowed to parse the explicitly supplied manifest but no
 
 ## Tests
 
-Add unit cases for each classification and failure path, then black-box fixtures for repository-root handling and emitted schema. Include unsafe symlinks, missing files, malformed input, unsupported versions, and non-UTF-8 or ambiguous content when relevant. Keep raw secrets out of fixtures even for negative tests.
+Keep automated cases focused on executable behavior: relevant output fields, error codes, and safe repository-root handling. Use representative unsafe paths, missing files, malformed input, and unsupported versions where the changed code handles them. Keep raw secrets out of fixtures even for negative tests.
 
-After focused tests, run the Ruby validator to confirm schema names, script boundaries, references, and public disclosures remain aligned.
+For the test inspector, organize cases around observable contracts: stage order, failure propagation, runner evidence, parser selection, and safe file access. Assert relevant result fields and reason codes. Avoid pinning private helper names, implementation flags, diagnostic sentences, or the layout of equivalent inputs. Use representative equivalent inputs and actual behavioral counterexamples instead of a Cartesian product of whitespace variants. Retain distinct failure cases even when they share a parser branch.
+
+After focused tests, run the Ruby validator for package structure and local references. It does not inspect Python source fragments or verify public prose. Master separately verifies the skills that interpret inspector output; report the affected manual checks without inferring their result from the automated tests.

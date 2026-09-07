@@ -13,13 +13,6 @@ inspect_docs = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(inspect_docs)
 
 
-def test_header_states_the_bounded_inspector_purpose() -> None:
-    header = "\n".join(SCRIPT.read_text(encoding="utf-8").splitlines()[:5])
-
-    assert "conservative, read-only structural discovery" in header
-    assert "Do not validate prose wording" in header
-
-
 def test_field_parser_tolerates_markdown_and_line_endings() -> None:
     text = (
         "## EPIC-001: First\r\n"
