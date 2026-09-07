@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import shlex
@@ -6,6 +7,7 @@ import stat
 import subprocess
 import sys
 import time
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 import pytest
@@ -82,16 +84,6 @@ elif mode == "hang":
     Path(os.environ["AQUARIUM_TEST_CHILD_PID"]).write_text(str(child.pid))
     time.sleep(60)
 elif mode == "escape":
-    child = subprocess.Popen([
-        sys.executable,
-        "-c",
-        "import os,time; os.setsid(); "
-        "open(os.environ['AQUARIUM_TEST_ESCAPE_READY'], 'w').write(str(os.getpid())); "
-        "time.sleep(60)",
-    ])
-    ready = Path(os.environ["AQUARIUM_TEST_ESCAPE_READY"])
-    while not ready.exists():
-        time.sleep(0.01)
     time.sleep(60)
 print(json.dumps(manifest, sort_keys=True))
 """
@@ -345,6 +337,7 @@ def test_timed_out_build_kills_process_group_and_releases_publisher_lock(
     host_root = tmp_path / "host"
     child_pid_path = tmp_path / "child.pid"
     enroll(repository, host_root)
+    build_timeout = dev_manager.PRODUCER_BUILD_TIMEOUT_SECONDS
     monkeypatch.setattr(dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", 0.2)
     monkeypatch.setenv("AQUARIUM_TEST_MODE", "hang")
     monkeypatch.setenv("AQUARIUM_TEST_CHILD_PID", str(child_pid_path))
@@ -365,41 +358,140 @@ def test_timed_out_build_kills_process_group_and_releases_publisher_lock(
     else:
         pytest.fail("producer child survived process-group timeout cleanup")
 
+    monkeypatch.setattr(dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", build_timeout)
     monkeypatch.setenv("AQUARIUM_TEST_MODE", "success")
     status, details = dev_manager.rebuild(repository, host_root, approve_build=True)
     assert status == "success"
     assert details["git_sha"]
 
 
+@pytest.mark.parametrize("wait_times_out", [False, True])
+def test_process_termination_bounds_waits_and_closes_held_pipes(
+    monkeypatch, wait_times_out
+):
+    grace = 0.1
+    monkeypatch.setattr(dev_manager, "PROCESS_TERMINATION_GRACE_SECONDS", grace)
+    signals = []
+    monkeypatch.setattr(
+        dev_manager.os, "killpg", lambda pid, sig: signals.append((pid, sig))
+    )
+
+    class ProcessWithHeldPipes:
+        pid = 123
+
+        def __init__(self):
+            self.stdout = io.StringIO()
+            self.stderr = io.StringIO()
+            self.drain_timeouts = []
+            self.wait_timeouts = []
+
+        def communicate(self, timeout=None):
+            assert timeout == grace
+            self.drain_timeouts.append(timeout)
+            raise subprocess.TimeoutExpired("producer", timeout)
+
+        def wait(self, timeout=None):
+            assert self.stdout.closed and self.stderr.closed
+            assert timeout == grace
+            self.wait_timeouts.append(timeout)
+            if wait_times_out:
+                raise subprocess.TimeoutExpired("producer", timeout)
+            return -signal.SIGKILL
+
+    process = ProcessWithHeldPipes()
+    dev_manager._terminate_process_bounded(process)
+
+    assert signals == [(process.pid, signal.SIGTERM), (process.pid, signal.SIGKILL)]
+    assert process.drain_timeouts == [grace, grace]
+    assert process.wait_timeouts == [grace]
+    assert process.stdout.closed and process.stderr.closed
+
+
+@contextmanager
+def escaped_build_pipes(monkeypatch, startup_delay=0):
+    # Own the separate-session pipe holder so cleanup never needs a PID file.
+    original_popen = subprocess.Popen
+    with ExitStack() as stack:
+        readers, writers = [], []
+        for _ in range(2):
+            read_fd, write_fd = os.pipe()
+            readers.append(stack.enter_context(os.fdopen(read_fd)))
+            writers.append(stack.enter_context(os.fdopen(write_fd, "w")))
+        escaped = original_popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"],
+            stdout=writers[0],
+            stderr=writers[1],
+            start_new_session=True,
+        )
+        builds = []
+        try:
+            assert os.getpgid(escaped.pid) == escaped.pid
+
+            def start_build(command, **kwargs):
+                if command[:3] != ["make", "-s", "aquarium-dev-build"] or (
+                    kwargs.get("env", {}).get("AQUARIUM_TEST_MODE") != "escape"
+                ):
+                    return original_popen(command, **kwargs)
+                # Setup may exceed the timeout; only the prepared build is timed.
+                time.sleep(startup_delay)
+                kwargs.update(stdout=writers[0], stderr=writers[1])
+                process = original_popen(command, **kwargs)
+                builds.append(process)
+                process.stdout, process.stderr = readers
+                for writer in writers:
+                    writer.close()
+                return process
+
+            with monkeypatch.context() as patch:
+                patch.setattr(subprocess, "Popen", start_build)
+                yield escaped
+                assert len(builds) == 1
+        finally:
+            escaped.kill()
+            escaped.wait(timeout=5)
+            for process in builds:
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGKILL)
+                process.wait(timeout=5)
+
+
+@pytest.mark.parametrize("startup_delay", [0, 0.3])
 def test_timed_out_build_does_not_wait_for_pipes_held_by_escaped_child(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, startup_delay
 ):
     repository = create_repository(tmp_path / "repository")
     host_root = tmp_path / "host"
-    ready = tmp_path / "escaped.pid"
     enroll(repository, host_root)
+    build_timeout = dev_manager.PRODUCER_BUILD_TIMEOUT_SECONDS
     monkeypatch.setattr(dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", 0.2)
     monkeypatch.setattr(dev_manager, "PROCESS_TERMINATION_GRACE_SECONDS", 0.1)
     monkeypatch.setenv("AQUARIUM_TEST_MODE", "escape")
-    monkeypatch.setenv("AQUARIUM_TEST_ESCAPE_READY", str(ready))
 
-    started = time.monotonic()
-    with pytest.raises(ManagerError) as failure:
-        dev_manager.rebuild(repository, host_root, approve_build=True)
-    elapsed = time.monotonic() - started
-    escaped_pid = int(ready.read_text())
-    try:
+    with escaped_build_pipes(monkeypatch, startup_delay) as escaped:
+        with pytest.raises(ManagerError) as failure:
+            dev_manager.rebuild(repository, host_root, approve_build=True)
         assert failure.value.code == "producer_build_timeout"
-        assert elapsed < 1
+        # Return while another session still holds both output pipes open.
+        assert escaped.poll() is None
+        assert os.getpgid(escaped.pid) == escaped.pid
         assert not list((host_root / "artifacts/aquarium").glob(".staging-*"))
+        monkeypatch.setattr(
+            dev_manager, "PRODUCER_BUILD_TIMEOUT_SECONDS", build_timeout
+        )
         monkeypatch.setenv("AQUARIUM_TEST_MODE", "success")
         status, _ = dev_manager.rebuild(repository, host_root, approve_build=True)
         assert status == "success"
-    finally:
-        try:
-            os.kill(escaped_pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
+    assert escaped.returncode is not None
+
+
+def test_escaped_build_pipes_cleans_up_after_assertion_failure(monkeypatch):
+    with (
+        pytest.raises(AssertionError, match="injected failure"),
+        escaped_build_pipes(monkeypatch) as escaped,
+    ):
+        assert escaped.poll() is None
+        raise AssertionError("injected failure")
+    assert escaped.returncode is not None
 
 
 def test_manifest_identity_mismatch_never_exposes_staging(tmp_path):

@@ -21,7 +21,7 @@ This index owns small actionable findings intentionally postponed from current w
 - Actionable issue: the official Podway v0.2.8 CLI resolves the deleted workspace configuration before reaching the daemon's `already_absent` path, so an identical post-success UUID-fenced replay returns nonretryable `WORKSPACE_CONFIG_INVALID` even though Podway's ADR, IPC schema, and daemon tests define `already_absent=true` convergence.
 - Owner: the Podway compatibility gate and integration documentation.
 - Reason for deferral: the first exact fenced removal succeeds, and Aquarium independently verifies that the isolated registry entry and `.podway` tree are absent while the Git worktree is preserved. The bounded v0.2.8 exception therefore does not weaken the initial destructive mutation boundary.
-- Re-entry condition: when an official Podway v0.2.9 artifact is available, require the replay to return `podway.workspace-removal-result/v1` with a null workspace UUID, `registry_entry_removed=false`, `podway_directory_removed=false`, and `already_absent=true`; then remove the v0.2.8 exception and its v4 error-terminal assertions and documentation.
+- Remaining qualification: the v0.2.9 compatibility implementation removes the v0.2.8 exception and requires `podway.workspace-removal-result/v1` with a null workspace UUID, `registry_entry_removed=false`, `podway_directory_removed=false`, and `already_absent=true`. Run the official checksum-verified artifact against the clean committed Aquarium candidate before removing this entry. The v5 receipt must prove successful replay and preserved Git worktree state; unit tests alone do not close this finding.
 
 ## DF-005: Separate non-output operational deviations from target findings
 

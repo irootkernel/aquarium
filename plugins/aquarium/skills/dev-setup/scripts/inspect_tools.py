@@ -375,7 +375,7 @@ def supported_podway_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 8)
+    return bool(match and int(match.group(1)) >= 9)
 
 
 def podway_v025_workaround_bytes(name: str, source: bytes) -> bytes | None:

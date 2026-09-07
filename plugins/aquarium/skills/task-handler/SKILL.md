@@ -11,7 +11,7 @@ Strengthen execution of one roadmap task goal with focused phase skills. Own tas
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), [release-notes.md](../../references/release-notes.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). Use Podway by default. A pre-session user opt-out or higher instruction excludes it; then do not inspect Podway, load `$use-podway`, read [podway-integration.md](../../references/podway-integration.md), or carry the opt-out forward.
 
-Otherwise read the Podway contract, use one `aquarium-task-v2` session for this canonical task after plan approval, mirror its current goal in the Codex goal, and record each verified phase handoff at the matching node. In `plan-only`, create neither goal nor session; in `plan-handoff`, create them only after approval and stop at `implement` with the verified plan artifact. Do not let either goal mechanism or runtime evidence replace roadmap authority.
+Otherwise read the Podway contract, use one `aquarium-task-v2` session for this canonical task after plan approval, coordinate with an explicitly authorized Codex goal under the shared Podway contract, and record each verified phase handoff at the matching node. In `plan-only`, create neither goal nor session; in `plan-handoff`, create the session only after approval, create a Codex goal only on explicit request, and stop at `implement` with the verified plan artifact. Do not let either goal mechanism or runtime evidence replace roadmap authority.
 
 ## Establish the Task Contract
 
@@ -96,9 +96,9 @@ When Podway is active:
 
 ## Own Goal Lifetime
 
-Do not create a goal before plan approval. After approval, inspect the current goal, resume it when it represents the same task, create one containing the task ID and evidence boundary when none exists, and stop rather than replace a different unfinished goal. Omit a token budget unless the user explicitly supplied one.
+Create a Codex goal only after plan approval and an explicit user request under its tool contract. When authorized, inspect the current goal, continue it when it represents the same task, create one containing the task ID and evidence boundary when none exists, and stop rather than replace a different unfinished goal. Otherwise proceed without a Codex goal. Omit a token budget unless the user explicitly supplied one.
 
-Keep the goal active through every phase. Mark it complete only after `$aquarium:task-close` succeeds and no required task work or authorized lifecycle action remains. Mark the goal blocked only when the host's goal tool defines a blocked state and its own repeated-blocker rule is met by the same unresolved external blocker persisting across consecutive goal turns with no authorized action remaining; otherwise keep it active and report the exact gap.
+When a Codex goal is authorized, keep it active through every phase. Mark it complete only after `$aquarium:task-close` succeeds and no required task work or authorized lifecycle action remains. Mark the goal blocked only when the host's goal tool defines a blocked state and its own repeated-blocker rule is met by the same unresolved external blocker persisting across consecutive goal turns with no authorized action remaining; otherwise keep it active and report the exact gap.
 
 ## Resume Without Shadow State
 

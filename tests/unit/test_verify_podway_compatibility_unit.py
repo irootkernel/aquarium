@@ -82,46 +82,113 @@ def test_procedure_result_rejects_an_unexpected_envelope() -> None:
         )
 
 
-def test_workspace_removal_contract_uses_v4_receipt() -> None:
-    runtime = verify_podway_compatibility.podway_runtime_qualification
-    completed = subprocess.CompletedProcess(
+def removal_replay_process(**changes: object) -> subprocess.CompletedProcess[bytes]:
+    result = {
+        "schema": "podway.workspace-removal-result/v1",
+        "worktree_root": "/tmp/repository",
+        "workspace_uuid": None,
+        "registry_entry_removed": False,
+        "podway_directory_removed": False,
+        "already_absent": True,
+    }
+    result.update(changes)
+    return subprocess.CompletedProcess(
         ["podway"],
         0,
         stdout=json.dumps(
             {
                 "schema": "podway.output/v3",
                 "command": "workspace.remove",
-                "result": {
-                    "schema": "podway.workspace-removal-result/v1",
-                    "worktree_root": "/tmp/repository",
-                    "workspace_uuid": None,
-                    "registry_entry_removed": False,
-                    "podway_directory_removed": False,
-                    "already_absent": True,
-                },
+                "result": result,
             }
         ).encode(),
         stderr=b"",
     )
 
-    result = runtime.output_result(
-        completed,
-        "workspace.remove",
-        "podway.workspace-removal-result/v1",
-    )
 
+def test_workspace_removal_replay_requires_success_with_v5_receipt() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    result = runtime.workspace_removal_result(
+        removal_replay_process(), "/tmp/repository", None
+    )
     assert result["already_absent"] is True
+    assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v4"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v5"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.8"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.9"
 
 
-def test_workspace_removal_replay_accepts_only_the_v028_terminal() -> None:
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"worktree_root": "/tmp/other"},
+        {"workspace_uuid": "original-uuid"},
+        {"registry_entry_removed": True},
+        {"podway_directory_removed": True},
+        {"already_absent": False},
+        {"registry_entry_removed": 0},
+        {"podway_directory_removed": 0},
+        {"already_absent": 1},
+        {"schema": "podway.workspace-removal-result/v2"},
+    ],
+)
+def test_workspace_removal_replay_rejects_incompatible_results(changes: dict) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    with pytest.raises(runtime.RuntimeQualificationError):
+        runtime.workspace_removal_result(
+            removal_replay_process(**changes), "/tmp/repository", None
+        )
+
+
+@pytest.mark.parametrize("workspace_uuid", [None, "original-uuid"])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {},
+        {"registry_entry_removed": 0},
+        {"registry_entry_removed": 1},
+        {"podway_directory_removed": 0},
+        {"podway_directory_removed": 1},
+        {"already_absent": 0},
+        {"already_absent": 1},
+        {"registry_entry_removed": None},
+        {"podway_directory_removed": "true"},
+        {"worktree_root": "/tmp/other"},
+        {"workspace_uuid": "wrong-uuid"},
+        {"extra": True},
+    ],
+)
+def test_workspace_removal_requires_exact_fields_and_boolean_flags(
+    workspace_uuid, changes
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    expected = {
+        "workspace_uuid": workspace_uuid,
+        "registry_entry_removed": workspace_uuid is not None,
+        "podway_directory_removed": workspace_uuid is not None,
+        "already_absent": workspace_uuid is None,
+    }
+    completed = removal_replay_process(**(expected | changes))
+    if changes:
+        with pytest.raises(runtime.RuntimeQualificationError):
+            runtime.workspace_removal_result(
+                completed, "/tmp/repository", workspace_uuid
+            )
+    else:
+        result = runtime.workspace_removal_result(
+            completed, "/tmp/repository", workspace_uuid
+        )
+        assert result["workspace_uuid"] == workspace_uuid
+        assert result["already_absent"] is (workspace_uuid is None)
+
+
+@pytest.mark.parametrize("returncode", [0, 5])
+def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     completed = subprocess.CompletedProcess(
         ["podway"],
-        5,
+        returncode,
         stdout=json.dumps(
             {
                 "schema": "podway.error/v1",
@@ -132,40 +199,49 @@ def test_workspace_removal_replay_accepts_only_the_v028_terminal() -> None:
         ).encode(),
         stderr=b"",
     )
-
-    assert runtime.workspace_removal_replay_error(completed)["code"] == (
-        "WORKSPACE_CONFIG_INVALID"
-    )
+    with pytest.raises(runtime.RuntimeQualificationError):
+        runtime.workspace_removal_result(completed, "/tmp/repository", None)
 
 
 @pytest.mark.parametrize(
-    ("returncode", "code", "retryable"),
+    "changes",
     [
-        (0, "WORKSPACE_CONFIG_INVALID", False),
-        (5, "WORKSPACE_NOT_INITIALIZED", False),
-        (5, "WORKSPACE_CONFIG_INVALID", True),
+        {},
+        {"daemon_version": "0.2.9"},
+        {"daemon_version": "v0.2.8"},
+        {"contract_manifest_digest": "sha256:" + "0" * 64},
     ],
 )
-def test_workspace_removal_replay_rejects_other_outcomes(
-    returncode: int, code: str, retryable: bool
+def test_managed_runtime_requires_v029_daemon_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changes: dict
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    completed = subprocess.CompletedProcess(
-        ["podway"],
-        returncode,
-        stdout=json.dumps(
-            {
-                "schema": "podway.error/v1",
-                "command": "workspace.remove",
-                "code": code,
-                "retryable": retryable,
-            }
-        ).encode(),
-        stderr=b"",
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
     )
-
-    with pytest.raises(runtime.RuntimeQualificationError, match="bounded v0.2.8"):
-        runtime.workspace_removal_replay_error(completed)
+    status = {
+        "pid": 123,
+        "readiness_state": "ready",
+        "readiness_stage": "ready",
+        "mode": "release-qa",
+        "daemon_version": "v0.2.9",
+        "contract_manifest_digest": (
+            "sha256:d2ff4e35b0a537d767fdb537414dd3ad4c32c69f4d11e1f8f5142c7203c808ac"
+        ),
+        "in_flight_client_count": 0,
+        "maintenance_operation_count": 0,
+    }
+    status.update(changes)
+    monkeypatch.setattr(managed, "daemon_status_probe", lambda: status)
+    times = iter([0, 0, runtime.READINESS_TIMEOUT_SECONDS + 1])
+    monkeypatch.setattr(runtime.time, "monotonic", lambda: next(times))
+    monkeypatch.setattr(runtime.time, "sleep", lambda _: None)
+    if changes:
+        with pytest.raises(runtime.RuntimeQualificationError):
+            managed.wait_ready()
+    else:
+        managed.wait_ready()
+        assert managed.daemon_pid == 123
 
 
 def test_managed_runtime_cleans_up_when_readiness_fails(

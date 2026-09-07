@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Raise the minimum Podway runtime to v0.2.9 and pin `use-podway` independently to commit `9014225982e4c316237e0d6e35052414d2dbc770` for context recovery and independent Codex goal coordination. Require successful UUID-fenced workspace-removal replay in the v5 compatibility receipt.
 - Raise the minimum Mulgae version to v0.1.19 and consume command-result v6.
 - Delegate Gaori and Mulgae asynchronous lifecycles to their upstream skills.
 - Separate execution completion from evidence quality and approval.

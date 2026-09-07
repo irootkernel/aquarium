@@ -319,8 +319,8 @@ print(json.dumps({{"schema_version": 1, "ok": True, "command": command, "invocat
         mcp_neutral_mixed_missing: bool = False,
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.8",
-        podway_daemon_version: str = "0.2.8",
+        podway_version: str = "v0.2.9",
+        podway_daemon_version: str = "0.2.9",
         podway_daemon_reachable: bool = True,
         podway_daemon_status_schema: str = "podway.daemon-status-result/v3",
         podway_daemon_mode: str = "prod",
@@ -3761,7 +3761,7 @@ else:
         self.assertEqual(podway["status"], "degraded")
 
     def test_unsupported_or_mixed_podway_versions_are_degraded(self) -> None:
-        self.install_fake_tools(podway_version="v0.3.0", podway_daemon_version="0.2.8")
+        self.install_fake_tools(podway_version="v0.3.0", podway_daemon_version="0.2.9")
         self.install_managed_podway_procedures()
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
@@ -3769,7 +3769,7 @@ else:
         self.assertFalse(podway["versions_match"])
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_v028_is_the_minimum_supported_release(self) -> None:
+    def test_podway_v029_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
             ("v0.2.0", False),
             ("v0.2.2", False),
@@ -3779,7 +3779,10 @@ else:
             ("v0.2.6", False),
             ("v0.2.7", False),
             ("v0.2.7-rc.1", False),
-            ("v0.2.8", True),
+            ("v0.2.8", False),
+            ("v0.2.9", True),
+            ("0.2.9", True),
+            ("v0.2.9-rc.1", False),
             ("0.2.99", True),
             ("v0.3.0", False),
         ):

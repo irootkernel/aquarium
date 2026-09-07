@@ -15,6 +15,8 @@ Use Podway by default. Exclude it only when the current user explicitly opts thi
 
 Otherwise read the Podway contract and use one `aquarium-validation-v2` session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority. A session created from an earlier managed Procedure version keeps its immutable snapshot and is not migrated in place.
 
+Create a Codex goal only on explicit user request under its tool contract, whether Podway is active or opted out. Continue an existing authorized Codex goal through audit, remediation, and confirmation within its own scope. Remediation groups organize the work; they do not create separate Codex goals or Podway sessions.
+
 ## Establish the Validation Contract
 
 Require one mutable Git repository, one canonical roadmap path inside it, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, and requests without one canonical roadmap epic identity.
@@ -49,7 +51,7 @@ For each complete whole-epic root or verified composite review, record the next 
 
 ## Audit the Epic Directly
 
-Run the audit without an active goal and without source mutation:
+Run the audit without source mutation. An existing authorized Codex goal may remain active during the audit:
 
 1. Build a requirement-to-owner-to-production-to-test-to-document matrix across every member task. Trace runtime wiring, consumers, persistence, concurrency, migrations, generated artifacts, failure and recovery behavior, operational guidance, external dependencies, roadmap consistency, repository-defined dossier disposition when applicable, and coverage by the completed epic's canonical sources.
 2. Inspect current code and evidence directly. Run only repository-authorized checks needed for the epic claim. Keep current agent-run, explicit user-run, unavailable, forbidden, stale, external, live, commit, and upstream publication evidence distinct; narrow green checks do not prove uncovered requirements.
@@ -62,30 +64,30 @@ With Podway active, create or resume the matching prepared validation session on
 
 Select only actions allowed by `guidance.allowed_actions` and represented by current `mutation_templates` entries. A clean decision advances to final review; confirmed gaps advance to remediation. Do not record candidate findings as confirmed Podway gaps before adjudication.
 
-## Group and Complete Remediation Goals
+## Group and Complete Remediation
 
 Group confirmed gaps by canonical requirement owner and coherent implementation boundary. Do not add new roadmap tasks or invent task IDs.
 
-- For a gap owned by one existing task, create or resume one remediation goal containing that task ID and hand the isolated correction to `$aquarium:task-commit` under that task ID. If the roadmap defines a reopen state, transition through it and return to success; otherwise preserve the successful state without adding remediation history to the roadmap.
-- For a cross-task seam or omitted epic-level design requirement owned by no existing task, create one epic remediation goal and hand the isolated correction to `$aquarium:task-commit` under the epic ID.
+- For a gap owned by one existing task, group the remediation under that task ID and hand the isolated correction to `$aquarium:task-commit` under that task ID. If the roadmap defines a reopen state, transition through it and return to success; otherwise preserve the successful state without adding remediation history to the roadmap.
+- For a cross-task seam or omitted epic-level design requirement owned by no existing task, group the remediation under the epic ID and hand the isolated correction to `$aquarium:task-commit` under that epic ID.
 - For work owned by another repository, stop with its owner, exact revision, and missing evidence. Never mutate that repository.
 
-If ownership is ambiguous, stop before goal creation and report the missing authority. Order task-owned groups by dependencies and roadmap order, then epic-owned groups. Never run two remediation goals concurrently.
+If ownership is ambiguous, stop before remediation and report the missing authority. Order task-owned groups by dependencies and roadmap order, then epic-owned groups. Never run two remediation groups concurrently.
 
-For each goal:
+For each remediation group:
 
 1. Implement the smallest complete correction, add or update regression coverage and any durable specification required by changed current behavior, and run affected authorized checks. In an enrolled repository, include one concise release-note `entry` for a changed shipped outcome or record `intentional no-note`; otherwise record `not-enrolled`.
-2. Fix every valid in-scope Medium-or-higher finding from the initial audit and root review, then repeat affected checks without starting a per-goal or follow-up review. Apply each Low disposition under the shared contract with its required local checks.
+2. Fix every valid in-scope Medium-or-higher finding from the initial audit and root review, then repeat affected checks without starting a per-group or follow-up review. Apply each Low disposition under the shared contract with its required local checks.
 3. Update the roadmap only for an actual lifecycle change or actionable downstream handoff. Record Low future work in the canonical deferred-feedback or TODO owner, not as accepted risk. Never add a routine `Validation remediation`, `Validation record`, command log, tested snapshot, runtime path, run ID, or commit list.
 4. Record resulting remediation commit IDs in Podway and the orchestration report, not in canonical documentation.
 
-Confirm the goal-owned diff, including any necessary lifecycle or current-semantics documentation, equals the verified correction for the recorded source findings. Hand that exact scope, its evidence, owning task or epic ID, release-note target and decision, zero or more approved promoted manifest path and digest pairs or their explicit absence, and approved one-commit authority to `$aquarium:task-commit`.
+Confirm the group's diff, including any necessary lifecycle or current-semantics documentation, equals the verified correction for the recorded source findings. Hand that exact scope, its evidence, owning task or epic ID, release-note target and decision, zero or more approved promoted manifest path and digest pairs or their explicit absence, and approved one-commit authority to `$aquarium:task-commit`.
 
-Verify the returned commit snapshot, residue, and hook evidence before completing the goal. The later whole-epic confirmation review, not the source review, owns coverage of those committed bytes.
+Verify the returned commit snapshot, residue, and hook evidence before completing the remediation group. Complete an authorized Codex goal only when its full objective is achieved; a remediation commit alone does not establish that. The later whole-epic confirmation review, not the source review, owns coverage of those committed bytes.
 
 ## Confirm Once and Stop on New Findings
 
-After all initial remediation goals complete, discard the prior matrix, findings, checks, and review result. With no active goal, repeat the direct audit and run exactly one round-two whole-epic Mulgae confirmation review from the latest committed snapshot. Do not start a third review automatically.
+After all initial remediation groups complete, discard the prior matrix, findings, checks, and review result. Continue any authorized Codex goal while repeating the direct audit and running exactly one round-two whole-epic Mulgae confirmation review from the latest committed snapshot. Do not start a third review automatically.
 
 If round two is incomplete, follow supported exact recovery within the approved envelope; otherwise stop without resubmitting the review. If CI passes and it has no valid finding, continue. A failed CI decision remains a verification gap even without findings; return it to its owning check or implementation within the approved remediation envelope, or stop for direction when no further remediation and review are authorized. A valid Medium-or-higher finding blocks validation; ask for one correction-and-review budget or stop. Risk acceptance and deferral are unavailable. When only Low findings remain, handle them inside the approved envelope. Self-evident fixes receive integrity checks, bounded behavioral fixes receive a focused test, future risks go to the canonical deferred-feedback owner, and structural work becomes a TODO candidate. State that the review predates changed bytes.
 

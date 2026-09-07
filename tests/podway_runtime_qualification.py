@@ -27,7 +27,7 @@ PROCESS_EXIT_TIMEOUT_SECONDS = 10
 RUN_TIMEOUT_SECONDS = 240
 REPEAT_COUNT = 2
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:9f3ed3571cc45cf49e445f8e2d75be3396f533db054e5e5cac8339207b8fea0c"
+    "sha256:d2ff4e35b0a537d767fdb537414dd3ad4c32c69f4d11e1f8f5142c7203c808ac"
 )
 
 SUCCESS_OPTIONS = {
@@ -153,22 +153,33 @@ def error_code(completed: subprocess.CompletedProcess[bytes]) -> str:
     return code
 
 
-def workspace_removal_replay_error(
+def workspace_removal_result(
     completed: subprocess.CompletedProcess[bytes],
+    worktree_root: str,
+    workspace_uuid: str | None,
 ) -> dict[str, Any]:
-    payload = json_payload(completed)
-    if (
-        completed.returncode != 5
-        or payload.get("schema") != ERROR_SCHEMA
-        or payload.get("command") != "workspace.remove"
-        or payload.get("code") != "WORKSPACE_CONFIG_INVALID"
-        or payload.get("retryable") is not False
+    result = output_result(
+        completed, "workspace.remove", "podway.workspace-removal-result/v1"
+    )
+    if result != {
+        "schema": "podway.workspace-removal-result/v1",
+        "worktree_root": worktree_root,
+        "workspace_uuid": workspace_uuid,
+        "registry_entry_removed": workspace_uuid is not None,
+        "podway_directory_removed": workspace_uuid is not None,
+        "already_absent": workspace_uuid is None,
+    } or any(
+        type(result.get(field)) is not bool
+        for field in (
+            "registry_entry_removed",
+            "podway_directory_removed",
+            "already_absent",
+        )
     ):
         raise RuntimeQualificationError(
-            "workspace removal replay did not return the bounded v0.2.8 "
-            "WORKSPACE_CONFIG_INVALID terminal"
+            "workspace removal did not return the exact expected result"
         )
-    return payload
+    return result
 
 
 def private_directory(path: Path) -> None:
@@ -398,7 +409,7 @@ class ManagedRuntime:
                 result.get("readiness_state") == "ready"
                 and result.get("readiness_stage") == "ready"
                 and result.get("mode") == RUNTIME_MODE
-                and result.get("daemon_version") == "0.2.8"
+                and result.get("daemon_version") == "v0.2.9"
                 and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
                 and (
                     result.get("in_flight_client_count") is None
@@ -440,7 +451,7 @@ class ManagedRuntime:
                         except OSError:
                             pass
         raise RuntimeQualificationError(
-            "daemon did not reach v0.2.8 release-qa readiness: "
+            "daemon did not reach v0.2.9 release-qa readiness: "
             f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
         )
 
@@ -452,7 +463,7 @@ class ManagedRuntime:
                 "name": "aquarium-release-qualification",
                 "pid": os.getpid(),
                 "product": "podway",
-                "version": "v0.2.8",
+                "version": "v0.2.9",
                 "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
             },
             "operation": "control",
@@ -691,22 +702,9 @@ class ManagedRuntime:
             workspace_uuid,
             "--yes",
         ]
-        removed = output_result(
-            self.raw(removal_arguments),
-            "workspace.remove",
-            "podway.workspace-removal-result/v1",
+        workspace_removal_result(
+            self.raw(removal_arguments), str(self.sandbox.resolve()), workspace_uuid
         )
-        if removed != {
-            "schema": "podway.workspace-removal-result/v1",
-            "worktree_root": str(self.sandbox.resolve()),
-            "workspace_uuid": workspace_uuid,
-            "registry_entry_removed": True,
-            "podway_directory_removed": True,
-            "already_absent": False,
-        }:
-            raise RuntimeQualificationError(
-                "workspace removal returned an incompatible initial result"
-            )
         if (
             podway_directory.exists()
             or not self.sandbox.is_dir()
@@ -717,8 +715,9 @@ class ManagedRuntime:
                 "workspace removal did not preserve the Git worktree boundary"
             )
 
-        replay = self.raw(removal_arguments, expected_exit=None)
-        workspace_removal_replay_error(replay)
+        replay = workspace_removal_result(
+            self.raw(removal_arguments), str(self.sandbox.resolve()), None
+        )
         post_removal_status = self.daemon_status_probe()
         if (
             podway_directory.exists()
@@ -735,7 +734,7 @@ class ManagedRuntime:
             "result_schema": "podway.workspace-removal-result/v1",
             "uuid_mismatch_rejected": True,
             "initial_removal_passed": True,
-            "replay_terminal_code": "WORKSPACE_CONFIG_INVALID",
+            "replay_result": replay,
             "replay_postcondition_verified": True,
             "podway_directory_absent": True,
             "registry_absent": True,
@@ -1421,7 +1420,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.8-run-{self.run_index}",
+                f"official-v0.2.9-run-{self.run_index}",
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
