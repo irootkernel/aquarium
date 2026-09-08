@@ -39,7 +39,7 @@ Mulgae remains operationally independent. Conformance is limited to common user-
 
 ## Settlement and recovery
 
-Independent Review follows Dolgorae's checked settlement and recovery contract. Orca Review follows its live Orca guides and [orca-supervision.md](orca-supervision.md). A process exit or silence is never terminal evidence. Deadline exhaustion performs one authoritative observation; active or unknown state is reported without retry or cleanup. Retry is allowed only after authoritative terminal settlement or cancellation and always uses a fresh lifecycle identity.
+Independent Review delegates settlement and recovery to the same-release `$use-dolgorae` skill and Dolgorae's checked contract. Orca Review follows its live Orca guides and [orca-supervision.md](orca-supervision.md), including authoritative observation on deadline exhaustion. A process exit or silence is never terminal evidence. Active or unknown state is reported without retry or cleanup; follow the owning backend's recovery contract before a later authorized review.
 
 ## Result contract
 

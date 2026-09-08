@@ -12,7 +12,8 @@ Run the canonical Aquarium review contract with one fresh Codex Reviewer through
 1. Read [review-contract.md](../../references/review-contract.md) completely.
 2. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
 3. Read [dolgorae-review-contract.md](../../references/dolgorae-review-contract.md) completely.
-4. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup-global`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
+4. Load the same-release `$use-dolgorae` skill. If it is missing or its release match is unverified, continue with the Dolgorae-scoped `$aquarium:dev-setup-global` diagnosis before review.
+5. Resolve `dolgorae` from the current process `PATH` and apply the exact stable candidate checks from `dev-setup-global`. Never use an Aquarium development artifact, `~/.aquarium`, `~/.aquarium-dev`, or a source-checkout binary.
 
 ## Establish the request
 
@@ -20,13 +21,13 @@ Resolve one canonical Git root, one exact `workspace`, `staged`, `dirty`, `head`
 
 Inspect and report branch, HEAD, upstream, staged, unstaged, untracked, ignored, and conflicted state without mutation. Never stage or normalize content. Bind the exact authority paths and user's test-status statement as context only. Explicit invocation with the exact target and Codex reviewer authorizes transmission of that immutable capture; ask again only if target, included paths, reviewer, profile, or execution scope changes.
 
-Resolve one existing Dolgorae Reviewer profile from checked workspace configuration. If there is no unambiguous compatible read-only Codex profile, stop with the exact profile setup action; do not create, edit, migrate, authenticate, or infer one. Apply the lower of the user deadline, Aquarium's 900-second ceiling, and Dolgorae's checked bound.
+Select one existing global Codex Profile through `$use-dolgorae`; ask when the request leaves the selection ambiguous. Inspect it with `profile show <name>` and offline `profile doctor <name>` without `--workspace`. Require compatible diagnostics, not merely `ok:true`. A Profile supplies the account and launch environment; the review operation owns read-only execution. Do not create, edit, migrate, authenticate, or infer a Profile. Use the upstream default deadline unless the user specifies a value within the native 1..3600-second range.
 
 ## Admit the candidate
 
-Require an official stable Dolgorae release from v0.1.1 through v0.1.x as described by the consumer contract. At review start, run `inspect_global_tools.py --component dolgorae --verify-dolgorae-release`, freeze the verified release tag, source commit, asset identities, executable checksum, path, file identity, runtime version, and compact sorted capability digest, and make no further network lookup during that invocation.
+Require an official stable Dolgorae release from v0.1.2 through v0.1.x as described by the consumer contract. At review start, run `inspect_global_tools.py --component dolgorae --verify-dolgorae-release`, freeze the verified release tag, source commit, asset identities, executable checksum, path, file identity, runtime version, and compact sorted capability digest, and make no further network lookup during that invocation.
 
-Require `command -v dolgorae` to resolve the frozen globally installed release candidate and repeat the local path, file identity, version, checksum, and capability checks immediately before every source-bearing operation. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission. Reject v0.1.0, prereleases, source or development builds, and v0.2 or later releases.
+Require `command -v dolgorae` to resolve the frozen globally installed release candidate and repeat the local path, file identity, version, checksum, and capability checks immediately before every source-bearing operation. A missing installation, wrong schema, incompatible capability, machine mismatch, file replacement, hash drift, or capability drift stops without source transmission. Reject v0.1.0, v0.1.1, prereleases, source or development builds, and v0.2 or later releases.
 
 ## Run one fresh Reviewer
 
@@ -38,7 +39,7 @@ dolgorae specialist review \
   --profile <reviewer-profile> \
   --target-kind <workspace|staged|dirty|head|commit|range> \
   [--revision <commit-or-range>] \
-  --deadline-seconds <effective-deadline> \
+  [--deadline-seconds <user-deadline>] \
   --format json
 ```
 
@@ -50,7 +51,7 @@ Dolgorae must capture before provider visibility, start one fresh managed Codex 
 
 Accept only one checked `specialist.review` result bound to the expected candidate, capture, target digest, Reviewer, engagement, Run, lifecycle revisions, evidence digest, integrity result, and settlement. Verify capture-time source identity and report later source mutation separately.
 
-Deadline exhaustion performs one authoritative observation. Terminal wins; active or unknown preserves the capture and recovery evidence. Cancellation requires explicit current user authorization and uses Dolgorae's checked cancellation path. Repeated cancellation is idempotent. Never retry an active or unknown predecessor; a later authorized retry uses a fresh identity.
+Delegate waiting, cancellation, settlement, and recovery to `$use-dolgorae` and its checked v2 error contract. Parse process exit independently of the envelope. On timeout, response loss, interruption, or unknown state, preserve every returned identity and follow the native recovery path. Cancellation requires explicit current user authorization. Do not manually reproduce the composed operation's internal lifecycle or replay an unknown predecessor.
 
 Reject late, stale, foreign-owner, lifecycle-mismatched, missing-evidence, tampered, concurrent-losing, or incompletely cleaned results. Exact accepted replay is idempotent. Wrong scope, source mutation by the workflow, missing output, incomplete lifecycle, or incomplete settlement prevents `APPROVE`.
 

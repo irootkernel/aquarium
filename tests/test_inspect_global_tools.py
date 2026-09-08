@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -126,7 +127,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v2"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v3"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
@@ -283,6 +284,7 @@ class TestInspectGlobalTools:
     def test_global_ouroboros_probe_uses_neutral_working_directory(self) -> None:
         inspector = mock.MagicMock()
         inspector.SANHO_SKILL_FILES = ()
+        inspector.DOLGORAE_SKILL_FILES = ()
         inspector.MULGAE_SKILL_FILES = ()
         inspector.GAORI_SKILL_FILES = ()
         inspector.SORAGE_SKILL_FILES = ()
@@ -363,6 +365,7 @@ class TestInspectGlobalTools:
     def test_dolgorae_scope_skips_unselected_component_probes(self) -> None:
         inspector = mock.MagicMock()
         inspector.SANHO_SKILL_FILES = ()
+        inspector.DOLGORAE_SKILL_FILES = ()
         inspector.MULGAE_SKILL_FILES = ()
         inspector.GAORI_SKILL_FILES = ()
         inspector.SORAGE_SKILL_FILES = ()
@@ -407,7 +410,7 @@ class TestInspectGlobalTools:
         inspect_sorage.assert_not_called()
         inspect_podway.assert_not_called()
         inspect_mcp.assert_not_called()
-        inspector.inspect_agent_skill.assert_not_called()
+        inspector.inspect_agent_skill.assert_called_once_with("use-dolgorae", ())
         inspector.inspect_mulgae_installation_prerequisites.assert_not_called()
         inspector.inspect_ouroboros.assert_not_called()
 
@@ -713,7 +716,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v17"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v18"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -769,7 +772,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v17"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v18"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(
@@ -1339,7 +1342,7 @@ def test_ouroboros_package_asset_probe_fails_closed(tmp_path, failure):
     )
 
 
-def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v2_shape(
+def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     ouroboros_homes, tmp_path
 ):
     _, _, current, default, _, install, _ = ouroboros_homes
@@ -1360,7 +1363,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v2_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v2"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v3"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),
@@ -1835,3 +1838,76 @@ def test_ouroboros_home_permission_failure_preserves_global_payload(
             call["home"] == str(current) and call["args"] != ["--version"]
             for call in calls
         )
+
+
+@pytest.mark.parametrize(
+    "case", ["missing", "complete", "incomplete", "changed", "duplicate"]
+)
+def test_dolgorae_paired_skill_is_independent_and_exposes_freshness_evidence(
+    tmp_path, monkeypatch, case
+):
+    home = tmp_path / "home"
+    codex_home = tmp_path / "codex"
+    home.mkdir()
+    codex_home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    inspector = inspect_global_tools.load_inspector()
+    canonical = home / ".agents/skills/use-dolgorae"
+    expected = {
+        "SKILL.md": "---\nname: use-dolgorae\n---\n# Dolgorae\n",
+        "references/configuration.md": "Profile configuration\n",
+        "references/lifecycle.md": "Lifecycle\n",
+        "references/recovery.md": "Recovery\n",
+    }
+    if case != "missing":
+        for relative, content in expected.items():
+            if case == "incomplete" and relative == "references/recovery.md":
+                continue
+            target = canonical / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content + ("Local edit\n" if case == "changed" else ""))
+    if case == "duplicate":
+        for relative, content in expected.items():
+            target = codex_home / "skills/use-dolgorae" / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
+    monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    monkeypatch.setattr(
+        inspector,
+        "inspect_dolgorae",
+        lambda *args, **kwargs: {
+            "status": "installed",
+            "installed": True,
+            "version": "0.1.2",
+            "probes": {},
+        },
+    )
+    payload = inspect_global_tools.inspect_global(
+        str(tmp_path), 1.0, False, components=("dolgorae",)
+    )
+    assert list(payload["tools"]) == ["dolgorae"]
+    tool = payload["tools"]["dolgorae"]
+    assert tool["cli"]["status"] == tool["status"] == "installed"
+    skill = tool["paired_skill"]
+    assert (
+        skill["status"]
+        == {
+            "missing": "missing",
+            "complete": "configured",
+            "incomplete": "degraded",
+            "changed": "configured",
+            "duplicate": "degraded",
+        }[case]
+    )
+    assert skill["duplicate"] is (case == "duplicate")
+    if case in {"complete", "changed"}:
+        hashes = {
+            entry["path"]: entry["sha256"]
+            for entry in skill["installations"][0]["files"]
+        }
+        assert set(hashes) == set(expected)
+        for relative, content in expected.items():
+            assert (
+                hashes[relative] == hashlib.sha256(content.encode()).hexdigest()
+            ) is (case == "complete")

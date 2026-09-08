@@ -67,7 +67,7 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 - [Gaori](https://github.com/irootkernel/gaori)는 기존 check를 실행하고, raw log를 보존하며, 요약된 evidence를 돌려줍니다. Gaori 연동은 선택 사항이고, 명령의 exit code가 pass/fail의 기준입니다.
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic을 여러 provider로 review합니다. Provider에는 immutable capture로 만든 격리된 read-only workspace만 보입니다. 임시 provider workspace는 사용 후 삭제되지만 capture와 report는 `.mulgae/` 아래에 남습니다. 결과는 staged file이나 standard output으로 전달됩니다. Aquarium은 finding의 타당성과 우선순위를 로컬에서 다시 판단합니다.
 - [Sorage](https://github.com/irootkernel/sorage)는 등록된 프로젝트 사이에서 로컬 문서 handoff를 중개합니다. Aquarium은 지원되는 Apple Silicon CLI와 paired `use-sorage` skill을 설치·진단하고, 별도 승인 후 로컬 초기화와 현재 Git 저장소 등록까지 수행할 수 있습니다. Inbox, outbox, review, revision, retention, deletion, Vault 작업은 paired skill이 맡습니다.
-- [Dolgorae](https://github.com/irootkernel/dolgorae)는 Independent Review에 필요한 immutable capture와 checked review lifecycle을 제공합니다. production review 경로에서는 공식 stable v0.1.x Apple Silicon 실행 파일 가운데 v0.1.1 이상만 검증을 거쳐 허용합니다.
+- [Dolgorae](https://github.com/irootkernel/dolgorae)는 Independent Review에 필요한 immutable capture와 checked review lifecycle을 제공합니다. production review 경로에서는 공식 stable v0.1.x Apple Silicon 실행 파일 가운데 v0.1.2 이상만 검증을 거쳐 허용합니다. 같은 릴리스의 `use-dolgorae` skill은 명시적으로 요청한 global Profile과 재사용 가능한 External Specialist Engagement 작업도 안내합니다.
 - [Orca Review](plugins/aquarium/skills/orca-review/SKILL.md)는 별도로 설치된 Orca runtime에서 지정한 reviewer를 새로 실행합니다. Claude를 지정할 수도 있습니다. Reviewer는 현재 등록된 worktree에서 staged, HEAD, commit, range target을 검토하며 staged review는 `git diff --cached`를 직접 읽습니다. Reviewer에게 현재 worktree에 파일을 쓰지 말라고 명시합니다. 모든 reviewer는 worktree 밖에 리뷰용 임시 파일, native state, tool output, 보고서를 저장할 수 있습니다. `/tmp`나 `/private/tmp`에 파일을 썼다는 이유만으로 경고하거나 리뷰를 실패로 처리하지 않습니다. Dolgorae는 사용하지 않으며 Aquarium은 결과를 독립적으로 판정합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
@@ -82,7 +82,7 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
 - `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
-- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component의 official metadata와 공개 paired-skill 최신성을 제한적으로 조회합니다. Dolgorae는 GitHub Releases metadata를 사용하고 Sanho, Mulgae, Gaori, Sorage, Podway는 `raw.githubusercontent.com` 파일을 임시 저장소에서 비교합니다. Scoped continuation은 이름이 지정된 component만 확인하며 설치용 다운로드, 변경, provider 호출은 별도 경계를 유지합니다.
+- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component의 official metadata와 공개 paired-skill 최신성을 제한적으로 조회합니다. Dolgorae는 GitHub Releases metadata를 사용하고 Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway는 `raw.githubusercontent.com` 파일을 임시 저장소에서 비교합니다. Scoped continuation은 이름이 지정된 component만 확인하며 설치용 다운로드, 변경, provider 호출은 별도 경계를 유지합니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서

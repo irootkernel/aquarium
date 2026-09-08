@@ -14,7 +14,7 @@ from typing import Any
 
 from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v2"
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v3"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -366,6 +366,7 @@ def inspect_global(
         raw_tools["podway"] = inspect_global_podway(inspector, root, timeout_seconds)
     skill_specs = {
         "sanho": ("use-sanho", inspector.SANHO_SKILL_FILES),
+        "dolgorae": ("use-dolgorae", inspector.DOLGORAE_SKILL_FILES),
         "mulgae": ("use-mulgae", inspector.MULGAE_SKILL_FILES),
         "gaori": ("use-gaori", inspector.GAORI_SKILL_FILES),
         "sorage": ("use-sorage", inspector.SORAGE_SKILL_FILES),

@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Raise the minimum Dolgorae version to v0.1.2, consume version JSON and machine envelope v2, add same-release `use-dolgorae` setup, and use global Codex Profiles. Delegate review lifecycle and reusable Specialist Engagement operations to the upstream skill and remove the Aquarium-only review deadline, byte, and artifact ceilings.
 - Replace the `aquarium-dev` skill with bundled MCP tools and a shared CLI runtime, with explicit installation and updates through `dev-setup-global`, stable Git-hook entrypoints, and preserved development-channel approvals.
 - Raise the minimum Podway runtime to v0.2.9 and pin `use-podway` independently to commit `9014225982e4c316237e0d6e35052414d2dbc770` for context recovery and independent Codex goal coordination. Require successful UUID-fenced workspace-removal replay in the v5 compatibility receipt.
 - Raise the minimum Mulgae version to v0.1.19 and consume command-result v6.

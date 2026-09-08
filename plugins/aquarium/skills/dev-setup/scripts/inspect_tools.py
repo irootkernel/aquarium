@@ -30,7 +30,7 @@ except ModuleNotFoundError as error:
         raise
     dolgorae_release = None
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v17"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v18"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -49,6 +49,12 @@ CANONICAL_SEMVER = re.compile(
     rf"{CANONICAL_NUMERIC_COMPONENT}(?:[-+][0-9A-Za-z.-]+)?"
 )
 SORAGE_ERROR_CODE = re.compile(r"[A-Z][A-Z0-9_]{0,63}")
+DOLGORAE_SKILL_FILES = (
+    "SKILL.md",
+    "references/configuration.md",
+    "references/lifecycle.md",
+    "references/recovery.md",
+)
 SANHO_SKILL_FILES = (
     "SKILL.md",
     "references/lifecycle.md",
@@ -1427,7 +1433,8 @@ def valid_dolgorae_envelope(
         and isinstance(envelope, dict)
         and set(envelope)
         == {"schema_version", "ok", "command", "invocation_id", "data"}
-        and envelope.get("schema_version") == 1
+        and type(envelope.get("schema_version")) is int
+        and envelope["schema_version"] == 2
         and envelope.get("ok") is True
         and envelope.get("command") == command
         and isinstance(envelope.get("invocation_id"), str)
@@ -1463,7 +1470,11 @@ def dolgorae_capabilities_compatible(data: Any, version: str) -> bool:
     )
     return bool(
         data.get("dolgorae_version") == version
-        and all(data.get(field) == 1 for field in protocol_fields)
+        and all(
+            type(data.get(field)) is int and data[field] == 1
+            for field in protocol_fields
+        )
+        and type(data.get("minimum_rpc_client_version")) is int
         and data.get("minimum_rpc_client_version") == 1
         and isinstance(data.get("maximum_rpc_client_version"), int)
         and not isinstance(data["maximum_rpc_client_version"], bool)
@@ -1485,19 +1496,23 @@ def dolgorae_capabilities_compatible(data: Any, version: str) -> bool:
         and isinstance(credential, dict)
         and credential.get("schema_id")
         == "https://dolgorae.local/schema/controller-credential/v1"
+        and type(credential.get("schema_version")) is int
         and credential.get("schema_version") == 1
         and isinstance(credential.get("schema_sha256"), str)
         and re.fullmatch(r"[0-9a-f]{64}", credential["schema_sha256"])
+        and type(credential.get("capability_byte_length")) is int
         and credential.get("capability_byte_length") == 32
         and credential.get("capability_encoding") == "base64url_no_padding"
         and credential.get("same_uid") is True
         and credential.get("regular_file") is True
         and credential.get("symlinks") == "forbidden"
         and credential.get("create_exclusive") is True
+        and type(credential.get("maximum_file_bytes")) is int
         and credential.get("maximum_file_bytes") == 4096
         and credential.get("client_descendant_pattern") == "<client>/<installation-id>/"
         and credential.get("normalized_principal")
         == "kind+subject_id_else_kind+instance_id"
+        and type(credential.get("initial_generation")) is int
         and credential.get("initial_generation") == 1
         and isinstance(credential.get("accepted_kinds"), list)
         and "workflow_orchestrator" in credential["accepted_kinds"]
@@ -1625,32 +1640,31 @@ def inspect_dolgorae(
         return tool
 
     raw_version_probe = run_command(
-        [str(executable.resolve()), "--version"], repository, timeout_seconds
+        [str(executable.resolve()), "version", "--json"], repository, timeout_seconds
     )
     version_probe = parse_json_probe(raw_version_probe)
     normalized_probe_result = normalized_probe(version_probe)
-    envelope = version_probe.get("result")
-    valid_envelope = valid_dolgorae_envelope(
-        version_probe, raw_version_probe, "version"
-    )
-    version_text = envelope.get("data") if isinstance(envelope, dict) else None
-    if (
-        valid_envelope
-        and isinstance(version_text, dict)
-        and set(version_text) == {"text"}
-    ):
-        match = re.fullmatch(
-            rf"dolgorae ({CANONICAL_SEMVER.pattern})", str(version_text["text"])
+    version_result = version_probe.get("result")
+    valid_envelope = bool(
+        version_probe["ok"]
+        and not raw_version_probe["stderr"]
+        and isinstance(version_result, dict)
+        and set(version_result) == {"name", "version"}
+        and version_result.get("name") == "dolgorae"
+        and isinstance(version_result.get("version"), str)
+        and re.fullmatch(
+            rf"v{CANONICAL_NUMERIC_COMPONENT}\.{CANONICAL_NUMERIC_COMPONENT}"
+            rf"\.{CANONICAL_NUMERIC_COMPONENT}(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+            r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?",
+            version_result["version"],
         )
-        if match:
-            tool["version"] = normalized_version(match.group(1))
-        else:
-            valid_envelope = False
-    else:
-        valid_envelope = False
+    )
+    if valid_envelope:
+        tool["version"] = version_result["version"].removeprefix("v")
     if not valid_envelope:
         normalized_probe_result["ok"] = False
-        normalized_probe_result["error_code"] = "unexpected_version_envelope"
+        if "error_code" not in normalized_probe_result:
+            normalized_probe_result["error_code"] = "unexpected_version_envelope"
     tool["probes"]["version"] = normalized_probe_result
     tool["version_supported"] = supported_dolgorae_version(tool["version"])
 
@@ -3970,6 +3984,7 @@ def inspect(
         }
         for name, path in {
             "use-sanho": Path.home() / ".agents/skills/use-sanho",
+            "use-dolgorae": Path.home() / ".agents/skills/use-dolgorae",
             "use-mulgae": Path.home() / ".agents/skills/use-mulgae",
             "use-gaori": Path.home() / ".agents/skills/use-gaori",
             "use-gaori-status": Path.home() / ".agents/skills/use-gaori-status",

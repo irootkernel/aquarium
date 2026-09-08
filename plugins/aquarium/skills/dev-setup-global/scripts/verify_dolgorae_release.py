@@ -24,16 +24,16 @@ MAX_RELEASE_PAGES = 10
 SUPPORTED_VERSION = re.compile(r"v0\.1\.(0|[1-9][0-9]*)")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
-SUPPORTED_VERSION_RANGE = ">=v0.1.1,<v0.2.0"
-UNSUPPORTED_VERSION_MESSAGE = "Dolgorae version is outside stable v0.1.1 through v0.1.x"
+SUPPORTED_VERSION_RANGE = ">=v0.1.2,<v0.2.0"
+UNSUPPORTED_VERSION_MESSAGE = "Dolgorae version is outside stable v0.1.2 through v0.1.x"
 PINNED_RELEASES = {
-    "v0.1.1": {
-        "source_commit": "4c8a1c5860b142293d4353eaa58fd751dcb3980e",
+    "v0.1.2": {
+        "source_commit": "060b569833535a23218cdc6dd45880862853030e",
         "archive_sha256": (
-            "8870f7ea63239f6e7328fec568d70fab6f53a2221cdc083fe106e70dcbe089f2"
+            "513db93e7f09bcb7c2b8e323014d7149c856ab8d342856c1e10d936a817547c4"
         ),
         "executable_sha256": (
-            "cd6287e1603f934564d53dddc4e5639f503f2c4d2b86523b27ef829af72ded17"
+            "a8baa962fbc4e08f8aaafd007836dfd01e7022095a1cddefa1d6969896b7cf69"
         ),
     }
 }
@@ -59,7 +59,7 @@ def supported_version(tag: str | None) -> bool:
     if not isinstance(tag, str):
         return False
     match = SUPPORTED_VERSION.fullmatch(tag)
-    return bool(match and int(match.group(1)) >= 1)
+    return bool(match and int(match.group(1)) >= 2)
 
 
 def canonical_supported_tag(version: str | None) -> str | None:

@@ -112,6 +112,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$aquarium:release-handler` for one stable release lifecycle and `$aquarium:release-qa` for its exact committed-candidate scenario verification.
+- Use `$use-dolgorae` for explicitly requested workspace, global Profile, review, External Specialist Engagement, and recovery operations. Keep execution and lifecycle rules in the paired skill.
 - Use `$use-sanho` at an authorized commit or push boundary in a Sanho-managed repository, or for an explicitly requested Sanho operation.
 - Use `$use-mulgae` as the native authority for authorized Mulgae asynchronous review, waiting, cancellation, evidence inspection, and recovery. Aquarium workflows own the target, approval criteria, and review-round accounting.
 - Use `$use-gaori` as the native authority for asynchronous execution, waiting, cancellation, and recovery when a selected check uses Gaori. Repository requirements select the command; Aquarium evaluates its terminal result and evidence separately.
