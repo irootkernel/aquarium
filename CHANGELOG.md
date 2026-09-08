@@ -6,30 +6,27 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add optional Sorage v0.1.x setup support for exact-release CLI and paired-skill diagnosis, minimal local initialization, approved Git repository registration, derived-marker ignore safety, bundle selection, and repository guidance.
-- Add `dev-setup-global` for automatic user-global CLI, skill, service, MCP, and Ouroboros diagnosis and updates.
+- Add optional Sorage v0.1.x setup with exact-release CLI and paired-skill diagnosis, approved repository registration, derived-marker ignore safety, and bundle support.
+- Add `dev-setup-global` for user-global CLI, skill, service, and MCP diagnosis and updates, including independent Ouroboros installation and readiness checks for each Codex home.
 
 ### Changed
 
-- Raise the minimum Dolgorae version to v0.1.2, consume version JSON and machine envelope v2, add same-release `use-dolgorae` setup, and use global Codex Profiles. Delegate review lifecycle and reusable Specialist Engagement operations to the upstream skill and remove the Aquarium-only review deadline, byte, and artifact ceilings.
-- Replace the `aquarium-dev` skill with bundled MCP tools and a shared CLI runtime, with explicit installation and updates through `dev-setup-global`, stable Git-hook entrypoints, and preserved development-channel approvals.
-- Raise the minimum Podway runtime to v0.2.9 and pin `use-podway` independently to commit `9014225982e4c316237e0d6e35052414d2dbc770` for context recovery and independent Codex goal coordination. Require successful UUID-fenced workspace-removal replay in the v5 compatibility receipt.
-- Raise the minimum Mulgae version to v0.1.19 and consume command-result v6.
-- Delegate Gaori and Mulgae asynchronous lifecycles to their upstream skills.
-- Separate execution completion from evidence quality and approval.
-- Count exact composite recovery within its original review round.
-- Raise the minimum Gaori version to v0.1.16, preserve asynchronous MCP awaiting during timing queries, diagnose the optional `use-gaori-status` skill independently, and support Experimental Dart and Patrol parser selection from verified commands.
-- Make `dev-setup` automatically diagnose evidenced repository configuration, propose only necessary changes, and retain ownership of root AGENTS.md and CLAUDE.md while trusting canonical global skill presence.
-- Make general `dev-setup` review and reorganize complete agent guidance around seven core behaviors, preserving project-specific constraints and honoring tool-limited requests, diagnosis-only requests, and explicit guidance exclusions.
-- Preserve setup bundle v1 while preparing global components once and applying repository configuration in target order.
+- Raise the minimum Dolgorae version to v0.1.2 with machine envelope v2, same-release `use-dolgorae`, and global Codex Profiles, delegating reviews and Specialist Engagements to the upstream skill without Aquarium-only deadline or artifact limits.
+- Replace the `aquarium-dev` skill with bundled MCP tools and a shared CLI, installed and updated explicitly through `dev-setup-global` while preserving stable Git-hook entrypoints and development-channel approvals.
+- Raise the minimum Podway runtime to v0.2.9 with successful UUID-fenced workspace-removal replay, and pin `use-podway` independently to `9014225982e4c316237e0d6e35052414d2dbc770` for context recovery and independent Codex goal coordination.
+- Raise the minimum Mulgae version to v0.1.19, consume command-result v6, and keep exact composite recovery within its original review round.
+- Delegate Gaori and Mulgae asynchronous lifecycles to their upstream skills while assessing execution completion, evidence quality, and approval separately.
+- Raise the minimum Gaori version to v0.1.16 with asynchronous timing queries, independent diagnosis of optional `use-gaori-status`, and Experimental Dart and Patrol parser selection from verified commands.
+- Make `dev-setup` diagnose repository configuration and reorganize agent guidance around seven core behaviors, trusting canonical global skills while preserving project constraints and explicit limits on setup or guidance changes.
+- Keep setup bundle v1 compatible while preparing global components once and configuring repositories in target order.
 
 ### Fixed
 
 - Schedule new-project test setup after executable product behavior exists and stop setup when implementation prerequisites are missing.
-- Install and diagnose Ouroboros integrations independently in each Codex home, with per-home MCP binding and readiness plus supported-version upgrade guidance.
-- Allow all Orca reviewers to write review-related files outside the current worktree without output-location warnings or failed reviews, while preserving worktree and Git protections.
-- Wait for development-build request admission in generated `post-commit` hooks before returning, keep request failures visible, and detach only the build worker. Preserve queued requests when worker launch fails and support migration of recorded background-request hooks through approved re-enrollment. Producer probes now time out, non-main hooks skip requests, legacy hooks report outdated, and approved recovery clears matching queued requests. Queue and diagnostic storage errors preserve structured failure reporting.
-- Make post-remediation release QA confirmation artifacts immutable, compute each verdict from the submitted evidence bytes bound to its admission, reject malformed admissions and overlong terminal basenames deterministically, and preserve recovery across reordered scenarios, output-parent aliases, pre-admission claim receipts, pending settlement inspection, and transient helper failures without reopening an admitted attempt.
+- Make `test-setup` inspection accept equivalent command syntax and `TESTING.md` declarations while reporting uncertainty only for behavior it cannot establish.
+- Allow all Orca reviewers to write review files outside the current worktree while preserving worktree and Git protections.
+- Make `post-commit` hooks wait for development-build request admission, preserve queued requests and visible failures when workers cannot start, and support migration of legacy hooks through approved re-enrollment.
+- Bind release QA confirmation verdicts to immutable admitted evidence, reject invalid submissions, and recover interrupted settlement without reopening the single permitted attempt.
 
 ## v0.1.14 - 2026-09-04
 
