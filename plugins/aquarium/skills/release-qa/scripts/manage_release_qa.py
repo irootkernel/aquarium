@@ -1069,7 +1069,13 @@ def settlement_result(
     }
 
 
-def load_terminal(path: Path, admission: dict[str, Any]) -> dict[str, Any]:
+def load_terminal(
+    path: Path,
+    admission: dict[str, Any],
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+    confirmation_root: Path,
+) -> dict[str, Any]:
     result = read_json(str(path))
     require_fields(
         result,
@@ -1112,8 +1118,30 @@ def load_terminal(path: Path, admission: dict[str, Any]) -> dict[str, Any]:
         or (result.get("verdict") == "REJECTED" and diagnostic is None)
         or (result.get("verdict") == "REJECTED" and result.get("clusters") != [])
         or (result.get("verdict") in {"PASS", "FINDINGS"} and diagnostic is not None)
+        or (diagnostic is not None and result.get("clusters") != [])
+        or (
+            diagnostic is not None
+            and result.get("verdict") == "INCOMPLETE"
+            and diagnostic["code"] != "settlement_evidence_changed"
+        )
     ):
         fail("result_invalid", "terminal result does not match its admission")
+    if diagnostic is None:
+        try:
+            if admission["snapshot_error"] is not None:
+                fail(
+                    "result_invalid", "terminal result requires valid admitted evidence"
+                )
+            cluster_values = verify_submission_snapshot(admission, confirmation_root)
+            clusters, verdict = settlement_outcome(
+                record, manifest, confirmation_root, cluster_values
+            )
+        except EvidenceError as error:
+            fail(
+                "result_invalid", f"terminal evidence cannot be verified: {error.code}"
+            )
+        if result != settlement_result(admission, clusters, verdict, None):
+            fail("result_invalid", "terminal result differs from its admitted evidence")
     return result
 
 
@@ -1225,6 +1253,15 @@ def validate_settlement(
     cluster_values: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], str]:
     clean_exact_main(repo, manifest["candidate_sha"])
+    return settlement_outcome(record, manifest, confirmation_root, cluster_values)
+
+
+def settlement_outcome(
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+    confirmation_root: Path,
+    cluster_values: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], str]:
     results = [
         validate_cluster(value, confirmation_root, manifest["candidate_sha"])
         for value in cluster_values
@@ -1380,7 +1417,10 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
                 raise
             admission = load_existing_admission()
     if output_path.exists():
-        return terminal_receipt(output_path, load_terminal(output_path, admission))
+        return terminal_receipt(
+            output_path,
+            load_terminal(output_path, admission, record, manifest, confirmation_root),
+        )
 
     result: dict[str, Any]
     try:
@@ -1419,7 +1459,9 @@ def finish_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
     except EvidenceError as error:
         if error.code != "output_exists":
             raise
-        result = load_terminal(output_path, admission)
+        result = load_terminal(
+            output_path, admission, record, manifest, confirmation_root
+        )
     return terminal_receipt(output_path, result)
 
 

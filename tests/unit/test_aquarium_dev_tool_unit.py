@@ -107,6 +107,26 @@ def test_install_is_idempotent_and_cli_uses_installed_runtime(package, dependenc
     assert not (Path.home() / ".aquarium").exists()
 
 
+def test_runtime_diagnosis_ignores_caller_modules(
+    package, dependencies, tmp_path, monkeypatch
+):
+    install(package)
+    healthy = runtime_install.diagnose(package)
+    caller = tmp_path / "caller"
+    caller.mkdir()
+    marker = caller / "imported"
+    (caller / "json.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).touch()\n"
+        "raise RuntimeError('caller module executed')\n"
+    )
+    monkeypatch.chdir(caller)
+    monkeypatch.setenv("PYTHONPATH", str(caller))
+
+    assert runtime_install.diagnose(package) == healthy
+    assert healthy["status"] == "current"
+    assert not marker.exists()
+
+
 @pytest.mark.parametrize(
     "damage", ["missing_receipt", "invalid_receipt", "source", "environment"]
 )

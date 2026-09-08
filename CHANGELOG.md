@@ -12,7 +12,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Raise the minimum Dolgorae version to v0.1.2 with machine envelope v2, same-release `use-dolgorae`, and global Codex Profiles, delegating reviews and Specialist Engagements to the upstream skill without Aquarium-only deadline or artifact limits.
-- Replace the `aquarium-dev` skill with bundled MCP tools and a shared CLI, installed and updated explicitly through `dev-setup-global` while preserving stable Git-hook entrypoints and development-channel approvals.
+- Replace the `aquarium-dev` skill with bundled MCP tools and a shared CLI, installed and updated explicitly through `dev-setup-global` while preserving stable Git-hook entrypoints, development-channel approvals, and runtime diagnosis isolated from caller modules.
 - Raise the minimum Podway runtime to v0.2.9 with successful UUID-fenced workspace-removal replay, and pin `use-podway` independently to `9014225982e4c316237e0d6e35052414d2dbc770` for context recovery and independent Codex goal coordination.
 - Raise the minimum Mulgae version to v0.1.19, consume command-result v6, and keep exact composite recovery within its original review round.
 - Delegate Gaori and Mulgae asynchronous lifecycles to their upstream skills while assessing execution completion, evidence quality, and approval separately.
@@ -23,10 +23,10 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Fixed
 
 - Schedule new-project test setup after executable product behavior exists and stop setup when implementation prerequisites are missing.
-- Make `test-setup` inspection accept equivalent command syntax and `TESTING.md` declarations while reporting uncertainty only for behavior it cannot establish.
+- Make `test-setup` inspection accept equivalent command syntax and `TESTING.md` declarations, respect Make variable assignment timing, and report uncertainty only for behavior it cannot establish.
 - Allow all Orca reviewers to write review files outside the current worktree while preserving worktree and Git protections.
 - Make `post-commit` hooks wait for development-build request admission, preserve queued requests and visible failures when workers cannot start, and support migration of legacy hooks through approved re-enrollment.
-- Bind release QA confirmation verdicts to immutable admitted evidence, reject invalid submissions, and recover interrupted settlement without reopening the single permitted attempt.
+- Bind release QA confirmation verdicts to immutable admitted evidence, revalidate terminal results on exact retries, reject invalid submissions, and recover interrupted settlement without reopening the single permitted attempt.
 
 ## v0.1.14 - 2026-09-04
 

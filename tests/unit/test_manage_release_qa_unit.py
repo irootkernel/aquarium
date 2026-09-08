@@ -824,6 +824,87 @@ def test_finish_persists_every_non_rejected_terminal_outcome(
 
 
 @pytest.mark.parametrize(
+    "damage",
+    [
+        "verdict",
+        "outcome_and_verdict",
+        "observed",
+        "findings",
+        "inventory",
+        "cluster_changed",
+        "evidence_changed",
+        "evidence_missing",
+    ],
+)
+def test_terminal_replay_requires_admitted_outcomes(release_case, damage):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="gap")
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        output = confirmation / "result.json"
+        assert qa.finish_confirmation(request, str(output))["verdict"] == "INCOMPLETE"
+        terminal = json.loads(output.read_text())
+        scenario = terminal["clusters"][0]["scenarios"][0]
+        if damage == "verdict":
+            terminal["verdict"] = "PASS"
+        elif damage == "outcome_and_verdict":
+            scenario["outcome"] = "pass"
+            terminal["verdict"] = "PASS"
+        elif damage == "observed":
+            scenario["observed"] = "different observation"
+        elif damage == "findings":
+            scenario["outcome"] = "finding"
+            terminal["verdict"] = "FINDINGS"
+            terminal["clusters"][0]["verified_findings"] = [
+                {"id": "F-2", "scenario_id": "S-1", "severity": "High"}
+            ]
+        elif damage == "inventory":
+            scenario["id"] = "different-scenario"
+        elif damage == "cluster_changed":
+            value = json.loads(result_file.read_text())
+            value["scenarios"][0]["observed"] = "changed admitted observation"
+            write_json(result_file, value)
+        elif damage == "evidence_changed":
+            (confirmation / "scenario.txt").write_text("changed evidence\n")
+        else:
+            (confirmation / "scenario.txt").unlink()
+        write_json(output, terminal)
+        admission = qa.settlement_admission_path(confirmation, begin["digest"])
+        terminal_bytes, admission_bytes = output.read_bytes(), admission.read_bytes()
+
+        with pytest.raises(qa.EvidenceError) as rejected:
+            qa.finish_confirmation(request, str(output))
+
+        assert rejected.value.code == "result_invalid"
+        assert output.read_bytes() == terminal_bytes
+        assert admission.read_bytes() == admission_bytes
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
     "boundary",
     ["before_admission", "after_admission", "during_recovery", "after_terminal"],
 )
@@ -1121,6 +1202,12 @@ def test_finish_changed_evidence_after_interruption_is_incomplete(
         assert receipt["verdict"] == "INCOMPLETE"
         terminal = json.loads((confirmation / "result.json").read_text())
         assert terminal["diagnostic"]["code"] == "settlement_evidence_changed"
+        (confirmation / "scenario.txt").write_text("bounded observation\n")
+        assert (
+            qa.finish_confirmation(request, str(confirmation / "result.json"))
+            == receipt
+        )
+        assert json.loads((confirmation / "result.json").read_text()) == terminal
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
 
@@ -1514,6 +1601,12 @@ def test_source_mutation_after_claim_settles_rejected_without_source_write(
         terminal = json.loads(result_path.read_text())
         assert terminal["verdict"] == "REJECTED"
         assert terminal["diagnostic"]["code"] == "source_mutated"
+        terminal_bytes = result_path.read_bytes()
+        dirty.unlink()
+        with pytest.raises(qa.EvidenceError) as retry:
+            qa.finish_confirmation(request, str(result_path))
+        assert retry.value.code == "source_mutated"
+        assert result_path.read_bytes() == terminal_bytes
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
 

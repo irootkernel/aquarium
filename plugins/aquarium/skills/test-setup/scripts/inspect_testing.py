@@ -12,7 +12,7 @@ import re
 import shlex
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import tomllib
 
@@ -585,9 +585,43 @@ def commands_use_only_runner(commands: list[str], runner: str) -> bool:
     )
 
 
+class MakeVariableValue(NamedTuple):
+    text: str
+    immediate: bool
+
+
 def make_variable_values(repository: Path) -> dict[str, set[str]]:
-    definitions: dict[str, list[str]] = {}
-    branches: list[tuple[dict[str, list[str]], list[dict[str, list[str]]], bool]] = []
+    definitions: dict[str, list[MakeVariableValue]] = {}
+    branches: list[
+        tuple[
+            dict[str, list[MakeVariableValue]],
+            list[dict[str, list[MakeVariableValue]]],
+            bool,
+        ]
+    ] = []
+
+    def resolve(value: str, seen: frozenset[str] = frozenset()) -> set[str]:
+        reference = re.search(r"\$\(([^)]+)\)|\$\{([^}]+)\}", value)
+        if not reference:
+            return {value}
+        name = reference.group(1) or reference.group(2)
+        replacements = {reference.group()}
+        if name not in seen and name in definitions:
+            replacements = {
+                expanded
+                for replacement in definitions[name]
+                for expanded in (
+                    {replacement.text}
+                    if replacement.immediate
+                    else resolve(replacement.text, seen | {name})
+                )
+            }
+        return {
+            value[: reference.start()] + replacement + suffix
+            for replacement in replacements
+            for suffix in resolve(value[reference.end() :], seen)
+        }
+
     define_depth = 0
     content = read_optional_text(repository / "Makefile", repository)
     for _, line in make_logical_lines(content):
@@ -600,7 +634,9 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
         if definition:
             define_depth += 1
             if define_depth == 1:
-                definitions[definition[1]] = [f"$({definition[1]})"]
+                definitions[definition[1]] = [
+                    MakeVariableValue(f"$({definition[1]})", True)
+                ]
             continue
         if define_depth:
             if stripped == "endef":
@@ -625,7 +661,9 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
                     {
                         value
                         for branch in alternatives
-                        for value in branch.get(name, [f"$({name})"])
+                        for value in branch.get(
+                            name, [MakeVariableValue(f"$({name})", True)]
+                        )
                     }
                 )
                 for name in set().union(*(branch.keys() for branch in alternatives))
@@ -635,7 +673,7 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
             r"(?:export|unexport|undefine)\s+([A-Za-z_][A-Za-z0-9_]*)", stripped
         )
         if bare and (stripped.startswith("undefine") or bare[1] not in definitions):
-            definitions[bare[1]] = [f"$({bare[1]})"]
+            definitions[bare[1]] = [MakeVariableValue(f"$({bare[1]})", True)]
         match = re.match(
             r"^(?:(?:override|export)\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*(\?=|\+=|:=|=)\s*(.*?)\s*$",
             line.split("#", 1)[0],
@@ -643,35 +681,39 @@ def make_variable_values(repository: Path) -> dict[str, set[str]]:
         if match:
             name, operator, value = match.groups()
             if operator == "?=":
-                definitions.setdefault(name, [value, f"$({name})"])
+                definitions.setdefault(
+                    name,
+                    [
+                        MakeVariableValue(value, False),
+                        MakeVariableValue(f"$({name})", True),
+                    ],
+                )
             elif operator == "+=":
                 definitions[name] = [
-                    f"{previous} {value}".strip()
-                    for previous in definitions.get(name, [""])
+                    MakeVariableValue(
+                        f"{previous.text} {suffix}".strip(), previous.immediate
+                    )
+                    for previous in definitions.get(
+                        name, [MakeVariableValue("", False)]
+                    )
+                    for suffix in (resolve(value) if previous.immediate else {value})
+                ]
+            elif operator == ":=":
+                definitions[name] = [
+                    MakeVariableValue(expanded, True) for expanded in resolve(value)
                 ]
             else:
-                definitions[name] = [value]
-
-    def resolve(value: str, seen: frozenset[str]) -> set[str]:
-        reference = re.search(r"\$\(([^)]+)\)|\$\{([^}]+)\}", value)
-        if not reference:
-            return {value}
-        name = reference.group(1) or reference.group(2)
-        if name in seen or name not in definitions:
-            return {value}
-        resolved: set[str] = set()
-        for replacement in definitions[name]:
-            expanded = (
-                value[: reference.start()] + replacement + value[reference.end() :]
-            )
-            resolved.update(resolve(expanded, seen | {name}))
-        return resolved
+                definitions[name] = [MakeVariableValue(value, False)]
 
     return {
         name: {
             expanded
             for value in values
-            for expanded in resolve(value, frozenset({name}))
+            for expanded in (
+                {value.text}
+                if value.immediate
+                else resolve(value.text, frozenset({name}))
+            )
         }
         for name, values in definitions.items()
     }

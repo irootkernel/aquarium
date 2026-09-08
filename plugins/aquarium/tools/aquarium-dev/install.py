@@ -129,8 +129,7 @@ assert mcp_server.create_server()
         subprocess.run(
             [
                 str(python),
-                "-E",
-                "-s",
+                "-I",
                 "-B",
                 "-c",
                 program,

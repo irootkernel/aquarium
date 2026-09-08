@@ -1,6 +1,6 @@
 # Capability Catalog
 
-Aquarium exposes 25 skills. Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
+Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
 
 ## Design and Discovery
 

@@ -1801,6 +1801,58 @@ class TestInspectTesting:
         assert result["structural_status"] == "unverifiable"
         assert self.framework(result, "python")["unit_int_parser"] == "generic"
 
+    @pytest.mark.parametrize(
+        ("assignments", "parser"),
+        [
+            ("RUNNER := false\nPYTHON := $(RUNNER)\nRUNNER := python3\n", "generic"),
+            ("RUNNER := python3\nPYTHON := $(RUNNER)\nRUNNER := false\n", "pytest"),
+            ("RUNNER := false\nPYTHON = $(RUNNER)\nRUNNER := python3\n", "pytest"),
+            ("RUNNER := python3\nPYTHON = $(RUNNER)\nRUNNER := false\n", "generic"),
+            (
+                "RUNNER := python3\nPYTHON :=\nPYTHON += $(RUNNER)\nRUNNER := false\n",
+                "pytest",
+            ),
+            (
+                "RUNNER := false\nPYTHON =\nPYTHON += $(RUNNER)\nRUNNER := python3\n",
+                "pytest",
+            ),
+            ("PYTHON := $(LATER)\nLATER := python3\n", "generic"),
+            (
+                (
+                    "ifeq ($(MODE),one)\nRUNNER := python3\nelse\nRUNNER := python3\n"
+                    "endif\nPYTHON := $(RUNNER)\nRUNNER := false\n"
+                ),
+                "pytest",
+            ),
+            (
+                (
+                    "ifeq ($(MODE),one)\nRUNNER := python3\nelse\nRUNNER := false\n"
+                    "endif\nPYTHON := $(RUNNER)\nRUNNER := python3\n"
+                ),
+                "generic",
+            ),
+        ],
+    )
+    def test_python_make_assignment_timing_controls_parser(
+        self, assignments: str, parser: str
+    ) -> None:
+        self.write_make_contract()
+        makefile = self.repository / "Makefile"
+        content = assignments + makefile.read_text(encoding="utf-8")
+        content = content.replace(
+            "test-unit:\n\t@true", "test-unit:\n\t$(PYTHON) -m pytest unit"
+        ).replace("test-int:\n\t@true", "test-int:\n\t$(PYTHON) -m pytest int")
+        makefile.write_text(content, encoding="utf-8")
+        self.write("requirements.txt", "pytest==9.1.1\n")
+        self.enroll("make")
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert self.framework(result, "python")["unit_int_parser"] == parser
+        assert result["structural_status"] == (
+            "conforming" if parser == "pytest" else "unverifiable"
+        )
+
     def test_override_python_make_variable_is_resolved(self) -> None:
         self.write_make_contract()
         makefile = self.repository / "Makefile"
