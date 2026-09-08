@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT_DIR = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts"
+SCRIPT_DIR = ROOT / "plugins/aquarium/tools/aquarium-dev"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 MANAGER_SPEC = importlib.util.spec_from_file_location(

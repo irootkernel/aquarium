@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts"
+SOURCE_SCRIPTS = ROOT / "plugins/aquarium/tools/aquarium-dev"
 CLI = SOURCE_SCRIPTS / "aquarium_dev.py"
 sys.path.insert(0, str(SOURCE_SCRIPTS))
 
@@ -197,7 +197,7 @@ def test_same_checkout_migrates_exact_recorded_legacy_hook_with_approval(tmp_pat
     assert content.startswith("#!/bin/sh\nprintf foreign\n")
     assert content.count("BEGIN AQUARIUM DEV v1") == 1
     assert "dev-aquarium/scripts/dev_aquarium.py" not in content
-    assert "aquarium-dev/scripts/aquarium_dev.py" in content
+    assert str(CLI.resolve()) in content
     record = json.loads((host_root / "enrollments/aquarium.json").read_text())
     assert record["hook_block"] in content
 

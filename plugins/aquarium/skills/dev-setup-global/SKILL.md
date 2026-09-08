@@ -32,6 +32,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 - Podway's per-user production daemon and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
+- The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
 - Aquarium production-binary readiness requires supported global Podway, Mulgae, Gaori, and Dolgorae executables and fails closed when any is missing. Sanho remains optional and is excluded from this baseline.
 
 Do not install provider CLIs, authenticate, read credentials, contact providers, transmit repository source, initialize repository workspaces, change project MCP, edit repository guidance, start tests or reviews, or invoke Ouroboros workflows.

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE_PATH = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts/dev_contract.py"
+MODULE_PATH = ROOT / "plugins/aquarium/tools/aquarium-dev/dev_contract.py"
 SPEC = importlib.util.spec_from_file_location("dev_contract", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 dev_contract = importlib.util.module_from_spec(SPEC)

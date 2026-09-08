@@ -42,6 +42,7 @@
     "documentation"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Aquarium",
     "shortDescription": "Engineer reliable software with AI Fleets.",

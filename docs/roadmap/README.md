@@ -92,7 +92,7 @@ Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed inde
 
 EPIC-003 completed against the then-current exact Dolgorae development generation and did not depend on EPIC-002's unfinished original producer tasks. Current production execution is governed by EPIC-005 and the global-release correction in `TASK-031`.
 
-**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/skills/aquarium-dev/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

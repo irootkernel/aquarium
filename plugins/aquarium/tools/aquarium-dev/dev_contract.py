@@ -51,6 +51,7 @@ ERROR_CODES = frozenset(
         "service_activation_failed",
         "approval_required",
         "invalid_arguments",
+        "internal_error",
         "worker_failed",
     }
 )

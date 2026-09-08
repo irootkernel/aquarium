@@ -252,15 +252,16 @@ def _hook_path(repository: Path) -> Path:
 
 
 def marker_block(repository: Path, manager_script: Path) -> str:
-    command = " ".join(
-        shlex.quote(value)
-        for value in (
+    if manager_script == Path.home() / ".local/bin/aquarium-dev":
+        entry = [os.fspath(manager_script)]
+    else:
+        entry = [
             os.fspath(Path(os.sys.executable).resolve()),
             os.fspath(manager_script.resolve()),
-            "request",
-            "--repository",
-            os.fspath(repository),
-        )
+        ]
+    command = " ".join(
+        shlex.quote(value)
+        for value in [*entry, "request", "--repository", os.fspath(repository)]
     )
     return (
         f"{MARKER_START}\n"
@@ -343,19 +344,19 @@ def install_launcher(
             "install-launcher",
         )
     content = source.read_text(encoding="utf-8")
-    if target.exists():
-        if target.is_symlink() or not target.is_file():
-            raise ManagerError(
-                "artifact_invalid",
-                "The launcher target is not a regular file.",
-                "Move the conflicting target aside before retrying.",
-                "install-launcher",
-            )
-        if (
-            target.read_text(encoding="utf-8") == content
-            and stat.S_IMODE(target.stat().st_mode) == 0o755
-        ):
-            return "no-change", {"target": str(target)}
+    if target.is_symlink() or (target.exists() and not target.is_file()):
+        raise ManagerError(
+            "artifact_invalid",
+            "The launcher target is not a regular file.",
+            "Move the conflicting target aside before retrying.",
+            "install-launcher",
+        )
+    if (
+        target.exists()
+        and target.read_text(encoding="utf-8") == content
+        and stat.S_IMODE(target.stat().st_mode) == 0o755
+    ):
+        return "no-change", {"target": str(target)}
     _atomic_write(target, content, 0o755)
     return "success", {"target": str(target)}
 
@@ -1907,7 +1908,10 @@ def _validate_generation(
 def _spawn_cleanup(host_root: Path, project_id: str, git_sha: str) -> None:
     subprocess.Popen(
         [
-            os.fspath(Path(os.sys.executable).resolve()),
+            os.fspath(Path(os.sys.executable).absolute()),
+            "-E",
+            "-s",
+            "-B",
             os.fspath(Path(__file__).with_name("aquarium_dev.py").resolve()),
             "--host-root",
             os.fspath(host_root),
@@ -2072,7 +2076,10 @@ def queue_request(
         try:
             subprocess.Popen(
                 [
-                    os.fspath(Path(os.sys.executable).resolve()),
+                    os.fspath(Path(os.sys.executable).absolute()),
+                    "-E",
+                    "-s",
+                    "-B",
                     os.fspath(manager_script.resolve()),
                     "--host-root",
                     os.fspath(host_root),

@@ -4,6 +4,22 @@ This catalog is shared by `dev-setup-global` and `dev-setup`. The global skill o
 
 Use only the section for a selected tool. Repository instructions override this catalog.
 
+## Aquarium Development Manager
+
+Source: the exact installed Aquarium plugin, under `tools/aquarium-dev/`. This optional local tool uses Aquarium's release version and has hash-pinned MCP Python SDK dependencies. It has no paired skill. Its MCP registration comes from the plugin; do not add a duplicate global registration.
+
+Run `inspect_global_tools.py --component aquarium-dev` to compare the installed runtime with the bundled source and check its launcher without changing either. This component requires Apple Silicon macOS and Python 3.11 or newer. It is not a production-binary prerequisite.
+
+For a scoped install or update request, resolve the current skill's plugin root, inspect its payload, and show the exact bundled version, source digest, manager root, launcher target, and existing state. After runtime and launcher approval, run:
+
+```text
+python3 <plugin-root>/tools/aquarium-dev/install.py install --approve-install --approve-launcher
+```
+
+The same command installs or updates. It creates an isolated Python environment under `~/.aquarium-dev/manager/versions/` and installs exact, hash-verified wheels from `https://pypi.org/simple` and its `files.pythonhosted.org` download host. Disclose that network access before execution. It validates the package and SDK before switching `manager/current`, installs the regular-file `~/.local/bin/aquarium-dev` entry, and preserves the prior runtime and launcher if preparation or selection fails. Prior runtime generations remain available to admitted workers and open MCP sessions. No source is uploaded.
+
+Re-run diagnosis and `~/.local/bin/aquarium-dev version`. Start a new Codex session for the plugin's MCP server. A plugin update does not update the runtime automatically; an identity mismatch requires this explicit update before the bundled MCP server can start. The existing CLI remains on its installed version. The installer does not change Git hooks, enroll checkouts, build producers, activate services, configure Codex, or change authentication. Legacy hook migration is a later, separately approved `aquarium-dev enroll` operation described in the [development contract](development-contract.md).
+
 ## Shared version and safety policy
 
 - Resolve the latest non-draft, non-prerelease stable release at execution time from the official repository, limited to a tool's supported release line when its section defines one. Display the exact tag and source before installation; never substitute `@latest` after approval.

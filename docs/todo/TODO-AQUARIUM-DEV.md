@@ -6,7 +6,7 @@
 
 This dossier is the detailed scope and acceptance source of truth for `EPIC-002`, `TASK-005` through `TASK-015`, `TASK-024`, and corrective `TASK-031`. The [canonical roadmap](../roadmap/README.md) alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks here are review evidence only.
 
-The shipped `$aquarium:aquarium-dev` skill and its linked reference own implemented workflow behavior. ADR-0008 supersedes the isolated-Codex and Dolgorae-development portions of the original design while preserving completed historical work.
+The `aquarium-dev` MCP tools, CLI, and shared development contract own implemented behavior. ADR-0008 supersedes the isolated-Codex and Dolgorae-development portions of the original design while preserving completed historical work.
 
 ## Goal
 
@@ -16,7 +16,7 @@ Dolgorae is an enrollable development producer whose repository owns enrollment 
 
 ## Success Criteria
 
-- `$aquarium:aquarium-dev` diagnoses and enrolls one named canonical checkout without repository-local Aquarium state.
+- `aquarium-dev` diagnoses and enrolls one named canonical checkout without repository-local Aquarium state.
 - All development metadata and artifacts live below `~/.aquarium-dev`; `~/.aquarium` remains production-only.
 - Every successful canonical local-`main` build publishes one immutable exact-SHA generation. Foreground tools advance current immediately; managed services remain pending until approved activation.
 - Foreground and activated managed-service commands are exposed through stable `~/.aquarium-dev/bin` indirections backed by one atomic current selector.
@@ -44,6 +44,7 @@ Each supported project has at most one canonical checkout. Approved re-enrollmen
 
 All development state is rooted at `~/.aquarium-dev/`:
 
+- `manager/` contains installed manager generations with private virtual environments, an atomic `current` selector, and the installer lock;
 - `enrollments/` records one canonical checkout per supported producer;
 - `artifacts/` contains immutable exact-SHA generations;
 - `current/` atomically selects one validated generation per project;
@@ -52,7 +53,7 @@ All development state is rooted at `~/.aquarium-dev/`:
 - `runtime/` contains opaque producer-owned managed-service state beneath one project root;
 - `locks/`, `requests/`, and `diagnostics/` support bounded publication and recovery.
 
-The separately approved launcher is installed at `~/.local/bin/aquarium-dev`. It preserves the caller's environment while changing only the child PATH and exact command selection. It resolves only an absent foreground command from the caller's global PATH. A managed-service command requires a matching ready or busy controller status and never falls back to production. There is no development Codex home and no Aquarium-owned authentication, plugin, or MCP configuration.
+The separately approved launcher is installed at `~/.local/bin/aquarium-dev`. It preserves the caller's environment while changing only the child PATH and exact command selection. It resolves only an absent foreground command from the caller's global PATH. A managed-service command requires a matching ready or busy controller status and never falls back to production. The plugin ships the bundled MCP registration; the development channel creates no separate Codex home, authentication, plugin installation settings, or global MCP configuration.
 
 ### Producer and Publication Contract
 

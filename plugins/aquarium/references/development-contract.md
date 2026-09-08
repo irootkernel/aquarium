@@ -2,6 +2,28 @@
 
 This reference is the shared contract for `aquarium-dev` producers and the host manager. The initial platform is Darwin arm64. Development artifacts are local integration evidence, never stable release or distribution evidence.
 
+## Distribution and invocation
+
+Aquarium bundles the Python manager, CLI, and stdio MCP server under `tools/aquarium-dev/`. There is no `aquarium-dev` skill. Use this channel only on an explicit development-channel request. Tool descriptions and server instructions explain when to call each operation. The manager validates inputs and approvals before applying changes.
+
+The plugin's `.mcp.json` registers one server. It exposes `aquarium_dev_diagnose`, `aquarium_dev_enroll`, `aquarium_dev_repair_hook`, `aquarium_dev_rebuild`, `aquarium_dev_service_plan`, and `aquarium_dev_service_apply`. Inputs use absolute repository paths, supported project IDs, approval booleans, and the exact native service token as applicable. Unknown fields and wrongly typed approvals are rejected before dispatch. A boolean records user consent; tool availability never supplies it. Worker and cleanup operations are internal CLI operations, not MCP tools.
+
+Both interfaces use the same operation dispatcher. MCP returns the CLI envelope as structured content and serialized text, and sets `isError` on failures. Invalid arguments retain exit code 2; unexpected execution exceptions return `internal_error` in the same error envelope with exit code 1. Process-exit and interrupt signals propagate. MCP runs blocking operations outside the protocol event loop. After any effect, diagnose again. If a call is interrupted or reports an internal error, inspect the current state before retrying. An error or missing response does not establish whether effects occurred.
+
+The public CLI supports the existing manager commands as `aquarium-dev <operation> [options]` and preserves `aquarium-dev <tool> [args...]` for the five supported executable producers. `aquarium-dev version` reports the installed runtime receipt. `aquarium-dev mcp` starts that installed runtime's stdio server.
+
+### Explicit runtime installation and updates
+
+The existing `dev-setup-global` skill owns optional runtime setup. The bundled `tools/aquarium-dev/install.py diagnose` reads installed-versus-bundled identity without creating host state. `install.py install --approve-install --approve-launcher` installs or updates only after separate runtime and launcher approvals. It requires Python 3.11 or newer, downloads exact hash-verified binary wheels from PyPI into a private virtual environment, verifies the SDK and copied source, and then selects the new runtime. It never enrolls a repository or migrates hooks during installation.
+
+The runtime source digest covers the Aquarium plugin version, every packaged Python source file, and the dependency lock. Installed generations live at `manager/versions/<source-sha256>-py<major>.<minor>/`, each with `runtime.json` and `venv/`. Recovery generations append `-r<32-lowercase-hex-UUID>` to that directory name and use the same receipt schema. Installation reuses a generation only after validating its receipt, source, and environment, including the same venv path checks used at startup. It preserves damaged directories and prepares a separate recovery generation with an atomic receipt write. `manager/current` selects a validated generation. The regular-file entry at `~/.local/bin/aquarium-dev` resolves that selector without depending on a plugin cache path. A failed update restores the prior launcher and selector. Prior generations remain available for admitted workers and existing MCP sessions. CLI and MCP bootstrap interpreters ignore ambient Python settings and user-site packages before selecting the installed runtime. Worker and cleanup subprocesses retain that isolation and disabled bytecode writes. These interpreter options preserve the environment variables inherited by producer commands.
+
+Plugin updates never install or select a runtime automatically. The plugin MCP launcher rejects a source-identity mismatch with setup guidance; the installed CLI and hooks bound to the stable entry continue using their runtime until an explicit update. Legacy hooks depend on their recorded script path and need approved migration if an update removes that script. Restart Codex after installation or update. Do not add a duplicate global MCP registration or a replacement paired skill. Setup diagnostics use `aquarium-dev-runtime-inspection/v1`, receipts use `aquarium-dev-runtime/v1`, and setup/startup errors use `aquarium-dev-runtime-error/v1`.
+
+Environment verification failures retain the child exit code and the last 4 KiB of stderr in the diagnosis. Failed installation cleanup preserves the original installation error; an unremovable, unselected generation may remain and is not reused unless it passes full validation.
+
+Both runtime installation and `install-launcher` require the launcher itself to be a regular file or absent, and reject dangling links. Its parent directories may be symbolic links. The manager runtime tree keeps its stricter non-symbolic path checks.
+
 ## Producer contract
 
 Every producer implements:
@@ -30,6 +52,9 @@ Diagnosis, controller `status`, and controller `plan` are read-only. Enrollment,
 All development state is below `~/.aquarium-dev/`:
 
 ```text
+manager/versions/<source-sha256>-py<major>.<minor>/
+manager/current
+manager/install.lock
 enrollments/<project-id>.json
 artifacts/<project-id>/<full-git-sha>/
 current/<project-id>
@@ -47,7 +72,7 @@ Executable and activated managed-service producers receive a `bin/<project-id>` 
 
 ## Enrollment, publication, and cleanup
 
-One project ID owns at most one canonical checkout. Same-checkout enrollment is idempotent while the manager block is current. Read-only diagnosis reports `hook: outdated` when the exact recorded block is intact but differs from the current manager; `owned` requires both to match. The recorded block also binds the resolved Python executable and manager-script paths. Run diagnosis, repair, and enrollment through the same paths, or approve migration when either path changes. A different checkout transfer or same-checkout migration from a recorded legacy manager path or background-request block requires explicit re-enrollment approval and replaces only the exact recorded hook block. Migration uses `enroll --approve-enrollment --approve-hook --approve-reenrollment` through the updated manager; `repair-hook` restores only a block that already matches that manager. Every touched hook and enrollment record is restored on failure. Symbolic hooks, external `core.hooksPath`, malformed markers, changed owned bytes, or ambiguous state fail closed.
+One project ID owns at most one canonical checkout. Same-checkout enrollment is idempotent while the manager block is current. Read-only diagnosis reports `hook: outdated` when the exact recorded block is intact but differs from the current manager; `owned` requires both to match. Installed managers bind the stable `~/.local/bin/aquarium-dev` entry in the recorded hook, so runtime updates do not change its bytes. Legacy blocks bind resolved Python and manager-script paths. A different checkout transfer or same-checkout migration from a recorded legacy manager path or background-request block requires explicit re-enrollment approval and replaces only the exact recorded hook block. Migration uses `aquarium-dev enroll --repository <absolute-git-root> --approve-enrollment --approve-hook --approve-reenrollment`; `repair-hook` restores only a block that already matches that manager. Every touched hook and enrollment record is restored on failure. Symbolic hooks, external `core.hooksPath`, malformed markers, changed owned bytes, or ambiguous state fail closed.
 
 Publication validates the producer description, manifest, Git identity, artifact containment, entrypoints, and checksum before sealing a generation. Foreground executables atomically advance `current/<project-id>` immediately. Managed services atomically advance only `pending/<project-id>` and keep the old command/controller/service generation active while busy. Under the generic service lock, an approved controller apply must report the exact target identity without recovery debt and a matching ready or busy status before Aquarium atomically advances `current`, exposes the command, clears pending, and cleans the superseded generation when its leases permit. Failure preserves the prior selected generation and pending recovery target. Every consumer holds a shared generation lease for its complete process lifetime; managed-service consumers also hold the shared service-generation lock. Cleanup never removes current or pending generations. Plugin generations are retained until a lease-aware plugin consumer owns their complete use lifetime.
 

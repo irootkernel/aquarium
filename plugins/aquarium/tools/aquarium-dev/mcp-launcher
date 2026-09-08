@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 -E -s -B "$(dirname "$0")/runtime_entry.py" mcp

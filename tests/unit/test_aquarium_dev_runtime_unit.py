@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_SCRIPTS = ROOT / "plugins/aquarium/skills/aquarium-dev/scripts"
+SOURCE_SCRIPTS = ROOT / "plugins/aquarium/tools/aquarium-dev"
 sys.path.insert(0, str(SOURCE_SCRIPTS))
 
 from dev_manager import artifact_digest
@@ -37,7 +37,7 @@ def init_repository(path: Path) -> None:
 def create_aquarium_repository(path: Path) -> Path:
     path.mkdir()
     init_repository(path)
-    script_target = path / "plugins/aquarium/skills/aquarium-dev/scripts"
+    script_target = path / "plugins/aquarium/tools/aquarium-dev"
     script_target.mkdir(parents=True)
     for name in (
         "build_aquarium_artifact.py",
@@ -70,10 +70,10 @@ def create_aquarium_repository(path: Path) -> Path:
     )
     (path / "Makefile").write_text(
         """aquarium-dev-describe:
-\t@python3 plugins/aquarium/skills/aquarium-dev/scripts/build_aquarium_artifact.py describe
+\t@python3 plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py describe
 
 aquarium-dev-build:
-\t@python3 plugins/aquarium/skills/aquarium-dev/scripts/build_aquarium_artifact.py build
+\t@python3 plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py build
 """,
         encoding="utf-8",
     )

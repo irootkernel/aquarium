@@ -22,6 +22,57 @@ sys.path.insert(0, str(GLOBAL_SCRIPT.parent))
 import inspect_global_tools
 
 
+@pytest.mark.parametrize(
+    "case", ["timeout", "failed", "invalid_json", "unavailable", "broken"]
+)
+def test_aquarium_runtime_probe_preserves_failure_reason(tmp_path, monkeypatch, case):
+    diagnostic = {
+        "schema": "aquarium-dev-runtime-error/v1",
+        "error": {"code": "runtime_install_failed"},
+    }
+
+    def probe(command, **kwargs):
+        assert kwargs["timeout"] == 3.5
+        if case == "timeout":
+            raise subprocess.TimeoutExpired(command, 3.5)
+        if case == "unavailable":
+            raise OSError("interpreter unavailable")
+        if case == "failed":
+            return subprocess.CompletedProcess(command, 1, "", json.dumps(diagnostic))
+        if case == "invalid_json":
+            return subprocess.CompletedProcess(command, 0, "{", "")
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            json.dumps({"status": "broken", "problem": "receipt missing"}),
+            "",
+        )
+
+    monkeypatch.setattr(inspect_global_tools.subprocess, "run", probe)
+    payload = inspect_global_tools.inspect_global(
+        str(tmp_path), 3.5, False, components=("aquarium-dev",)
+    )["tools"]["aquarium-dev"]
+    if case == "broken":
+        assert payload == {"status": "broken", "problem": "receipt missing"}
+    else:
+        assert payload["status"] == "unverifiable"
+        assert payload["problem"]
+        assert (
+            payload["reason"]
+            == {
+                "timeout": "probe_timeout",
+                "failed": "probe_failed",
+                "invalid_json": "invalid_json",
+                "unavailable": "probe_failed",
+            }[case]
+        )
+        if case == "failed":
+            assert payload["exit_code"] == 1
+            assert payload["diagnostic"] == diagnostic
+        elif case == "timeout":
+            assert payload["timeout_seconds"] == 3.5
+
+
 class TestInspectGlobalTools:
     def setup_method(self) -> None:
         self.temporary_directory = tempfile.TemporaryDirectory()
@@ -100,6 +151,7 @@ class TestInspectGlobalTools:
             "humanizer",
             "im-not-ai",
             "ouroboros",
+            "aquarium-dev",
         }
         assert list(payload["tools"]) == list(inspect_global_tools.GLOBAL_COMPONENTS)
 

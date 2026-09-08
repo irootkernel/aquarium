@@ -8,7 +8,7 @@ The plugin manifest owns the current package version and the root CHANGELOG owns
 
 ## Detailed Specifications
 
-- [Capabilities](capabilities.md) inventories every public and delegated Aquarium skill and its effect boundary.
+- [Capabilities](capabilities.md) inventories Aquarium's public and delegated skills, bundled MCP tools, and CLI entrypoints with their effect boundaries.
 - [Workflow contracts](workflow-contracts.md) explains shape, task, epic, validation, setup, and release lifecycles.
 - [Tool integrations](tool-integrations.md) records supported versions, platforms, readiness dimensions, and ownership boundaries.
 - [Local interfaces](local-interfaces.md) catalogs Procedure IDs, local CLIs, hooks, and JSON schemas.

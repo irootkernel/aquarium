@@ -44,6 +44,16 @@ assert(nonempty_string(manifest.fetch("description")), "plugin description is mi
 assert(local_path(PLUGIN.join(manifest.fetch("skills"))) == PLUGIN.join("skills"),
        "plugin skills path must resolve to its skill directory")
 
+mcp = JSON.parse(read_file(PLUGIN.join(manifest.fetch("mcpServers"))))
+mcp.fetch("mcp_servers").each do |name, server|
+  command = server.fetch("command")
+  assert(command.start_with?("./"), "bundled MCP command must be plugin-relative: #{name}")
+  executable = local_path(PLUGIN.join(command))
+  assert(executable.to_s.start_with?("#{PLUGIN}/"), "MCP command escapes plugin: #{name}")
+  assert(executable.file? && executable.executable?, "MCP command is not executable: #{name}")
+  assert(server.fetch("args").is_a?(Array), "MCP arguments must be an array: #{name}")
+end
+
 marketplace = JSON.parse(read_file(ROOT.join(".agents/plugins/marketplace.json")))
 entries = marketplace.fetch("plugins")
 assert(entries.is_a?(Array) && entries.length == 1, "marketplace must publish one plugin")
@@ -120,11 +130,14 @@ bytes = hero.binread(24)
 assert(bytes.start_with?("\x89PNG\r\n\x1a\n".b), "hero asset must be PNG")
 assert(bytes.byteslice(16, 8)&.unpack("NN") == [2172, 724], "hero asset dimensions are incorrect")
 
-# Inspect tracked documentation only; ignored runtime evidence is not an authority.
-output, status = Open3.capture2("git", "-C", ROOT.to_s, "ls-files", "-z", "--", "*.md")
-assert(status.success?, "cannot list tracked documentation")
+# Check tracked documentation present in the working tree, including staged additions.
+# Untracked notes and ignored runtime evidence are not documentation authorities.
+output, status = Open3.capture2("git", "-C", ROOT.to_s, "ls-files", "--cached",
+                               "-z", "--", "*.md")
+assert(status.success?, "cannot list source documentation")
 output.split("\0").each do |relative|
   path = ROOT.join(relative)
+  next unless path.exist? || path.symlink?
   in_fence = false
   read_file(path).each_line do |line|
     in_fence = !in_fence if line.lstrip.start_with?("```", "~~~")
