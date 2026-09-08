@@ -4,13 +4,13 @@
 
 **Roadmap epic:** `EPIC-002`
 
-This dossier is the detailed scope and acceptance source of truth for `EPIC-002`, `TASK-005` through `TASK-015`, `TASK-024`, corrective `TASK-031`, `TASK-041`, and `TASK-042`. The [canonical roadmap](../roadmap/README.md) alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks here are review evidence only.
+This dossier is the detailed scope and acceptance source of truth for `EPIC-002`, `TASK-005` through `TASK-015`, `TASK-024`, corrective `TASK-031`, and `TASK-042`, and preserves the withdrawal rationale for `TASK-041`. The [canonical roadmap](../roadmap/README.md) alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks here are review evidence only.
 
 The `aquarium-dev` MCP tools, CLI, and shared development contract own implemented behavior. ADR-0008 supersedes the isolated-Codex and Dolgorae-development portions of the original design while preserving completed historical work.
 
 ## Goal
 
-Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, Dolgorae, Sorage, and Seongge through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
+Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, Dolgorae, and Seongge through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
 
 Master confirmed Dolgorae development-channel setup completion on 2026-09-08. Its repository owns producer enrollment. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. Independent Review still uses only the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
 
@@ -78,7 +78,8 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 | `TASK-031` | Separates development and production roots, removes Codex ownership, adds development-first foreground fallback plus fail-closed managed services, admits optional Dolgorae enrollment, and removes Dolgorae coupling from Orca Review. |
 | `TASK-011` | Integrated Podway's persistent managed development service and explicit workspace mode contract. |
 | `TASK-012` through `TASK-014` | Integrate Mulgae, Gaori, and Sanho producers. |
-| `TASK-041` and `TASK-042` | Add Sorage and Seongge consumer support and integrate their producers. |
+| `TASK-041` | Preserve the decision to exclude Sorage from the development channel; see the canonical roadmap for lifecycle state. |
+| `TASK-042` | Add Seongge consumer support and integrate its producer. |
 | `TASK-015` | Cold-validates the complete corrected development channel. |
 
 ## TASK-031: Separate Development and Production Environments
@@ -119,29 +120,37 @@ For Podway:
 
 Dolgorae setup is complete as confirmed by Master on 2026-09-08. This documentation update records that confirmation without claiming a new exact-candidate validation run. Final integration verification remains in `TASK-015`.
 
-For each of Mulgae, Gaori, Sanho, Sorage, and Seongge:
+For each of Mulgae, Gaori, Sanho, and Seongge:
 
 - [ ] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
 - [ ] verify canonical enrollment, first build, post-commit update, direct PATH selection, and the relevant Aquarium consumer;
 - [ ] preserve the producer's native runtime, policy, evidence, and independent release ownership;
 - [ ] reject development artifacts as official distribution evidence.
 
-## TASK-041 and TASK-042: Sorage and Seongge Integration
+## TASK-041: Sorage development-channel withdrawal
 
-These tasks extend the planned producer set. The current development manager does not yet support Sorage or Seongge.
+Sorage exchanges development requirements across projects. It does not need
+separate production and development instances, and introducing that separation
+would make the system substantially more complex. Sorage is therefore excluded
+from the development-channel producer set, enrollment, and cold validation.
+Its existing stable setup and Project registration remain supported. The
+[canonical roadmap](../roadmap/README.md) records Master's withdrawal decision.
 
-For each tool:
+## TASK-042: Seongge Integration
+
+The current development manager does not yet support Seongge. This task extends
+the planned producer set:
 
 - Add its project identity and command to the shared consumer contract, manager, launcher, skill guidance, and affected tests.
 - Establish the producer's native foreground or managed-service contract before enrollment. Preserve producer ownership of service lifecycle and state.
 - Accept an exact clean local-`main` handoff with both Make-target outputs, artifact checksum, embedded version and commit identity, and focused producer tests.
 - Verify enrollment, initial publication, subsequent update, command resolution, failure recovery, and isolation from production configuration and state. For managed services, also verify pending publication, approved activation, and exact service identity.
-- Keep development artifacts separate from official release qualification. Sorage retains ownership of Projects, Vault, Handoffs, and reviews; Seongge retains ownership of its native runtime and integrations.
+- Keep development artifacts separate from official release qualification. Seongge retains ownership of its native runtime and integrations.
 
 ## TASK-015: Cold Validation
 
 - [ ] Start from clean temporary user and repository state with no development enrollment.
-- [ ] Enroll Aquarium and the seven external producers only through the skill workflow.
+- [ ] Enroll Aquarium and the six external producers only through the skill workflow.
 - [ ] Prove initial build, exact-SHA isolation, subsequent update, atomic current advancement, stable bin resolution, and superseded-generation cleanup.
 - [ ] Prove same-checkout idempotency and approved re-enrollment.
 - [ ] Prove missing producer, rejected manifest, build failure, missing checkout, corrupt artifact, and selector-drift diagnostics.
@@ -151,7 +160,7 @@ For each tool:
 
 ## Epic Acceptance
 
-- [ ] `TASK-011` through `TASK-015`, `TASK-024`, `TASK-031`, `TASK-041`, and `TASK-042` are `Completed` in the canonical roadmap.
+- [ ] `TASK-011` through `TASK-015`, `TASK-024`, `TASK-031`, and `TASK-042` are `Completed` in the canonical roadmap.
 - [ ] Cold validation uses final exact Aquarium and producer candidates after all accepted changes.
 - [ ] Current specs, architecture, ADRs, implementation tips, operations, public documentation, privacy terms, and executable validation agree on the corrected contract.
 - [ ] Development-contract evidence remains explicitly separate from production installation, stable release, and distribution evidence.

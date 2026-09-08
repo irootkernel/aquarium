@@ -19,6 +19,7 @@ This file alone owns Aquarium's adopted epic and task identity, ordering, depend
 | In Review | Implementation is complete and acceptance evidence is under review |
 | Completed | The work unit passed its explicit acceptance and closeout |
 | Deferred | Adopted work is intentionally postponed with a re-entry condition |
+| Cancelled | Adopted work is withdrawn; its ID and decision remain recorded, but completion is no longer required |
 | Blocked | Progress cannot continue until a named condition changes |
 
 Epic status is independent of child task status. Completing every child does not complete an epic without explicit epic acceptance.
@@ -64,7 +65,7 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 Build the `aquarium-dev` development channel planned for v0.1.14 so Aquarium and its explicitly enrolled tool producers can exercise exact local-main artifacts early, discover cross-project integration failures before release preparation, and keep production tools and state separate.
 
-`TASK-031` completed the corrected Aquarium-owned runtime: all development state lives under `~/.aquarium-dev`, foreground producers are preferred through its `bin` directory with independent global fallback when absent, managed services require an exact active development generation without production fallback, and the launcher inherits the caller's environment. Dolgorae is an enrollable foreground producer with no missing-binary exception. Sanho is explicitly optional. `TASK-011` accepted Podway's exact clean local-`main` v0.2.8 handoff and verified its persistent `podwayd --dev` service, explicit workspace mode support, canonical enrollment, immutable publication, approved activation, stable command resolution, and production isolation. Master confirmed that Dolgorae development-channel setup is complete on 2026-09-08; it no longer blocks producer integration. Remaining integration covers Mulgae, Gaori, Sanho, Sorage, and Seongge. Sorage and Seongge require Aquarium consumer support and exact producer handoffs under TASK-041 and TASK-042. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not.
+`TASK-031` completed the corrected Aquarium-owned runtime: all development state lives under `~/.aquarium-dev`, foreground producers are preferred through its `bin` directory with independent global fallback when absent, managed services require an exact active development generation without production fallback, and the launcher inherits the caller's environment. Dolgorae is an enrollable foreground producer with no missing-binary exception. Sanho is explicitly optional. `TASK-011` accepted Podway's exact clean local-`main` v0.2.8 handoff and verified its persistent `podwayd --dev` service, explicit workspace mode support, canonical enrollment, immutable publication, approved activation, stable command resolution, and production isolation. Master confirmed that Dolgorae development-channel setup is complete on 2026-09-08; it no longer blocks producer integration. Remaining integration covers Mulgae, Gaori, Sanho, and Seongge. Seongge requires Aquarium consumer support and an exact producer handoff under TASK-042. Each handoff must name the producer commit SHA and include both Make-target outputs, the artifact checksum, embedded runtime version and SHA diagnostics, and focused producer tests. A local `main` ahead of its remote is acceptable development evidence; a dirty checkout is not.
 
 **Detailed SOT:** [`TODO-AQUARIUM-DEV.md`](../todo/TODO-AQUARIUM-DEV.md)
 
@@ -82,9 +83,9 @@ Build the `aquarium-dev` development channel planned for v0.1.14 so Aquarium and
 | TASK-014 | Integrate Sanho | Add and verify Sanho's shared producer contract and development resolution. | Planned | TASK-010 |
 | TASK-024 | Integrate Dolgorae | Integrate the Dolgorae producer with the development channel corrected by TASK-031; Master confirmed setup completion on 2026-09-08. | Completed | TASK-010; external Dolgorae TASK-035 |
 | TASK-031 | Separate development and production environments | Rename the channel and root to `aquarium-dev`, inherit the caller's environment, give foreground producers per-tool global fallback, require managed services to match an active development generation, admit optional Dolgorae enrollment, and decouple Orca Review from Dolgorae. | Completed | TASK-010, TASK-028 |
-| TASK-041 | Integrate Sorage | Add Aquarium consumer support, accept the shared producer contract, and verify development resolution and production-state isolation. | Planned | TASK-031, TASK-036; external Sorage producer handoff |
+| TASK-041 | Integrate Sorage | Withdraw development-channel integration: Sorage exchanges development requirements across projects, so separating production and development adds unnecessary complexity. | Cancelled | None |
 | TASK-042 | Integrate Seongge | Add Aquarium consumer support, accept the shared producer contract, and verify development resolution and production-state isolation. | Planned | TASK-031; external Seongge producer handoff |
-| TASK-015 | Cold-validate the integrated environment | Prove setup, update, failure, concurrency, launcher, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-024, TASK-031, TASK-041, TASK-042 |
+| TASK-015 | Cold-validate the integrated environment | Prove setup, update, failure, concurrency, launcher, and cross-project behavior from clean state. | Planned | TASK-011, TASK-012, TASK-013, TASK-014, TASK-024, TASK-031, TASK-042 |
 
 ## EPIC-003: Activate Dolgorae-backed Reviews
 
@@ -183,7 +184,7 @@ Podway owns its release, distribution, runtime-mode implementation, and source-d
 
 Adopt Sorage as an optional local document-handoff integration. Aquarium diagnoses and installs the supported CLI and paired skill, initializes the local installation with a minimal profile, and registers each selected Git repository through an explicitly approved Project creation or binding. Sorage retains authority over Project identity, the managed Vault, Handoffs, reviews, retention, deletion, backup, and derived inbox state.
 
-The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.0. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Development-channel integration is planned separately in EPIC-002 under TASK-041; it is not yet implemented.
+The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.0. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
 
 **Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
 
