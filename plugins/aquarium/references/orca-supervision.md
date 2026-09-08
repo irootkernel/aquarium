@@ -10,7 +10,7 @@ Require the user to select a reviewer before creating the Run or Task. Then star
 
 The Task contains the declared target, applicable resolved Git identity, review focus, authority paths, included and excluded state, static-review restrictions, and required report fields. Do not include suspected findings or intended fixes. Do not create a capture manifest, target digest binding, repository fingerprint, or pre/post state comparison.
 
-Every Dispatch, regardless of target, must tell the reviewer that this is review only; absolutely prohibit creating, editing, deleting, moving, formatting, or generating any file in the current registered worktree; prohibit changes to the Git index, refs, configuration, or commits; prohibit tests, builds, formatters, installers, authentication, and unrelated network operations; require only actionable findings with severity and exact `path:line`; and require `APPROVE` when no actionable finding exists. Require the reviewer to read only the declared target. For `head`, `commit`, and `range`, require file content and diffs from the resolved revisions through read-only Git commands and prohibit substituting current index or worktree bytes.
+Every Dispatch, regardless of target, must tell the reviewer that this is review only; absolutely prohibit creating, editing, deleting, moving, formatting, or generating any file in the current registered worktree; prohibit changes to the Git index, refs, configuration, or commits; prohibit tests, builds, formatters, installers, authentication, and unrelated network operations; and require only actionable target findings with severity and exact `path:line`. Require an advisory technical conclusion and separate reporting of operational deviations under [the shared policy](review-contract.md#orca-operational-deviations). Advisory `APPROVE` means the reviewer found no actionable target findings in the evidence it could assess; require disclosure of any known compromise or uncertainty. Tell the reviewer to deliver that result and complete its required native lifecycle without waiting for or certifying the coordinator's later settlement. Only the coordinator issues the final technical verdict. Require the reviewer to read only the declared target. For `head`, `commit`, and `range`, require file content and diffs from the resolved revisions through read-only Git commands and prohibit substituting current index or worktree bytes.
 
 For `staged`, additionally require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply the corresponding target-specific read instructions to `head`, `commit`, and `range` without weakening the common restrictions.
 
@@ -22,7 +22,7 @@ Tell the reviewer to return the complete result through the Orca lifecycle messa
 
 Use event-driven waits for `worker_done`, `escalation`, and `question`, with a cumulative 30-minute default liveness budget and a user update at least once per minute. A checkpoint timeout inside the budget is not failure. At budget exhaustion inspect authoritative worker state once, keep an active or unproven worker intact, and require explicit user direction for more waiting or cancellation.
 
-After one accepted `worker_done`, read the complete authoritative transcript, settle the worker through the current guide, process the complete Delivery, and acknowledge it only after required release or retention succeeds. Follow the live guide's current recovery and FIFO rules rather than duplicating a fixed batch-drain protocol here. Never retry, replace, switch reviewer, release an active worker, or reinterpret an operational failure as a technical verdict.
+After one accepted `worker_done`, read the complete authoritative transcript, settle the worker through the current guide, process the complete Delivery, and acknowledge it only after required release or retention succeeds. Follow the live guide's current recovery and FIFO rules rather than duplicating a fixed batch-drain protocol here. Never retry, replace, switch reviewer, release an active worker, or turn backend failure, incomplete settlement, or compromised or unproven review guarantees into a final technical verdict. Assess other observed deviations under [the shared policy](review-contract.md#orca-operational-deviations).
 
 ## Output adjudication examples
 
@@ -38,3 +38,17 @@ These examples assume the declared worktree is elsewhere. File location does not
 | An external path follows a symbolic link into the current worktree. | Treat the actual write as a worktree-write violation. |
 | External files exist, the complete result has no actionable findings, and the Orca lifecycle is authoritative. | Permit `APPROVE` without an output-location warning or another review. |
 | An external report needed for the result is missing, or the Orca lifecycle is incomplete. | Report the missing output or lifecycle evidence; do not return `APPROVE`. |
+
+## Operational deviation examples
+
+Apply [Orca operational deviations](review-contract.md#orca-operational-deviations) to the complete available evidence. These examples describe how to report an observed violation; they do not permit the action or authorize another review.
+
+| Scenario | Required treatment |
+| --- | --- |
+| A reviewer violates a report-format or delivery-order instruction, but the complete result and all review guarantees are established. | Report target findings first, decide the technical verdict from those findings, and report the instruction violation separately. Technical `APPROVE` does not imply instruction compliance. |
+| A reviewer finds no actionable target findings and is ready to deliver its result before coordinator settlement. | Return advisory `APPROVE` with any observed deviations or uncertainty and complete the required native lifecycle. The coordinator decides the final verdict after settlement and acknowledgement; pending settlement alone does not block the reviewer's report. |
+| A reviewer runs a prohibited test, but existing authorized evidence establishes that all review guarantees remain intact. | Report the test execution as a deviation. Exclude its results from the static technical verdict and decide that verdict from adjudicated target findings. |
+| The side effects of a prohibited test or command cannot be established from existing authorized evidence. | Withhold the final technical verdict and identify the missing evidence. Do not launch checks or create a snapshot to fill the gap. |
+| A reviewer changes the target or Git state, reviews a different target, or does not match the requested identity. | Withhold the final technical verdict and identify the compromised guarantee. Report only findings supported by the available evidence. |
+| Required output is missing, the backend fails, or lifecycle settlement is incomplete. | Withhold the final technical verdict and report the output or native lifecycle failure. Follow Orca's existing recovery rules. |
+| A reviewer creates a permitted external report and all review guarantees hold. | Apply the normal technical verdict rules without a deviation warning. |

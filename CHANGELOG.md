@@ -8,6 +8,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Keep Aquarium plugin installation and update requests in the host plugin-management flow without loading `dev-setup-global` or running global tool diagnostics.
 - Recognize and install `humanize-korean` under `~/.agents/skills/` regardless of `CODEX_HOME`.
+- Separate Orca review findings from operational deviations and withhold technical verdicts when review trustworthiness is compromised or cannot be established.
 
 ## v0.1.15 - 2026-09-08
 

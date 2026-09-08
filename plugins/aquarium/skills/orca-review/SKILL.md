@@ -41,12 +41,12 @@ Place the declared target, review focus, authority paths, included and excluded 
 - Read only the declared target. For `head`, `commit`, and `range`, obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes.
 - Do not modify the Git index, refs, configuration, or commits.
 - Do not run tests, builds, formatters, installers, authentication, or unrelated network operations.
-- Report only actionable findings with severity and exact `path:line`.
-- Return `APPROVE` when no actionable finding exists.
+- Report only actionable target findings with severity and exact `path:line`.
+- Return an advisory technical conclusion with the target findings and report operational deviations separately under [the shared policy](../../references/review-contract.md#orca-operational-deviations). Advisory `APPROVE` means no actionable target finding was found in the evidence you could assess; disclose any known compromise or uncertainty. Complete your required native lifecycle without waiting for or certifying the coordinator's later settlement. The coordinator owns the final technical verdict.
 
 For `staged`, also require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply equivalent target-specific read instructions to `head`, `commit`, and `range`. Require the reviewer to complete the injected Orca lifecycle exactly once and label execution-dependent claims `runtime unverified`. If required evidence cannot be gathered under the restrictions, require a bounded confirmation need instead of a mutation.
 
-Supervise, settle, acknowledge, and recover only through the live Orca guides. Never retry automatically, switch reviewers, release an active worker, or reinterpret an operational failure as `APPROVE`.
+Supervise, settle, acknowledge, and recover only through the live Orca guides. Never retry automatically, switch reviewers, release an active worker, or reinterpret backend failure, incomplete settlement, or compromised or unproven review guarantees as `APPROVE`. Assess other observed deviations under [the shared policy](../../references/review-contract.md#orca-operational-deviations).
 
 ## Adjudicate and report
 
@@ -55,6 +55,8 @@ Independently verify every finding against the exact target and authority withou
 This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the shared result, reviewer identity, remediation continuation, Orca object and lifecycle status, and the paths of retained report files used to deliver the result. Report `dolgorae_used: false`.
 
 External review files alone must not trigger a rule-violation warning, an operational failure, a withheld verdict, or a demand for another review. Wrong scope, missing required output, reviewer identity mismatch, or incomplete lifecycle prevents a clean verdict.
+
+Apply [Orca operational deviations](../../references/review-contract.md#orca-operational-deviations) when review instructions were violated. Report adjudicated target findings first and keep the technical verdict, deviation report, and backend lifecycle status distinct. A technical `APPROVE` does not certify instruction compliance. Withhold the final technical verdict when a required guarantee is compromised or cannot be established from existing authorized evidence.
 
 ## Mulgae semantic conformance
 

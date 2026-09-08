@@ -168,7 +168,7 @@ Adopt exact upstream Humanizer and im-not-ai releases as independently installed
 
 Adopt the official Podway v0.2.8 release as Aquarium's minimum stable runtime. The v0.2.8 contract adds named-mode daemon readiness v3 and keeps workspace runtime-mode changes behind explicit authorization. Qualification covers the revised task, goal, and validation Procedures together with the official artifact's fenced workspace-removal behavior.
 
-Podway owns its release, distribution, runtime-mode implementation, and source-distributed `use-podway` lifecycle guidance. Aquarium independently verifies the official artifact and diagnoses runtime-mode mismatches without changing modes. The v0.2.8 workspace-removal replay exception remains in deferred feedback until an official v0.2.9 artifact satisfies the documented convergence contract.
+Podway owns its release, distribution, runtime-mode implementation, and source-distributed `use-podway` lifecycle guidance. Aquarium independently verifies the official artifact and diagnoses runtime-mode mismatches without changing modes. Verification of the official Podway v0.2.9 artifact confirmed successful workspace-removal replay and preservation of the Git worktree, closing the v0.2.8 replay exception.
 
 **Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Local interfaces](../specs/local-interfaces.md), [Podway integration](../../plugins/aquarium/references/podway-integration.md), [Changing Procedures](../implementation-tips/changing-procedures.md)
 
