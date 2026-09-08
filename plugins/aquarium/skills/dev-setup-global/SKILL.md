@@ -1,11 +1,17 @@
 ---
 name: dev-setup-global
-description: "Diagnose, install, and update Aquarium user-global development tools. Use when the user invokes $aquarium:dev-setup-global or a workflow reports a missing global CLI, paired skill, global MCP registration, service, Lore, Deslop, Humanizer, im-not-ai, or Ouroboros component. Use $aquarium:dev-setup for repository-local configuration."
+description: "Diagnose, install, and update supported user-global development tools and integrations. Excludes Aquarium plugin installation or updates. Use when the user invokes $aquarium:dev-setup-global or a workflow reports a missing global CLI, paired skill, global MCP registration, service, Lore, Deslop, Humanizer, im-not-ai, or Ouroboros component. Use $aquarium:dev-setup for repository-local configuration."
 ---
 
 # Global Development Setup
 
-Own user-global installation, exact-upstream freshness, upgrades, services, and global Codex integration without inspecting or changing repository configuration.
+Own installation, exact-upstream freshness, upgrades, services, and global Codex integration for the supported components listed below without inspecting or changing repository configuration.
+
+## Check Request Scope Before Loading References
+
+Aquarium plugin installation and updates belong to the host's plugin-management flow. A request to install or update only the Aquarium plugin, including a specific version, does not select this skill. If this skill was selected for that request, return to the host's plugin-management flow before reading the tool catalog or running any diagnostic. Do not infer a global tool setup request from plugin installation.
+
+Use this skill for an explicit global development setup request or a workflow continuation naming a global component that needs attention. An explicit request to install or update the optional `aquarium-dev` runtime remains in scope; installing or updating the Aquarium plugin alone does not request that runtime.
 
 Read the selected sections of [the shared tool catalog](../../references/tool-catalog.md). Do not read repository-local `.podway`, `.mulgae`, `.gaori`, `.sorage`, `.codex`, AGENTS.md, or CLAUDE.md as global setup evidence.
 

@@ -42,13 +42,15 @@ codex plugin add aquarium@root-kernel
 
 Restart Codex after installing or upgrading, then open `/hooks` and explicitly trust Aquarium's roadmap commit guard. The hook catches direct shell commits. It is not complete enforcement: commits created indirectly by another tool may not pass through it.
 
+Install or update the Aquarium plugin through Codex's plugin-management flow. A plugin-only request does not invoke `$aquarium:dev-setup-global` or start global tool diagnostics. Request global development tool setup separately when needed.
+
 Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup-global` checks and updates user-global tools from exact upstream sources, while `$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md and CLAUDE.md. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
 ## Development Channel
 
 `aquarium-dev` provides an explicit Apple Silicon macOS development channel for Aquarium maintainers. It enrolls one named canonical local-`main` checkout, builds immutable exact-commit artifacts below `~/.aquarium-dev/`, and atomically exposes foreground executables or producer-owned managed services through `~/.aquarium-dev/bin/`. Enrollment, hook changes, builds, managed-service activation, and launcher installation each retain a separate approval boundary.
 
-Aquarium bundles the manager's MCP tools and CLI in the plugin. Ask for a development-channel diagnosis in chat, or run `aquarium-dev diagnose --repository <absolute-git-root>`. Use `$aquarium:dev-setup-global` for explicit initial runtime installation and later updates, then start a new Codex session. Plugin updates do not replace the installed runtime automatically. See the [development runbook](docs/ops/development-channel.md).
+Aquarium bundles the manager's MCP tools and CLI in the plugin. Ask for a development-channel diagnosis in chat, or run `aquarium-dev diagnose --repository <absolute-git-root>`. Use `$aquarium:dev-setup-global` when explicitly requesting initial installation or an update of the optional `aquarium-dev` runtime, then start a new Codex session. Plugin updates do not replace the installed runtime automatically. See the [development runbook](docs/ops/development-channel.md).
 
 The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported tools and prefers each available `~/.aquarium-dev/bin` generation. An absent foreground tool alone may fall back to the caller's global `PATH` outside both Aquarium roots. A managed service runs only when its producer controller reports the same active generation as ready or busy; pending, missing, mismatched, stopped, or recovering service state fails closed without production fallback. Podway is the first required managed service, while Sanho remains optional. The manager does not change the caller's Codex home, authentication, plugin installation, or global MCP configuration. Development artifacts are local integration evidence only, not release or distribution proof.
 

@@ -42,13 +42,15 @@ codex plugin add aquarium@root-kernel
 
 설치나 업그레이드 후 Codex를 재시작하고, `/hooks`에서 Aquarium의 roadmap commit guard를 명시적으로 신뢰하도록 설정합니다. 이 hook은 직접 실행한 shell commit을 잡아냅니다. 다만 완전한 강제 장치는 아니어서, 다른 도구가 간접적으로 만든 commit은 hook을 거치지 않을 수 있습니다.
 
+Aquarium 플러그인 설치와 업데이트는 Codex의 플러그인 관리 기능으로 처리합니다. 플러그인만 설치하거나 업데이트하는 요청을 처리할 때는 `$aquarium:dev-setup-global`을 호출하거나 전역 도구 진단을 시작하지 않습니다. 전역 개발 도구 설정이 필요하면 별도로 요청합니다.
+
 Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트합니다. `$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md, CLAUDE.md를 관리합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓸 수 있습니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
 
 ## Development Channel
 
 `aquarium-dev`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 `~/.aquarium-dev/` 아래에 만들며, foreground executable 또는 producer-owned managed service를 `~/.aquarium-dev/bin/`에 atomic하게 노출합니다. Enrollment, hook 변경, build, managed-service activation, launcher 설치는 각각 별도 승인을 유지합니다.
 
-Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니다. 대화에서 development channel 진단을 요청하거나 `aquarium-dev diagnose --repository <absolute-git-root>`를 실행합니다. 최초 runtime 설치와 이후 업데이트는 `$aquarium:dev-setup-global`에 명시적으로 요청하고, 완료 후 새 Codex 세션을 시작합니다. 플러그인 업데이트만으로 설치된 runtime이 자동 교체되지는 않습니다. 자세한 절차는 [development runbook](docs/ops/development-channel.md)을 참고합니다.
+Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니다. 대화에서 development channel 진단을 요청하거나 `aquarium-dev diagnose --repository <absolute-git-root>`를 실행합니다. 선택 사항인 `aquarium-dev` runtime의 최초 설치와 이후 업데이트는 `$aquarium:dev-setup-global`에 명시적으로 요청하고 완료 후 새 Codex 세션을 시작합니다. 플러그인 업데이트만으로 설치된 runtime이 자동 교체되지는 않습니다. 자세한 절차는 [development runbook](docs/ops/development-channel.md)을 참고합니다.
 
 사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용합니다. Foreground tool의 development generation이 없을 때만 두 Aquarium root 밖의 caller global `PATH`로 fallback합니다. Managed service는 producer controller가 동일 generation을 ready 또는 busy 상태로 보고할 때만 실행하며 pending, missing, mismatched, stopped, recovering 상태에서는 production으로 fallback하지 않고 fail closed합니다. Podway가 첫 번째 필수 managed service이고 Sanho는 명시적인 선택 항목입니다. Manager는 caller의 Codex home, authentication, plugin installation, global MCP configuration을 변경하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
 

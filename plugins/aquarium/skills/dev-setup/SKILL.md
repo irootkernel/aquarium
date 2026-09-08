@@ -1,11 +1,11 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage binding, project MCP, AGENTS.md, or CLAUDE.md. Use $aquarium:dev-setup-global for user-global installation or updates."
+description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage binding, project MCP, AGENTS.md, or CLAUDE.md. Use $aquarium:dev-setup-global for supported user-global development tool installation or updates. Aquarium plugin installation and updates belong to the host plugin-management flow."
 ---
 
 # Repository Development Setup
 
-Diagnose the repository first, propose only changes supported by repository evidence, and leave user-global installation and updates to `$aquarium:dev-setup-global`.
+Diagnose the repository first, propose only changes supported by repository evidence, and leave supported user-global development tool installation and updates to `$aquarium:dev-setup-global`. Route requests to install or update only the Aquarium plugin directly to the host's plugin-management flow without repository or global setup diagnosis.
 
 This skill owns root AGENTS.md and CLAUDE.md guidance. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
 
