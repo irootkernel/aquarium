@@ -1703,8 +1703,10 @@ def test_ouroboros_unresolvable_home_isolated_or_rejected(
         return
     assert completed.returncode == 0, completed.stdout
     assert "deslop" in payload["tools"]
-    assert payload["tools"]["im-not-ai"]["status"] == "unverifiable"
-    assert payload["tools"]["im-not-ai"]["expected_target"] is None
+    assert payload["tools"]["im-not-ai"]["status"] == "missing"
+    assert payload["tools"]["im-not-ai"]["expected_target"] == str(
+        Path.home() / ".agents/skills/humanize-korean"
+    )
     result = payload["tools"]["ouroboros"]
     assert result["current_home"] == invalid
     assert result["homes"][0]["reason"] == "home_resolution_failed"

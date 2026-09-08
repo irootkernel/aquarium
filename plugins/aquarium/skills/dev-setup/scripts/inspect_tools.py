@@ -3205,7 +3205,7 @@ def inspect_humanizer() -> dict[str, Any]:
 
 def inspect_im_not_ai() -> dict[str, Any]:
     try:
-        target = effective_codex_skill_root() / "humanize-korean"
+        target = Path.home() / ".agents/skills/humanize-korean"
     except (OSError, ValueError, RuntimeError):
         target = None
     result = inspect_writing_skill(
@@ -3994,7 +3994,7 @@ def inspect(
             "lore-query": Path.home() / ".agents/skills/lore-query",
             "deslop": Path.home() / ".agents/skills/deslop",
             "humanizer": Path.home() / ".agents/skills/humanizer",
-            "humanize-korean": effective_codex_skill_root() / "humanize-korean",
+            "humanize-korean": Path.home() / ".agents/skills/humanize-korean",
         }.items()
     }
     tools = {

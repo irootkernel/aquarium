@@ -393,7 +393,7 @@ Official source: `https://github.com/epoko77-ai/im-not-ai`
 
 Resolve the supported `v2.3.2` release through official GitHub release metadata, prepare a temporary detached checkout at that exact tag, and require `HEAD` to equal the resolved release commit. Read the checked-out `install.sh` and require every write target to derive from the isolated temporary `CODEX_HOME`. Disclose the exact `./install.sh --codex-only --copy` command and temporary target and obtain separate approval for that upstream-code execution, then run it without `--force`. Reject unexpected writes outside that isolated directory, then add the checkout's root LICENSE to the generated `humanize-korean` directory.
 
-Require the materialized payload to contain only regular non-symlink files, the exact generated tree, and `name: humanize-korean`. Install that complete payload at `$CODEX_HOME/skills/humanize-korean`, defaulting to `~/.codex/skills/humanize-korean` when `CODEX_HOME` is unset, only after separate approval. Then compare every path and digest and reject duplicates in other Codex skill roots. Never point the active skill target at a checkout, run the installer against the active Codex home, invoke the skill, or create `_workspace/` during setup.
+Require the materialized payload to contain only regular non-symlink files, the exact generated tree, and `name: humanize-korean`. Install that complete payload at `~/.agents/skills/humanize-korean` only after separate approval. Then compare every path and digest and reject duplicates in other Codex skill roots. Never point the active skill target at a checkout, run the installer against the active Codex home, invoke the skill, or create `_workspace/` during setup.
 
 ## Podway
 

@@ -885,7 +885,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         name: str = "humanize-korean",
         include_license: bool = True,
     ) -> Path:
-        skill_directory = (root or self.codex_home / "skills") / "humanize-korean"
+        skill_directory = (root or self.home / ".agents/skills") / "humanize-korean"
         skill_directory.mkdir(parents=True)
         for relative_path in inspect_tools.HUMANIZE_KOREAN_SKILL_FILES:
             path = skill_directory / relative_path
@@ -3339,6 +3339,18 @@ else:
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
 
+    def test_repository_trusts_korean_skill_presence_in_agents_root(self) -> None:
+        target = self.home / ".agents/skills/humanize-korean"
+        target.mkdir(parents=True)
+
+        skill = json.loads(self.inspect().stdout)["trusted_global_skills"][
+            "humanize-korean"
+        ]
+
+        self.assertEqual(skill["canonical_path"], str(target))
+        self.assertTrue(skill["present"])
+        self.assertEqual(skill["verification_scope"], "presence_only")
+
     def test_writing_skill_installations_are_structurally_unverifiable(self) -> None:
         self.install_humanizer_skill()
         self.install_im_not_ai_skill()
@@ -3368,7 +3380,7 @@ else:
         self.assertEqual(im_not_ai["supported_release"], "v2.3.2")
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(self.codex_home / "skills/humanize-korean"),
+            str(self.home / ".agents/skills/humanize-korean"),
         )
         self.assertEqual(
             im_not_ai["agent_skill"]["installations"][0]["unexpected_entries"],
@@ -3391,10 +3403,10 @@ else:
         self.assertEqual(tools["im-not-ai"]["status"], "degraded")
         self.assertFalse(tools["im-not-ai"]["installed"])
 
-        shutil.rmtree(self.codex_home / "skills/humanize-korean")
+        shutil.rmtree(self.home / ".agents/skills/humanize-korean")
         source = self.install_im_not_ai_skill(root=self.base / "source-skills")
         (self.codex_home / "skills").mkdir(parents=True, exist_ok=True)
-        (self.codex_home / "skills/humanize-korean").symlink_to(
+        (self.home / ".agents/skills/humanize-korean").symlink_to(
             source, target_is_directory=True
         )
         im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
@@ -3421,7 +3433,7 @@ else:
 
     def test_writing_skills_in_noncanonical_roots_are_degraded(self) -> None:
         self.install_humanizer_skill(root=self.codex_home / "skills")
-        self.install_im_not_ai_skill(root=self.home / ".agents/skills")
+        self.install_im_not_ai_skill(root=self.codex_home / "skills")
 
         tools = json.loads(self.inspect_global().stdout)["tools"]
 
@@ -3457,21 +3469,20 @@ else:
         self.assertFalse(humanizer["installed"])
         self.assertEqual(humanizer["status"], "degraded")
 
-    def test_im_not_ai_target_follows_effective_codex_home(self) -> None:
+    def test_im_not_ai_target_uses_agents_root_with_custom_codex_home(self) -> None:
         self.install_im_not_ai_skill()
 
         im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
 
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(self.codex_home / "skills/humanize-korean"),
+            str(self.home / ".agents/skills/humanize-korean"),
         )
         self.assertTrue(im_not_ai["installed"])
 
-    def test_im_not_ai_target_anchors_relative_codex_home_to_cwd(self) -> None:
+    def test_im_not_ai_target_ignores_relative_codex_home(self) -> None:
         relative_home = Path("relative-codex")
-        expected_home = self.base / relative_home
-        self.install_im_not_ai_skill(root=expected_home / "skills")
+        self.install_im_not_ai_skill()
         self.environment["CODEX_HOME"] = str(relative_home)
 
         with (
@@ -3482,7 +3493,7 @@ else:
 
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(expected_home / "skills/humanize-korean"),
+            str(self.home / ".agents/skills/humanize-korean"),
         )
         self.assertTrue(im_not_ai["installed"])
         self.assertEqual(im_not_ai["status"], "unverifiable")

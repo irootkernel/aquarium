@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.16 - Unreleased
 
+### Fixed
+
+- Recognize and install `humanize-korean` under `~/.agents/skills/` regardless of `CODEX_HOME`.
+
 ## v0.1.15 - 2026-09-08
 
 ### Added

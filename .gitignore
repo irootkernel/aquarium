@@ -10,6 +10,7 @@ __pycache__/
 .claude/
 .codex/
 .codegraph/
+.sorage/
 
 /.mulgae/*
 !/.mulgae/config.yaml
