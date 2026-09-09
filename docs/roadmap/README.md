@@ -243,8 +243,12 @@ the paired tool skill updates in their owning repositories.
 | TASK-045 | Remove redundant Aquarium rechecks and questions | Extend SKILL-03 with confirmed Sanho non-use guidance and user-requested Sorage inbox/outbox checks; align setup guidance and callers while preserving task and Git boundaries. | Planned | TASK-044 |
 | TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045; external SKILL-04 through SKILL-08 |
 
+Sanho (`SKILL-07`) source work is `Completed`, as confirmed by Master on
+2026-09-09. Aquarium's local source inspection and integration acceptance remain
+pending.
+
 `TASK-046` is blocked pending the Gaori (`SKILL-04`), Mulgae (`SKILL-05`),
-Podway (`SKILL-06`), Sanho (`SKILL-07`), and Sorage (`SKILL-08`) source work.
+Podway (`SKILL-06`), and Sorage (`SKILL-08`) source work.
 These are external work labels from the modernization proposal, not Aquarium
 task IDs. Each tool repository owns its implementation and lifecycle.
 
