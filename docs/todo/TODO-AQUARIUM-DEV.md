@@ -122,7 +122,9 @@ Dolgorae setup is complete as confirmed by Master on 2026-09-08. This documentat
 
 Gaori setup is complete as confirmed by Master on 2026-09-09. TASK-013 records that confirmation; final integration verification remains in TASK-015.
 
-For each of Mulgae, Sanho, and Seongge:
+Sanho setup is complete. Its clean local-`main` producer contract, canonical enrollment, current development command, artifact identity, focused producer tests, and separation from the production installation have been verified. TASK-014 records that result; final integration verification remains in TASK-015.
+
+For each of Mulgae and Seongge:
 
 - [ ] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
 - [ ] verify canonical enrollment, first build, post-commit update, direct PATH selection, and the relevant Aquarium consumer;
