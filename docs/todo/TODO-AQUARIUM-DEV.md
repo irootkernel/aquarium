@@ -120,7 +120,9 @@ For Podway:
 
 Dolgorae setup is complete as confirmed by Master on 2026-09-08. This documentation update records that confirmation without claiming a new exact-candidate validation run. Final integration verification remains in `TASK-015`.
 
-For each of Mulgae, Gaori, Sanho, and Seongge:
+Gaori setup is complete as confirmed by Master on 2026-09-09. TASK-013 records that confirmation; final integration verification remains in TASK-015.
+
+For each of Mulgae, Sanho, and Seongge:
 
 - [ ] accept one exact clean local-`main` handoff with both producer target outputs, checksum proof, embedded runtime identity, and focused tests;
 - [ ] verify canonical enrollment, first build, post-commit update, direct PATH selection, and the relevant Aquarium consumer;
