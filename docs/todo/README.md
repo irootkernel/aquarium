@@ -12,6 +12,9 @@ Before an epic becomes `Completed`, its final closeout must classify and promote
 - [Astra skill modernization dossier](TODO-ASTRA-SKILLS.md) defines the scope and
   acceptance for `EPIC-012`, `TASK-043` through `TASK-046`, and the local producer
   source checks needed for integration.
+- [Production setup status dossier](TODO-PRODUCTION-STATUS.md) defines the
+  ledger, CLI ownership, write timing, and acceptance for `EPIC-013` and
+  `TASK-048` through `TASK-050`.
 
 ## Unadopted TODO Candidates
 

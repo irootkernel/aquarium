@@ -40,6 +40,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-010 | Separate global and repository development setup | Completed |
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
+| EPIC-013 | Record and report production setup status | Planned |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -266,3 +267,26 @@ is not a prerequisite. At epic intake, inspect the updated local skill sources
 and their references before planning Aquarium edits; retain the exact source
 identity in native execution evidence. Required manual acceptance remains a
 completion gate after the task is unblocked.
+
+## EPIC-013: Record and report production setup status
+
+**Status:** `Planned`
+
+Store one production ledger at `~/.aquarium/status.yaml` for Git roots that
+have finished `$aquarium:dev-setup`. After that skill reports a terminal
+outcome, `aquarium-status record` upserts the row. `aquarium-status show` reads
+the file from a shell, with no Codex or Grok session. `$aquarium:status` calls
+the same `show` command. The LLM must not write the YAML.
+
+ADR-0008 already reserves `~/.aquarium/` for production state.
+`aquarium-dev` still writes only under `~/.aquarium-dev/`. A repository-local
+`.aquarium` file remains forbidden. `dev-setup-bundle` still must not persist
+its input manifest.
+
+**Detailed SOT:** [`TODO-PRODUCTION-STATUS.md`](../todo/TODO-PRODUCTION-STATUS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-048 | Freeze the production status contract | Define `~/.aquarium/status.yaml`, schema `aquarium-production-status/v1`, closed `record` JSON, CLI ownership, terminal-outcome write rules, privacy, and the bans on scanning, repository-local `.aquarium`, and development-channel writes. | Planned | None |
+| TASK-049 | Ship `aquarium-status` and wire setup/status skills | Implement bundled `show`/`record`, atomic YAML writes, and `~/.local/bin/aquarium-status`. `show` must work without a plugin host. `dev-setup` calls bundled `record` after Report; `$aquarium:status` calls `show`. | Planned | TASK-048 |
+| TASK-050 | Qualify status persistence and reporting | Prove `show` without a plugin host, fail-closed invalid JSON, `ready` as the only `last_configured_*` advance, incomplete outcomes, scoped `ready`, atomic replace, and missing Git roots. Master verifies skill behavior separately. | Planned | TASK-049 |
