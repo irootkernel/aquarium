@@ -30,7 +30,7 @@ except ModuleNotFoundError as error:
         raise
     dolgorae_release = None
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v18"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v19"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -249,6 +249,7 @@ def run_command(
     cwd: Path,
     timeout_seconds: float,
     environment_overrides: dict[str, str] | None = None,
+    input_text: str | None = None,
 ) -> dict[str, Any]:
     environment = os.environ.copy()
     for name in tuple(environment):
@@ -268,6 +269,7 @@ def run_command(
             text=True,
             errors="replace",
             timeout=timeout_seconds,
+            input=input_text,
         )
     except subprocess.TimeoutExpired:
         return {
@@ -431,7 +433,8 @@ def supported_mulgae_version(version: str | None) -> bool:
 def supported_sorage_version(version: str | None) -> bool:
     if not version:
         return False
-    return bool(re.fullmatch(rf"v?0\.1\.{CANONICAL_NUMERIC_COMPONENT}", version))
+    match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
+    return bool(match and int(match.group(1)) >= 1)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -561,6 +564,29 @@ def ignored_by_git(
     return probe["exit_code"] == 0
 
 
+def ignored_by_root_gitignore(
+    repository: Path, relative_path: str, timeout_seconds: float
+) -> bool:
+    probe = run_command(
+        ["git", "check-ignore", "--verbose", "--no-index", "-z", "--stdin"],
+        repository,
+        timeout_seconds,
+        input_text=f"{relative_path}\0",
+    )
+    if not probe["ok"]:
+        return False
+    fields = probe["stdout"].split("\0")
+    if len(fields) != 5 or fields[-1] or not fields[1].isdigit():
+        return False
+    source_text, _, pattern, pathname, _ = fields
+    if pathname != relative_path or pattern.startswith("!"):
+        return False
+    source = Path(source_text)
+    if not source.is_absolute():
+        source = repository / source
+    return os.path.normpath(source) == os.path.normpath(repository / ".gitignore")
+
+
 def tracked_by_git(
     repository: Path, relative_path: str, timeout_seconds: float
 ) -> bool:
@@ -597,6 +623,7 @@ def configuration_entry(
     relative_path: str,
     timeout_seconds: float,
     ignore_probe_path: str | None = None,
+    ignored: bool | None = None,
 ) -> dict[str, Any]:
     path = repository.joinpath(relative_path)
     present, symlinked = safe_managed_file_state(path, repository)
@@ -606,8 +633,12 @@ def configuration_entry(
         "path": relative_path,
         "present": present,
         "symlinked": symlinked,
-        "ignored": ignored_by_git(
-            repository, ignore_probe_path or relative_path, timeout_seconds
+        "ignored": (
+            ignored
+            if ignored is not None
+            else ignored_by_git(
+                repository, ignore_probe_path or relative_path, timeout_seconds
+            )
         ),
     }
 
@@ -2662,6 +2693,7 @@ def inspect_sorage(
         repository,
         ".sorage/",
         timeout_seconds,
+        ignored=ignored_by_root_gitignore(repository, ".sorage/", timeout_seconds),
     )
     configuration["tracked"] = tracked_under_git(repository, ".sorage", timeout_seconds)
     configuration["unignored"] = untracked_under_git(

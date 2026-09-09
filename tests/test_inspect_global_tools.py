@@ -716,7 +716,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v18"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v19"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -772,7 +772,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v18"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v19"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(

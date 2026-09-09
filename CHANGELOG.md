@@ -4,6 +4,14 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.16 - Unreleased
 
+### Changed
+
+- Require Sorage v0.1.1 or later in the v0.1 line; run `$aquarium:dev-setup-global` to update an installed v0.1.0 CLI and its same-tag `use-sorage` skill.
+- Route explicitly requested broker operations through the paired skill, including Review Note reads before sender revision and bounded event timeline reads when needed.
+- Require `.sorage/` in the repository root `.gitignore`; repositories that relied only on `.git/info/exclude`, a nested `.sorage/.gitignore`, or a global excludes file must add the root rule before Sorage setup is ready.
+- Require an explicit Project setup request before `$aquarium:dev-setup` proposes Sorage Project registration; Project listing and mutation retain their separate approval boundaries.
+- Remove automatic session-start and pre-task Sorage discovery; rerun `$aquarium:dev-setup` to refresh repository guidance written by an earlier Aquarium version.
+
 ### Fixed
 
 - Allow Orca reviewers to write Git-ignored runtime files such as those under `.omc/` without warnings, extra checks, or approval requests.

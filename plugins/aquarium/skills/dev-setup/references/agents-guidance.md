@@ -108,7 +108,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow.
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, or incomplete-investigation proposal.
 - Use `$aquarium:dev-setup-global` to diagnose, install, or update supported user-global development tools, paired skills, services, and global MCP state. Requests to install or update only the Aquarium plugin belong to the host's plugin-management flow; do not load this skill or run global setup diagnostics for those requests.
-- Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and operating guidance.
+- Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and operating guidance, including explicitly requested Sorage Project setup.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$aquarium:release-handler` for one stable release lifecycle and `$aquarium:release-qa` for its exact committed-candidate scenario verification.
@@ -117,7 +117,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$use-mulgae` as the native authority for authorized Mulgae asynchronous review, waiting, cancellation, evidence inspection, and recovery. Aquarium workflows own the target, approval criteria, and review-round accounting.
 - Use `$use-gaori` as the native authority for asynchronous execution, waiting, cancellation, and recovery when a selected check uses Gaori. Repository requirements select the command; Aquarium evaluates its terminal result and evidence separately.
 - Use `$use-gaori-status` for Gaori-calculated duration, outcome history, and detailed timing explanations. Keep test execution and one-off live estimates with `$use-gaori`; a missing status skill does not block a selected check.
-- Use `$use-sorage` at session start and before every task in a Sorage-enabled repository. Resolve every inbox, outbox, Handoff, review, retention, deletion, and Vault operation through that paired skill; never edit the managed Vault or derived `.sorage/INBOX.md` directly.
+- Use `$use-sorage` only when the user explicitly requests a broker operation. Check only the requested inbox or outbox; session start, a new task, a Sorage mention, or Project registration does not authorize discovery. Resolve every Handoff, review, revision, retention, deletion, and Vault operation through that paired skill; never edit the managed Vault or derived `.sorage/INBOX.md` directly.
 - Let Aquarium workflows use Podway by default for Git-backed work unless the current user opts out before the first managed-session mutation. No Aquarium skill owns a Podway session; only when starting a different session should the workflow ask whether to preserve, finish, delete, or replace the existing one.
 - Use `$use-podway` directly for an explicitly requested Procedure v2 lifecycle, goal, diagnosis, recovery, cancellation, or discard operation. Route Procedure authoring to the separately installed `$create-podway-procedure` maintainer skill.
 - Use `$lore-commits` for non-trivial commit messages and `$lore-query` to inspect recorded decision context.

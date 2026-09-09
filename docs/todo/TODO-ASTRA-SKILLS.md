@@ -8,10 +8,12 @@ repository root), with Master's direction to consume updated local tool sources 
 when those tools have not been released. The adopted requirements are included here so
 execution does not depend on that external proposal remaining available.
 
-Master approved the Sanho team's scope refinements and two Aquarium additions:
-record confirmed Sanho non-use in project guidance, and check Sorage inbox/outbox
-only on an explicit user request. These additions extend TASK-045 and TASK-046;
-they do not expand Aquarium's source-edit ownership into the tool repositories.
+Master approved the Sanho team's scope refinements and an Aquarium addition to
+record confirmed Sanho non-use in project guidance. That addition extends
+TASK-045 and TASK-046 without expanding Aquarium's source-edit ownership into
+the tool repositories. `EPIC-009` and `TASK-047` now own immediate adoption of
+Sorage's explicit-request workflow. TASK-046 retains the Sorage regression
+scenarios for the complete skill integration.
 
 The [roadmap](../roadmap/README.md#epic-012-modernize-aquarium-skills-for-gpt-6-astra)
 alone owns IDs, ordering, dependencies, and lifecycle state. This dossier owns scope,
@@ -34,7 +36,7 @@ improvement is promised.
 | --- | --- | --- |
 | TASK-043 | SKILL-01 | Concise Aquarium discovery descriptions |
 | TASK-044 | SKILL-02 | Focused entrypoints and conditional reference loading |
-| TASK-045 | SKILL-03 plus approved guidance changes | Evidence reuse, Sanho non-use guidance, and explicit Sorage discovery |
+| TASK-045 | SKILL-03 plus approved guidance changes | Evidence reuse and Sanho non-use guidance |
 | TASK-046 | SKILL-09 plus approved guidance scenarios | Integration and manual acceptance |
 
 The tool work remains in its owning repositories. This epic does not implement
@@ -165,7 +167,7 @@ Acceptance:
 
 ### TASK-045: Remove redundant Aquarium rechecks and questions
 
-Address five bounded behaviors:
+Address four bounded behaviors:
 
 1. In `task-handler`, replace unconditional rereading of every affected file after every
    phase with verification of phase postconditions and refresh of changed, conflicting,
@@ -181,12 +183,6 @@ Address five bounded behaviors:
    the repository's registration and configuration; a missing executable or failed
    status command alone does not establish non-use. Preserve configured-project
    guidance and update the exclusion when Sanho is adopted.
-5. In `dev-setup`, its agent-guidance template, Aquarium's own AGENTS.md, and affected
-   callers, require an explicit user request before checking Sorage inbox/outbox.
-   Session start, a new task, installation, or Project registration alone must not
-   trigger those checks. Do not load `use-sorage` merely to perform automatic inbox
-   or outbox discovery. Keep the same authorized checks within their requested scope
-   without asking for the same permission again.
 
 Use the following Sanho guidance when non-use is established:
 
@@ -195,23 +191,6 @@ Use the following Sanho guidance when non-use is established:
 > preparation. Use it only when the user explicitly requests Sanho adoption,
 > initialization, configuration, or diagnosis. Update this guidance when Sanho
 > is adopted.
-
-Use the following Sorage discovery guidance:
-
-> Check Sorage inbox/outbox only when the user explicitly requests those checks.
-> Do not check them automatically at session start, before a task, or because
-> this project is registered with Sorage. Apply this project instruction when
-> following use-sorage; a request for another Sorage operation does not by itself
-> authorize inbox/outbox checks.
-
-Replace contradictory automatic-discovery instructions at their Aquarium owners,
-including `dev-setup/references/agents-guidance.md`, rather than appending a second
-rule beside them. Apply Master's discovery policy in project guidance even when
-the paired Sorage skill still describes automatic session-start checks. Keep this
-user-selected orchestration policy separate from Sorage's native commands: explicit
-handoff operations, revision checks, review priority for known changes_requested
-items, withdrawal restrictions, and Vault protections retain their contracts.
-The Sorage producer's SKILL-08 remains a description-only change.
 
 Reconcile directly affected shared references and guidance without reverting newer
 AGENTS.md improvements. Do not use this task to change task-close's terminal-state
@@ -232,11 +211,8 @@ Acceptance:
   commit/push preparation. Configured projects retain their boundary-specific checks.
 - A missing executable or failed query never produces a false Sanho non-use statement.
   Sanho adoption updates the exclusion so it cannot silently disable configured use.
-- Sorage inbox/outbox checks occur only within an explicit request for those checks.
-  Registration, session start, ordinary work, and other Sorage operations do not
-  activate discovery. Known handoffs can still be handled under their authorization.
-- Agent guidance and Aquarium callers agree on both policies. Skill and CLI semantics
-  outside the approved discovery and routing changes remain intact.
+- Agent guidance and Aquarium callers agree on the Sanho policy. Skill and CLI
+  semantics outside the approved routing changes remain intact.
 
 ### TASK-046: Validate integration and complete manual acceptance
 
@@ -273,7 +249,7 @@ applicable execution authority and can remain pending after source preparation.
 | Explicit Sorage inbox/outbox request and continuation | Perform the requested checks within their scope without repeating authorization |
 | Another explicit Sorage operation without an inbox/outbox request | Perform the authorized operation without adding automatic discovery |
 | Full and confirmation release QA | Original candidate and settlement guarantees remain intact |
-| Sorage handoff under the explicit discovery policy | Preserve revision, review, withdrawal, and Vault behavior |
+| Sorage handoff under the [explicit broker-operation policy](../specs/tool-integrations.md#sorage-readiness) | Preserve revision, review, withdrawal, and Vault behavior |
 
 Acceptance:
 
@@ -398,23 +374,24 @@ Acceptance:
   and changed targets or effects; structural results remain separate from observed
   Astra behavior.
 
-### Sorage (SKILL-08): Shorten the Sorage description
+### Sorage (SKILL-08): Explicit-request broker operations
 
-The producer scope changes only the `description` in `skills/use-sorage/SKILL.md`.
-
-Describe when the skill applies without embedding the full inbox, revision,
-transmission, and response workflow. Preserve the body byte-for-byte.
+The official Sorage v0.1.1 source completes SKILL-08 and supersedes the earlier
+description-only proposal. Its `skills/use-sorage/SKILL.md` changes both discovery
+and Handoff-processing guidance. `TASK-047` owns Aquarium's immediate adoption;
+this epic inspects the final source and verifies that later restructuring does not
+change its native contract.
 
 Acceptance:
 
 - Frontmatter remains valid.
-- The description clearly identifies Sorage document handoffs.
-- The producer body, including its session-start discovery and outbox instructions,
-  revision checks, withdrawal restrictions, and Vault protections, remains unchanged.
-  Aquarium's user-approved discovery override belongs to TASK-045 and is verified
-  separately in TASK-046; unchanged producer text does not require automatic checks
-  in a project with that explicit instruction.
-- No operational command or runtime change is introduced.
+- Broker operations start only after an explicit user request. Inbox and outbox
+  checks report only the requested list and do not authorize Handoff processing.
+- Requested sender processing reads the current Review Note before revision, while
+  the bounded event timeline remains optional.
+- Requested Project setup uses the repository root `.gitignore` for `.sorage/`
+  without making the CLI edit repository files.
+- Revision checks, withdrawal restrictions, and Vault protections remain intact.
 
 ## Handoff and epic acceptance
 

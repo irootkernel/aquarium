@@ -36,7 +36,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-006 | Adopt Podway v0.2.7 | Completed |
 | EPIC-007 | Adopt upstream document humanizers | Completed |
 | EPIC-008 | Adopt Podway v0.2.8 | Completed |
-| EPIC-009 | Adopt Sorage v0.1.x | In Progress |
+| EPIC-009 | Adopt Sorage v0.1.x | Completed |
 | EPIC-010 | Separate global and repository development setup | Completed |
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
@@ -181,18 +181,21 @@ Podway owns its release, distribution, runtime-mode implementation, and source-d
 
 ## EPIC-009: Adopt Sorage v0.1.x
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Adopt Sorage as an optional local document-handoff integration. Aquarium diagnoses and installs the supported CLI and paired skill, initializes the local installation with a minimal profile, and registers each selected Git repository through an explicitly approved Project creation or binding. Sorage retains authority over Project identity, the managed Vault, Handoffs, reviews, retention, deletion, backup, and derived inbox state.
 
-The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.0. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
+The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.1. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
 
-**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
+Master explicitly accepted EPIC-009 and TASK-047 closeout on 2026-09-09. The later cross-skill regression scenarios remain with TASK-046 and are not claimed by this closeout.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [capabilities](../specs/capabilities.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md), [repository guidance](../../plugins/aquarium/skills/dev-setup/references/agents-guidance.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-035 | Add Sorage setup and Project registration | Add bounded Sorage inspection, exact-release and paired-skill setup, minimal initialization, approved Project creation or binding, ignore safety, bundle selection, and agent guidance. | Completed | External Sorage v0.1.0 release |
 | TASK-036 | Qualify Sorage integration | Verify version, initialization, Project resolution, privacy, documentation, bundle, and failure contracts against isolated fixtures and the official v0.1.0 CLI. | Completed | TASK-035 |
+| TASK-047 | Adopt Sorage v0.1.1 workflow contracts | Align explicitly requested broker operations, Review Note reads, optional event timelines, and Project setup through `.gitignore` with the official v0.1.1 CLI and paired skill. | Completed | TASK-035, TASK-036; external Sorage v0.1.1 release |
 
 ## EPIC-010: Separate Global and Repository Development Setup
 
@@ -240,15 +243,19 @@ the paired tool skill updates in their owning repositories.
 | --- | --- | --- | --- | --- |
 | TASK-043 | Shorten Aquarium discovery descriptions | Adopt SKILL-01: simplify descriptions while preserving activation semantics and workflow behavior. | Planned | None |
 | TASK-044 | Restructure Aquarium entrypoints and conditional reading | Adopt SKILL-02: move conditional detail to reachable references and preserve transition contracts. | Planned | TASK-043 |
-| TASK-045 | Remove redundant Aquarium rechecks and questions | Extend SKILL-03 with confirmed Sanho non-use guidance and user-requested Sorage inbox/outbox checks; align setup guidance and callers while preserving task and Git boundaries. | Planned | TASK-044 |
-| TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045; external SKILL-04 through SKILL-08 |
+| TASK-045 | Remove redundant Aquarium rechecks and questions | Extend SKILL-03 with confirmed Sanho non-use guidance; align setup guidance and callers while preserving task and Git boundaries. | Planned | TASK-044 |
+| TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045, TASK-047; external SKILL-04 through SKILL-08 |
 
 Sanho (`SKILL-07`) source work is `Completed`, as confirmed by Master on
 2026-09-09. Aquarium's local source inspection and integration acceptance remain
 pending.
 
+Sorage (`SKILL-08`) source work is `Completed` in the official v0.1.1 release,
+as confirmed by Master on 2026-09-09. `TASK-047` owns Aquarium's immediate
+adoption; `TASK-046` retains the later cross-skill regression scenarios.
+
 `TASK-046` is blocked pending the Gaori (`SKILL-04`), Mulgae (`SKILL-05`),
-Podway (`SKILL-06`), and Sorage (`SKILL-08`) source work.
+and Podway (`SKILL-06`) source work.
 These are external work labels from the modernization proposal, not Aquarium
 task IDs. Each tool repository owns its implementation and lifecycle.
 

@@ -970,7 +970,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_sorage(
         self,
         *,
-        version: str = "v0.1.0",
+        version: str = "v0.1.1",
         initialized: bool = True,
         registered: bool = True,
         project_status: str = "active",
@@ -1141,7 +1141,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v18")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v19")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -1189,7 +1189,10 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
 
     def test_sorage_supports_only_stable_v01_releases(self) -> None:
         for version, supported in (
-            ("v0.1.0", True),
+            ("v0.1.0", False),
+            ("v0.1.1", True),
+            ("v0.1.01", False),
+            ("v0.1.10", True),
             ("0.1.99", True),
             ("v0.1.1-rc.1", False),
             ("v0.0.9", False),
@@ -1316,6 +1319,193 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             },
         )
         self.assert_sorage_private_fields_absent(sorage)
+
+    def test_sorage_local_exclude_does_not_satisfy_repository_ignore_policy(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".git/info/exclude").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/INBOX.md").write_text(
+            "derived\n", encoding="utf-8"
+        )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "installed")
+        self.assertEqual(sorage["readiness_status"], "degraded")
+        self.assertFalse(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_global_exclude_does_not_satisfy_repository_ignore_policy(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        excludes_file = self.base / "global-excludes"
+        excludes_file.write_text(".sorage/\n", encoding="utf-8")
+        self.git("config", "core.excludesFile", str(excludes_file))
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/INBOX.md").write_text(
+            "derived\n", encoding="utf-8"
+        )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "installed")
+        self.assertEqual(sorage["readiness_status"], "degraded")
+        self.assertFalse(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_nested_gitignore_does_not_satisfy_repository_policy(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/.gitignore").write_text(
+            "*\n", encoding="utf-8"
+        )
+        probe = inspect_tools.run_command(
+            ["git", "check-ignore", "--verbose", "--no-index", "-z", "--stdin"],
+            self.repository,
+            NORMAL_PROBE_TIMEOUT_SECONDS,
+            input_text=".sorage/\0",
+        )
+        self.assertTrue(probe["ok"])
+        self.assertEqual(probe["stdout"].split("\0")[0], ".sorage/.gitignore")
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "installed")
+        self.assertEqual(sorage["readiness_status"], "degraded")
+        self.assertFalse(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_root_rule_remediates_nested_gitignore_policy(self) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/.gitignore").write_text(
+            "*\n", encoding="utf-8"
+        )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "configured")
+        self.assertEqual(sorage["readiness_status"], "ready")
+        self.assertTrue(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_negated_root_ignore_does_not_satisfy_repository_policy(
+        self,
+    ) -> None:
+        self.install_fake_sorage()
+        self.install_sorage_skill()
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/**\n!.sorage/**\n", encoding="utf-8"
+        )
+        self.repository.joinpath(".sorage").mkdir()
+        self.repository.joinpath(".sorage/INBOX.md").write_text(
+            "derived\n", encoding="utf-8"
+        )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+
+        self.assertEqual(sorage["status"], "installed")
+        self.assertEqual(sorage["readiness_status"], "degraded")
+        self.assertFalse(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_root_ignore_probe_does_not_run_the_generic_probe(self) -> None:
+        self.repository.joinpath(".gitignore").write_text(
+            ".sorage/\n", encoding="utf-8"
+        )
+
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.shutil, "which", return_value=None),
+            mock.patch.object(
+                inspect_tools,
+                "ignored_by_git",
+                side_effect=AssertionError("generic ignore probe must not run"),
+            ),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        self.assertTrue(sorage["configuration"][0]["ignored"])
+
+    def test_sorage_root_ignore_probe_parses_colon_digits_in_pattern(self) -> None:
+        self.repository.joinpath(".gitignore").write_text(
+            "[.:1:]sorage/\n", encoding="utf-8"
+        )
+
+        self.assertTrue(
+            inspect_tools.ignored_by_root_gitignore(
+                self.repository, ".sorage/", NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+        )
+
+    def test_sorage_root_ignore_probe_rejects_ambiguous_exclude_source(
+        self,
+    ) -> None:
+        excludes_file = self.repository / ".gitignore:5:x"
+        excludes_file.write_text(".sorage/\n", encoding="utf-8")
+        self.git("config", "core.excludesFile", str(excludes_file))
+
+        self.assertFalse(
+            inspect_tools.ignored_by_root_gitignore(
+                self.repository, ".sorage/", NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+        )
 
     def test_sorage_invalid_or_duplicate_skills_block_readiness(self) -> None:
         for case in ("invalid", "duplicate"):
@@ -1741,19 +1931,19 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self.assertEqual(normalized["error_code"], "AMBIGUOUS_PROJECT")
         self.assertIsNone(data)
 
-    def test_sorage_version_uses_the_bare_v010_contract(self) -> None:
+    def test_sorage_version_uses_the_bare_v01_contract(self) -> None:
         base = {
             "attempted": True,
             "ok": True,
             "exit_code": 0,
             "timed_out": False,
         }
-        bare = {**base, "result": {"name": "sorage", "version": "v0.1.0"}}
+        bare = {**base, "result": {"name": "sorage", "version": "v0.1.1"}}
         enveloped = {
             **base,
             "result": {
                 "ok": True,
-                "data": {"name": "sorage", "version": "v0.1.0"},
+                "data": {"name": "sorage", "version": "v0.1.1"},
             },
         }
         self.assertTrue(inspect_tools.normalize_sorage_version(bare)["contract_valid"])
@@ -1833,6 +2023,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     self.repository.joinpath(".sorage/notes.md").unlink()
                     self.repository.joinpath(".sorage").rmdir()
                 if case == "tracked":
+                    self.assertTrue(sorage["configuration"][0]["ignored"])
                     self.assertTrue(sorage["configuration"][0]["tracked"])
                 if case == "symlinked":
                     self.assertTrue(sorage["configuration"][0]["symlinked"])
@@ -5382,7 +5573,7 @@ else:
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v18")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v19")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertTrue(payload["error"]["message"].strip())
 
