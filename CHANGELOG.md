@@ -6,6 +6,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Allow Orca reviewers to write Git-ignored runtime files such as those under `.omc/` without warnings, extra checks, or approval requests.
+
 - Keep Aquarium plugin installation and update requests in the host plugin-management flow without loading `dev-setup-global` or running global tool diagnostics.
 - Recognize and install `humanize-korean` under `~/.agents/skills/` regardless of `CODEX_HOME`.
 - Separate Orca review findings from operational deviations and withhold technical verdicts when review trustworthiness is compromised or cannot be established.

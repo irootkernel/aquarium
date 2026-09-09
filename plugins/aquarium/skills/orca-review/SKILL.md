@@ -18,7 +18,7 @@ Run the canonical Aquarium review contract with one fresh requested reviewer own
 
 Resolve one canonical Git root, one `staged`, `head`, `commit`, or `range` source scope, one requested reviewer, and one review focus. A `task`, `epic`, or special request supplies authority and focus but must resolve to one of those four scopes. Read the roadmap and linked authority first. Ask only when the authority does not identify one unambiguous scope and applicable revision.
 
-`staged` means the current `HEAD`-to-index change in Orca's registered worktree. Confirm through read-only Git inspection that `git diff --cached` is nonempty, and report staged, unstaged, untracked, ignored, and conflicted state without normalizing it. The reviewer reads the live staged target directly; do not replace it with a copied checkout, capture manifest, snapshot, or digest binding. External tool output remains a review aid under the Dispatch rules below.
+`staged` means the current `HEAD`-to-index change in Orca's registered worktree. Confirm through read-only Git inspection that `git diff --cached` is nonempty, and report staged, unstaged, non-ignored untracked, and conflicted state without normalizing it. Do not inventory ignored runtime files or compare them before and after review. The reviewer reads the live staged target directly; do not replace it with a copied checkout, capture manifest, snapshot, or digest binding. External tool output remains a review aid under the Dispatch rules below.
 
 For `head`, `commit`, and `range`, resolve the requested revisions with ordinary read-only Git commands and preserve the meanings in [review-contract.md](../../references/review-contract.md). Current index and worktree changes remain excluded from those committed targets. Conflicts stop the review.
 
@@ -35,8 +35,8 @@ Resolve the installed Orca command and ready local runtime exactly as [orca-supe
 Place the declared target, review focus, authority paths, included and excluded state, and the following instructions in every Dispatch, regardless of target:
 
 - This is review only.
-- Never create, edit, delete, move, format, or generate any file in the current registered worktree.
-- All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree. `/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are examples, not an allowlist. The actual write destination must remain outside the worktree, including when a path traverses a symbolic link. Return the paths of retained report files used to deliver the result.
+- Never create, edit, delete, move, format, or generate source files or other tracked or non-ignored files in the current registered worktree.
+- All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree or in Git-ignored runtime paths within it, such as ignored files under `.omc/`. `/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are external examples, not an allowlist. This permission does not cover tracked files, non-ignored worktree files, or changes to Git state, including through symbolic links. Return the paths of retained report files used to deliver the result.
 - External tool output and reports may contain bytes of the declared target, including redirected `git diff --cached` or `git show` output read in pieces. These files are review aids; they do not replace the live index or resolved Git revisions as target authority.
 - Read only the declared target. For `head`, `commit`, and `range`, obtain file content and diffs from the resolved revisions through read-only Git commands; never substitute current index or worktree bytes.
 - Do not modify the Git index, refs, configuration, or commits.
@@ -54,7 +54,7 @@ Independently verify every finding against the exact target and authority withou
 
 This standalone workflow is report-only. Do not remediate, run checks, stage, commit, or start another review. Return the shared result, reviewer identity, remediation continuation, Orca object and lifecycle status, and the paths of retained report files used to deliver the result. Report `dolgorae_used: false`.
 
-External review files alone must not trigger a rule-violation warning, an operational failure, a withheld verdict, or a demand for another review. Wrong scope, missing required output, reviewer identity mismatch, or incomplete lifecycle prevents a clean verdict.
+Permitted external review files and Git-ignored runtime files alone must not trigger a warning, an operational deviation, an approval request, additional checks, a withheld verdict, or another review. Wrong scope, missing required output, reviewer identity mismatch, or incomplete lifecycle prevents a clean verdict.
 
 Apply [Orca operational deviations](../../references/review-contract.md#orca-operational-deviations) when review instructions were violated. Report adjudicated target findings first and keep the technical verdict, deviation report, and backend lifecycle status distinct. A technical `APPROVE` does not certify instruction compliance. Withhold the final technical verdict when a required guarantee is compromised or cannot be established from existing authorized evidence.
 
