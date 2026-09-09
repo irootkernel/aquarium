@@ -39,6 +39,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-009 | Adopt Sorage v0.1.x | In Progress |
 | EPIC-010 | Separate global and repository development setup | Completed |
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
+| EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -222,3 +223,35 @@ The hardened path applies only after a complete full-mode `FINDINGS` result. A n
 | TASK-038 | Freeze exact confirmation identity | Make the full record, remediation manifest, claim, and finding-to-scenario inventory create-once artifacts bound by exact digests and candidate identity. | Completed | None |
 | TASK-039 | Enforce one-shot confirmation settlement | Admit one finish operation per exact claim, persist an immutable terminal PASS, FINDINGS, INCOMPLETE, or REJECTED attempt record, and fail closed on replay, concurrency, or interrupted settlement. | Completed | TASK-038 |
 | TASK-040 | Qualify confirmation integrity | Cover valid settlement, artifact replacement, claim replay, finding-scenario mismatch, rejected evidence, concurrency, and interruption with focused tests and align the release QA contract. | Completed | TASK-038, TASK-039 |
+
+## EPIC-012: Modernize Aquarium Skills for GPT-6 Astra
+
+**Status:** `Planned`
+
+Reduce unnecessary instruction loading, repeated investigation, redundant
+verification, and repeated questions in Aquarium skills while preserving native
+tool contracts, workflow behavior outside the approved changes, and distinct
+authorization boundaries. Master intends to execute this epic after completing
+the paired tool skill updates in their owning repositories.
+
+**Detailed SOT:** [`TODO-ASTRA-SKILLS.md`](../todo/TODO-ASTRA-SKILLS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-043 | Shorten Aquarium discovery descriptions | Adopt SKILL-01: simplify descriptions while preserving activation semantics and workflow behavior. | Planned | None |
+| TASK-044 | Restructure Aquarium entrypoints and conditional reading | Adopt SKILL-02: move conditional detail to reachable references and preserve transition contracts. | Planned | TASK-043 |
+| TASK-045 | Remove redundant Aquarium rechecks and questions | Extend SKILL-03 with confirmed Sanho non-use guidance and user-requested Sorage inbox/outbox checks; align setup guidance and callers while preserving task and Git boundaries. | Planned | TASK-044 |
+| TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045; external SKILL-04 through SKILL-08 |
+
+`TASK-046` is blocked pending the Gaori (`SKILL-04`), Mulgae (`SKILL-05`),
+Podway (`SKILL-06`), Sanho (`SKILL-07`), and Sorage (`SKILL-08`) source work.
+These are external work labels from the modernization proposal, not Aquarium
+task IDs. Each tool repository owns its implementation and lifecycle.
+
+Unblock `TASK-046` after Master's completion handoff and inspection of the current
+local source trees establish the external acceptance requirements in the dossier,
+and `TASK-043`, `TASK-044`, and `TASK-045` are complete. Tool release or installation
+is not a prerequisite. At epic intake, inspect the updated local skill sources
+and their references before planning Aquarium edits; retain the exact source
+identity in native execution evidence. Required manual acceptance remains a
+completion gate after the task is unblocked.
