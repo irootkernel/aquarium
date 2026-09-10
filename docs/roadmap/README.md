@@ -276,11 +276,12 @@ completion gate after the task is unblocked.
 
 **Status:** `Planned`
 
-Store one production ledger at `~/.aquarium/status.yaml` for Git roots that
-have finished `$aquarium:dev-setup`. After that skill reports a terminal
-outcome, `aquarium-status record` upserts the row. `aquarium-status show` reads
-the file from a shell, with no Codex or Grok session. `$aquarium:status` calls
-the same `show` command. The LLM must not write the YAML.
+Store one production ledger at `~/.aquarium/status.yaml` for Git worktree roots
+that have finished `$aquarium:dev-setup` or received a terminal bundle result.
+The owning setup workflow records the settled outcome before its final report.
+`aquarium-status show` reads the file from a shell without Codex, Grok, or a
+plugin cache, while `$aquarium:status` uses the same reporting contract. The LLM
+must not write the YAML.
 
 ADR-0008 already reserves `~/.aquarium/` for production state.
 `aquarium-dev` still writes only under `~/.aquarium-dev/`. A repository-local
@@ -291,6 +292,6 @@ its input manifest.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-048 | Freeze the production status contract | Define `~/.aquarium/status.yaml`, schema `aquarium-production-status/v1`, closed `record` JSON, CLI ownership, terminal-outcome write rules, privacy, and the bans on scanning, repository-local `.aquarium`, and development-channel writes. | Planned | None |
-| TASK-049 | Ship `aquarium-status` and wire setup/status skills | Implement bundled `show`/`record`, atomic YAML writes, and `~/.local/bin/aquarium-status`. `show` must work without a plugin host. `dev-setup` calls bundled `record` after Report; `$aquarium:status` calls `show`. | Planned | TASK-048 |
-| TASK-050 | Qualify status persistence and reporting | Prove `show` without a plugin host, fail-closed invalid JSON, `ready` as the only `last_configured_*` advance, incomplete outcomes, scoped `ready`, atomic replace, and missing Git roots. Master verifies skill behavior separately. | Planned | TASK-049 |
+| TASK-048 | Freeze the production status contract | Define schema `aquarium-production-status/v1`, sourced version and freshness observations, full versus scoped attempt meaning, component unknown states, terminal-record ownership, locked revision-safe writes, output and exit contracts, Git identity, retention, privacy, and explicit row removal. | Planned | None |
+| TASK-049 | Ship `aquarium-status` and wire setup/status skills | Implement `show`, closed-JSON `record`, and exact `forget`; install the cache-independent versioned runtime and launcher through `dev-setup-global`; wire `dev-setup`, bundle-owned early outcomes, and `$aquarium:status` without duplicate records. | Planned | TASK-048 |
+| TASK-050 | Qualify status persistence and reporting | Prove independent offline and refreshed reporting, JSON-only output, scoped then unscoped promotion, unknown and corrupt observations, concurrent merge and conflict behavior, storage-failure recovery, Git-root retention, approved launcher replacement, and execution after plugin-cache removal. Master verifies skill behavior separately. | Planned | TASK-049 |
