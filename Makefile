@@ -56,6 +56,7 @@ PYTHON_FILES := \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \
 	tests/unit/test_manage_release_qa_unit.py \
+	tests/unit/test_procedure_alignment_contracts.py \
 	tests/unit/test_inspect_testing_unit.py \
 	tests/unit/test_verify_podway_compatibility_unit.py \
 	tests/e2e/test_test_setup_cli.py \

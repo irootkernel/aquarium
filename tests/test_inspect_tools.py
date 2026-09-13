@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Self
 from unittest import mock
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 GLOBAL_SCRIPT_DIRECTORY = ROOT / "plugins/aquarium/skills/dev-setup-global/scripts"
 sys.path.insert(0, str(GLOBAL_SCRIPT_DIRECTORY))
@@ -1141,7 +1143,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v19")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v21")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -3775,6 +3777,13 @@ else:
                 for item in podway["managed_procedures"]
             )
         )
+        self.assertTrue(
+            all(
+                item["handler_contract_status"] == "compatible"
+                and item["handler_contract_reasons"] == []
+                for item in podway["managed_procedures"]
+            )
+        )
         self.assertEqual(
             podway["migration_kinds"],
             {"product_rename": False},
@@ -3785,6 +3794,59 @@ else:
         )
         self.assertEqual(
             podway["status"], "configured" if platform_supported else "degraded"
+        )
+
+    def test_help_and_default_inspection_work_without_site_packages(self) -> None:
+        help_result = subprocess.run(
+            [sys.executable, "-S", str(SCRIPT), "--help"],
+            env=self.environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        self.assertIn("--repository", help_result.stdout)
+
+        inspection = subprocess.run(
+            [
+                sys.executable,
+                "-S",
+                str(SCRIPT),
+                "--repository",
+                str(self.repository),
+            ],
+            env=self.environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(inspection.returncode, 0, inspection.stderr)
+        self.assertEqual(
+            json.loads(inspection.stdout)["schema_version"],
+            "aquarium-dev-setup-inspection.v21",
+        )
+
+    def test_missing_pyyaml_degrades_only_podway_handler_checks(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+            mock.patch("inspect_tools.yaml", None),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertTrue(
+            all(
+                entry["handler_contract_status"] == "not_checked"
+                and entry["handler_contract_reasons"] == ["pyyaml_unavailable"]
+                for entry in podway["managed_procedures"]
+            )
         )
 
     def test_session_not_found_is_ready_in_an_initialized_workspace(self) -> None:
@@ -3934,6 +3996,8 @@ else:
             if item["path"].endswith("aquarium-task-v2.yaml")
         )
         self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "compatible")
+        self.assertEqual(entry["handler_contract_reasons"], [])
         self.assertEqual(entry["update_explanation"], "local_customization")
         self.assertFalse(entry["matches_source"])
         self.assertEqual(entry["preview"]["procedure_id"], "aquarium-task-v2")
@@ -3943,6 +4007,264 @@ else:
         self.assertFalse(
             (self.repository / ".podway/procedure-ownership.json").exists()
         )
+
+    def test_valid_same_id_customization_missing_handler_contract_is_degraded(
+        self,
+    ) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        target.write_text(
+            target.read_text(encoding="utf-8").replace(
+                "id: pending-low-dispositions",
+                "id: custom-pending-low-dispositions",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        before = target.read_bytes()
+
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertIn(
+            "missing_required_items:low-disposition-record:pending-low-dispositions",
+            entry["handler_contract_reasons"],
+        )
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
+        self.assertEqual(target.read_bytes(), before)
+
+    def test_goal_and_validation_waits_require_low_blocker_evidence(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        for name in ("aquarium-goal-v2.yaml", "aquarium-validation-v2.yaml"):
+            with self.subTest(procedure=name):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                wait = next(
+                    node
+                    for node in document["graph"]["nodes"]
+                    if node["id"] == "await-user-direction"
+                )
+                wait["evidence_from"] = [
+                    source
+                    for source in wait["evidence_from"]
+                    if source["node"] != "record-low-disposition"
+                ]
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    "missing_required_evidence:await-user-direction:"
+                    "record-low-disposition:after-target,"
+                    "record-low-disposition:current-blocking-findings,"
+                    "record-low-disposition:low-disposition-summary,"
+                    "record-low-disposition:source-review-basis",
+                    reasons,
+                )
+
+    def test_every_managed_procedure_requires_instructions_on_used_actions(
+        self,
+    ) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        for canonical_path in sorted(procedures.glob("aquarium-*-v2.yaml")):
+            with self.subTest(procedure=canonical_path.name):
+                canonical = canonical_path.read_bytes()
+                document = yaml.safe_load(canonical)
+                used = {node["use"] for node in document["graph"]["nodes"]}
+                action_id = next(
+                    definition_id
+                    for definition_id in used
+                    if document["node_definitions"][definition_id].get("type")
+                    == "action"
+                )
+                malformed_values = {
+                    "missing": None,
+                    "null": None,
+                    "empty-list": [],
+                    "blank-member": [""],
+                    "scalar": "perform the action",
+                }
+                for case, malformed in malformed_values.items():
+                    with self.subTest(procedure=canonical_path.name, case=case):
+                        candidate = copy.deepcopy(document)
+                        if case == "missing":
+                            candidate["node_definitions"][action_id].pop("instructions")
+                        else:
+                            candidate["node_definitions"][action_id]["instructions"] = (
+                                malformed
+                            )
+                        customized = yaml.safe_dump(candidate, sort_keys=False).encode()
+
+                        status, reasons = inspect_tools.inspect_podway_handler_contract(
+                            canonical_path.name, customized, canonical
+                        )
+
+                        self.assertEqual(status, "incompatible")
+                        self.assertIn(
+                            f"missing_action_instructions:{action_id}",
+                            reasons,
+                        )
+
+    def test_malformed_nested_procedure_shapes_return_bounded_reasons(self) -> None:
+        canonical_path = (
+            ROOT / "plugins/aquarium/assets/podway/procedures/aquarium-task-v2.yaml"
+        )
+        canonical = canonical_path.read_bytes()
+        base = yaml.safe_load(canonical)
+        cases = []
+
+        document = copy.deepcopy(base)
+        document["node_definitions"]["low-disposition-record"]["items"] = 1
+        cases.append(("malformed_items:low-disposition-record", document))
+
+        document = copy.deepcopy(base)
+        document["node_definitions"]["low-disposition-record"]["items"].append(1)
+        cases.append(("malformed_item:low-disposition-record:8", document))
+
+        document = copy.deepcopy(base)
+        document["node_definitions"]["low-disposition-record"]["items"][6][
+            "choices"
+        ] = "same-as-review"
+        cases.append(
+            ("malformed_choices:low-disposition-record:coverage-relationship", document)
+        )
+
+        evidence_node = next(
+            node for node in base["graph"]["nodes"] if node.get("evidence_from")
+        )
+        evidence_node_id = evidence_node["id"]
+
+        document = copy.deepcopy(base)
+        node = next(
+            item
+            for item in document["graph"]["nodes"]
+            if item["id"] == evidence_node_id
+        )
+        node["evidence_from"] = "record-plan"
+        cases.append((f"malformed_evidence_from:{evidence_node_id}", document))
+
+        document = copy.deepcopy(base)
+        node = next(
+            item
+            for item in document["graph"]["nodes"]
+            if item["id"] == evidence_node_id
+        )
+        node["evidence_from"].append("record-plan")
+        cases.append(
+            (
+                (
+                    f"malformed_evidence_source:{evidence_node_id}:"
+                    f"{len(node['evidence_from']) - 1}"
+                ),
+                document,
+            )
+        )
+
+        document = copy.deepcopy(base)
+        node = next(
+            item
+            for item in document["graph"]["nodes"]
+            if item["id"] == evidence_node_id
+        )
+        node["evidence_from"][0]["items"] = "plan-summary"
+        cases.append((f"malformed_evidence_items:{evidence_node_id}:0", document))
+
+        for expected_reason, document in cases:
+            with self.subTest(reason=expected_reason):
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    canonical_path.name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+                self.assertEqual(status, "incompatible")
+                self.assertIn(expected_reason, reasons)
+
+    def test_malformed_nested_customization_does_not_collapse_inspection(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        document = yaml.safe_load(target.read_text(encoding="utf-8"))
+        document["node_definitions"]["low-disposition-record"]["items"] = 1
+        target.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+        before = target.read_bytes()
+
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertIn(
+            "malformed_items:low-disposition-record",
+            entry["handler_contract_reasons"],
+        )
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(target.read_bytes(), before)
+
+    def test_valid_unrecognized_semantic_customization_is_unqualified(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        target.write_text(
+            target.read_text(encoding="utf-8").replace(
+                "to: record-outcome\n          effect: advance",
+                "to: closeout\n          effect: advance",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        before = target.read_bytes()
+
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            podway = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "unqualified")
+        self.assertEqual(
+            entry["handler_contract_reasons"],
+            ["unrecognized_semantic_customization"],
+        )
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(target.read_bytes(), before)
 
     def test_valid_wrong_id_content_is_invalid(self) -> None:
         self.install_fake_tools()
@@ -4015,23 +4337,30 @@ else:
                     "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9",
                     "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
                     "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
+                    "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
                 },
                 "aquarium-goal-v2.yaml": {
                     "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
                     "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
                     "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3",
                     "8ca12a8ba36e9dd035bc70c903b8a5a0a9e4fd6db00cf75e2448f66082ab6ac6",
+                    "42eee85a406f46c3c7c40a467bfa1764d1e0b3042247b0604564ea20547f8d96",
+                    "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
                 },
                 "aquarium-validation-v2.yaml": {
                     "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
                     "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",
                     "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
+                    "9f3c0a0628f6ea820dbffee2355b949a2d2459e595ea3044d9aa53d81482eb5c",
+                    "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
                 },
                 "aquarium-design-v2.yaml": {
-                    "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6"
+                    "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
+                    "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
-                    "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb"
+                    "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
+                    "c8ce6585a735eb3a159a6f14f40d3dd413cc33812b254e10703c76b3d49dddd9",
                 },
             },
         )
@@ -5573,7 +5902,7 @@ else:
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v19")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v21")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertTrue(payload["error"]["message"].strip())
 

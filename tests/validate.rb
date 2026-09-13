@@ -114,8 +114,15 @@ procedures.each do |filename|
   targets = [procedure.fetch("graph").fetch("entry")]
   targets.concat(procedure.fetch("manual_rework").fetch("allowed_targets"))
   nodes.each do |node|
-    assert(procedure.fetch("node_definitions").key?(node.fetch("use")),
+    definition = procedure.fetch("node_definitions")[node.fetch("use")]
+    assert(definition,
            "unknown node definition: #{path}:#{node.fetch('id')}")
+    if definition.fetch("type") == "action"
+      instructions = definition["instructions"]
+      assert(instructions.is_a?(Array) && !instructions.empty? &&
+             instructions.all? { |instruction| nonempty_string(instruction) },
+             "action instructions are missing: #{path}:#{node.fetch('id')}")
+    end
     targets << node["next"] if node.key?("next")
     targets.concat(node.fetch("routes", {}).values.map { |route| route.fetch("to") })
     targets.concat(node.fetch("evidence_from", []).map { |evidence| evidence.fetch("node") })

@@ -24,9 +24,9 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 
 - **작업에는 identity가 있습니다.** 수행 대상 task나 epic은 roadmap 안에서 ID와 lifecycle 상태를 가집니다. Commit은 `task-commit`을 거치며, 사용자가 확인한 lifecycle 변경을 건너뛰지 않고 함께 기록합니다.
 - **수행은 단계와 gate로 나뉩니다.** `task-handler`는 task 하나를 plan부터 close까지 7단계로 진행합니다. Plan을 승인하기 전에는 아무것도 바꾸지 않습니다. 해당하는 모든 roadmap 요구사항은 현재 증거와 대응되어야 합니다. Closeout은 사용자의 명시적 승인을 기다립니다.
-- **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 Aquarium이 로컬에서 타당성과 우선순위를 다시 판단하기 전까지 참고 의견(advisory)입니다. 승인된 handler는 유효한 Medium 이상 문제를 수정한 뒤 다시 review합니다. Low 문제는 범위에 따라 로컬에서 고치거나 deferred-feedback에 등록하고, 구조적인 작업이면 TODO 후보로 남깁니다.
+- **증거는 검증됩니다.** 명령의 exit code가 pass/fail을 결정합니다. Review finding은 Aquarium이 로컬에서 타당성과 우선순위를 다시 판단하기 전까지 참고 의견(advisory)입니다. 승인된 handler는 유효한 Medium 이상 문제를 수정한 뒤 다시 review합니다. Low 문제는 범위에 따라 로컬에서 고치거나 deferred-feedback에 등록하고, 구조적인 작업이면 TODO 후보로 남깁니다. 이렇게 정해진 Low 묶음을 모두 처리하고 검사했다면 과거 건수만을 이유로 review를 반복하지 않습니다.
 - **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact와 Sorage에서 파생된 artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
-- **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review와 remediation round는 정해진 예산 안에서만 돌고, cold validation은 새 gap이 더 발견되지 않으면 멈춥니다.
+- **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review 예산은 반드시 소진해야 하는 횟수가 아니라 상한입니다. Low만 남으면 로컬에서 처리하고, Medium 이상 수정 뒤에 필요한 확인 review는 생략하지 않습니다.
 - **불변식과 테스트는 계약입니다.** Release QA는 저장소가 자체적으로 등록한 active Design Gate가 있으면 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.

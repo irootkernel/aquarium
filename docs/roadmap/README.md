@@ -41,6 +41,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
 | EPIC-013 | Record and report production setup status | Planned |
+| EPIC-014 | Align Procedure contracts and bound Low-finding convergence | In Review |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -295,3 +296,41 @@ its input manifest.
 | TASK-048 | Freeze the production status contract | Define schema `aquarium-production-status/v1`, sourced version and freshness observations, full versus scoped attempt meaning, component unknown states, terminal-record ownership, locked revision-safe writes, output and exit contracts, Git identity, retention, privacy, and explicit row removal. | Planned | None |
 | TASK-049 | Ship `aquarium-status` and wire setup/status skills | Implement `show`, closed-JSON `record`, and exact `forget`; install the cache-independent versioned runtime and launcher through `dev-setup-global`; wire `dev-setup`, bundle-owned early outcomes, and `$aquarium:status` without duplicate records. | Planned | TASK-048 |
 | TASK-050 | Qualify status persistence and reporting | Prove independent offline and refreshed reporting, JSON-only output, scoped then unscoped promotion, unknown and corrupt observations, concurrent merge and conflict behavior, storage-failure recovery, Git-root retention, approved launcher replacement, and execution after plugin-cache removal. Master verifies skill behavior separately. | Planned | TASK-049 |
+
+## EPIC-014: Align Procedure contracts and bound Low-finding convergence
+
+**Status:** `In Review`
+
+Align the five managed Podway Procedures with their owning skills, shared review
+rules, closeout, and commit handoffs. A completed review or audit may retain its
+historical Low findings after every eligible Low item has a supported disposition
+and the required local verification. Additional provider reviews or broad
+re-audits cannot be started solely to reduce that historical count.
+
+The change preserves required first reviews, confirmation owed after a
+Medium-or-higher correction, exact native recovery, immutable admitted sessions,
+and separate approval boundaries for installation, commits, and publication. It
+does not change the Podway engine or built-in presets.
+
+Implementation corrections and refreshed native qualification are prepared.
+`TASK-060` remains in review for Master's separately observed agent-behavior
+acceptance, and `TASK-061` remains blocked until that acceptance is complete. Canonical
+and repository-local Procedure sources are synchronized for later starts; this does
+not replace or reinterpret an admitted session and establishes no runtime
+activation, commit, or publication.
+
+**Detailed SOT:** [`TODO-PROCEDURE-WORKFLOW-CONVERGENCE.md`](../todo/TODO-PROCEDURE-WORKFLOW-CONVERGENCE.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-051 | Adopt the workflow contract and freeze regression cases | Register the approved scope, baseline, identifiers, requirements, and finite routing fixtures without claiming the reported incident was reproduced. | Completed | None |
+| TASK-052 | Define finite Low settlement and review admission policy | Separate immutable review facts from pending dispositions, blockers, coverage, and authority for another review. | Completed | TASK-051 |
+| TASK-053 | Align task Procedure inputs, boundaries, and Low gates | Connect task phase inputs and add a verified finite Low-settlement route. | Completed | TASK-052 |
+| TASK-054 | Add typed goal evidence and a general Low-settlement route | Gate goal success on verification and review readiness independently of finding counts. | Completed | TASK-053 |
+| TASK-055 | Make validation severity-aware and align wait and rework boundaries | Remove Low-only audit recursion while preserving required confirmation and explicit user direction. | Completed | TASK-054 |
+| TASK-056 | Complete five-Procedure node guidance and non-implementation boundaries | Map each node to its capability, inputs, prohibited effects, evidence, and rework owner. | Completed | TASK-055 |
+| TASK-057 | Reconcile handlers, resume, closeout, and commit composition | Carry accepted Low-only deltas through exact final-target verification without another review. | Completed | TASK-056 |
+| TASK-058 | Qualify customization and immutable-version compatibility | Distinguish native validity from handler compatibility and preserve old snapshots and local customizations. | Completed | TASK-057 |
+| TASK-059 | Implement and run native graph regression qualification | Exercise the revised canonical graphs, rejection paths, cleanup, and official Podway artifact compatibility. | Completed | TASK-058 |
+| TASK-060 | Observe agent behavior and context-recovery acceptance | Confirm review dispatch, wait, resume, and forbidden-effect behavior through separately authorized scenarios. | In Review | TASK-059; Master's separate observed-agent verification |
+| TASK-061 | Promote durable documentation and prepare an unactivated handoff | Publish implemented behavior to canonical owners and report evidence without installation, commit, or release claims. | Blocked | TASK-060 |

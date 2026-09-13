@@ -1,0 +1,937 @@
+{
+  "document_kind": "aquarium-review-routing-regression-cases",
+  "status": "implemented-mixed-evidence-contract",
+  "scope": "Current work unit and stated already-authorized transition only. A count of zero is not a permanent prohibition on separately authorized future work.",
+  "notes": [
+    "These logical route labels are planning labels, not existing CLI commands or reserved native schemas.",
+    "Automatic provider-root counts exclude native exact recovery and refer to additional roots in the described scope.",
+    "Native tests and observed-agent tests prove different boundaries; neither substitutes for the other."
+  ],
+  "correction_acceptance_matrix": [
+    {"id": "C-01", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-02", "evidence_class": "native-and-recording-contract", "runner": "tests/podway_runtime_qualification.py and observed agent campaign", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-03", "evidence_class": "native-and-observed-dispatch", "runner": "tests/podway_runtime_qualification.py and observed agent campaign", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-04", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-05", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-06", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-07", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-08", "evidence_class": "native-and-observed-agent", "runner": "tests/podway_runtime_qualification.py and observed agent campaign", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-09", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-10", "evidence_class": "native-and-observed-agent", "runner": "tests/podway_runtime_qualification.py and observed agent campaign", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-11", "evidence_class": "observed-agent", "runner": "observed agent campaign", "implementation_status": "specified", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-12", "evidence_class": "inspector", "runner": "tests/test_inspect_tools.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-13", "evidence_class": "inspector", "runner": "tests/test_inspect_tools.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-14", "evidence_class": "inspector-and-native-validation", "runner": "tests/test_inspect_tools.py and tests/verify_podway_compatibility.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-15", "evidence_class": "observed-skill-and-helper", "runner": "observed agent campaign and existing commit helpers", "implementation_status": "specified", "execution_status": "not-recorded-by-this-fixture"},
+    {"id": "C-16", "evidence_class": "observed-agent-and-native-route", "runner": "observed agent campaign and tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"}
+  ],
+  "cases": [
+    {
+      "id": "RR-001",
+      "name": "First member review is Low-only",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 3,
+        "pending_low_dispositions": 3,
+        "completed_root_count": 1
+      },
+      "expected": {
+        "logical_route": "settle-low-then-ordinary-closeout",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Preserve source_low_count=3.",
+          "Do not force a second review or a hardening-only path.",
+          "Require every disposition and local check."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-002",
+      "name": "Historical Low count remains nonzero",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 3,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "pass",
+        "delta": "accepted-low-only"
+      },
+      "expected": {
+        "logical_route": "eligible-for-goal-assessment",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Historical findings do not become zero.",
+          "Provider review still predates changed bytes."
+        ]
+      },
+      "evidence_class": "native"
+    },
+    {
+      "id": "RR-003",
+      "name": "Cold validation Low-only first result",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 2,
+        "completed_root_count": 1
+      },
+      "expected": {
+        "logical_route": "settle-low-then-validation-closeout",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "A second confirmation is not mandatory merely because budget remains."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-004",
+      "name": "Medium correction owes confirmation",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 1,
+        "pending_low_dispositions": 1,
+        "prior_medium_remediation": true,
+        "confirmation_owed": true,
+        "completed_root_count": 1
+      },
+      "expected": {
+        "logical_route": "perform-already-owed-confirmation-then-settle",
+        "additional_automatic_provider_roots_in_this_scope": 1,
+        "required_assertions": [
+          "The one review is required by prior Medium correction, not by Low.",
+          "Do not waive the confirmation."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-005",
+      "name": "Confirmation returns Low-only",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 2,
+        "prior_medium_remediation": true,
+        "confirmation_owed": false,
+        "completed_root_count": 2
+      },
+      "expected": {
+        "logical_route": "settle-low-without-third-review",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No further automatic provider root."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-006",
+      "name": "Verification failed without findings",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "fail",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 0,
+        "pending_low_dispositions": 0
+      },
+      "expected": {
+        "logical_route": "owned-verification-failure-or-stop",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Success unavailable.",
+          "Do not invent a finding to unlock failure routing."
+        ]
+      },
+      "evidence_class": "native"
+    },
+    {
+      "id": "RR-007",
+      "name": "CI failed without findings",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "fail",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 0,
+        "pending_low_dispositions": 0
+      },
+      "expected": {
+        "logical_route": "owned-ci-failure-or-stop",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Finding absence cannot establish CI success.",
+          "Later corrected-target review requires its own valid reason and budget."
+        ]
+      },
+      "evidence_class": "native-and-evidence-validation"
+    },
+    {
+      "id": "RR-008",
+      "name": "Verification inconclusive",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "inconclusive",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 0
+      },
+      "expected": {
+        "logical_route": "incomplete-required-evidence",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No success."
+        ]
+      },
+      "evidence_class": "native"
+    },
+    {
+      "id": "RR-009",
+      "name": "Incomplete native result",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "incomplete",
+        "ci": "unknown",
+        "confirmation_needed": 0,
+        "blocking_findings": 0
+      },
+      "expected": {
+        "logical_route": "exact-native-recovery-or-stop",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not guess a root identity.",
+          "No speculative replacement root."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-010",
+      "name": "Finding validity unresolved",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 1,
+        "blocking_findings": 0,
+        "source_low_count": 1
+      },
+      "expected": {
+        "logical_route": "confirmation-hold",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Resolve through authorized evidence.",
+          "No downstream success."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-011",
+      "name": "Low local check fails",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "fail"
+      },
+      "expected": {
+        "logical_route": "incomplete-low-settlement",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Zero pending count alone does not admit success.",
+          "A new provider review is not automatically authorized."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-012",
+      "name": "Disposition still pending",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 1,
+        "low_local_checks": "pass"
+      },
+      "expected": {
+        "logical_route": "continue-exact-pending-disposition-or-wait",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not repeat complete dispositions."
+        ]
+      },
+      "evidence_class": "native"
+    },
+    {
+      "id": "RR-013",
+      "name": "Direct audit contains only Low",
+      "workflow_context": "epic-validation",
+      "input": {
+        "audit_result": "pass",
+        "total_confirmed_gaps": 4,
+        "blocking_gaps": 0,
+        "low_gaps": 4,
+        "confirmation_needed": 0,
+        "first_required_review_already_complete": true
+      },
+      "expected": {
+        "logical_route": "settle-low-not-broad-remediation",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not route on total_confirmed_gaps alone."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-014",
+      "name": "Re-audit contains only Low",
+      "workflow_context": "cold-validation",
+      "input": {
+        "audit_result": "pass",
+        "total_confirmed_gaps": 4,
+        "blocking_gaps": 0,
+        "low_gaps": 4,
+        "confirmation_needed": 0,
+        "first_required_review_already_complete": true
+      },
+      "expected": {
+        "logical_route": "settle-low-not-remediate-reaudit-loop",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No broad audit recurrence solely to make total gaps zero."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-015",
+      "name": "Preliminary audit Low does not waive first review",
+      "workflow_context": "epic-validation",
+      "input": {
+        "audit_result": "pass",
+        "blocking_gaps": 0,
+        "low_gaps": 2,
+        "confirmation_needed": 0,
+        "first_required_review_already_complete": false
+      },
+      "expected": {
+        "logical_route": "retain-first-required-review",
+        "additional_automatic_provider_roots_in_this_scope": 1,
+        "required_assertions": [
+          "This is an independent first-review obligation.",
+          "No further review solely for Low after the first adequate result."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-016",
+      "name": "Initial Medium correction has authority",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 1,
+        "completed_root_count": 1,
+        "remediation_authorized": true,
+        "confirmation_owed": true
+      },
+      "expected": {
+        "logical_route": "owned-medium-remediation-and-one-confirmation",
+        "additional_automatic_provider_roots_in_this_scope": 1,
+        "required_assertions": [
+          "Do not use Low deferral."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-017",
+      "name": "Medium remains after cold confirmation",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 1,
+        "completed_root_count": 2,
+        "extra_authorization": false
+      },
+      "expected": {
+        "logical_route": "await-user-direction",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Reach the explicit wait node.",
+          "No correction or next review without authority."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-018",
+      "name": "One extra pass expressly authorized",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 1,
+        "completed_root_count": 2,
+        "extra_authorization": "one-fix-and-confirmation"
+      },
+      "expected": {
+        "logical_route": "one-authorized-remediation-and-confirmation",
+        "additional_automatic_provider_roots_in_this_scope": 1,
+        "required_assertions": [
+          "Bind authorization to the exact source issue set.",
+          "Do not reuse after it is consumed."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-019",
+      "name": "One-pass authority already consumed on resume",
+      "workflow_context": "cold-validation",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 1,
+        "completed_root_count": 3,
+        "extra_authorization": "consumed"
+      },
+      "expected": {
+        "logical_route": "await-fresh-user-direction",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Context restoration does not restore authority."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-020",
+      "name": "Native invocation still pending",
+      "workflow_context": "epic-member",
+      "input": {
+        "native_review": "pending",
+        "pending_invocation": "exact-existing-invocation",
+        "source_low_count": null
+      },
+      "expected": {
+        "logical_route": "resume-exact-native-invocation",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not start a second root.",
+          "Do not infer source finding counts from unfinished output."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-021",
+      "name": "Verified composite preserves original-root count",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "result": "verified-composite",
+        "original_roots": 1,
+        "source_low_count": 2,
+        "pending_low_dispositions": 2
+      },
+      "expected": {
+        "logical_route": "settle-low-preserve-one-original-round",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not count root and composite as two new rounds."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-022",
+      "name": "Accepted Low delta reaches commit",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "pass",
+        "delta": "exact-accepted-low-only",
+        "commit_authorized": true
+      },
+      "expected": {
+        "logical_route": "verify-final-composition-and-commit",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not demand fresh provider coverage.",
+          "Commit only authorized exact bytes."
+        ]
+      },
+      "evidence_class": "handoff-and-observed-agent"
+    },
+    {
+      "id": "RR-023",
+      "name": "Unrelated delta mixed into commit",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "pass",
+        "delta": "low-plus-unrelated-change",
+        "commit_authorized": true
+      },
+      "expected": {
+        "logical_route": "reject-stale-or-broader-handoff",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not accept extra changes as Low.",
+          "Do not independently start review in task-commit."
+        ]
+      },
+      "evidence_class": "handoff-and-observed-agent"
+    },
+    {
+      "id": "RR-024",
+      "name": "Future-risk owner missing",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 1,
+        "pending_low_dispositions": 1,
+        "disposition": "low-deferred-feedback",
+        "canonical_owner": "absent",
+        "owner_creation_authorized": false
+      },
+      "expected": {
+        "logical_route": "wait-for-exact-owner-authority",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not silently create owner.",
+          "Do not keep reviewing while waiting."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-025",
+      "name": "Provider calls acceptance defect Low",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "provider_priority": "Low",
+        "affects_current_acceptance": true,
+        "source_low_count": 1
+      },
+      "expected": {
+        "logical_route": "reclassify-as-blocking-with-evidence",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "The Low exception is unavailable.",
+          "Any later review needs ordinary remediation authority."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-026",
+      "name": "Proper final-closeout substitute",
+      "workflow_context": "epic-closeout",
+      "input": {
+        "verification": "pass",
+        "review_evidence_kind": "validated-closeout",
+        "prior_validation": "exact-successful-terminal",
+        "closeout_checks": "pass",
+        "blocking_findings": 0,
+        "confirmation_needed": 0
+      },
+      "expected": {
+        "logical_route": "closeout-exemption-eligible",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not fabricate provider ID or ordinal."
+        ]
+      },
+      "evidence_class": "native-and-semantic-acceptance"
+    },
+    {
+      "id": "RR-027",
+      "name": "Member abuses closeout exemption",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "review_evidence_kind": "validated-closeout",
+        "blocking_findings": 0,
+        "confirmation_needed": 0
+      },
+      "expected": {
+        "logical_route": "reject-invalid-exemption",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No success without the actual required review."
+        ]
+      },
+      "evidence_class": "native-and-semantic-acceptance"
+    },
+    {
+      "id": "RR-028",
+      "name": "Restore mid-settlement",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 5,
+        "pending_low_dispositions": 2,
+        "settled_ids": [
+          "L1",
+          "L2",
+          "L3"
+        ],
+        "remaining_ids": [
+          "L4",
+          "L5"
+        ],
+        "context_restored": true
+      },
+      "expected": {
+        "logical_route": "continue-same-frozen-set",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Reuse verified dispositions.",
+          "Do not reset review ordinal or create a replacement session."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-029",
+      "name": "Old active snapshot after source update",
+      "workflow_context": "task",
+      "input": {
+        "installed_source_version": 9,
+        "active_snapshot_version": 8,
+        "old_handler_contract_proven": false
+      },
+      "expected": {
+        "logical_route": "pause-on-unsupported-resume",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not reinterpret old items/guards.",
+          "Do not reset/delete/migrate automatically."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-030",
+      "name": "Native-valid custom graph omits required gate",
+      "workflow_context": "epic-member",
+      "input": {
+        "native_valid": true,
+        "same_procedure_id": true,
+        "handler_gate_present": false
+      },
+      "expected": {
+        "logical_route": "incompatible-or-unqualified",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Preserve the customized file.",
+          "Do not certify skill semantics from native validity."
+        ]
+      },
+      "evidence_class": "structural-compatibility"
+    },
+    {
+      "id": "RR-031",
+      "name": "Cosmetic compatible customization",
+      "workflow_context": "task",
+      "input": {
+        "native_valid": true,
+        "same_procedure_id": true,
+        "handler_structural_contract": "pass",
+        "changes": "wording-only"
+      },
+      "expected": {
+        "logical_route": "preserve-customization",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not overwrite without approval."
+        ]
+      },
+      "evidence_class": "structural-compatibility"
+    },
+    {
+      "id": "RR-032",
+      "name": "Stopped validation cannot become achieved",
+      "workflow_context": "cold-validation",
+      "input": {
+        "user_direction": "stop",
+        "blocking_findings": 1
+      },
+      "expected": {
+        "logical_route": "non-achieved-or-open-stopped-state",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No successful roadmap or goal claim."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-033",
+      "name": "Broad self-audit used to chase Low",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 2,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "pass",
+        "proposed_next_action": "new-all-project-self-audit-only-for-Low"
+      },
+      "expected": {
+        "logical_route": "do-not-dispatch-broad-audit",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Changing the tool name does not evade finite settlement."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-034",
+      "name": "Count projection contradicts source set",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 3,
+        "pending_low_dispositions": 0,
+        "settled_identity_count": 2
+      },
+      "expected": {
+        "logical_route": "reject-inconsistent-settlement",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Coordinator must validate exact set accounting.",
+          "Do not overclaim native arithmetic validation."
+        ]
+      },
+      "evidence_class": "semantic-handoff"
+    },
+    {
+      "id": "RR-035",
+      "name": "Hardening handoff already independently eligible",
+      "workflow_context": "epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 1,
+        "pending_low_dispositions": 0,
+        "completed_root_count": 2,
+        "hardening_consumer": "approved",
+        "promoted_evidence": "verified"
+      },
+      "expected": {
+        "logical_route": "retain-narrow-hardening-handoff",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Preserve native source IDs and approved projection.",
+          "Do not call the native review clean."
+        ]
+      },
+      "evidence_class": "native-and-observed-agent"
+    },
+    {
+      "id": "RR-036",
+      "name": "A separate task still needs its first review",
+      "workflow_context": "next-epic-member",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "previous_member_low_settled": true,
+        "current_member_review_complete": false
+      },
+      "expected": {
+        "logical_route": "perform-current-members-required-review",
+        "additional_automatic_provider_roots_in_this_scope": 1,
+        "required_assertions": [
+          "The previous member settlement does not waive a different scope obligation."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-037",
+      "name": "Low local checks reveal a new material bug",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 1,
+        "pending_low_dispositions": 1,
+        "new_current_correctness_bug": true
+      },
+      "expected": {
+        "logical_route": "record-blocker-and-use-owned-remediation-or-wait",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not hide the bug to preserve Low-only status.",
+          "No automatic new review without its independent authority."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-038",
+      "name": "Design flow must not implement",
+      "workflow_context": "design",
+      "input": {
+        "quality_result": "pass",
+        "exact_diff_approved": true,
+        "approved_effect": "documents-only"
+      },
+      "expected": {
+        "logical_route": "apply-approved-documents-only",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "No implementation, staging, commit, or publication by implication."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-039",
+      "name": "Diagnostic incomplete document is not a solved bug",
+      "workflow_context": "war-room",
+      "input": {
+        "selected_artifact": "incomplete-investigation",
+        "exact_diff_approved": true,
+        "document_validation": "pass"
+      },
+      "expected": {
+        "logical_route": "diagnostic-artifact-goal-only",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Do not claim root cause solved or implement a fix."
+        ]
+      },
+      "evidence_class": "observed-agent"
+    },
+    {
+      "id": "RR-040",
+      "name": "Accepted Low delta fails final target identity",
+      "workflow_context": "task",
+      "input": {
+        "verification": "pass",
+        "native_review": "complete",
+        "ci": "pass",
+        "confirmation_needed": 0,
+        "blocking_findings": 0,
+        "source_low_count": 1,
+        "pending_low_dispositions": 0,
+        "low_local_checks": "pass",
+        "final_target_matches_verified_delta": false
+      },
+      "expected": {
+        "logical_route": "reject-stale-final-target",
+        "additional_automatic_provider_roots_in_this_scope": 0,
+        "required_assertions": [
+          "Local check success for other bytes is insufficient."
+        ]
+      },
+      "evidence_class": "handoff"
+    }
+  ]
+}

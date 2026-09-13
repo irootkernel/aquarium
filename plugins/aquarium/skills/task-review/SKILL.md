@@ -18,6 +18,7 @@ Corrections returned to an owning phase change the diff and invalidate affected 
 1. Follow repository-specific Mulgae instructions and the shared contract's prerequisite routing. Keep the task in review when a required prerequisite is missing; setup changes belong to the routed setup skill.
 2. Select one target containing the complete task diff and excluding unrelated work. Stop when safe isolation cannot be established.
 3. Supply `$use-mulgae` with that target, roles, and a bounded objective naming the task, goal revision, review ordinal, and review mode. Delegate native preflight, execution, waiting, and any authorized exact recovery under the shared contract.
+   Before dispatch, establish the independent reason, remaining round, target, and original-root lineage. Resume the same invocation when it is pending. Do not dispatch when the only reason is eligible Low settlement or its accepted delta.
 4. Consume the terminal root or verified composite result. Keep execution completion, CI decision, extraction quality, and local finding dispositions separate. Pending execution and unavailable publication authority cannot support a review decision.
 5. Treat every finding as an advisory hypothesis. Preserve its reported severity, verify it against the roadmap, current code, and tests, assign its effective priority, and select the applicable shared disposition.
 6. Adjudicate every finding but do not change files. In delegated `remediation-eligible` mode, return valid findings through the owning phase with required checks and re-review status. A direct invocation reports findings and the exact `$aquarium:task-handler` continuation without mutation. In `confirmation-only` mode, return Medium-or-higher findings for bounded user authorization and return eligible Low handling to the approved owning envelope without granting another provider review.
@@ -25,7 +26,7 @@ Corrections returned to an owning phase change the diff and invalidate affected 
 
 ## Bound the Evidence
 
-Apply the shared contract's operational-completion and extraction-quality rules. Task approval separately requires passing CI and zero unresolved valid findings. Keep those outcomes explicit in the handoff; provider success or process exit alone cannot approve the task.
+Apply the shared contract's operational-completion and extraction-quality rules. Task approval separately requires passing CI, no unresolved Medium-or-higher or confirmation-needed finding, and a completed verified disposition for every frozen eligible Low finding. It does not require the immutable source Low count to become zero. Keep those outcomes explicit in the handoff; provider success or process exit alone cannot approve the task.
 
 Do not count a cancelled lane, operational failure, incomplete capture, unavailable findings query, or unverified finding as successful review evidence. Do not commit or publish in this phase.
 

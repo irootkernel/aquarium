@@ -16,10 +16,21 @@ Do not edit an installed copy in a target repository as the source change. Updat
 4. Check recovery paths for sessions created by the previously supported Podway release. Never translate unknown interrupted work into an automatic replay.
 5. Verify the serialized asset bytes and relevant Podway compatibility scenarios.
 
+Repository setup reports each installed managed file's `source_state` separately
+from `handler_contract_status` and `handler_contract_reasons`. Native validation
+establishes that Podway accepts a same-ID customization; it does not establish
+that current Aquarium handlers can supply and consume its required nodes,
+evidence items, and routes. An incompatible customization remains untouched and
+keeps setup degraded until its owner approves an exact update.
+
 Podway v0.2.9 limits each `evidence_from` entry to 16 items. When one graph node needs more, split the items across entries for the same source node; `decide-final-review` in `aquarium-validation-v2` uses this split intentionally.
 
 ## Compatibility Evidence
 
 A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.9 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.9-podway> make test-podway-compat` against the exact Aquarium candidate.
 
-Procedure validators prove declaration and graph invariants only. Scenario tests must cover semantic changes such as cancellation races, stale sessions, result propagation, retry behavior, and owner handoffs.
+Procedure validators prove declaration and graph invariants only. Native scenario
+tests cover executable routing and rejection behavior. Agent-observed scenarios
+separately cover semantic choices such as review admission, Low settlement,
+context recovery, approval boundaries, and owner handoffs. Report these evidence
+classes separately and list any unrun observed-agent scenarios.

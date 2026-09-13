@@ -5,7 +5,7 @@ description: "Update durable documentation and review status for one refined roa
 
 # Task Document
 
-Document only the refined task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
+Document only the refined task established by `$aquarium:task-handler`. Consume the selected current implementation identity, refinement result, verification result and observations, and verification decision; do not reconstruct them from stale narrative history. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.
 
 Read [documentation-governance.md](../../references/documentation-governance.md), [epic-execution-sot.md](../../references/epic-execution-sot.md), [evidence-residency.md](../../references/evidence-residency.md), and [release-notes.md](../../references/release-notes.md).
 

@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "8"
+version: "9"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -10,6 +10,9 @@ node_definitions:
     type: action
     title: Record the approved plan
     intent: Bind execution to the approved task plan and authority.
+    instructions:
+      - Use task-handler after task-plan approval; record the exact task, plan, checks, and granted effects.
+      - Do not implement, stage, review, commit, or publish while recording the plan.
     items:
       - id: plan-summary
         type: text
@@ -28,6 +31,9 @@ node_definitions:
     type: action
     title: Prepare implementation entry
     intent: Bind implementation either to the approved plan or to an operationally complete failed review CI decision.
+    instructions:
+      - Reconstruct the approved plan and exact first-entry or rework cause before delegating implementation.
+      - Do not manufacture fresh authority or evidence from an older attempt.
     items:
       - id: implementation-entry-summary
         type: text
@@ -40,6 +46,9 @@ node_definitions:
     type: action
     title: Record implementation
     intent: Record the isolated implementation and focused evidence.
+    instructions:
+      - Use task-implement with the selected plan and implementation-entry basis.
+      - Do not stage, edit lifecycle state, invoke review, commit, or publish; return the exact task-owned delta and focused evidence.
     items:
       - id: implementation-summary
         type: text
@@ -59,6 +68,9 @@ node_definitions:
     type: action
     title: Record verification
     intent: Record current requirement-mapped verification evidence.
+    instructions:
+      - Use task-verify on the current refined target and map every applicable requirement to current evidence.
+      - Do not review or commit; report failed, stale, unavailable, and inconclusive evidence explicitly.
     items:
       - id: verification-result
         type: check_result
@@ -117,6 +129,9 @@ node_definitions:
     type: action
     title: Record refinement
     intent: Record deslop, optimization, staged baseline, and refreshed checks.
+    instructions:
+      - Use task-refine only for authorized cleanup and optimization of the current implementation.
+      - Return the exact refined target and refreshed evidence without review, lifecycle closeout, commit, or publication.
     items:
       - id: refinement-summary
         type: text
@@ -129,6 +144,9 @@ node_definitions:
     type: action
     title: Record documentation
     intent: Record durable documentation and roadmap review-state evidence.
+    instructions:
+      - Use task-document with the selected current implementation and verification evidence.
+      - Document current behavior in its canonical owner; do not copy runtime logs or perform review, commit, or publication.
     items:
       - id: documentation-summary
         type: text
@@ -141,6 +159,9 @@ node_definitions:
     type: action
     title: Record Mulgae review
     intent: Record complete review capture and adjudicated findings.
+    instructions:
+      - Use task-review for one exact authorized full target and preserve original-root lineage, operational evidence, CI, and finding identities.
+      - Review is report-only; do not edit files or start another root solely because eligible Low findings exist.
     items:
       - id: review-round
         type: integer
@@ -331,7 +352,17 @@ node_definitions:
     type: action
     title: Record completed Low dispositions
     intent: Record proportionate Low handling without claiming that the provider reviewed corrected or newly recorded bytes.
+    instructions:
+      - Freeze the exact eligible Low set from the selected review and apply only the supported disposition-owned work.
+      - Run required local checks and preserve honest review coverage; do not request another provider review or broad audit solely for Low.
     items:
+      - id: source-review-basis
+        type: text
+        prompt: Record the original root or direct-audit basis, effective result, reviewed target, goal revision, and finite finding-set identity.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
       - id: low-disposition-summary
         type: text
         prompt: Record each finding ID, effective Low priority, selected disposition, affected paths, required local checks, canonical deferred-feedback or TODO owner when applicable, re-entry condition, and the preceding review that predates changed bytes.
@@ -339,6 +370,121 @@ node_definitions:
         min_length: 1
         max_length: 7000
         multiline: true
+      - id: pending-low-dispositions
+        type: integer
+        prompt: Record the number of frozen eligible Low findings without a completed required disposition.
+        required: true
+        minimum: 0
+      - id: current-blocking-findings
+        type: integer
+        prompt: Record newly established current blockers or effective Medium-or-higher findings after local checks.
+        required: true
+        minimum: 0
+      - id: before-target
+        type: text
+        prompt: Record the exact target reviewed by the source review or audit.
+        required: true
+        min_length: 1
+        max_length: 512
+        multiline: true
+      - id: after-target
+        type: text
+        prompt: Record the exact current target after the permitted disposition delta.
+        required: true
+        min_length: 1
+        max_length: 512
+        multiline: true
+      - id: coverage-relationship
+        type: choice
+        prompt: Record whether the current target is unchanged or contains only the accepted Low-only delta.
+        required: true
+        choices:
+          - same-as-review
+          - review-predates-low-delta
+      - id: low-disposition-verification
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-low-disposition-verification; Podway does not execute or attest the operation.
+        help: The operation verifies complete supported dispositions, exact target composition, and required local checks while preserving original review coverage.
+        required: true
+        operation_id: aquarium-low-disposition-verification
+        operation_digest: sha256:788e0961be2fcf797e891bb55e440d6779b4b9d745818ad186c840acc5df013c
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  low-result-decision:
+    type: decision
+    title: Evaluate Low verification
+    objective: Continue only when the required local Low verification passed.
+    prompt: Did the Low disposition verification pass on the current target?
+    evidence_guidance:
+      - A failed or inconclusive result returns to the local settlement owner and creates no review authority.
+    options:
+      - id: passed
+        label: Low verification passed
+        criteria: The required local verification passed on the recorded final target.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: low-disposition-verification
+            field: outcome
+            equals: pass
+      - id: incomplete
+        label: Low verification incomplete
+        criteria: The required local verification failed or is inconclusive.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: low-disposition-verification
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Explain the result using the exact local verification evidence.
+  low-completion-decision:
+    type: decision
+    title: Verify Low settlement
+    objective: Advance only after the frozen Low set and its exact permitted delta are fully verified.
+    prompt: Is Low settlement complete for the current target?
+    evidence_guidance:
+      - Check the typed local result, pending dispositions, current blockers, exact before and after targets, and review coverage.
+      - Do not start another review to change the historical Low count.
+    options:
+      - id: completed
+        label: Low settlement completed
+        criteria: Required local verification passed and both pending disposition and current blocker counts are zero.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: pending-low-dispositions
+            equals: 0
+          - evidence:
+              node: record-low-disposition
+              item: current-blocking-findings
+            equals: 0
+      - id: incomplete
+        label: Low settlement incomplete
+        criteria: A disposition or required local verification remains incomplete.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: current-blocking-findings
+            equals: 0
+          - evidence:
+              node: record-low-disposition
+              item: pending-low-dispositions
+            at_least: 1
+      - id: blocker-found
+        label: Current blocker found
+        criteria: Local verification established a current blocker that must return to its owning phase within available authority.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: current-blocking-findings
+            at_least: 1
+    reason:
+      required: true
+      prompt: Explain the result using the frozen set, local checks, and current target.
   goal-assessment:
     type: decision
     title: Assess the task goal
@@ -369,6 +515,8 @@ node_definitions:
     type: action
     title: Record the assessed outcome
     intent: Record the outcome and any required follow-up before approval.
+    instructions:
+      - Preserve the actual assessment and remaining commitments; a terminal Procedure path does not imply roadmap success.
     items:
       - id: outcome-summary
         type: text
@@ -398,6 +546,9 @@ node_definitions:
     type: action
     title: Record task closeout
     intent: Record final roadmap, commit, worktree, and publication states.
+    instructions:
+      - Use task-close and, only with separate commit authority, task-commit on the exact accepted final-target composition.
+      - Reject stale or extra changes and do not invoke review, push, publish, install, or reset a session by implication.
     items:
       - id: closeout-summary
         type: text
@@ -431,6 +582,15 @@ graph:
       next: implement
     - id: implement
       use: implementation-record
+      evidence_from:
+        - node: record-plan
+          required: true
+          items:
+            - plan-summary
+        - node: prepare-implementation
+          required: true
+          items:
+            - implementation-entry-summary
       next: refine
     - id: refine
       use: refinement-record
@@ -462,10 +622,27 @@ graph:
           to: document
           effect: advance
         failed:
-          to: refine
+          to: verify
           effect: rework
     - id: document
       use: documentation-record
+      evidence_from:
+        - node: implement
+          required: true
+          items:
+            - implementation-summary
+            - source-revision
+        - node: refine
+          required: true
+          items:
+            - refinement-summary
+        - node: verify
+          required: true
+          items:
+            - verification-result
+            - verification-observations
+        - node: decide-verification
+          required: true
       next: review
     - id: review
       use: review-record
@@ -533,12 +710,51 @@ graph:
         - node: review
           required: true
           items:
+            - review-summary
             - review-run-id
             - reported-severity-summary
             - effective-medium-or-higher-findings
             - effective-low-findings
             - confirmation-needed-findings
-      next: assess-goal
+      next: decide-low-result
+    - id: decide-low-result
+      use: low-result-decision
+      evidence_from:
+        - node: record-low-disposition
+          required: true
+          items:
+            - low-disposition-verification
+      routes:
+        passed:
+          to: decide-low-completion
+          effect: advance
+        incomplete:
+          to: record-low-disposition
+          effect: rework
+    - id: decide-low-completion
+      use: low-completion-decision
+      evidence_from:
+        - node: record-low-disposition
+          required: true
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - pending-low-dispositions
+            - current-blocking-findings
+            - before-target
+            - after-target
+            - coverage-relationship
+            - low-disposition-verification
+      routes:
+        completed:
+          to: assess-goal
+          effect: advance
+        incomplete:
+          to: record-low-disposition
+          effect: rework
+        blocker-found:
+          to: implement
+          effect: rework
     - id: assess-goal
       use: goal-assessment
       evidence_from:
@@ -585,7 +801,14 @@ graph:
         - node: record-low-disposition
           required: false
           items:
+            - source-review-basis
             - low-disposition-summary
+            - pending-low-dispositions
+            - current-blocking-findings
+            - before-target
+            - after-target
+            - coverage-relationship
+            - low-disposition-verification
       routes:
         achieved:
           to: record-outcome

@@ -36,13 +36,152 @@ SUCCESS_OPTIONS = {
     "classify-scope": "task",
     "decide-cause": "established",
     "decide-evidence": "supported",
+    "decide-low-completion": "completed",
+    "decide-low-result": "passed",
+    "decide-operational-evidence": "passed",
+    "decide-review-basis": "native-review",
     "decide-final-review": "validated",
     "decide-gaps": "clean",
     "decide-quality": "passed",
     "decide-review": "approved",
     "decide-verification": "passed",
     "confirm-review-findings": "resolved",
+    "confirm-finding-validity": "resolved",
     "assess-goal": "achieved",
+}
+
+GOAL_OPERATIONAL_VARIANTS = (
+    ("verification-fail-review-pass", "fail", "pass", "verification-incomplete"),
+    (
+        "verification-inconclusive-review-pass",
+        "inconclusive",
+        "pass",
+        "verification-incomplete",
+    ),
+    ("verification-pass-review-fail", "pass", "fail", "review-incomplete"),
+    (
+        "verification-pass-review-inconclusive",
+        "pass",
+        "inconclusive",
+        "review-incomplete",
+    ),
+    ("verification-pass-review-pass", "pass", "pass", "passed"),
+)
+
+VALIDATION_FINAL_REVIEW_SCENARIOS = {
+    "validation-review-fail-gaps-0": ("fail", 0, "review-operation-incomplete"),
+    "validation-review-inconclusive-gaps-0": (
+        "inconclusive",
+        0,
+        "review-operation-incomplete",
+    ),
+    "validation-review-fail-gaps-1": ("fail", 1, "review-operation-incomplete"),
+    "validation-review-inconclusive-gaps-1": (
+        "inconclusive",
+        1,
+        "review-operation-incomplete",
+    ),
+    "validation-review-pass-gaps-1": ("pass", 1, "incomplete"),
+    "validation-review-pass-gaps-0": ("pass", 0, "validated"),
+}
+
+LOW_BLOCKER_SCENARIOS = {
+    "low-blocker-wait": {
+        "source_kind": "review",
+        "source_id": "fixture:review:goal:01",
+        "frozen_low_ids": ["fixture:goal:low:01", "fixture:goal:low:02"],
+        "blocker": {
+            "id": "fixture:blocker:goal:01",
+            "description": (
+                "The goal fixture-owned acceptance invariant remains unsatisfied."
+            ),
+            "affected_scope": "fixture/goal-owned-component",
+        },
+    },
+    "validation-low-blocker-wait": {
+        "source_kind": "audit",
+        "source_id": "audit:A1",
+        "frozen_low_ids": ["audit:A1:L1", "audit:A1:L2"],
+        "blocker": {
+            "id": "fixture:blocker:validation:01",
+            "description": (
+                "The validation fixture-owned acceptance invariant remains unsatisfied."
+            ),
+            "affected_scope": "fixture/validation-owned-component",
+        },
+    },
+}
+
+GOAL_KIND_SCENARIOS = {
+    "goal-kind-member-closeout": ("member-task", "validated-closeout"),
+    "goal-kind-prevalidation-closeout": (
+        "pre-validation-remediation",
+        "validated-closeout",
+    ),
+    "goal-kind-epic-closeout": ("epic-closeout", "validated-closeout"),
+    "goal-kind-member-native": ("member-task", "native-review"),
+}
+
+EXPECTED_NATIVE_CASE_VARIANTS = {
+    "C-01": {"audit-2-provider-0"},
+    "C-02": {"audit-2-provider-1"},
+    "C-03": {
+        "aquarium-goal-v2",
+        "aquarium-task-v2",
+        "aquarium-validation-v2",
+    },
+    "C-04": {
+        "verification-fail-review-pass",
+        "verification-inconclusive-review-pass",
+        "verification-pass-review-pass",
+    },
+    "C-05": {
+        "verification-pass-review-fail",
+        "verification-pass-review-inconclusive",
+        "verification-pass-review-pass",
+    },
+    "C-06": {
+        "aquarium-goal-v2",
+        "aquarium-task-v2",
+        "aquarium-validation-v2",
+    },
+    "C-07": {
+        "aquarium-goal-v2",
+        "aquarium-task-v2",
+        "aquarium-validation-v2",
+    },
+    "C-08": {"goal-low-blocker-wait", "validation-low-blocker-wait"},
+    "C-09": set(GOAL_KIND_SCENARIOS),
+    "C-10": {"goal-medium-wait", "validation-medium-wait"},
+    "C-16": set(VALIDATION_FINAL_REVIEW_SCENARIOS),
+}
+
+CASE_ASSERTIONS = {
+    "C-01": [
+        "validated guard rejected pending audit Low obligations",
+        "domain state unchanged after rejection",
+        "audit-only settlement reached goal assessment",
+    ],
+    "C-02": [
+        "audit and provider namespaces survived consolidation",
+        "all source identities received fixture dispositions",
+        "completed settlement preserved historical source counts",
+    ],
+    "C-03": ["completed Low settlement bypassed review and audit nodes"],
+    "C-04": ["zero-finding verification failures rejected operational success"],
+    "C-05": ["zero-finding review-readiness failures rejected operational success"],
+    "C-06": ["failed Low verification rejected the passing route"],
+    "C-07": ["pending Low dispositions rejected completion"],
+    "C-08": [
+        "exact current settlement source and blocker content was readable at the wait action",
+        "current settlement blocker routed to an unset user choice",
+    ],
+    "C-09": ["goal kind independently constrained the closeout substitute"],
+    "C-10": ["Medium-or-higher evidence routed to an unset user choice"],
+    "C-16": [
+        "validation final-review outcomes and evidence gaps selected distinct routes",
+        "guard rejection preserved domain state",
+    ],
 }
 
 
@@ -52,6 +191,74 @@ class RuntimeQualificationError(RuntimeError):
 
 class ExpectedCleanupProbe(RuntimeError):
     """Deliberately unwind one managed runtime to prove failure cleanup."""
+
+
+def low_blocker_fixture(scenario: str, target: str) -> dict[str, Any]:
+    try:
+        definition = LOW_BLOCKER_SCENARIOS[scenario]
+    except KeyError as error:
+        raise RuntimeQualificationError(
+            f"unsupported Low blocker fixture scenario: {scenario!r}"
+        ) from error
+    source_id = definition["source_id"]
+    frozen_low_ids = list(definition["frozen_low_ids"])
+    return {
+        "source_basis": {
+            "source_kind": definition["source_kind"],
+            "source_id": source_id,
+            "frozen_low_ids": frozen_low_ids,
+            "target": target,
+        },
+        "disposition_summary": {
+            "source_id": source_id,
+            "dispositions": [
+                {"id": identity, "disposition": "fixture-recorded"}
+                for identity in frozen_low_ids
+            ],
+            "new_blocker": {
+                **definition["blocker"],
+                "source_id": source_id,
+            },
+        },
+    }
+
+
+def decoded_fixture_object(value: Any, label: str) -> dict[str, Any]:
+    if not isinstance(value, str):
+        raise RuntimeQualificationError(f"{label} was not text")
+    try:
+        decoded = json.loads(value)
+    except json.JSONDecodeError as error:
+        raise RuntimeQualificationError(
+            f"{label} was not valid fixture JSON"
+        ) from error
+    if not isinstance(decoded, dict):
+        raise RuntimeQualificationError(f"{label} was not a fixture object")
+    return decoded
+
+
+def assert_low_blocker_readback(
+    expected: dict[str, Any],
+    source_basis: Any,
+    disposition_summary: Any,
+    blockers: Any,
+    after_target: Any,
+) -> None:
+    if (
+        decoded_fixture_object(source_basis, "Low blocker source basis")
+        != expected["source_basis"]
+        or decoded_fixture_object(
+            disposition_summary, "Low blocker disposition summary"
+        )
+        != expected["disposition_summary"]
+        or type(blockers) is not int
+        or blockers != 1
+        or not isinstance(after_target, str)
+        or after_target != expected["source_basis"]["target"]
+    ):
+        raise RuntimeQualificationError(
+            "Low blocker wait did not preserve its exact settlement evidence"
+        )
 
 
 def sha256_file(path: Path) -> str:
@@ -224,6 +431,7 @@ class ManagedRuntime:
         self.old_page_token: str | None = None
         self.task_verification_reworked = False
         self.task_review_reworked = False
+        self.task_medium_reworked = False
         self.task_review_guard_failure = False
         self.task_evidence_reworked = False
         self.task_guard_failure = False
@@ -231,6 +439,16 @@ class ManagedRuntime:
         self.task_list_limit = False
         self.task_stale_token = False
         self.task_snapshot_immutable = False
+        self.low_settlement_procedures: set[str] = set()
+        self.low_settlement_rounds: dict[str, int] = {}
+        self.node_visits: dict[str, int] = {}
+        self.goal_evidence_round = 0
+        self.correction_case_variants: dict[str, set[str]] = {}
+        self.validation_source_basis_verified = False
+        self.low_blocker_readback_verified = False
+        self.fixture_target = ""
+        self.current_procedure_id = ""
+        self.scenario = "standard"
 
     def __enter__(self) -> Self:
         try:
@@ -327,6 +545,11 @@ class ManagedRuntime:
         bounded_process(
             ["git", "commit", "--allow-empty", "-q", "-m", "qualification fixture"],
             cwd=self.sandbox,
+        )
+        self.fixture_target = (
+            bounded_process(["git", "rev-parse", "HEAD"], cwd=self.sandbox)
+            .stdout.decode("utf-8")
+            .strip()
         )
         daemon_log = root / "logs" / "qualification-harness.log"
         self.log = daemon_log.open("xb")
@@ -646,6 +869,102 @@ class ManagedRuntime:
                 return value
         raise RuntimeQualificationError("observation omitted workspace UUID fences")
 
+    def mark_case_variant(self, case_id: str, variant: str) -> None:
+        if case_id not in EXPECTED_NATIVE_CASE_VARIANTS:
+            raise RuntimeQualificationError(f"unknown correction case: {case_id}")
+        self.correction_case_variants.setdefault(case_id, set()).add(variant)
+
+    def domain_state(self, observation: dict[str, Any]) -> dict[str, Any]:
+        status = observation["status"]
+        current = status["current"]
+        return {
+            "workspace_uuid": self.workspace_uuid(observation),
+            "session_id": status["session"]["id"],
+            "session_lifecycle": status["session"]["lifecycle"],
+            "session_revision": status["session"]["revision"],
+            "graph_node_id": current["node"]["graph_node_id"],
+            "attempt_id": current["attempt"]["attempt_id"],
+            "goal_revision": status.get("goal_revision"),
+        }
+
+    def reject_guarded_decision(
+        self, observation: dict[str, Any], option: str
+    ) -> dict[str, Any]:
+        before = self.domain_state(observation)
+        rejected = self.decide(observation, option, expected_exit=None)
+        if (
+            rejected.returncode == 0
+            or error_code(rejected) != "OPTION_GUARD_UNSATISFIED"
+        ):
+            raise RuntimeQualificationError(
+                f"guarded option was not rejected: option={option!r}; "
+                f"exit={rejected.returncode}"
+            )
+        after = self.observe()
+        after_state = self.domain_state(after)
+        if after_state != before:
+            raise RuntimeQualificationError(
+                "guard rejection changed domain state: "
+                f"before={before!r}; after={after_state!r}"
+            )
+        return after
+
+    def read_complete_evidence(
+        self, observation: dict[str, Any], source: str, item: str
+    ) -> Any:
+        expected_digest = None
+        for readback in observation.get("guidance", {}).get("readback", []):
+            if readback.get("source_graph_node_id") != source:
+                continue
+            for selected in readback.get("items", []):
+                if selected.get("item_id") == item:
+                    expected_digest = selected.get("value_digest")
+        if not isinstance(expected_digest, str):
+            raise RuntimeQualificationError(
+                f"evidence was not selected by the current consumer: {source}:{item}"
+            )
+        status = observation["status"]
+        result = output_result(
+            self.raw(
+                [
+                    "--json",
+                    "evidence",
+                    "read",
+                    "--source",
+                    source,
+                    "--item",
+                    item,
+                    "--if-workspace-uuid",
+                    self.workspace_uuid(observation),
+                    "--if-session-id",
+                    status["session"]["id"],
+                ]
+            ),
+            "evidence.read",
+            "podway.evidence-read-result/v1",
+        )
+        if (
+            result.get("truncated") is not False
+            or result.get("next_page_token") is not None
+            or result.get("value_digest") != expected_digest
+        ):
+            raise RuntimeQualificationError(
+                f"evidence read was incomplete or changed: {source}:{item}"
+            )
+        return result["page"]["data"]
+
+    @staticmethod
+    def decision_destination(
+        completed: subprocess.CompletedProcess[bytes], expected: str
+    ) -> None:
+        result = output_result(completed, "session.decide", "podway.decision-result/v1")
+        if result.get("target_graph_node_id") != expected:
+            raise RuntimeQualificationError(
+                "decision reached the wrong destination: "
+                f"expected={expected!r}; "
+                f"actual={result.get('target_graph_node_id')!r}"
+            )
+
     def exercise_workspace_removal(self) -> dict[str, Any]:
         assert self.sandbox is not None
         podway_directory = self.sandbox / ".podway"
@@ -924,22 +1243,266 @@ class ManagedRuntime:
         item_type = item["type"]
         item_id = item["item_id"]
         constraints = item.get("constraints", {})
+        provider_low_ids = (
+            ["provider:R1:L1"]
+            if self.scenario == "standard"
+            and self.current_procedure_id == "aquarium-validation-v2"
+            and self.run_index == 2
+            else []
+        )
+        audit_low_ids = (
+            ["audit:A1:L1", "audit:A1:L2"]
+            if self.current_procedure_id == "aquarium-validation-v2"
+            and self.scenario in {"standard", "validation-low-blocker-wait"}
+            else []
+        )
+        applicable_low_ids = [*audit_low_ids, *provider_low_ids]
+        blocker_fixture = (
+            low_blocker_fixture(self.scenario, self.fixture_target)
+            if self.scenario in LOW_BLOCKER_SCENARIOS
+            else None
+        )
         if item_type == "text":
             maximum = constraints.get("max_length", 256)
             if item_id == "implementation-summary":
                 value = (
                     f"runtime-{self.run_index}-{self.command_sequence}-" + "x" * 5000
                 )[:maximum]
+            elif item_id == "applicable-obligation-summary":
+                value = json.dumps(
+                    {
+                        "audit_count": len(audit_low_ids),
+                        "audit_low_ids": audit_low_ids,
+                        "provider_count": len(provider_low_ids),
+                        "provider_low_ids": provider_low_ids,
+                        "pending_low_ids": applicable_low_ids,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif node == "final-review" and item_id == "valid-finding-ids":
+                value = json.dumps(
+                    {"provider_low_ids": provider_low_ids},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif node == "final-review" and item_id == "finding-disposition-summary":
+                value = json.dumps(
+                    {
+                        "audit_low_ids": audit_low_ids,
+                        "provider_low_ids": provider_low_ids,
+                        "state": "pending-local-disposition",
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif (
+                blocker_fixture is not None
+                and node == "record-low-disposition"
+                and item_id == "source-review-basis"
+            ):
+                value = json.dumps(
+                    blocker_fixture["source_basis"],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif (
+                blocker_fixture is not None
+                and node == "record-low-disposition"
+                and item_id == "low-disposition-summary"
+            ):
+                value = json.dumps(
+                    blocker_fixture["disposition_summary"],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif (
+                self.current_procedure_id == "aquarium-validation-v2"
+                and node == "record-low-disposition"
+                and item_id == "source-review-basis"
+            ):
+                value = json.dumps(
+                    {
+                        "audit_low_ids": audit_low_ids,
+                        "provider_low_ids": provider_low_ids,
+                        "target": self.fixture_target,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif (
+                self.current_procedure_id == "aquarium-validation-v2"
+                and node == "record-low-disposition"
+                and item_id == "low-disposition-summary"
+            ):
+                value = json.dumps(
+                    {
+                        "dispositions": [
+                            {"id": identity, "result": "fixture-corrected-and-verified"}
+                            for identity in applicable_low_ids
+                        ]
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            elif item_id in {"audit-basis-target", "before-target", "after-target"}:
+                value = self.fixture_target
             else:
                 value = f"qualification {node} {item_id}"
             return {"type": "text", "value": value}
         if item_type == "integer":
-            return {"type": "integer", "value": constraints.get("minimum", 0)}
+            low_counts = {
+                ("audit", "confirmed-gap-count"),
+                ("audit", "eligible-low-gap-count"),
+                ("record-evidence", "effective-low-findings"),
+                ("record-evidence", "unresolved-valid-findings"),
+            }
+            value = (
+                2 if (node, item_id) in low_counts else constraints.get("minimum", 0)
+            )
+            if (
+                self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+                and node == "final-review"
+                and item_id == "required-evidence-gaps"
+            ):
+                value = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][1]
+            if (
+                self.scenario == "goal-operational-matrix"
+                and node == "record-evidence"
+                and item_id
+                in {
+                    "unresolved-valid-findings",
+                    "effective-medium-or-higher-findings",
+                    "effective-low-findings",
+                    "confirmation-needed-findings",
+                }
+            ):
+                value = 0
+            if (
+                self.scenario in GOAL_KIND_SCENARIOS
+                and node == "record-evidence"
+                and item_id
+                in {
+                    "unresolved-valid-findings",
+                    "effective-medium-or-higher-findings",
+                    "effective-low-findings",
+                    "confirmation-needed-findings",
+                }
+            ):
+                value = 0
+            if self.scenario == "medium-wait" and node == "record-evidence":
+                if item_id in {
+                    "effective-medium-or-higher-findings",
+                    "unresolved-valid-findings",
+                }:
+                    value = 1
+                elif item_id == "effective-low-findings":
+                    value = 0
+            if self.scenario == "validation-medium-wait":
+                if node == "audit" and item_id in {
+                    "confirmed-gap-count",
+                    "blocking-gap-count",
+                    "eligible-low-gap-count",
+                    "confirmation-needed-gap-count",
+                }:
+                    value = 0
+                if node == "final-review":
+                    if item_id in {
+                        "unresolved-valid-findings",
+                        "medium-or-higher-findings",
+                        "medium-findings",
+                        "current-applicable-blockers",
+                    }:
+                        value = 1
+                    elif item_id in {
+                        "blocker-findings",
+                        "critical-findings",
+                        "high-findings",
+                        "low-findings",
+                        "confirmation-needed-findings",
+                        "pending-applicable-low-dispositions",
+                        "required-evidence-gaps",
+                    }:
+                        value = 0
+            if (
+                self.scenario in {"standard", "validation-low-blocker-wait"}
+                and node == "final-review"
+                and item_id
+                in {
+                    "low-findings",
+                    "unresolved-valid-findings",
+                }
+            ):
+                value = len(provider_low_ids)
+            if (
+                self.scenario in {"standard", "validation-low-blocker-wait"}
+                and node == "final-review"
+                and item_id == "pending-applicable-low-dispositions"
+            ):
+                value = len(applicable_low_ids)
+            if (
+                node == "record-audit-low-basis"
+                and item_id == "audit-low-finding-count"
+            ):
+                value = 2
+            if node == "record-low-disposition":
+                round_index = self.low_settlement_rounds.get(
+                    self.current_procedure_id, 0
+                )
+                if self.scenario in {
+                    "low-blocker-wait",
+                    "validation-low-blocker-wait",
+                }:
+                    if item_id == "pending-low-dispositions":
+                        value = 0
+                    elif item_id == "current-blocking-findings":
+                        value = 1
+                elif item_id == "pending-low-dispositions":
+                    value = 0 if round_index >= 2 else 1
+                elif item_id == "current-blocking-findings":
+                    value = 0
+            if node == "review" and self.task_review_reworked:
+                if self.task_medium_reworked and item_id in {
+                    "effective-low-findings",
+                    "unresolved-valid-findings",
+                }:
+                    value = 2
+                elif not self.task_medium_reworked and item_id in {
+                    "effective-medium-or-higher-findings",
+                    "unresolved-valid-findings",
+                    "unresolved-implementation-findings",
+                }:
+                    value = 1
+            return {"type": "integer", "value": value}
         if item_type == "choice":
             choices = constraints.get("choices", [])
+            goal_kind = None
+            review_evidence_kind = None
+            if self.scenario in GOAL_KIND_SCENARIOS:
+                goal_kind, review_evidence_kind = GOAL_KIND_SCENARIOS[self.scenario]
+                if (
+                    self.goal_evidence_round > 0
+                    and review_evidence_kind == "validated-closeout"
+                ):
+                    review_evidence_kind = "native-review"
             preferred = {
                 "hardening-deferral-state": "not-applicable",
-                "review-mode": "remediation-eligible",
+                "goal-kind": goal_kind or "member-task",
+                "review-evidence-kind": review_evidence_kind or "native-review",
+                "review-mode": (
+                    "confirmation-only"
+                    if self.scenario == "validation-medium-wait"
+                    else (
+                        "hardening-deferral-eligible"
+                        if self.scenario == "medium-wait"
+                        else "remediation-eligible"
+                    )
+                ),
+                "extra-review-authorization": (
+                    "pending" if self.scenario == "medium-wait" else "not-required"
+                ),
+                "audit-basis-status": "applicable",
+                "coverage-relationship": "review-predates-low-delta",
                 "ci-decision": (
                     "fail"
                     if node == "review" and not self.task_review_reworked
@@ -952,13 +1515,45 @@ class ManagedRuntime:
         if item_type == "confirm":
             return {"type": "confirm", "value": True}
         if item_type == "list":
+            if item_id == "audit-low-finding-identities":
+                return {"type": "list", "value": ["audit:A1:L1", "audit:A1:L2"]}
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
-            outcome = (
-                "fail"
-                if node == "verify" and not self.task_verification_reworked
-                else "pass"
-            )
+            if (
+                self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+                and node == "final-review"
+                and item_id == "final-review-result"
+            ):
+                outcome = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][0]
+            elif (
+                self.scenario == "goal-operational-matrix" and node == "record-evidence"
+            ):
+                variant = GOAL_OPERATIONAL_VARIANTS[self.goal_evidence_round]
+                outcome = (
+                    variant[1] if item_id == "goal-verification-result" else variant[2]
+                )
+            elif (node == "verify" and not self.task_verification_reworked) or (
+                self.scenario == "standard"
+                and node == "record-evidence"
+                and item_id == "goal-verification-result"
+                and self.goal_evidence_round == 0
+            ):
+                outcome = "fail"
+            elif (
+                self.scenario == "standard"
+                and node == "record-evidence"
+                and item_id == "goal-review-readiness-result"
+                and self.goal_evidence_round == 1
+            ):
+                outcome = "inconclusive"
+            elif (
+                self.scenario == "standard"
+                and node == "record-low-disposition"
+                and self.low_settlement_rounds.get(self.current_procedure_id, 0) == 0
+            ):
+                outcome = "fail"
+            else:
+                outcome = "pass"
             return {
                 "type": "check_result",
                 "operation_id": constraints["operation_id"],
@@ -977,6 +1572,28 @@ class ManagedRuntime:
 
     def fill_action(self, observation: dict[str, Any], procedure_id: str) -> None:
         node = observation["guidance"]["node"]["graph_node_id"]
+        if (
+            self.scenario in {"low-blocker-wait", "validation-low-blocker-wait"}
+            and node == "await-user-direction"
+        ):
+            self.low_blocker_readback_verified = False
+            expected = low_blocker_fixture(self.scenario, self.fixture_target)
+            source_basis = self.read_complete_evidence(
+                observation, "record-low-disposition", "source-review-basis"
+            )
+            disposition = self.read_complete_evidence(
+                observation, "record-low-disposition", "low-disposition-summary"
+            )
+            blockers = self.read_complete_evidence(
+                observation, "record-low-disposition", "current-blocking-findings"
+            )
+            after_target = self.read_complete_evidence(
+                observation, "record-low-disposition", "after-target"
+            )
+            assert_low_blocker_readback(
+                expected, source_basis, disposition, blockers, after_target
+            )
+            self.low_blocker_readback_verified = True
         required = [
             item
             for item in observation["active_items"]
@@ -1039,6 +1656,33 @@ class ManagedRuntime:
                 if item["type"] != "artifact"
             }
             if not records:
+                if (
+                    self.scenario == "standard"
+                    and procedure_id == "aquarium-validation-v2"
+                    and node == "final-review"
+                ):
+                    audit_count = self.read_complete_evidence(
+                        current,
+                        "record-audit-low-basis",
+                        "audit-low-finding-count",
+                    )
+                    audit_ids = self.read_complete_evidence(
+                        current,
+                        "record-audit-low-basis",
+                        "audit-low-finding-identities",
+                    )
+                    audit_target = self.read_complete_evidence(
+                        current, "record-audit-low-basis", "audit-basis-target"
+                    )
+                    if (
+                        audit_count != 2
+                        or audit_ids != ["audit:A1:L1", "audit:A1:L2"]
+                        or audit_target != self.fixture_target
+                    ):
+                        raise RuntimeQualificationError(
+                            "validation Low audit basis was not preserved exactly"
+                        )
+                    self.validation_source_basis_verified = True
                 return
             self.record(current, records)
             current = self.observe()
@@ -1258,7 +1902,9 @@ class ManagedRuntime:
             )
         self.task_stale_token = True
 
-    def drive_procedure(self, name: str) -> None:
+    def drive_procedure(
+        self, name: str, *, scenario: str = "standard"
+    ) -> dict[str, Any] | None:
         assert self.sandbox is not None
         relative = f".podway/procedures/{name}"
         preview = output_result(
@@ -1267,6 +1913,9 @@ class ManagedRuntime:
             "podway.procedure-preview-result/v1",
         )
         procedure_id = preview["procedure_id"]
+        self.current_procedure_id = procedure_id
+        self.scenario = scenario
+        self.node_visits = {}
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
         expected = [
@@ -1318,6 +1967,44 @@ class ManagedRuntime:
                 break
             node = observation["guidance"]["node"]["graph_node_id"]
             node_type = observation["guidance"]["node"]["node_type"]
+            self.node_visits[node] = self.node_visits.get(node, 0) + 1
+            if scenario != "standard" and node == "choose-user-direction":
+                if (
+                    node_type != "decision"
+                    or status["session"]["lifecycle"] != "running"
+                ):
+                    raise RuntimeQualificationError(
+                        "user-direction scenario did not stop at an active choice: "
+                        f"node_type={node_type!r}; "
+                        f"lifecycle={status['session']['lifecycle']!r}"
+                    )
+                if scenario == "low-blocker-wait":
+                    if not self.low_blocker_readback_verified:
+                        raise RuntimeQualificationError(
+                            "goal Low blocker wait skipped evidence readback"
+                        )
+                    self.mark_case_variant("C-08", "goal-low-blocker-wait")
+                elif scenario == "validation-low-blocker-wait":
+                    if not self.low_blocker_readback_verified:
+                        raise RuntimeQualificationError(
+                            "validation Low blocker wait skipped evidence readback"
+                        )
+                    self.mark_case_variant("C-08", "validation-low-blocker-wait")
+                elif scenario == "medium-wait":
+                    self.mark_case_variant("C-10", "goal-medium-wait")
+                elif scenario == "validation-medium-wait":
+                    self.mark_case_variant("C-10", "validation-medium-wait")
+                else:
+                    raise RuntimeQualificationError(
+                        f"unexpected user-direction scenario: {scenario}"
+                    )
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "decision_unset": True,
+                }
             if node_type == "action":
                 self.fill_action(observation, procedure_id)
                 ready = self.observe()
@@ -1332,6 +2019,12 @@ class ManagedRuntime:
                     raise RuntimeQualificationError(
                         "action transition result is invalid"
                     )
+                if procedure_id == "aquarium-goal-v2" and node == "record-evidence":
+                    self.goal_evidence_round += 1
+                if node == "record-low-disposition":
+                    self.low_settlement_rounds[procedure_id] = (
+                        self.low_settlement_rounds.get(procedure_id, 0) + 1
+                    )
                 continue
             if node_type != "decision":
                 raise RuntimeQualificationError(
@@ -1343,18 +2036,7 @@ class ManagedRuntime:
                 and node == "decide-verification"
                 and not self.task_verification_reworked
             ):
-                rejected = self.decide(observation, "passed", expected_exit=None)
-                rejected_code = (
-                    error_code(rejected) if rejected.returncode != 0 else None
-                )
-                if (
-                    rejected.returncode == 0
-                    or rejected_code != "OPTION_GUARD_UNSATISFIED"
-                ):
-                    raise RuntimeQualificationError(
-                        "verification guard did not reject the passing route: "
-                        f"exit={rejected.returncode}; code={rejected_code!r}"
-                    )
+                observation = self.reject_guarded_decision(observation, "passed")
                 self.task_guard_failure = True
                 self.decide(observation, "failed")
                 self.task_verification_reworked = True
@@ -1374,31 +2056,317 @@ class ManagedRuntime:
                 and node == "decide-review"
                 and not self.task_review_reworked
             ):
-                rejected = self.decide(observation, "approved", expected_exit=None)
-                rejected_code = (
-                    error_code(rejected) if rejected.returncode != 0 else None
-                )
-                if (
-                    rejected.returncode == 0
-                    or rejected_code != "OPTION_GUARD_UNSATISFIED"
-                ):
-                    raise RuntimeQualificationError(
-                        "review CI guard did not reject approval: "
-                        f"exit={rejected.returncode}; code={rejected_code!r}"
-                    )
+                observation = self.reject_guarded_decision(observation, "approved")
                 self.task_review_guard_failure = True
                 self.decide(observation, "ci-failed")
                 self.task_review_reworked = True
                 continue
 
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "decide-review"
+                and not self.task_medium_reworked
+            ):
+                self.decide(observation, "implementation-changes")
+                self.task_medium_reworked = True
+                continue
+
+            if (
+                procedure_id == "aquarium-goal-v2"
+                and node == "decide-review-basis"
+                and scenario
+                in {"goal-kind-member-closeout", "goal-kind-prevalidation-closeout"}
+                and self.goal_evidence_round == 1
+            ):
+                observation = self.reject_guarded_decision(
+                    observation, "final-closeout"
+                )
+                invalid = self.decide(observation, "invalid-substitute")
+                self.decision_destination(invalid, "record-evidence")
+                continue
+
+            if (
+                scenario == "standard"
+                and procedure_id == "aquarium-goal-v2"
+                and node == "decide-operational-evidence"
+            ):
+                if self.goal_evidence_round == 1:
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    self.decide(observation, "verification-incomplete")
+                    continue
+                if self.goal_evidence_round == 2:
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    self.decide(observation, "review-incomplete")
+                    continue
+
+            if (
+                scenario == "goal-operational-matrix"
+                and procedure_id == "aquarium-goal-v2"
+                and node == "decide-operational-evidence"
+            ):
+                variant, _verification, _review, expected_option = (
+                    GOAL_OPERATIONAL_VARIANTS[self.goal_evidence_round - 1]
+                )
+                if expected_option != "passed":
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    failure = self.decide(observation, expected_option)
+                    expected_destination = (
+                        "complete-work"
+                        if expected_option == "verification-incomplete"
+                        else "record-evidence"
+                    )
+                    self.decision_destination(failure, expected_destination)
+                    case_id = (
+                        "C-04"
+                        if expected_option == "verification-incomplete"
+                        else "C-05"
+                    )
+                    self.mark_case_variant(case_id, variant)
+                    continue
+
+            if (
+                scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+                and procedure_id == "aquarium-validation-v2"
+                and node == "decide-final-review"
+            ):
+                expected_outcome, expected_gaps, expected_option = (
+                    VALIDATION_FINAL_REVIEW_SCENARIOS[scenario]
+                )
+                actual_outcome = self.read_complete_evidence(
+                    observation, "final-review", "final-review-result"
+                ).get("outcome")
+                actual_gaps = self.read_complete_evidence(
+                    observation, "final-review", "required-evidence-gaps"
+                )
+                if (actual_outcome, actual_gaps) != (
+                    expected_outcome,
+                    expected_gaps,
+                ):
+                    raise RuntimeQualificationError(
+                        "validation final-review matrix evidence changed: "
+                        f"scenario={scenario!r}; outcome={actual_outcome!r}; "
+                        f"gaps={actual_gaps!r}"
+                    )
+                if expected_option != "validated":
+                    observation = self.reject_guarded_decision(observation, "validated")
+                if expected_outcome != "pass":
+                    observation = self.reject_guarded_decision(
+                        observation, "incomplete"
+                    )
+                decision = self.decide(observation, expected_option)
+                self.decision_destination(
+                    decision,
+                    "assess-goal"
+                    if expected_option == "validated"
+                    else "record-review-operation-incomplete"
+                    if expected_option == "review-operation-incomplete"
+                    else "record-incomplete",
+                )
+                self.mark_case_variant("C-16", scenario)
+                continue
+
+            if (
+                scenario == "standard"
+                and node == "decide-low-result"
+                and self.low_settlement_rounds.get(procedure_id) == 1
+            ):
+                observation = self.reject_guarded_decision(observation, "passed")
+                self.decide(observation, "incomplete")
+                self.mark_case_variant("C-06", procedure_id)
+                continue
+
+            if (
+                scenario == "standard"
+                and node == "decide-low-completion"
+                and self.low_settlement_rounds.get(procedure_id) == 2
+            ):
+                observation = self.reject_guarded_decision(observation, "completed")
+                self.decide(observation, "incomplete")
+                self.mark_case_variant("C-07", procedure_id)
+                continue
+
             if node == "assess-goal":
+                if (
+                    scenario == "standard"
+                    and procedure_id == "aquarium-validation-v2"
+                    and procedure_id in self.low_settlement_procedures
+                ):
+                    if not self.validation_source_basis_verified:
+                        raise RuntimeQualificationError(
+                            "validation settlement lost its source audit basis"
+                        )
+                    obligations = json.loads(
+                        self.read_complete_evidence(
+                            observation,
+                            "final-review",
+                            "applicable-obligation-summary",
+                        )
+                    )
+                    provider_count = self.read_complete_evidence(
+                        observation, "final-review", "low-findings"
+                    )
+                    settlement = json.loads(
+                        self.read_complete_evidence(
+                            observation,
+                            "record-low-disposition",
+                            "low-disposition-summary",
+                        )
+                    )
+                    pending = self.read_complete_evidence(
+                        observation,
+                        "record-low-disposition",
+                        "pending-low-dispositions",
+                    )
+                    blockers = self.read_complete_evidence(
+                        observation,
+                        "record-low-disposition",
+                        "current-blocking-findings",
+                    )
+                    before_target = self.read_complete_evidence(
+                        observation, "record-low-disposition", "before-target"
+                    )
+                    after_target = self.read_complete_evidence(
+                        observation, "record-low-disposition", "after-target"
+                    )
+                    expected_ids = ["audit:A1:L1", "audit:A1:L2"]
+                    if self.run_index == 2:
+                        expected_ids.append("provider:R1:L1")
+                    disposition_ids = [
+                        item["id"] for item in settlement["dispositions"]
+                    ]
+                    if (
+                        obligations.get("audit_count") != 2
+                        or obligations.get("provider_count") != provider_count
+                        or obligations.get("pending_low_ids") != expected_ids
+                        or disposition_ids != expected_ids
+                        or pending != 0
+                        or blockers != 0
+                        or before_target != self.fixture_target
+                        or after_target != self.fixture_target
+                        or self.node_visits.get("audit") != 1
+                        or self.node_visits.get("re-audit", 0) != 0
+                        or self.node_visits.get("final-review") != 1
+                    ):
+                        raise RuntimeQualificationError(
+                            "completed validation settlement changed its source obligations: "
+                            f"obligations={obligations!r}; dispositions={disposition_ids!r}; "
+                            f"pending={pending!r}; blockers={blockers!r}; "
+                            f"targets={(before_target, after_target)!r}; "
+                            f"fixture_target={self.fixture_target!r}; "
+                            f"node_visits={self.node_visits!r}"
+                        )
+                    case_id = "C-02" if self.run_index == 2 else "C-01"
+                    variant = (
+                        "audit-2-provider-1"
+                        if self.run_index == 2
+                        else "audit-2-provider-0"
+                    )
+                    self.mark_case_variant(case_id, variant)
+                if scenario == "goal-operational-matrix":
+                    self.mark_case_variant("C-04", "verification-pass-review-pass")
+                    self.mark_case_variant("C-05", "verification-pass-review-pass")
+                if scenario in GOAL_KIND_SCENARIOS:
+                    self.mark_case_variant("C-09", scenario)
                 observation = self.assess_goal(observation)
-            option = SUCCESS_OPTIONS.get(node)
+            special_option = None
+            if (
+                scenario == "standard"
+                and procedure_id == "aquarium-validation-v2"
+                and node == "decide-final-review"
+            ):
+                final_result = self.read_complete_evidence(
+                    observation, "final-review", "final-review-result"
+                )
+                pending = self.read_complete_evidence(
+                    observation,
+                    "final-review",
+                    "pending-applicable-low-dispositions",
+                )
+                blockers = self.read_complete_evidence(
+                    observation, "final-review", "current-applicable-blockers"
+                )
+                gaps = self.read_complete_evidence(
+                    observation, "final-review", "required-evidence-gaps"
+                )
+                obligations = json.loads(
+                    self.read_complete_evidence(
+                        observation,
+                        "final-review",
+                        "applicable-obligation-summary",
+                    )
+                )
+                expected_pending = 3 if self.run_index == 2 else 2
+                if (
+                    final_result.get("outcome") != "pass"
+                    or pending != expected_pending
+                    or blockers != 0
+                    or gaps != 0
+                    or obligations.get("audit_low_ids")
+                    != ["audit:A1:L1", "audit:A1:L2"]
+                    or obligations.get("provider_low_ids")
+                    != (["provider:R1:L1"] if self.run_index == 2 else [])
+                ):
+                    raise RuntimeQualificationError(
+                        "validation final-review fixture did not establish the intended basis"
+                    )
+                observation = self.reject_guarded_decision(observation, "validated")
+            if (
+                scenario
+                in {
+                    "low-blocker-wait",
+                    "validation-low-blocker-wait",
+                }
+                and node == "decide-low-completion"
+            ):
+                observation = self.reject_guarded_decision(observation, "completed")
+                special_option = "blocker-found"
+            elif (scenario == "medium-wait" and node == "decide-evidence") or (
+                scenario == "validation-medium-wait" and node == "decide-final-review"
+            ):
+                special_option = "user-direction"
+            elif scenario == "validation-medium-wait" and node == "decide-gaps":
+                special_option = "clean"
+            elif (
+                scenario == "goal-operational-matrix" or scenario in GOAL_KIND_SCENARIOS
+            ) and node == "decide-evidence":
+                special_option = "supported"
+            elif (
+                scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
+            ):
+                special_option = "final-closeout"
+            option = (
+                special_option
+                or {
+                    "decide-evidence": "low-disposition"
+                    if procedure_id == "aquarium-goal-v2"
+                    else None,
+                    "decide-final-review": "low-disposition"
+                    if procedure_id == "aquarium-validation-v2"
+                    else None,
+                    "decide-gaps": "low-only"
+                    if procedure_id == "aquarium-validation-v2"
+                    else None,
+                    "decide-review": "low-disposition"
+                    if procedure_id == "aquarium-task-v2"
+                    else None,
+                }.get(node)
+                or SUCCESS_OPTIONS.get(node)
+            )
             if option is None:
                 raise RuntimeQualificationError(
                     f"no successful qualification option for {procedure_id}:{node}"
                 )
             decision = self.decide(observation, option)
+            if (
+                scenario == "standard"
+                and procedure_id == "aquarium-validation-v2"
+                and node == "decide-final-review"
+            ):
+                self.decision_destination(decision, "record-low-disposition")
+            if node == "decide-low-completion" and option == "completed":
+                self.decision_destination(decision, "assess-goal")
+                self.low_settlement_procedures.add(procedure_id)
+                self.mark_case_variant("C-03", procedure_id)
             payload = json_payload(decision)
             result = payload.get("result")
             if (
@@ -1436,6 +2404,13 @@ class ManagedRuntime:
         )
 
 
+def merge_case_variants(
+    destination: dict[str, set[str]], source: dict[str, set[str]]
+) -> None:
+    for case_id, variants in source.items():
+        destination.setdefault(case_id, set()).update(variants)
+
+
 def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, Any]:
     """Run two fresh isolated official-artifact runtime passes."""
     procedures = repository / "plugins/aquarium/assets/podway/procedures"
@@ -1452,6 +2427,48 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         )
     with ManagedRuntime(binary, daemon, procedures, REPEAT_COUNT + 1) as runtime:
         workspace_removal = runtime.exercise_workspace_removal()
+    wait_scenarios: list[dict[str, Any]] = []
+    case_variants: dict[str, set[str]] = {}
+    wait_specs = (
+        ("aquarium-goal-v2.yaml", "low-blocker-wait"),
+        ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
+        ("aquarium-goal-v2.yaml", "medium-wait"),
+        ("aquarium-validation-v2.yaml", "validation-medium-wait"),
+    )
+    for offset, (procedure_name, scenario) in enumerate(wait_specs, start=2):
+        with ManagedRuntime(
+            binary, daemon, procedures, REPEAT_COUNT + offset
+        ) as runtime:
+            result = runtime.drive_procedure(procedure_name, scenario=scenario)
+            if result is None:
+                raise RuntimeQualificationError(
+                    f"{scenario} did not produce a bounded wait result"
+                )
+            wait_scenarios.append(result)
+            merge_case_variants(case_variants, runtime.correction_case_variants)
+    scenario_runs: list[dict[str, Any]] = []
+    bounded_scenarios = (
+        ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
+        *((scenario, "aquarium-goal-v2.yaml") for scenario in GOAL_KIND_SCENARIOS),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+        ),
+    )
+    for offset, (scenario, procedure_name) in enumerate(
+        bounded_scenarios, start=REPEAT_COUNT + len(wait_specs) + 2
+    ):
+        with ManagedRuntime(binary, daemon, procedures, offset) as runtime:
+            runtime.drive_procedure(procedure_name, scenario=scenario)
+            merge_case_variants(case_variants, runtime.correction_case_variants)
+            scenario_runs.append(
+                {
+                    "scenario": scenario,
+                    "procedure_id": procedure_name.removesuffix(".yaml"),
+                    "cleanup": "pending-context-exit",
+                }
+            )
+        scenario_runs[-1]["cleanup"] = "passed"
     receipts: list[dict[str, Any]] = []
     for run_index in range(1, REPEAT_COUNT + 1):
         started = time.monotonic()
@@ -1465,10 +2482,17 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                 "guarded_decision": runtime.task_guard_failure,
                 "verification_rework": runtime.task_verification_reworked,
                 "review_rework": runtime.task_review_reworked,
+                "medium_confirmation": runtime.task_medium_reworked,
                 "review_guard_failure": runtime.task_review_guard_failure,
                 "manual_rework": runtime.task_evidence_reworked,
                 "stale_page_token": runtime.task_stale_token,
                 "immutable_snapshot": runtime.task_snapshot_immutable,
+                "task_low_settlement": "aquarium-task-v2"
+                in runtime.low_settlement_procedures,
+                "goal_low_settlement": "aquarium-goal-v2"
+                in runtime.low_settlement_procedures,
+                "validation_low_settlement": "aquarium-validation-v2"
+                in runtime.low_settlement_procedures,
             }
             if not all(seam_results.values()):
                 missing = sorted(
@@ -1477,6 +2501,7 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                 raise RuntimeQualificationError(
                     f"runtime seams were not exercised: {missing}"
                 )
+            merge_case_variants(case_variants, runtime.correction_case_variants)
             elapsed = time.monotonic() - started
             if elapsed > RUN_TIMEOUT_SECONDS:
                 raise RuntimeQualificationError(
@@ -1487,11 +2512,27 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                     "run": run_index,
                     "procedure_count": 5,
                     "seams": sorted(seam_results),
+                    "correction_matrix_cases": sorted(runtime.correction_case_variants),
                     "elapsed_seconds": round(elapsed, 3),
                     "cleanup": "pending-context-exit",
                 }
             )
         receipts[-1]["cleanup"] = "passed"
+    if case_variants != EXPECTED_NATIVE_CASE_VARIANTS:
+        raise RuntimeQualificationError(
+            "correction matrix scenarios were incomplete: "
+            f"expected={EXPECTED_NATIVE_CASE_VARIANTS!r}; observed={case_variants!r}"
+        )
+    correction_matrix_results = [
+        {
+            "case_id": case_id,
+            "scope": "native-procedure",
+            "variants": sorted(case_variants[case_id]),
+            "assertions": CASE_ASSERTIONS[case_id],
+            "status": "passed",
+        }
+        for case_id in sorted(case_variants)
+    ]
     return {
         "runtime_mode": RUNTIME_MODE,
         "daemon_status_schema": "podway.daemon-status-result/v3",
@@ -1499,5 +2540,9 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         "runtime_procedure_count": 5,
         "failure_cleanup": "passed",
         "workspace_removal": workspace_removal,
+        "wait_scenarios": wait_scenarios,
+        "scenario_runs": scenario_runs,
+        "correction_matrix_cases": sorted(case_variants),
+        "correction_matrix_results": correction_matrix_results,
         "runtime_runs": receipts,
     }

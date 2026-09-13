@@ -32,6 +32,15 @@ advance a workflow from a start or cancellation acknowledgement, or infer live
 state from completed run inventory. Return terminal run identity and evidence
 only when the native result supplies them.
 
+Before delegating a new root, the Aquarium caller must establish an independent
+reason and remaining authority for that exact target, mode, ordinal, and goal
+revision. Eligible Low settlement and its permitted locally verified delta are
+explicit negative authorization for another root. Do not replace a pending or
+uncertain invocation, reset an ordinal after context restoration, or run a broad
+self-audit under another name to make historical Low findings disappear. A
+required first review and a confirmation owed by an earlier Medium-or-higher
+correction remain independent reasons to dispatch.
+
 ## Accept Recovery Evidence
 
 The approved review envelope may cover missing required roles on the original
@@ -71,6 +80,13 @@ does not waive coverage, publication, CI, or adjudication requirements. After co
 or other target changes, recovery of an old capture cannot establish current
 review evidence. The next provider review is the next authorized full-target
 root round. `followup` and `delta` cannot substitute for it.
+
+When every effective Medium-or-higher finding and confirmation gap is resolved,
+the selected review is operationally complete with passing CI, and its finite Low
+set has verified dispositions, the owning workflow may advance even though the
+source Low count is nonzero. Preserve the original target and report that the
+review predates any permitted Low-only correction bytes. Do not describe those
+bytes as provider-reviewed.
 
 Verify ordinary findings with the paired skill's supported evidence reads.
 Composite findings support status, findings, report, and export, but not CLI

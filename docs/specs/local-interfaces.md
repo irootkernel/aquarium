@@ -6,11 +6,11 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `8` | `task-handler` | Plan, implementation, refinement, typed verification, Medium-or-higher re-review, Low disposition, goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `9` | `epic-handler` | One member task, pre-validation remediation, or epic closeout goal with Low-only hardening deferral and a validation-bound closeout review exception |
-| `aquarium-validation-v2` | `9` | `epic-handler` and `epic-validator` | Baseline, guarded audit, Medium-or-higher remediation and re-review, local Low disposition, assessment, and closeout |
-| `aquarium-design-v2` | `2` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout |
-| `aquarium-war-room-v2` | `2` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout |
+| `aquarium-task-v2` | `9` | `task-handler` | Selected plan input, implementation, refinement, typed verification, required review, finite Low settlement, goal assessment, approval, and closeout |
+| `aquarium-goal-v2` | `11` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with typed verification and review readiness, general Low settlement, explicit user direction, and a validation-bound closeout substitute |
+| `aquarium-validation-v2` | `11` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced audit and provider obligation composition, required Medium-or-higher confirmation, independently required final review, finite Low settlement, explicit user direction, assessment, and closeout |
+| `aquarium-design-v2` | `3` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout with action guidance |
+| `aquarium-war-room-v2` | `3` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout with action guidance |
 
 Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`](../../plugins/aquarium/assets/podway/procedures/). The version belongs to the Procedure document, not the Aquarium plugin version, and an active session retains the immutable snapshot with which it started.
 
@@ -19,7 +19,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
 | `dev-setup-global/scripts/inspect_global_tools.py` | Optional existing working directory, repeatable component scope and Codex homes, command timeout, release verification, and Sorage initialization diagnosis | `aquarium-dev-setup-global-inspection.v3` | Selected user-global CLI, paired-skill, service, global MCP, writing-skill, Lore, and Ouroboros inspection without requiring or reading repository configuration |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional repository-component flags | `aquarium-dev-setup-inspection.v19` | Normalized Git and repository configuration inspection with presence-only trust for canonical global skills, optional Sorage Project registration, and same-ID Podway-valid customization |
+| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional repository-component flags | `aquarium-dev-setup-inspection.v21` | Normalized Git and repository configuration inspection with presence-only trust for canonical global skills, optional Sorage Project registration, and separate Podway source-provenance and handler-contract compatibility results |
 | `dev-setup-global/scripts/verify_dolgorae_release.py` | Optional supported Dolgorae version and network timeout | `aquarium-dolgorae-release-verification.v1` | Bounded official GitHub Release identity verification for stable v0.1.2 through v0.1.x |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
@@ -28,7 +28,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `release-handler/scripts/inspect_release_notes.py` | Repository, expected version, and release baseline | `aquarium-release-notes-inspection/v1` | Inventories cumulative release-note enrollment and candidate delta |
 | `release-qa/scripts/manage_release_qa.py` | Versioned full-pass, preparation, admission, or finish JSON | `aquarium-release-qa-confirmation-record/v2`, `aquarium-release-qa-confirmation-manifest/v2`, `aquarium-release-qa-confirmation-claim/v2`, `aquarium-release-qa-confirmation-settlement-admission/v1`, or `aquarium-release-qa-confirmation-result/v2` | Creates immutable QA matrices, binds exact remediation and finding-to-scenario coverage, admits one digest-bound settlement per claim, and persists one immutable terminal result |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v4` JSON on standard input | `aquarium-release-publication-state/v4` | Normalizes local, remote, tag, stable hosted Release, and exact or approved QA-neutral candidate binding supplied by the caller |
-| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v5` | Executes the exact v0.2.9 CLI and sibling daemon in isolated `release-qa` mode against all managed Procedures, declaration-limit failures, two lifecycle passes, and fenced workspace-removal rejection, success, and successful already-absent replay |
+| `tests/verify_podway_compatibility.py` | `PODWAY_BIN` selected by the Make target | `aquarium-podway-compatibility.v6` | Executes the exact v0.2.9 CLI and sibling daemon in isolated `release-qa` mode against all managed Procedures, records the exact native subvariants and assertions passed for correction cases C-01 through C-10 and C-16, exercises declaration-limit failures and two lifecycle passes, and proves fenced workspace-removal rejection, success, and successful already-absent replay |
 
 Every inspector also has a versioned error schema where applicable. Consumers use normalized fields and reason codes rather than parsing human stderr or exposing raw configuration and credential material.
 
@@ -52,7 +52,17 @@ The native package resolver runs once through the uv-tool interpreter beside the
 
 The global inspector's repeatable `--component` option selects only the named components and returns only those `tools` entries in catalog order; omitting it selects all supported global components. A Dolgorae release lookup or Sorage initialization diagnosis is invalid unless its component is selected. The `--repository` option validates only an existing compatibility directory; every selected global CLI, Codex, Podway, Sorage, Go, Dolgorae, and Ouroboros probe runs from a neutral filesystem root so repository-local configuration cannot affect its result. `--timeout-seconds` bounds ordinary commands. Podway `daemon wait-ready` instead uses the catalog's fixed 120-second native wait and at least five seconds of caller headroom. The Podway `daemon` member exposes normalized installation, loading, reachability, running, version, target, mode, readiness, elapsed-time, recovery, and CLI-version-match fields plus its probe. It becomes `configured` only for a ready production daemon on the supported target with a matching CLI version and completed recovery inventory. `--include-sorage-initialization` opts into `sorage doctor`, whose native open-and-migrate path may update the local database or journal, so `dev-setup-global` discloses that side effect before adding the flag.
 
-The repository inspector's v19 payload exposes exactly twelve `trusted_global_skills` entries: `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, `lore-commits`, `lore-query`, `deslop`, `humanizer`, and `humanize-korean`. Each entry contains only `canonical_path`, `present`, and `verification_scope: "presence_only"`. The same presence-only object replaces `tools.<name>.agent_skill` for Sanho, Mulgae, Gaori, Sorage, and optional Podway. Its `tools` object excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros because those components belong to the global inspector.
+The repository inspector's v21 payload exposes exactly twelve `trusted_global_skills` entries: `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, `lore-commits`, `lore-query`, `deslop`, `humanizer`, and `humanize-korean`. Each entry contains only `canonical_path`, `present`, and `verification_scope: "presence_only"`. The same presence-only object replaces `tools.<name>.agent_skill` for Sanho, Mulgae, Gaori, Sorage, and optional Podway. Its `tools` object excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros because those components belong to the global inspector.
+
+Each `tools.podway.managed_procedures` entry reports immutable file provenance
+through `source_state` and `update_explanation`, while
+`handler_contract_status` (`compatible`, `unqualified`, `incompatible`, or
+`not_checked`) and stable `handler_contract_reasons` describe whether the
+installed graph exposes the structural nodes, items, and routes consumed by
+current Aquarium handlers. A Podway-valid same-ID customization remains
+`valid_customization`; an unrecognized semantic graph or incompatible handler
+contract independently keeps readiness degraded and is never overwritten by
+inspection.
 
 When a repository component depends on a missing or degraded user-global MCP registration, the inspector reports the recommendation `continue_with_dev_setup_global`. Repository workflows use the same continuation for unavailable or unready user-global services and do not repair either class locally.
 

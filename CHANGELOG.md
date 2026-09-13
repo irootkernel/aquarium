@@ -6,6 +6,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Align all managed Podway Procedures and their owning skills around finite Low-finding settlement: preserve historical review facts, require current local verification, and proceed to assessment without another provider review solely to reduce a past Low count.
+- Separate Podway native Procedure validity from Aquarium handler compatibility during repository setup while preserving same-ID customizations and immutable active-session snapshots.
 - Replace the deprecated Aquarium for Kimi edition link with Aquarium for Grok.
 - Require Sorage v0.1.1 or later in the v0.1 line; run `$aquarium:dev-setup-global` to update an installed v0.1.0 CLI and its same-tag `use-sorage` skill.
 - Route explicitly requested broker operations through the paired skill, including Review Note reads before sender revision and bounded event timeline reads when needed.

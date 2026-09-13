@@ -26,7 +26,7 @@ OUTPUT_SCHEMA = "podway.output/v3"
 DIAGNOSTICS_SCHEMA = "podway.procedure-diagnostics-result/v1"
 SOURCE_SCHEMA = "podway.procedure-source-result/v1"
 PREVIEW_SCHEMA = "podway.procedure-preview-result/v1"
-RESULT_SCHEMA = "aquarium-podway-compatibility.v5"
+RESULT_SCHEMA = "aquarium-podway-compatibility.v6"
 COMMAND_TIMEOUT_SECONDS = 30
 PROCEDURE_NAMES = (
     "aquarium-design-v2.yaml",

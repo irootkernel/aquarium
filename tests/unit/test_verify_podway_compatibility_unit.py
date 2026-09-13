@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import os
@@ -13,6 +14,10 @@ SPEC = importlib.util.spec_from_file_location("verify_podway_compatibility", SCR
 assert SPEC is not None and SPEC.loader is not None
 verify_podway_compatibility = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(verify_podway_compatibility)
+
+
+def reversed_json(value: dict[str, object]) -> str:
+    return json.dumps(dict(reversed(list(value.items()))), separators=(",", ":"))
 
 
 def git(repository: Path, *arguments: str) -> None:
@@ -106,7 +111,114 @@ def removal_replay_process(**changes: object) -> subprocess.CompletedProcess[byt
     )
 
 
-def test_workspace_removal_replay_requires_success_with_v5_receipt() -> None:
+def decision_process(target: str) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.CompletedProcess(
+        ["podway"],
+        0,
+        stdout=json.dumps(
+            {
+                "schema": "podway.output/v3",
+                "command": "session.decide",
+                "result": {
+                    "schema": "podway.decision-result/v1",
+                    "target_graph_node_id": target,
+                },
+            }
+        ).encode(),
+        stderr=b"",
+    )
+
+
+def test_decision_destination_uses_decision_result_target() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    runtime.ManagedRuntime.decision_destination(
+        decision_process("complete-work"), "complete-work"
+    )
+    with pytest.raises(runtime.RuntimeQualificationError, match="wrong destination"):
+        runtime.ManagedRuntime.decision_destination(
+            decision_process("record-evidence"), "complete-work"
+        )
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    ["low-blocker-wait", "validation-low-blocker-wait"],
+)
+@pytest.mark.parametrize(
+    "variant",
+    [
+        "exact",
+        "wrong-source",
+        "missing-blocker",
+        "wrong-blocker",
+        "wrong-description",
+        "wrong-scope",
+        "wrong-target",
+        "wrong-count",
+    ],
+)
+def test_low_blocker_readback_requires_exact_scenario_content(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    scenario: str,
+    variant: str,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
+    )
+    managed.scenario = scenario
+    managed.fixture_target = "a" * 40
+    expected = runtime.low_blocker_fixture(scenario, managed.fixture_target)
+    source_basis = copy.deepcopy(expected["source_basis"])
+    disposition = copy.deepcopy(expected["disposition_summary"])
+    blockers = 1
+    after_target = managed.fixture_target
+
+    if variant == "wrong-source":
+        source_basis["source_id"] = "fixture:unrelated-source:01"
+    elif variant == "missing-blocker":
+        disposition.pop("new_blocker")
+    elif variant == "wrong-blocker":
+        disposition["new_blocker"]["id"] = "fixture:blocker:unrelated:01"
+    elif variant == "wrong-description":
+        disposition["new_blocker"]["description"] = "An unrelated condition."
+    elif variant == "wrong-scope":
+        disposition["new_blocker"]["affected_scope"] = "fixture/unrelated"
+    elif variant == "wrong-target":
+        after_target = "b" * 40
+    elif variant == "wrong-count":
+        blockers = 2
+
+    readback = {
+        "source-review-basis": reversed_json(source_basis),
+        "low-disposition-summary": reversed_json(disposition),
+        "current-blocking-findings": blockers,
+        "after-target": after_target,
+    }
+    monkeypatch.setattr(
+        managed,
+        "read_complete_evidence",
+        lambda _observation, _source, item: readback[item],
+    )
+    observation = {
+        "guidance": {"node": {"graph_node_id": "await-user-direction"}},
+        "active_items": [],
+    }
+
+    if variant == "exact":
+        managed.fill_action(observation, "unused")
+        assert managed.low_blocker_readback_verified is True
+    else:
+        with pytest.raises(
+            runtime.RuntimeQualificationError,
+            match="exact settlement evidence|source basis",
+        ):
+            managed.fill_action(observation, "unused")
+        assert managed.low_blocker_readback_verified is False
+
+
+def test_workspace_removal_replay_requires_success_with_v6_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(
         removal_replay_process(), "/tmp/repository", None
@@ -114,7 +226,7 @@ def test_workspace_removal_replay_requires_success_with_v5_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v5"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v6"
     )
     assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.9"
 
