@@ -304,8 +304,8 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.7",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.19",
-        mulgae_output_schema: str = "mulgae-command-result.v6",
+        mulgae_version: str = "v0.1.21",
+        mulgae_output_schema: str = "mulgae-command-result.v8",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
         mulgae_doctor_case: str = "ready",
         mulgae_mcp_mode: str | None = None,
@@ -440,8 +440,8 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                         "observed_version": version,
                         "eligibility": eligibility,
                         "compatibility": compatibility,
-                        "minimum_version": "0.16.3",
-                        "verified_latest": "0.16.3",
+                        "minimum_version": "0.16.5",
+                        "verified_latest": "0.16.5",
                         "reason_code": reason,
                     }}
                     not_applicable_cli = compatible("not_applicable", "not_evaluated", "not_observed", "")
@@ -493,7 +493,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
 
                     provider_issue = doctor_case if config_ready and not invalid_identity else ""
                     binary = diagnostic("verified")
-                    cli = compatible("verified", "eligible", "verified", "provider_cli_version_supported", "0.16.3")
+                    cli = compatible("verified", "eligible", "verified", "provider_cli_version_supported", "0.16.5")
                     provider_state = "eligible"
                     provider_reason = "provider_cli_version_supported"
                     if provider_issue in {{"binary_missing", "binary_nonexecutable"}}:
@@ -3434,7 +3434,7 @@ else:
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.19")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.21")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -4773,7 +4773,7 @@ else:
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.19")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.21")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -4845,12 +4845,13 @@ else:
             ("v0.1.16", False, "degraded"),
             ("v0.1.17", False, "degraded"),
             ("v0.1.18", False, "degraded"),
-            ("v0.1.19", True, "installed"),
-            ("0.1.19", True, "installed"),
-            ("v0.1.20", True, "installed"),
-            ("v0.1.019", False, "degraded"),
-            ("v0.1.0019", False, "degraded"),
-            ("v0.1.19-rc.1", False, "degraded"),
+            ("v0.1.19", False, "degraded"),
+            ("v0.1.20", False, "degraded"),
+            ("v0.1.21", True, "installed"),
+            ("0.1.21", True, "installed"),
+            ("v0.1.021", False, "degraded"),
+            ("v0.1.0021", False, "degraded"),
+            ("v0.1.21-rc.1", False, "degraded"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", False, "degraded"),
         )
@@ -5012,6 +5013,7 @@ else:
         for schema in (
             "mulgae-command-result.v4",
             "mulgae-command-result.v5",
+            "mulgae-command-result.v6",
             "mulgae-command-result.v7",
         ):
             with self.subTest(schema=schema):
@@ -5346,10 +5348,15 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v6",
+                    "schema_version": "mulgae-command-result.v8",
                     "result": {
                         "kind": secret,
                         "readiness": secret,
+                        "diagnostic_summary": {
+                            "component": secret,
+                            "phase": secret,
+                            "provider_session_fingerprint": secret,
+                        },
                         "doctor": {
                             "schema_version": "mulgae-doctor-result.v2",
                             "config": {"status": secret, "uri": secret},
@@ -6080,7 +6087,7 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v6",
+                    "schema_version": "mulgae-command-result.v8",
                     "result": {
                         "kind": "diagnosed",
                         "doctor": {"schema_version": "mulgae-doctor-result.v2"},

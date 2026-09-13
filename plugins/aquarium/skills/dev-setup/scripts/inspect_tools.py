@@ -41,7 +41,7 @@ SCHEMA_VERSION = "aquarium-dev-setup-inspection.v21"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v6"
+MULGAE_COMMAND_RESULT_SCHEMA = "mulgae-command-result.v8"
 MULGAE_DOCTOR_RESULT_SCHEMA = "mulgae-doctor-result.v2"
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
@@ -837,7 +837,7 @@ def supported_mulgae_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 19)
+    return bool(match and int(match.group(1)) >= 21)
 
 
 def supported_sorage_version(version: str | None) -> bool:

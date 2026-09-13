@@ -46,7 +46,7 @@ A confirmation-only Medium-or-higher finding stops for a new bounded correction-
 
 ## Review Targets
 
-The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns v6 response consumption, asynchronous waiting, and exact recovery accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next full-target review; recovery of an older capture cannot prove corrected bytes.
+The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns v8 response consumption, asynchronous waiting, failed-run and composite recovery, and exact round accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next full-target review; recovery of an older capture cannot prove corrected bytes.
 
 The shared review contract accepts staged changes, `HEAD`, one commit, a two-dot or three-dot range, one roadmap task or epic resolved to Git, or an explicitly scoped special investigation. Dirty working-tree content is never silently added to a committed target.
 
