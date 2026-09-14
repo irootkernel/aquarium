@@ -1,6 +1,6 @@
 # Dolgorae Review Consumer Contract
 
-This contract binds Aquarium review workflows to official stable Dolgorae releases from v0.1.2 through v0.1.x on Apple Silicon. Dolgorae owns the checked wire schemas, capture implementation, Reviewer lifecycle, credential carriers, terminal evidence, settlement, retention, and cleanup. Aquarium owns candidate admission, global release validation, source-scope selection, backend routing, and result adjudication. Production review never consumes an Aquarium development-channel generation.
+This dormant contract records the Dolgorae consumer boundary for possible future Independent Review re-enablement. `$aquarium:independent-review` is currently disabled and must stop before Dolgorae discovery, setup, capture, or source transmission. Explicit Dolgorae setup and operations remain available through their owning workflows. When this route is re-enabled, it binds Aquarium review workflows to official stable Dolgorae releases from v0.1.2 through v0.1.x on Apple Silicon.
 
 ## Candidate identity
 

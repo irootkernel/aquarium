@@ -1,6 +1,6 @@
 # Static Review Contract
 
-Use this contract for one static, read-only review through `$aquarium:independent-review` or `$aquarium:orca-review`. Read [finding-disposition.md](finding-disposition.md) as the shared adjudication and remediation policy. The two workflows share target meaning, consent, reviewer restrictions, adjudication, and technical verdict rules, but each backend owns its own target acquisition and lifecycle.
+Use this contract for one static, read-only review through `$aquarium:orca-review`. Read [finding-disposition.md](finding-disposition.md) as the shared adjudication and remediation policy. The Dolgorae-backed `$aquarium:independent-review` route is temporarily disabled and stops before setup or source transmission; its historical target meanings remain documented here for compatibility and possible future re-enablement.
 
 ## Exact target
 
@@ -17,7 +17,7 @@ Every review has one source scope and one review focus. The source scope is exac
 
 `task`, `epic`, and special request are authority and focus selectors applied to one source scope. They are never additional scopes. Resolve mutable revisions before transmission. `workspace`, `staged`, `dirty`, and `head` reject a revision; `commit` requires one commit; `range` requires one explicit two-dot or three-dot expression.
 
-Independent Review uses Dolgorae's checked immutable capture as target authority. Its complete candidate, capture, manifest, path-safety, lifecycle, settlement, and recovery rules are defined by [dolgorae-review-contract.md](dolgorae-review-contract.md).
+When re-enabled, Independent Review uses Dolgorae's checked immutable capture as target authority. Its dormant candidate, capture, manifest, path-safety, lifecycle, settlement, and recovery rules are defined by [dolgorae-review-contract.md](dolgorae-review-contract.md).
 
 Orca Review reads the selected target directly in Orca's current registered worktree. For `staged`, the reviewer inspects `git diff --cached`, the staged files, and their callers. For `head`, `commit`, and `range`, the reviewer obtains file content and diffs from the resolved revisions through read-only Git commands and never substitutes current index or worktree bytes. Orca Review does not replace the selected target with a copied checkout, capture manifest, snapshot, fingerprint, or digest binding. External tool output remains a review aid under the permission below. `workspace` and `dirty` remain unsupported.
 
@@ -39,7 +39,7 @@ Mulgae remains operationally independent. Conformance is limited to common user-
 
 ## Settlement and recovery
 
-Independent Review delegates settlement and recovery to the same-release `$use-dolgorae` skill and Dolgorae's checked contract. Orca Review follows its live Orca guides and [orca-supervision.md](orca-supervision.md), including authoritative observation on deadline exhaustion. A process exit or silence is never terminal evidence. Active or unknown state is reported without retry or cleanup; follow the owning backend's recovery contract before a later authorized review.
+The disabled Independent Review route performs no settlement or recovery. Orca Review follows its live Orca guides and [orca-supervision.md](orca-supervision.md), including authoritative observation on deadline exhaustion. A process exit or silence is never terminal evidence. Active or unknown state is reported without retry or cleanup; follow the owning backend's recovery contract before a later authorized review.
 
 ## Result contract
 

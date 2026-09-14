@@ -6,6 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Temporarily disable Dolgorae-based Independent Review before setup or source transmission, guide users to explicitly selected native Codex or Orca alternatives, and make Dolgorae optional for common production readiness.
 - Raise the minimum Mulgae version to v0.1.21 and consume command-result v8. Adopt retained failed-review recovery, stage-specific provider rate-limit handling, and ZCode-only automatic initialization.
 - Align all managed Podway Procedures and their owning skills around finite Low-finding settlement: preserve historical review facts, require current local verification, and proceed to assessment without another provider review solely to reduce a past Low count.
 - Separate Podway native Procedure validity from Aquarium handler compatibility during repository setup while preserving same-ID customizations and immutable active-session snapshots.
