@@ -80,6 +80,10 @@ skill_directories.each do |directory|
          "default prompt is missing: #{ui_path}")
   assert([true, false].include?(ui.fetch("policy").fetch("allow_implicit_invocation")),
          "implicit invocation policy must be boolean: #{ui_path}")
+  if directory.basename.to_s == "mulgae-review"
+    assert(ui.fetch("policy").fetch("allow_implicit_invocation") == false,
+           "standalone Mulgae review must require explicit invocation: #{ui_path}")
+  end
 end
 
 # Parse package data without inspecting Python source or duplicating workflow prose.

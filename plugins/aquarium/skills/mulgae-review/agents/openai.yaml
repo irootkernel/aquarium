@@ -1,0 +1,6 @@
+interface:
+  display_name: "Mulgae Review"
+  short_description: "Review exact change or completion targets with Mulgae"
+  default_prompt: "Use $aquarium:mulgae-review for one report-only standalone Mulgae review of an exact change or Task or Epic completion target."
+policy:
+  allow_implicit_invocation: false

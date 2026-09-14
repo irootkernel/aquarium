@@ -2,8 +2,9 @@
 
 Use Mulgae v0.1.21 or a supported later stable v0.1.x release. The same-release
 `$use-mulgae` skill owns native execution, retention, cancellation, and recovery.
-This contract owns how Aquarium consumes those results within an approved task
-or epic review. Read [finding-disposition.md](finding-disposition.md) and
+This contract owns how Aquarium consumes those results in an approved Task or
+Epic review and in the explicitly requested standalone report-only entrypoint.
+Read [finding-disposition.md](finding-disposition.md) and
 [evidence-residency.md](evidence-residency.md) before adjudication or handoff.
 Read [review-intent-contract.md](review-intent-contract.md) before dispatch to
 select `change` or `completion`, construct the Review Brief, assign criterion
@@ -14,9 +15,11 @@ responsibility, and preserve the separate aggregate assessment.
 Use `$use-mulgae` for asynchronous execution and every native lifecycle decision,
 including transport selection, waiting, cancellation, retention, and recovery.
 Aquarium supplies the canonical repository, exact complete target, Review Brief
-through the native objective input, roles, goal revision, review ordinal, mode,
-and approved source-transmission scope. Bind preflight and execution to those
-same inputs. Current command
+through the native objective input, roles, and approved source-transmission
+scope. An owning workflow also supplies its goal revision, review ordinal, and
+mode. A standalone invocation includes those values only when the request
+provides them as context and never manufactures them. Bind preflight and
+execution to those same inputs. Current command
 responses use `mulgae-command-result.v8`; setup consumes Doctor v2 and review
 preflight uses v3. Historical v5, v6, and v7 readability does not admit those
 versions as current command responses.
@@ -37,8 +40,9 @@ state from completed run inventory. Return terminal run identity and evidence
 only when the native result supplies them.
 
 Before delegating a new root, the Aquarium caller must establish an independent
-reason and remaining authority for that exact target, mode, ordinal, and goal
-revision. Eligible Low settlement and its permitted locally verified delta are
+reason and remaining authority for that exact target. When an owning workflow
+supplies a mode, ordinal, and goal revision, bind the root to them. Eligible Low
+settlement and its permitted locally verified delta are
 explicit negative authorization for another root. Do not replace a pending or
 uncertain invocation, reset an ordinal after context restoration, or run a broad
 self-audit under another name to make historical Low findings disappear. A
