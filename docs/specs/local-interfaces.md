@@ -7,8 +7,8 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
 | `aquarium-task-v2` | `9` | `task-handler` | Selected plan input, implementation, refinement, typed verification, required review, finite Low settlement, goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `11` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with typed verification and review readiness, general Low settlement, explicit user direction, and a validation-bound closeout substitute |
-| `aquarium-validation-v2` | `11` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced audit and provider obligation composition, required Medium-or-higher confirmation, independently required final review, finite Low settlement, explicit user direction, assessment, and closeout |
+| `aquarium-goal-v2` | `12` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with typed verification and review readiness, general Low settlement, explicit user direction, and a validation-bound closeout substitute |
+| `aquarium-validation-v2` | `12` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced audit and provider obligation composition, required Medium-or-higher confirmation, independently required final review, finite Low settlement, explicit user direction, assessment, and closeout |
 | `aquarium-design-v2` | `3` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout with action guidance |
 | `aquarium-war-room-v2` | `3` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout with action guidance |
 

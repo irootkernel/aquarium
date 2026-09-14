@@ -41,7 +41,8 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
 | EPIC-013 | Record and report production setup status | Planned |
-| EPIC-014 | Align Procedure contracts and bound Low-finding convergence | In Review |
+| EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
+| EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Planned |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -299,7 +300,7 @@ its input manifest.
 
 ## EPIC-014: Align Procedure contracts and bound Low-finding convergence
 
-**Status:** `In Review`
+**Status:** `Completed`
 
 Align the five managed Podway Procedures with their owning skills, shared review
 rules, closeout, and commit handoffs. A completed review or audit may retain its
@@ -312,14 +313,12 @@ Medium-or-higher correction, exact native recovery, immutable admitted sessions,
 and separate approval boundaries for installation, commits, and publication. It
 does not change the Podway engine or built-in presets.
 
-Implementation corrections and refreshed native qualification are prepared.
-`TASK-060` remains in review for Master's separately observed agent-behavior
-acceptance, and `TASK-061` remains blocked until that acceptance is complete. Canonical
-and repository-local Procedure sources are synchronized for later starts; this does
-not replace or reinterpret an admitted session and establishes no runtime
-activation, commit, or publication.
+Master accepted the separately observed agent behavior on 2026-09-14. Canonical
+and repository-local Procedure sources are synchronized for later starts; this
+does not replace or reinterpret an admitted session and establishes no runtime
+activation, installation, or publication.
 
-**Detailed SOT:** [`TODO-PROCEDURE-WORKFLOW-CONVERGENCE.md`](../todo/TODO-PROCEDURE-WORKFLOW-CONVERGENCE.md)
+**Canonical Outcomes:** [Finding disposition](../../plugins/aquarium/references/finding-disposition.md), [Procedure node contracts](../../plugins/aquarium/references/procedure-node-contracts.md), [Podway integration](../../plugins/aquarium/references/podway-integration.md), [Local interfaces](../specs/local-interfaces.md), [Changing Procedures](../implementation-tips/changing-procedures.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -332,5 +331,33 @@ activation, commit, or publication.
 | TASK-057 | Reconcile handlers, resume, closeout, and commit composition | Carry accepted Low-only deltas through exact final-target verification without another review. | Completed | TASK-056 |
 | TASK-058 | Qualify customization and immutable-version compatibility | Distinguish native validity from handler compatibility and preserve old snapshots and local customizations. | Completed | TASK-057 |
 | TASK-059 | Implement and run native graph regression qualification | Exercise the revised canonical graphs, rejection paths, cleanup, and official Podway artifact compatibility. | Completed | TASK-058 |
-| TASK-060 | Observe agent behavior and context-recovery acceptance | Confirm review dispatch, wait, resume, and forbidden-effect behavior through separately authorized scenarios. | In Review | TASK-059; Master's separate observed-agent verification |
-| TASK-061 | Promote durable documentation and prepare an unactivated handoff | Publish implemented behavior to canonical owners and report evidence without installation, commit, or release claims. | Blocked | TASK-060 |
+| TASK-060 | Observe agent behavior and context-recovery acceptance | Confirm review dispatch, wait, resume, and forbidden-effect behavior through separately authorized scenarios. | Completed | TASK-059; Master's separate observed-agent verification |
+| TASK-061 | Promote durable documentation and prepare an unactivated handoff | Publish implemented behavior to canonical owners and report evidence without installation, commit, or release claims. | Completed | TASK-060 |
+
+## EPIC-015: Add intent-aware review and disable Independent Review temporarily
+
+**Status:** `Planned`
+
+Give enabled Mulgae and Orca reviews enough authoritative context to assess the
+selected change or the completion of a named Task or Epic. Apply the same Review
+Brief semantics when Master explicitly chooses an available native Codex
+subagent, while preserving each route's native lifecycle and action boundaries.
+
+Temporarily disable Aquarium's Dolgorae-based Independent Review before setup,
+target capture, source transmission, or dispatch. The entrypoint guides Master
+to available alternatives without launching one automatically. Dolgorae remains
+an optional supported global component for explicit setup and operations; its
+absence does not fail common production readiness while this route is disabled.
+Dolgorae changes and future Independent Review re-enablement are outside this
+epic.
+
+**Detailed SOT:** [`TODO-INTENT-AWARE-REVIEWS.md`](../todo/TODO-INTENT-AWARE-REVIEWS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-062 | Disable Independent Review and relax common Dolgorae readiness | Refuse every Independent Review request before Dolgorae work, guide alternatives without automatic fallback, and make Dolgorae optional in common production readiness while preserving explicit setup and operations. | Planned | None |
+| TASK-063 | Define the shared review-intent contract | Define review purpose, Review Brief construction, requirement provenance, candidate boundaries, completion checkpoints, and result interpretation for enabled routes. | Planned | TASK-062 |
+| TASK-064 | Add intent-aware embedded Mulgae completion review | Deliver approved handler context to Mulgae and conservatively aggregate accepted Markdown role reports, leaving uncovered criteria unverified. | Planned | TASK-063 |
+| TASK-065 | Add standalone Mulgae change and completion review | Support report-only staged change and named Task or Epic completion assessment through Mulgae without starting implementation or remediation. | Planned | TASK-064 |
+| TASK-066 | Align Orca and explicit native Codex subagent guidance | Carry the shared brief through Orca Dispatch and result handling, and describe explicitly chosen host-native subagent reviews without claiming unsupported guarantees. | Planned | TASK-063 |
+| TASK-067 | Qualify and document the review contract | Align handlers, Procedures, canonical and public documentation, deterministic checks, and Master's separate manual acceptance for the delivered review behavior. | Planned | TASK-064, TASK-065, TASK-066 |

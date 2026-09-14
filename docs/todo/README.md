@@ -15,9 +15,9 @@ Before an epic becomes `Completed`, its final closeout must classify and promote
 - [Production setup status dossier](TODO-PRODUCTION-STATUS.md) defines the
   ledger, CLI ownership, write timing, and acceptance for `EPIC-013` and
   `TASK-048` through `TASK-050`.
-- [Procedure workflow convergence dossier](TODO-PROCEDURE-WORKFLOW-CONVERGENCE.md)
-  defines the finite Low-settlement, Procedure, handler, compatibility, and
-  acceptance contract for `EPIC-014` and `TASK-051` through `TASK-061`.
+- [Intent-aware review dossier](TODO-INTENT-AWARE-REVIEWS.md) defines review
+  intent, completion assessment, temporary Independent Review disablement, and
+  acceptance for `EPIC-015` and `TASK-062` through `TASK-067`.
 
 ## Unadopted TODO Candidates
 
