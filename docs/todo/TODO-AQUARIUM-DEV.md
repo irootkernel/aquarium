@@ -12,7 +12,7 @@ The `aquarium-dev` MCP tools, CLI, and shared development contract own implement
 
 Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, Dolgorae, and Seongge through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
 
-Master confirmed Dolgorae development-channel setup completion on 2026-09-08. Its repository owns producer enrollment. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. Independent Review still uses only the globally installed official release and validates its exact version, executable checksum, and capabilities immediately before use. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
+Master confirmed Dolgorae development-channel setup completion on 2026-09-08. Its repository owns producer enrollment. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. TASK-031 originally kept Independent Review on the globally installed official release, but EPIC-015 later disabled that entrypoint before all Dolgorae work. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
 
 ## Success Criteria
 

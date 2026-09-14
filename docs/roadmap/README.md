@@ -137,7 +137,7 @@ This adoption succeeds EPIC-003 without reopening it and does not complete the u
 | --- | --- | --- | --- | --- |
 | TASK-025 | Adopt the official Dolgorae v0.1.0 distribution | Pin the release tag, source commit, platform, archive, executable checksum, maturity, and ownership boundaries. | Completed | External Dolgorae v0.1.0 release |
 | TASK-026 | Implement stable Dolgorae admission and setup | Add exact stable inspection, bundle selection, and fail-closed identity checks; private execution is later removed by TASK-031. | Completed | TASK-025 |
-| TASK-027 | Activate stable Dolgorae-backed reviews | Historically moved both review paths to the pinned stable release; TASK-031 retains it only for Independent Review and restores native Orca reviewer execution. | Completed | TASK-026; EPIC-003 |
+| TASK-027 | Activate stable Dolgorae-backed reviews | Historically moved both review paths to the pinned stable release; TASK-031 retained it only for Independent Review and restored native Orca reviewer execution. EPIC-015 later disables the Independent route. | Completed | TASK-026; EPIC-003 |
 | TASK-028 | Qualify and close stable Dolgorae adoption | Verify the official artifact and complete code, workflow, documentation, privacy, and regression acceptance. | Completed | TASK-027 |
 
 ## EPIC-006: Adopt Podway v0.2.7
@@ -360,4 +360,4 @@ epic.
 | TASK-064 | Add intent-aware embedded Mulgae completion review | Deliver approved handler context, aggregate accepted Markdown role reports, preserve safe criterion handoffs, and connect completion gaps to Task and Epic approval decisions. | Completed | TASK-063 |
 | TASK-065 | Add standalone Mulgae change and completion review | Add the report-only `mulgae-review` entrypoint for staged changes and named Task or Epic completion without duplicating native lifecycle or starting remediation. | Completed | TASK-064 |
 | TASK-066 | Align Orca and explicit native Codex subagent guidance | Carry the shared brief through Orca Dispatch and result handling, and describe explicitly chosen host-native subagent reviews without claiming unsupported guarantees. | Completed | TASK-063 |
-| TASK-067 | Qualify and document the review contract | Verify integrated approval decisions and routing, align canonical and public documentation, and complete deterministic checks plus Master's separate manual acceptance. | Planned | TASK-064, TASK-065, TASK-066 |
+| TASK-067 | Qualify and document the review contract | Verify integrated approval decisions and routing, align canonical and public documentation, and complete deterministic checks plus Master's separate manual acceptance. | Completed | TASK-064, TASK-065, TASK-066 |

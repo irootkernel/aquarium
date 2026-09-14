@@ -36,7 +36,7 @@ The review is static and source-read-only. Every participant runs no tests, buil
 
 ## Backend ownership
 
-`independent-review` uses one guarded Dolgorae `specialist.review` v2 operation to capture the target and run one fresh Codex Reviewer. It creates and accepts no Orca Run, Task, Dispatch, worker, terminal, context, or worktree. Missing or invalid Dolgorae state fails closed without Orca fallback.
+When re-enabled, `independent-review` uses one guarded Dolgorae `specialist.review` v2 operation to capture the target and run one fresh Codex Reviewer. It creates and accepts no Orca Run, Task, Dispatch, worker, terminal, context, or worktree. Missing or invalid Dolgorae state fails closed without Orca fallback.
 
 `orca-review` uses one local Orca Run, Task, Dispatch, and fresh requested native reviewer. Orca exclusively owns its worker, Delivery, acknowledgement, settlement, and recovery lifecycle. It performs no Dolgorae discovery, capture, launch, settlement, or fallback.
 

@@ -6,6 +6,8 @@
 
 **Supersedes:** [ADR-0007](0007-host-local-immutable-development-artifacts.md)
 
+**Current review-route status:** EPIC-015 later disabled Aquarium Independent Review before all Dolgorae work. The production and development environment separation decided here remains in force; the statements below about Independent Review record the route that existed when this ADR was accepted.
+
 ## Context
 
 The first development-channel design stored development artifacts and a dedicated Codex home below `~/.aquarium/`, and it enrolled Dolgorae as another source-built producer. That mixed unreleased development state with Aquarium's production namespace, duplicated Codex configuration and authentication concerns, and created a private Dolgorae runtime even though production reviews should use the official globally installed release.

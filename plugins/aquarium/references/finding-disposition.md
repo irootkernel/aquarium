@@ -15,7 +15,7 @@ The effective priority, not the provider label, controls remediation. A finding 
 
 ## Apply the authority envelope
 
-A standalone `$aquarium:independent-review`, direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, or standalone `$aquarium:orca-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
+The disabled `$aquarium:independent-review` entrypoint only reports its refusal and alternative guidance; it starts no review. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, or standalone `$aquarium:orca-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
 
 An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope authorizes finding remediation only inside its existing work-unit, repository, behavior, check, staging, and review budget. Within that envelope, remediate without another user prompt and report the correction afterward. Stop first when a finding needs a product or authority choice, adds a requirement, expands scope or repository ownership, creates a new file not covered by the plan, requires a destructive or external action, cannot be isolated safely, or exceeds the remaining review budget.
 
@@ -23,7 +23,7 @@ Confirmation-only review authority covers adjudication, reporting, and eligible 
 
 ## Remediate by effective priority
 
-A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and reviewed again on the corrected complete target. Keep the same backend, reviewer, focus, and user-facing source scope where feasible. Independent Review and Mulgae create fresh native captures. Orca reads the corrected live target. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
+A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and reviewed again on the corrected complete target. Keep the same backend, reviewer, purpose, and user-facing source scope where feasible. Mulgae creates a fresh native capture, and Orca reads the corrected live target. Independent Review would require a fresh capture if separately re-enabled. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
 
 Classify a valid `Low` finding into exactly one disposition:
 

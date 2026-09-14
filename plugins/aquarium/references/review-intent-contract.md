@@ -99,6 +99,8 @@ Each criterion assessment is one of these Aquarium states, which are not new nat
 
 Conflicting accepted assessments resolve to `unmet` when any evidence establishes a real gap; otherwise they remain `unverified` until the conflict is resolved. Silence is never `met`. Multiple role reports do not constitute a vote, and a majority cannot erase a supported gap.
 
+When a report assesses only part of a compound criterion, retain the supported evidence and keep the unassessed remainder `unverified`; a label for the assessed part cannot make the whole criterion `met`. When multiple reports describe the same semantic finding or criterion gap, preserve their native report identities and finding-specific dispositions but count the shared issue once in the aggregate assessment. Deduplication never discards distinct evidence, remaining gaps, or dispositions.
+
 ## Interpret results
 
 An actionable finding identifies a violated requirement, applicable contract, or concrete correctness, security, privacy, compatibility, or data-integrity invariant, with scenario, impact, evidence, and an appropriate correction. Missing required implementation may cite the violated requirement, expected location, and inspected evidence rather than fabricating `path:line` evidence.

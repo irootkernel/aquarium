@@ -1,6 +1,6 @@
 # Development Channel Specification
 
-The explicitly requested `aquarium-dev` MCP tools and CLI manage one canonical local-`main` checkout per supported project on Darwin arm64. Supported producers are Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae. Dolgorae remains unenrolled until its repository commits and registers an approved producer generation; production review paths continue to use only the verified globally installed release binary.
+The explicitly requested `aquarium-dev` MCP tools and CLI manage one canonical local-`main` checkout per supported project on Darwin arm64. Supported producers are Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae. Dolgorae remains unenrolled until its repository commits and registers an approved producer generation. Aquarium Independent Review is disabled before any Dolgorae work, while explicitly delegated Dolgorae operations continue to use the verified globally installed release binary.
 
 Diagnosis is read-only. Enrollment metadata, a native hook marker, an initial or recovery build, and installation of the user-local launcher are separate effects with separate approvals. All Aquarium-owned development state lives below `~/.aquarium-dev/`; `~/.aquarium/` is reserved for production use.
 
