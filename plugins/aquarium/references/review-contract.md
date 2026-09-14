@@ -4,7 +4,8 @@ Use this contract for one static, read-only review through `$aquarium:orca-revie
 
 ## Exact target
 
-Every review has one source scope and one review focus. The source scope is exactly one of:
+Every review has one source scope and one `change` or `completion` purpose under
+the Review Brief. The source scope is exactly one of:
 
 | Scope | Meaning | Independent Review | Orca Review |
 | --- | --- | --- | --- |
@@ -15,7 +16,11 @@ Every review has one source scope and one review focus. The source scope is exac
 | `commit` | First-parent transition into one resolved commit, or the empty tree into a root commit. | Dolgorae capture | Current registered worktree Git reads |
 | `range` | Requested `A..B` transition or merge-base-to-`B` transition for `A...B`, preserving the operator. | Dolgorae capture | Current registered worktree Git reads |
 
-`task`, `epic`, and special request are authority and focus selectors applied to one source scope. They are never additional scopes. Resolve mutable revisions before transmission. `workspace`, `staged`, `dirty`, and `head` reject a revision; `commit` requires one commit; `range` requires one explicit two-dot or three-dot expression.
+`task`, `epic`, and special request supply authority and work-unit intent applied
+to one source scope. They are never additional scopes. Resolve mutable revisions
+before transmission. `workspace`, `staged`, `dirty`, and `head` reject a
+revision; `commit` requires one commit; `range` requires one explicit two-dot or
+three-dot expression.
 
 When re-enabled, Independent Review uses Dolgorae's checked immutable capture as target authority. Its dormant candidate, capture, manifest, path-safety, lifecycle, settlement, and recovery rules are defined by [dolgorae-review-contract.md](dolgorae-review-contract.md).
 
@@ -43,11 +48,37 @@ The disabled Independent Review route performs no settlement or recovery. Orca R
 
 ## Result contract
 
-Require only actionable finding candidates. Each finding includes reported severity, exact `path:line`, triggering scenario, violated authority, impact, and smallest remediation. Omit praise, style preferences, speculation, and duplicates. Return `APPROVE` only when no actionable finding remains and the selected backend lifecycle is authoritative.
+Require only actionable finding candidates. Each finding includes reported
+severity, triggering scenario, violated authority, impact, evidence, and the
+smallest remediation. Use exact `path:line` evidence when implementation exists;
+for missing implementation, cite the requirement, expected location, and
+inspected evidence without fabricating a source line. Omit praise, style
+preferences, speculation, and duplicates. Return technical `APPROVE` only when
+no actionable finding remains and the selected backend lifecycle is
+authoritative.
 
 The coordinator independently checks every finding against the exact target and authority without running checks or changing files. Preserve reported severity, classify validity as Valid, Invalid, or Needs confirmation, and assign an effective `Blocker`, `Critical`, `High`, `Medium`, or `Low` priority under the shared disposition contract; execution-dependent claims remain `runtime unverified`.
 
-Return source scope and applicable resolved identity, included and excluded state, review focus, reviewer and backend, technical verdict, adjudicated findings with reported severity, effective priority, validity, and disposition, rejected count, confirmation needs, and separate backend lifecycle status. Independent Review additionally returns its target digest, capture, manifest, source-mutation observation, target-integrity result, and Dolgorae settlement evidence. Orca Review additionally returns its Run, Task, Dispatch, worker, Delivery, acknowledgement, settlement evidence, and the paths of retained report files used to deliver the result. Permitted external review files and Git-ignored runtime files alone must not trigger a warning, an operational deviation, an approval request, additional checks, a withheld verdict, or another review. Wrong scope, missing required output, reviewer mismatch, or incomplete backend lifecycle is operationally incomplete and never `APPROVE`.
+Return purpose, work-unit identity when applicable, checkpoint, source scope and
+resolved identity, included and excluded state, reviewer and backend, technical
+verdict, adjudicated findings with reported severity, effective priority,
+validity, and disposition, rejected count, confirmation needs, verification
+limitations, and separate backend lifecycle status. For `completion`, also
+return every applicable criterion with its source, assessment, evidence and
+provenance, remaining gap, and aggregate unmet and unverified counts. For
+`change`, state that whole-work-unit completion was not assessed. A clean
+technical verdict never substitutes for the completion assessment.
+
+Independent Review additionally returns its target digest, capture, manifest,
+source-mutation observation, target-integrity result, and Dolgorae settlement
+evidence when that route is enabled. Orca Review additionally returns its Run,
+Task, Dispatch, worker, Delivery, acknowledgement, settlement evidence, and the
+paths of retained report files used to deliver the result. Permitted external
+review files and Git-ignored runtime files alone must not trigger a warning, an
+operational deviation, an approval request, additional checks, a withheld
+verdict, or another review. Wrong scope, missing required purpose-specific
+output, reviewer mismatch, or incomplete backend lifecycle is operationally
+incomplete and never technical `APPROVE`.
 
 ## Orca operational deviations
 

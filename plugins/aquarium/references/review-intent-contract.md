@@ -26,8 +26,32 @@ Before an authorized dispatch through an enabled route, build one concise Review
 | Completion checkpoint | Readiness before closeout or assessment of an already claimed outcome, including the obligations due now. |
 | Verification evidence | Relevant checks, candidate identities, unavailable evidence, author-reported results, and checks the reviewer may not run. |
 | Invocation metadata | Existing goal revision, ordinal, review mode, selected roles, and lineage required by the owning workflow. |
+| Requested result | Findings and limitations for `change`; findings, every criterion assessment, and evidence gaps for `completion`. |
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
+
+## Use a native Codex review subagent
+
+Use a fresh host-native Codex subagent only after the user explicitly selects
+that review route and the current host exposes native delegation. Give it the
+same Review Brief, exact target, and approved context that another enabled
+static route would receive. Do not invent a delegation tool or silently choose
+Orca, Mulgae, or another backend when native delegation is unavailable.
+
+The subagent review is static and report-only. Require it to inspect the
+selected candidate, the applicable original requirements, and relevant callers,
+contracts, or tests without running checks, editing files, changing Git state,
+or spawning another review. For `completion`, require findings, one assessment
+for every applicable criterion, and explicit evidence gaps. For `change`,
+require findings and limitations without claiming whole-work-unit completion.
+The coordinator verifies the result while preserving subagent and coordinator
+evidence as separate provenance.
+
+Use only the lifecycle and evidence the host actually provides. Do not describe
+this route as Independent Review, Dolgorae, Orca, or Mulgae, and do not claim an
+immutable capture, publication, settlement, or recovery guarantee that was not
+observed. If the host cannot provide a fresh subagent or the selected target
+cannot be bounded, report that limitation and stop without automatic fallback.
 
 ## Recover intent and provenance
 

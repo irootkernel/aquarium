@@ -8,9 +8,44 @@ Use the original registered checkout and its proven `current` worktree. Do not c
 
 Require the user to select a reviewer before creating the Run or Task. Then start one fresh requested reviewer through the live guide's supervised `worker-start --task <task-id> --worktree current --agent <requested-reviewer>` path. Use `--agent claude` when Claude is requested. Do not default to or substitute another reviewer. Do not reuse a terminal, create a low-level provider terminal, or use Dolgorae.
 
-The Task contains the declared target, applicable resolved Git identity, review focus, authority paths, included and excluded state, static-review restrictions, and required report fields. Do not include suspected findings or intended fixes. Do not create a capture manifest, target digest binding, repository fingerprint, or pre/post state comparison.
+The Task contains the complete Review Brief defined by
+[review-intent-contract.md](review-intent-contract.md), including the purpose,
+actual criteria, checkpoint, source basis, candidate boundary, included and
+excluded state, verification provenance, and requested result. Do not include
+suspected findings or intended fixes. Do not create a capture manifest, target
+digest binding, repository fingerprint, or pre/post state comparison.
 
-Every Dispatch, regardless of target, must tell the reviewer that this is review only; prohibit creating, editing, deleting, moving, formatting, or generating source files or other tracked or non-ignored files in the current registered worktree; prohibit changes to the Git index, refs, configuration, or commits; prohibit tests, builds, formatters, installers, authentication, and unrelated network operations; and require only actionable target findings with severity and exact `path:line`. Require an advisory technical conclusion and separate reporting of operational deviations under [the shared policy](review-contract.md#orca-operational-deviations). Advisory `APPROVE` means the reviewer found no actionable target findings in the evidence it could assess; require disclosure of any known compromise or uncertainty. Tell the reviewer to deliver that result and complete its required native lifecycle without waiting for or certifying the coordinator's later settlement. Only the coordinator issues the final technical verdict. Require the reviewer to read only the declared target. For `head`, `commit`, and `range`, require file content and diffs from the resolved revisions through read-only Git commands and prohibit substituting current index or worktree bytes.
+Every Dispatch, regardless of target, carries that complete Review Brief and the
+purpose-specific result defined by [review-contract.md](review-contract.md).
+Tell the reviewer that this is review only. Prohibit creating, editing,
+deleting, moving, formatting, or generating source files or other tracked or
+non-ignored files in the current registered worktree; changes to the Git index,
+refs, configuration, or commits; and tests, builds, formatters, installers,
+authentication, or unrelated network operations.
+
+Require actionable target findings with severity, scenario, violated authority,
+impact, and evidence. Use exact `path:line` evidence when implementation exists.
+A supported omission instead cites the requirement, expected location, and
+inspected evidence without inventing a line. For `completion`, require one
+`met`, `unmet`, `unverified`, or `not-applicable` assessment for every applicable
+criterion, with evidence provenance and remaining gaps. For `change`, require an
+explicit statement that whole-work-unit completion was not assessed.
+
+Treat only the declared target as candidate evidence. The reviewer may read its
+relevant files, callers, contracts, and tests plus approved authority sources at
+the basis named in the brief. Unstaged or current-worktree authority bytes do
+not replace a declared HEAD or other revision basis. Do not broaden into
+unrelated current-worktree inspection. For `head`, `commit`, and `range`, require
+candidate content and diffs from the resolved revisions through read-only Git
+commands and prohibit substituting current index or worktree bytes.
+
+Require an advisory technical conclusion and separate reporting of operational
+deviations under [the shared policy](review-contract.md#orca-operational-deviations).
+Advisory `APPROVE` means the reviewer found no actionable target findings in the
+evidence it could assess; require disclosure of any known compromise or
+uncertainty. Tell the reviewer to deliver that result and complete its required
+native lifecycle without waiting for or certifying the coordinator's later
+settlement. Only the coordinator issues the final technical verdict.
 
 For `staged`, additionally require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply the corresponding target-specific read instructions to `head`, `commit`, and `range` without weakening the common restrictions.
 
