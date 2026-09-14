@@ -14,11 +14,11 @@ the implemented behavior after closeout.
 | Task | Delivery boundary |
 | --- | --- |
 | `TASK-062` | Disable Independent Review before dispatch, guide alternatives, and make Dolgorae optional in common production readiness. |
-| `TASK-063` | Define the shared Review Brief, purpose, provenance, candidate, checkpoint, and assessment semantics. |
-| `TASK-064` | Apply completion review to embedded Mulgae use and aggregate accepted Markdown role reports conservatively. |
-| `TASK-065` | Add standalone Mulgae change and Task or Epic completion review. |
+| `TASK-063` | Define the shared Review Brief, criterion responsibility and aggregation, provenance, candidate, checkpoint, and completion decision semantics. |
+| `TASK-064` | Apply completion review to embedded Mulgae use, aggregate accepted Markdown role reports, and connect the result to Task and Epic approval decisions. |
+| `TASK-065` | Add the report-only `mulgae-review` entrypoint for standalone change and Task or Epic completion review. |
 | `TASK-066` | Align Orca Dispatch and result handling, plus guidance for an explicitly chosen native Codex subagent. |
-| `TASK-067` | Align handlers, Procedures, canonical and public documentation, deterministic checks, and manual acceptance. |
+| `TASK-067` | Qualify integrated decisions and routing, align canonical and public documentation, and complete deterministic checks and manual acceptance. |
 
 ## 1. Requested outcome
 
@@ -194,7 +194,12 @@ If a backend's native finding schema cannot represent an omission, report it thr
 
 ### 6.3 Return a requirement assessment for completion review
 
-Return one assessment for every applicable criterion, with at least the criterion source, implementation or absence evidence, verification evidence, assessment, and remaining gap. Suggested semantic assessments are `met`, `unmet`, `unverified`, and `not-applicable`; native schema names remain the producer's decision.
+Return one assessment for every applicable criterion. Preserve the criterion
+identity and source, assigned review responsibility, implementation or absence
+evidence, verification evidence, assessment, evidence provenance, accepted
+report identities, and remaining gap. Assessments are `met`, `unmet`,
+`unverified`, and `not-applicable`; these are Aquarium semantics rather than new
+native Mulgae fields.
 
 `met` is limited to the stated assessment boundary and evidence. `not-applicable` requires a reason grounded in the work's scope or checkpoint. Neither value may be used to hide an unread criterion or an unavailable required check.
 
@@ -209,11 +214,40 @@ Example only:
 
 A zero-finding report is not a requirement assessment. The coordinator must not label its own later audit as a provider-produced assessment. Reuse supported provider reports where they carry the requested result; do not assume a new structured result already exists.
 
+Before dispatch, map every applicable criterion to one or more responsibilities
+within the already authorized role arrangement. Do not leave a criterion to an
+unspecified reviewer. If the selected arrangement cannot cover a responsibility,
+record that limitation as an unresolved assessment gap without adding a role or
+review call automatically.
+
 ### 6.4 Separate verdicts and preserve evidence limits
 
 Report technical findings, requirement assessment, verification coverage, and backend lifecycle status separately. Explain the overall answer in terms of the requested purpose and checkpoint.
 
 For completion review, missing required assessments, unresolved requirement gaps, or unavailable mandatory evidence prevent an unqualified completion approval. Technical cleanliness alone must not be presented as proof of completion. Preserve the native technical verdict and explain the limitation rather than rewriting native status.
+
+Treat the aggregate completion assessment as a separate Aquarium-consumed fact.
+Its safe handoff retains criterion identities and sources, assessment states,
+provider or coordinator provenance, unresolved gaps, and the counts needed by
+the owning decision. Do not encode a semantic gap by changing native
+`ci_decision`, coverage, publication, extraction, or finding records.
+
+Apply these decision rules at normal review approval, after Low settlement,
+member-Task goal assessment, and whole-Epic validation:
+
+| Assessment state | Owning workflow behavior |
+| --- | --- |
+| Every applicable criterion has sufficient evidence | Advance only when existing verification, finding-disposition, lifecycle, and authorization conditions also pass. |
+| A criterion is demonstrably unmet | Preserve its evidence provenance and route it to the existing implementation or documentation owner when the approved envelope permits correction. |
+| A criterion is missing, unread, partly assessed, or affected by unresolved conflicting evidence | Preserve the exact gap and withhold completion approval. Leave the decision unset when existing authority cannot resolve it. |
+| Mandatory verification is unavailable | Record the verification gap separately and withhold approval without starting another check or review implicitly. |
+| A criterion is not applicable at this checkpoint | Require a reason grounded in the applicable authority, scope, or checkpoint. |
+
+A clean native result or completed Low disposition cannot erase an independent
+completion gap. A permitted, locally verified Low-only delta retains its current
+settlement path and does not require another provider round. Coordinator evidence
+may resolve a question within existing authority, but it remains coordinator
+evidence and does not become provider coverage.
 
 Orca and the temporary native Codex subagent review remain static and report-only. Dolgorae-based Independent Review performs no review while disabled. Reading test code is not running it. An author's statement that tests passed is not independently observed execution. Inspect existing authorized evidence and identify its provenance and candidate relevance; do not rerun checks merely to fill the table. Embedded workflows may use checks only within their existing authorization.
 
@@ -231,24 +265,61 @@ All selected roles need the same applicable work context. Define responsibility 
 
 Consume the requirement assessment alongside native findings and independently adjudicate both. Preserve the existing handler-owned verification and Epic audit; provider assessment complements those checks and does not replace them.
 
+`TASK-064` owns the first complete approval connection. Update `task-review`, the
+Task handler, Epic member review, whole-Epic review and validation consumers, and
+the task, goal, and validation Procedure decisions that admit completion. Carry
+the assessment through normal review approval, Low settlement, goal assessment,
+and Epic validation. An embedded review feature is incomplete if its owning
+workflow can ignore a reported completion gap. `TASK-067` verifies this behavior
+and does not defer its first implementation.
+
 The current inspected consumer contract admits Mulgae v0.1.21 and current command-result v8. Retain those adopted native contracts, including recovery and rate-limit distinctions. Verify the supported producer contract again during implementation rather than restoring older v6 assumptions from earlier discussion.
 
-### 7.2 Standalone Mulgae completion requests
+### 7.2 Standalone Mulgae review entrypoint
 
-Document how the existing Aquarium entrypoints and shared contract handle an explicit standalone Mulgae Task or Epic completion request. Do not assume that changing the embedded handlers also changes direct use of the separately installed `$use-mulgae` skill.
+Add a thin `$aquarium:mulgae-review` skill as the named Aquarium entrypoint for
+explicit standalone review. It receives the request, resolves `change` or
+`completion` and the exact supported target, loads the shared intent and finding
+contracts, constructs the Review Brief, delegates native execution to
+`$use-mulgae`, consumes accepted reports, adjudicates their assessments, and
+returns a purpose-specific report.
 
-The coordinating Aquarium path must build the same brief and consume the same completion result while delegating execution to `$use-mulgae`. Keep direct `task-review` scoped to its supported Task identity. Do not route an Epic request into a Task-only interface or automatically invoke the mutating `epic-validator` workflow to obtain report-only behavior.
+The entrypoint is Aquarium orchestration, not another review engine. It does not
+duplicate capture, execution, waiting, recovery, publication, retention, or
+provider selection. It does not replace embedded `task-review`, add a native
+Codex subagent backend, start a Task or Epic handler, invoke `epic-validator`,
+run tests, remediate, edit source, stage, commit, change roadmap lifecycle, or
+grant another review round.
 
-A new `mulgae-review` skill is not required by this request. If a new entrypoint is needed, justify it through the repository's design process instead of creating an undocumented alias. Any necessary changes to the producer-owned paired skill belong in an explicit external handoff.
+Document discovery metadata and examples for a generic staged change, named Task
+completion in a staged candidate, and named Epic completion in a resolved
+committed candidate. Completion with no new diff uses a supported immutable
+target and never manufactures staged changes. Preserve supplied target and role
+information without asking for it again. Missing information follows the shared
+standalone resolution rules.
 
 ### 7.3 Result and handoff compatibility
 
 The initial Aquarium implementation consumes Mulgae v0.1.21's accepted Markdown
-role reports. Each selected role assesses the criteria applicable to that role,
-and the coordinator aggregates those assessments conservatively. A criterion
-that no accepted report addresses remains `unverified`. A new machine-readable
-Mulgae assessment schema is not a prerequisite. If later work needs one, treat
-it as a separate producer-owned handoff.
+role reports. Aggregate only reports admissible under the existing result and
+recovery contract for the selected candidate and requirement basis. Preserve
+verified composite lineage and do not substitute unrelated or stale role reports.
+
+Apply these aggregation rules:
+
+| Report situation | Aggregated treatment |
+| --- | --- |
+| A role addresses only part of a criterion | Retain the partial evidence and keep the unassessed remainder visible. Do not promote the role's label to whole-criterion satisfaction. |
+| Accepted reports disagree | Inspect the candidate, requirement basis, and cited evidence. Adjudicate by evidence, not majority vote or favorable selection. An unresolved material conflict blocks a clean completion result. |
+| No accepted report addresses a criterion | Keep it `unverified`; native role coverage does not fill the gap. |
+| Multiple reports describe the same defect or criterion gap | Preserve relevant source identities but count the semantic issue once. Do not rewrite native finding records or dispositions. |
+| A role marks a criterion not applicable | Verify an authority-backed scope or checkpoint reason. A limited role remit does not make the criterion inapplicable to the work unit. |
+| The coordinator resolves a question independently | Record the coordinator's evidence separately without attributing provider coverage. |
+
+Summarizing duplicate evidence must not discard finding-specific dispositions or
+alter native round and Low-settlement accounting. A new machine-readable Mulgae
+assessment schema and an exact-prose parser are not prerequisites. If later work
+needs a producer schema, treat it as a separate producer-owned handoff.
 
 Inspect native accepted reports, extraction, and evidence resources before promising additional structured requirement output. If the existing output cannot preserve a later required assessment, identify a Mulgae-owned change and coordinate it explicitly.
 
@@ -339,6 +410,8 @@ Inspect current owners before editing. This table identifies likely change locat
 | [Orca skill](../../plugins/aquarium/skills/orca-review/SKILL.md) | Deliver the brief through Dispatch and consume the purpose-specific result. |
 | [Task review](../../plugins/aquarium/skills/task-review/SKILL.md) and [Task handler](../../plugins/aquarium/skills/task-handler/SKILL.md) | Supply Task criteria and checkpoint; return a safe, usable requirement assessment. |
 | [Epic handler](../../plugins/aquarium/skills/epic-handler/SKILL.md) and [Epic validator](../../plugins/aquarium/skills/epic-validator/SKILL.md) | Supply member or whole-Epic context and preserve independent direct-audit responsibilities. |
+| New `plugins/aquarium/skills/mulgae-review/SKILL.md` and discovery metadata | Provide the report-only standalone entrypoint, load shared contracts, and delegate native lifecycle to `$use-mulgae`. |
+| Task, goal, and validation Procedures and their installed copies | Carry completion assessment into normal approval, Low settlement, member-Task goal assessment, and whole-Epic validation without changing native result meanings. |
 | [Evidence residency](../../plugins/aquarium/references/evidence-residency.md) and downstream handoffs | Resolve any necessary schema or residency changes without promoting private review payloads. |
 | Capability, workflow, integration, setup-routing, and public documentation | Distinguish enabled reviews from disabled Independent Review. Remove guidance that routes users to the disabled path, including workspace/dirty recommendations. Do not classify disablement as a broken installation. |
 | Temporary native Codex subagent guidance in the shared reference and refusal | Reuse the Review Brief under actual host capabilities and explicit user choice without introducing another backend implementation. |
@@ -354,9 +427,9 @@ Complete the Aquarium work in this order. Dolgorae correction is not a prerequis
 | Step | Work | Exit condition |
 | --- | --- | --- |
 | 1 | Disable the Independent entrypoint and update its immediate routing and discovery surfaces. | Explicit requests refuse before any Dolgorae operation or alternative launch and explain the temporary alternatives. |
-| 2 | Define the common intent contract for enabled reviews. | Purpose, brief, provenance, candidate, checkpoint, result, and authority rules are consistent. |
-| 3 | Update Mulgae callers and Orca Dispatch/result handling using existing native interfaces. | Actual reviewer input and returned assessments support the requested scenarios; genuine enabled-path limitations are identified without inventing native fields. |
-| 4 | Add temporary native Codex subagent guidance and complete alternative routing documentation. | Explicit user choices retain their target and purpose; unavailable delegation and unsupported Orca scopes are handled honestly. No automatic fallback or new backend is introduced. |
+| 2 | Define the common intent, criterion aggregation, and completion decision contract for enabled reviews. | Purpose, brief, responsibility, provenance, candidate, checkpoint, result, approval, and authority rules are consistent. |
+| 3 | Update embedded Mulgae callers, safe handoffs, and Task and Epic approval decisions using existing native interfaces. | Actual reviewer input and returned assessments support the requested scenarios, and no approval path can ignore a completion gap. |
+| 4 | Add standalone `mulgae-review`, align Orca Dispatch/result handling, and add temporary native Codex subagent guidance. | Each explicit route preserves its target and purpose, unavailable capabilities are reported honestly, and no automatic fallback or duplicate backend lifecycle is introduced. |
 | 5 | Validate scenarios and reconcile canonical and public documentation. | Enabled behavior and Independent refusal match the documented state, with checks and evidence limits reported. |
 
 Deliver under the normal release policy. Intentional Independent disablement is the required outcome, not partial implementation waiting for Dolgorae. Do not claim equivalent availability or guarantees across the enabled routes and the disabled entrypoint. Any unresolved requirement of an enabled route still needs an honest completion report.
@@ -406,6 +479,9 @@ Use controlled examples for the following checks. Review-execution cases apply t
 | Dolgorae work already exists when Independent is disabled | Refusal does not resume, cancel, settle, delete, or otherwise alter that work. |
 | Standalone Mulgae Epic completion request | The shared contract is actually loaded and the result is report-only without starting a handler. |
 | Requirements or candidate change after review | The previous assessment remains bound to its original basis; affected evidence is not relabeled current. |
+| Native CI passes with zero findings but one applicable criterion was not assessed | Completion approval is withheld in normal review, Low-settlement, member-Task, and whole-Epic paths where applicable; native status is not rewritten. |
+| Two accepted role reports disagree about a criterion | The coordinator evaluates the cited evidence; an unresolved conflict cannot become clean through voting or selective report consumption. |
+| A role reports `met` after inspecting only part of a compound criterion | The partial evidence is retained and the unassessed remainder prevents whole-criterion completion. |
 
 Compare representative findings before and after the change where useful. Record whether irrelevant findings were reduced and required omissions were still found. Do not promise a percentage improvement or treat one clean sample as proof of general accuracy.
 
@@ -466,6 +542,10 @@ assume the implementation is correct or prescribe unrelated features.
 - [ ] Completion assessment examines the full applicable candidate and can identify work missing from the diff.
 - [ ] Requirement provenance, approved scope changes, non-goals, and completion checkpoints affect judgment correctly.
 - [ ] Results distinguish findings, requirement coverage, verification limits, and backend lifecycle.
+- [ ] Passing native CI and zero findings cannot approve completion while an applicable criterion, mandatory verification item, or material assessment conflict remains unresolved, including after Low settlement and at Task or Epic boundaries.
+- [ ] Criterion responsibility, partial coverage, conflicting judgments, duplicate semantic gaps, authority-backed non-applicability, and coordinator evidence follow the defined aggregation rules without changing native result provenance.
+- [ ] `$aquarium:mulgae-review` covers the named standalone scenarios, loads the shared contract, and remains report-only while `$use-mulgae` owns native lifecycle.
+- [ ] `TASK-064` cannot complete while embedded reports expose gaps that their owning Task or Epic workflow can ignore.
 - [ ] Omission reporting and safe handoffs work without fake native fields, line numbers, findings, or evidence.
 - [ ] Dolgorae modification and re-enablement are outside this request; an upgrade or capability change cannot restore the disabled route automatically.
 - [ ] Existing scope, security, remediation, review-budget, Low settlement, and lifecycle boundaries remain intact.
