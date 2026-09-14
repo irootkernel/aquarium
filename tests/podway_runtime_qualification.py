@@ -211,6 +211,7 @@ CASE_ASSERTIONS = {
     "C-09": ["goal kind independently constrained the closeout substitute"],
     "C-10": [
         "rework evidence routed to an unset user choice",
+        "goal authority guards rejected the opposite remediation mode",
         "each exercised user decision authorized only one correction pass",
     ],
     "C-16": [
@@ -2776,13 +2777,19 @@ class ManagedRuntime:
                 special_option = "blocker-found"
             elif scenario == "medium-wait" and node == "decide-evidence":
                 special_option = "blocking"
-            elif scenario == "medium-wait" and node == "decide-goal-rework-authority":
+            elif node == "decide-goal-rework-authority" and scenario in {
+                "medium-wait",
+                "goal-closeout-unmet-wait",
+            }:
+                observation = self.reject_guarded_decision(observation, "remediation")
                 special_option = "user-direction"
             elif (
-                scenario == "goal-closeout-unmet-wait"
+                procedure_id == "aquarium-goal-v2"
                 and node == "decide-goal-rework-authority"
             ):
-                special_option = "closeout-direction"
+                observation = self.reject_guarded_decision(
+                    observation, "user-direction"
+                )
             elif scenario == "goal-hardening-defer" and node == "decide-evidence":
                 special_option = "low-only"
             elif scenario == "goal-hardening-defer" and node == "decide-low-handling":

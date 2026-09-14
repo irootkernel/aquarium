@@ -485,20 +485,12 @@ node_definitions:
             equals: remediation-eligible
       - id: user-direction
         label: Await user direction
-        criteria: Hardening mode always requires a fresh one-shot user decision before another pass.
+        criteria: Hardening or closeout mode requires a fresh one-shot user decision before another pass.
         guards:
           - evidence:
               node: record-evidence
               item: review-mode
-            equals: hardening-deferral-eligible
-      - id: closeout-direction
-        label: Reconsider closeout evidence
-        criteria: A closeout substitute exposed rework and requires explicit user direction.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: review-mode
-            equals: closeout-not-required
+            not_equals: remediation-eligible
     reason:
       required: true
       prompt: Explain the current bounded rework authority.
@@ -960,9 +952,6 @@ graph:
           to: complete-work
           effect: rework
         user-direction:
-          to: await-user-direction
-          effect: advance
-        closeout-direction:
           to: await-user-direction
           effect: advance
     - id: await-user-direction

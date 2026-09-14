@@ -9,6 +9,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests/fixtures"
 PROCEDURES = ROOT / "plugins/aquarium/assets/podway/procedures"
+CANONICAL_PROCEDURES = ROOT / ".podway/procedures"
 
 
 def load_json(name: str) -> dict:
@@ -17,6 +18,19 @@ def load_json(name: str) -> dict:
 
 def load_procedure(name: str) -> dict:
     return yaml.safe_load((PROCEDURES / name).read_text(encoding="utf-8"))
+
+
+def test_installed_procedure_sources_match_canonical_copies() -> None:
+    asset_names = {path.name for path in PROCEDURES.glob("aquarium-*-v2.yaml")}
+    canonical_names = {
+        path.name for path in CANONICAL_PROCEDURES.glob("aquarium-*-v2.yaml")
+    }
+
+    assert asset_names == canonical_names
+    for name in sorted(asset_names):
+        assert (PROCEDURES / name).read_bytes() == (
+            CANONICAL_PROCEDURES / name
+        ).read_bytes()
 
 
 PREDICATE_OPERATORS = (
@@ -290,14 +304,9 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     assert graph["decide-goal-rework-authority"]["routes"] == {
         "remediation": {"to": "complete-work", "effect": "rework"},
         "user-direction": {"to": "await-user-direction", "effect": "advance"},
-        "closeout-direction": {"to": "await-user-direction", "effect": "advance"},
     }
     authority_options = options(goal, "goal-rework-authority-decision")
-    assert set(authority_options) == {
-        "remediation",
-        "user-direction",
-        "closeout-direction",
-    }
+    assert set(authority_options) == {"remediation", "user-direction"}
     assert normalized_guards(authority_options["remediation"]) == {
         (
             "record-evidence",
@@ -312,17 +321,8 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
             "record-evidence",
             "review-mode",
             None,
-            "equals",
-            "hardening-deferral-eligible",
-        )
-    }
-    assert normalized_guards(authority_options["closeout-direction"]) == {
-        (
-            "record-evidence",
-            "review-mode",
-            None,
-            "equals",
-            "closeout-not-required",
+            "not_equals",
+            "remediation-eligible",
         )
     }
     goal_options = options(goal, "evidence-decision")

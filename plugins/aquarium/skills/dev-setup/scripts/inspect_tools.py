@@ -369,7 +369,6 @@ PODWAY_HANDLER_CONTRACTS = {
             "decide-goal-rework-authority": {
                 "remediation": "complete-work",
                 "user-direction": "await-user-direction",
-                "closeout-direction": "await-user-direction",
             },
             "decide-low-handling": {
                 "settle": "record-low-disposition",
