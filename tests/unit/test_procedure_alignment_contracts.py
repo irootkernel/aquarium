@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 from pathlib import Path
@@ -49,79 +48,15 @@ def normalized_guards(option: dict) -> set[tuple[str, str, str | None, str, obje
     return result
 
 
-def assert_validation_final_review_contract(procedure: dict) -> None:
-    definitions = procedure["node_definitions"]
-    graph_nodes = {node["id"]: node for node in procedure["graph"]["nodes"]}
-    decision = graph_nodes["decide-final-review"]
-    options = {
-        option["id"]: option for option in definitions[decision["use"]]["options"]
+def options(procedure: dict, definition_id: str) -> dict[str, dict]:
+    return {
+        option["id"]: option
+        for option in procedure["node_definitions"][definition_id]["options"]
     }
 
-    assert normalized_guards(options["validated"]) == {
-        ("final-review", "final-review-result", "outcome", "equals", "pass"),
-        (
-            "final-review",
-            "pending-applicable-low-dispositions",
-            None,
-            "equals",
-            0,
-        ),
-        ("final-review", "current-applicable-blockers", None, "equals", 0),
-        ("final-review", "required-evidence-gaps", None, "equals", 0),
-    }
-    assert normalized_guards(options["low-disposition"]) == {
-        ("final-review", "final-review-result", "outcome", "equals", "pass"),
-        (
-            "final-review",
-            "pending-applicable-low-dispositions",
-            None,
-            "at_least",
-            1,
-        ),
-        ("final-review", "current-applicable-blockers", None, "equals", 0),
-        ("final-review", "required-evidence-gaps", None, "equals", 0),
-    }
-    assert normalized_guards(options["incomplete"]) == {
-        ("final-review", "final-review-result", "outcome", "equals", "pass"),
-        ("final-review", "required-evidence-gaps", None, "at_least", 1),
-    }
-    assert normalized_guards(options["review-operation-incomplete"]) == {
-        (
-            "final-review",
-            "final-review-result",
-            "outcome",
-            "not_equals",
-            "pass",
-        ),
-    }
 
-    assert decision["routes"]["validated"] == {
-        "to": "assess-goal",
-        "effect": "advance",
-    }
-    assert decision["routes"]["low-disposition"] == {
-        "to": "record-low-disposition",
-        "effect": "advance",
-    }
-    assert decision["routes"]["incomplete"] == {
-        "to": "record-incomplete",
-        "effect": "advance",
-    }
-    assert decision["routes"]["review-operation-incomplete"] == {
-        "to": "record-review-operation-incomplete",
-        "effect": "advance",
-    }
-    selected = {
-        (source["node"], item)
-        for source in decision["evidence_from"]
-        for item in source.get("items", [])
-    }
-    assert {
-        ("final-review", "final-review-result"),
-        ("final-review", "pending-applicable-low-dispositions"),
-        ("final-review", "current-applicable-blockers"),
-        ("final-review", "required-evidence-gaps"),
-    } <= selected
+def nodes(procedure: dict) -> dict[str, dict]:
+    return {node["id"]: node for node in procedure["graph"]["nodes"]}
 
 
 def test_selected_shared_operation_descriptors_match_declared_slots() -> None:
@@ -218,43 +153,285 @@ def test_low_completion_routes_to_goal_assessment_without_a_review_loop() -> Non
         }
 
 
-def test_validation_final_review_routes_from_composed_applicable_obligations() -> None:
-    procedure = load_procedure("aquarium-validation-v2.yaml")
-    definitions = procedure["node_definitions"]
-    items = {item["id"] for item in definitions["final-review-record"]["items"]}
-    required = {
-        "applicable-obligation-summary",
-        "pending-applicable-low-dispositions",
-        "current-applicable-blockers",
-        "required-evidence-gaps",
-    }
-    assert required <= items
-
-    assert_validation_final_review_contract(procedure)
-
-
-def test_validation_final_review_contract_rejects_wrong_pending_operand() -> None:
-    procedure = load_procedure("aquarium-validation-v2.yaml")
-    mutated = copy.deepcopy(procedure)
-    options = mutated["node_definitions"]["final-review-decision"]["options"]
-    validated = next(option for option in options if option["id"] == "validated")
-    pending = next(
-        guard
-        for guard in validated["guards"]
-        if guard["evidence"]["item"] == "pending-applicable-low-dispositions"
+def test_completion_status_contract_is_identical_across_workflows() -> None:
+    cases = (
+        ("aquarium-task-v2.yaml", "review"),
+        ("aquarium-goal-v2.yaml", "record-evidence"),
+        ("aquarium-validation-v2.yaml", "final-review"),
     )
-    pending["equals"] = 1
+    for name, evidence_node in cases:
+        procedure = load_procedure(name)
+        actual = options(procedure, "completion-status-decision")
+        assert set(actual) == {"complete", "unmet", "unverified"}
+        assert normalized_guards(actual["complete"]) == {
+            (evidence_node, "completion-unmet-criteria", None, "equals", 0),
+            (evidence_node, "completion-unverified-criteria", None, "equals", 0),
+        }
+        assert normalized_guards(actual["unmet"]) == {
+            (evidence_node, "completion-unmet-criteria", None, "at_least", 1),
+            (evidence_node, "completion-unverified-criteria", None, "equals", 0),
+        }
+        assert normalized_guards(actual["unverified"]) == {
+            (evidence_node, "completion-unverified-criteria", None, "at_least", 1),
+        }
 
-    try:
-        assert_validation_final_review_contract(mutated)
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("wrong pending-disposition operand was not detected")
+
+def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    graph = nodes(task)
+    review_items = {
+        item["id"] for item in task["node_definitions"]["review-record"]["items"]
+    }
+    assert "extra-review-authorization" not in review_items
+    assert (
+        graph["confirm-review-findings"]["routes"]["resolved"]["to"]
+        == "decide-review-ci"
+    )
+    assert graph["decide-review-ci"]["routes"] == {
+        "passed": {"to": "confirm-review-completion", "effect": "advance"},
+        "failed": {"to": "decide-task-rework-authority", "effect": "advance"},
+    }
+    assert graph["confirm-review-completion"]["routes"] == {
+        "complete": {"to": "decide-review", "effect": "advance"},
+        "unmet": {"to": "decide-task-rework-authority", "effect": "advance"},
+        "unverified": {"to": "review", "effect": "rework"},
+    }
+    assert graph["decide-review"]["routes"] == {
+        "clean": {"to": "assess-goal", "effect": "advance"},
+        "blocking": {"to": "decide-task-rework-authority", "effect": "advance"},
+        "low-disposition": {"to": "record-low-disposition", "effect": "advance"},
+        "inconsistent": {"to": "review", "effect": "rework"},
+    }
+    assert graph["decide-task-rework-authority"]["routes"] == {
+        "remediation": {"to": "decide-implementation-owner", "effect": "advance"},
+        "user-direction": {"to": "await-user-direction", "effect": "advance"},
+    }
+    authority_options = options(task, "task-rework-authority-decision")
+    assert set(authority_options) == {"remediation", "user-direction"}
+    assert normalized_guards(authority_options["remediation"]) == {
+        ("review", "review-mode", None, "equals", "remediation-eligible")
+    }
+    assert normalized_guards(authority_options["user-direction"]) == {
+        ("review", "review-mode", None, "equals", "confirmation-only")
+    }
+    assert graph["choose-user-direction"]["routes"] == {
+        "fix-and-review": {
+            "to": "decide-implementation-owner",
+            "effect": "advance",
+        },
+        "stop": {"to": "assess-goal", "effect": "advance"},
+    }
+    assert (
+        graph["decide-implementation-owner"]["routes"]["clear"]["to"]
+        == "decide-verification-owner"
+    )
+    assert (
+        graph["decide-verification-owner"]["routes"]["clear"]["to"]
+        == "decide-documentation-owner"
+    )
+    assert graph["decide-documentation-owner"]["routes"]["clear"] == {
+        "to": "review",
+        "effect": "rework",
+    }
+    for definition_id, item_id in (
+        ("implementation-owner-decision", "implementation-rework-obligations"),
+        ("verification-owner-decision", "verification-rework-obligations"),
+        ("documentation-owner-decision", "documentation-rework-obligations"),
+    ):
+        owner_options = options(task, definition_id)
+        assert normalized_guards(owner_options["required"]) == {
+            ("review", item_id, None, "at_least", 1),
+        }
+        assert normalized_guards(owner_options["clear"]) == {
+            ("review", item_id, None, "equals", 0),
+        }
+
+    guarded_items = {
+        guard["evidence"]["item"]
+        for definition in task["node_definitions"].values()
+        for option in definition.get("options", [])
+        for guard in option.get("guards", [])
+    }
+    assert "unresolved-implementation-findings" not in guarded_items
+    assert "unresolved-documentation-findings" not in guarded_items
+    assert {
+        "implementation-rework-obligations",
+        "verification-rework-obligations",
+        "documentation-rework-obligations",
+    } <= guarded_items
+    review_options = options(task, "review-decision")
+    assert normalized_guards(review_options["inconsistent"]) == {
+        ("review", "unresolved-valid-findings", None, "at_least", 1),
+        ("review", "effective-medium-or-higher-findings", None, "equals", 0),
+        ("review", "effective-low-findings", None, "equals", 0),
+    }
+
+
+def test_goal_routes_completion_findings_authority_and_low_handling_serially() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    graph = nodes(goal)
+    record_items = {
+        item["id"] for item in goal["node_definitions"]["evidence-record"]["items"]
+    }
+    assert "current-rework-obligations" not in record_items
+    assert "extra-review-authorization" not in record_items
+    assert "authorized-rework-decision" not in goal["node_definitions"]
+    assert graph["confirm-completion-assessment"]["routes"] == {
+        "complete": {"to": "decide-evidence", "effect": "advance"},
+        "unmet": {"to": "decide-goal-rework-authority", "effect": "advance"},
+        "unverified": {"to": "record-evidence", "effect": "rework"},
+    }
+    assert graph["decide-evidence"]["routes"] == {
+        "clean": {"to": "assess-goal", "effect": "advance"},
+        "blocking": {"to": "decide-goal-rework-authority", "effect": "advance"},
+        "low-only": {"to": "record-hardening-deferral", "effect": "advance"},
+        "inconsistent": {"to": "record-evidence", "effect": "rework"},
+    }
+    assert graph["decide-goal-rework-authority"]["routes"] == {
+        "remediation": {"to": "complete-work", "effect": "rework"},
+        "user-direction": {"to": "await-user-direction", "effect": "advance"},
+        "closeout-direction": {"to": "await-user-direction", "effect": "advance"},
+    }
+    authority_options = options(goal, "goal-rework-authority-decision")
+    assert set(authority_options) == {
+        "remediation",
+        "user-direction",
+        "closeout-direction",
+    }
+    assert normalized_guards(authority_options["remediation"]) == {
+        (
+            "record-evidence",
+            "review-mode",
+            None,
+            "equals",
+            "remediation-eligible",
+        )
+    }
+    assert normalized_guards(authority_options["user-direction"]) == {
+        (
+            "record-evidence",
+            "review-mode",
+            None,
+            "equals",
+            "hardening-deferral-eligible",
+        )
+    }
+    assert normalized_guards(authority_options["closeout-direction"]) == {
+        (
+            "record-evidence",
+            "review-mode",
+            None,
+            "equals",
+            "closeout-not-required",
+        )
+    }
+    goal_options = options(goal, "evidence-decision")
+    assert normalized_guards(goal_options["inconsistent"]) == {
+        ("record-evidence", "unresolved-valid-findings", None, "at_least", 1),
+        (
+            "record-evidence",
+            "effective-medium-or-higher-findings",
+            None,
+            "equals",
+            0,
+        ),
+        ("record-evidence", "effective-low-findings", None, "equals", 0),
+    }
+    assert graph["record-hardening-deferral"]["next"] == "decide-low-handling"
+    assert graph["decide-low-handling"]["routes"] == {
+        "settle": {"to": "record-low-disposition", "effect": "advance"},
+        "defer": {"to": "record-hardening-handoff", "effect": "advance"},
+    }
+
+
+def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (
+    None
+):
+    procedure = load_procedure("aquarium-validation-v2.yaml")
+    graph = nodes(procedure)
+    assert graph["final-review"]["next"] == "decide-final-review-operation"
+    assert graph["decide-final-review-operation"]["routes"] == {
+        "passed": {"to": "confirm-final-review-findings", "effect": "advance"},
+        "incomplete": {"to": "record-review-operation-incomplete", "effect": "advance"},
+    }
+    assert (
+        graph["confirm-final-review-findings"]["routes"]["resolved"]["to"]
+        == "confirm-completion-assessment"
+    )
+    assert graph["confirm-completion-assessment"]["routes"] == {
+        "complete": {"to": "decide-required-evidence", "effect": "advance"},
+        "unmet": {"to": "decide-validation-rework-authority", "effect": "advance"},
+        "unverified": {"to": "record-incomplete", "effect": "advance"},
+    }
+    assert graph["decide-required-evidence"]["routes"] == {
+        "complete": {"to": "decide-current-blockers", "effect": "advance"},
+        "incomplete": {"to": "record-incomplete", "effect": "advance"},
+    }
+    assert graph["decide-current-blockers"]["routes"] == {
+        "clear": {"to": "decide-final-review", "effect": "advance"},
+        "blocking": {"to": "decide-validation-rework-authority", "effect": "advance"},
+    }
+    assert graph["decide-validation-rework-authority"]["routes"] == {
+        "remediation": {"to": "audit", "effect": "rework"},
+        "user-direction": {"to": "await-user-direction", "effect": "advance"},
+    }
+    final_options = options(procedure, "final-review-decision")
+    assert normalized_guards(final_options["validated"]) == {
+        ("final-review", "pending-applicable-low-dispositions", None, "equals", 0)
+    }
+    assert normalized_guards(final_options["low-disposition"]) == {
+        ("final-review", "pending-applicable-low-dispositions", None, "at_least", 1)
+    }
+
+
+def test_low_settlement_records_and_guards_carried_completion_state() -> None:
+    for name in (
+        "aquarium-task-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-validation-v2.yaml",
+    ):
+        procedure = load_procedure(name)
+        low_items = {
+            item["id"]: item
+            for item in procedure["node_definitions"]["low-disposition-record"]["items"]
+        }
+        assert {
+            "completion-assessment-summary",
+            "completion-unmet-criteria",
+            "completion-unverified-criteria",
+        } <= low_items.keys()
+        completed = options(procedure, "low-completion-decision")["completed"]
+        assert normalized_guards(completed) == {
+            ("record-low-disposition", "pending-low-dispositions", None, "equals", 0),
+            ("record-low-disposition", "current-blocking-findings", None, "equals", 0),
+            ("record-low-disposition", "completion-unmet-criteria", None, "equals", 0),
+            (
+                "record-low-disposition",
+                "completion-unverified-criteria",
+                None,
+                "equals",
+                0,
+            ),
+        }
+        selected = {
+            item
+            for source in nodes(procedure)["decide-low-completion"]["evidence_from"]
+            if source["node"] == "record-low-disposition"
+            for item in source.get("items", [])
+        }
+        assert {
+            "completion-assessment-summary",
+            "completion-unmet-criteria",
+            "completion-unverified-criteria",
+        } <= selected
 
 
 def test_user_direction_record_completes_before_the_unset_choice_node() -> None:
-    for name in ("aquarium-goal-v2.yaml", "aquarium-validation-v2.yaml"):
+    for name in (
+        "aquarium-task-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-validation-v2.yaml",
+    ):
         procedure = load_procedure(name)
         nodes = {node["id"]: node for node in procedure["graph"]["nodes"]}
 
@@ -264,6 +441,30 @@ def test_user_direction_record_completes_before_the_unset_choice_node() -> None:
             nodes["await-user-direction"]["use"]
         ]["instructions"]
         assert isinstance(instructions, list) and instructions
+
+
+def test_review_evidence_uses_one_source_entry_and_only_needed_items() -> None:
+    cases = (
+        ("aquarium-task-v2.yaml", "decide-review", "review"),
+        ("aquarium-validation-v2.yaml", "decide-final-review", "final-review"),
+    )
+    for name, node_id, source_id in cases:
+        procedure = load_procedure(name)
+        sources = [
+            source
+            for source in nodes(procedure)[node_id]["evidence_from"]
+            if source["node"] == source_id
+        ]
+        assert len(sources) == 1
+
+    validation = load_procedure("aquarium-validation-v2.yaml")
+    completion_sources = nodes(validation)["confirm-completion-assessment"][
+        "evidence_from"
+    ]
+    selected = {
+        item for source in completion_sources for item in source.get("items", [])
+    }
+    assert "review-mode" not in selected
 
 
 def test_goal_kind_contract_keeps_closeout_substitute_narrow() -> None:

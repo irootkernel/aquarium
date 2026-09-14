@@ -4048,6 +4048,91 @@ else:
         self.assertEqual(podway["status"], "degraded")
         self.assertEqual(target.read_bytes(), before)
 
+    def test_review_completion_and_owner_items_are_handler_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = (
+            (
+                "aquarium-task-v2.yaml",
+                "review-record",
+                "completion-assessment-summary",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "review-record",
+                "implementation-rework-obligations",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "evidence-record",
+                "completion-unmet-criteria",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "final-review-record",
+                "completion-unverified-criteria",
+            ),
+        )
+        for name, definition_id, item_id in cases:
+            with self.subTest(procedure=name, item=item_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                definition = document["node_definitions"][definition_id]
+                definition["items"] = [
+                    item for item in definition["items"] if item["id"] != item_id
+                ]
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"missing_required_items:{definition_id}:{item_id}", reasons
+                )
+
+    def test_review_modes_are_handler_choice_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = (
+            (
+                "aquarium-task-v2.yaml",
+                "review-record",
+                "confirmation-only",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "evidence-record",
+                "hardening-deferral-eligible",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "final-review-record",
+                "confirmation-only",
+            ),
+        )
+        for name, definition_id, removed_choice in cases:
+            with self.subTest(procedure=name, choice=removed_choice):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                definition = document["node_definitions"][definition_id]
+                review_mode = next(
+                    item for item in definition["items"] if item["id"] == "review-mode"
+                )
+                review_mode["choices"].remove(removed_choice)
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"missing_required_choices:{definition_id}:review-mode",
+                    reasons,
+                )
+
     def test_goal_and_validation_waits_require_low_blocker_evidence(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         for name in ("aquarium-goal-v2.yaml", "aquarium-validation-v2.yaml"):
@@ -4078,6 +4163,50 @@ else:
                     "record-low-disposition:current-blocking-findings,"
                     "record-low-disposition:low-disposition-summary,"
                     "record-low-disposition:source-review-basis",
+                    reasons,
+                )
+
+    def test_serial_review_gate_routes_are_handler_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = (
+            (
+                "aquarium-task-v2.yaml",
+                "decide-review-ci",
+                "passed",
+                "confirm-review-completion",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "choose-user-direction",
+                "fix-and-review",
+                "complete-work",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "decide-required-evidence",
+                "complete",
+                "decide-current-blockers",
+            ),
+        )
+        for name, node_id, option_id, destination in cases:
+            with self.subTest(procedure=name, node=node_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                node = next(
+                    item for item in document["graph"]["nodes"] if item["id"] == node_id
+                )
+                self.assertEqual(node["routes"][option_id]["to"], destination)
+                node["routes"][option_id]["to"] = "closeout"
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"incompatible_route:{node_id}:{option_id}",
                     reasons,
                 )
 
@@ -4137,13 +4266,21 @@ else:
         cases.append(("malformed_items:low-disposition-record", document))
 
         document = copy.deepcopy(base)
+        malformed_index = len(
+            document["node_definitions"]["low-disposition-record"]["items"]
+        )
         document["node_definitions"]["low-disposition-record"]["items"].append(1)
-        cases.append(("malformed_item:low-disposition-record:8", document))
+        cases.append(
+            (f"malformed_item:low-disposition-record:{malformed_index}", document)
+        )
 
         document = copy.deepcopy(base)
-        document["node_definitions"]["low-disposition-record"]["items"][6][
-            "choices"
-        ] = "same-as-review"
+        coverage_item = next(
+            item
+            for item in document["node_definitions"]["low-disposition-record"]["items"]
+            if item["id"] == "coverage-relationship"
+        )
+        coverage_item["choices"] = "same-as-review"
         cases.append(
             ("malformed_choices:low-disposition-record:coverage-relationship", document)
         )
@@ -4338,6 +4475,7 @@ else:
                     "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
                     "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
                     "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
+                    "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
                 },
                 "aquarium-goal-v2.yaml": {
                     "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
@@ -4346,6 +4484,7 @@ else:
                     "8ca12a8ba36e9dd035bc70c903b8a5a0a9e4fd6db00cf75e2448f66082ab6ac6",
                     "42eee85a406f46c3c7c40a467bfa1764d1e0b3042247b0604564ea20547f8d96",
                     "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
+                    "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
                 },
                 "aquarium-validation-v2.yaml": {
                     "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
@@ -4353,6 +4492,7 @@ else:
                     "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
                     "9f3c0a0628f6ea820dbffee2355b949a2d2459e595ea3044d9aa53d81482eb5c",
                     "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
+                    "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
                 },
                 "aquarium-design-v2.yaml": {
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",

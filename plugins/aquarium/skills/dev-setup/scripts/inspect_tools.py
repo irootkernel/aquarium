@@ -149,6 +149,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "0ae730df9ca5854ff61b02679e3ac58aa4508ee35c5a09ba76c35e7d0ef3d45d",
         "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
         "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
+        "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
     },
     "aquarium-goal-v2.yaml": {
         "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
@@ -157,6 +158,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "8ca12a8ba36e9dd035bc70c903b8a5a0a9e4fd6db00cf75e2448f66082ab6ac6",
         "42eee85a406f46c3c7c40a467bfa1764d1e0b3042247b0604564ea20547f8d96",
         "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
+        "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
     },
     "aquarium-validation-v2.yaml": {
         "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
@@ -164,6 +166,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
         "9f3c0a0628f6ea820dbffee2355b949a2d2459e595ea3044d9aa53d81482eb5c",
         "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
+        "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
     },
     "aquarium-design-v2.yaml": {
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
@@ -181,15 +184,37 @@ PODWAY_HANDLER_CONTRACTS = {
             "prepare-implementation",
             "implement",
             "document",
+            "decide-review-ci",
+            "confirm-review-completion",
+            "decide-review",
+            "decide-task-rework-authority",
+            "decide-implementation-owner",
+            "decide-verification-owner",
+            "decide-documentation-owner",
+            "await-user-direction",
+            "choose-user-direction",
             "record-low-disposition",
             "decide-low-result",
             "decide-low-completion",
         },
         "definition_items": {
             "implementation-entry-record": {"implementation-entry-summary"},
+            "review-record": {
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
+                "unresolved-implementation-findings",
+                "unresolved-documentation-findings",
+                "implementation-rework-obligations",
+                "verification-rework-obligations",
+                "documentation-rework-obligations",
+            },
             "low-disposition-record": {
                 "source-review-basis",
                 "low-disposition-summary",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
                 "pending-low-dispositions",
                 "current-blocking-findings",
                 "before-target",
@@ -198,10 +223,51 @@ PODWAY_HANDLER_CONTRACTS = {
                 "low-disposition-verification",
             },
         },
+        "definition_choices": {
+            ("review-record", "review-mode"): {
+                "remediation-eligible",
+                "confirmation-only",
+            },
+        },
         "routes": {
             "decide-verification": {"failed": "verify"},
+            "decide-review-ci": {
+                "passed": "confirm-review-completion",
+                "failed": "decide-task-rework-authority",
+            },
+            "confirm-review-completion": {
+                "complete": "decide-review",
+                "unmet": "decide-task-rework-authority",
+                "unverified": "review",
+            },
+            "decide-review": {
+                "clean": "assess-goal",
+                "blocking": "decide-task-rework-authority",
+                "low-disposition": "record-low-disposition",
+                "inconsistent": "review",
+            },
+            "decide-task-rework-authority": {
+                "remediation": "decide-implementation-owner",
+                "user-direction": "await-user-direction",
+            },
+            "decide-implementation-owner": {
+                "required": "implement",
+                "clear": "decide-verification-owner",
+            },
+            "decide-verification-owner": {
+                "required": "verify",
+                "clear": "decide-documentation-owner",
+            },
+            "decide-documentation-owner": {
+                "required": "document",
+                "clear": "review",
+            },
             "decide-low-result": {"passed": "decide-low-completion"},
             "decide-low-completion": {"completed": "assess-goal"},
+            "choose-user-direction": {
+                "fix-and-review": "decide-implementation-owner",
+                "stop": "assess-goal",
+            },
         },
         "evidence": {
             "implement": {
@@ -223,6 +289,11 @@ PODWAY_HANDLER_CONTRACTS = {
             "decide-review-basis",
             "decide-operational-evidence",
             "confirm-finding-validity",
+            "confirm-completion-assessment",
+            "decide-evidence",
+            "decide-goal-rework-authority",
+            "record-hardening-deferral",
+            "decide-low-handling",
             "await-user-direction",
             "choose-user-direction",
             "record-low-disposition",
@@ -236,9 +307,15 @@ PODWAY_HANDLER_CONTRACTS = {
                 "goal-verification-result",
                 "goal-review-readiness-result",
                 "confirmation-needed-findings",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
             },
             "low-disposition-record": {
                 "source-review-basis",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
                 "pending-low-dispositions",
                 "current-blocking-findings",
                 "before-target",
@@ -257,14 +334,53 @@ PODWAY_HANDLER_CONTRACTS = {
                 "native-review",
                 "validated-closeout",
             },
+            ("evidence-record", "review-mode"): {
+                "remediation-eligible",
+                "hardening-deferral-eligible",
+                "closeout-not-required",
+            },
         },
         "routes": {
             "decide-review-basis": {
                 "native-review": "decide-operational-evidence",
                 "final-closeout": "record-closeout-substitute",
+                "invalid-substitute": "record-evidence",
+            },
+            "decide-operational-evidence": {
+                "passed": "confirm-finding-validity",
+                "verification-incomplete": "complete-work",
+                "review-incomplete": "record-evidence",
+            },
+            "confirm-finding-validity": {
+                "resolved": "confirm-completion-assessment",
+                "unresolved": "record-evidence",
+            },
+            "confirm-completion-assessment": {
+                "complete": "decide-evidence",
+                "unmet": "decide-goal-rework-authority",
+                "unverified": "record-evidence",
+            },
+            "decide-evidence": {
+                "clean": "assess-goal",
+                "blocking": "decide-goal-rework-authority",
+                "low-only": "record-hardening-deferral",
+                "inconsistent": "record-evidence",
+            },
+            "decide-goal-rework-authority": {
+                "remediation": "complete-work",
+                "user-direction": "await-user-direction",
+                "closeout-direction": "await-user-direction",
+            },
+            "decide-low-handling": {
+                "settle": "record-low-disposition",
+                "defer": "record-hardening-handoff",
             },
             "decide-low-result": {"passed": "decide-low-completion"},
             "decide-low-completion": {"completed": "assess-goal"},
+            "choose-user-direction": {
+                "fix-and-review": "complete-work",
+                "stop": "assess-goal",
+            },
         },
         "evidence": {
             "await-user-direction": {
@@ -278,6 +394,13 @@ PODWAY_HANDLER_CONTRACTS = {
     "aquarium-validation-v2.yaml": {
         "nodes": {
             "record-audit-low-basis",
+            "decide-final-review-operation",
+            "confirm-final-review-findings",
+            "confirm-completion-assessment",
+            "decide-required-evidence",
+            "decide-current-blockers",
+            "decide-validation-rework-authority",
+            "decide-final-review",
             "await-user-direction",
             "choose-user-direction",
             "record-low-disposition",
@@ -300,18 +423,30 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "final-review-record": {
                 "applicable-obligation-summary",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
                 "pending-applicable-low-dispositions",
                 "current-applicable-blockers",
                 "required-evidence-gaps",
             },
             "low-disposition-record": {
                 "source-review-basis",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
                 "pending-low-dispositions",
                 "current-blocking-findings",
                 "before-target",
                 "after-target",
                 "coverage-relationship",
                 "low-disposition-verification",
+            },
+        },
+        "definition_choices": {
+            ("final-review-record", "review-mode"): {
+                "remediation-eligible",
+                "confirmation-only",
             },
         },
         "routes": {
@@ -323,10 +458,34 @@ PODWAY_HANDLER_CONTRACTS = {
                 "low-only": "record-audit-low-basis",
                 "user-direction": "await-user-direction",
             },
+            "decide-final-review-operation": {
+                "passed": "confirm-final-review-findings",
+                "incomplete": "record-review-operation-incomplete",
+            },
+            "confirm-final-review-findings": {
+                "resolved": "confirm-completion-assessment",
+                "unresolved": "record-incomplete",
+            },
+            "confirm-completion-assessment": {
+                "complete": "decide-required-evidence",
+                "unmet": "decide-validation-rework-authority",
+                "unverified": "record-incomplete",
+            },
+            "decide-required-evidence": {
+                "complete": "decide-current-blockers",
+                "incomplete": "record-incomplete",
+            },
+            "decide-current-blockers": {
+                "clear": "decide-final-review",
+                "blocking": "decide-validation-rework-authority",
+            },
+            "decide-validation-rework-authority": {
+                "remediation": "audit",
+                "user-direction": "await-user-direction",
+            },
             "decide-final-review": {
                 "low-disposition": "record-low-disposition",
-                "incomplete": "record-incomplete",
-                "review-operation-incomplete": "record-review-operation-incomplete",
+                "validated": "assess-goal",
             },
             "decide-low-result": {"passed": "decide-low-completion"},
             "decide-low-completion": {"completed": "assess-goal"},

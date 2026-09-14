@@ -35,19 +35,46 @@ SUCCESS_OPTIONS = {
     "approve-diff": "approved",
     "classify-scope": "task",
     "decide-cause": "established",
-    "decide-evidence": "supported",
+    "decide-evidence": "clean",
+    "decide-goal-rework-authority": "remediation",
+    "decide-low-handling": "settle",
     "decide-low-completion": "completed",
     "decide-low-result": "passed",
     "decide-operational-evidence": "passed",
     "decide-review-basis": "native-review",
     "decide-final-review": "validated",
+    "decide-final-review-operation": "passed",
+    "confirm-final-review-findings": "resolved",
+    "confirm-completion-assessment": "complete",
+    "confirm-review-completion": "complete",
+    "decide-required-evidence": "complete",
+    "decide-current-blockers": "clear",
+    "decide-validation-rework-authority": "remediation",
     "decide-gaps": "clean",
     "decide-quality": "passed",
-    "decide-review": "approved",
+    "decide-review": "clean",
+    "decide-review-ci": "passed",
+    "decide-task-rework-authority": "remediation",
+    "decide-implementation-owner": "clear",
+    "decide-verification-owner": "clear",
+    "decide-documentation-owner": "clear",
     "decide-verification": "passed",
     "confirm-review-findings": "resolved",
     "confirm-finding-validity": "resolved",
     "assess-goal": "achieved",
+}
+
+TASK_OWNER_SCENARIOS = {
+    "task-completion-implementation-owner": "implementation-rework-obligations",
+    "task-completion-verification-owner": "verification-rework-obligations",
+    "task-completion-documentation-owner": "documentation-rework-obligations",
+}
+
+COMPLETION_GAP_SCENARIOS = {
+    "goal-completion-unmet": ("aquarium-goal-v2", "unmet"),
+    "goal-completion-unverified": ("aquarium-goal-v2", "unverified"),
+    "validation-completion-unmet": ("aquarium-validation-v2", "unmet"),
+    "validation-completion-unverified": ("aquarium-validation-v2", "unverified"),
 }
 
 GOAL_OPERATIONAL_VARIANTS = (
@@ -152,7 +179,12 @@ EXPECTED_NATIVE_CASE_VARIANTS = {
     },
     "C-08": {"goal-low-blocker-wait", "validation-low-blocker-wait"},
     "C-09": set(GOAL_KIND_SCENARIOS),
-    "C-10": {"goal-medium-wait", "validation-medium-wait"},
+    "C-10": {
+        "goal-closeout-unmet-wait",
+        "goal-medium-wait",
+        "task-confirmation-only-wait",
+        "validation-medium-wait",
+    },
     "C-16": set(VALIDATION_FINAL_REVIEW_SCENARIOS),
 }
 
@@ -177,7 +209,10 @@ CASE_ASSERTIONS = {
         "current settlement blocker routed to an unset user choice",
     ],
     "C-09": ["goal kind independently constrained the closeout substitute"],
-    "C-10": ["Medium-or-higher evidence routed to an unset user choice"],
+    "C-10": [
+        "rework evidence routed to an unset user choice",
+        "each exercised user decision authorized only one correction pass",
+    ],
     "C-16": [
         "validation final-review outcomes and evidence gaps selected distinct routes",
         "guard rejection preserved domain state",
@@ -446,6 +481,8 @@ class ManagedRuntime:
         self.correction_case_variants: dict[str, set[str]] = {}
         self.validation_source_basis_verified = False
         self.low_blocker_readback_verified = False
+        self.task_one_shot_decision_used = False
+        self.goal_one_shot_decision_used = False
         self.fixture_target = ""
         self.current_procedure_id = ""
         self.scenario = "standard"
@@ -1121,8 +1158,12 @@ class ManagedRuntime:
                 expected_exit=None,
             )
         if len(templates) != 1:
+            node = observation["guidance"]["node"]["graph_node_id"]
+            allowed = observation["guidance"].get("allowed_option_ids", [])
             raise RuntimeQualificationError(
-                f"observation omitted one decision template for {option}"
+                "observation omitted one decision template: "
+                f"scenario={self.scenario}; node={node}; option={option}; "
+                f"allowed={allowed}"
             )
         argv = list(templates[0]["argv"])[1:]
         if "--json" not in argv:
@@ -1347,6 +1388,14 @@ class ManagedRuntime:
                 )
             elif item_id in {"audit-basis-target", "before-target", "after-target"}:
                 value = self.fixture_target
+            elif (
+                self.scenario == "goal-hardening-defer"
+                and item_id == "hardening-deferral-evidence-sha256"
+            ):
+                value = (
+                    "sha256:"
+                    + hashlib.sha256(b"qualification-hardening-deferral").hexdigest()
+                )
             else:
                 value = f"qualification {node} {item_id}"
             return {"type": "text", "value": value}
@@ -1366,6 +1415,18 @@ class ManagedRuntime:
                 and item_id == "required-evidence-gaps"
             ):
                 value = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][1]
+            if (
+                self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+                and node == "audit"
+                and item_id
+                in {
+                    "confirmed-gap-count",
+                    "blocking-gap-count",
+                    "eligible-low-gap-count",
+                    "confirmation-needed-gap-count",
+                }
+            ):
+                value = 0
             if (
                 self.scenario == "goal-operational-matrix"
                 and node == "record-evidence"
@@ -1390,6 +1451,30 @@ class ManagedRuntime:
                 }
             ):
                 value = 0
+            if (
+                self.scenario.startswith("goal-completion-")
+                and node == ("record-evidence")
+                and item_id
+                in {
+                    "unresolved-valid-findings",
+                    "effective-medium-or-higher-findings",
+                    "effective-low-findings",
+                    "confirmation-needed-findings",
+                }
+            ):
+                value = 0
+            if (
+                self.scenario.startswith("validation-completion-")
+                and node == ("audit")
+                and item_id
+                in {
+                    "confirmed-gap-count",
+                    "blocking-gap-count",
+                    "eligible-low-gap-count",
+                    "confirmation-needed-gap-count",
+                }
+            ):
+                value = 0
             if self.scenario == "medium-wait" and node == "record-evidence":
                 if item_id in {
                     "effective-medium-or-higher-findings",
@@ -1397,6 +1482,28 @@ class ManagedRuntime:
                 }:
                     value = 1
                 elif item_id == "effective-low-findings":
+                    value = 0
+            if (
+                self.scenario == "goal-finding-inconsistent"
+                and node == "record-evidence"
+                and item_id
+                in {
+                    "unresolved-valid-findings",
+                    "effective-medium-or-higher-findings",
+                    "effective-low-findings",
+                }
+            ):
+                value = int(
+                    item_id == "unresolved-valid-findings"
+                    and self.node_visits.get(node) == 1
+                )
+            if self.scenario == "goal-hardening-defer" and node == "record-evidence":
+                if item_id in {
+                    "unresolved-valid-findings",
+                    "effective-low-findings",
+                }:
+                    value = 1
+                elif item_id == "effective-medium-or-higher-findings":
                     value = 0
             if self.scenario == "validation-medium-wait":
                 if node == "audit" and item_id in {
@@ -1441,6 +1548,77 @@ class ManagedRuntime:
             ):
                 value = len(applicable_low_ids)
             if (
+                self.scenario == "task-completion-unverified"
+                and node == "review"
+                and self.node_visits.get("review") == 2
+                and item_id == "completion-unverified-criteria"
+            ):
+                value = 1
+            if (
+                self.scenario == "task-completion-mixed-owners"
+                and node == "review"
+                and self.node_visits.get("review") == 2
+                and item_id
+                in {
+                    "completion-unmet-criteria",
+                    "implementation-rework-obligations",
+                    "verification-rework-obligations",
+                    "documentation-rework-obligations",
+                }
+            ):
+                value = 1
+            if (
+                self.scenario
+                in {
+                    *TASK_OWNER_SCENARIOS,
+                    "task-completion-owner-inconsistent",
+                    "task-finding-inconsistent",
+                }
+                and node == "review"
+                and self.node_visits.get("review") == 2
+            ):
+                owned_item = TASK_OWNER_SCENARIOS.get(self.scenario)
+                if self.scenario != "task-finding-inconsistent" and item_id in {
+                    "completion-unmet-criteria",
+                    owned_item,
+                }:
+                    value = 1
+                if (
+                    self.scenario == "task-finding-inconsistent"
+                    and item_id == "unresolved-valid-findings"
+                ):
+                    value = 1
+            if (
+                self.scenario == "task-confirmation-only-wait"
+                and node == "review"
+                and self.node_visits.get("review") in {2, 3}
+                and item_id
+                in {
+                    "completion-unmet-criteria",
+                    "implementation-rework-obligations",
+                }
+            ):
+                value = 1
+            if (
+                self.scenario == "goal-closeout-unmet-wait"
+                and node == "record-evidence"
+                and item_id == "completion-unmet-criteria"
+            ):
+                value = 1
+            if (
+                self.scenario in COMPLETION_GAP_SCENARIOS
+                and node
+                == (
+                    "record-evidence"
+                    if self.current_procedure_id == "aquarium-goal-v2"
+                    else "final-review"
+                )
+                and self.node_visits.get(node) == 1
+            ):
+                _procedure, gap = COMPLETION_GAP_SCENARIOS[self.scenario]
+                if item_id == f"completion-{gap}-criteria":
+                    value = 1
+            if (
                 node == "record-audit-low-basis"
                 and item_id == "audit-low-finding-count"
             ):
@@ -1461,17 +1639,32 @@ class ManagedRuntime:
                     value = 0 if round_index >= 2 else 1
                 elif item_id == "current-blocking-findings":
                     value = 0
-            if node == "review" and self.task_review_reworked:
-                if self.task_medium_reworked and item_id in {
-                    "effective-low-findings",
-                    "unresolved-valid-findings",
-                }:
+            if self.scenario == "standard" and node == "review":
+                if not self.task_review_reworked and item_id == (
+                    "implementation-rework-obligations"
+                ):
+                    value = 1
+                elif (
+                    self.task_review_reworked
+                    and self.task_medium_reworked
+                    and item_id
+                    in {
+                        "effective-low-findings",
+                        "unresolved-valid-findings",
+                    }
+                ):
                     value = 2
-                elif not self.task_medium_reworked and item_id in {
-                    "effective-medium-or-higher-findings",
-                    "unresolved-valid-findings",
-                    "unresolved-implementation-findings",
-                }:
+                elif (
+                    self.task_review_reworked
+                    and not self.task_medium_reworked
+                    and item_id
+                    in {
+                        "effective-medium-or-higher-findings",
+                        "unresolved-valid-findings",
+                        "unresolved-implementation-findings",
+                        "implementation-rework-obligations",
+                    }
+                ):
                     value = 1
             return {"type": "integer", "value": value}
         if item_type == "choice":
@@ -1486,26 +1679,42 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
-                "hardening-deferral-state": "not-applicable",
-                "goal-kind": goal_kind or "member-task",
-                "review-evidence-kind": review_evidence_kind or "native-review",
+                "hardening-deferral-state": (
+                    "recorded"
+                    if self.scenario == "goal-hardening-defer"
+                    else "not-applicable"
+                ),
+                "goal-kind": (
+                    "epic-closeout"
+                    if self.scenario == "goal-closeout-unmet-wait"
+                    else goal_kind or "member-task"
+                ),
+                "review-evidence-kind": (
+                    "validated-closeout"
+                    if self.scenario == "goal-closeout-unmet-wait"
+                    else review_evidence_kind or "native-review"
+                ),
                 "review-mode": (
                     "confirmation-only"
-                    if self.scenario == "validation-medium-wait"
+                    if self.scenario
+                    in {"validation-medium-wait", "task-confirmation-only-wait"}
                     else (
                         "hardening-deferral-eligible"
-                        if self.scenario == "medium-wait"
-                        else "remediation-eligible"
+                        if self.scenario in {"medium-wait", "goal-hardening-defer"}
+                        else (
+                            "closeout-not-required"
+                            if self.scenario == "goal-closeout-unmet-wait"
+                            else "remediation-eligible"
+                        )
                     )
-                ),
-                "extra-review-authorization": (
-                    "pending" if self.scenario == "medium-wait" else "not-required"
                 ),
                 "audit-basis-status": "applicable",
                 "coverage-relationship": "review-predates-low-delta",
                 "ci-decision": (
                     "fail"
-                    if node == "review" and not self.task_review_reworked
+                    if self.scenario == "standard"
+                    and node == "review"
+                    and not self.task_review_reworked
                     else "pass"
                 ),
                 "reproduction-state": "reproduced",
@@ -1968,6 +2177,40 @@ class ManagedRuntime:
             node = observation["guidance"]["node"]["graph_node_id"]
             node_type = observation["guidance"]["node"]["node_type"]
             self.node_visits[node] = self.node_visits.get(node, 0) + 1
+            if (
+                scenario == "task-confirmation-only-wait"
+                and node == "choose-user-direction"
+                and not self.task_one_shot_decision_used
+            ):
+                if (
+                    node_type != "decision"
+                    or status["session"]["lifecycle"] != "running"
+                    or self.node_visits.get("decide-task-rework-authority") != 1
+                ):
+                    raise RuntimeQualificationError(
+                        "task one-shot authorization did not begin at a fresh active decision"
+                    )
+                decision = self.decide(observation, "fix-and-review")
+                self.decision_destination(decision, "decide-implementation-owner")
+                self.task_one_shot_decision_used = True
+                continue
+            if (
+                scenario == "medium-wait"
+                and node == "choose-user-direction"
+                and not self.goal_one_shot_decision_used
+            ):
+                if (
+                    node_type != "decision"
+                    or status["session"]["lifecycle"] != "running"
+                    or self.node_visits.get("decide-goal-rework-authority") != 1
+                ):
+                    raise RuntimeQualificationError(
+                        "goal one-shot authorization did not begin at a fresh active decision"
+                    )
+                decision = self.decide(observation, "fix-and-review")
+                self.decision_destination(decision, "complete-work")
+                self.goal_one_shot_decision_used = True
+                continue
             if scenario != "standard" and node == "choose-user-direction":
                 if (
                     node_type != "decision"
@@ -1991,9 +2234,35 @@ class ManagedRuntime:
                         )
                     self.mark_case_variant("C-08", "validation-low-blocker-wait")
                 elif scenario == "medium-wait":
+                    if (
+                        not self.goal_one_shot_decision_used
+                        or self.node_visits.get("choose-user-direction") != 2
+                        or self.node_visits.get("decide-goal-rework-authority") != 2
+                        or self.node_visits.get("complete-work") != 2
+                    ):
+                        raise RuntimeQualificationError(
+                            "goal hardening authority was not consumed exactly once"
+                        )
                     self.mark_case_variant("C-10", "goal-medium-wait")
                 elif scenario == "validation-medium-wait":
                     self.mark_case_variant("C-10", "validation-medium-wait")
+                elif scenario == "task-confirmation-only-wait":
+                    if (
+                        not self.task_one_shot_decision_used
+                        or self.node_visits.get("choose-user-direction") != 2
+                        or self.node_visits.get("decide-task-rework-authority") != 2
+                        or self.node_visits.get("decide-implementation-owner") != 1
+                    ):
+                        raise RuntimeQualificationError(
+                            "task confirmation-only authority was not consumed exactly once"
+                        )
+                    self.mark_case_variant("C-10", "task-confirmation-only-wait")
+                elif scenario == "goal-closeout-unmet-wait":
+                    if self.node_visits.get("decide-goal-rework-authority") != 1:
+                        raise RuntimeQualificationError(
+                            "goal closeout completion gap skipped its authority gate"
+                        )
+                    self.mark_case_variant("C-10", "goal-closeout-unmet-wait")
                 else:
                     raise RuntimeQualificationError(
                         f"unexpected user-direction scenario: {scenario}"
@@ -2004,6 +2273,10 @@ class ManagedRuntime:
                     "node": node,
                     "lifecycle": status["session"]["lifecycle"],
                     "decision_unset": True,
+                    "one_shot_decision_used": (
+                        self.task_one_shot_decision_used
+                        or self.goal_one_shot_decision_used
+                    ),
                 }
             if node_type == "action":
                 self.fill_action(observation, procedure_id)
@@ -2053,12 +2326,13 @@ class ManagedRuntime:
 
             if (
                 procedure_id == "aquarium-task-v2"
-                and node == "decide-review"
+                and node == "decide-review-ci"
                 and not self.task_review_reworked
+                and scenario == "standard"
             ):
-                observation = self.reject_guarded_decision(observation, "approved")
+                observation = self.reject_guarded_decision(observation, "passed")
                 self.task_review_guard_failure = True
-                self.decide(observation, "ci-failed")
+                self.decide(observation, "failed")
                 self.task_review_reworked = True
                 continue
 
@@ -2066,9 +2340,111 @@ class ManagedRuntime:
                 procedure_id == "aquarium-task-v2"
                 and node == "decide-review"
                 and not self.task_medium_reworked
+                and scenario == "standard"
             ):
-                self.decide(observation, "implementation-changes")
+                self.decide(observation, "blocking")
+                continue
+
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "decide-implementation-owner"
+                and scenario == "standard"
+                and self.node_visits.get("review") == 1
+            ):
+                self.decide(observation, "required")
+                continue
+
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "decide-implementation-owner"
+                and not self.task_medium_reworked
+                and "required" in observation["guidance"]["allowed_option_ids"]
+                and scenario in {"standard", "task-completion-mixed-owners"}
+            ):
+                self.decide(observation, "required")
                 self.task_medium_reworked = True
+                continue
+
+            if (
+                scenario == "task-confirmation-only-wait"
+                and node == "decide-implementation-owner"
+            ):
+                self.decide(observation, "required")
+                continue
+
+            if (
+                scenario == "task-completion-unverified"
+                and node == "confirm-review-completion"
+                and self.node_visits.get("review") == 2
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unverified")
+                continue
+
+            if (
+                scenario == "task-completion-mixed-owners"
+                and node == "confirm-review-completion"
+                and self.node_visits.get("review") == 2
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unmet")
+                continue
+
+            if (
+                scenario
+                in {
+                    *TASK_OWNER_SCENARIOS,
+                    "task-completion-owner-inconsistent",
+                }
+                and node == "confirm-review-completion"
+                and self.node_visits.get("review") == 2
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unmet")
+                continue
+
+            if (
+                scenario == "task-confirmation-only-wait"
+                and node == "confirm-review-completion"
+                and self.node_visits.get("review") in {2, 3}
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unmet")
+                continue
+
+            if (
+                scenario == "task-confirmation-only-wait"
+                and node == "decide-task-rework-authority"
+            ):
+                observation = self.reject_guarded_decision(observation, "remediation")
+                self.decide(observation, "user-direction")
+                continue
+
+            if (
+                scenario == "task-finding-inconsistent"
+                and node == "decide-review"
+                and self.node_visits.get("review") == 2
+            ):
+                observation = self.reject_guarded_decision(observation, "clean")
+                self.decide(observation, "inconsistent")
+                continue
+
+            if (
+                scenario in COMPLETION_GAP_SCENARIOS
+                and node == "confirm-completion-assessment"
+                and self.node_visits.get(node) == 1
+            ):
+                _expected_procedure, gap = COMPLETION_GAP_SCENARIOS[scenario]
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, gap)
+                continue
+
+            if (
+                scenario == "goal-closeout-unmet-wait"
+                and node == "confirm-completion-assessment"
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unmet")
                 continue
 
             if (
@@ -2083,6 +2459,19 @@ class ManagedRuntime:
                 )
                 invalid = self.decide(observation, "invalid-substitute")
                 self.decision_destination(invalid, "record-evidence")
+                continue
+
+            if scenario == "goal-closeout-unmet-wait" and node == "decide-review-basis":
+                self.decide(observation, "final-closeout")
+                continue
+
+            if (
+                scenario == "goal-finding-inconsistent"
+                and node == "decide-evidence"
+                and self.goal_evidence_round == 1
+            ):
+                observation = self.reject_guarded_decision(observation, "clean")
+                self.decide(observation, "inconsistent")
                 continue
 
             if (
@@ -2127,43 +2516,52 @@ class ManagedRuntime:
             if (
                 scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and procedure_id == "aquarium-validation-v2"
-                and node == "decide-final-review"
             ):
                 expected_outcome, expected_gaps, expected_option = (
                     VALIDATION_FINAL_REVIEW_SCENARIOS[scenario]
                 )
-                actual_outcome = self.read_complete_evidence(
-                    observation, "final-review", "final-review-result"
-                ).get("outcome")
-                actual_gaps = self.read_complete_evidence(
-                    observation, "final-review", "required-evidence-gaps"
-                )
-                if (actual_outcome, actual_gaps) != (
-                    expected_outcome,
-                    expected_gaps,
+                if node == "decide-final-review-operation":
+                    actual_outcome = self.read_complete_evidence(
+                        observation, "final-review", "final-review-result"
+                    ).get("outcome")
+                    if actual_outcome != expected_outcome:
+                        raise RuntimeQualificationError(
+                            "validation final-review operation evidence changed"
+                        )
+                if (
+                    node == "decide-final-review-operation"
+                    and expected_outcome != "pass"
                 ):
-                    raise RuntimeQualificationError(
-                        "validation final-review matrix evidence changed: "
-                        f"scenario={scenario!r}; outcome={actual_outcome!r}; "
-                        f"gaps={actual_gaps!r}"
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    decision = self.decide(observation, "incomplete")
+                    self.decision_destination(
+                        decision, "record-review-operation-incomplete"
                     )
-                if expected_option != "validated":
-                    observation = self.reject_guarded_decision(observation, "validated")
-                if expected_outcome != "pass":
-                    observation = self.reject_guarded_decision(
-                        observation, "incomplete"
+                    self.mark_case_variant("C-16", scenario)
+                    continue
+                if node == "decide-required-evidence" and expected_outcome == "pass":
+                    actual_gaps = self.read_complete_evidence(
+                        observation, "final-review", "required-evidence-gaps"
                     )
-                decision = self.decide(observation, expected_option)
-                self.decision_destination(
-                    decision,
-                    "assess-goal"
-                    if expected_option == "validated"
-                    else "record-review-operation-incomplete"
-                    if expected_option == "review-operation-incomplete"
-                    else "record-incomplete",
-                )
-                self.mark_case_variant("C-16", scenario)
-                continue
+                    if actual_gaps != expected_gaps:
+                        raise RuntimeQualificationError(
+                            "validation required-evidence fixture changed"
+                        )
+                if (
+                    node == "decide-required-evidence"
+                    and expected_outcome == "pass"
+                    and expected_gaps > 0
+                ):
+                    observation = self.reject_guarded_decision(observation, "complete")
+                    decision = self.decide(observation, "incomplete")
+                    self.decision_destination(decision, "record-incomplete")
+                    self.mark_case_variant("C-16", scenario)
+                    continue
+                if node == "decide-final-review" and expected_option == "validated":
+                    decision = self.decide(observation, "validated")
+                    self.decision_destination(decision, "assess-goal")
+                    self.mark_case_variant("C-16", scenario)
+                    continue
 
             if (
                 scenario == "standard"
@@ -2186,6 +2584,62 @@ class ManagedRuntime:
                 continue
 
             if node == "assess-goal":
+                if (
+                    scenario == "task-completion-unverified"
+                    and self.node_visits.get("review", 0) < 3
+                ):
+                    raise RuntimeQualificationError(
+                        "unverified completion did not return to fresh review evidence"
+                    )
+                if scenario == "task-completion-mixed-owners" and (
+                    self.node_visits.get("decide-implementation-owner") != 1
+                    or self.node_visits.get("decide-verification-owner", 0) != 0
+                    or self.node_visits.get("decide-documentation-owner", 0) != 0
+                ):
+                    raise RuntimeQualificationError(
+                        "mixed task owners did not route to implementation first"
+                    )
+                if scenario in TASK_OWNER_SCENARIOS:
+                    expected_node = {
+                        "implementation-rework-obligations": "decide-implementation-owner",
+                        "verification-rework-obligations": "decide-verification-owner",
+                        "documentation-rework-obligations": "decide-documentation-owner",
+                    }[TASK_OWNER_SCENARIOS[scenario]]
+                    if self.node_visits.get(expected_node) != 1:
+                        raise RuntimeQualificationError(
+                            f"{scenario} did not visit its sole owner gate"
+                        )
+                if scenario == "task-completion-owner-inconsistent" and (
+                    self.node_visits.get("decide-implementation-owner") != 1
+                    or self.node_visits.get("decide-verification-owner") != 1
+                    or self.node_visits.get("decide-documentation-owner") != 1
+                    or self.node_visits.get("review", 0) < 3
+                ):
+                    raise RuntimeQualificationError(
+                        "ownerless task completion gap did not return to review"
+                    )
+                if (
+                    scenario == "task-finding-inconsistent"
+                    and self.node_visits.get("review", 0) < 3
+                ):
+                    raise RuntimeQualificationError(
+                        "inconsistent task finding evidence did not return to review"
+                    )
+                if (
+                    scenario == "goal-finding-inconsistent"
+                    and self.node_visits.get("record-evidence", 0) < 2
+                ):
+                    raise RuntimeQualificationError(
+                        "inconsistent goal finding evidence did not return to evidence"
+                    )
+                if scenario == "goal-hardening-defer" and (
+                    self.node_visits.get("record-hardening-deferral") != 1
+                    or self.node_visits.get("decide-low-handling") != 1
+                    or self.node_visits.get("record-hardening-handoff") != 1
+                ):
+                    raise RuntimeQualificationError(
+                        "goal hardening deferral did not traverse its complete handoff"
+                    )
                 if (
                     scenario == "standard"
                     and procedure_id == "aquarium-validation-v2"
@@ -2320,16 +2774,47 @@ class ManagedRuntime:
             ):
                 observation = self.reject_guarded_decision(observation, "completed")
                 special_option = "blocker-found"
-            elif (scenario == "medium-wait" and node == "decide-evidence") or (
-                scenario == "validation-medium-wait" and node == "decide-final-review"
+            elif scenario == "medium-wait" and node == "decide-evidence":
+                special_option = "blocking"
+            elif scenario == "medium-wait" and node == "decide-goal-rework-authority":
+                special_option = "user-direction"
+            elif (
+                scenario == "goal-closeout-unmet-wait"
+                and node == "decide-goal-rework-authority"
+            ):
+                special_option = "closeout-direction"
+            elif scenario == "goal-hardening-defer" and node == "decide-evidence":
+                special_option = "low-only"
+            elif scenario == "goal-hardening-defer" and node == "decide-low-handling":
+                special_option = "defer"
+            elif (
+                scenario == "validation-medium-wait"
+                and node == "decide-current-blockers"
+            ):
+                special_option = "blocking"
+            elif (
+                scenario == "validation-medium-wait"
+                and node == "decide-validation-rework-authority"
             ):
                 special_option = "user-direction"
-            elif scenario == "validation-medium-wait" and node == "decide-gaps":
-                special_option = "clean"
             elif (
-                scenario == "goal-operational-matrix" or scenario in GOAL_KIND_SCENARIOS
-            ) and node == "decide-evidence":
-                special_option = "supported"
+                scenario in TASK_OWNER_SCENARIOS
+                and node
+                == {
+                    "implementation-rework-obligations": "decide-implementation-owner",
+                    "verification-rework-obligations": "decide-verification-owner",
+                    "documentation-rework-obligations": "decide-documentation-owner",
+                }[TASK_OWNER_SCENARIOS[scenario]]
+            ):
+                special_option = "required"
+            elif (scenario == "validation-medium-wait" and node == "decide-gaps") or (
+                (
+                    scenario == "goal-operational-matrix"
+                    or scenario in GOAL_KIND_SCENARIOS
+                )
+                and node == "decide-evidence"
+            ):
+                special_option = "clean"
             elif (
                 scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
             ):
@@ -2337,17 +2822,20 @@ class ManagedRuntime:
             option = (
                 special_option
                 or {
-                    "decide-evidence": "low-disposition"
+                    "decide-evidence": "low-only"
                     if procedure_id == "aquarium-goal-v2"
+                    and scenario in {"standard", "low-blocker-wait"}
                     else None,
                     "decide-final-review": "low-disposition"
                     if procedure_id == "aquarium-validation-v2"
+                    and scenario in {"standard", "validation-low-blocker-wait"}
                     else None,
                     "decide-gaps": "low-only"
                     if procedure_id == "aquarium-validation-v2"
+                    and scenario in {"standard", "validation-low-blocker-wait"}
                     else None,
                     "decide-review": "low-disposition"
-                    if procedure_id == "aquarium-task-v2"
+                    if procedure_id == "aquarium-task-v2" and scenario == "standard"
                     else None,
                 }.get(node)
                 or SUCCESS_OPTIONS.get(node)
@@ -2433,7 +2921,9 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         ("aquarium-goal-v2.yaml", "low-blocker-wait"),
         ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
         ("aquarium-goal-v2.yaml", "medium-wait"),
+        ("aquarium-goal-v2.yaml", "goal-closeout-unmet-wait"),
         ("aquarium-validation-v2.yaml", "validation-medium-wait"),
+        ("aquarium-task-v2.yaml", "task-confirmation-only-wait"),
     )
     for offset, (procedure_name, scenario) in enumerate(wait_specs, start=2):
         with ManagedRuntime(
@@ -2449,6 +2939,22 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
     scenario_runs: list[dict[str, Any]] = []
     bounded_scenarios = (
         ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
+        ("task-completion-unverified", "aquarium-task-v2.yaml"),
+        ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
+        ("task-finding-inconsistent", "aquarium-task-v2.yaml"),
+        ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
+        ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
+        *(
+            (scenario, "aquarium-task-v2.yaml")
+            for scenario in (
+                *TASK_OWNER_SCENARIOS,
+                "task-completion-owner-inconsistent",
+            )
+        ),
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _gap) in COMPLETION_GAP_SCENARIOS.items()
+        ),
         *((scenario, "aquarium-goal-v2.yaml") for scenario in GOAL_KIND_SCENARIOS),
         *(
             (scenario, "aquarium-validation-v2.yaml")

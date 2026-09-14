@@ -47,14 +47,17 @@ Low counts never decrease merely because their required work is complete.
 Enter Low settlement only after the native invocation and finding query are
 complete, required coverage and publication evidence is available, CI and required
 verification pass, no finding needs confirmation, and no current blocker or
-effective Medium-or-higher finding remains. Bind each provider finding by original
+effective Medium-or-higher finding remains. The admitted completion assessment must
+also have zero `unmet` and zero `unverified` criteria. Bind each provider finding by original
 root, effective result, and source finding ID; retain separate namespaces for
 direct-audit findings. Do not collapse findings because their prose is similar.
 
 Settlement completes only when every frozen finding has exactly one supported
 disposition, every required local check passes on the actual final target, the
 pending disposition and current blocker counts are zero, and the reviewed basis
-plus exact permitted delta accounts for the final target. A failed or inconclusive
+plus exact permitted delta accounts for the final target. The settlement record
+must carry the criterion-level completion summary and its zero unmet and unverified
+counts; it may not depend on a parallel source record that could later diverge. A failed or inconclusive
 local check, unavailable owner, changed requirement, unrelated delta, or repeated
 unchanged disposition is a specific incomplete state. Route it to its owner or
 wait; do not start another review to create a cleaner report.
@@ -63,7 +66,8 @@ The complete Low-settlement composition carries the exact reviewed or audited
 basis and its native identities, the frozen eligible finding IDs and supported
 dispositions, before and after target identities, the exact permitted Low-only
 delta, required local check identities and current outcomes, zero pending
-dispositions and current blockers, and the coverage relationship. A handoff must
+dispositions and current blockers, the carried completion summary and zero unmet
+and unverified counts, and the coverage relationship. A handoff must
 carry that composition or state explicitly that no accepted Low-only delta applies.
 Invalid findings retain their adjudication but do not require a Low remediation
 disposition.

@@ -23,7 +23,7 @@ that current Aquarium handlers can supply and consume its required nodes,
 evidence items, and routes. An incompatible customization remains untouched and
 keeps setup degraded until its owner approves an exact update.
 
-Podway v0.2.9 limits each `evidence_from` entry to 16 items. When one graph node needs more, split the items across entries for the same source node; `decide-final-review` in `aquarium-validation-v2` uses this split intentionally.
+Podway v0.2.9 limits each `evidence_from` entry to 16 items. When one graph node needs more, split the items across entries for the same source node. Keep a single entry when the selected evidence remains within that limit.
 
 ## Compatibility Evidence
 

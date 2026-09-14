@@ -20,8 +20,8 @@ unless the placement selects it.
 | Refine | `task-refine` consumes the current implementation result | Limit work to authorized cleanup and return the exact refined target |
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
-| Review and confirmation | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates | Review is report-only; pending evidence or confirmation cannot advance |
-| Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
+| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, findings, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
+| Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
 | Assessment and closeout | `task-handler`, then `task-close` and an independently authorized `task-commit` | Non-achieved work cannot close; actual user approval and exact final-target composition remain required |
 
 ## Goal Procedure
@@ -31,15 +31,19 @@ not invoke the task phase skills. `complete-work` returns the work summary, sour
 revision, and conditional plan-handoff artifact. `record-evidence` returns the goal
 kind, review-evidence kind, typed verification and review-readiness results, and
 applicable review and finding records.
-Operational failure, unresolved confirmation, and blocking findings route to their
-owner or an explicit wait. A first adequate Low-only review routes directly to
-finite settlement and goal assessment. The final-closeout substitute is valid only
+Operational evidence, finding confirmation, completion, finding class, rework
+authority, and Low handling are separate serial decisions. Unverified completion
+returns to evidence; unmet completion and Medium-or-higher findings share the
+explicit authority gate. A first adequate Low-only review alone records either
+finite settlement or the supported bounded hardening handoff. The derived
+`current-rework-obligations` total is not part of the contract. The final-closeout substitute is valid only
 for `goal-kind=epic-closeout` with exact successful validation evidence.
 
-An additional review authorization is bound to the exact pending correction and
-next ordinal. It is not reusable after the pass or after context restoration. The
-narrow second-review hardening handoff remains available when independently
-reached, but no caller starts a second review merely to qualify for it.
+Each `choose-user-direction: fix-and-review` decision authorizes its one transition
+back to work and the next review ordinal. Later rework reaches a fresh unset choice;
+no recorded authorization survives the pass or context restoration. The narrow
+second-review hardening handoff remains available when independently reached, but
+no caller starts a second review merely to qualify for it.
 
 ## Validation Procedure
 
@@ -54,8 +58,9 @@ Blocking corrections return to remediation only within the caller's existing
 envelope and keep their triggering set. A required corrected-target confirmation
 still runs. Low-only audit or confirmation results use local settlement without a
 new broad audit. Final review preserves applicable audit and provider identities
-under separate namespaces and routes from current pending, blocking, and required
-evidence-gap facts. When another Medium-or-higher correction needs authority,
+under separate namespaces, then admits operation, finding confirmation, completion,
+required evidence, and current blockers through separate serial decisions before
+the final Low-or-validated choice. When another Medium-or-higher correction needs authority,
 select the supported `user-direction` route, record only the current issue set and
 exhausted authority at `await-user-direction`, complete that action, and stop at
 `choose-user-direction` with the actual choice unset until the user answers.
