@@ -1,6 +1,6 @@
 # Static Review Contract
 
-Use this contract for one static, read-only review through `$aquarium:orca-review`. Read [finding-disposition.md](finding-disposition.md) as the shared adjudication and remediation policy. The Dolgorae-backed `$aquarium:independent-review` route is temporarily disabled and stops before setup or source transmission; its historical target meanings remain documented here for compatibility and possible future re-enablement.
+Use this contract for one static, read-only review through `$aquarium:orca-review`. Read [review-intent-contract.md](review-intent-contract.md) for the Review Brief and change-versus-completion semantics, then read [finding-disposition.md](finding-disposition.md) for adjudication and remediation. The Dolgorae-backed `$aquarium:independent-review` route is temporarily disabled and stops before setup or source transmission; its historical target meanings remain documented here for compatibility and possible future re-enablement.
 
 ## Exact target
 

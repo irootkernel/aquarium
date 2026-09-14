@@ -356,7 +356,7 @@ epic.
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-062 | Disable Independent Review and relax common Dolgorae readiness | Refuse every Independent Review request before Dolgorae work, guide alternatives without automatic fallback, and make Dolgorae optional in common production readiness while preserving explicit setup and operations. | Completed | None |
-| TASK-063 | Define the shared review-intent contract | Define Review Brief semantics, criterion responsibility and aggregation, requirement provenance, candidate boundaries, completion checkpoints, and the completion conditions consumed by handlers and Procedures. | Planned | TASK-062 |
+| TASK-063 | Define the shared review-intent contract | Define Review Brief semantics, criterion responsibility and aggregation, requirement provenance, candidate boundaries, completion checkpoints, and the completion conditions consumed by handlers and Procedures. | Completed | TASK-062 |
 | TASK-064 | Add intent-aware embedded Mulgae completion review | Deliver approved handler context, aggregate accepted Markdown role reports, preserve safe criterion handoffs, and connect completion gaps to Task and Epic approval decisions. | Planned | TASK-063 |
 | TASK-065 | Add standalone Mulgae change and completion review | Add the report-only `mulgae-review` entrypoint for staged changes and named Task or Epic completion without duplicating native lifecycle or starting remediation. | Planned | TASK-064 |
 | TASK-066 | Align Orca and explicit native Codex subagent guidance | Carry the shared brief through Orca Dispatch and result handling, and describe explicitly chosen host-native subagent reviews without claiming unsupported guarantees. | Planned | TASK-063 |

@@ -5,14 +5,18 @@ Use Mulgae v0.1.21 or a supported later stable v0.1.x release. The same-release
 This contract owns how Aquarium consumes those results within an approved task
 or epic review. Read [finding-disposition.md](finding-disposition.md) and
 [evidence-residency.md](evidence-residency.md) before adjudication or handoff.
+Read [review-intent-contract.md](review-intent-contract.md) before dispatch to
+select `change` or `completion`, construct the Review Brief, assign criterion
+responsibility, and preserve the separate aggregate assessment.
 
 ## Delegate Native Execution
 
 Use `$use-mulgae` for asynchronous execution and every native lifecycle decision,
 including transport selection, waiting, cancellation, retention, and recovery.
-Aquarium supplies the canonical repository, exact complete target, objective,
-roles, goal revision, review ordinal, mode, and approved source-transmission
-scope. Bind preflight and execution to those same inputs. Current command
+Aquarium supplies the canonical repository, exact complete target, Review Brief
+through the native objective input, roles, goal revision, review ordinal, mode,
+and approved source-transmission scope. Bind preflight and execution to those
+same inputs. Current command
 responses use `mulgae-command-result.v8`; setup consumes Doctor v2 and review
 preflight uses v3. Historical v5, v6, and v7 readability does not admit those
 versions as current command responses.
@@ -136,3 +140,9 @@ excerpt or finding-to-source binding. If that evidence cannot resolve a finding,
 report the gap and obtain any additional authority required by its disposition.
 Report and export writes retain the paired skill's explicit user-request boundary.
 Keep raw provider output and runtime artifacts private under the evidence contract.
+
+For completion review, consume every accepted selected-role Markdown report and
+aggregate criterion states under the review-intent contract. A clean finding
+query does not establish criterion coverage. Missing, unreadable, conflicting,
+or silent role evidence remains an assessment gap without changing Mulgae's
+native CI, coverage, publication, extraction, finding, or lifecycle facts.

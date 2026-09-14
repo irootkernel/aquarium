@@ -1,6 +1,6 @@
 # Review Finding Disposition
 
-Use this contract whenever Aquarium consumes findings from Independent Review, Mulgae, or Orca Review. A provider finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
+Use this contract whenever Aquarium consumes findings from Mulgae or Orca Review, and with the dormant Independent Review contract if that route is re-enabled. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent. A provider finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
 
 ## Adjudicate before acting
 
@@ -93,4 +93,4 @@ For a staged target, an approved remediation envelope includes modifying and exa
 
 ## Report the outcome
 
-Return counts by reported severity, effective priority, validity, and disposition. For each valid or confirmation-needed finding, include its source ID, reported severity, effective priority, exact path, owner, disposition, verification state, whether the last provider review predates the current bytes, and any missing authority. A technical `APPROVE` requires no unresolved valid or confirmation-needed finding and an authoritative backend lifecycle result.
+Return counts by reported severity, effective priority, validity, and disposition. For each valid or confirmation-needed finding, include its source ID, reported severity, effective priority, exact path, owner, disposition, verification state, whether the last provider review predates the current bytes, and any missing authority. A technical `APPROVE` requires no unresolved valid or confirmation-needed finding and an authoritative backend lifecycle result. Completion additionally requires the separate criterion assessment defined by the review-intent contract; neither result substitutes for the other.
