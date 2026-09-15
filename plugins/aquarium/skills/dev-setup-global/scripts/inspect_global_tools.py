@@ -157,18 +157,7 @@ def inspect_global_mcp(
     root: Path,
     timeout_seconds: float,
 ) -> dict[str, Any]:
-    codex = inspector.shutil.which("codex")
-    if not codex:
-        return {"status": "unavailable", "reason": "codex_executable_missing"}
-    neutral_cwd = Path(root.anchor)
-    raw, probe = inspector.mcp_registration_probe(
-        codex, name, neutral_cwd, timeout_seconds
-    )
-    if name == "mulgae":
-        return inspector.classify_mulgae_mcp_scope(
-            raw, probe, executable, root, "global"
-        )
-    return inspector.classify_gaori_mcp_scope(raw, probe, executable, root, "global")
+    return inspector.inspect_global_mcp_scope(name, executable, root, timeout_seconds)
 
 
 def inspect_global_podway(

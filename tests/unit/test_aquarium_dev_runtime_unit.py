@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE_SCRIPTS = ROOT / "plugins/aquarium/tools/aquarium-dev"
 sys.path.insert(0, str(SOURCE_SCRIPTS))
 
+import build_aquarium_artifact
 from dev_manager import artifact_digest
 
 
@@ -82,7 +83,9 @@ aquarium-dev-build:
     return path
 
 
-def test_aquarium_producer_uses_committed_bytes_and_embeds_identity(tmp_path):
+def test_aquarium_producer_uses_committed_bytes_and_embeds_identity(
+    tmp_path, monkeypatch
+):
     repository = create_aquarium_repository(tmp_path / "aquarium")
     description = subprocess.run(
         ["make", "-s", "aquarium-dev-describe"],
@@ -120,13 +123,18 @@ def test_aquarium_producer_uses_committed_bytes_and_embeds_identity(tmp_path):
     assert manifest["sha256"] == artifact_digest(artifact)
 
     (repository / "plugins/aquarium/.codex-plugin/plugin.json").write_text("dirty")
+    monkeypatch.chdir(repository)
+    with pytest.raises(build_aquarium_artifact.ProducerError):
+        build_aquarium_artifact.repository_state(require_clean=True)
+    rejected_output = tmp_path / "rejected-output"
+    rejected_output.mkdir()
     rejected = subprocess.run(
         ["make", "-s", "aquarium-dev-build"],
         cwd=repository,
         capture_output=True,
         text=True,
         check=False,
-        env={**environment, "AQUARIUM_DEV_OUTPUT": str(tmp_path / "unused")},
+        env={**environment, "AQUARIUM_DEV_OUTPUT": str(rejected_output)},
     )
     assert rejected.returncode == 2
-    assert "clean working tree" in rejected.stderr
+    assert not any(rejected_output.iterdir())

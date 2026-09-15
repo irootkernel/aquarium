@@ -14,6 +14,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -749,18 +750,6 @@ def json_probe(
     )
 
 
-def named_mcp_server_missing(raw_probe: dict[str, Any], name: str) -> bool:
-    return bool(
-        raw_probe["exit_code"] == 1
-        and not raw_probe["timed_out"]
-        and not raw_probe.get("stdout", "").strip()
-        and re.fullmatch(
-            rf"\s*Error: No MCP server named (?P<quote>['\"]?){re.escape(name)}(?P=quote) found\.\s*",
-            raw_probe.get("stderr", ""),
-        )
-    )
-
-
 def version_from_probe(probe: dict[str, Any]) -> str | None:
     result = probe.get("result")
     version = result.get("version") if isinstance(result, dict) else None
@@ -1376,35 +1365,34 @@ def ouroboros_isolated_launcher_matches(transport: Any) -> bool:
 
 
 def classify_ouroboros_registration(
-    raw_probe: dict[str, Any], ouroboros_executable: str | None
+    registration_probe: dict[str, Any], ouroboros_executable: str | None
 ) -> dict[str, Any]:
     probe = {
-        key: raw_probe[key] for key in ("attempted", "ok", "exit_code", "timed_out")
+        key: registration_probe[key]
+        for key in ("attempted", "ok", "exit_code", "timed_out")
     }
-    if raw_probe["timed_out"]:
-        probe["reason"] = "registration_probe_timed_out"
-        return {"status": "degraded", "probe": probe}
-    if raw_probe.get("error_code"):
-        probe["error_code"] = raw_probe["error_code"]
-        probe["reason"] = "registration_probe_failed"
-        return {"status": "degraded", "probe": probe}
-
-    if not raw_probe["ok"]:
-        not_found = named_mcp_server_missing(raw_probe, "ouroboros")
+    if not registration_probe["ok"]:
+        missing = registration_probe.get("presence") == "missing"
+        if registration_probe.get("error_code") and (
+            registration_probe["error_code"] != "invalid_json"
+            or registration_probe.get("response_invalid")
+        ):
+            probe["error_code"] = registration_probe["error_code"]
         probe["reason"] = (
-            "registration_not_found" if not_found else "registration_probe_failed"
+            "registration_not_found"
+            if missing
+            else "registration_probe_timed_out"
+            if registration_probe["timed_out"]
+            else "registration_invalid_json"
+            if registration_probe.get("response_invalid")
+            else "registration_probe_failed"
         )
         return {
-            "status": "missing" if not_found else "degraded",
+            "status": "missing" if missing else "degraded",
             "probe": probe,
         }
 
-    parsed = parse_json_probe(raw_probe)
-    if parsed.get("error_code") == "invalid_json":
-        probe["error_code"] = "invalid_json"
-        probe["reason"] = "registration_invalid_json"
-        return {"status": "degraded", "probe": probe}
-    result = parsed.get("result")
+    result = registration_probe.get("result")
     if not isinstance(result, dict):
         probe["reason"] = "registration_result_invalid"
         return {"status": "degraded", "probe": probe}
@@ -2812,14 +2800,55 @@ def mcp_registration_probe(
     cwd: Path,
     timeout_seconds: float,
     environment_overrides: dict[str, str] | None = None,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> dict[str, Any]:
+    started_at = time.monotonic()
     raw = run_command(
         [codex_executable, "mcp", "get", name, "--json"],
         cwd,
         timeout_seconds,
         environment_overrides,
     )
-    return raw, parse_json_probe(raw)
+    probe = parse_json_probe(raw)
+    probe["response_invalid"] = bool(
+        raw["ok"] and probe.get("error_code") == "invalid_json"
+    )
+    if probe["ok"] or probe["response_invalid"]:
+        return probe
+    if probe["timed_out"]:
+        probe["presence"] = "unverifiable"
+        return probe
+
+    remaining_seconds = timeout_seconds - (time.monotonic() - started_at)
+    if remaining_seconds <= 0:
+        probe["presence"] = "unverifiable"
+        return probe
+
+    list_probe = json_probe(
+        [codex_executable, "mcp", "list", "--json"],
+        cwd,
+        remaining_seconds,
+        environment_overrides,
+    )
+    registrations = list_probe.get("result")
+    if not list_probe["ok"] or not isinstance(registrations, list):
+        probe["presence"] = "unverifiable"
+        return probe
+
+    names: list[str] = []
+    for registration in registrations:
+        if not isinstance(registration, dict):
+            probe["presence"] = "unverifiable"
+            return probe
+        registered_name = registration.get("name")
+        if not isinstance(registered_name, str) or not registered_name:
+            probe["presence"] = "unverifiable"
+            return probe
+        names.append(registered_name)
+    if len(names) != len(set(names)):
+        probe["presence"] = "unverifiable"
+        return probe
+    probe["presence"] = "present" if name in names else "missing"
+    return probe
 
 
 def resolve_mcp_command(command: Any) -> Path | None:
@@ -2843,10 +2872,8 @@ def missing_mcp_scope(reason: str = "registration_not_found") -> dict[str, Any]:
     return {"status": "missing", "reason": reason}
 
 
-def failed_mcp_scope(
-    raw_probe: dict[str, Any], probe: dict[str, Any], name: str
-) -> dict[str, Any]:
-    if named_mcp_server_missing(raw_probe, name):
+def failed_mcp_scope(probe: dict[str, Any]) -> dict[str, Any]:
+    if probe.get("presence") == "missing":
         return missing_mcp_scope()
     return {
         "status": "degraded",
@@ -2859,14 +2886,13 @@ def failed_mcp_scope(
 
 
 def classify_mulgae_mcp_scope(
-    raw_probe: dict[str, Any],
     probe: dict[str, Any],
     mulgae_executable: str | None,
     repository: Path,
     scope: str,
 ) -> dict[str, Any]:
     if not probe["ok"]:
-        return failed_mcp_scope(raw_probe, probe, "mulgae")
+        return failed_mcp_scope(probe)
     result = probe.get("result")
     transport = result.get("transport") if isinstance(result, dict) else None
     if not isinstance(result, dict) or not isinstance(transport, dict):
@@ -2966,11 +2992,9 @@ def mcp_recommendation(global_status: str, local_present: bool) -> str:
 
 
 def effective_mcp_registration(
-    name: str,
     global_registration: dict[str, Any],
     local_registration: dict[str, Any],
     local_symlinked: bool,
-    effective_raw: dict[str, Any],
     effective_probe: dict[str, Any],
 ) -> tuple[str, str, str | None]:
     if local_symlinked:
@@ -2983,7 +3007,7 @@ def effective_mcp_registration(
         else "none"
     )
     if selected_scope == "none":
-        if named_mcp_server_missing(effective_raw, name):
+        if effective_probe.get("presence") == "missing":
             return "missing", "none", "registration_not_found"
         if not effective_probe["ok"]:
             return "degraded", "unverifiable", "effective_registration_probe_failed"
@@ -3038,11 +3062,11 @@ def inspect_mulgae_mcp(
             version_probe["stdout"]
         )
     neutral_cwd = Path(repository.anchor)
-    global_raw, global_probe = mcp_registration_probe(
+    global_probe = mcp_registration_probe(
         codex_executable, "mulgae", neutral_cwd, timeout_seconds
     )
     global_registration = classify_mulgae_mcp_scope(
-        global_raw, global_probe, mulgae_executable, repository, "global"
+        global_probe, mulgae_executable, repository, "global"
     )
     if global_probe["ok"]:
         global_registration["_result"] = global_probe.get("result")
@@ -3055,7 +3079,7 @@ def inspect_mulgae_mcp(
     elif not project_config_present:
         local_registration = missing_mcp_scope("project_configuration_missing")
     else:
-        local_raw, local_probe = mcp_registration_probe(
+        local_probe = mcp_registration_probe(
             codex_executable,
             "mulgae",
             neutral_cwd,
@@ -3063,7 +3087,7 @@ def inspect_mulgae_mcp(
             {"CODEX_HOME": str(repository / ".codex")},
         )
         local_registration = classify_mulgae_mcp_scope(
-            local_raw, local_probe, mulgae_executable, repository, "local"
+            local_probe, mulgae_executable, repository, "local"
         )
         if local_probe["ok"]:
             local_registration["_result"] = local_probe.get("result")
@@ -3074,15 +3098,13 @@ def inspect_mulgae_mcp(
         }
     )
 
-    effective_raw, effective_probe = mcp_registration_probe(
+    effective_probe = mcp_registration_probe(
         codex_executable, "mulgae", repository, timeout_seconds
     )
     status, effective_scope, reason = effective_mcp_registration(
-        "mulgae",
         global_registration,
         local_registration,
         project_config_symlinked,
-        effective_raw,
         effective_probe,
     )
     global_registration.pop("_result", None)
@@ -3462,14 +3484,13 @@ def inspect_sorage(
 
 
 def classify_gaori_mcp_scope(
-    raw_probe: dict[str, Any],
     probe: dict[str, Any],
     gaori_executable: str | None,
     repository: Path,
     scope: str,
 ) -> dict[str, Any]:
     if not probe["ok"]:
-        return failed_mcp_scope(raw_probe, probe, "gaori")
+        return failed_mcp_scope(probe)
     result = probe.get("result")
     transport = result.get("transport") if isinstance(result, dict) else None
     if not isinstance(result, dict) or not isinstance(transport, dict):
@@ -3522,6 +3543,28 @@ def classify_gaori_mcp_scope(
     return registration
 
 
+def inspect_global_mcp_scope(
+    name: str,
+    executable: str | None,
+    root: Path,
+    timeout_seconds: float,
+) -> dict[str, Any]:
+    codex_executable = shutil.which("codex")
+    if not codex_executable:
+        return {"status": "unavailable", "reason": "codex_executable_missing"}
+    classifiers = {
+        "mulgae": classify_mulgae_mcp_scope,
+        "gaori": classify_gaori_mcp_scope,
+    }
+    classifier = classifiers.get(name)
+    if classifier is None:
+        raise ValueError(f"unsupported global MCP component: {name}")
+    probe = mcp_registration_probe(
+        codex_executable, name, Path(root.anchor), timeout_seconds
+    )
+    return classifier(probe, executable, root, "global")
+
+
 def inspect_gaori_mcp(
     repository: Path, gaori_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
@@ -3554,11 +3597,11 @@ def inspect_gaori_mcp(
         return registration
 
     neutral_cwd = Path(repository.anchor)
-    global_raw, global_probe = mcp_registration_probe(
+    global_probe = mcp_registration_probe(
         codex_executable, "gaori", neutral_cwd, timeout_seconds
     )
     global_registration = classify_gaori_mcp_scope(
-        global_raw, global_probe, gaori_executable, repository, "global"
+        global_probe, gaori_executable, repository, "global"
     )
     if global_probe["ok"]:
         global_registration["_result"] = global_probe.get("result")
@@ -3571,7 +3614,7 @@ def inspect_gaori_mcp(
     elif not project_config_present:
         local_registration = missing_mcp_scope("project_configuration_missing")
     else:
-        local_raw, local_probe = mcp_registration_probe(
+        local_probe = mcp_registration_probe(
             codex_executable,
             "gaori",
             neutral_cwd,
@@ -3579,7 +3622,7 @@ def inspect_gaori_mcp(
             {"CODEX_HOME": str(repository / ".codex")},
         )
         local_registration = classify_gaori_mcp_scope(
-            local_raw, local_probe, gaori_executable, repository, "local"
+            local_probe, gaori_executable, repository, "local"
         )
         if local_probe["ok"]:
             local_registration["_result"] = local_probe.get("result")
@@ -3590,15 +3633,13 @@ def inspect_gaori_mcp(
         }
     )
 
-    effective_raw, effective_probe = mcp_registration_probe(
+    effective_probe = mcp_registration_probe(
         codex_executable, "gaori", repository, timeout_seconds
     )
     status, effective_scope, reason = effective_mcp_registration(
-        "gaori",
         global_registration,
         local_registration,
         project_config_symlinked,
-        effective_raw,
         effective_probe,
     )
     global_registration.pop("_result", None)
@@ -4085,23 +4126,17 @@ def inspect_ouroboros(
     direct_runtime_configured = False
     isolated_runtime_configured = False
     if codex:
-        registration_raw = run_command(
-            [
-                str(Path(codex).resolve()),
-                "mcp",
-                "get",
-                "ouroboros",
-                "--json",
-            ],
+        registration_probe = mcp_registration_probe(
+            str(Path(codex).resolve()),
+            "ouroboros",
             repository,
             timeout_seconds,
-            environment_overrides=environment,
+            environment,
         )
         tool["mcp_registration"] = classify_ouroboros_registration(
-            registration_raw, tool["executable"]
+            registration_probe, tool["executable"]
         )
-        parsed_registration = parse_json_probe(registration_raw)
-        registration_result = parsed_registration.get("result")
+        registration_result = registration_probe.get("result")
         registration_transport = (
             registration_result.get("transport")
             if isinstance(registration_result, dict)
@@ -4179,7 +4214,7 @@ def inspect_ouroboros(
             "probe": skipped_probe("executable_missing"),
         }
         if isolated_runtime_configured:
-            runtime_probe = normalized_probe(registration_raw)
+            runtime_probe = normalized_probe(registration_probe)
             runtime_probe["reason"] = "isolated_launcher_configured"
             tool["mcp_runtime"] = {
                 "status": "configured",
@@ -4220,7 +4255,7 @@ def inspect_ouroboros(
     }
 
     if isolated_runtime_configured:
-        runtime_probe = normalized_probe(registration_raw)
+        runtime_probe = normalized_probe(registration_probe)
         runtime_probe["reason"] = "isolated_launcher_configured"
         tool["mcp_runtime"] = {
             "status": "configured",

@@ -137,13 +137,52 @@ def fetch_json(url: str, timeout_seconds: float) -> Any:
         ) from error
 
 
-def _required_text(body: str, label: str, pattern: re.Pattern[str]) -> str:
-    match = re.search(rf"^- {re.escape(label)}: `([^`]+)`\.\r?$", body, re.MULTILINE)
-    if not match or not pattern.fullmatch(match.group(1)):
+def _required_body_digest(body: str, label: str) -> str:
+    values: set[str] = set()
+    awaiting_continuation = False
+    fence = ""
+    for raw_line in body.splitlines():
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})", raw_line)
+        if marker:
+            if not fence:
+                fence = marker.group(1)
+            elif marker.group(1)[0] == fence[0] and len(marker.group(1)) >= len(fence):
+                fence = ""
+            awaiting_continuation = False
+            continue
+        if fence:
+            continue
+        if awaiting_continuation:
+            awaiting_continuation = False
+            if raw_line[:1].isspace():
+                candidate = (
+                    raw_line.strip()
+                    .replace("`", "")
+                    .replace("*", "")
+                    .replace("_", "")
+                    .removesuffix(".")
+                    .strip()
+                )
+                if SHA256.fullmatch(candidate):
+                    values.add(candidate)
+                    continue
+        if raw_line.startswith("\t") or re.match(r"^ {4}", raw_line):
+            continue
+        line = re.sub(r"^ {0,3}[-+*][ \t]+", "", raw_line.strip())
+        line = line.replace("`", "").replace("*", "").replace("_", "")
+        key, separator, value = line.partition(":")
+        if not separator or " ".join(key.split()).casefold() != label.casefold():
+            continue
+        candidate = value.strip().removesuffix(".").strip()
+        if SHA256.fullmatch(candidate):
+            values.add(candidate)
+        elif not candidate:
+            awaiting_continuation = True
+    if len(values) != 1:
         raise ReleaseVerificationError(
-            "invalid_release_notes", f"missing valid {label} release identity"
+            "invalid_release_notes", f"missing or conflicting {label} release identity"
         )
-    return match.group(1)
+    return values.pop()
 
 
 def _verify_release(
@@ -166,26 +205,14 @@ def _verify_release(
         )
     body = release.get("body")
     assets = release.get("assets")
-    target_commit = release.get("target_commitish")
-    if (
-        not isinstance(body, str)
-        or not isinstance(assets, list)
-        or not isinstance(target_commit, str)
-    ):
+    if not isinstance(body, str) or not isinstance(assets, list):
         raise ReleaseVerificationError(
             "invalid_metadata", "release identity fields are malformed"
         )
 
     archive_name = f"dolgorae-{tag}-aarch64-apple-darwin.tar.gz"
     checksum_name = f"{archive_name}.sha256"
-    archive_sha = _required_text(body, "Archive SHA-256", SHA256)
-    executable_sha = _required_text(body, "Contained executable SHA-256", SHA256)
-    release_commit = _required_text(body, "Release commit", COMMIT)
-    noted_archive = _required_text(body, "Archive", re.compile(re.escape(archive_name)))
-    if target_commit != release_commit:
-        raise ReleaseVerificationError(
-            "release_commit_mismatch", "release commit metadata does not agree"
-        )
+    executable_sha = _required_body_digest(body, "Contained executable SHA-256")
 
     selected: dict[str, dict[str, Any]] = {}
     for asset in assets:
@@ -209,10 +236,41 @@ def _verify_release(
         raise ReleaseVerificationError(
             "missing_asset", "release is missing a required Apple Silicon asset"
         )
-    if selected[archive_name].get("digest") != f"sha256:{archive_sha}":
+    archive_digest = selected[archive_name].get("digest")
+    if not isinstance(archive_digest, str) or not re.fullmatch(
+        rf"sha256:({SHA256.pattern})", archive_digest
+    ):
         raise ReleaseVerificationError(
-            "archive_digest_mismatch", "archive digest metadata does not agree"
+            "archive_digest_mismatch", "archive digest metadata is invalid"
         )
+    archive_sha = archive_digest.removeprefix("sha256:")
+
+    ref = fetcher(f"{API_ROOT}/git/ref/tags/{tag}", timeout_seconds)
+    ref_object = ref.get("object") if isinstance(ref, dict) else None
+    ref_sha = ref_object.get("sha") if isinstance(ref_object, dict) else None
+    if (
+        not isinstance(ref_object, dict)
+        or ref_object.get("type") != "tag"
+        or not isinstance(ref_sha, str)
+        or not COMMIT.fullmatch(ref_sha)
+    ):
+        raise ReleaseVerificationError(
+            "invalid_tag", "release tag is not an annotated official tag"
+        )
+    tag_object = fetcher(f"{API_ROOT}/git/tags/{ref_sha}", timeout_seconds)
+    peeled = tag_object.get("object") if isinstance(tag_object, dict) else None
+    peeled_sha = peeled.get("sha") if isinstance(peeled, dict) else None
+    if (
+        not isinstance(peeled, dict)
+        or peeled.get("type") != "commit"
+        or not isinstance(peeled_sha, str)
+        or not COMMIT.fullmatch(peeled_sha)
+    ):
+        raise ReleaseVerificationError(
+            "invalid_tag",
+            "annotated tag does not peel to a release commit",
+        )
+    release_commit = peeled_sha
 
     pinned = PINNED_RELEASES.get(tag)
     observed_identity = {
@@ -226,28 +284,6 @@ def _verify_release(
             "release metadata does not match Aquarium's pinned baseline identity",
         )
 
-    ref = fetcher(f"{API_ROOT}/git/ref/tags/{tag}", timeout_seconds)
-    ref_object = ref.get("object") if isinstance(ref, dict) else None
-    if (
-        not isinstance(ref_object, dict)
-        or ref_object.get("type") != "tag"
-        or not COMMIT.fullmatch(str(ref_object.get("sha", "")))
-    ):
-        raise ReleaseVerificationError(
-            "invalid_tag", "release tag is not an annotated official tag"
-        )
-    tag_object = fetcher(f"{API_ROOT}/git/tags/{ref_object['sha']}", timeout_seconds)
-    peeled = tag_object.get("object") if isinstance(tag_object, dict) else None
-    if (
-        not isinstance(peeled, dict)
-        or peeled.get("type") != "commit"
-        or peeled.get("sha") != release_commit
-    ):
-        raise ReleaseVerificationError(
-            "release_commit_mismatch",
-            "annotated tag does not peel to the release commit",
-        )
-
     return {
         "schema_version": SCHEMA_VERSION,
         "status": "verified",
@@ -255,7 +291,7 @@ def _verify_release(
         "release": {
             "tag": tag,
             "source_commit": release_commit,
-            "archive_name": noted_archive,
+            "archive_name": archive_name,
             "archive_url": selected[archive_name]["browser_download_url"],
             "archive_sha256": archive_sha,
             "checksum_name": checksum_name,

@@ -747,7 +747,6 @@ def test_generated_hook_reports_admission_failure_and_preserves_commit(
     )
     assert commit.returncode == 0
     assert '"code": "dirty_worktree"' in commit.stderr
-    assert "the Git commit was created" in commit.stderr
     assert "foreign hook continued" in commit.stderr
     sha = subprocess.check_output(
         ["git", "-C", repository, "rev-parse", "HEAD"], text=True
@@ -1206,12 +1205,20 @@ def test_rebuild_reports_publication_success_when_queue_cleanup_fails(
     with pytest.raises(ManagerError) as failure:
         dev_manager.rebuild(repository, host_root, approve_build=True)
     assert failure.value.code == "publication_failed"
-    assert "was published" in failure.value.message
+    assert failure.value.stage == "schedule"
     assert target.exists()
     assert (host_root / "current/aquarium").resolve().name == details["git_sha"]
 
 
-def test_hook_branch_lookup_failure_is_visible_and_preserves_foreign_commands(tmp_path):
+def test_hook_branch_lookup_failure_is_visible_and_preserves_foreign_commands(
+    tmp_path, monkeypatch
+):
+    binary_directory = tmp_path / "bin"
+    binary_directory.mkdir()
+    git = binary_directory / "git"
+    git.write_text("#!/bin/sh\nexit 2\n")
+    git.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{binary_directory}:{os.environ['PATH']}")
     hook = tmp_path / "hook.sh"
     hook.write_text(
         "#!/bin/sh\nset -eu\n"
@@ -1220,8 +1227,9 @@ def test_hook_branch_lookup_failure_is_visible_and_preserves_foreign_commands(tm
     )
     result = subprocess.run(["sh", hook], capture_output=True, text=True, check=False)
     assert result.returncode == 0
-    assert "Aquarium could not inspect the Git branch" in result.stderr
-    assert result.stderr.endswith("foreign continued\n")
+    diagnostic, foreign = result.stderr.splitlines()
+    assert diagnostic
+    assert foreign == "foreign continued"
 
 
 @pytest.mark.parametrize("probe", ("describe", "build"))

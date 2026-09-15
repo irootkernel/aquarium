@@ -17,7 +17,7 @@ Send only those bounded facts as one `aquarium-release-publication-observation/v
 
 The object contains these bounded facts:
 
-- `version`, `release_basis_candidate_sha`, and `release_commit` (`sha`, `parent_sha`, `title`);
+- `version`, `release_basis_candidate_sha`, and `release_commit` (`sha`, `parent_sha`, `title`), where `title` must equal the repository-defined `[REL] Release v<version>` identity before publication can proceed;
 - `qa_evidence_candidate_sha`, `qa_evidence_relation_to_release_basis` (`equal` or `direct_parent`), `qa_binding` (`exact` or `approved_qa_neutral_descendant`), and `qa_reuse_attempt` (`0` or `1`);
 - `gate_evidence_release_commit_sha`, `local_main_sha`, `remote_main_sha`, and `remote_main_relation_to_release_basis` (`equal`, `ancestor`, `descendant`, or `diverged`); and
 - `tag` (`state`, `annotated`, `peeled_sha`) describing the live publication-remote tag, and `hosted_release` (`state`, `tag`, `target_sha`, `draft`, `prerelease`). A local-only tag is remote `absent` and must not suppress `create_and_push_tag`; a draft or prerelease hosted object is a conflict, never a completed stable Release.

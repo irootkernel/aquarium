@@ -2,7 +2,10 @@
 
 ## Contract
 
-This repository is enrolled in `aquarium-test-contract/v1` with the `make` profile. The root `Makefile` is the executable authority; this document records its intended meaning and never authorizes a handler to skip a check.
+- Contract: `aquarium-test-contract/v1`
+- Profile: `make`
+
+The root `Makefile` is the executable authority; this document records its intended meaning and never authorizes a handler to skip a check.
 
 Ruby and Python validation is limited to objective package structure and executable helper behavior. It does not compare skill prose, sentence order, line wrapping, diagnostic wording, or private implementation names. Master verifies skill functionality separately after updates: multi-step workflows, decisions, recommendations, approvals, and handoffs. A passing `make test` does not establish that those behaviors work. The gate does not invoke LLM evaluators; agents report affected manual checks without claiming an unobserved result.
 

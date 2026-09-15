@@ -508,6 +508,126 @@ class TestInspectTesting:
             item["code"] for item in result["findings"]
         }
 
+    def test_list_nested_fenced_example_cannot_conflict_with_real_declarations(
+        self,
+    ) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(
+            path.read_text().replace(
+                "Profile: make",
+                "Profile: make\n\n"
+                "- Migration example:\n"
+                "    ```text\n"
+                "    Contract: aquarium-test-contract/v2\n"
+                "    Profile: typescript-bun\n"
+                "    ```",
+            )
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["testing_document"]["profile"] == "make"
+
+    def test_first_contract_body_line_cannot_enroll_from_indented_example(
+        self,
+    ) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        content = path.read_text()
+        content = content.replace(
+            "## Contract\n\nContract: aquarium-test-contract/v1\nProfile: make",
+            "## Contract\n    Contract: aquarium-test-contract/v1\n"
+            "    Profile: typescript-bun\n\nProfile: make",
+        )
+        path.write_text(content)
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert not result["testing_document"]["contract_registered"]
+        assert result["testing_document"]["profile"] == "make"
+
+    def test_trailing_unicode_whitespace_does_not_change_declarations(self) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(
+            path.read_text()
+            .replace(
+                "Contract: aquarium-test-contract/v1",
+                "Contract: aquarium-test-contract/v1\N{NO-BREAK SPACE}",
+            )
+            .replace("Profile: make", "Profile: make\N{NO-BREAK SPACE}")
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+        assert result["testing_document"]["profile"] == "make"
+
+    def test_contract_identifier_is_exact_while_profile_enum_is_case_normalized(
+        self,
+    ) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(path.read_text().replace("Profile: make", "Profile: MAKE"))
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        assert result["structural_status"] == "conforming"
+
+        path.write_text(
+            path.read_text().replace(
+                "Contract: aquarium-test-contract/v1",
+                "Contract: Aquarium-Test-Contract/v1",
+            )
+        )
+        result = inspect_testing.inspect_repository(self.repository)
+        assert "testing_contract_unregistered" in {
+            item["code"] for item in result["findings"]
+        }
+
+    def test_document_prose_does_not_enroll_or_select_a_profile(self) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(
+            path.read_text().replace(
+                "Contract: aquarium-test-contract/v1\nProfile: make",
+                "This repository is enrolled in aquarium-test-contract/v1 with the make profile.",
+            )
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        codes = {item["code"] for item in result["findings"]}
+        assert "testing_contract_unregistered" in codes
+        assert "testing_profile_missing" in codes
+
+    def test_document_rejects_conflicting_structured_declarations(self) -> None:
+        self.write_make_contract()
+        self.enroll("make")
+        path = self.repository / "TESTING.md"
+        path.write_text(
+            path.read_text().replace(
+                "Contract: aquarium-test-contract/v1\nProfile: make",
+                "Contract: aquarium-test-contract/v1\n"
+                "Contract: aquarium-test-contract/v2\n"
+                "Profile: make\n"
+                "Profile: typescript-bun",
+            )
+        )
+
+        result = inspect_testing.inspect_repository(self.repository)
+
+        codes = {item["code"] for item in result["findings"]}
+        assert "testing_contract_unregistered" in codes
+        assert "testing_profile_missing" in codes
+
     def test_symlinked_root_makefile_is_not_read(self) -> None:
         external = self.repository.parent / "credentials.make"
         external.write_text("credential-marker: secret\n", encoding="utf-8")

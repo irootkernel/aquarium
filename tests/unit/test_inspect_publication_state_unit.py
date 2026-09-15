@@ -194,6 +194,21 @@ def test_publication_rejects_self_parent_release_commit() -> None:
 
 
 @pytest.mark.parametrize(
+    "title",
+    ("[REL] Release v0.1.13", "[RELEASE] Release v0.1.11", "custom release subject"),
+)
+def test_publication_rejects_nonconforming_release_identity(title: str) -> None:
+    value = observation()
+    value["release_commit"]["title"] = title
+
+    result = inspect_publication_state.inspect(value)
+
+    assert result["classification"] == "unproven"
+    assert result["next_action"] == "stop"
+    assert result["statuses"]["evidence"] == "unproven"
+
+
+@pytest.mark.parametrize(
     "configure",
     [
         lambda value: value.update(local_main_sha=OTHER),
@@ -362,7 +377,6 @@ def test_invalid_qa_binding_fields_are_rejected(field: str, invalid: object) -> 
     [
         lambda value: value.update(qa_evidence_candidate_sha=None),
         lambda value: value.update(gate_evidence_release_commit_sha=None),
-        lambda value: value["release_commit"].update(title="[REL] Release v0.1.12"),
         lambda value: value["release_commit"].update(parent_sha=OTHER),
     ],
 )

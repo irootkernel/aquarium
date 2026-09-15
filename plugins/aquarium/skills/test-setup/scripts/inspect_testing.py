@@ -2039,11 +2039,13 @@ def inspect_testing_document(
     try:
         content = path.read_text(encoding="utf-8")
         content = re.sub(r"(?s)<!--.*?-->", "", content)
-        # Examples do not enroll a repository or satisfy required sections.
+        # Fenced examples remain opaque to declaration parsing. A placeholder keeps
+        # section presence observable, while list-nested examples remain indented and
+        # cannot match direct declarations.
         visible_lines: list[str] = []
         fence = ""
         for line in content.splitlines():
-            marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+            marker = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
             if marker:
                 if not fence:
                     fence = marker.group(1)
@@ -2064,31 +2066,40 @@ def inspect_testing_document(
                 rf"(?ims)^ {{0,3}}##[ \t]+{re.escape(heading)}[ \t]*#*[ \t]*\n(.*?)(?=^ {{0,3}}##[ \t]+|\Z)",
                 content,
             )
-            body = section.group(1).strip() if section else ""
+            body = section.group(1) if section else ""
             section_content[heading] = body
-            result["sections"][heading] = bool(body)
-        contract_content = re.sub(r"[`*_]", "", section_content["Contract"])
-        result["contract_registered"] = bool(
-            re.search(
-                rf"(?im)^\s*(?:[-+]\s*)?Contract:\s*{re.escape(CONTRACT_MARKER)}\s*$",
-                contract_content,
+            result["sections"][heading] = bool(body.strip())
+        contract_lines = [
+            re.sub(r"[`*_]", "", line)
+            for line in section_content["Contract"].splitlines()
+        ]
+        contract_values = {
+            match.group(1)
+            for line in contract_lines
+            if (
+                match := re.fullmatch(
+                    r" {0,3}(?:[-+*][ \t]+)?Contract:[ \t]*(\S+)\s*",
+                    line,
+                    re.IGNORECASE,
+                )
             )
-            or re.search(
-                rf"(?i)\b(?:enrolled|registered)\s+(?:in|under|with)\s+{re.escape(CONTRACT_MARKER)}(?![\w/.-])",
-                contract_content,
+        }
+        result["contract_registered"] = contract_values == {CONTRACT_MARKER}
+        profile_values = {
+            match.group(1).lower()
+            for line in contract_lines
+            if (
+                match := re.fullmatch(
+                    r" {0,3}(?:[-+*][ \t]+)?Profile:[ \t]*(\S+)\s*",
+                    line,
+                    re.IGNORECASE,
+                )
             )
-        )
-        explicit_profile = re.search(
-            r"(?im)^\s*(?:[-+]\s*)?Profile:\s*(make|typescript-bun|polyglot-make)\s*$",
-            contract_content,
-        )
-        prose_profile = re.search(
-            r"(?i)(?<![\w-])(make|typescript-bun|polyglot-make)\s+profile\b",
-            contract_content,
-        )
-        profile_match = explicit_profile or prose_profile
-        if profile_match:
-            result["profile"] = profile_match.group(1).lower()
+        }
+        if len(profile_values) == 1:
+            declared_profile = next(iter(profile_values))
+            if declared_profile in {"make", "typescript-bun", "polyglot-make"}:
+                result["profile"] = declared_profile
     except (OSError, UnicodeError):
         findings.append(
             finding(
@@ -2101,7 +2112,7 @@ def inspect_testing_document(
             finding(
                 "testing_contract_unregistered",
                 "error",
-                f"TESTING.md lacks {CONTRACT_MARKER}.",
+                f"TESTING.md does not declare one unambiguous Contract: {CONTRACT_MARKER} field.",
             )
         )
     if result["profile"] is None:
@@ -2109,7 +2120,7 @@ def inspect_testing_document(
             finding(
                 "testing_profile_missing",
                 "error",
-                "TESTING.md does not declare a supported selected profile.",
+                "TESTING.md does not declare one unambiguous supported Profile field.",
             )
         )
     elif result["profile"] != expected_profile:

@@ -594,16 +594,14 @@ class TestInspectGlobalTools:
 
     def test_global_mcp_probe_uses_neutral_working_directory(self) -> None:
         inspector = mock.MagicMock()
-        inspector.shutil.which.return_value = "/usr/local/bin/codex"
-        inspector.mcp_registration_probe.return_value = ({}, {"ok": False})
-        inspector.classify_gaori_mcp_scope.return_value = {"status": "unavailable"}
+        inspector.inspect_global_mcp_scope.return_value = {"status": "unavailable"}
 
         inspect_global_tools.inspect_global_mcp(
             inspector, "gaori", "/usr/local/bin/gaori", self.repository, 2.0
         )
 
-        inspector.mcp_registration_probe.assert_called_once_with(
-            "/usr/local/bin/codex", "gaori", Path(self.repository.anchor), 2.0
+        inspector.inspect_global_mcp_scope.assert_called_once_with(
+            "gaori", "/usr/local/bin/gaori", self.repository, 2.0
         )
 
     @pytest.mark.parametrize(
@@ -982,7 +980,11 @@ if name == "ooo":
     else:
         sys.exit(2)
 elif name == "codex":
-    if not (home / "config.toml").exists():
+    configured = (home / "config.toml").exists()
+    if sys.argv[1:] == ["mcp", "list", "--json"]:
+        print(json.dumps([{"name": "ouroboros"}] if configured else []))
+        sys.exit(0)
+    if not configured:
         print("No MCP server named 'ouroboros' found.", file=sys.stderr)
         sys.exit(1)
     entry = tomllib.loads((home / "config.toml").read_text())["mcp_servers"]["ouroboros"]

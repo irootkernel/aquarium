@@ -319,6 +319,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         gaori_mcp_global: bool = False,
         mcp_neutral_failure: bool = False,
         mcp_neutral_mixed_missing: bool = False,
+        mcp_list_mode: str = "valid",
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
         podway_version: str = "v0.2.9",
@@ -593,6 +594,40 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 if arguments == ["--version"]:
                     print("codex-cli 0.149.0")
                     raise SystemExit(0)
+                repository_path = pathlib.Path({str(self.repository)!r}).resolve()
+                local_codex_home = repository_path / ".codex"
+                active_codex_home = pathlib.Path(os.environ.get("CODEX_HOME", "")).resolve()
+                isolated_local = active_codex_home == local_codex_home
+                effective_lookup = pathlib.Path.cwd().resolve() == repository_path and not isolated_local
+                if arguments == ["mcp", "list", "--json"]:
+                    if {mcp_list_mode!r} == "failure":
+                        raise SystemExit(2)
+                    if {mcp_list_mode!r} == "malformed":
+                        print("not-json")
+                        raise SystemExit(0)
+                    registrations = []
+                    for server, mode, global_registration in (
+                        ("mulgae", {mulgae_mcp_mode!r}, {mulgae_mcp_global!r}),
+                        ("gaori", {gaori_mcp_mode!r}, {gaori_mcp_global!r}),
+                        ("ouroboros", {ouroboros_mcp_mode!r}, True),
+                    ):
+                        local_config = local_codex_home / "config.toml"
+                        local_registration = local_config.is_file() and f"[mcp_servers.{{server}}]" in local_config.read_text(encoding="utf-8")
+                        visible = local_registration if isolated_local or effective_lookup and local_registration else global_registration
+                        if mode == "missing":
+                            visible = False
+                        elif mode in {{"silent-failure", "probe-failure", "timeout"}}:
+                            visible = True
+                        if visible:
+                            registrations.append({{"name": server}})
+                    if {mcp_list_mode!r} == "duplicate" and registrations:
+                        registrations.append(registrations[0])
+                    elif {mcp_list_mode!r} == "non-object-entry":
+                        registrations.append("invalid")
+                    elif {mcp_list_mode!r} == "nameless-entry":
+                        registrations.append({{}})
+                    print(json.dumps(registrations))
+                    raise SystemExit(0)
                 if len(arguments) != 4 or arguments[:2] != ["mcp", "get"] or arguments[3] != "--json":
                     raise SystemExit(2)
                 server = arguments[2]
@@ -610,20 +645,16 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     if server == "gaori"
                     else True
                 )
-                repository_path = pathlib.Path({str(self.repository)!r}).resolve()
-                local_codex_home = repository_path / ".codex"
-                active_codex_home = pathlib.Path(os.environ.get("CODEX_HOME", "")).resolve()
-                isolated_local = active_codex_home == local_codex_home
-                effective_lookup = pathlib.Path.cwd().resolve() == repository_path and not isolated_local
                 local_config = local_codex_home / "config.toml"
                 local_registration = local_config.is_file() and f"[mcp_servers.{{server}}]" in local_config.read_text(encoding="utf-8")
                 use_global_registration = not isolated_local and not (effective_lookup and local_registration)
                 if server in {{"mulgae", "gaori"}}:
-                    if {mcp_neutral_mixed_missing!r}:
+                    neutral_lookup = not isolated_local and not effective_lookup
+                    if {mcp_neutral_mixed_missing!r} and neutral_lookup:
                         print("neutral configuration failed", file=sys.stderr)
                         print(f"Error: No MCP server named '{{server}}' found.", file=sys.stderr)
                         raise SystemExit(1)
-                    if {mcp_neutral_failure!r}:
+                    if {mcp_neutral_failure!r} and neutral_lookup:
                         print("neutral configuration failed", file=sys.stderr)
                         raise SystemExit(1)
                     if isolated_local and not local_registration:
@@ -2975,24 +3006,46 @@ else:
         result = verify_dolgorae_release.verify_release("0.1.2", 1.0, fetcher)
         self.assertEqual(result["release"]["source_commit"], pinned["source_commit"])
 
-        changed = copy.deepcopy(release)
-        changed["body"] = changed["body"].replace(pinned["executable_sha256"], "0" * 64)
+        for field in ("source_commit", "archive_sha256", "executable_sha256"):
+            with self.subTest(field=field):
+                changed = copy.deepcopy(release)
+                changed_commit = pinned["source_commit"]
+                if field == "archive_sha256":
+                    changed["assets"][0]["digest"] = f"sha256:{'0' * 64}"
+                elif field == "executable_sha256":
+                    changed["body"] = changed["body"].replace(
+                        pinned["executable_sha256"], "0" * 64
+                    )
+                else:
+                    changed_commit = "1" * 40
 
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.verify_release(
-                "v0.1.2",
-                1.0,
-                lambda url, timeout: (
-                    changed if "/releases/tags/" in url else fetcher(url, timeout)
-                ),
-            )
-        self.assertEqual(context.exception.code, "pinned_release_mismatch")
+                def changed_fetcher(
+                    url: str,
+                    timeout: float,
+                    release_metadata: dict[str, object] = changed,
+                    release_commit: str = changed_commit,
+                ) -> object:
+                    if "/releases/tags/" in url:
+                        return release_metadata
+                    if "/git/tags/" in url:
+                        return {"object": {"type": "commit", "sha": release_commit}}
+                    return fetcher(url, timeout)
 
-    def test_dolgorae_release_verifier_accepts_crlf_release_notes(self) -> None:
+                with self.assertRaises(
+                    verify_dolgorae_release.ReleaseVerificationError
+                ) as context:
+                    verify_dolgorae_release.verify_release(
+                        "v0.1.2", 1.0, changed_fetcher
+                    )
+                self.assertEqual(context.exception.code, "pinned_release_mismatch")
+
+    def test_dolgorae_release_verifier_uses_structured_identity_sources(self) -> None:
         release = self.dolgorae_release_metadata()
-        release["body"] = release["body"].replace("\n", "\r\n")
+        release["target_commitish"] = "main"
+        release["body"] = (
+            "Human-readable release notes may change.\r\n"
+            f"+ __Contained executable SHA-256__: {('c' * 64)}\r\n"
+        )
 
         def fetcher(url: str, _timeout: float) -> object:
             if "/releases/tags/" in url:
@@ -3005,6 +3058,54 @@ else:
 
         result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
         self.assertEqual(result["release"]["tag"], "v0.1.3")
+        self.assertEqual(result["release"]["source_commit"], "4" * 40)
+        self.assertEqual(result["release"]["archive_sha256"], "8" * 64)
+
+    def test_dolgorae_release_verifier_accepts_wrapped_digest_declaration(
+        self,
+    ) -> None:
+        release = self.dolgorae_release_metadata()
+        release["body"] = (
+            "Contained executable SHA-256:\n"
+            f"  `{('c' * 64)}`.\n"
+            "A later paragraph mentions Contained executable SHA-256 without declaring it.\n"
+        )
+
+        def fetcher(url: str, _timeout: float) -> object:
+            if "/releases/tags/" in url:
+                return release
+            if "/git/ref/tags/" in url:
+                return {"object": {"type": "tag", "sha": "5" * 40}}
+            if "/git/tags/" in url:
+                return {"object": {"type": "commit", "sha": "4" * 40}}
+            raise AssertionError(url)
+
+        result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
+
+        self.assertEqual(result["release"]["executable_sha256"], "c" * 64)
+
+    def test_dolgorae_release_verifier_ignores_example_digests(self) -> None:
+        release = self.dolgorae_release_metadata()
+        release["body"] = (
+            "```text\n"
+            f"Contained executable SHA-256: {'0' * 64}\n"
+            "```\n"
+            f"    Contained executable SHA-256: {'1' * 64}\n"
+            f"- contained executable sha-256: `{('c' * 64)}`.\n"
+        )
+
+        def fetcher(url: str, _timeout: float) -> object:
+            if "/releases/tags/" in url:
+                return release
+            if "/git/ref/tags/" in url:
+                return {"object": {"type": "tag", "sha": "5" * 40}}
+            if "/git/tags/" in url:
+                return {"object": {"type": "commit", "sha": "4" * 40}}
+            raise AssertionError(url)
+
+        result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
+
+        self.assertEqual(result["release"]["executable_sha256"], "c" * 64)
 
     def test_dolgorae_release_verifier_rejects_invalid_release_identity(self) -> None:
         cases: list[tuple[str, object, str]] = []
@@ -3016,9 +3117,11 @@ else:
         wrong_url["assets"][0]["browser_download_url"] = "https://example.invalid/a"
         cases.append(("wrong asset URL", wrong_url, "invalid_asset"))
 
-        wrong_digest = self.dolgorae_release_metadata()
-        wrong_digest["assets"][0]["digest"] = f"sha256:{'0' * 64}"
-        cases.append(("wrong archive digest", wrong_digest, "archive_digest_mismatch"))
+        malformed_digest = self.dolgorae_release_metadata()
+        malformed_digest["assets"][0]["digest"] = f"sha512:{'0' * 64}"
+        cases.append(
+            ("malformed archive digest", malformed_digest, "archive_digest_mismatch")
+        )
 
         missing_asset = self.dolgorae_release_metadata()
         missing_asset["assets"].pop()
@@ -3030,13 +3133,15 @@ else:
             ("missing release note identity", missing_note, "invalid_release_notes")
         )
 
+        conflicting_note = self.dolgorae_release_metadata()
+        conflicting_note["body"] += f"Contained executable SHA-256: {'0' * 64}\n"
+        cases.append(
+            ("conflicting executable digest", conflicting_note, "invalid_release_notes")
+        )
+
         draft = self.dolgorae_release_metadata()
         draft["draft"] = True
         cases.append(("draft", draft, "unsupported_release"))
-
-        target_mismatch = self.dolgorae_release_metadata()
-        target_mismatch["target_commitish"] = "0" * 40
-        cases.append(("target mismatch", target_mismatch, "release_commit_mismatch"))
 
         for name, release, expected_code in cases:
             with self.subTest(name=name):
@@ -3070,20 +3175,37 @@ else:
             verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
         self.assertEqual(context.exception.code, "invalid_tag")
 
-        def wrong_peel_fetcher(url: str, _timeout: float) -> object:
+        def malformed_peel_fetcher(url: str, _timeout: float) -> object:
             if "/releases/tags/" in url:
                 return release
             if "/git/ref/tags/" in url:
                 return {"object": {"type": "tag", "sha": "5" * 40}}
             if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": "0" * 40}}
+                return {"object": {"type": "commit", "sha": "not-a-commit"}}
             raise AssertionError(url)
 
         with self.assertRaises(
             verify_dolgorae_release.ReleaseVerificationError
         ) as context:
-            verify_dolgorae_release.verify_release("v0.1.3", 1.0, wrong_peel_fetcher)
-        self.assertEqual(context.exception.code, "release_commit_mismatch")
+            verify_dolgorae_release.verify_release(
+                "v0.1.3", 1.0, malformed_peel_fetcher
+            )
+        self.assertEqual(context.exception.code, "invalid_tag")
+
+        def numeric_peel_fetcher(url: str, _timeout: float) -> object:
+            if "/releases/tags/" in url:
+                return release
+            if "/git/ref/tags/" in url:
+                return {"object": {"type": "tag", "sha": "5" * 40}}
+            if "/git/tags/" in url:
+                return {"object": {"type": "commit", "sha": int("4" * 40)}}
+            raise AssertionError(url)
+
+        with self.assertRaises(
+            verify_dolgorae_release.ReleaseVerificationError
+        ) as context:
+            verify_dolgorae_release.verify_release("v0.1.3", 1.0, numeric_peel_fetcher)
+        self.assertEqual(context.exception.code, "invalid_tag")
 
     def test_dolgorae_release_fetch_rejects_untrusted_or_malformed_responses(
         self,
@@ -5452,16 +5574,17 @@ else:
                     registration["recommendation"], "continue_with_dev_setup_global"
                 )
 
-    def test_global_mcp_probe_failure_is_not_treated_as_local_proof(self) -> None:
+    def test_global_mcp_probe_failure_uses_structured_scope_inventory(self) -> None:
         self.write_project_mcp_config("mulgae")
-        self.install_fake_tools(mulgae_mcp_mode="configured", mcp_neutral_failure=True)
+        self.install_fake_tools(mulgae_mcp_mode="configured", mulgae_mcp_global=False)
 
         registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
             "mcp_registration"
         ]
 
-        self.assertEqual(registration["status"], "degraded")
-        self.assertEqual(registration["global"]["status"], "degraded")
+        self.assertEqual(registration["status"], "configured")
+        self.assertEqual(registration["global"]["status"], "missing")
+        self.assertEqual(registration["local"]["status"], "configured")
 
     def test_repository_resolution_ignores_ambient_git_redirection(self) -> None:
         other = self.base / "other-repository"
@@ -5492,51 +5615,167 @@ else:
         self.assertEqual(registration["status"], "degraded")
         self.assertEqual(registration["reason"], "registration_probe_failed")
 
-    def test_named_mcp_absence_requires_clean_stdout_and_paired_quotes(self) -> None:
-        base = {
-            "exit_code": 1,
-            "timed_out": False,
-            "stdout": "",
-            "stderr": "Error: No MCP server named 'mulgae' found.\n",
-        }
-
-        self.assertTrue(inspect_tools.named_mcp_server_missing(base, "mulgae"))
-        self.assertFalse(
-            inspect_tools.named_mcp_server_missing(
-                {**base, "stdout": '{"unexpected":true}\n'}, "mulgae"
-            )
-        )
-        self.assertFalse(
-            inspect_tools.named_mcp_server_missing(
-                {**base, "stderr": "Error: No MCP server named 'mulgae\" found.\n"},
-                "mulgae",
-            )
-        )
-
-    def test_ouroboros_absence_requires_exact_named_server_diagnostic(self) -> None:
+    def test_structured_mcp_presence_distinguishes_absence_from_failure(self) -> None:
         base = {
             "attempted": True,
             "ok": False,
             "exit_code": 1,
             "timed_out": False,
-            "stdout": "",
-            "stderr": "Error: No MCP server named 'ouroboros' found.\n",
         }
 
         self.assertEqual(
-            inspect_tools.classify_ouroboros_registration(base, None)["status"],
+            inspect_tools.classify_ouroboros_registration(
+                {**base, "presence": "missing"}, None
+            )["status"],
             "missing",
         )
-        for raw in (
-            {**base, "stdout": '{"unexpected":true}\n'},
-            {**base, "exit_code": 2},
-            {**base, "stderr": "No MCP server named ouroboros found\n"},
-        ):
-            with self.subTest(raw=raw):
+        for presence in ("present", "unverifiable"):
+            with self.subTest(presence=presence):
                 self.assertEqual(
-                    inspect_tools.classify_ouroboros_registration(raw, None)["status"],
+                    inspect_tools.classify_ouroboros_registration(
+                        {**base, "presence": presence}, None
+                    )["status"],
                     "degraded",
                 )
+
+    def test_mcp_registration_probe_uses_remaining_budget_for_inventory(self) -> None:
+        direct_failure = {
+            "attempted": True,
+            "ok": False,
+            "exit_code": 1,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": "arbitrary diagnostic wording",
+        }
+        inventory = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+            "result": [],
+        }
+        with (
+            mock.patch.object(
+                inspect_tools, "run_command", return_value=direct_failure
+            ),
+            mock.patch.object(
+                inspect_tools, "json_probe", return_value=inventory
+            ) as listing,
+            mock.patch.object(
+                inspect_tools.time, "monotonic", side_effect=(100.0, 100.25)
+            ),
+        ):
+            probe = inspect_tools.mcp_registration_probe(
+                "/usr/local/bin/codex", "mulgae", Path("/"), 1.0
+            )
+
+        self.assertEqual(probe["presence"], "missing")
+        self.assertEqual(listing.call_args.args[2], 0.75)
+
+    def test_mcp_registration_probe_preserves_malformed_success(self) -> None:
+        malformed_success = {
+            "attempted": True,
+            "ok": True,
+            "exit_code": 0,
+            "timed_out": False,
+            "stdout": "not-json",
+            "stderr": "",
+        }
+        with (
+            mock.patch.object(
+                inspect_tools, "run_command", return_value=malformed_success
+            ),
+            mock.patch.object(inspect_tools, "json_probe") as listing,
+        ):
+            probe = inspect_tools.mcp_registration_probe(
+                "/usr/local/bin/codex", "ouroboros", Path("/"), 1.0
+            )
+
+        self.assertTrue(probe["response_invalid"])
+        self.assertEqual(probe["error_code"], "invalid_json")
+        self.assertNotIn("presence", probe)
+        listing.assert_not_called()
+        classified = inspect_tools.classify_ouroboros_registration(probe, None)
+        self.assertEqual(classified["status"], "degraded")
+        self.assertEqual(classified["probe"]["reason"], "registration_invalid_json")
+
+    def test_mcp_registration_probe_does_not_start_inventory_after_budget(self) -> None:
+        direct_failure = {
+            "attempted": True,
+            "ok": False,
+            "exit_code": 1,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": "",
+        }
+        with (
+            mock.patch.object(
+                inspect_tools, "run_command", return_value=direct_failure
+            ),
+            mock.patch.object(inspect_tools, "json_probe") as listing,
+            mock.patch.object(
+                inspect_tools.time, "monotonic", side_effect=(100.0, 101.5)
+            ),
+        ):
+            probe = inspect_tools.mcp_registration_probe(
+                "/usr/local/bin/codex", "mulgae", Path("/"), 1.0
+            )
+
+        self.assertEqual(probe["presence"], "unverifiable")
+        listing.assert_not_called()
+
+    def test_mcp_registration_timeout_never_starts_a_second_probe(self) -> None:
+        timed_out = {
+            "attempted": True,
+            "ok": False,
+            "exit_code": None,
+            "timed_out": True,
+            "stdout": "",
+            "stderr": "",
+        }
+        with (
+            mock.patch.object(inspect_tools, "run_command", return_value=timed_out),
+            mock.patch.object(inspect_tools, "json_probe") as listing,
+        ):
+            probe = inspect_tools.mcp_registration_probe(
+                "/usr/local/bin/codex", "mulgae", Path("/"), 1.0
+            )
+
+        self.assertEqual(probe["presence"], "unverifiable")
+        listing.assert_not_called()
+
+    def test_global_mcp_adapter_owns_probe_and_classifier_signatures(self) -> None:
+        probe = {
+            "attempted": True,
+            "ok": False,
+            "exit_code": 1,
+            "timed_out": False,
+            "presence": "missing",
+        }
+        with (
+            mock.patch.object(
+                inspect_tools.shutil, "which", return_value="/usr/local/bin/codex"
+            ),
+            mock.patch.object(
+                inspect_tools, "mcp_registration_probe", return_value=probe
+            ) as registration_probe,
+            mock.patch.object(
+                inspect_tools,
+                "classify_gaori_mcp_scope",
+                return_value={"status": "missing"},
+            ) as classifier,
+        ):
+            result = inspect_tools.inspect_global_mcp_scope(
+                "gaori", "/usr/local/bin/gaori", Path("/tmp/repository"), 2.0
+            )
+
+        self.assertEqual(result["status"], "missing")
+        registration_probe.assert_called_once_with(
+            "/usr/local/bin/codex", "gaori", Path("/"), 2.0
+        )
+        classifier.assert_called_once_with(
+            probe, "/usr/local/bin/gaori", Path("/tmp/repository"), "global"
+        )
 
     def test_normalized_probe_drops_untrusted_json_fields(self) -> None:
         raw = {
@@ -5658,7 +5897,7 @@ else:
         self.assertNotIn(secret, json.dumps({"mulgae": mulgae, "podway": podway}))
         self.assertEqual(podway["error_code"], "unrecognized_podway_error")
 
-    def test_global_mcp_probe_rejects_mixed_named_missing_diagnostic(self) -> None:
+    def test_global_mcp_probe_ignores_diagnostic_wording(self) -> None:
         self.write_project_mcp_config("mulgae")
         self.install_fake_tools(
             mulgae_mcp_mode="configured", mcp_neutral_mixed_missing=True
@@ -5668,8 +5907,25 @@ else:
             "mcp_registration"
         ]
 
-        self.assertEqual(registration["status"], "degraded")
-        self.assertEqual(registration["global"]["status"], "degraded")
+        self.assertEqual(registration["status"], "configured")
+        self.assertEqual(registration["global"]["status"], "missing")
+        self.assertEqual(registration["local"]["status"], "configured")
+
+    def test_mcp_list_failure_or_invalid_shape_does_not_prove_absence(self) -> None:
+        self.write_project_mcp_config("mulgae")
+        for mode in (
+            "failure",
+            "malformed",
+            "duplicate",
+            "non-object-entry",
+            "nameless-entry",
+        ):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(mulgae_mcp_mode="missing", mcp_list_mode=mode)
+                registration = json.loads(self.inspect().stdout)["tools"]["mulgae"][
+                    "mcp_registration"
+                ]
+                self.assertEqual(registration["global"]["status"], "degraded")
 
     def test_symlinked_mulgae_and_codex_configuration_skip_owning_probes(self) -> None:
         external = self.base / "external-config"
