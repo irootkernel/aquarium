@@ -143,6 +143,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
         "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
         "6bb336f321a83bba429c4173942eb977000014c627245839b3434da7d1055602",
         "c666f17cf41e8a9403f610f89b0b7397352d8ac6e2e5e05e1c268fc0e6ece3d9",
@@ -152,6 +153,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
     },
     "aquarium-goal-v2.yaml": {
+        "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
         "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
         "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
         "90411e16758cb79a01294e008d9a091a52b341fc1e9bb968ce9521fed2910ec3",
@@ -200,6 +202,7 @@ PODWAY_HANDLER_CONTRACTS = {
         "definition_items": {
             "implementation-entry-record": {"implementation-entry-summary"},
             "review-record": {
+                "finding-count-consistency",
                 "completion-assessment-summary",
                 "completion-unmet-criteria",
                 "completion-unverified-criteria",
@@ -224,6 +227,10 @@ PODWAY_HANDLER_CONTRACTS = {
             },
         },
         "definition_choices": {
+            ("review-record", "finding-count-consistency"): {
+                "consistent",
+                "inconsistent",
+            },
             ("review-record", "review-mode"): {
                 "remediation-eligible",
                 "confirmation-only",
@@ -302,6 +309,7 @@ PODWAY_HANDLER_CONTRACTS = {
         },
         "definition_items": {
             "evidence-record": {
+                "finding-count-consistency",
                 "goal-kind",
                 "review-evidence-kind",
                 "goal-verification-result",
@@ -325,6 +333,10 @@ PODWAY_HANDLER_CONTRACTS = {
             },
         },
         "definition_choices": {
+            ("evidence-record", "finding-count-consistency"): {
+                "consistent",
+                "inconsistent",
+            },
             ("evidence-record", "goal-kind"): {
                 "member-task",
                 "pre-validation-remediation",

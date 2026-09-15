@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "10"
+version: "11"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -230,6 +230,13 @@ node_definitions:
         prompt: Record the number of valid Low findings that require a completed shared disposition.
         required: true
         minimum: 0
+      - id: finding-count-consistency
+        type: choice
+        prompt: Record whether unresolved-valid-findings equals the sum of the effective Medium-or-higher and Low finding counts.
+        required: true
+        choices:
+          - consistent
+          - inconsistent
       - id: confirmation-needed-findings
         type: integer
         prompt: Record the number of findings whose validity still needs confirmation.
@@ -279,6 +286,10 @@ node_definitions:
         guards:
           - evidence:
               node: review
+              item: finding-count-consistency
+            equals: consistent
+          - evidence:
+              node: review
               item: unresolved-valid-findings
             equals: 0
           - evidence:
@@ -295,12 +306,20 @@ node_definitions:
         guards:
           - evidence:
               node: review
+              item: finding-count-consistency
+            equals: consistent
+          - evidence:
+              node: review
               item: effective-medium-or-higher-findings
             at_least: 1
       - id: low-disposition
         label: Complete Low dispositions
         criteria: No valid Medium-or-higher finding remains and at least one valid Low finding requires shared local disposition.
         guards:
+          - evidence:
+              node: review
+              item: finding-count-consistency
+            equals: consistent
           - evidence:
               node: review
               item: effective-medium-or-higher-findings
@@ -311,20 +330,12 @@ node_definitions:
             at_least: 1
       - id: inconsistent
         label: Finding evidence inconsistent
-        criteria: The unresolved total is nonzero while neither supported severity bucket owns it.
+        criteria: The unresolved total does not equal the sum of the supported severity buckets.
         guards:
           - evidence:
               node: review
-              item: unresolved-valid-findings
-            at_least: 1
-          - evidence:
-              node: review
-              item: effective-medium-or-higher-findings
-            equals: 0
-          - evidence:
-              node: review
-              item: effective-low-findings
-            equals: 0
+              item: finding-count-consistency
+            equals: inconsistent
     reason:
       required: true
       prompt: Explain the decision using the recorded review evidence.
@@ -953,6 +964,7 @@ graph:
             - reported-severity-summary
             - effective-medium-or-higher-findings
             - effective-low-findings
+            - finding-count-consistency
             - unresolved-valid-findings
       routes:
         clean:

@@ -96,16 +96,10 @@ GOAL_OPERATIONAL_VARIANTS = (
 )
 
 VALIDATION_FINAL_REVIEW_SCENARIOS = {
-    "validation-review-fail-gaps-0": ("fail", 0, "review-operation-incomplete"),
-    "validation-review-inconclusive-gaps-0": (
+    "validation-review-fail": ("fail", None, "review-operation-incomplete"),
+    "validation-review-inconclusive": (
         "inconclusive",
-        0,
-        "review-operation-incomplete",
-    ),
-    "validation-review-fail-gaps-1": ("fail", 1, "review-operation-incomplete"),
-    "validation-review-inconclusive-gaps-1": (
-        "inconclusive",
-        1,
+        None,
         "review-operation-incomplete",
     ),
     "validation-review-pass-gaps-1": ("pass", 1, "incomplete"),
@@ -1415,7 +1409,8 @@ class ManagedRuntime:
                 and node == "final-review"
                 and item_id == "required-evidence-gaps"
             ):
-                value = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][1]
+                expected_gaps = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][1]
+                value = expected_gaps if expected_gaps is not None else 0
             if (
                 self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and node == "audit"
@@ -1494,9 +1489,11 @@ class ManagedRuntime:
                     "effective-low-findings",
                 }
             ):
-                value = int(
-                    item_id == "unresolved-valid-findings"
-                    and self.node_visits.get(node) == 1
+                inconsistent = self.node_visits.get(node) == 1
+                value = (
+                    2
+                    if inconsistent and item_id == "unresolved-valid-findings"
+                    else int(inconsistent and item_id == "effective-low-findings")
                 )
             if self.scenario == "goal-hardening-defer" and node == "record-evidence":
                 if item_id in {
@@ -1584,11 +1581,11 @@ class ManagedRuntime:
                     owned_item,
                 }:
                     value = 1
-                if (
-                    self.scenario == "task-finding-inconsistent"
-                    and item_id == "unresolved-valid-findings"
-                ):
-                    value = 1
+                if self.scenario == "task-finding-inconsistent" and item_id in {
+                    "unresolved-valid-findings",
+                    "effective-low-findings",
+                }:
+                    value = 2 if item_id == "unresolved-valid-findings" else 1
             if (
                 self.scenario == "task-confirmation-only-wait"
                 and node == "review"
@@ -1680,6 +1677,20 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
+                "finding-count-consistency": (
+                    "inconsistent"
+                    if (
+                        self.scenario == "goal-finding-inconsistent"
+                        and node == "record-evidence"
+                        and self.node_visits.get(node) == 1
+                    )
+                    or (
+                        self.scenario == "task-finding-inconsistent"
+                        and node == "review"
+                        and self.node_visits.get(node) == 2
+                    )
+                    else "consistent"
+                ),
                 "hardening-deferral-state": (
                     "recorded"
                     if self.scenario == "goal-hardening-defer"
@@ -2427,6 +2438,9 @@ class ManagedRuntime:
                 and self.node_visits.get("review") == 2
             ):
                 observation = self.reject_guarded_decision(observation, "clean")
+                observation = self.reject_guarded_decision(
+                    observation, "low-disposition"
+                )
                 self.decide(observation, "inconsistent")
                 continue
 
@@ -2472,6 +2486,7 @@ class ManagedRuntime:
                 and self.goal_evidence_round == 1
             ):
                 observation = self.reject_guarded_decision(observation, "clean")
+                observation = self.reject_guarded_decision(observation, "low-only")
                 self.decide(observation, "inconsistent")
                 continue
 
@@ -2540,7 +2555,7 @@ class ManagedRuntime:
                     )
                     self.mark_case_variant("C-16", scenario)
                     continue
-                if node == "decide-required-evidence" and expected_outcome == "pass":
+                if node == "decide-required-evidence" and expected_gaps is not None:
                     actual_gaps = self.read_complete_evidence(
                         observation, "final-review", "required-evidence-gaps"
                     )
@@ -2550,7 +2565,7 @@ class ManagedRuntime:
                         )
                 if (
                     node == "decide-required-evidence"
-                    and expected_outcome == "pass"
+                    and expected_gaps is not None
                     and expected_gaps > 0
                 ):
                     observation = self.reject_guarded_decision(observation, "complete")

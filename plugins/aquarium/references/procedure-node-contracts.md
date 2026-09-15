@@ -20,7 +20,7 @@ unless the placement selects it.
 | Refine | `task-refine` consumes the current implementation result | Limit work to authorized cleanup and return the exact refined target |
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
-| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, findings, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
+| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, finding-count consistency, findings, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
 | Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
 | Assessment and closeout | `task-handler`, then `task-close` and an independently authorized `task-commit` | Non-achieved work cannot close; actual user approval and exact final-target composition remain required |
 
@@ -31,10 +31,11 @@ not invoke the task phase skills. `complete-work` returns the work summary, sour
 revision, and conditional plan-handoff artifact. `record-evidence` returns the goal
 kind, review-evidence kind, typed verification and review-readiness results, and
 applicable review and finding records.
-Operational evidence, finding confirmation, completion, finding class, rework
-authority, and Low handling are separate serial decisions. Unverified completion
+Operational evidence, finding confirmation, completion, finding-count consistency,
+finding class, rework authority, and Low handling are separate serial decisions. Unverified completion
 returns to evidence; unmet completion and Medium-or-higher findings share the
-explicit authority gate. A first adequate Low-only review alone records either
+explicit authority gate. Inconsistent finding totals return to evidence before
+classification. A first adequate Low-only review alone records either
 finite settlement or the supported bounded hardening handoff. The derived
 `current-rework-obligations` total is not part of the contract. The final-closeout substitute is valid only
 for `goal-kind=epic-closeout` with exact successful validation evidence.

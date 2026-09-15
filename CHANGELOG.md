@@ -8,7 +8,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Align canonical and public review documentation with enabled Mulgae and Orca behavior, disabled Independent Review, and the host-limited native Codex subagent alternative.
 - Align Orca Dispatch and result handling with the shared Review Brief, and define report-only guidance for an explicitly selected host-native Codex subagent review.
-- Require embedded task, member-goal, and whole-epic Mulgae reviews to assess every actual requirement as met, unmet, unverified, or not applicable, and prevent approval or Low-finding settlement from bypassing semantic completion gaps.
+- Require embedded task, member-goal, and whole-epic Mulgae reviews to assess every actual requirement as met, unmet, unverified, or not applicable, and prevent approval or Low-finding settlement from bypassing semantic completion gaps or inconsistent finding totals.
 - Add a report-only standalone Mulgae Review entrypoint for exact change targets and named Task or Epic completion candidates, using the shared review-intent contract and every accepted role report.
 - Temporarily disable Dolgorae-based Independent Review before setup or source transmission, guide users to explicitly selected native Codex or Orca alternatives, and make Dolgorae optional for common production readiness.
 - Raise the minimum Mulgae version to v0.1.21 and consume command-result v8. Adopt retained failed-review recovery, stage-specific provider rate-limit handling, and ZCode-only automatic initialization.

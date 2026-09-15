@@ -6,8 +6,8 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `10` | `task-handler` | Selected plan input, implementation, refinement, typed verification, and serial finding-confirmation, CI, completion, finding-class, explicit rework-authority, phase-owner, user-direction, and finite Low-settlement decisions before goal assessment, approval, and closeout |
-| `aquarium-goal-v2` | `13` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with serial operational, confirmation, completion, finding, rework-authority, and Low-handling decisions plus a validation-bound closeout substitute |
+| `aquarium-task-v2` | `11` | `task-handler` | Selected plan input, implementation, refinement, typed verification, and serial finding-confirmation, CI, completion, finding-count consistency, finding-class, explicit rework-authority, phase-owner, user-direction, and finite Low-settlement decisions before goal assessment, approval, and closeout |
+| `aquarium-goal-v2` | `14` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with serial operational, confirmation, completion, finding-count consistency, finding, rework-authority, and Low-handling decisions plus a validation-bound closeout substitute |
 | `aquarium-validation-v2` | `13` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced obligation composition, and serial final-review operation, confirmation, completion, required-evidence, blocker, rework-authority, and Low-settlement decisions before assessment and closeout |
 | `aquarium-design-v2` | `3` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout with action guidance |
 | `aquarium-war-room-v2` | `3` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions, guarded proposal quality, approval, documentation, assessment, and closeout with action guidance |

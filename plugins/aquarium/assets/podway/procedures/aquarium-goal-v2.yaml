@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "13"
+version: "14"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -142,6 +142,13 @@ node_definitions:
         prompt: Record the number of valid Low findings that require a completed shared disposition.
         required: true
         minimum: 0
+      - id: finding-count-consistency
+        type: choice
+        prompt: Record whether unresolved-valid-findings equals the sum of the effective Medium-or-higher and Low finding counts.
+        required: true
+        choices:
+          - consistent
+          - inconsistent
       - id: confirmation-needed-findings
         type: integer
         prompt: Record the number of findings whose validity still needs confirmation.
@@ -377,6 +384,10 @@ node_definitions:
         guards:
           - evidence:
               node: record-evidence
+              item: finding-count-consistency
+            equals: consistent
+          - evidence:
+              node: record-evidence
               item: unresolved-valid-findings
             equals: 0
           - evidence:
@@ -393,12 +404,20 @@ node_definitions:
         guards:
           - evidence:
               node: record-evidence
+              item: finding-count-consistency
+            equals: consistent
+          - evidence:
+              node: record-evidence
               item: effective-medium-or-higher-findings
             at_least: 1
       - id: low-only
         label: Low findings remain
         criteria: No Medium-or-higher finding remains and the finite eligible Low set requires disposition or hardening deferral.
         guards:
+          - evidence:
+              node: record-evidence
+              item: finding-count-consistency
+            equals: consistent
           - evidence:
               node: record-evidence
               item: effective-medium-or-higher-findings
@@ -409,20 +428,12 @@ node_definitions:
             at_least: 1
       - id: inconsistent
         label: Finding evidence inconsistent
-        criteria: The unresolved total is nonzero while neither supported severity bucket owns it.
+        criteria: The unresolved total does not equal the sum of the supported severity buckets.
         guards:
           - evidence:
               node: record-evidence
-              item: unresolved-valid-findings
-            at_least: 1
-          - evidence:
-              node: record-evidence
-              item: effective-medium-or-higher-findings
-            equals: 0
-          - evidence:
-              node: record-evidence
-              item: effective-low-findings
-            equals: 0
+              item: finding-count-consistency
+            equals: inconsistent
     reason:
       required: true
       prompt: Explain the selection using the recorded evidence.
@@ -925,6 +936,7 @@ graph:
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
             - effective-low-findings
+            - finding-count-consistency
             - confirmation-needed-findings
             - finding-disposition-summary
       routes:

@@ -275,10 +275,16 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
     } <= guarded_items
     review_options = options(task, "review-decision")
     assert normalized_guards(review_options["inconsistent"]) == {
-        ("review", "unresolved-valid-findings", None, "at_least", 1),
-        ("review", "effective-medium-or-higher-findings", None, "equals", 0),
-        ("review", "effective-low-findings", None, "equals", 0),
+        ("review", "finding-count-consistency", None, "equals", "inconsistent"),
     }
+    for option_id in ("clean", "blocking", "low-disposition"):
+        assert (
+            "review",
+            "finding-count-consistency",
+            None,
+            "equals",
+            "consistent",
+        ) in normalized_guards(review_options[option_id])
 
 
 def test_goal_routes_completion_findings_authority_and_low_handling_serially() -> None:
@@ -327,16 +333,22 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     }
     goal_options = options(goal, "evidence-decision")
     assert normalized_guards(goal_options["inconsistent"]) == {
-        ("record-evidence", "unresolved-valid-findings", None, "at_least", 1),
         (
             "record-evidence",
-            "effective-medium-or-higher-findings",
+            "finding-count-consistency",
             None,
             "equals",
-            0,
+            "inconsistent",
         ),
-        ("record-evidence", "effective-low-findings", None, "equals", 0),
     }
+    for option_id in ("clean", "blocking", "low-only"):
+        assert (
+            "record-evidence",
+            "finding-count-consistency",
+            None,
+            "equals",
+            "consistent",
+        ) in normalized_guards(goal_options[option_id])
     assert graph["record-hardening-deferral"]["next"] == "decide-low-handling"
     assert graph["decide-low-handling"]["routes"] == {
         "settle": {"to": "record-low-disposition", "effect": "advance"},
