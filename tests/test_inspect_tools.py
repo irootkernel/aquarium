@@ -302,7 +302,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_tools(
         self,
         malformed_sanho: bool = False,
-        sanho_version: str = "v0.2.7",
+        sanho_version: str = "v0.2.8",
         sanho_doctor_warnings: int = 0,
         mulgae_version: str = "v0.1.21",
         mulgae_output_schema: str = "mulgae-command-result.v8",
@@ -959,9 +959,20 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_sanho_skill(
         self, root: Path | None = None, complete: bool = True, name: str = "use-sanho"
     ) -> None:
-        self.install_agent_skill(
-            "use-sanho", root=root, complete=complete, frontmatter_name=name
+        skill_root = (root or self.codex_home / "skills") / "use-sanho"
+        skill_root.joinpath("references").mkdir(parents=True, exist_ok=True)
+        skill_root.joinpath("SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: test\n---\n", encoding="utf-8"
         )
+        references = (
+            ("authoring.md", "inspection.md", "lifecycle.md", "recovery.md")
+            if complete
+            else ("lifecycle.md",)
+        )
+        for reference in references:
+            skill_root.joinpath("references", reference).write_text(
+                f"# {reference}\n", encoding="utf-8"
+            )
 
     def install_gaori_skill(
         self, root: Path | None = None, complete: bool = True, name: str = "use-gaori"
@@ -3556,7 +3567,7 @@ else:
         self.assertNotIn("secret-value", completed.stdout)
         self.assertNotIn("credential: hidden", completed.stdout)
         tools = json.loads(completed.stdout)["tools"]
-        self.assertEqual(tools["sanho"]["version"], "v0.2.7")
+        self.assertEqual(tools["sanho"]["version"], "v0.2.8")
         self.assertTrue(tools["sanho"]["version_supported"])
         self.assertEqual(tools["sanho"]["status"], "configured")
         self.assertFalse(tools["sanho"]["agent_skill"]["present"])
@@ -5186,8 +5197,11 @@ else:
         cases = (
             ("v0.2.5", False, "degraded"),
             ("v0.2.6", False, "degraded"),
-            ("v0.2.7", True, "configured"),
+            ("v0.2.7", False, "degraded"),
             ("v0.2.7-rc.1", False, "degraded"),
+            ("v0.2.8", True, "configured"),
+            ("0.2.8", True, "configured"),
+            ("v0.2.8-rc.1", False, "degraded"),
             ("v0.2.99", True, "configured"),
             ("v0.3.0", False, "degraded"),
         )
@@ -5219,15 +5233,29 @@ else:
         self.assertTrue(installation["frontmatter_valid"])
         self.assertTrue(all(item["present"] for item in installation["files"]))
         self.assertTrue(all(item["sha256"] for item in installation["files"]))
+        self.assertEqual(
+            [item["path"] for item in installation["files"]],
+            [
+                "SKILL.md",
+                "references/authoring.md",
+                "references/inspection.md",
+                "references/lifecycle.md",
+                "references/recovery.md",
+            ],
+        )
 
     def test_partial_invalid_or_duplicate_sanho_skills_are_degraded(self) -> None:
-        cases = ("partial", "invalid", "duplicate")
+        cases = ("partial", "legacy", "invalid", "duplicate")
         for case in cases:
             with self.subTest(case=case):
                 for root in (self.codex_home / "skills", self.home / ".agents/skills"):
                     shutil.rmtree(root / "use-sanho", ignore_errors=True)
                 if case == "partial":
                     self.install_sanho_skill(complete=False)
+                elif case == "legacy":
+                    self.install_agent_skill(
+                        "use-sanho", root=self.home / ".agents/skills"
+                    )
                 elif case == "invalid":
                     self.install_sanho_skill(name="wrong-name")
                 else:

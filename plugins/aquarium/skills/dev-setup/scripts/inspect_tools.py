@@ -65,8 +65,9 @@ DOLGORAE_SKILL_FILES = (
 )
 SANHO_SKILL_FILES = (
     "SKILL.md",
-    "references/lifecycle.md",
     "references/authoring.md",
+    "references/inspection.md",
+    "references/lifecycle.md",
     "references/recovery.md",
 )
 GAORI_SKILL_FILES = (
@@ -1025,7 +1026,7 @@ def supported_sanho_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 7)
+    return bool(match and int(match.group(1)) >= 8)
 
 
 def supported_dolgorae_version(version: str | None) -> bool:

@@ -6,6 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Raise the minimum Sanho version to v0.2.8, adopt its conflicted-sync content-retention fix, and install and verify the complete five-file `use-sanho` skill tree.
 - Require explicit `Contract:` and `Profile:` fields for `TESTING.md` enrollment; repositories using prose-only enrollment must add both fields.
 - Classify Codex MCP registration from its structured named lookup and bounded inventory instead of diagnostic stderr wording.
 - Read each Dolgorae release identity from its authoritative structured source while tolerating ordinary release-note Markdown around the contained executable digest.
