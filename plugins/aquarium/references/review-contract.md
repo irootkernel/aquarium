@@ -24,7 +24,24 @@ three-dot expression.
 
 When re-enabled, Independent Review uses Dolgorae's checked immutable capture as target authority. Its dormant candidate, capture, manifest, path-safety, lifecycle, settlement, and recovery rules are defined by [dolgorae-review-contract.md](dolgorae-review-contract.md).
 
-Orca Review reads the selected target directly in Orca's current registered worktree. For `staged`, the reviewer inspects `git diff --cached`, the staged files, and their callers. For `head`, `commit`, and `range`, the reviewer obtains file content and diffs from the resolved revisions through read-only Git commands and never substitutes current index or worktree bytes. Orca Review does not replace the selected target with a copied checkout, capture manifest, snapshot, fingerprint, or digest binding. External tool output remains a review aid under the permission below. `workspace` and `dirty` remain unsupported.
+Orca Review reads the selected target directly in Orca's current registered worktree. For `staged`, the reviewer inspects `git diff --cached` and the staged files. It reads unchanged callers only when a changed behavior or applicable requirement establishes a plausible affected path. For `head`, `commit`, and `range`, the reviewer obtains file content and diffs from the resolved revisions through read-only Git commands and never substitutes current index or worktree bytes. Orca Review does not replace the selected target with a copied checkout, capture manifest, snapshot, fingerprint, or digest binding. External tool output remains a review aid under the permission below. `workspace` and `dirty` remain unsupported.
+
+## Proportional change inspection
+
+An Orca `change` review starts with the exact diff and Review Brief. Inspect the
+changed implementation and applicable authority first. Expand into an unchanged
+caller, contract, test, or dependent only when a changed interface or behavior,
+an applicable requirement, or a concrete failure hypothesis establishes a
+plausible affected path. Follow that path only far enough to confirm or reject
+the concern.
+
+Do not inventory callers, traverse adjacent modules, search for unrelated or
+pre-existing defects, or use available time for a broader audit. Omit a
+pre-existing issue unless the target introduces it, worsens it, or makes it
+newly reachable. Stop and return the result once every changed behavior has been
+checked against its intended effect and plausible affected paths and no
+evidence-backed concern remains. There is no minimum exploration depth. These
+limits do not narrow a `completion` review's criterion assessment.
 
 ## Selection and consent
 

@@ -10,7 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Require explicit `Contract:` and `Profile:` fields for `TESTING.md` enrollment; repositories using prose-only enrollment must add both fields.
 - Classify Codex MCP registration from its structured named lookup and bounded inventory instead of diagnostic stderr wording.
 - Read each Dolgorae release identity from its authoritative structured source while tolerating ordinary release-note Markdown around the contained executable digest.
-- Calibrate Orca Review findings to concrete current defects and keep style preferences, speculative risks, and verification gaps from blocking approval by themselves.
+- Keep Orca change reviews proportional to the target: focus findings on concrete current defects, follow only plausible affected paths, and stop without auditing unrelated or pre-existing issues; style preferences, speculative risks, and verification gaps do not block approval by themselves.
 - Raise the minimum Gaori version to v0.1.17, accept its simplified version JSON without commit identity, and install and verify the complete seven-file `use-gaori` skill tree.
 - Align canonical and public review documentation with enabled Mulgae and Orca behavior, disabled Independent Review, and the host-limited native Codex subagent alternative.
 - Align Orca Dispatch and result handling with the shared Review Brief, and define report-only guidance for an explicitly selected host-native Codex subagent review.

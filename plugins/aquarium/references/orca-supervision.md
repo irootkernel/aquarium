@@ -32,12 +32,23 @@ criterion, with evidence provenance and remaining gaps. For `change`, require an
 explicit statement that whole-work-unit completion was not assessed.
 
 Treat only the declared target as candidate evidence. The reviewer may read its
-relevant files, callers, contracts, and tests plus approved authority sources at
-the basis named in the brief. Unstaged or current-worktree authority bytes do
-not replace a declared HEAD or other revision basis. Do not broaden into
-unrelated current-worktree inspection. For `head`, `commit`, and `range`, require
-candidate content and diffs from the resolved revisions through read-only Git
-commands and prohibit substituting current index or worktree bytes.
+relevant files plus the unchanged context and approved authority sources needed
+to judge the brief. Unstaged or current-worktree authority bytes do not replace
+a declared HEAD or other revision basis. Do not broaden into unrelated
+current-worktree inspection. For `head`, `commit`, and `range`, require candidate
+content and diffs from the resolved revisions through read-only Git commands and
+prohibit substituting current index or worktree bytes.
+
+For `change`, require the proportional inspection defined by
+[review-contract.md](review-contract.md#proportional-change-inspection). Start
+with the exact diff and changed implementation, and expand into unchanged
+callers, contracts, tests, or dependents only along a plausible affected path.
+Do not inventory callers, inspect adjacent modules for other defects, or spend
+remaining time on a broader audit. Omit pre-existing issues that the target does
+not introduce, worsen, or make newly reachable. Require the reviewer to return
+the result as soon as the intended effect and plausible affected paths have been
+assessed and no evidence-backed concern remains. Do not apply this stopping rule
+to `completion` criterion coverage.
 
 Require an advisory technical conclusion and separate reporting of operational
 deviations under [the shared policy](review-contract.md#orca-operational-deviations).
@@ -47,7 +58,7 @@ uncertainty. Tell the reviewer to deliver that result and complete its required
 native lifecycle without waiting for or certifying the coordinator's later
 settlement. Only the coordinator issues the final technical verdict.
 
-For `staged`, additionally require inspection of `git diff --cached`, the relevant staged files, and their callers. Apply the corresponding target-specific read instructions to `head`, `commit`, and `range` without weakening the common restrictions.
+For `staged`, additionally require inspection of `git diff --cached` and the relevant staged files, plus only the unchanged context required by the proportional `change` rule or the applicable `completion` criteria. Apply the corresponding target-specific read instructions to `head`, `commit`, and `range` without weakening the common restrictions.
 
 Include the shared output permission in every Dispatch: All Orca reviewers may create or update review-related temporary files, native session state, tool output, and reports outside the current registered worktree or in Git-ignored runtime paths within it, such as ignored files under `.omc/`. `/tmp`, `/private/tmp`, `$TMPDIR`, and `~/.claude` are external examples, not an allowlist. This permission does not cover tracked files, non-ignored worktree files, or changes to Git state, including through symbolic links.
 
