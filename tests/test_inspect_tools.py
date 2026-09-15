@@ -311,7 +311,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         mulgae_mcp_mode: str | None = None,
         mulgae_mcp_global: bool = False,
         go_version: str = "go1.26.6",
-        gaori_version: str = "v0.1.16",
+        gaori_version: str = "v0.1.17",
         gaori_config_ok: bool = True,
         malformed_gaori_config: bool = False,
         slow_gaori_config: bool = False,
@@ -570,7 +570,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 if arguments == ["version", "--json"]:
                     if {slow_gaori!r}:
                         time.sleep(4)
-                    print(json.dumps({{"name": "gaori", "version": {gaori_version!r}, "commit": "6de20aa97aa6efff50077e5fe1b19ee8333bafba"}}))
+                    print(json.dumps({{"name": "gaori", "version": {gaori_version!r}}}))
                     raise SystemExit(0)
                 if arguments == ["--json", "config", "check"]:
                     if {slow_gaori_config!r}:
@@ -935,9 +935,27 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_gaori_skill(
         self, root: Path | None = None, complete: bool = True, name: str = "use-gaori"
     ) -> None:
-        self.install_agent_skill(
-            "use-gaori", root=root, complete=complete, frontmatter_name=name
+        skill_root = (root or self.codex_home / "skills") / "use-gaori"
+        skill_root.joinpath("references").mkdir(parents=True, exist_ok=True)
+        skill_root.joinpath("SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: test\n---\n", encoding="utf-8"
         )
+        references = (
+            (
+                "authoring.md",
+                "existing-logs.md",
+                "fallbacks.md",
+                "lifecycle.md",
+                "recovery.md",
+                "retention.md",
+            )
+            if complete
+            else ("lifecycle.md",)
+        )
+        for reference in references:
+            skill_root.joinpath("references", reference).write_text(
+                f"# {reference}\n", encoding="utf-8"
+            )
 
     def install_mulgae_skill(
         self, root: Path | None = None, complete: bool = True, name: str = "use-mulgae"
@@ -3460,7 +3478,7 @@ else:
         zcode = tools["mulgae"]["provider_inventory"][1]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
-        self.assertEqual(tools["gaori"]["version"], "v0.1.16")
+        self.assertEqual(tools["gaori"]["version"], "v0.1.17")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
         self.assertFalse(tools["gaori"]["agent_skill"]["present"])
@@ -5785,11 +5803,13 @@ else:
             ("0.1.13", False, "degraded"),
             ("0.1.14", False, "degraded"),
             ("0.1.15", False, "degraded"),
-            ("0.1.16", True, "configured"),
-            ("v0.1.16", True, "configured"),
-            ("v0.1.16-rc.1", False, "degraded"),
-            ("v0.1.016", False, "degraded"),
-            ("vv0.1.16", False, "degraded"),
+            ("0.1.16", False, "degraded"),
+            ("v0.1.16", False, "degraded"),
+            ("0.1.17", True, "configured"),
+            ("v0.1.17", True, "configured"),
+            ("v0.1.17-rc.1", False, "degraded"),
+            ("v0.1.017", False, "degraded"),
+            ("vv0.1.17", False, "degraded"),
             ("v0.1.14-rc.1", False, "degraded"),
             ("v0.1.99", True, "configured"),
             ("0.2.0", False, "degraded"),
@@ -5913,14 +5933,30 @@ else:
         self.assertTrue(installation["frontmatter_valid"])
         self.assertTrue(all(item["present"] for item in installation["files"]))
         self.assertTrue(all(item["sha256"] for item in installation["files"]))
+        self.assertEqual(
+            [item["path"] for item in installation["files"]],
+            [
+                "SKILL.md",
+                "references/authoring.md",
+                "references/existing-logs.md",
+                "references/fallbacks.md",
+                "references/lifecycle.md",
+                "references/recovery.md",
+                "references/retention.md",
+            ],
+        )
 
     def test_partial_invalid_or_duplicate_gaori_skills_are_degraded(self) -> None:
-        for case in ("partial", "invalid", "duplicate"):
+        for case in ("partial", "legacy", "invalid", "duplicate"):
             with self.subTest(case=case):
                 for root in (self.codex_home / "skills", self.home / ".agents/skills"):
                     shutil.rmtree(root / "use-gaori", ignore_errors=True)
                 if case == "partial":
                     self.install_gaori_skill(complete=False)
+                elif case == "legacy":
+                    self.install_agent_skill(
+                        "use-gaori", root=self.home / ".agents/skills"
+                    )
                 elif case == "invalid":
                     self.install_gaori_skill(name="wrong-name")
                 else:
@@ -6014,8 +6050,15 @@ else:
         shutil.rmtree(skill_directory / "references")
         external = self.base / "sensitive"
         external.mkdir()
-        for name in ("lifecycle", "authoring", "recovery"):
-            external.joinpath(f"{name}.md").write_text(
+        for name in (
+            "authoring.md",
+            "existing-logs.md",
+            "fallbacks.md",
+            "lifecycle.md",
+            "recovery.md",
+            "retention.md",
+        ):
+            external.joinpath(name).write_text(
                 "credential-value-must-not-be-read\n", encoding="utf-8"
             )
         skill_directory.joinpath("references").symlink_to(

@@ -70,9 +70,12 @@ SANHO_SKILL_FILES = (
 )
 GAORI_SKILL_FILES = (
     "SKILL.md",
-    "references/lifecycle.md",
     "references/authoring.md",
+    "references/existing-logs.md",
+    "references/fallbacks.md",
+    "references/lifecycle.md",
     "references/recovery.md",
+    "references/retention.md",
 )
 GAORI_STATUS_SKILL_FILES = ("SKILL.md",)
 MULGAE_SKILL_FILES = (
@@ -1047,7 +1050,7 @@ def supported_gaori_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 16)
+    return bool(match and int(match.group(1)) >= 17)
 
 
 def supported_mulgae_version(version: str | None) -> bool:
