@@ -42,7 +42,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
 | EPIC-013 | Record and report production setup status | Planned |
 | EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
-| EPIC-015 | Add intent-aware review and disable Independent Review temporarily | In Progress |
+| EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -336,7 +336,7 @@ activation, installation, or publication.
 
 ## EPIC-015: Add intent-aware review and disable Independent Review temporarily
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Give enabled Mulgae and Orca reviews enough authoritative context to assess the
 selected change or the completion of a named Task or Epic. Apply the same Review
@@ -351,7 +351,7 @@ absence does not fail common production readiness while this route is disabled.
 Dolgorae changes and future Independent Review re-enablement are outside this
 epic.
 
-**Detailed SOT:** [`TODO-INTENT-AWARE-REVIEWS.md`](../todo/TODO-INTENT-AWARE-REVIEWS.md)
+**Canonical Outcomes:** [Review intent](../../plugins/aquarium/references/review-intent-contract.md), [Static review](../../plugins/aquarium/references/review-contract.md), [Mulgae review](../../plugins/aquarium/references/mulgae-review-contract.md), [Finding disposition](../../plugins/aquarium/references/finding-disposition.md), [Workflow contracts](../specs/workflow-contracts.md), [Capability catalog](../specs/capabilities.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

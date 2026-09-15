@@ -15,10 +15,6 @@ Before an epic becomes `Completed`, its final closeout must classify and promote
 - [Production setup status dossier](TODO-PRODUCTION-STATUS.md) defines the
   ledger, CLI ownership, write timing, and acceptance for `EPIC-013` and
   `TASK-048` through `TASK-050`.
-- [Intent-aware review dossier](TODO-INTENT-AWARE-REVIEWS.md) defines review
-  intent, completion assessment, temporary Independent Review disablement, and
-  acceptance for `EPIC-015` and `TASK-062` through `TASK-067`.
-
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.
