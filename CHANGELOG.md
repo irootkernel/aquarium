@@ -23,6 +23,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Preserve completion evidence through final task, goal, and validation assessment, and reconcile review provenance, omission handling, and disabled Independent Review alternatives.
 - Allow Orca reviewers to write Git-ignored runtime files such as those under `.omc/` without warnings, extra checks, or approval requests.
 
 - Keep Aquarium plugin installation and update requests in the host plugin-management flow without loading `dev-setup-global` or running global tool diagnostics.

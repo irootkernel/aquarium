@@ -23,7 +23,9 @@ that current Aquarium handlers can supply and consume its required nodes,
 evidence items, and routes. An incompatible customization remains untouched and
 keeps setup degraded until its owner approves an exact update.
 
-Podway v0.2.9 limits each `evidence_from` entry to 16 items. When one graph node needs more, split the items across entries for the same source node. Keep a single entry when the selected evidence remains within that limit.
+Podway v0.2.9 permits at most eight `evidence_from` references per placement and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both limits; otherwise keep a single reference.
+
+The Task Procedure's `assess-goal` placement intentionally consumes the final normalized implementation evidence from `implement` instead of repeating the `prepare-implementation` re-entry summary. That leaves the eighth reference available for user-direction evidence while preserving the implementation result that the assessment actually needs.
 
 ## Compatibility Evidence
 

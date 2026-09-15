@@ -1,15 +1,19 @@
 ---
 name: independent-review
-description: "Explain that Dolgorae-based Independent Review is temporarily unavailable and guide the user to an explicitly selected review alternative without launching it. Use only when the user explicitly invokes $aquarium:independent-review."
+description: "Explain that Dolgorae-based Independent Review is temporarily unavailable, or dispatch exactly one explicitly preselected supported Orca or native Codex alternative under that route's own contract. Native Codex requires host fresh delegation. Use only when the user explicitly invokes $aquarium:independent-review."
 ---
 
 # Independent Review
 
-Independent Review is temporarily disabled. Stop before Dolgorae discovery, setup, Profile inspection, source capture, source transmission, provider contact, or any other review operation.
+Independent Review is temporarily disabled. Stop before Dolgorae discovery, setup, Profile inspection, source capture, source transmission, provider contact, or any other Dolgorae review operation.
 
-Explain that Aquarium does not currently offer its Dolgorae-backed Independent Review route. Offer these alternatives without selecting or launching either one:
+Explain that Aquarium does not currently offer its Dolgorae-backed Independent Review route. `workspace` and `dirty` targets have no Orca equivalent. Preserve the original target and review question and apply the routing matrix in [review-intent-contract.md](../../references/review-intent-contract.md#route-a-disabled-independent-review-request):
 
-- Ask for `$aquarium:orca-review` with an exact supported Git target and reviewer when Orca should supervise the review.
-- Ask Codex to use a fresh native read-only subagent with an exact target and review intent when the current host exposes native delegation and a native Codex review is appropriate. After Master explicitly selects that route, the coordinator supplies the shared Review Brief and requires findings, completion criterion assessments when applicable, and explicit evidence gaps without claiming capture, settlement, or recovery guarantees the host does not provide.
+- With no preselected alternative, explain the available Orca and native Codex routes and launch nothing.
+- With exactly one preselected Orca alternative, validate its supported target and requested reviewer, then invoke `$aquarium:orca-review` under that skill's prerequisites and authorization boundaries.
+- With exactly one preselected native Codex alternative, proceed only when the host exposes fresh native delegation and follow [the native Codex route](../../references/review-intent-contract.md#use-a-native-codex-review-subagent). If delegation is unavailable, report that limitation and stop without fallback.
+- With more than one preselected alternative, ask the user to choose exactly one and launch nothing.
 
-The current request authorizes no fallback review, setup action, source transmission, test, edit, staging, commit, or publication. Dolgorae remains available only through an explicitly requested `$aquarium:dev-setup-global` Dolgorae setup flow or an explicitly requested `$use-dolgorae` operation.
+A target unsupported by the selected route remains a reported limitation, not permission to translate or broaden it. Independent Review owns only the refusal and routing decision; the explicitly selected alternative owns its execution, source handling, lifecycle, evidence, and result.
+
+Refusal alone authorizes no fallback review, setup action, source transmission, test, edit, staging, commit, or publication. Exactly one explicitly preselected supported alternative authorizes only that alternative under its own contract. Dolgorae remains available only through an explicitly requested `$aquarium:dev-setup-global` Dolgorae setup flow or an explicitly requested `$use-dolgorae` operation.

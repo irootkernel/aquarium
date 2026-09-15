@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "11"
+version: "12"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -741,6 +741,7 @@ node_definitions:
     prompt: What is the outcome of the current task goal?
     evidence_guidance:
       - Read the approved plan, latest implementation, verification, documentation, and review evidence.
+      - A path reached from choose-user-direction after the user selected stop cannot select achieved; use the carried direction and completion evidence when assessing every criterion.
     options:
       - id: achieved
         label: Goal achieved
@@ -1136,10 +1137,6 @@ graph:
           required: true
           items:
             - plan-summary
-        - node: prepare-implementation
-          required: true
-          items:
-            - implementation-entry-summary
         - node: implement
           required: true
           items:
@@ -1165,6 +1162,10 @@ graph:
             - review-run-id
             - review-summary
             - ci-decision
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - finding-count-consistency
             - reported-severity-summary
             - effective-medium-or-higher-findings
             - effective-low-findings
@@ -1172,6 +1173,11 @@ graph:
             - unresolved-valid-findings
             - unresolved-implementation-findings
             - unresolved-documentation-findings
+        - node: await-user-direction
+          required: false
+          items:
+            - direction-classification
+            - direction-summary
         - node: record-low-disposition
           required: false
           items:

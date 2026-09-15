@@ -15,10 +15,9 @@ Assemble evidence already produced by the agent and explicitly supplied by the u
 
 Confirm that approved requirements, applicable verification, deslop, optimization, durable documentation, Mulgae review, and finding dispositions are represented in the final task evidence. Do not invent a terminal state when the roadmap lacks one.
 
-When the review predates an accepted Low-only delta, require the exact reviewed
-basis, frozen finding IDs and dispositions, before and after targets, passing local
-verification, zero pending dispositions and current blockers, and the honest
-coverage relationship. Verify that the final diff contains only that permitted
+When the review predates an accepted Low-only delta, require the complete
+Low-settlement composition defined by the shared finding-disposition contract.
+Verify that the final diff contains only that permitted
 delta plus separately approved lifecycle and promoted-evidence changes. Do not
 request another provider review solely because the target changed in this allowed
 way. Reject any stale, failed, ambiguous, or additional change.

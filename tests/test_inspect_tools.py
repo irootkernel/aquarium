@@ -4166,8 +4166,106 @@ else:
                     reasons,
                 )
 
-    def test_serial_review_gate_routes_are_handler_contracts(self) -> None:
+    def test_completion_and_direction_evidence_are_handler_contracts(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = (
+            (
+                "aquarium-task-v2.yaml",
+                "await-user-direction",
+                "review",
+                "completion-assessment-summary",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "await-user-direction",
+                "review",
+                "completion-unmet-criteria",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "await-user-direction",
+                "review",
+                "completion-unverified-criteria",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "assess-goal",
+                "review",
+                "completion-assessment-summary",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "assess-goal",
+                "record-evidence",
+                "finding-count-consistency",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "await-user-direction",
+                "final-review",
+                "completion-unverified-criteria",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "assess-goal",
+                "await-user-direction",
+                "direction-summary",
+            ),
+        )
+        for name, node_id, source_id, item_id in cases:
+            with self.subTest(procedure=name, node=node_id, item=item_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                node = next(
+                    entry
+                    for entry in document["graph"]["nodes"]
+                    if entry["id"] == node_id
+                )
+                for source in node["evidence_from"]:
+                    if source["node"] == source_id and item_id in source.get(
+                        "items", []
+                    ):
+                        source["items"].remove(item_id)
+                        break
+                else:
+                    self.fail(f"missing test fixture evidence {source_id}:{item_id}")
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"missing_required_evidence:{node_id}:{source_id}:{item_id}",
+                    reasons,
+                )
+
+    def test_serial_review_gate_nodes_and_routes_are_handler_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        node_cases = (
+            ("aquarium-task-v2.yaml", "confirm-review-findings"),
+            ("aquarium-validation-v2.yaml", "remediate"),
+            ("aquarium-validation-v2.yaml", "re-audit"),
+        )
+        for name, node_id in node_cases:
+            with self.subTest(procedure=name, node=node_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                document["graph"]["nodes"] = [
+                    node for node in document["graph"]["nodes"] if node["id"] != node_id
+                ]
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(f"missing_required_nodes:{node_id}", reasons)
+
         cases = (
             (
                 "aquarium-task-v2.yaml",
@@ -4186,6 +4284,24 @@ else:
                 "decide-required-evidence",
                 "complete",
                 "decide-current-blockers",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "decide-gaps",
+                "blocking-gaps",
+                "remediate",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "decide-re-audit",
+                "blocking-gaps",
+                "remediate",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "choose-user-direction",
+                "stop",
+                "record-stopped",
             ),
         )
         for name, node_id, option_id, destination in cases:
@@ -4469,6 +4585,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
                     "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
                     "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
                     "6bb336f321a83bba429c4173942eb977000014c627245839b3434da7d1055602",
@@ -4479,6 +4596,7 @@ else:
                     "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
                     "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
                     "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
                     "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
@@ -4489,6 +4607,7 @@ else:
                     "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
                     "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
                     "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",
                     "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",

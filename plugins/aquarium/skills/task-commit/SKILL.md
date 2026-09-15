@@ -5,7 +5,7 @@ description: "Prepare and create one authorized Git commit while reconciling roa
 
 # Task Commit
 
-Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md) and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one explicitly approved release-note hunk when needed, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
+Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one explicitly approved release-note hunk when needed, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
 
 ## Establish the Commit Boundary
 
@@ -35,7 +35,7 @@ A handler commit handoff must include:
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, reviewed snapshot, verdict, and review run when applicable, with inapplicable fields marked explicitly.
-- the Low-settlement composition as the exact reviewed basis, frozen finding IDs and dispositions, before and after targets, local verification identities and outcomes, pending and current blocker counts, and coverage relationship, or an explicit statement that no accepted Low-only delta applies;
+- the complete Low-settlement composition defined by the shared finding-disposition contract, or an explicit statement that no accepted Low-only delta applies;
 - the release-note decision as exact `entry` text already present in the approved diff, `intentional no-note`, or `not-enrolled`;
 - zero or more staged promoted-evidence manifest paths paired with exact `sha256:<64-hex>` manifest digests and the owning workflow's current native-evidence, native-target-digest, and copied-projection validation result, or an explicit statement that no promoted evidence applies;
 - for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs used only for pre-commit verification, or an explicit statement that no hardening deferral applies.

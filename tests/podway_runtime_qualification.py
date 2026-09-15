@@ -77,6 +77,27 @@ COMPLETION_GAP_SCENARIOS = {
     "validation-completion-unverified": ("aquarium-validation-v2", "unverified"),
 }
 
+STOP_EVIDENCE_SCENARIOS = {
+    "task-stop-preserves-completion": ("aquarium-task-v2", "review"),
+    "goal-stop-preserves-completion": ("aquarium-goal-v2", "record-evidence"),
+    "validation-stop-preserves-completion": (
+        "aquarium-validation-v2",
+        "final-review",
+    ),
+}
+TASK_CONFIRMATION_SCENARIOS = {
+    "task-confirmation-only-wait",
+    "task-stop-preserves-completion",
+}
+GOAL_CLOSEOUT_GAP_SCENARIOS = {
+    "goal-closeout-unmet-wait",
+    "goal-stop-preserves-completion",
+}
+VALIDATION_CONFIRMATION_SCENARIOS = {
+    "validation-medium-wait",
+    "validation-stop-preserves-completion",
+}
+
 GOAL_OPERATIONAL_VARIANTS = (
     ("verification-fail-review-pass", "fail", "pass", "verification-incomplete"),
     (
@@ -176,8 +197,11 @@ EXPECTED_NATIVE_CASE_VARIANTS = {
     "C-10": {
         "goal-closeout-unmet-wait",
         "goal-medium-wait",
+        "goal-stop-preserves-completion",
         "task-confirmation-only-wait",
+        "task-stop-preserves-completion",
         "validation-medium-wait",
+        "validation-stop-preserves-completion",
     },
     "C-16": set(VALIDATION_FINAL_REVIEW_SCENARIOS),
 }
@@ -207,6 +231,8 @@ CASE_ASSERTIONS = {
         "rework evidence routed to an unset user choice",
         "goal authority guards rejected the opposite remediation mode",
         "each exercised user decision authorized only one correction pass",
+        "user stop preserved completion evidence and direction through goal assessment",
+        "stopped work produced a not-achieved goal outcome",
     ],
     "C-16": [
         "validation final-review outcomes and evidence gaps selected distinct routes",
@@ -1503,7 +1529,7 @@ class ManagedRuntime:
                     value = 1
                 elif item_id == "effective-medium-or-higher-findings":
                     value = 0
-            if self.scenario == "validation-medium-wait":
+            if self.scenario in VALIDATION_CONFIRMATION_SCENARIOS:
                 if node == "audit" and item_id in {
                     "confirmed-gap-count",
                     "blocking-gap-count",
@@ -1511,7 +1537,7 @@ class ManagedRuntime:
                     "confirmation-needed-gap-count",
                 }:
                     value = 0
-                if node == "final-review":
+                if self.scenario == "validation-medium-wait" and node == "final-review":
                     if item_id in {
                         "unresolved-valid-findings",
                         "medium-or-higher-findings",
@@ -1529,6 +1555,12 @@ class ManagedRuntime:
                         "required-evidence-gaps",
                     }:
                         value = 0
+            if (
+                self.scenario == "validation-stop-preserves-completion"
+                and node == "final-review"
+                and item_id == "completion-unmet-criteria"
+            ):
+                value = 1
             if (
                 self.scenario in {"standard", "validation-low-blocker-wait"}
                 and node == "final-review"
@@ -1587,7 +1619,7 @@ class ManagedRuntime:
                 }:
                     value = 2 if item_id == "unresolved-valid-findings" else 1
             if (
-                self.scenario == "task-confirmation-only-wait"
+                self.scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "review"
                 and self.node_visits.get("review") in {2, 3}
                 and item_id
@@ -1598,7 +1630,7 @@ class ManagedRuntime:
             ):
                 value = 1
             if (
-                self.scenario == "goal-closeout-unmet-wait"
+                self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                 and node == "record-evidence"
                 and item_id == "completion-unmet-criteria"
             ):
@@ -1698,24 +1730,24 @@ class ManagedRuntime:
                 ),
                 "goal-kind": (
                     "epic-closeout"
-                    if self.scenario == "goal-closeout-unmet-wait"
+                    if self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                     else goal_kind or "member-task"
                 ),
                 "review-evidence-kind": (
                     "validated-closeout"
-                    if self.scenario == "goal-closeout-unmet-wait"
+                    if self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                     else review_evidence_kind or "native-review"
                 ),
                 "review-mode": (
                     "confirmation-only"
                     if self.scenario
-                    in {"validation-medium-wait", "task-confirmation-only-wait"}
+                    in VALIDATION_CONFIRMATION_SCENARIOS | TASK_CONFIRMATION_SCENARIOS
                     else (
                         "hardening-deferral-eligible"
                         if self.scenario in {"medium-wait", "goal-hardening-defer"}
                         else (
                             "closeout-not-required"
-                            if self.scenario == "goal-closeout-unmet-wait"
+                            if self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                             else "remediation-eligible"
                         )
                     )
@@ -1911,7 +1943,9 @@ class ManagedRuntime:
             "conditional action requirements did not converge"
         )
 
-    def assess_goal(self, observation: dict[str, Any]) -> dict[str, Any]:
+    def assess_goal(
+        self, observation: dict[str, Any], *, status: str = "satisfied"
+    ) -> dict[str, Any]:
         goal = observation["guidance"].get("goal", {})
         for criterion in goal.get("criteria", []):
             if criterion.get("status") != "unassessed":
@@ -1920,8 +1954,8 @@ class ManagedRuntime:
                 observation,
                 "goal.assess_criterion",
                 {
-                    "<status>": "satisfied",
-                    "<reason>": "official-artifact runtime criterion passed",
+                    "<status>": status,
+                    "<reason>": f"official-artifact runtime criterion {status}",
                 },
             )
             payload = json_payload(completed)
@@ -2206,6 +2240,15 @@ class ManagedRuntime:
                 self.decision_destination(decision, "decide-implementation-owner")
                 self.task_one_shot_decision_used = True
                 continue
+            if scenario in STOP_EVIDENCE_SCENARIOS and node == "choose-user-direction":
+                decision = self.decide(observation, "stop")
+                expected_destination = (
+                    "record-stopped"
+                    if procedure_id == "aquarium-validation-v2"
+                    else "assess-goal"
+                )
+                self.decision_destination(decision, expected_destination)
+                continue
             if (
                 scenario == "medium-wait"
                 and node == "choose-user-direction"
@@ -2378,7 +2421,7 @@ class ManagedRuntime:
                 continue
 
             if (
-                scenario == "task-confirmation-only-wait"
+                scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "decide-implementation-owner"
             ):
                 self.decide(observation, "required")
@@ -2416,7 +2459,7 @@ class ManagedRuntime:
                 continue
 
             if (
-                scenario == "task-confirmation-only-wait"
+                scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "confirm-review-completion"
                 and self.node_visits.get("review") in {2, 3}
             ):
@@ -2425,7 +2468,7 @@ class ManagedRuntime:
                 continue
 
             if (
-                scenario == "task-confirmation-only-wait"
+                scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "decide-task-rework-authority"
             ):
                 observation = self.reject_guarded_decision(observation, "remediation")
@@ -2455,7 +2498,7 @@ class ManagedRuntime:
                 continue
 
             if (
-                scenario == "goal-closeout-unmet-wait"
+                scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                 and node == "confirm-completion-assessment"
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
@@ -2476,8 +2519,19 @@ class ManagedRuntime:
                 self.decision_destination(invalid, "record-evidence")
                 continue
 
-            if scenario == "goal-closeout-unmet-wait" and node == "decide-review-basis":
+            if (
+                scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
+                and node == "decide-review-basis"
+            ):
                 self.decide(observation, "final-closeout")
+                continue
+
+            if (
+                scenario == "validation-stop-preserves-completion"
+                and node == "confirm-completion-assessment"
+            ):
+                observation = self.reject_guarded_decision(observation, "complete")
+                self.decide(observation, "unmet")
                 continue
 
             if (
@@ -2600,6 +2654,60 @@ class ManagedRuntime:
                 continue
 
             if node == "assess-goal":
+                if scenario in STOP_EVIDENCE_SCENARIOS:
+                    expected_procedure, completion_source = STOP_EVIDENCE_SCENARIOS[
+                        scenario
+                    ]
+                    if procedure_id != expected_procedure:
+                        raise RuntimeQualificationError(
+                            "stop-evidence scenario used the wrong Procedure"
+                        )
+                    summary = self.read_complete_evidence(
+                        observation,
+                        completion_source,
+                        "completion-assessment-summary",
+                    )
+                    unmet = self.read_complete_evidence(
+                        observation,
+                        completion_source,
+                        "completion-unmet-criteria",
+                    )
+                    unverified = self.read_complete_evidence(
+                        observation,
+                        completion_source,
+                        "completion-unverified-criteria",
+                    )
+                    direction = self.read_complete_evidence(
+                        observation,
+                        "await-user-direction",
+                        "direction-classification",
+                    )
+                    direction_summary = self.read_complete_evidence(
+                        observation,
+                        "await-user-direction",
+                        "direction-summary",
+                    )
+                    if (
+                        not summary
+                        or unmet != 1
+                        or unverified != 0
+                        or not direction
+                        or not direction_summary
+                    ):
+                        raise RuntimeQualificationError(
+                            "stop path lost completion evidence or user direction"
+                        )
+                    if procedure_id != "aquarium-validation-v2":
+                        consistency = self.read_complete_evidence(
+                            observation,
+                            completion_source,
+                            "finding-count-consistency",
+                        )
+                        if consistency != "consistent":
+                            raise RuntimeQualificationError(
+                                "stop path lost finding-count consistency"
+                            )
+                    self.mark_case_variant("C-10", scenario)
                 if (
                     scenario == "task-completion-unverified"
                     and self.node_visits.get("review", 0) < 3
@@ -2737,7 +2845,14 @@ class ManagedRuntime:
                     self.mark_case_variant("C-05", "verification-pass-review-pass")
                 if scenario in GOAL_KIND_SCENARIOS:
                     self.mark_case_variant("C-09", scenario)
-                observation = self.assess_goal(observation)
+                observation = self.assess_goal(
+                    observation,
+                    status=(
+                        "unsatisfied"
+                        if scenario in STOP_EVIDENCE_SCENARIOS
+                        else "satisfied"
+                    ),
+                )
             special_option = None
             if (
                 scenario == "standard"
@@ -2795,6 +2910,7 @@ class ManagedRuntime:
             elif node == "decide-goal-rework-authority" and scenario in {
                 "medium-wait",
                 "goal-closeout-unmet-wait",
+                "goal-stop-preserves-completion",
             }:
                 observation = self.reject_guarded_decision(observation, "remediation")
                 special_option = "user-direction"
@@ -2820,6 +2936,12 @@ class ManagedRuntime:
             ):
                 special_option = "user-direction"
             elif (
+                scenario == "validation-stop-preserves-completion"
+                and node == "decide-validation-rework-authority"
+            ):
+                observation = self.reject_guarded_decision(observation, "remediation")
+                special_option = "user-direction"
+            elif (
                 scenario in TASK_OWNER_SCENARIOS
                 and node
                 == {
@@ -2841,6 +2963,8 @@ class ManagedRuntime:
                 scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
             ):
                 special_option = "final-closeout"
+            elif scenario in STOP_EVIDENCE_SCENARIOS and node == "assess-goal":
+                special_option = "not-achieved"
             option = (
                 special_option
                 or {
@@ -2981,6 +3105,10 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         *(
             (scenario, "aquarium-validation-v2.yaml")
             for scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+        ),
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _source) in STOP_EVIDENCE_SCENARIOS.items()
         ),
     )
     for offset, (scenario, procedure_name) in enumerate(

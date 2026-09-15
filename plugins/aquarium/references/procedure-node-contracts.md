@@ -20,9 +20,9 @@ unless the placement selects it.
 | Refine | `task-refine` consumes the current implementation result | Limit work to authorized cleanup and return the exact refined target |
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
-| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, finding-count consistency, findings, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
+| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
 | Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
-| Assessment and closeout | `task-handler`, then `task-close` and an independently authorized `task-commit` | Non-achieved work cannot close; actual user approval and exact final-target composition remain required |
+| Assessment and closeout | `task-handler` consumes the carried completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
 
 ## Goal Procedure
 
@@ -31,14 +31,18 @@ not invoke the task phase skills. `complete-work` returns the work summary, sour
 revision, and conditional plan-handoff artifact. `record-evidence` returns the goal
 kind, review-evidence kind, typed verification and review-readiness results, and
 applicable review and finding records.
-Operational evidence, finding confirmation, completion, finding-count consistency,
-finding class, rework authority, and Low handling are separate serial decisions. Unverified completion
+Operational evidence, finding confirmation, completion, finding class, rework
+authority, and Low handling form a serial routing chain. Finding-count consistency
+is a guard axis of the finding-class decision. Unverified completion
 returns to evidence; unmet completion and Medium-or-higher findings share the
 explicit authority gate. Inconsistent finding totals return to evidence before
 classification. A first adequate Low-only review alone records either
 finite settlement or the supported bounded hardening handoff. The derived
 `current-rework-obligations` total is not part of the contract. The final-closeout substitute is valid only
-for `goal-kind=epic-closeout` with exact successful validation evidence.
+for `goal-kind=epic-closeout` with exact successful validation evidence. Goal
+assessment consumes the carried completion summary and gap counts, their
+consistency when present, and any user direction. A stop direction must produce a
+not-achieved assessment rather than closing the goal.
 
 Each `choose-user-direction: fix-and-review` decision authorizes its one transition
 back to work and the next review ordinal. Later rework reaches a fresh unset choice;
@@ -65,6 +69,9 @@ the final Low-or-validated choice. When another Medium-or-higher correction need
 select the supported `user-direction` route, record only the current issue set and
 exhausted authority at `await-user-direction`, complete that action, and stop at
 `choose-user-direction` with the actual choice unset until the user answers.
+Validation assessment consumes the carried completion summary and gap counts,
+their consistency when present, and any user direction. A stop direction must
+produce a not-achieved assessment rather than validating or closing the epic.
 
 ## Design Procedure
 

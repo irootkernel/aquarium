@@ -1,6 +1,6 @@
 interface:
   display_name: "Independent Review"
-  short_description: "Explain the disabled review route and alternatives"
-  default_prompt: "Use $aquarium:independent-review to explain its temporary unavailability and available alternatives without launching a review."
+  short_description: "Refuse the disabled route or run one selected alternative"
+  default_prompt: "Use $aquarium:independent-review to explain its temporary unavailability, or dispatch exactly one explicitly preselected supported Orca or native Codex alternative under that route's own contract; native Codex additionally requires host fresh delegation."
 policy:
   allow_implicit_invocation: false

@@ -143,6 +143,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
         "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
         "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
         "6bb336f321a83bba429c4173942eb977000014c627245839b3434da7d1055602",
@@ -153,6 +154,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
     },
     "aquarium-goal-v2.yaml": {
+        "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
         "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
         "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
         "7bf4460688335c1d1985fc1171313ac42ba7f82a64d8bc8733826a4fdd116e38",
@@ -163,6 +165,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
     },
     "aquarium-validation-v2.yaml": {
+        "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
         "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
         "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",
         "45192a644087b811eb34952576798ae4f3e85ebdf87c77fc8dc097d3c8bb2f50",
@@ -186,6 +189,7 @@ PODWAY_HANDLER_CONTRACTS = {
             "prepare-implementation",
             "implement",
             "document",
+            "confirm-review-findings",
             "decide-review-ci",
             "confirm-review-completion",
             "decide-review",
@@ -288,6 +292,19 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("verify", "verification-result"),
                 ("verify", "verification-observations"),
                 ("decide-verification", None),
+            },
+            "await-user-direction": {
+                ("review", "completion-assessment-summary"),
+                ("review", "completion-unmet-criteria"),
+                ("review", "completion-unverified-criteria"),
+            },
+            "assess-goal": {
+                ("review", "completion-assessment-summary"),
+                ("review", "completion-unmet-criteria"),
+                ("review", "completion-unverified-criteria"),
+                ("review", "finding-count-consistency"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
             },
         },
     },
@@ -395,16 +412,29 @@ PODWAY_HANDLER_CONTRACTS = {
         },
         "evidence": {
             "await-user-direction": {
+                ("record-evidence", "completion-assessment-summary"),
+                ("record-evidence", "completion-unmet-criteria"),
+                ("record-evidence", "completion-unverified-criteria"),
                 ("record-low-disposition", "source-review-basis"),
                 ("record-low-disposition", "low-disposition-summary"),
                 ("record-low-disposition", "current-blocking-findings"),
                 ("record-low-disposition", "after-target"),
+            },
+            "assess-goal": {
+                ("record-evidence", "completion-assessment-summary"),
+                ("record-evidence", "completion-unmet-criteria"),
+                ("record-evidence", "completion-unverified-criteria"),
+                ("record-evidence", "finding-count-consistency"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
             },
         },
     },
     "aquarium-validation-v2.yaml": {
         "nodes": {
             "record-audit-low-basis",
+            "remediate",
+            "re-audit",
             "decide-final-review-operation",
             "confirm-final-review-findings",
             "confirm-completion-assessment",
@@ -414,6 +444,7 @@ PODWAY_HANDLER_CONTRACTS = {
             "decide-final-review",
             "await-user-direction",
             "choose-user-direction",
+            "record-stopped",
             "record-low-disposition",
             "decide-low-result",
             "decide-low-completion",
@@ -462,10 +493,12 @@ PODWAY_HANDLER_CONTRACTS = {
         },
         "routes": {
             "decide-gaps": {
+                "blocking-gaps": "remediate",
                 "low-only": "record-audit-low-basis",
                 "user-direction": "await-user-direction",
             },
             "decide-re-audit": {
+                "blocking-gaps": "remediate",
                 "low-only": "record-audit-low-basis",
                 "user-direction": "await-user-direction",
             },
@@ -494,6 +527,10 @@ PODWAY_HANDLER_CONTRACTS = {
                 "remediation": "audit",
                 "user-direction": "await-user-direction",
             },
+            "choose-user-direction": {
+                "fix-and-review": "audit",
+                "stop": "record-stopped",
+            },
             "decide-final-review": {
                 "low-disposition": "record-low-disposition",
                 "validated": "assess-goal",
@@ -503,10 +540,20 @@ PODWAY_HANDLER_CONTRACTS = {
         },
         "evidence": {
             "await-user-direction": {
+                ("final-review", "completion-assessment-summary"),
+                ("final-review", "completion-unmet-criteria"),
+                ("final-review", "completion-unverified-criteria"),
                 ("record-low-disposition", "source-review-basis"),
                 ("record-low-disposition", "low-disposition-summary"),
                 ("record-low-disposition", "current-blocking-findings"),
                 ("record-low-disposition", "after-target"),
+            },
+            "assess-goal": {
+                ("final-review", "completion-assessment-summary"),
+                ("final-review", "completion-unmet-criteria"),
+                ("final-review", "completion-unverified-criteria"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
             },
         },
     },

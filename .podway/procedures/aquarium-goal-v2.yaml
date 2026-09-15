@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "14"
+version: "15"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -735,6 +735,7 @@ node_definitions:
     prompt: What is the outcome of the current goal?
     evidence_guidance:
       - Read the latest work and evidence records and assess every goal criterion.
+      - A path reached from choose-user-direction after the user selected stop cannot select achieved; use the carried direction and completion evidence when assessing every criterion.
     options:
       - id: achieved
         label: Goal achieved
@@ -1088,11 +1089,20 @@ graph:
             - review-mode
             - review-run-id
             - evidence-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - finding-count-consistency
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
             - effective-low-findings
             - confirmation-needed-findings
             - finding-disposition-summary
+        - node: await-user-direction
+          required: false
+          items:
+            - direction-classification
+            - direction-summary
         - node: record-hardening-deferral
           required: false
           items:

@@ -1,6 +1,6 @@
 # Review Intent Contract
 
-Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
+Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion, and for the disabled `$aquarium:independent-review` entrypoint's refusal and routing decision. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
 
 ## Select the purpose
 
@@ -10,6 +10,19 @@ Every review has one purpose:
 - `completion` asks both whether the candidate has actionable defects or regressions and whether the named Task, Epic, or bounded requirement set is fully satisfied at the current checkpoint.
 
 Purpose does not change the selected source scope, native review mode, remediation budget, or authorization. It grants no additional permission to run checks, edit files, stage, commit, publish, install, change providers, or launch another review.
+
+## Route a disabled Independent Review request
+
+The disabled `$aquarium:independent-review` entrypoint owns only its refusal and routing decision. Apply this matrix before any discovery, setup, source handling, provider contact, or review launch:
+
+| Explicitly preselected supported alternative | Result |
+| --- | --- |
+| None | Explain the refusal and available alternatives; launch nothing. |
+| Exactly one Orca route | Preserve the original target and review question, validate the requested reviewer and supported target, then invoke `$aquarium:orca-review` under its own contract. |
+| Exactly one native Codex route | Preserve the original target and review question. Use a fresh host-native review subagent only when the host exposes native delegation; otherwise report the unavailable route and stop without fallback. |
+| More than one alternative | Ask the user to choose exactly one route; launch nothing. |
+
+The selected route owns execution, source handling, lifecycle, evidence, and result. The disabled entrypoint adds no fallback, translation, or backend guarantee.
 
 ## Build the Review Brief
 
@@ -78,11 +91,15 @@ If a native target exposes only a patch and cannot support the requested complet
 
 Referenced sources must be readable in the selected review environment. A host-only path is not delivered context for an isolated provider. Additional context stays within the approved transmission scope and excludes credentials, private conversations, raw provider transcripts, and other repositories unless separately authorized. Do not silently truncate acceptance criteria or invent Aquarium-only byte limits.
 
+When a transport or readability limit makes original authority or required evidence unavailable in the selected review environment, disclose the exact omitted context. Mark a criterion `unverified` when that omission prevents a supported assessment from the evidence the reviewer can read. If readable evidence already establishes a concrete gap, assess the criterion as `unmet` under the rules below. A Review Brief omission alone does not affect the assessment when the reviewer can independently read the original authority and applicable evidence. A coordinator summary of material the reviewer cannot read remains coordinator evidence and does not establish provider or role coverage.
+
 ## Assess change and completion
 
 For `change`, inspect the intended effect plus relevant implementation, callers, contracts, and tests. Separate pre-existing issues from defects introduced or made reachable by the change. Do not expand into an unrelated repository-wide audit.
 
 For `completion`, start with the applicable requirements and trace them to implementation, production wiring, consumers, tests, documentation, and required artifacts. Inspect unchanged code when needed to detect missing wiring, modules, migrations, recovery, or acceptance evidence. For an Epic, cover every applicable member requirement and integration seam. For a member Task, apply current parent-Epic constraints without requiring unfinished future members prematurely.
+
+Every enabled completion reviewer must reconcile the Review Brief's criterion set with the named work unit's original authority and applicable member requirements. Assess a reconciled requirement omitted from the brief as `met`, `unmet`, `unverified`, or `not-applicable` from the readable evidence. Mark it `unverified` only when the requirement is unreadable, its conflict remains unresolved, or the available evidence is insufficient. Neither the brief nor a coordinator summary may narrow the authoritative completion basis silently.
 
 A pre-closeout review does not reject ready work merely because an already authorized later step has not yet changed lifecycle state or created the commit. An already-claimed completed outcome includes final artifacts and lifecycle obligations required by repository authority. Neither checkpoint implies push, release, deployment, or live verification unless the work unit requires it.
 
@@ -98,6 +115,8 @@ Each criterion assessment is one of these Aquarium states, which are not new nat
 - `not-applicable`: the applicable authority, approved scope, or current checkpoint establishes that the criterion does not apply.
 
 Conflicting accepted assessments resolve to `unmet` when any evidence establishes a real gap; otherwise they remain `unverified` until the conflict is resolved. Silence is never `met`. Multiple role reports do not constitute a vote, and a majority cannot erase a supported gap.
+
+Coordinator-authored evidence retains coordinator provenance. It may explain context, map requirements, or support local adjudication, but it never counts as provider evidence, an accepted role report, or coverage by a responsibility assigned to a reviewer.
 
 When a report assesses only part of a compound criterion, retain the supported evidence and keep the unassessed remainder `unverified`; a label for the assessed part cannot make the whole criterion `met`. When multiple reports describe the same semantic finding or criterion gap, preserve their native report identities and finding-specific dispositions but count the shared issue once in the aggregate assessment. Deduplication never discards distinct evidence, remaining gaps, or dispositions.
 

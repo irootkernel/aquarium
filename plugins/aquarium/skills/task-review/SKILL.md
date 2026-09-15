@@ -32,7 +32,7 @@ Do not count a cancelled lane, operational failure, incomplete capture, unavaila
 
 Mulgae retains complete provider stdout and stderr without a product byte ceiling. Keep raw transcripts, accepted reports, extraction artifacts, and credential-profile paths in private Mulgae runtime state.
 
-Verify every finding locally, but bound the orchestrator handoff to counts by reported severity, effective priority, validity, and disposition plus at most 20 highest-priority records containing only finding ID, reported severity, effective priority, validity, disposition, and affected repository-relative paths.
+Verify every finding locally, but bound the orchestrator handoff to counts by reported severity, effective priority, validity, and disposition plus at most 20 highest-priority records containing only finding ID, reported severity, effective priority, validity, disposition, and affected repository-relative paths. Bound the separate completion assessment to criterion identity and source, assessment state, remaining gap, and reviewer or coordinator provenance.
 
 When more remain, include the omitted count and authoritative run/findings identity or digest. Never include descriptions, quotes, credential-profile paths, or raw provider payloads.
 

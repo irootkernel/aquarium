@@ -455,6 +455,50 @@ def test_user_direction_record_completes_before_the_unset_choice_node() -> None:
         assert isinstance(instructions, list) and instructions
 
 
+def test_stop_paths_preserve_completion_and_direction_for_goal_assessment() -> None:
+    cases = (
+        ("aquarium-task-v2.yaml", "review", True),
+        ("aquarium-goal-v2.yaml", "record-evidence", True),
+        ("aquarium-validation-v2.yaml", "final-review", False),
+    )
+    completion_items = {
+        "completion-assessment-summary",
+        "completion-unmet-criteria",
+        "completion-unverified-criteria",
+    }
+    for name, completion_node, has_count_consistency in cases:
+        procedure = load_procedure(name)
+        graph = nodes(procedure)
+        assessment_sources = graph["assess-goal"]["evidence_from"]
+        selected_completion = {
+            item
+            for source in assessment_sources
+            if source["node"] == completion_node
+            for item in source.get("items", [])
+        }
+        selected_direction = {
+            item
+            for source in assessment_sources
+            if source["node"] == "await-user-direction"
+            for item in source.get("items", [])
+        }
+
+        assert completion_items <= selected_completion
+        assert ("finding-count-consistency" in selected_completion) is (
+            has_count_consistency
+        )
+        assert {"direction-classification", "direction-summary"} <= (selected_direction)
+
+        wait_sources = graph["await-user-direction"]["evidence_from"]
+        wait_completion = {
+            item
+            for source in wait_sources
+            if source["node"] == completion_node
+            for item in source.get("items", [])
+        }
+        assert completion_items <= wait_completion
+
+
 def test_review_evidence_uses_one_source_entry_and_only_needed_items() -> None:
     cases = (
         ("aquarium-task-v2.yaml", "decide-review", "review"),
