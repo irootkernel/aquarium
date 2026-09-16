@@ -689,7 +689,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                         args = ["--isolated", "--python", ">=3.12", "--from", "ouroboros-ai[mcp]", "ouroboros", "mcp", "serve"]
                         env = {{"OUROBOROS_AGENT_RUNTIME": "codex", "OUROBOROS_LLM_BACKEND": "codex"}}
                         if mode == "isolated-pinned":
-                            args[4] = "ouroboros-ai[mcp]==0.51.15"
+                            args[4] = "ouroboros-ai[mcp]==" + {ouroboros_version!r}
                         elif mode == "isolated-suffix":
                             args.extend(["--runtime", "codex", "--llm-backend", "codex"])
                             env = {{}}
@@ -702,7 +702,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                         elif mode == "isolated-wrong-package":
                             args[4] = "ouroboros-ai"
                         elif mode == "isolated-unsupported-pin":
-                            args[4] = "ouroboros-ai[mcp]==0.54.0"
+                            args[4] = "ouroboros-ai[mcp]==0.50.9"
                         elif mode == "isolated-old-pin":
                             args[4] = "ouroboros-ai[mcp]==0.51.0"
                         elif mode == "isolated-extra-arg":
@@ -918,7 +918,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         name: str = "humanize-korean",
         include_license: bool = True,
     ) -> Path:
-        skill_directory = (root or self.home / ".agents/skills") / "humanize-korean"
+        skill_directory = (root or self.codex_home / "skills") / "humanize-korean"
         skill_directory.mkdir(parents=True)
         for relative_path in inspect_tools.HUMANIZE_KOREAN_SKILL_FILES:
             path = skill_directory / relative_path
@@ -3683,8 +3683,8 @@ else:
         self.assertFalse(deslop["installed"])
         self.assertTrue(deslop["agent_skill"]["installations"][0]["symlinked"])
 
-    def test_repository_trusts_korean_skill_presence_in_agents_root(self) -> None:
-        target = self.home / ".agents/skills/humanize-korean"
+    def test_repository_trusts_korean_skill_presence_in_codex_home(self) -> None:
+        target = self.codex_home / "skills/humanize-korean"
         target.mkdir(parents=True)
 
         skill = json.loads(self.inspect().stdout)["trusted_global_skills"][
@@ -3706,7 +3706,7 @@ else:
         self.assertEqual(humanizer["status"], "unverifiable")
         self.assertEqual(humanizer["version"], "2.11.1")
         self.assertTrue(humanizer["version_supported"])
-        self.assertEqual(humanizer["supported_release"], "v2.11.1")
+        self.assertEqual(humanizer["supported_range"], ">=2.11.1")
         self.assertEqual(
             humanizer["expected_target"],
             str(self.home / ".agents/skills/humanizer"),
@@ -3724,33 +3724,33 @@ else:
         self.assertEqual(im_not_ai["supported_release"], "v2.3.2")
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(self.home / ".agents/skills/humanize-korean"),
+            str(self.codex_home / "skills/humanize-korean"),
         )
         self.assertEqual(
             im_not_ai["agent_skill"]["installations"][0]["unexpected_entries"],
             [],
         )
 
-    def test_writing_skill_extra_missing_and_symlinked_files_are_degraded(self) -> None:
+    def test_writing_skill_extra_missing_and_symlinked_files(self) -> None:
         humanizer = self.install_humanizer_skill()
         humanizer.joinpath("README.md").write_text("extra\n", encoding="utf-8")
         self.install_im_not_ai_skill(include_license=False)
 
         tools = json.loads(self.inspect_global().stdout)["tools"]
 
-        self.assertEqual(tools["humanizer"]["status"], "degraded")
-        self.assertFalse(tools["humanizer"]["installed"])
+        self.assertEqual(tools["humanizer"]["status"], "unverifiable")
+        self.assertTrue(tools["humanizer"]["installed"])
         self.assertEqual(
             tools["humanizer"]["agent_skill"]["installations"][0]["unexpected_entries"],
-            ["README.md"],
+            [],
         )
         self.assertEqual(tools["im-not-ai"]["status"], "degraded")
         self.assertFalse(tools["im-not-ai"]["installed"])
 
-        shutil.rmtree(self.home / ".agents/skills/humanize-korean")
+        shutil.rmtree(self.codex_home / "skills/humanize-korean")
         source = self.install_im_not_ai_skill(root=self.base / "source-skills")
         (self.codex_home / "skills").mkdir(parents=True, exist_ok=True)
-        (self.home / ".agents/skills/humanize-korean").symlink_to(
+        (self.codex_home / "skills/humanize-korean").symlink_to(
             source, target_is_directory=True
         )
         im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
@@ -3775,25 +3775,107 @@ else:
             )
         )
 
-    def test_writing_skills_in_noncanonical_roots_are_degraded(self) -> None:
-        self.install_humanizer_skill(root=self.codex_home / "skills")
-        self.install_im_not_ai_skill(root=self.codex_home / "skills")
+    def test_humanizer_active_home_candidate_and_korean_shared_copy(self) -> None:
+        humanizer_target = self.install_humanizer_skill(
+            root=self.codex_home / "skills", version="3.0.0"
+        )
+        self.install_im_not_ai_skill(root=self.home / ".agents/skills")
 
         tools = json.loads(self.inspect_global().stdout)["tools"]
 
-        self.assertEqual(tools["humanizer"]["status"], "degraded")
-        self.assertFalse(tools["humanizer"]["installed"])
+        self.assertEqual(tools["humanizer"]["status"], "unverifiable")
+        self.assertTrue(tools["humanizer"]["installed"])
+        self.assertEqual(tools["humanizer"]["expected_target"], str(humanizer_target))
         self.assertEqual(tools["im-not-ai"]["status"], "degraded")
         self.assertFalse(tools["im-not-ai"]["installed"])
 
-    def test_humanizer_requires_the_pinned_supported_release(self) -> None:
-        self.install_humanizer_skill(version="2.10.0")
+        trusted = json.loads(self.inspect().stdout)["trusted_global_skills"][
+            "humanizer"
+        ]
+        self.assertEqual(trusted["canonical_path"], str(humanizer_target))
+        self.assertTrue(trusted["present"])
+
+    def test_humanizer_active_default_home_candidate(self) -> None:
+        target = self.install_humanizer_skill(root=self.home / ".codex/skills")
+        self.environment.pop("CODEX_HOME")
 
         humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
 
+        self.assertEqual(humanizer["expected_target"], str(target))
+        self.assertTrue(humanizer["installed"])
+
+    def test_humanizer_accepts_stable_versions_at_or_above_minimum(self) -> None:
+        for version, supported in (
+            ("2.11.0", False),
+            ("2.11.1", True),
+            ("3.0.0", True),
+            ("3.0.0rc1", False),
+        ):
+            with self.subTest(version=version):
+                shutil.rmtree(
+                    self.home / ".agents/skills/humanizer", ignore_errors=True
+                )
+                self.install_humanizer_skill(version=version)
+                humanizer = json.loads(self.inspect_global().stdout)["tools"][
+                    "humanizer"
+                ]
+                self.assertEqual(humanizer["installed"], supported)
+                self.assertEqual(humanizer["version_supported"], supported)
+
+    def test_humanizer_other_codex_home_is_independent(self) -> None:
+        self.install_humanizer_skill(root=self.codex_home / "skills")
+        other_home = self.home / ".codex-work"
+        self.install_humanizer_skill(root=other_home / "skills")
+        (self.home / ".codex-linked").symlink_to(other_home, target_is_directory=True)
+
+        humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
+
+        self.assertFalse(humanizer["agent_skill"]["duplicate"])
+        self.assertTrue(humanizer["installed"])
+
+    def test_humanizer_active_and_shared_copies_are_duplicate(self) -> None:
+        self.install_humanizer_skill(root=self.codex_home / "skills")
+        self.install_humanizer_skill()
+
+        humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
+
+        self.assertTrue(humanizer["agent_skill"]["duplicate"])
         self.assertFalse(humanizer["installed"])
-        self.assertFalse(humanizer["version_supported"])
+
+    def test_humanizer_rejects_extra_symlink(self) -> None:
+        skill = self.install_humanizer_skill(version="3.0.0")
+        skill.joinpath("reference.md").symlink_to(skill / "SKILL.md")
+
+        humanizer = json.loads(self.inspect_global().stdout)["tools"]["humanizer"]
+
         self.assertEqual(humanizer["status"], "degraded")
+        self.assertEqual(
+            humanizer["agent_skill"]["installations"][0]["unexpected_entries"],
+            ["reference.md"],
+        )
+
+    def test_humanizer_rejects_unreadable_extra_directory(self) -> None:
+        skill = self.install_humanizer_skill(version="3.0.0")
+
+        def incomplete_walk(directory, *, followlinks, onerror):
+            yield directory, ["reference"], ["SKILL.md", "LICENSE"]
+            onerror(PermissionError("reference directory is unreadable"))
+
+        with mock.patch("inspect_tools.os.walk", side_effect=incomplete_walk):
+            result = inspect_tools.inspect_writing_skill(
+                skill_name="humanizer",
+                expected_files=inspect_tools.HUMANIZER_SKILL_FILES,
+                expected_target=skill,
+                minimum_version=inspect_tools.HUMANIZER_MINIMUM_VERSION,
+                roots=(skill.parent,),
+            )
+
+        self.assertFalse(result["installed"])
+        self.assertEqual(result["status"], "degraded")
+        self.assertEqual(
+            result["agent_skill"]["installations"][0]["unexpected_entries"],
+            ["<unsafe-or-unreadable>"],
+        )
 
     def test_writing_skill_version_reader_rejects_a_special_skill_file(self) -> None:
         skill_directory = self.home / ".agents/skills/humanizer"
@@ -3813,20 +3895,51 @@ else:
         self.assertFalse(humanizer["installed"])
         self.assertEqual(humanizer["status"], "degraded")
 
-    def test_im_not_ai_target_uses_agents_root_with_custom_codex_home(self) -> None:
+    def test_im_not_ai_target_uses_active_codex_home(self) -> None:
         self.install_im_not_ai_skill()
 
         im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
 
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(self.home / ".agents/skills/humanize-korean"),
+            str(self.codex_home / "skills/humanize-korean"),
         )
         self.assertTrue(im_not_ai["installed"])
 
-    def test_im_not_ai_target_ignores_relative_codex_home(self) -> None:
-        relative_home = Path("relative-codex")
+    def test_im_not_ai_defaults_to_dot_codex_home(self) -> None:
+        self.install_im_not_ai_skill(root=self.home / ".codex/skills")
+        self.environment.pop("CODEX_HOME")
+
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
+
+        self.assertEqual(
+            im_not_ai["expected_target"],
+            str(self.home / ".codex/skills/humanize-korean"),
+        )
+        self.assertTrue(im_not_ai["installed"])
+
+    def test_im_not_ai_other_codex_home_is_independent(self) -> None:
         self.install_im_not_ai_skill()
+        self.install_im_not_ai_skill(root=self.home / ".codex/skills")
+
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
+
+        self.assertTrue(im_not_ai["installed"])
+        self.assertFalse(im_not_ai["agent_skill"]["duplicate"])
+
+    def test_im_not_ai_shared_copy_is_duplicate(self) -> None:
+        self.install_im_not_ai_skill()
+        self.install_im_not_ai_skill(root=self.home / ".agents/skills")
+
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
+
+        self.assertFalse(im_not_ai["installed"])
+        self.assertEqual(im_not_ai["status"], "degraded")
+        self.assertTrue(im_not_ai["agent_skill"]["duplicate"])
+
+    def test_im_not_ai_target_resolves_relative_codex_home(self) -> None:
+        relative_home = Path("relative-codex")
+        self.install_im_not_ai_skill(root=self.base / relative_home / "skills")
         self.environment["CODEX_HOME"] = str(relative_home)
 
         with (
@@ -3837,7 +3950,7 @@ else:
 
         self.assertEqual(
             im_not_ai["expected_target"],
-            str(self.home / ".agents/skills/humanize-korean"),
+            str(self.base / relative_home / "skills/humanize-korean"),
         )
         self.assertTrue(im_not_ai["installed"])
         self.assertEqual(im_not_ai["status"], "unverifiable")
@@ -6753,7 +6866,7 @@ else:
         ouroboros_inspector.assert_not_called()
         self.assertNotIn("ouroboros", payload["tools"])
 
-    def test_ouroboros_supports_only_the_selected_minor_line(self) -> None:
+    def test_ouroboros_supports_stable_versions_at_or_above_minimum(self) -> None:
         expected = {
             "0.51.0": False,
             "0.51.1": True,
@@ -6761,7 +6874,8 @@ else:
             "0.50.9": False,
             "0.52.0": True,
             "0.53.0": True,
-            "0.54.0": False,
+            "0.54.4": True,
+            "1.0.0": True,
             "0.53.0rc1": False,
         }
         for version, supported in expected.items():
@@ -6774,11 +6888,11 @@ else:
         output = "\x1b[1mOuroboros\x1b[0m version \x1b[1m0.51\x1b[0m.\x1b[1m1\x1b[0m\n"
         self.assertEqual(inspect_tools.ouroboros_version_from_output(output), "0.51.1")
 
-    def test_ouroboros_version_parser_reports_unsupported_major(self) -> None:
+    def test_ouroboros_version_parser_accepts_newer_major(self) -> None:
         output = "runtime 9.9.9\nOuroboros version 1.0.0\n"
         version = inspect_tools.ouroboros_version_from_output(output)
         self.assertEqual(version, "1.0.0")
-        self.assertFalse(inspect_tools.supported_ouroboros_version(version))
+        self.assertTrue(inspect_tools.supported_ouroboros_version(version))
 
     def test_installed_ouroboros_reports_configured_components(self) -> None:
         self.install_fake_tools(
@@ -6818,6 +6932,17 @@ else:
                     "isolated_launcher_configured",
                 )
                 self.assertEqual(ouroboros["status"], "configured")
+
+    def test_ouroboros_accepts_newer_matching_isolated_pin(self) -> None:
+        self.install_fake_tools(
+            ouroboros_version="0.54.4", ouroboros_mcp_mode="isolated-pinned"
+        )
+        completed = self.inspect_ouroboros_probe()
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
+        self.assertTrue(ouroboros["version_supported"])
+        self.assertEqual(ouroboros["runtime_package"]["status"], "pinned")
+        self.assertEqual(ouroboros["status"], "configured")
 
     def test_ouroboros_accepts_isolated_launcher_without_base_cli(self) -> None:
         self.install_fake_tools(ouroboros_mcp_mode="isolated")
@@ -6903,7 +7028,7 @@ else:
                 self.assertEqual(ouroboros["status"], "degraded")
 
     def test_ouroboros_version_failures_and_unsupported_versions_degrade(self) -> None:
-        for version, version_ok in (("0.54.0", True), ("0.51.1", False)):
+        for version, version_ok in (("0.51.0", True), ("0.51.1", False)):
             with self.subTest(version=version, version_ok=version_ok):
                 self.install_fake_tools(
                     ouroboros_version=version,
@@ -7053,7 +7178,7 @@ else:
         completed = self.inspect_ouroboros_probe()
         self.assertEqual(completed.returncode, 0, completed.stderr)
         ouroboros = json.loads(completed.stdout)["tools"]["ouroboros"]
-        self.assertEqual(ouroboros["supported_range"], ">=0.51.1,<0.54.0")
+        self.assertEqual(ouroboros["supported_range"], ">=0.51.1")
         self.assertEqual(ouroboros["status"], "missing")
         self.assertEqual(ouroboros["codex_integration"]["status"], "missing")
         self.assertEqual(ouroboros["mcp_runtime"]["status"], "missing")

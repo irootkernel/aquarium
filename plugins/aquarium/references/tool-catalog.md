@@ -23,6 +23,7 @@ Re-run diagnosis and `~/.local/bin/aquarium-dev version`. Start a new Codex sess
 ## Shared version and safety policy
 
 - Resolve the latest non-draft, non-prerelease stable release at execution time from the official repository, limited to a tool's supported release line when its section defines one. Display the exact tag and source before installation; never substitute `@latest` after approval.
+- Use the selected upstream release's documented default skill location. When it names `$CODEX_HOME`, use the active Codex home's `skills` directory (`~/.codex/skills` when unset). When it gives no default location, use `~/.agents/skills`. Check locations loaded by the same Codex home before installing so setup does not create a duplicate.
 - Preserve an already compatible installation unless the user approves an upgrade.
 - Diagnose credentials by whether the owning CLI reports readiness. Never print, copy, or persist credential material.
 - Keep configuration in each tool's native files. Never create `.aquarium`, a selection manifest, or a shadow version registry.
@@ -383,9 +384,9 @@ If the target exists, compare its complete tree with the approved source plus LI
 
 Official source: `https://github.com/blader/humanizer`
 
-Resolve the supported `v2.11.1` release through official GitHub release metadata, prepare a temporary detached checkout at that exact tag, and require `HEAD` to equal the resolved release commit. The complete install payload is the root `SKILL.md` and `LICENSE`; require regular non-symlink files, `name: humanizer`, and frontmatter version `2.11.1`.
+Support stable releases `>=v2.11.1` without an upper bound. Resolve the latest stable release by default or the user's selected supported release through official GitHub release metadata. Prepare a temporary detached checkout at that exact tag and require `HEAD` to equal the resolved release commit. Require a regular non-symlink root `SKILL.md` and `LICENSE`, `name: humanizer`, and a frontmatter version matching the selected tag. Include any additional regular skill files required by that release's upstream guidance in the verified install payload.
 
-Install the verified two-file payload at `~/.agents/skills/humanizer` only after separate approval. Compare the complete source and target trees and every digest, rejecting missing or extra paths, symlinks, invalid frontmatter, a non-v2 or mismatched version, and duplicates in other Codex skill roots. Never execute Humanizer or rewrite prose during setup.
+The current upstream guidance does not name `$CODEX_HOME` as its default; use `~/.agents/skills/humanizer` unless the selected release documents a different default. The offline inspector accepts a sole shared or active-home copy as a structural candidate; confirm the selected release's installation guidance before treating either target as canonical. Install only after separate approval. Compare the complete selected payload and target trees and every digest, rejecting missing or extra paths, symlinks, invalid frontmatter, a below-minimum or mismatched version, and copies that would be loaded beside the selected target. Never execute Humanizer or rewrite prose during setup.
 
 ## im-not-ai
 
@@ -393,7 +394,7 @@ Official source: `https://github.com/epoko77-ai/im-not-ai`
 
 Resolve the supported `v2.3.2` release through official GitHub release metadata, prepare a temporary detached checkout at that exact tag, and require `HEAD` to equal the resolved release commit. Read the checked-out `install.sh` and require every write target to derive from the isolated temporary `CODEX_HOME`. Disclose the exact `./install.sh --codex-only --copy` command and temporary target and obtain separate approval for that upstream-code execution, then run it without `--force`. Reject unexpected writes outside that isolated directory, then add the checkout's root LICENSE to the generated `humanize-korean` directory.
 
-Require the materialized payload to contain only regular non-symlink files, the exact generated tree, and `name: humanize-korean`. Install that complete payload at `~/.agents/skills/humanize-korean` only after separate approval. Then compare every path and digest and reject duplicates in other Codex skill roots. Never point the active skill target at a checkout, run the installer against the active Codex home, invoke the skill, or create `_workspace/` during setup.
+Require the materialized payload to contain only regular non-symlink files, the exact generated tree, and `name: humanize-korean`. Install that complete payload at `<active CODEX_HOME>/skills/humanize-korean` only after separate approval, using `~/.codex` when `CODEX_HOME` is unset. Never install it at `~/.agents/skills/humanize-korean`. Compare every path and digest after installation. Treat copies in other Codex homes as independent installations; report a copy in `~/.agents/skills/humanize-korean` as a duplicate and migrate or remove it only with separate approval and the shared backup policy. Never point the active skill target at a checkout, run the installer against the active Codex home, invoke the skill, or create `_workspace/` during setup.
 
 ## Podway
 
@@ -451,13 +452,13 @@ Podway v0.2.5 also preserves explicit confirmed `podway reset --all` recovery wh
 
 ## Ouroboros
 
-Official source: `https://github.com/Q00/ouroboros`. Python package: `ouroboros-ai`. Support only `>=0.51.1,<0.54.0`, including 0.53; future minor lines require compatibility review. Preserve the upstream interview, PM, Seed, and QA interfaces. Seed QA in 0.53 is advisory; do not add a blocking QA-until-PASS loop.
+Official source: `https://github.com/Q00/ouroboros`. Python package: `ouroboros-ai`. Support stable releases `>=0.51.1` without an upper bound. Use the selected package's native Codex assets and verify the interfaces needed by the requested workflow. Seed QA in 0.53 is advisory; do not add a blocking QA-until-PASS loop.
 
 ### Package and Home Discovery
 
 The CLI is installed once per user. Codex integration belongs to each Codex home: `<home>/rules/ouroboros*` and `<home>/skills/ouroboros-*`. Never install Ouroboros skills into `~/.agents/skills`, use that location to satisfy readiness, or treat valid installations in different Codex homes as duplicates.
 
-Run `dev-setup-global/scripts/inspect_global_tools.py --component ouroboros --verify-ouroboros-release`. Disclose `https://pypi.org/pypi/ouroboros-ai/json` before the read-only request. The lookup excludes prereleases and withdrawn releases and reports the installed version, latest stable release, latest supported release, and whether compatibility review is required. A failed lookup, including an HTTP protocol error, is `freshness_unverifiable` and preserves the other inspection results. If the CLI exists but its version probe fails or returns no parseable version, freshness is `freshness_unverifiable` with reason `cli_version_unverifiable`; successfully fetched release metadata remains available. Only an absent CLI is `missing` after a successful lookup. Without the flag, freshness is `not_checked` and the inspector makes no network request. Resolve and approve an exact package version; do not install a moving range.
+Run `dev-setup-global/scripts/inspect_global_tools.py --component ouroboros --verify-ouroboros-release`. Disclose `https://pypi.org/pypi/ouroboros-ai/json` before the read-only request. The lookup excludes prereleases and withdrawn releases and reports the installed version, latest stable release, and latest release at or above the minimum. A failed lookup, including an HTTP protocol error, is `freshness_unverifiable` and preserves the other inspection results. If the CLI exists but its version probe fails or returns no parseable version, freshness is `freshness_unverifiable` with reason `cli_version_unverifiable`; successfully fetched release metadata remains available. Only an absent CLI is `missing` after a successful lookup. Without the flag, freshness is `not_checked` and the inspector makes no network request. Resolve and approve an exact package version; do not install a moving range.
 
 The inspector includes the active `$CODEX_HOME` (default `~/.codex`), an existing `~/.codex`, and immediate `~/.codex-*` directories with Codex configuration or Ouroboros artifacts. Add arbitrary user-selected locations with repeatable `--codex-home <path>`. Resolve relative paths against the invocation directory, merge aliases of the same directory, and never search repository trees. A missing active or explicitly selected home remains a missing installation target; an unrelated directory is not a discovered home.
 
@@ -483,7 +484,7 @@ For existing integration, use `CODEX_HOME=<absolute-home> ooo codex refresh` as 
 
 `--mcp-mode auto` may preserve a user-managed mismatch and return success. Reinspect the actual registration; that result is not a completed repair. Offer preservation with the unresolved gap or an explicitly approved canonical replacement using `--mcp-mode stdio` on supported hosts. Include the exact MCP adjustments needed after native setup in the original proposal: bind `CODEX_HOME` to that configuration file's home and pin the isolated MCP package to the approved CLI version. Use the owning Codex CLI or an exact TOML edit confined to the Ouroboros entry; preserve unrelated settings and comments. Never write one active home into every discovered home's registration. Respect native platform limitations instead of substituting an unsupported mode.
 
-Report `legacy_shared_skills` as migration candidates, not removal authority. Identify prefixed copies and inspect older unprefixed copies against verified upstream content before including them. Show the exact paths and backup/removal steps in the migration proposal. Install and verify the selected homes before removing only approved legacy copies. Never delete unrelated shared skills or require removing a valid copy in another home.
+Report `legacy_shared_skills` as migration candidates, not removal authority. Identify prefixed copies only for skill names in the selected package and compare unprefixed copies against verified upstream content before including them. Report an unprefixed shared skill with a matching frontmatter name or unsafe symlink as `shared_skill_conflicts` when its provenance is unverified. The conflict prevents home readiness without proving Ouroboros ownership. Inspect its owner before proposing any removal. Show the exact paths and backup/removal steps for approved migrations. Prepare and verify the selected home payloads before migration, and require the final inspection to show no shared conflicts. Never delete unrelated shared skills or require removing a valid copy in another home.
 
 ### Completion and Runtime Switching
 

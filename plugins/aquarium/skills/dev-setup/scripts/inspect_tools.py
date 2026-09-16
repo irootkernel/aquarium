@@ -119,7 +119,7 @@ HUMANIZER_SKILL_FILES = (
     "SKILL.md",
     "LICENSE",
 )
-HUMANIZER_SUPPORTED_RELEASE = "v2.11.1"
+HUMANIZER_MINIMUM_VERSION = "2.11.1"
 HUMANIZE_KOREAN_SKILL_FILES = (
     "SKILL.md",
     "LICENSE",
@@ -1070,10 +1070,21 @@ def supported_mulgae_go_version(version: str | None) -> bool:
 
 
 def supported_ouroboros_version(version: str | None) -> bool:
+    return supported_stable_version(version, (0, 51, 1))
+
+
+def supported_stable_version(
+    version: str | None, minimum: tuple[int, int, int]
+) -> bool:
     if not version:
         return False
-    match = re.fullmatch(rf"v?0\.(51|52|53)\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and (int(match.group(1)) > 51 or int(match.group(2)) >= 1))
+    match = re.fullmatch(
+        rf"v?({CANONICAL_NUMERIC_COMPONENT})\."
+        rf"({CANONICAL_NUMERIC_COMPONENT})\."
+        rf"({CANONICAL_NUMERIC_COMPONENT})",
+        version,
+    )
+    return bool(match and tuple(map(int, match.groups())) >= minimum)
 
 
 def ouroboros_version_from_output(output: str) -> str | None:
@@ -1744,9 +1755,13 @@ def managed_directory_tree_symlinked(path: Path, boundary: Path) -> bool:
     return False
 
 
-def inspect_agent_skill(name: str, required_files: tuple[str, ...]) -> dict[str, Any]:
+def inspect_agent_skill(
+    name: str,
+    required_files: tuple[str, ...],
+    roots: tuple[Path, ...] | None = None,
+) -> dict[str, Any]:
     installations: list[dict[str, Any]] = []
-    for root in skill_roots():
+    for root in roots if roots is not None else skill_roots():
         directory = root / name
         if skill_root_symlinked(root):
             installations.append(
@@ -3754,10 +3769,26 @@ def skill_roots() -> list[Path]:
     return roots
 
 
+def humanizer_skill_roots() -> tuple[Path, ...]:
+    return tuple(
+        dict.fromkeys((effective_codex_skill_root(), Path.home() / ".agents/skills"))
+    )
+
+
 def effective_codex_skill_root() -> Path:
     codex_home = os.environ.get("CODEX_HOME")
     root = Path(codex_home).expanduser() if codex_home else Path.home() / ".codex"
     return (root if root.is_absolute() else Path.cwd() / root) / "skills"
+
+
+def humanizer_expected_target() -> Path:
+    shared = Path.home() / ".agents/skills/humanizer"
+    active = effective_codex_skill_root() / "humanizer"
+    if (active.exists() or active.is_symlink()) and not (
+        shared.exists() or shared.is_symlink()
+    ):
+        return active
+    return shared
 
 
 def frontmatter_name(skill_path: Path) -> str | None:
@@ -3791,7 +3822,7 @@ def frontmatter_version(skill_path: Path) -> str | None:
 
 
 def unexpected_skill_entries(
-    directory: Path, expected_files: tuple[str, ...]
+    directory: Path, expected_files: tuple[str, ...], allow_extra: bool = False
 ) -> list[str]:
     expected_file_set = set(expected_files)
     expected_directories = {
@@ -3803,10 +3834,13 @@ def unexpected_skill_entries(
     actual_files: set[str] = set()
     actual_directories: set[str] = set()
     unsafe_entries: set[str] = set()
+    walk_errors: list[OSError] = []
     if directory.is_symlink() or not directory.is_dir():
         return ["<unsafe-or-unreadable>"]
     try:
-        for root, directories, files in os.walk(directory, followlinks=False):
+        for root, directories, files in os.walk(
+            directory, followlinks=False, onerror=walk_errors.append
+        ):
             root_path = Path(root)
             retained_directories = []
             for name in directories:
@@ -3821,12 +3855,16 @@ def unexpected_skill_entries(
             for name in files:
                 path = root_path / name
                 relative = str(path.relative_to(directory))
-                if path.is_symlink():
+                if path.is_symlink() or not path.is_file():
                     unsafe_entries.add(relative)
                 else:
                     actual_files.add(relative)
     except OSError:
         return ["<unsafe-or-unreadable>"]
+    if walk_errors:
+        return ["<unsafe-or-unreadable>"]
+    if allow_extra:
+        return sorted(unsafe_entries)
     return sorted(
         unsafe_entries
         | (actual_files - expected_file_set)
@@ -3839,15 +3877,20 @@ def inspect_writing_skill(
     skill_name: str,
     expected_files: tuple[str, ...],
     expected_target: Path | None,
-    supported_release: str,
-    require_version: bool,
+    supported_release: str | None = None,
+    minimum_version: str | None = None,
+    roots: tuple[Path, ...] | None = None,
 ) -> dict[str, Any]:
-    agent_skill = inspect_agent_skill(skill_name, expected_files)
+    agent_skill = inspect_agent_skill(skill_name, expected_files, roots)
     for installation in agent_skill["installations"]:
         installation["unexpected_entries"] = (
             ["<unsafe-or-unreadable>"]
             if installation["symlinked"]
-            else unexpected_skill_entries(Path(installation["path"]), expected_files)
+            else unexpected_skill_entries(
+                Path(installation["path"]),
+                expected_files,
+                allow_extra=minimum_version is not None,
+            )
         )
     structurally_ready = bool(
         agent_skill["status"] == "configured"
@@ -3870,7 +3913,9 @@ def inspect_writing_skill(
         if skill_entry["present"] and not skill_entry["symlinked"]:
             version = frontmatter_version(Path(installation["path"]) / "SKILL.md")
     version_supported = (
-        version == supported_release.removeprefix("v") if require_version else None
+        supported_stable_version(version, tuple(map(int, minimum_version.split("."))))
+        if minimum_version is not None
+        else None
     )
     ready = structurally_ready and (version_supported is not False)
     return {
@@ -3882,7 +3927,11 @@ def inspect_writing_skill(
         "expected_target": str(expected_target)
         if expected_target is not None
         else None,
-        "supported_release": supported_release,
+        **(
+            {"supported_range": f">={minimum_version}"}
+            if minimum_version is not None
+            else {"supported_release": supported_release}
+        ),
         "executable": None,
         "version": version,
         "version_supported": version_supported,
@@ -3901,23 +3950,27 @@ def inspect_humanizer() -> dict[str, Any]:
     return inspect_writing_skill(
         skill_name="humanizer",
         expected_files=HUMANIZER_SKILL_FILES,
-        expected_target=Path.home() / ".agents/skills/humanizer",
-        supported_release=HUMANIZER_SUPPORTED_RELEASE,
-        require_version=True,
+        expected_target=humanizer_expected_target(),
+        minimum_version=HUMANIZER_MINIMUM_VERSION,
+        roots=humanizer_skill_roots(),
     )
 
 
 def inspect_im_not_ai() -> dict[str, Any]:
     try:
-        target = Path.home() / ".agents/skills/humanize-korean"
+        root = effective_codex_skill_root()
+        target = root / "humanize-korean"
+        shared_root = Path.home() / ".agents/skills"
+        roots = (root, shared_root) if root != shared_root else (root,)
     except (OSError, ValueError, RuntimeError):
         target = None
+        roots = None
     result = inspect_writing_skill(
         skill_name="humanize-korean",
         expected_files=HUMANIZE_KOREAN_SKILL_FILES,
         expected_target=target,
         supported_release=IM_NOT_AI_SUPPORTED_RELEASE,
-        require_version=False,
+        roots=roots,
     )
     if target is None:
         result["reason"] = "home_resolution_failed"
@@ -4104,7 +4157,7 @@ def inspect_ouroboros(
         if cli_observation is not None
         else inspect_ouroboros_cli(repository, timeout_seconds)
     )
-    tool["supported_range"] = ">=0.51.1,<0.54.0"
+    tool["supported_range"] = ">=0.51.1"
     environment = {"CODEX_HOME": str(codex_home)} if codex_home else None
     tool["home_binding"] = {
         "status": "unverifiable",
@@ -4697,8 +4750,8 @@ def inspect(
             "lore-commits": Path.home() / ".agents/skills/lore-commits",
             "lore-query": Path.home() / ".agents/skills/lore-query",
             "deslop": Path.home() / ".agents/skills/deslop",
-            "humanizer": Path.home() / ".agents/skills/humanizer",
-            "humanize-korean": Path.home() / ".agents/skills/humanize-korean",
+            "humanizer": humanizer_expected_target(),
+            "humanize-korean": effective_codex_skill_root() / "humanize-korean",
         }.items()
     }
     tools = {

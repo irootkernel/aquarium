@@ -49,11 +49,13 @@ Use one exact supported release tag or disclosed full commit SHA according to th
 
 For each selected paired or third-party skill, compare the verified source with its canonical target. Treat missing or extra files, different bytes, invalid frontmatter, symlinks, and duplicate installations as independent gaps.
 
-Apply this duplicate rule to shared-location skills. Ouroboros uses the per-home contract below. Other Codex skill roots remain diagnostic evidence only. When another copy exists, report the duplicate risk and never create a known duplicate. Do not propose installation at the canonical target until the user separately approves removal or migration of the alternate copy so that one canonical target remains.
+Apply this duplicate rule to shared-location skills. Resolve the target from the selected upstream release's default installation guidance: use the active Codex home's skills directory when it names `$CODEX_HOME`, and `~/.agents/skills` when it names no default. Ouroboros uses the per-home contract below. Other Codex skill roots remain diagnostic evidence only. When another copy would be loaded beside the selected target, report the duplicate risk and never create a known duplicate. Do not propose installation at the canonical target until the user separately approves removal or migration of the conflicting copy.
 
 `dev-setup` trusting an existing canonical path is not freshness evidence.
 
-Ouroboros update diagnosis reports installed, latest stable, and latest supported versions. Its CLI is user-global; rules, skills, and MCP registration belong to each Codex home. Propose all discovered homes by default. Never install its skills into `~/.agents/skills` or classify valid copies in different homes as duplicates. Keep current-home readiness, all-discovered-home readiness, package freshness, and live runtime evidence separate. Never cross the supported release range automatically.
+Ouroboros update diagnosis reports installed, latest stable, and latest supported versions. Its CLI is user-global; rules, skills, and MCP registration belong to each Codex home. Propose all discovered homes by default. Never install its skills into `~/.agents/skills` or classify valid copies in different homes as duplicates. A shared copy matching a selected package skill name or a same-name shared conflict prevents completed home readiness; inspect provenance before proposing removal. Keep current-home readiness, all-discovered-home readiness, package freshness, and live runtime evidence separate. Never install below the minimum supported version.
+
+im-not-ai's `humanize-korean` skill also belongs to the active Codex home. Use `<active CODEX_HOME>/skills/humanize-korean`, or `~/.codex/skills/humanize-korean` when unset. Do not install it in `~/.agents/skills`; copies in other Codex homes are independent, while a shared-root copy is a duplicate to report and resolve separately.
 
 ## Respect Host Mode and Approval Boundaries
 

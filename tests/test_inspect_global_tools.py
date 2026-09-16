@@ -1144,6 +1144,55 @@ def test_ouroboros_shared_skills_are_migration_evidence_only(ouroboros_homes):
     assert shared.joinpath("SKILL.md").read_bytes() == before
 
 
+def test_ouroboros_shared_skill_blocks_ready_home(ouroboros_homes):
+    _, home, _, _, _, _, source = ouroboros_homes
+    shared = home / ".agents/skills/ouroboros-auto"
+    shared.mkdir(parents=True)
+    shared.joinpath("SKILL.md").write_bytes(source["skills/ouroboros-auto/SKILL.md"])
+
+    result = inspect_home_fixture(ouroboros_homes)
+
+    assert result["legacy_shared_skills"] == [str(shared)]
+    assert result["homes"][0]["skills"]["status"] == "configured"
+    assert result["homes"][0]["status"] == "degraded"
+    assert result["homes"][0]["reason"] == "legacy_shared_skills_present"
+    assert result["current_home_readiness"] == "degraded"
+
+
+def test_ouroboros_unrelated_prefixed_shared_skill_does_not_block_home(
+    ouroboros_homes,
+):
+    _, home, _, _, _, _, _ = ouroboros_homes
+    unrelated = home / ".agents/skills/ouroboros-notes"
+    unrelated.mkdir(parents=True)
+
+    result = inspect_home_fixture(ouroboros_homes)
+
+    assert result["legacy_shared_skills"] == []
+    assert result["shared_skill_conflicts"] == []
+    assert result["current_home_readiness"] == "configured"
+
+
+def test_ouroboros_old_unprefixed_shared_skill_blocks_ready_home(ouroboros_homes):
+    _, home, _, _, _, _, _ = ouroboros_homes
+    shared = home / ".agents/skills/auto"
+    shared.mkdir(parents=True)
+    shared.joinpath("SKILL.md").write_text("---\nname: auto\n---\nold upstream\n")
+
+    result = inspect_home_fixture(ouroboros_homes)
+
+    assert result["legacy_shared_skills"] == []
+    assert result["shared_skill_conflicts"] == [str(shared)]
+    assert result["homes"][0]["skills"]["status"] == "configured"
+    assert result["homes"][0]["status"] == "degraded"
+    assert result["homes"][0]["reason"] == "shared_skill_conflict"
+
+    shared.joinpath("SKILL.md").write_text("---\nname: unrelated\n---\nuser skill\n")
+    result = inspect_home_fixture(ouroboros_homes)
+    assert result["shared_skill_conflicts"] == []
+    assert result["current_home_readiness"] == "configured"
+
+
 def test_ouroboros_case_alias_merges_by_identity_and_matches_binding(
     ouroboros_homes, monkeypatch
 ):
@@ -1247,7 +1296,8 @@ def test_ouroboros_artifacts_do_not_inherit_aggregate_doctor_failure(ouroboros_h
     "installed,latest,status",
     [
         ("0.51.15", "0.53.0", "update_available"),
-        ("0.53.0", "0.54.0", "current"),
+        ("0.53.0", "0.54.4", "update_available"),
+        ("0.54.4", "0.54.4", "current"),
         (None, "0.53.0", "missing"),
     ],
 )
@@ -1272,9 +1322,34 @@ def test_ouroboros_freshness_distinguishes_supported_and_latest(
         inspect_global_tools.load_inspector(), ouroboros_cli_observation(installed), 1
     )
     assert result["status"] == status
-    assert result["latest_supported"] == "0.53.0"
+    assert result["latest_supported"] == latest
     assert result["latest_stable"] == latest
-    assert result["compatibility_review_required"] == (latest == "0.54.0")
+    assert "compatibility_review_required" not in result
+
+
+def test_ouroboros_freshness_reports_no_supported_release(monkeypatch):
+    import inspect_ouroboros
+
+    response = mock.MagicMock()
+    response.__enter__.return_value = response
+    response.geturl.return_value = inspect_ouroboros.PYPI_URL
+    response.read.return_value = json.dumps(
+        {
+            "info": {"name": "ouroboros-ai"},
+            "releases": {"0.51.0": [{"yanked": False}]},
+        }
+    ).encode()
+    monkeypatch.setattr(
+        inspect_ouroboros.urllib.request, "urlopen", lambda *args, **kwargs: response
+    )
+
+    result = inspect_ouroboros.release_freshness(
+        inspect_global_tools.load_inspector(), ouroboros_cli_observation(None), 1
+    )
+
+    assert result["status"] == "missing"
+    assert result["latest_stable"] == "0.51.0"
+    assert result["latest_supported"] is None
 
 
 def test_ouroboros_freshness_failure_and_opt_in(ouroboros_homes, monkeypatch):
@@ -1623,7 +1698,7 @@ def test_ouroboros_freshness_uses_cli_probe_evidence(
     module, _, _, _, _, _, _ = ouroboros_homes
     inspector = inspect_global_tools.load_inspector()
     real_run = inspector.run_command
-    version = {"older": "0.51.17", "unsupported": "0.54.0"}.get(failure, "0.53.0")
+    version = {"older": "0.51.17", "unsupported": "0.51.0"}.get(failure, "0.53.0")
 
     def run(command, *args, **kwargs):
         if command[1:] == ["--version"]:
@@ -1705,10 +1780,8 @@ def test_ouroboros_unresolvable_home_isolated_or_rejected(
         return
     assert completed.returncode == 0, completed.stdout
     assert "deslop" in payload["tools"]
-    assert payload["tools"]["im-not-ai"]["status"] == "missing"
-    assert payload["tools"]["im-not-ai"]["expected_target"] == str(
-        Path.home() / ".agents/skills/humanize-korean"
-    )
+    assert payload["tools"]["im-not-ai"]["status"] == "unverifiable"
+    assert payload["tools"]["im-not-ai"]["expected_target"] is None
     result = payload["tools"]["ouroboros"]
     assert result["current_home"] == invalid
     assert result["homes"][0]["reason"] == "home_resolution_failed"

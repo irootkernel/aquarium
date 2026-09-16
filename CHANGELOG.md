@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.17 - Unreleased
 
+### Changed
+
+- Accept stable Humanizer and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, and reject duplicate skills visible to the same Codex home.
+
 ## v0.1.16 - 2026-09-16
 
 ### Added
