@@ -4,37 +4,32 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.16 - Unreleased
 
+### Added
+
+- Add intent-aware Task, Goal, and Epic completion reviews that classify every requirement as met, unmet, unverified, or not applicable from all accepted Mulgae role reports, preserve the evidence through the final decision, and block approval when criteria or finding totals are inconsistent.
+- Add an explicitly invoked, report-only Mulgae Review entrypoint for exact change targets and named Task or Epic completion candidates.
+
 ### Changed
 
 - Raise the minimum Sanho version to v0.2.8, adopt its conflicted-sync content-retention fix, and install and verify the complete five-file `use-sanho` skill tree.
-- Require explicit `Contract:` and `Profile:` fields for `TESTING.md` enrollment; repositories using prose-only enrollment must add both fields.
-- Classify Codex MCP registration from its structured named lookup and bounded inventory instead of diagnostic stderr wording.
-- Read each Dolgorae release identity from its authoritative structured source while tolerating ordinary release-note Markdown around the contained executable digest.
-- Keep Orca change reviews proportional to the target: focus findings on concrete current defects, follow only plausible affected paths, and stop without auditing unrelated or pre-existing issues; style preferences, speculative risks, and verification gaps do not block approval by themselves.
 - Raise the minimum Gaori version to v0.1.17, accept its simplified version JSON without commit identity, and install and verify the complete seven-file `use-gaori` skill tree.
-- Align canonical and public review documentation with enabled Mulgae and Orca behavior, disabled Independent Review, and the host-limited native Codex subagent alternative.
-- Align Orca Dispatch and result handling with the shared Review Brief, and define report-only guidance for an explicitly selected host-native Codex subagent review.
-- Require embedded task, member-goal, and whole-epic Mulgae reviews to assess every actual requirement as met, unmet, unverified, or not applicable, and prevent approval or Low-finding settlement from bypassing semantic completion gaps or inconsistent finding totals.
-- Add a report-only standalone Mulgae Review entrypoint for exact change targets and named Task or Epic completion candidates, using the shared review-intent contract and every accepted role report.
-- Temporarily disable Dolgorae-based Independent Review before setup or source transmission, guide users to explicitly selected native Codex or Orca alternatives, and make Dolgorae optional for common production readiness.
-- Raise the minimum Mulgae version to v0.1.21 and consume command-result v8. Adopt retained failed-review recovery, stage-specific provider rate-limit handling, and ZCode-only automatic initialization.
-- Align all managed Podway Procedures and their owning skills around finite Low-finding settlement: preserve historical review facts, require current local verification, and proceed to assessment without another provider review solely to reduce a past Low count.
+- Raise the minimum Mulgae version to v0.1.21, consume command-result v8, recover retained failed reviews, handle provider rate limits by stage, and restrict automatic initialization to ZCode.
+- Require explicit `Contract:` and `Profile:` fields for `TESTING.md` enrollment; repositories using prose-only enrollment must add both fields.
+- Inspect Codex MCP registration and Dolgorae release identity from structured authorities instead of diagnostic prose, while accepting ordinary release-note Markdown around the declared executable digest.
+- Keep Orca change reviews proportional to the target: focus findings on concrete current defects, follow only plausible affected paths, and stop without auditing unrelated or pre-existing issues; style preferences, speculative risks, and verification gaps do not block approval by themselves.
+- Carry the shared Review Brief through Orca dispatch and result handling, and document explicitly selected native Codex subagent reviews as report-only host operations rather than Aquarium-managed backends.
+- Disable Dolgorae-based Independent Review before setup or source transmission, require explicit selection of a native Codex or Orca alternative, and make Dolgorae optional for common production readiness.
+- Let managed Podway Procedures settle historical Low findings from current local verification without repeating provider reviews solely to reduce a past Low count.
 - Separate Podway native Procedure validity from Aquarium handler compatibility during repository setup while preserving same-ID customizations and immutable active-session snapshots.
 - Replace the deprecated Aquarium for Kimi edition link with Aquarium for Grok.
-- Require Sorage v0.1.1 or later in the v0.1 line; run `$aquarium:dev-setup-global` to update an installed v0.1.0 CLI and its same-tag `use-sorage` skill.
-- Route explicitly requested broker operations through the paired skill, including Review Note reads before sender revision and bounded event timeline reads when needed.
-- Require `.sorage/` in the repository root `.gitignore`; repositories that relied only on `.git/info/exclude`, a nested `.sorage/.gitignore`, or a global excludes file must add the root rule before Sorage setup is ready.
-- Require an explicit Project setup request before `$aquarium:dev-setup` proposes Sorage Project registration; Project listing and mutation retain their separate approval boundaries.
-- Remove automatic session-start and pre-task Sorage discovery; rerun `$aquarium:dev-setup` to refresh repository guidance written by an earlier Aquarium version.
+- Require Sorage v0.1.1 or later and route explicitly requested broker operations through its paired skill, including Review Note and bounded event-timeline reads; run `$aquarium:dev-setup-global` to update a v0.1.0 CLI and same-tag skill.
+- Require an explicit Sorage Project setup request and root `.sorage/` ignore rule while preserving separate listing and mutation approvals, remove automatic session-start and pre-task discovery, and tell repositories configured by earlier Aquarium versions to add the root rule when missing and rerun `$aquarium:dev-setup`.
 
 ### Fixed
 
-- Preserve completion evidence through final task, goal, and validation assessment, and reconcile review provenance, omission handling, and disabled Independent Review alternatives.
-- Allow Orca reviewers to write Git-ignored runtime files such as those under `.omc/` without warnings, extra checks, or approval requests.
-
+- Allow Orca reviewers to write Git-ignored runtime files without warnings or extra checks, separate target findings from operational deviations, and withhold technical verdicts when review trust cannot be established.
 - Keep Aquarium plugin installation and update requests in the host plugin-management flow without loading `dev-setup-global` or running global tool diagnostics.
 - Recognize and install `humanize-korean` under `~/.agents/skills/` regardless of `CODEX_HOME`.
-- Separate Orca review findings from operational deviations and withhold technical verdicts when review trustworthiness is compromised or cannot be established.
 
 ## v0.1.15 - 2026-09-08
 
