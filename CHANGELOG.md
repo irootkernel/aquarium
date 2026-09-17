@@ -6,6 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Raise the minimum supported Podway version to v0.2.10 and qualify the existing managed Procedures against its official Apple Silicon release.
 - Accept stable Humanizer and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, and reject duplicate skills visible to the same Codex home.
 
 ## v0.1.16 - 2026-09-16

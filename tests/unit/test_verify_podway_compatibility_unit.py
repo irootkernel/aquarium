@@ -228,7 +228,7 @@ def test_workspace_removal_replay_requires_success_with_v6_receipt() -> None:
     assert (
         verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v6"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.9"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.10"
 
 
 @pytest.mark.parametrize(
@@ -319,12 +319,12 @@ def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None
     "changes",
     [
         {},
-        {"daemon_version": "0.2.9"},
-        {"daemon_version": "v0.2.8"},
+        {"daemon_version": "0.2.10"},
+        {"daemon_version": "v0.2.9"},
         {"contract_manifest_digest": "sha256:" + "0" * 64},
     ],
 )
-def test_managed_runtime_requires_v029_daemon_identity(
+def test_managed_runtime_requires_v0210_daemon_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changes: dict
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
@@ -336,9 +336,9 @@ def test_managed_runtime_requires_v029_daemon_identity(
         "readiness_state": "ready",
         "readiness_stage": "ready",
         "mode": "release-qa",
-        "daemon_version": "v0.2.9",
+        "daemon_version": "v0.2.10",
         "contract_manifest_digest": (
-            "sha256:d2ff4e35b0a537d767fdb537414dd3ad4c32c69f4d11e1f8f5142c7203c808ac"
+            "sha256:bff8af8f57f1390446333cc56775ca71209e99bd3ff6fd556c39906b77a90635"
         ),
         "in_flight_client_count": 0,
         "maintenance_operation_count": 0,

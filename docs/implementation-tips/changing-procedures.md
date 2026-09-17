@@ -23,13 +23,13 @@ that current Aquarium handlers can supply and consume its required nodes,
 evidence items, and routes. An incompatible customization remains untouched and
 keeps setup degraded until its owner approves an exact update.
 
-Podway v0.2.9 permits at most eight `evidence_from` references per placement and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both limits; otherwise keep a single reference.
+Podway v0.2.10 permits at most eight `evidence_from` references per placement and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both limits; otherwise keep a single reference.
 
 The Task Procedure's `assess-goal` placement intentionally consumes the final normalized implementation evidence from `implement` instead of repeating the `prepare-implementation` re-entry summary. That leaves the eighth reference available for user-direction evidence while preserving the implementation result that the assessment actually needs.
 
 ## Compatibility Evidence
 
-A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.9 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.9-podway> make test-podway-compat` against the exact Aquarium candidate.
+A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.10 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> make test-podway-compat` against the exact Aquarium candidate.
 
 Procedure validators prove declaration and graph invariants only. Native scenario
 tests cover executable routing and rejection behavior. Agent-observed scenarios

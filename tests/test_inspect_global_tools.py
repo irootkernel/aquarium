@@ -428,7 +428,7 @@ class TestInspectGlobalTools:
                 "loaded": True,
                 "reachable": True,
                 "running": True,
-                "version": "v0.2.9",
+                "version": "v0.2.10",
                 "target": "aarch64-apple-darwin",
                 "ready": True,
                 "mode": "prod",
@@ -445,7 +445,7 @@ class TestInspectGlobalTools:
             "status": "installed",
             "installed": True,
             "executable": "/usr/local/bin/podway",
-            "version": "v0.2.9",
+            "version": "v0.2.10",
             "probes": {},
         }
 
@@ -480,7 +480,7 @@ class TestInspectGlobalTools:
                 ("mode", "dev"),
             ),
             ({"ready": False}, {"ok": True}, ("ready", False)),
-            ({"version": "v0.2.10"}, {"ok": True}, ("versions_match", False)),
+            ({"version": "v0.2.11"}, {"ok": True}, ("versions_match", False)),
             (
                 {"target": "x86_64-apple-darwin"},
                 {"ok": True},
@@ -516,7 +516,7 @@ class TestInspectGlobalTools:
             "loaded": True,
             "reachable": True,
             "running": True,
-            "version": "v0.2.9",
+            "version": "v0.2.10",
             "target": "aarch64-apple-darwin",
             "ready": True,
             "mode": "prod",
@@ -534,7 +534,7 @@ class TestInspectGlobalTools:
             "status": "installed",
             "installed": True,
             "executable": "/usr/local/bin/podway",
-            "version": "v0.2.9",
+            "version": "v0.2.10",
             "probes": {},
         }
 
