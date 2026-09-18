@@ -40,7 +40,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-010 | Separate global and repository development setup | Completed |
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
-| EPIC-013 | Record and report production setup status | Planned |
+| EPIC-013 | Record and report production setup status | In Progress |
 | EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 
@@ -276,7 +276,7 @@ completion gate after the task is unblocked.
 
 ## EPIC-013: Record and report production setup status
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Store one production ledger at `~/.aquarium/status.yaml` for Git worktree roots
 that have finished `$aquarium:dev-setup` or received a terminal bundle result.
@@ -290,11 +290,13 @@ ADR-0008 already reserves `~/.aquarium/` for production state.
 `.aquarium` file remains forbidden. `dev-setup-bundle` still must not persist
 its input manifest.
 
-**Detailed SOT:** [`TODO-PRODUCTION-STATUS.md`](../todo/TODO-PRODUCTION-STATUS.md)
+**Detailed SOT:** [`TODO-PRODUCTION-STATUS.md`](../todo/TODO-PRODUCTION-STATUS.md),
+with the frozen delivery contract in
+[`production-status.md`](../specs/production-status.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-048 | Freeze the production status contract | Define schema `aquarium-production-status/v1`, sourced version and freshness observations, full versus scoped attempt meaning, component unknown states, terminal-record ownership, locked revision-safe writes, output and exit contracts, Git identity, retention, privacy, and explicit row removal. | Planned | None |
+| TASK-048 | Freeze the production status contract | Define schema `aquarium-production-status/v1`, sourced version and freshness observations, full versus scoped attempt meaning, component unknown states, terminal-record ownership, locked revision-safe writes, output and exit contracts, Git identity, retention, privacy, and explicit row removal. | Completed | None |
 | TASK-049 | Ship `aquarium-status` and wire setup/status skills | Implement `show`, closed-JSON `record`, and exact `forget`; install the cache-independent versioned runtime and launcher through `dev-setup-global`; wire `dev-setup`, bundle-owned early outcomes, and `$aquarium:status` without duplicate records. | Planned | TASK-048 |
 | TASK-050 | Qualify status persistence and reporting | Prove independent offline and refreshed reporting, JSON-only output, scoped then unscoped promotion, unknown and corrupt observations, concurrent merge and conflict behavior, storage-failure recovery, Git-root retention, approved launcher replacement, and execution after plugin-cache removal. Master verifies skill behavior separately. | Planned | TASK-049 |
 

@@ -4,9 +4,28 @@ Aquarium contains instructions for Codex. The plugin does not operate a hosted s
 
 Some instructed workflows can invoke local or third-party tools after explicit user approval. Bounded read-only network operations may be authorized by an explicit tool selection or skill invocation without a second network prompt.
 
+EPIC-013 reserves a local production setup-status ledger at
+`~/.aquarium/status.yaml`. After TASK-049 ships the executable, terminal
+repository setup may record canonical absolute Git worktree and common-directory
+paths, a display label, attempt identifiers and times, outcome and scope, sourced
+Aquarium versions, and the latest settled Sanho and `aquarium-dev` observations.
+The ledger stores no credentials, repository source, provider output, or raw
+diagnostics. Default reporting is offline. An explicit `--refresh` contacts only
+the official Aquarium GitHub latest stable Release endpoint, and an explicit
+source-root observation reads only that local Aquarium checkout's manifest and
+CHANGELOG. Rows for moved or deleted worktrees remain until the user explicitly
+forgets the exact row. Owned state is user-private with `0700` directories and
+`0600` files; a repository-local `.aquarium` path remains forbidden.
+
 `dev-setup-bundle` reads only the explicitly supplied local YAML manifest and the listed Git repositories needed for setup preflight. It keeps the manifest path and digest only for the active request, does not discover sibling repositories, persist the manifest, or transmit its contents, delegates the selected global union once to `dev-setup-global`, and delegates repository state to `dev-setup`.
 
 Explicitly invoking `aquarium-dev` reads only the named Git checkout and Aquarium-owned host-local state needed to diagnose the development channel. Separately approved enrollment, hook, build, managed-service activation, and launcher-installation operations may write exact committed artifacts and bounded metadata below `~/.aquarium-dev/`, the exact Aquarium-owned marker in the named checkout's native hook, and the user-local `~/.local/bin/aquarium-dev` launcher. Separately approved runtime installation or update contacts `pypi.org` and `files.pythonhosted.org` to download hash-verified binary wheels into a private virtual environment below `~/.aquarium-dev/manager/`; it uploads no repository source. For a managed service, Aquarium invokes only the immutable producer-owned controller with its project runtime root and exact target generation; that controller owns any LaunchAgent, daemon, socket, registry, log, or recovery access and returns bounded status, plan, and result metadata. The launcher inherits the caller's environment and prepends only `~/.aquarium-dev/bin`; it neither copies credentials nor creates or changes Codex authentication, plugin, or global MCP configuration. Aquarium ships its bundled MCP registration in the plugin itself. Development artifacts and diagnostics are local integration evidence and are not uploaded or promoted to release evidence by this workflow.
+
+Separately approved `aquarium-status` installation contacts only
+`https://pypi.org/simple` and `https://files.pythonhosted.org` to download the
+hash-pinned PyYAML 6.0.3 binary wheel into
+`~/.aquarium/status-runtime/versions/`. It uploads no repository source, ledger
+content, path, project label, or setup result.
 
 Explicitly invoking `dev-setup-global` without a component list automatically contacts the documented official metadata and raw-file endpoints for every supported global component. A scoped continuation contacts only sources for its named components. Dolgorae uses official GitHub Releases metadata; Dolgorae, Sanho, Mulgae, Gaori, Sorage, and Podway also download their documented public paired-skill files to ephemeral storage for comparison with `~/.agents/skills/use-*`. These reads send no repository or local skill content, persist no downloaded file without separate approval, and authorize no installation, mutation, provider request, or other network endpoint. `dev-setup` performs no upstream freshness lookup and does not read canonical global skill contents.
 

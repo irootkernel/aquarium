@@ -2,6 +2,30 @@
 
 Aquarium ships declarative skill contracts, Podway Procedure definitions, local structural inspectors, one commit hook, and verification helpers. JSON schema identifiers are compatibility surfaces for their owning workflows.
 
+## Reserved Production Status Interfaces
+
+`TASK-048` freezes, but does not yet ship, the production setup-status
+interfaces implemented by `TASK-049`. The ledger uses
+`aquarium-production-status/v1`; the record input and receipt use
+`aquarium-production-status-record/v1` and
+`aquarium-production-status-record-receipt/v1`; JSON show output uses
+`aquarium-production-status-report/v1`; exact deletion uses
+`aquarium-production-status-forget-receipt/v1`; and failures use
+`aquarium-production-status-error/v1`. Setup handoff and recording results use
+`aquarium-production-status-attempt/v1` and
+`aquarium-production-status-recording-result/v1`. Installation and diagnosis use
+`aquarium-status-runtime/v1`, `aquarium-status-runtime-inspection/v1`, and
+`aquarium-status-runtime-error/v1`.
+
+The reserved CLI is `aquarium-status show --format text|json [--refresh]
+[--source-root <absolute-path>]`, closed-JSON `record` on standard input, and
+`forget --git-root <absolute-path> [--if-file-revision <revision>
+--if-row-revision <revision> --if-row-sha256 <digest>]`. Exit 0 is a
+successful result, exit 1 is owned-state failure, exit 2 is invalid caller input,
+and exit 3 is a revision or attempt conflict. The exact fields, write timing,
+locking, runtime installation, and retention rules are owned by the
+[production-status specification](production-status.md).
+
 ## Managed Podway Procedures
 
 | Procedure ID | Version | Owner | Recorded lifecycle |

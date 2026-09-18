@@ -1,10 +1,18 @@
 # Specifications
 
-This directory is the maintainer-facing catalog of Aquarium's implemented behavior. Each document summarizes current contracts and links the exact shipped authority; a summary never overrides its owning skill, reference, Procedure, script, manifest, or test runner.
+This directory is the maintainer-facing catalog of Aquarium's implemented
+behavior and explicitly frozen delivery contracts. Each document states whether
+its interfaces are shipped or reserved and links the exact authority; a summary
+never overrides its owning skill, reference, Procedure, script, manifest, or
+test runner.
 
 ## Version Scope
 
-The plugin manifest owns the current package version and the root CHANGELOG owns release history and the one open candidate when present. Specifications describe the implemented checkout without duplicating release state.
+The plugin manifest owns the current package version and the root CHANGELOG owns
+release history and the one open candidate when present. Specifications describe
+the implemented checkout without duplicating release state. An active roadmap
+task may freeze a reserved interface here only when the document labels it
+unimplemented and a later task is assigned to ship or revise the same contract.
 
 ## Detailed Specifications
 
@@ -14,6 +22,7 @@ The plugin manifest owns the current package version and the root CHANGELOG owns
 - [Local interfaces](local-interfaces.md) catalogs Procedure IDs, local CLIs, hooks, and JSON schemas.
 - [Safety and evidence](safety-and-evidence.md) defines authority, approval, review, and evidence-residency behavior.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
+- [Production setup status](production-status.md) freezes the user-global setup ledger, reporter, recorder, retention, and installation contracts reserved for EPIC-013 delivery.
 
 ## Exact Authorities
 
@@ -27,4 +36,7 @@ The plugin manifest owns the current package version and the root CHANGELOG owns
 | Public behavior, privacy, and authority boundaries | [`README.md`](../../README.md), [`PRIVACY.md`](../../PRIVACY.md), and [`TERMS.md`](../../TERMS.md) |
 | Release outcomes and next stable version | [`CHANGELOG.md`](../../CHANGELOG.md) |
 
-Add another specification only for a durable cross-cutting contract with no more exact shipped owner. Planned behavior belongs in the roadmap or TODO until it becomes current.
+Add another specification only for a durable cross-cutting contract with no more
+exact shipped owner, or for an explicitly reserved contract under the rule
+above. Other planned behavior belongs in the roadmap or TODO until it becomes
+current.
