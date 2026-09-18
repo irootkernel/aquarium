@@ -74,6 +74,123 @@ def test_aquarium_runtime_probe_preserves_failure_reason(tmp_path, monkeypatch, 
             assert payload["timeout_seconds"] == 3.5
 
 
+@pytest.mark.parametrize(
+    ("status", "installed", "launcher_state", "action"),
+    [
+        (
+            "current",
+            {
+                "plugin_version": "0.1.17",
+                "source_sha256": "installed-source",
+                "python_version": "3.13.7",
+            },
+            "managed_current",
+            None,
+        ),
+        ("missing", None, "missing", "install"),
+        (
+            "outdated",
+            {
+                "plugin_version": "0.1.16",
+                "source_sha256": "old-source",
+                "python_version": "3.13.7",
+            },
+            "managed_outdated",
+            "update",
+        ),
+        ("broken", None, "managed_outdated", "repair"),
+        ("unsafe", None, "unknown", None),
+    ],
+)
+def test_aquarium_status_diagnosis_is_passed_through(
+    monkeypatch, status, installed, launcher_state, action
+):
+    diagnosis = {
+        "schema": "aquarium-status-runtime-inspection/v1",
+        "status": status,
+        "bundled": {
+            "plugin_version": "0.1.17",
+            "source_sha256": "bundled-source",
+        },
+        "installed": installed,
+        "launcher": {
+            "path": "/isolated/home/.local/bin/aquarium-status",
+            "state": launcher_state,
+        },
+        "runtime_root": "/isolated/home/.local/share/aquarium-status",
+        "action": action,
+    }
+    diagnose = mock.Mock(return_value=diagnosis)
+    module = mock.Mock(diagnose=diagnose)
+    spec = mock.Mock(loader=mock.Mock())
+    monkeypatch.setattr(
+        inspect_global_tools.importlib.util,
+        "spec_from_file_location",
+        lambda *args, **kwargs: spec,
+    )
+    monkeypatch.setattr(
+        inspect_global_tools.importlib.util,
+        "module_from_spec",
+        lambda requested_spec: module,
+    )
+
+    result = inspect_global_tools.inspect_aquarium_status()
+
+    assert result is diagnosis
+    diagnose.assert_called_once()
+    assert diagnose.call_args.args[0].name == "aquarium-status"
+
+
+def test_aquarium_status_component_scope_is_isolated(tmp_path, monkeypatch):
+    inspector = mock.Mock()
+    diagnosis = {
+        "schema": "aquarium-status-runtime-inspection/v1",
+        "status": "missing",
+        "bundled": {
+            "plugin_version": "0.1.17",
+            "source_sha256": "bundled-source",
+        },
+        "installed": None,
+        "launcher": {
+            "path": "/isolated/home/.local/bin/aquarium-status",
+            "state": "missing",
+        },
+        "runtime_root": "/isolated/home/.local/share/aquarium-status",
+        "action": "install",
+    }
+    status_inspector = mock.Mock(return_value=diagnosis)
+    monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    monkeypatch.setattr(
+        inspect_global_tools, "inspect_aquarium_status", status_inspector
+    )
+
+    payload = inspect_global_tools.inspect_global(
+        str(tmp_path), 1.0, False, components=("aquarium-status",)
+    )
+
+    assert payload["tools"] == {"aquarium-status": diagnosis}
+    status_inspector.assert_called_once_with()
+    assert inspector.method_calls == []
+
+
+def test_other_component_scope_skips_aquarium_status(tmp_path, monkeypatch):
+    inspector = mock.Mock()
+    inspector.inspect_lora.return_value = {"status": "configured"}
+    status_inspector = mock.Mock()
+    monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    monkeypatch.setattr(
+        inspect_global_tools, "inspect_aquarium_status", status_inspector
+    )
+
+    payload = inspect_global_tools.inspect_global(
+        str(tmp_path), 1.0, False, components=("lora",)
+    )
+
+    assert payload["tools"] == {"lora": {"status": "configured"}}
+    status_inspector.assert_not_called()
+    inspector.inspect_lora.assert_called_once_with()
+
+
 class TestInspectGlobalTools:
     def setup_method(self) -> None:
         self.temporary_directory = tempfile.TemporaryDirectory()

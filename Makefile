@@ -16,6 +16,8 @@ export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
 	tests/unit/test_aquarium_dev_tool_unit.py \
+	tests/unit/test_aquarium_status_install_unit.py \
+	tests/unit/test_aquarium_status_unit.py \
 	plugins/aquarium/tools/aquarium-dev/mcp_server.py \
 	plugins/aquarium/tools/aquarium-dev/install.py \
 	plugins/aquarium/tools/aquarium-dev/runtime_entry.py \
@@ -46,6 +48,7 @@ PYTHON_FILES := \
 	tests/test_inspect_global_tools.py \
 	tests/test_inspect_tools.py \
 	tests/test_inspect_testing.py \
+	tests/test_aquarium_status_integration.py \
 	tests/test_normalize_manifest.py \
 	tests/test_task_commit_gate.py \
 	tests/podway_runtime_qualification.py \
@@ -66,6 +69,7 @@ PYTHON_FILES := \
 	tests/unit/test_inspect_testing_unit.py \
 	tests/unit/test_verify_podway_compatibility_unit.py \
 	tests/e2e/test_test_setup_cli.py \
+	tests/e2e/test_aquarium_status_cli.py \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
 .PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat
@@ -100,7 +104,7 @@ test-unit: test-requirements
 	$(PYTHON) -m pytest tests/unit
 
 test-int: test-requirements
-	$(PYTHON) -m pytest tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py
+	$(PYTHON) -m pytest tests/test_aquarium_status_integration.py tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py
 	$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 
 test-e2e: test-requirements

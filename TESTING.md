@@ -25,9 +25,9 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 | Stage | Checks |
 |---|---|
 | `test-prepare` | Ruff formatting and lint for maintained Python files; plugin-manifest JSON parsing; Ruby syntax; package metadata, local references, basic Procedure structure, and release-version identity; whitespace validation. |
-| `test-unit` | Native pytest tests for isolated pure functions in the test-setup, docs-setup, release-notes, publication-state, and independent-review target inspectors and helpers. |
-| `test-int` | The native pytest docs-setup, global-tool, and test-setup inspector suites followed by the three pre-existing Python `unittest` suites exercising tool inspection, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
-| `test-e2e` | Python pytest scenarios invoking the shipped test-setup inspector CLI as a black box against isolated temporary repository fixtures. |
+| `test-unit` | Native pytest tests for isolated production-status contracts, storage and reporting helpers, its offline installer, and the test-setup, docs-setup, release-notes, publication-state, and independent-review target inspectors and helpers. |
+| `test-int` | Native pytest production-status persistence and concurrency scenarios plus the docs-setup, global-tool, and test-setup inspector suites, followed by the three pre-existing Python `unittest` suites exercising tool inspection, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
+| `test-e2e` | Python pytest scenarios invoking the shipped production-status and test-setup CLIs as black boxes against isolated temporary repository fixtures. |
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
 
@@ -48,13 +48,13 @@ Podway skill changes also need Master's manual verification: setup must compare 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |
 |---|---|---|---|---|
 | Python unit | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `$(PYTHON) -m pytest tests/unit` | None |
-| Python integration | pytest with native fixtures and assertions plus waived legacy `unittest` | `requirements.txt`, `pyproject.toml`, Python standard library, and the committed pre-existing suites | `$(PYTHON) -m pytest tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py`, then `$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py` | `AQ-WAIVER-001` applies only to the three `unittest` suites |
+| Python integration | pytest with native fixtures and assertions plus waived legacy `unittest` | `requirements.txt`, `pyproject.toml`, Python standard library, and the committed pre-existing suites | `$(PYTHON) -m pytest tests/test_aquarium_status_integration.py tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py`, then `$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py` | `AQ-WAIVER-001` applies only to the three `unittest` suites |
 | Python E2E | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `$(PYTHON) -m pytest tests/e2e` | None |
 | Ruby package validation | Standalone structural assertion script | User-provided Ruby 3.3 or newer | `ruby tests/validate.rb` inside `test-prepare` | Not a unit or integration test framework layer |
 
 The test environment requires the exact Python development dependencies in `requirements.txt`, including the MCP SDK and its runtime dependencies. Runtime installation tests reuse these dependencies in temporary environments without downloading packages; stdio tests exercise the packaged server launcher. The shipped runtime has its own hash-pinned `plugins/aquarium/tools/aquarium-dev/requirements.txt`. Every handler checks the selected environment before executing and fails with an installation command when Python, pytest, PyYAML, Ruff, or an exact dependency version is unavailable. Handlers never install dependencies implicitly.
 
-The global inspector tests use temporary Codex homes, synthetic package assets, and local executable fixtures to check home discovery, CLI probe reuse, independent artifact health, MCP home binding, package pins, and partial readiness. PyPI responses are mocked, so the standard gate remains offline. The asset-probe test checks the native rendered-rules contract separately from raw skill bytes; a successful aggregate doctor cannot substitute for either comparison.
+The production-status tests use temporary homes, temporary Git worktrees, bounded child processes, local fault injection, and test-owned runtime generations. They verify merge and conflict behavior, replay and exact deletion fences, durable rollback, offline and refreshed reporting, enrollment joins, isolated hash-pinned installation, launcher recovery, and cache-independent execution without contacting PyPI or mutating production state. The global inspector tests use temporary Codex homes, synthetic package assets, and local executable fixtures to check home discovery, CLI probe reuse, independent artifact health, MCP home binding, package pins, and partial readiness. PyPI responses are mocked, so the standard gate remains offline. The asset-probe test checks the native rendered-rules contract separately from raw skill bytes; a successful aggregate doctor cannot substitute for either comparison.
 
 ## Gaori Mapping
 
@@ -70,7 +70,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 
 ## E2E Environment
 
-The E2E production-equivalent artifact is the shipped `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py` CLI. E2E invokes only its documented `--repository` public interface in a child process and treats its JSON and exit status as black-box output. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables.
+The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py` and `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables.
 
 Each scenario creates one unique operating-system temporary directory containing only test-owned repository fixtures. It uses no credential, account, network, port, database, container, volume, provider, or production environment. `pytest` owns teardown through `tmp_path`; the test never deletes a path it did not create. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
 
@@ -79,7 +79,7 @@ Each scenario creates one unique operating-system temporary directory containing
 - Ruff formatting and lint cover all maintained Python source and test files.
 - Python bytecode compilation is implicit in every pytest and unittest import; syntax failures stop the applicable stage.
 - Ruby syntax is checked explicitly before the package validator runs.
-- Race, undefined-behavior, sanitizer, browser, device, and database diagnostics are not applicable because Aquarium ships declarative plugin assets and local Python/Ruby inspection utilities with no native, concurrent, browser, device, or database runtime.
+- Bounded multi-process tests exercise the production-status ledger's lock and revision behavior. Native race sanitizers, undefined-behavior sanitizers, browser, device, and database diagnostics are not applicable to the Python/Ruby plugin assets and local utilities.
 
 ## Legacy Waivers
 
