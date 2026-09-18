@@ -63,6 +63,12 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup-global`은 user-global 도구를 관리하고, `$aquarium:dev-setup`은 repository 설정과 에이전트 운영 지침을 자동 진단해 필요한 변경만 제안합니다. `$aquarium:dev-setup-bundle`은 v1 manifest 하나에서 두 범위를 나눠 처리합니다.
 
+`$aquarium:status`는 setup을 다시 실행하거나 현재 도구 상태를 보장하지
+않고 로컬 production setup 원장을 보여줍니다. release 정보 갱신은
+명시적으로 선택해야 하며, 기록 하나를 지울 때는 현재 revision과 digest에
+결박된 별도 승인이 필요합니다. `aquarium-status` runtime은 global setup이
+진단하며 plugin update만으로 자동 교체되지 않습니다.
+
 ## 생태계가 연결되는 방식
 
 - [Podway](https://github.com/irootkernel/podway)는 Git 기반 workflow의 goal, transition, handoff를 기록하는 local execution memory를 제공합니다. `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, `war-room`은 기본적으로 Podway를 사용하며, 첫 managed-session 변경 전에 선택 해제할 수 있습니다. Workflow는 Aquarium이 진행하고 Podway는 기록하며, 상세 lifecycle 작업은 해당 workflow나 standalone `use-podway` skill이 맡습니다.

@@ -8,6 +8,10 @@ Aquarium is a local Codex plugin rather than an independently hosted service. It
 
 The [development-channel runbook](development-channel.md) covers diagnosis, approved enrollment, exact builds, launcher installation, and bounded recovery on Apple Silicon macOS.
 
+The [production-status runbook](production-status.md) covers local ledger
+reporting, separately authorized release refresh, managed runtime diagnosis and
+repair, record-only retry, and exact approved row removal.
+
 ## Runbook Requirements
 
 Every runbook must state:

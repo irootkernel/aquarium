@@ -14,7 +14,7 @@ from typing import Any
 
 from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v3"
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v4"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -28,6 +28,7 @@ GLOBAL_COMPONENTS = (
     "podway",
     "ouroboros",
     "aquarium-dev",
+    "aquarium-status",
 )
 PROJECT_INSPECTOR = (
     Path(__file__).resolve().parents[2] / "dev-setup/scripts/inspect_tools.py"
@@ -66,6 +67,36 @@ def load_inspector() -> Any:
         sys.modules.pop(spec.name, None)
         raise
     return module
+
+
+def inspect_aquarium_status() -> dict[str, Any]:
+    script = Path(__file__).resolve().parents[3] / "tools/aquarium-status/install.py"
+    spec = importlib.util.spec_from_file_location("aquarium_status_installer", script)
+    if spec is None or spec.loader is None:
+        raise InspectionError(
+            "inspector_unavailable", "aquarium-status inspector is unavailable"
+        )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    payload = module.diagnose(script.parent)
+    required = {
+        "schema",
+        "status",
+        "bundled",
+        "installed",
+        "launcher",
+        "runtime_root",
+        "action",
+    }
+    if (
+        not isinstance(payload, dict)
+        or set(payload) != required
+        or payload.get("schema") != "aquarium-status-runtime-inspection/v1"
+    ):
+        raise InspectionError(
+            "inspection_failed", "aquarium-status inspection contract is invalid", 1
+        )
+    return payload
 
 
 def cli_component(tool: dict[str, Any]) -> dict[str, Any]:
@@ -484,6 +515,8 @@ def inspect_global(
                 else "probe_failed",
                 "problem": str(error),
             }
+    if "aquarium-status" in requested_components:
+        tools["aquarium-status"] = inspect_aquarium_status()
     tools = {name: tools[name] for name in selected_components}
     return {
         "schema_version": SCHEMA_VERSION,

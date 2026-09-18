@@ -19,6 +19,12 @@ PYTHON_FILES := \
 	plugins/aquarium/tools/aquarium-dev/mcp_server.py \
 	plugins/aquarium/tools/aquarium-dev/install.py \
 	plugins/aquarium/tools/aquarium-dev/runtime_entry.py \
+	plugins/aquarium/tools/aquarium-status/aquarium_status.py \
+	plugins/aquarium/tools/aquarium-status/install.py \
+	plugins/aquarium/tools/aquarium-status/runtime_entry.py \
+	plugins/aquarium/tools/aquarium-status/status_contract.py \
+	plugins/aquarium/tools/aquarium-status/status_report.py \
+	plugins/aquarium/tools/aquarium-status/status_store.py \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/verify_dolgorae_release.py \

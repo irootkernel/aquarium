@@ -15,6 +15,7 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 - Aquarium coordinates Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai but does not vendor or own their upstream implementations.
 - Skills preserve separate authority for diagnosis, network lookup, installation, provider transmission, repository mutation, commits, and publication.
 - Podway and native tools own runtime and execution evidence. Sorage owns its Vault, Project identity, Handoffs, and derived inbox marker. Ignored runtime artifacts are not roadmap history, architecture, or durable specifications.
+- `aquarium-status` alone owns the private production setup ledger and its installed reporting runtime. Setup skills submit closed terminal-attempt documents; they do not write YAML. Ledger history remains separate from repository authority, live tool health, and `aquarium-dev` enrollment.
 - Canonical documentation describes current structure and delivery intent; it does not replace executable source, Git history, external release proof, or runtime activation evidence.
 
 ## Exact Authorities

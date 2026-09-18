@@ -2,10 +2,10 @@
 
 Aquarium ships declarative skill contracts, Podway Procedure definitions, local structural inspectors, one commit hook, and verification helpers. JSON schema identifiers are compatibility surfaces for their owning workflows.
 
-## Reserved Production Status Interfaces
+## Production Status Interfaces
 
-`TASK-048` freezes, but does not yet ship, the production setup-status
-interfaces implemented by `TASK-049`. The ledger uses
+`TASK-048` froze and `TASK-049` ships the production setup-status interfaces.
+The ledger uses
 `aquarium-production-status/v1`; the record input and receipt use
 `aquarium-production-status-record/v1` and
 `aquarium-production-status-record-receipt/v1`; JSON show output uses
@@ -17,7 +17,7 @@ interfaces implemented by `TASK-049`. The ledger uses
 `aquarium-status-runtime/v1`, `aquarium-status-runtime-inspection/v1`, and
 `aquarium-status-runtime-error/v1`.
 
-The reserved CLI is `aquarium-status show --format text|json [--refresh]
+The CLI is `aquarium-status show --format text|json [--refresh]
 [--source-root <absolute-path>]`, closed-JSON `record` on standard input, and
 `forget --git-root <absolute-path> [--if-file-revision <revision>
 --if-row-revision <revision> --if-row-sha256 <digest>]`. Exit 0 is a
@@ -42,7 +42,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 
 | Entrypoint | Input | Success schema | Behavior |
 | --- | --- | --- | --- |
-| `dev-setup-global/scripts/inspect_global_tools.py` | Optional existing working directory, repeatable component scope and Codex homes, command timeout, release verification, and Sorage initialization diagnosis | `aquarium-dev-setup-global-inspection.v3` | Selected user-global CLI, paired-skill, service, global MCP, writing-skill, Lore, and Ouroboros inspection without requiring or reading repository configuration |
+| `dev-setup-global/scripts/inspect_global_tools.py` | Optional existing working directory, repeatable component scope and Codex homes, command timeout, release verification, and Sorage initialization diagnosis | `aquarium-dev-setup-global-inspection.v4` | Selected user-global CLI, paired-skill, service, global MCP, writing-skill, Lore, Ouroboros, and `aquarium-status` inspection without requiring or reading repository configuration |
 | `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional repository-component flags | `aquarium-dev-setup-inspection.v21` | Normalized Git and repository configuration inspection with presence-only trust for canonical global skills, optional Sorage Project registration, and separate Podway source-provenance and handler-contract compatibility results |
 | `dev-setup-global/scripts/verify_dolgorae_release.py` | Optional supported Dolgorae version and network timeout | `aquarium-dolgorae-release-verification.v1` | Bounded official GitHub Release identity verification for stable v0.1.2 through v0.1.x |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |

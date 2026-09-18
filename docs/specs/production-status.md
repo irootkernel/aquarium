@@ -1,8 +1,15 @@
 # Production Setup Status
 
-This specification freezes the `aquarium-production-status/v1` contract. The
-executable and skill wiring enter the shipped checkout through `TASK-049`; until
-then, the interfaces below are reserved and must not be reported as available.
+This specification owns the shipped `aquarium-production-status/v1` contract.
+`TASK-048` froze its delivery shape and `TASK-049` added the executable and skill
+wiring. Availability still depends on an installed, verified user-global
+runtime.
+
+TASK-049 security review re-froze one installation detail before publication:
+the launcher is generated from the verified receipt and starts its exact
+interpreter with `-B -I -S`. This supersedes TASK-048's unsafe copied-entrypoint
+wording, which would have started an ambient Python before verifying the
+receipt. The ledger and public JSON schemas did not change.
 
 ## Purpose and authority
 
@@ -168,11 +175,13 @@ without exactly one stable Unreleased target yields `unknown`.
 The physical source root must be a directory. Each component from it to the
 manifest and CHANGELOG must remain contained, owned only as an external read,
 and contain no symbolic link; each final target must be a regular file no larger
-than 1 MiB. Enrollment joins read only the exact project-ID file below
-`~/.aquarium-dev/enrollments/`; every path component must be a non-symbolic
-directory, and the final JSON must be a non-symbolic regular file no larger than
-1 MiB. Violations yield the corresponding invalid, unreadable, or unsafe state
-without following the target.
+than 1 MiB. Enrollment joins inspect only the six allowlisted project-ID files
+below `~/.aquarium-dev/enrollments/` and select a valid file whose checkout is
+the exact stored Git root; an unrelated malformed file cannot poison another
+row. Every path component must be a non-symbolic directory, and each final JSON
+must be a non-symbolic regular file no larger than 1 MiB. Violations attributable
+to the selected row yield the corresponding invalid or unreadable state without
+following the target.
 
 The report's top-level `status` is `complete` or `partial`. A failed optional
 refresh, unreadable or invalid enrollment, or unavailable requested source
@@ -263,7 +272,11 @@ has only `code` and `message`. Exit-1 codes are `state_unsafe`,
 
 ## Storage, locking, and durability
 
-`show` takes a shared lock. `record` and `forget` hold an exclusive
+`show` takes a shared lock whenever the owned state root and lock already exist.
+When both the ledger and lock are absent, its read-only fast path returns the
+absent snapshot without creating either path; a concurrent first record may
+linearize immediately before or after that snapshot. A ledger without its lock
+is unsafe. `record` and `forget` hold an exclusive
 `~/.aquarium/status.lock` across safe-path validation, read, schema validation,
 revision checks, merge, temporary-file write and fsync, atomic replacement, and
 parent-directory fsync. Owned directories use mode `0700`; the ledger, lock,
@@ -329,10 +342,21 @@ and an explicit verified dependency path to confirm the recorded Python version
 and PyYAML 6.0.3. The runtime uses the same order and refuses extra distributions
 or dependency files.
 
-The launcher is a regular executable `~/.local/bin/aquarium-status` with no
-plugin-cache path. It is managed only when its bytes equal the bundled or
-currently installed `runtime_entry.py` and the selected generation's receipt
-and payload verify. Any other regular launcher is unknown and fails closed.
+The launcher is a generated regular POSIX executable at
+`~/.local/bin/aquarium-status` with no plugin-cache path. Its deterministic
+bytes carry the Aquarium managed-launcher marker and invoke the receipt's
+absolute interpreter with `-B -I -S` and the selected generation's verified
+`runtime_entry.py`. A managed candidate must point directly below the owned
+versions root. In normal state its exact bytes are derived from that
+generation's closed receipt and bind the receipt's still-matching interpreter.
+If the selected generation or receipt is missing or structurally corrupt, the
+exact generated marker and argv are a repair candidate only when the safe
+`current` selector names that same contained generation; marker shape alone is
+never ownership evidence. A launcher is fully managed only when its generation
+is selected and its receipt, payload, dependencies, and interpreter verify.
+This distinction permits repair of interrupted or missing selected state without
+treating an arbitrary marker-shaped file as owned. Any other regular launcher
+is unknown and fails closed.
 
 Diagnosis compares the bundled payload, installed receipt, selector, private
 environment, and launcher independently. An unknown regular launcher, symbolic
@@ -361,9 +385,10 @@ failures return `aquarium-status-runtime-error/v1` with only `schema` and an
 
 Diagnosis applies this precedence: an unsafe owned path yields `unsafe` with a
 null action; otherwise an unknown regular launcher yields `unsafe` with a null
-action and can never be replaced; otherwise no selected generation yields
-`missing` and `install`; otherwise an invalid selector, receipt, payload,
-environment, or managed-launcher relationship yields `broken` and `repair`;
+action and can never be replaced; otherwise no selected generation and no
+managed candidate yields `missing` and `install`; a managed candidate without a
+selected generation, or an invalid selector, selected receipt, payload,
+environment, or managed-launcher relationship, yields `broken` and `repair`;
 otherwise a verified installed source different from the bundled source yields
 `outdated` and `update`; only a fully matching source yields `current` with a
 null action. Launcher state is `unsafe` before all other launcher states, then

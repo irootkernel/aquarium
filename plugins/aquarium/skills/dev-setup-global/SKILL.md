@@ -11,7 +11,7 @@ Own installation, exact-upstream freshness, upgrades, services, and global Codex
 
 Aquarium plugin installation and updates belong to the host's plugin-management flow. A request to install or update only the Aquarium plugin, including a specific version, does not select this skill. If this skill was selected for that request, return to the host's plugin-management flow before reading the tool catalog or running any diagnostic. Do not infer a global tool setup request from plugin installation.
 
-Use this skill for an explicit global development setup request or a workflow continuation naming a global component that needs attention. An explicit request to install or update the optional `aquarium-dev` runtime remains in scope; installing or updating the Aquarium plugin alone does not request that runtime.
+Use this skill for an explicit global development setup request or a workflow continuation naming a global component that needs attention. An explicit request to install or update the optional `aquarium-dev` or `aquarium-status` runtime remains in scope; installing or updating the Aquarium plugin alone does not request either runtime.
 
 Read the selected sections of [the shared tool catalog](../../references/tool-catalog.md). Do not read repository-local `.podway`, `.mulgae`, `.gaori`, `.sorage`, `.codex`, AGENTS.md, or CLAUDE.md as global setup evidence.
 
@@ -39,6 +39,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
 - The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
+- The `aquarium-status` user-global reporter runtime bundled with Aquarium. Diagnose it by default. Install, update, or repair its private hash-pinned runtime and launcher only after a separate exact approval. It is setup-recording infrastructure, not a bundle-manifest v1 tool and not part of production-binary readiness.
 - Aquarium production-binary readiness requires supported global Podway, Mulgae, and Gaori executables and fails closed when any is missing. Dolgorae and Sanho remain optional and are excluded from this baseline.
 
 Do not install provider CLIs, authenticate, read credentials, contact providers, transmit repository source, initialize repository workspaces, change project MCP, edit repository guidance, start tests or reviews, or invoke Ouroboros workflows.
@@ -71,6 +72,11 @@ Before every persistent action:
 4. Re-read the target and invalidate approval if its snapshot changed.
 5. Execute only the approved action and verify through the owning CLI and exact tree comparison.
 
+For `aquarium-status`, disclose the exact PyPI endpoints and use only the bundled
+installer's hash-pinned PyYAML environment. Never replace an unknown regular
+launcher. Run the bundled installer with `--approve-install --approve-launcher`
+only after approval covering both exact targets, then rerun the scoped inspector.
+
 ## Apply the Shared Backup Policy
 
 Use `Choose a Backup Policy for Existing State` in the shared tool catalog for every overwrite or removal. The shared policy owns the request-scoped choice, loss and recovery disclosure, restoration evidence, and the rule that preparing an incoming payload is not a backup.
@@ -79,7 +85,7 @@ Never use `sudo`, `--force`, unapproved removal, provider invocation, source tra
 
 ## Bundle Intake
 
-Accept a bounded `dev-setup-bundle` handoff containing the manifest digest and union of selected global components. Prepare each global component at most once. For Ouroboros, prepare the CLI once and integration once per distinct Codex home. Preserve all per-action approvals and return independent results for the bundle's target processing. Never read the manifest or infer repositories.
+Accept a bounded `dev-setup-bundle` handoff containing the manifest digest and union of selected global components. Add `aquarium-status` as bundle infrastructure without changing or reinterpreting the manifest tool vocabulary. Prepare each global component and that runtime at most once. For Ouroboros, prepare the CLI once and integration once per distinct Codex home. Preserve all per-action approvals and return independent results for the bundle's target processing. Never read the manifest or infer repositories.
 
 ## Report
 

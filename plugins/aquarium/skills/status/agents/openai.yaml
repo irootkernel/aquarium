@@ -1,0 +1,6 @@
+interface:
+  display_name: "Production Setup Status"
+  short_description: "Report or forget recorded production setup state"
+  default_prompt: "Use $aquarium:status to report my recorded production setup status."
+policy:
+  allow_implicit_invocation: false

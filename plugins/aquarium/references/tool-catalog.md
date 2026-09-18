@@ -20,6 +20,31 @@ The same command installs or updates. It creates an isolated Python environment 
 
 Re-run diagnosis and `~/.local/bin/aquarium-dev version`. Start a new Codex session for the plugin's MCP server. A plugin update does not update the runtime automatically; an identity mismatch requires this explicit update before the bundled MCP server can start. The existing CLI remains on its installed version. The installer does not change Git hooks, enroll checkouts, build producers, activate services, configure Codex, or change authentication. Legacy hook migration is a later, separately approved `aquarium-dev enroll` operation described in the [development contract](development-contract.md).
 
+## Aquarium Production Status
+
+Source: the exact installed Aquarium plugin under `tools/aquarium-status/`. Run
+`inspect_global_tools.py --component aquarium-status` for read-only diagnosis.
+The component is selected by default for unscoped global setup and once as
+infrastructure for a setup bundle, but it is not a production-binary prerequisite
+or a bundle manifest v1 tool.
+
+Installation requires Apple Silicon macOS and Python 3.11 or newer. Before an
+approved install, update, or repair, disclose `https://pypi.org/simple` and
+`https://files.pythonhosted.org`, the exact `~/.aquarium/status-runtime/` and
+`~/.local/bin/aquarium-status` targets, and whether either target already exists.
+Never replace an unknown regular launcher. After approval run:
+
+```text
+python3 <plugin-root>/tools/aquarium-status/install.py install --approve-install --approve-launcher
+```
+
+The installer admits only hash-pinned PyYAML 6.0.3 binary wheels, verifies the
+payload, interpreter, and every dependency file before activation, and restores
+the prior selector and launcher if activation fails. It uploads no source or
+ledger data. Re-run the scoped inspector and `aquarium-status show --format
+json`; the latter reports history and freshness but does not establish live tool
+health. Plugin updates never update this runtime automatically.
+
 ## Shared version and safety policy
 
 - Resolve the latest non-draft, non-prerelease stable release at execution time from the official repository, limited to a tool's supported release line when its section defines one. Display the exact tag and source before installation; never substitute `@latest` after approval.

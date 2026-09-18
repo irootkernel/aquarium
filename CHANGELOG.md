@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.17 - Unreleased
 
+### Added
+
+- Add a private production setup ledger and managed `aquarium-status` reporter with independent freshness, exactly-once setup recording, record-only retry, and revision-bound explicit removal.
+
 ### Changed
 
 - Let Task, Epic, and validation workflows use a complete composite execution SOT when no dossier is declared and the user explicitly waives it, with a separate dossier recommendation before the final waiver for larger work.

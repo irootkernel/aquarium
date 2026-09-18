@@ -4,16 +4,20 @@ Aquarium contains instructions for Codex. The plugin does not operate a hosted s
 
 Some instructed workflows can invoke local or third-party tools after explicit user approval. Bounded read-only network operations may be authorized by an explicit tool selection or skill invocation without a second network prompt.
 
-EPIC-013 reserves a local production setup-status ledger at
-`~/.aquarium/status.yaml`. After TASK-049 ships the executable, terminal
-repository setup may record canonical absolute Git worktree and common-directory
+Aquarium keeps a local production setup-status ledger at
+`~/.aquarium/status.yaml`. Terminal repository setup may record canonical
+absolute Git worktree and common-directory
 paths, a display label, attempt identifiers and times, outcome and scope, sourced
 Aquarium versions, and the latest settled Sanho and `aquarium-dev` observations.
 The ledger stores no credentials, repository source, provider output, or raw
 diagnostics. Default reporting is offline. An explicit `--refresh` contacts only
 the official Aquarium GitHub latest stable Release endpoint, and an explicit
 source-root observation reads only that local Aquarium checkout's manifest and
-CHANGELOG. Rows for moved or deleted worktrees remain until the user explicitly
+CHANGELOG. Default reporting may also read the six allowlisted local
+`~/.aquarium-dev/enrollments/<project-id>.json` files for supported Aquarium
+projects until it finds an exact checkout-path match for a recorded row; it
+does not enumerate other files or use the display label as identity. Rows for
+moved or deleted worktrees remain until the user explicitly
 forgets the exact row. Owned state is user-private with `0700` directories and
 `0600` files; a repository-local `.aquarium` path remains forbidden.
 

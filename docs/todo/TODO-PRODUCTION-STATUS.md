@@ -19,6 +19,10 @@ closeout after durable implementation guidance has been promoted.
 - Ship `plugins/aquarium/tools/aquarium-status/` with the frozen show, record,
   forget, storage, report, runtime, diagnosis, installation, and rollback
   contracts.
+- Re-freeze the pre-publication launcher detail after security review: generate
+  exact receipt-bound shell bytes that start the recorded interpreter with
+  `-B -I -S`; do not copy a Python entrypoint that would start ambient Python
+  before receipt verification. Preserve every public ledger and JSON schema.
 - Add explicit `$aquarium:status` reporting and approved exact-row removal.
 - Include `aquarium-status` in unscoped global setup diagnosis without adding it
   to the production-binary baseline or the bundle manifest v1 tool vocabulary.

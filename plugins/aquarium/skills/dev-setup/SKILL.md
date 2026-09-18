@@ -43,6 +43,24 @@ In Plan Mode, run every non-mutating repository diagnostic available and return 
 
 Outside Plan Mode, use the same automatic discovery. Before each persistent action, show the exact command or complete diff, target paths, side effects, preserved state, verification, and backup policy when replacement or removal is involved. Establish `Choose a Backup Policy for Existing State` from the shared tool catalog before the first action-specific approval for an overwrite or removal, then obtain the action-specific approval required by the host. Re-read every target immediately before an approved mutation and invalidate stale approval.
 
+Before preparing any terminal attempt, require the scoped global inspector to
+report `aquarium-status` as `current`. A missing, outdated, or broken runtime is
+a `$aquarium:dev-setup-global` continuation with its own proposal and approval;
+an unsafe or unknown launcher is a blocker. Do not begin repository mutation
+until the current runtime can read the predecessor row revision.
+
+After canonical Git identity and full or scoped component intent are fixed, use
+the canonical Git root's final NFC-normalized path component as the project
+label. General setup without an explicit component limit is full; every
+explicit component request or continuation is scoped to its sorted unique
+component names, including `agents-guidance` when guidance is selected. Then
+create one `aquarium-production-status-attempt/v1` immediately before
+the first persistent setup mutation. For a terminal no-op, create it immediately
+before settlement. Read the current row revision through `aquarium-status show
+--format json`; a missing row uses revision 0. A bundle-supplied attempt replaces
+local creation and must be preserved byte-for-byte. Diagnosis, Plan Mode, and
+work stopped before execution approval do not create an attempt.
+
 An explicit diagnosis-only request suppresses mutation proposals. A scoped continuation inspects only the named repository component and its direct prerequisites.
 
 ## Configure Repository Components
@@ -73,6 +91,28 @@ A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, ta
 
 Reject unsupported tools, invalid local MCP overrides, or any request to read the manifest. Preserve per-target partial failure and return `ready`, `partial`, `failed`, `declined`, or `skipped` with an exact resumption request.
 
+## Record Terminal Setup
+
+For every attempt created here or supplied by the bundle, submit exactly one
+`aquarium-production-status-record/v1` after the target reaches `ready`,
+`partial`, `failed`, or `declined`. Populate completion time and only settled
+`sanho` or `aquarium_dev` component observations. Run the current bundled
+recorder through the verified `aquarium-status` dependency runtime so the
+recorded Aquarium version belongs to this plugin, not a stale PATH payload. Use
+`python3 <plugin-root>/tools/aquarium-status/install.py run-bundled --source
+<plugin-root>/tools/aquarium-status record` with the closed document on standard
+input; do not import a cache path into the current agent process.
+
+Return `aquarium-production-status-recording-result/v1` with exactly `schema`,
+`status`, `attempt_id`, `receipt`, `retry_request`, and `problem_code`. Preserve
+setup success if recording fails: return `failed`, the exact original record
+document as `retry_request`, a closed problem code, and make the enclosing setup
+result `partial`. A retry submits only that identical document to `record`; it
+must not re-enter or repeat setup. If canonical identity was unavailable, return
+`not_recordable` with a null attempt ID and do not write a row. Use the exact
+fields, nullability rules, and closed problem codes in the
+[production-status specification](../../../../docs/specs/production-status.md).
+
 ## Report
 
-Report selected and out-of-scope repository components, diagnostic evidence, proposed or completed repository changes, deferred side-effectful diagnostics, global continuation gaps, verification, preserved worktree state, and whether staging, commit, or publication occurred. Do not report a global component as current or exact-upstream-verified; that claim belongs to `$aquarium:dev-setup-global`.
+Report selected and out-of-scope repository components, diagnostic evidence, proposed or completed repository changes, deferred side-effectful diagnostics, global continuation gaps, status-recording result or exact record-only retry, verification, preserved worktree state, and whether staging, commit, or publication occurred. Do not report a global component as current or exact-upstream-verified; that claim belongs to `$aquarium:dev-setup-global`.

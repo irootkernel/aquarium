@@ -127,7 +127,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v3"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v4"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
@@ -153,6 +153,7 @@ class TestInspectGlobalTools:
             "im-not-ai",
             "ouroboros",
             "aquarium-dev",
+            "aquarium-status",
         }
         assert list(payload["tools"]) == list(inspect_global_tools.GLOBAL_COMPONENTS)
 
@@ -1440,7 +1441,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v3"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v4"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),

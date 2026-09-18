@@ -63,6 +63,12 @@ The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported t
 
 Foundations: `$aquarium:docs-setup` governs canonical documentation structure and roadmap IDs. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup-global` maintains user-global tools; `$aquarium:dev-setup` automatically diagnoses repository configuration and agent guidance, proposing changes only when needed. `$aquarium:dev-setup-bundle` delegates those two scopes across several repositories from one v1 manifest.
 
+`$aquarium:status` reports the local production setup ledger without rerunning
+setup or claiming live tool health. Optional release refresh is explicit, and
+forgetting one recorded checkout requires approval bound to its current revision
+and digest. The managed `aquarium-status` runtime is diagnosed by global setup
+and is never updated merely because the plugin changed.
+
 ## How the Ecosystem Connects
 
 - [Podway](https://github.com/irootkernel/podway) provides local execution memory for the goals, transitions, and handoffs of Git-backed workflows. It is selected by default for `task-handler`, `epic-handler`, `epic-validator`, `new-project`, `new-feature`, `refactor`, and `war-room`, and may be opted out before the first managed-session mutation. Aquarium runs the workflow and Podway records it; detailed lifecycle operations belong to the owning workflow or the standalone `use-podway` skill.
