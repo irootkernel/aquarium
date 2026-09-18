@@ -1,17 +1,17 @@
 # Epic Execution SOT
 
-Use this contract when an Aquarium design workflow defines an epic or a handler or validator resolves the context needed to execute or validate one. A dossier is a temporary consolidated execution SOT for complex work, not a mandatory documentation shape.
+Use this contract when an Aquarium design workflow defines an epic or a handler or validator resolves the context needed to execute or validate one. A dossier is the default consolidated execution SOT. When no dossier is declared, an explicit waiver permits execution from a complete composite execution SOT.
 
-## Decide Whether a Dossier Is Required
+## Decide When to Create a Dossier
 
-Require one active dossier when either condition holds at design or preflight:
+At work-definition time, create one active dossier when either condition holds:
 
 - the epic has three or more member tasks, counting the complete canonical membership rather than only unfinished tasks;
 - goal, scope, constraints, task objectives, prohibited actions, acceptance, or required handoff ownership is distributed across three or more requirement-bearing canonical documents.
 
 Count the roadmap as a requirement-bearing document only when it owns execution requirements beyond identity, ordering, dependencies, lifecycle vocabulary, and status. Do not count implementation outputs, tests, generated artifacts, evidence, or specifications and architecture documents first created during delivery; classify the planned execution context before implementation begins.
 
-An epic with at most two member tasks and at most two requirement-bearing canonical documents may omit a dossier only when repository discovery still yields an unambiguous goal, scope, task identity and lifecycle, dependency ordering, acceptance, required artifacts and handoffs, and every safety-critical external-action boundary. Missing semantic information blocks the workflow regardless of file count.
+An epic may proceed without a dossier only when repository discovery still yields an unambiguous goal, scope, task identity and lifecycle, dependency ordering, acceptance, required artifacts and handoffs, and every safety-critical external-action boundary, and the user explicitly waives the dossier. Missing semantic information blocks the workflow regardless of file count and cannot be waived.
 
 ## Create or Revise the Execution SOT
 
@@ -23,11 +23,17 @@ When a design workflow produces a small epic below the threshold, keep its compl
 
 ## Consume and Validate the Execution SOT
 
-`$aquarium:epic-handler` and `$aquarium:task-handler` discover the canonical roadmap, documentation index, repository guidance, and requirement-bearing documents before applying the threshold. When a required dossier is absent, stop before mutation and route revision to the appropriate design workflow: `new-feature` for ordinary feature work, `refactor` for refactor work, `war-room` for a diagnosed difficult bug, or `new-project` while shaping a new project. Ask only when that ownership is ambiguous. Never route dossier creation to `docs-setup`.
+`$aquarium:epic-handler` and `$aquarium:task-handler` discover the canonical roadmap, documentation index, repository guidance, and requirement-bearing documents before requesting approval. Use a linked active dossier when one exists. Treat a dossier as absent only when the canonical roadmap and document links declare none. If the epic declares a dossier but its link cannot be resolved under the repository's documentation rules, treat that broken link as an unresolved requirement owner. When no dossier is declared, resolve the canonical document set collectively as a composite execution SOT.
 
-When a dossier is not required, treat the discovered canonical document set collectively as the execution SOT and proceed. Leaf task phases consume the handler-resolved SOT and update a dossier only when one exists. They do not independently manufacture a dossier requirement.
+Before mutation, the handler's decision-complete plan must disclose that no dossier is declared and identify the canonical source paths and owners for the goal, scope, constraints and prohibited actions, complete task membership and dependency order, acceptance, required artifacts, handoffs, and safety-critical external-action boundaries. For work below the creation threshold, the plan approval must also explicitly waive the dossier. Generic plan approval, discussion, or partial agreement is not a waiver.
 
-`$aquarium:epic-validator` applies the same threshold while an epic is active or in review. For a completed epic, validate acceptance from its current canonical outcomes and repository-defined historical sources; never recreate a deleted temporary dossier. Report the exact missing semantic owner when the completed state cannot be validated.
+When work meets either creation threshold and no dossier is declared, first explain the coordination risk, recommend creating the dossier, and ask the user to choose between routing to the appropriate work-definition skill or considering a waiver. Choosing to consider a waiver authorizes only preparation of the composite-SOT plan. The plan must disclose the risk again, and execution requires a second explicit approval that both accepts the plan and waives the dossier. If an approved source set or its requirements change materially, update the plan and obtain approval again before further mutation; when the revised source set still has no dossier, renew the applicable waiver in that approval.
+
+Approval cannot supply missing product meaning. When discovery cannot resolve a required semantic owner or the composite set is ambiguous or incomplete, stop before mutation and report the exact gap. An unresolvable declared dossier is such a gap, not dossier absence. Route revision to `new-feature` for ordinary feature work, `refactor` for refactor work, `war-room` for a diagnosed difficult bug, or `new-project` while shaping a new project. Ask only when that ownership is ambiguous, and never route dossier creation to `docs-setup`.
+
+Leaf task phases consume the handler-resolved execution SOT and update a dossier only when one exists. They do not independently manufacture a dossier requirement.
+
+For an active or in-review epic, `$aquarium:epic-validator` uses the linked dossier or applies the same waiver flow before validating a disclosed composite execution SOT. Its validation-envelope approval carries the explicit waiver for work below the creation threshold and is the second confirmation when the work meets a creation threshold. If the resolved source set or its requirements change materially after approval, update the envelope and renew the applicable waiver before further mutation. For a completed epic, validate acceptance from its current canonical outcomes and repository-defined historical sources without requesting a waiver or recreating a deleted temporary dossier. Report the exact missing semantic owner when the completed state cannot be validated.
 
 ## Close Out Without Manufacturing Documentation
 
