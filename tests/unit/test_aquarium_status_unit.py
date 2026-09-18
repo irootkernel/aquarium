@@ -1,10 +1,13 @@
+import http.client
 import importlib.util
 import io
 import json
 import sys
 import unicodedata
 import urllib.error
+import urllib.response
 import uuid
+from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -92,6 +95,37 @@ def test_record_validation_normalizes_project_and_closes_nested_shapes(
         "kind": "scoped",
         "components": ["aquarium-dev", "sanho"],
     }
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    [
+        "20260918T000000Z",
+        "2026-W38-5T00:00:00Z",
+        "2026-09-18 00:00:00Z",
+        "2026-09-18T00:00Z",
+        "2026-09-18T00:00:00+00:00",
+    ],
+)
+def test_record_validation_rejects_non_rfc3339_utc_timestamps(
+    status_modules, tmp_path, timestamp
+):
+    value = _record(tmp_path)
+    value["started_at"] = timestamp
+
+    with pytest.raises(status_modules.contract.ContractError, match="RFC 3339"):
+        status_modules.contract.validate_record(value, str(tmp_path))
+
+
+def test_record_validation_preserves_arbitrary_fractional_second_order(
+    status_modules, tmp_path
+):
+    value = _record(tmp_path)
+    value["started_at"] = "2026-09-18T00:00:00.1234569Z"
+    value["completed_at"] = "2026-09-18T00:00:00.1234561Z"
+
+    with pytest.raises(status_modules.contract.ContractError, match="completion time"):
+        status_modules.contract.validate_record(value, str(tmp_path))
 
 
 @pytest.mark.parametrize(
@@ -315,8 +349,8 @@ def test_freshness_is_derived_independently(status_modules, left, right, expecte
 def test_release_observation_is_offline_by_default(status_modules, monkeypatch):
     report = status_modules.report
     monkeypatch.setattr(
-        report.urllib.request,
-        "urlopen",
+        report,
+        "_open_release_request",
         lambda *args, **kwargs: pytest.fail("offline reporting contacted the network"),
     )
 
@@ -347,7 +381,7 @@ def test_release_refresh_accepts_only_a_stable_official_tag(
         observed.update(url=request.full_url, timeout=timeout)
         return Response()
 
-    monkeypatch.setattr(report.urllib.request, "urlopen", open_request)
+    monkeypatch.setattr(report, "_open_release_request", open_request)
 
     value, warning = report.release_version(True)
 
@@ -372,12 +406,57 @@ def test_failed_release_refresh_is_partial_data_not_an_exception(
     def unavailable(*args, **kwargs):
         raise urllib.error.URLError("offline")
 
-    monkeypatch.setattr(report.urllib.request, "urlopen", unavailable)
+    monkeypatch.setattr(report, "_open_release_request", unavailable)
 
     value, warning = report.release_version(True)
 
     assert value == {"value": None, "source": "unavailable", "status": "unknown"}
     assert warning == "release_refresh_failed"
+
+
+def test_malformed_http_release_response_is_partial_data(status_modules, monkeypatch):
+    report = status_modules.report
+
+    def malformed(*args, **kwargs):
+        raise http.client.BadStatusLine("malformed response")
+
+    monkeypatch.setattr(report, "_open_release_request", malformed)
+
+    value, warning = report.release_version(True)
+
+    assert value == {"value": None, "source": "unavailable", "status": "unknown"}
+    assert warning == "release_refresh_failed"
+
+
+def test_release_refresh_rejects_redirects(status_modules, monkeypatch):
+    report = status_modules.report
+    observed = []
+    real_build_opener = report.urllib.request.build_opener
+
+    class RedirectFixture(report.urllib.request.BaseHandler):
+        def default_open(self, request):
+            observed.append(request.full_url)
+            headers = Message()
+            headers["Location"] = "https://example.invalid/release"
+            response = urllib.response.addinfourl(
+                io.BytesIO(b""),
+                headers,
+                request.full_url,
+                code=302,
+            )
+            response.msg = "Found"
+            return response
+
+    def build_opener(handler):
+        return real_build_opener(handler, RedirectFixture())
+
+    monkeypatch.setattr(report.urllib.request, "build_opener", build_opener)
+
+    value, warning = report.release_version(True)
+
+    assert value == {"value": None, "source": "unavailable", "status": "unknown"}
+    assert warning == "release_refresh_failed"
+    assert observed == [report.LATEST_RELEASE_URL]
 
 
 def _source_tree(root: Path, *, changelog="## v1.3.0 - Unreleased\n"):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import stat
@@ -24,6 +25,15 @@ KNOWN_PROJECT_IDS = (
     "podway",
     "sanho",
 )
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, file_pointer, code, message, headers, new_url):
+        return None
+
+
+def _open_release_request(request: urllib.request.Request, timeout: int):
+    return urllib.request.build_opener(_NoRedirect()).open(request, timeout=timeout)
 
 
 def version(
@@ -159,7 +169,7 @@ def release_version(refresh: bool) -> tuple[dict[str, Any], str | None]:
                 "User-Agent": "aquarium-status",
             },
         )
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with _open_release_request(request, timeout=10) as response:
             payload = response.read(MAX_EXTERNAL_BYTES + 1)
         if len(payload) > MAX_EXTERNAL_BYTES:
             raise ValueError("release response is too large")
@@ -171,6 +181,7 @@ def release_version(refresh: bool) -> tuple[dict[str, Any], str | None]:
         OSError,
         ValueError,
         AttributeError,
+        http.client.HTTPException,
         json.JSONDecodeError,
         urllib.error.URLError,
     ):

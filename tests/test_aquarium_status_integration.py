@@ -461,16 +461,26 @@ def test_full_and_scoped_transitions_preserve_unsettled_state(
         outcome="failed",
         components={"sanho": observation("v1.2.4", "failed")},
     )
-    final_ready = request(root, 3)
+    full_partial = request(root, 3, outcome="partial")
+    full_declined = request(root, 4, outcome="declined")
+    final_ready = request(root, 5)
 
     for expected, payload in enumerate(
-        (full_ready, scoped, full_failed, final_ready), start=1
+        (
+            full_ready,
+            scoped,
+            full_failed,
+            full_partial,
+            full_declined,
+            final_ready,
+        ),
+        start=1,
     ):
         receipt = output(invoke(home, "record", stdin=payload))
         assert receipt["file_revision"] == receipt["row_revision"] == expected
         stored, _ = ledger(home)
         row = stored["repositories"][0]
-        if expected < 4:
+        if expected < 6:
             assert row["last_full_ready"]["attempt_id"] == full_ready["attempt_id"]
 
     row = report(home)["repositories"][0]

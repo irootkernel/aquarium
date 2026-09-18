@@ -41,7 +41,6 @@ def run_refresh_cli(home: Path, mode: str) -> subprocess.CompletedProcess[str]:
 import os
 import sys
 import urllib.error
-import urllib.request
 
 class Response:
     def __enter__(self):
@@ -58,9 +57,9 @@ def open_release(request, timeout):
         raise urllib.error.URLError("offline fixture")
     return Response()
 
-urllib.request.urlopen = open_release
 sys.path.insert(0, sys.argv[1])
 import aquarium_status
+aquarium_status.release_version.__globals__["_open_release_request"] = open_release
 raise SystemExit(aquarium_status.main(["show", "--format", "json", "--refresh"]))
 """
     environment = {

@@ -9,6 +9,7 @@ import re
 import unicodedata
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,10 @@ FORGET_RECEIPT_SCHEMA = "aquarium-production-status-forget-receipt/v1"
 ERROR_SCHEMA = "aquarium-production-status-error/v1"
 VERSION_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+UTC_RFC3339_RE = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?Z$"
+)
 COMPONENTS = frozenset(
     {
         "sanho",
@@ -131,20 +136,21 @@ def validate_uuid4(value: Any) -> str:
     return value
 
 
-def parse_time(value: Any, label: str) -> datetime:
-    if not isinstance(value, str) or not value.endswith("Z"):
+def parse_time(value: Any, label: str) -> tuple[datetime, Decimal]:
+    if not isinstance(value, str) or UTC_RFC3339_RE.fullmatch(value) is None:
         raise ContractError(
             "invalid_input", f"{label} must be a UTC RFC 3339 timestamp"
         )
     try:
-        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+        parsed = datetime.fromisoformat(value[:19] + "+00:00")
     except ValueError as error:
         raise ContractError(
             "invalid_input", f"{label} must be a UTC RFC 3339 timestamp"
         ) from error
     if parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0:
         raise ContractError("invalid_input", f"{label} must be UTC")
-    return parsed
+    fraction = Decimal(f"0.{value[20:-1]}") if value[19] == "." else Decimal(0)
+    return parsed, fraction
 
 
 def validate_version(value: Any, label: str = "version") -> dict[str, Any]:
