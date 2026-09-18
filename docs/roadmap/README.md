@@ -40,7 +40,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-010 | Separate global and repository development setup | Completed |
 | EPIC-011 | Harden release QA confirmation integrity | Completed |
 | EPIC-012 | Modernize Aquarium Skills for GPT-6 Astra | Planned |
-| EPIC-013 | Record and report production setup status | In Progress |
+| EPIC-013 | Record and report production setup status | Completed |
 | EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 
@@ -276,7 +276,7 @@ completion gate after the task is unblocked.
 
 ## EPIC-013: Record and report production setup status
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Store one production ledger at `~/.aquarium/status.yaml` for Git worktree roots
 that have finished `$aquarium:dev-setup` or received a terminal bundle result.
@@ -290,9 +290,7 @@ ADR-0008 already reserves `~/.aquarium/` for production state.
 `.aquarium` file remains forbidden. `dev-setup-bundle` still must not persist
 its input manifest.
 
-**Detailed SOT:** [`TODO-PRODUCTION-STATUS.md`](../todo/TODO-PRODUCTION-STATUS.md),
-with the frozen delivery contract in
-[`production-status.md`](../specs/production-status.md)
+**Canonical Outcomes:** [Production status](../specs/production-status.md), [Capabilities](../specs/capabilities.md), [Local interfaces](../specs/local-interfaces.md), [Architecture](../architecture/README.md), [Production status operations](../ops/production-status.md), [README](../../README.md), [Privacy](../../PRIVACY.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
