@@ -2017,6 +2017,17 @@ class ManagedRuntime:
         if item_type == "choice":
             choices = constraints.get("choices", [])
             task_resume = TASK_RESUME_SCENARIOS.get(self.scenario)
+            task_review_route = (
+                task_resume.get("effective_route", task_resume["route"])
+                if task_resume
+                and (
+                    task_resume.get("completed_transition")
+                    or (node == "review" and self.node_visits.get("review", 0) > 1)
+                )
+                else task_resume["route"]
+                if task_resume
+                else None
+            )
             goal_kind = None
             review_evidence_kind = None
             if self.scenario in GOAL_KIND_SCENARIOS:
@@ -2036,14 +2047,8 @@ class ManagedRuntime:
                     if validation_recovery and node == "capture-baseline"
                     else "orca"
                     if validation_recovery and node == "final-review"
-                    else task_resume.get("effective_route", task_resume["route"])
-                    if task_resume
-                    and (
-                        task_resume.get("completed_transition")
-                        or (node == "review" and self.node_visits.get("review", 0) > 1)
-                    )
-                    else task_resume["route"]
-                    if task_resume
+                    else task_review_route
+                    if task_review_route is not None
                     else qualified_route
                 ),
                 "effective-review-route": (
@@ -2253,9 +2258,11 @@ class ManagedRuntime:
                 "coverage-relationship": "review-predates-low-delta",
                 "backend-check-result": (
                     "pass"
-                    if qualified_route == "mulgae"
+                    if qualified_route == "mulgae" or task_review_route == "mulgae"
                     else "not-provided"
-                    if goal_recovery or validation_recovery
+                    if goal_recovery
+                    or validation_recovery
+                    or task_review_route is not None
                     else "not-provided"
                     if qualified_route is not None
                     else (

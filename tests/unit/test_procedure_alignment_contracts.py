@@ -39,7 +39,7 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-task-v2.yaml",
             "17",
-            "bcf0066c90a6446b0005f4661271a64ca35f7ab38a366ad6370a3985db616513",
+            "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
             "aquarium-task-v16.yaml",
             "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
         ),
