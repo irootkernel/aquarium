@@ -2195,6 +2195,7 @@ graph:
           items:
             - finding-disposition-summary
             - applicable-obligation-summary
+            - low-findings
             - pending-applicable-low-dispositions
             - current-applicable-blockers
             - required-evidence-gaps
