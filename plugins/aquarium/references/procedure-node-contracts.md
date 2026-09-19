@@ -20,7 +20,7 @@ unless the placement selects it.
 | Refine | `task-refine` consumes the current implementation result | Limit work to authorized cleanup and return the exact refined target |
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
-| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; `task-handler` adjudicates confirmation, CI, completion, finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
+| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; the checkpoint carries the prior operation's route identity, and `task-handler` adjudicates route entry, confirmation, CI, completion, finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | `resume-current` reads the actual preceding unsettled operation and explicit direction, authorizes only Mulgae, Orca, or native Codex, and re-enters only the matching existing provider entry; it cannot switch providers, resume a waiver, bypass authorization, or act as fallback. Switching or waiving after incomplete or failed work requires `safe-to-change` and preserves the pending ordinal; after a completed checkpoint it requires `completed-checkpoint`, preserves lineage, and consumes the next ordinal. Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
 | Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
 | Assessment and closeout | `task-handler` consumes the carried completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
 
@@ -63,8 +63,11 @@ Blocking corrections return to remediation only within the caller's existing
 envelope and keep their triggering set. A required corrected-target confirmation
 still runs. Low-only audit or confirmation results use local settlement without a
 new broad audit. Final review preserves applicable audit and provider identities
-under separate namespaces, then admits operation, finding confirmation, completion,
-required evidence, and current blockers through separate serial decisions before
+under separate namespaces. Its route-binding check consumes the planned route,
+effective route, immediately preceding provider route and operation, native
+lifecycle state, requested direction, and current transition authority. It then
+admits operation, finding confirmation, completion, required evidence, and
+current blockers through separate serial decisions before
 the final Low-or-validated choice. When another Medium-or-higher correction needs authority,
 select the supported `user-direction` route, record only the current issue set and
 exhausted authority at `await-user-direction`, complete that action, and stop at
@@ -103,8 +106,7 @@ cannot be established is unqualified. Preserve every customized file and request
 the existing supported replacement choice; never overwrite, migrate a session, or
 start a substitute workflow automatically.
 
-The executable required-node, item, choice, evidence, and route inventory is
-`PODWAY_HANDLER_CONTRACTS` in
-`skills/dev-setup/scripts/inspect_tools.py`. Its structural classification does not
-prove that customized instructions have equivalent meaning or that Podway executed
-or verified any external work.
+`skills/dev-setup/scripts/inspect_tools.py` derives the executable required-node,
+item, choice, evidence, and route inventory from the current canonical Procedure.
+Its structural classification does not prove that customized instructions have
+equivalent meaning or that Podway executed or verified any external work.

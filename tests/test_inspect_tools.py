@@ -28,8 +28,11 @@ GLOBAL_SCRIPT = (
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
 TASK_V15_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v15.yaml"
+TASK_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v16.yaml"
 GOAL_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v18.yaml"
+GOAL_V19_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v19.yaml"
 VALIDATION_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v17.yaml"
+VALIDATION_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v18.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -4330,6 +4333,11 @@ else:
                 "implementation-rework-obligations",
             ),
             (
+                "aquarium-task-v2.yaml",
+                "review-checkpoint-record",
+                "prior-review-route",
+            ),
+            (
                 "aquarium-goal-v2.yaml",
                 "evidence-record",
                 "completion-unmet-criteria",
@@ -4512,246 +4520,96 @@ else:
 
     def test_compatibility_serial_gate_evidence_is_a_handler_contract(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
-        cases = {
-            "aquarium-task-v2.yaml": {
-                "validate-review-route-entry": {
-                    "prepare-review": {
-                        "route-authorization-basis",
-                        "prior-review-operation",
-                        "prior-route-change-readiness",
-                    },
-                },
-                "classify-review-route-change": {
-                    "prepare-review": {
-                        "prior-assessment-ordinal",
-                        "prior-review-operation",
-                        "prior-route-change-readiness",
-                    },
-                },
-                "confirm-review-route-change-readiness": {
-                    "prepare-review": {
-                        "prior-review-operation",
-                        "prior-route-change-readiness",
-                    },
-                },
-                "authorize-planned-review-route": {
-                    "record-plan": {"review-route"},
-                    "prepare-review": {
-                        "effective-review-route",
-                        "route-authorization-basis",
-                        "route-change-authority-reference",
-                    },
-                },
-                "authorize-incomplete-review-route": {
-                    "prepare-review": {
-                        "effective-review-route",
-                        "route-authorization-basis",
-                        "route-change-authority-reference",
-                        "prior-review-operation",
-                        "prior-route-change-readiness",
-                    },
-                },
-                "authorize-completed-review-route": {
-                    "prepare-review": {
-                        "effective-review-route",
-                        "route-authorization-basis",
-                        "route-change-authority-reference",
-                        "prior-review-operation",
-                        "prior-route-change-readiness",
-                    },
-                },
-                "confirm-goal-assessment-core": {
-                    "record-plan": {"plan-summary"},
-                    "implement": {"implementation-summary", "source-revision"},
-                    "verify": {"verification-result"},
-                    "refine": {"refinement-summary"},
-                    "document": {"documentation-summary"},
-                },
-                "confirm-stopped-goal-boundary": {
-                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
-                },
-                "record-review-route-direction": {
-                    "review": {"assessment-provenance-kind"},
-                },
-                "await-user-direction": {
-                    "review": {"assessment-provenance-kind"},
-                },
-                "assess-goal": {
-                    "review": {"assessment-provenance-kind"},
-                },
-                "assess-stopped-goal": {
-                    "review": {"assessment-provenance-kind"},
-                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
-                },
-            },
-            "aquarium-goal-v2.yaml": {
-                "confirm-review-route-context": {
-                    "complete-work": {
-                        "review-target-scope",
-                        "review-selection-summary",
-                    },
-                },
-                "confirm-review-route-entry": {
-                    "record-evidence": {
-                        "route-authorization-basis",
-                        "route-change-readiness",
-                        "prior-route-lifecycle-state",
-                    },
-                },
-                "confirm-review-route-binding": {
-                    "complete-work": {"review-route"},
-                    "record-evidence": {
-                        "review-route",
-                        "route-authorization-basis",
-                        "route-change-authority-reference",
-                    },
-                },
-                "confirm-extra-assessment-ordinal": {
-                    "record-evidence": {"assessment-ordinal"},
-                },
-                "confirm-review-provenance": {
-                    "record-evidence": {
-                        "review-operation",
-                        "review-evidence-reference",
-                        "assessment-provenance",
-                        "waiver-summary",
-                    },
-                },
-                "confirm-incomplete-review-provenance": {
-                    "record-evidence": {
-                        "review-operation",
-                        "review-evidence-reference",
-                        "assessment-provenance",
-                        "waiver-summary",
-                    },
-                },
-                "confirm-hardening-review-eligibility": {
-                    "record-evidence": {
-                        "review-route",
-                        "review-operation",
-                        "backend-check-result",
-                        "review-mode",
-                    },
-                },
-                "confirm-hardening-record": {
-                    "record-evidence": {"assessment-ordinal"},
-                    "record-hardening-deferral": {
-                        "hardening-deferral-publication-state",
-                        "hardening-deferral-findings-query-state",
-                        "hardening-deferral-native-target-sha256",
-                    },
-                },
-            },
-            "aquarium-validation-v2.yaml": {
-                "confirm-extra-final-assessment-ordinal": {
-                    "final-review": {"assessment-ordinal"},
-                },
-                "confirm-final-review-provenance": {
-                    "final-review": {
-                        "review-operation",
-                        "review-evidence-reference",
-                        "assessment-provenance",
-                        "waiver-summary",
-                    },
-                },
-                "confirm-incomplete-final-review-provenance": {
-                    "final-review": {
-                        "review-operation",
-                        "review-evidence-reference",
-                        "assessment-provenance",
-                        "waiver-summary",
-                    },
-                },
-            },
-        }
-        for name, node_contracts in cases.items():
-            canonical = procedures.joinpath(name).read_bytes()
-            for node_id, source_contracts in node_contracts.items():
-                for source_id, item_ids in source_contracts.items():
-                    for item_id in item_ids:
-                        with self.subTest(
-                            procedure=name,
-                            node=node_id,
-                            source=source_id,
-                            item=item_id,
-                        ):
-                            document = yaml.safe_load(canonical)
-                            node = next(
-                                entry
-                                for entry in document["graph"]["nodes"]
-                                if entry["id"] == node_id
-                            )
-                            source = next(
-                                entry
-                                for entry in node["evidence_from"]
-                                if entry["node"] == source_id
-                                and item_id in entry.get("items", [])
-                            )
-                            source["items"][source["items"].index(item_id)] = (
-                                "removed-contract-item"
-                            )
+        cases = (
+            ("aquarium-task-v2.yaml", "review", "record-plan"),
+            (
+                "aquarium-task-v2.yaml",
+                "confirm-review-route-binding",
+                "review",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "decide-mulgae-review-operation",
+                "review",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-review-route-binding",
+                "complete-work",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-first-route-evidence",
+                "record-evidence",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-waived-finding-validity",
+                "record-evidence",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-final-review-route-binding",
+                "capture-baseline",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-assessed-final-review-provenance",
+                "final-review",
+            ),
+        )
+        for name, node_id, source_id in cases:
+            with self.subTest(procedure=name, node=node_id, source=source_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                node = next(
+                    entry
+                    for entry in document["graph"]["nodes"]
+                    if entry["id"] == node_id
+                )
+                source = next(
+                    entry
+                    for entry in node["evidence_from"]
+                    if entry["node"] == source_id
+                )
+                source["node"] = "removed-contract-source"
 
-                            status, reasons = (
-                                inspect_tools.inspect_podway_handler_contract(
-                                    name,
-                                    yaml.safe_dump(document, sort_keys=False).encode(),
-                                    canonical,
-                                )
-                            )
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
 
-                            self.assertEqual(status, "incompatible")
-                            self.assertIn(
-                                "missing_required_evidence:"
-                                f"{node_id}:{source_id}:{item_id}",
-                                reasons,
-                            )
+                self.assertEqual(status, "incompatible")
+                self.assertTrue(
+                    any(
+                        reason.startswith(
+                            f"missing_required_evidence:{node_id}:{source_id}:"
+                        )
+                        for reason in reasons
+                    ),
+                    reasons,
+                )
 
     def test_serial_review_gate_nodes_and_routes_are_handler_contracts(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         node_cases = (
-            ("aquarium-task-v2.yaml", "prepare-review"),
             ("aquarium-task-v2.yaml", "validate-review-route-entry"),
-            ("aquarium-task-v2.yaml", "classify-review-route-change"),
-            ("aquarium-task-v2.yaml", "confirm-review-route-change-readiness"),
-            ("aquarium-task-v2.yaml", "authorize-planned-review-route"),
-            ("aquarium-task-v2.yaml", "authorize-incomplete-review-route"),
-            ("aquarium-task-v2.yaml", "authorize-completed-review-route"),
-            ("aquarium-task-v2.yaml", "confirm-review-route-binding"),
-            ("aquarium-task-v2.yaml", "decide-review-operation"),
-            ("aquarium-task-v2.yaml", "confirm-assessment-ordinal"),
-            ("aquarium-task-v2.yaml", "confirm-extra-assessment-ordinal"),
-            ("aquarium-task-v2.yaml", "confirm-review-evidence"),
-            ("aquarium-task-v2.yaml", "confirm-incomplete-review-evidence"),
-            ("aquarium-task-v2.yaml", "confirm-review-provenance"),
-            ("aquarium-task-v2.yaml", "confirm-incomplete-review-provenance"),
-            ("aquarium-task-v2.yaml", "decide-backend-check"),
-            ("aquarium-task-v2.yaml", "confirm-review-findings"),
-            ("aquarium-task-v2.yaml", "confirm-review-route-settlement"),
-            ("aquarium-task-v2.yaml", "record-review-route-stop"),
-            ("aquarium-task-v2.yaml", "confirm-goal-assessment-core"),
-            ("aquarium-task-v2.yaml", "confirm-stopped-goal-assessment-core"),
-            ("aquarium-task-v2.yaml", "record-stopped-goal-boundary"),
-            ("aquarium-task-v2.yaml", "confirm-stopped-goal-boundary"),
-            ("aquarium-task-v2.yaml", "assess-goal"),
-            ("aquarium-task-v2.yaml", "assess-stopped-goal"),
-            ("aquarium-task-v2.yaml", "record-stopped-outcome"),
-            ("aquarium-task-v2.yaml", "approve-stopped-closeout"),
-            ("aquarium-task-v2.yaml", "stopped-closeout"),
-            ("aquarium-goal-v2.yaml", "confirm-review-route-context"),
-            ("aquarium-goal-v2.yaml", "confirm-review-route-entry"),
-            ("aquarium-goal-v2.yaml", "confirm-extra-assessment-ordinal"),
-            ("aquarium-goal-v2.yaml", "confirm-review-provenance"),
-            ("aquarium-goal-v2.yaml", "confirm-incomplete-review-provenance"),
-            ("aquarium-goal-v2.yaml", "confirm-hardening-review-eligibility"),
-            ("aquarium-goal-v2.yaml", "confirm-hardening-record"),
-            ("aquarium-validation-v2.yaml", "remediate"),
-            ("aquarium-validation-v2.yaml", "re-audit"),
-            ("aquarium-validation-v2.yaml", "confirm-extra-final-assessment-ordinal"),
-            ("aquarium-validation-v2.yaml", "confirm-final-review-provenance"),
-            (
-                "aquarium-validation-v2.yaml",
-                "confirm-incomplete-final-review-provenance",
-            ),
+            ("aquarium-task-v2.yaml", "enter-mulgae-review-route"),
+            ("aquarium-task-v2.yaml", "decide-mulgae-review-operation"),
+            ("aquarium-task-v2.yaml", "confirm-first-review-evidence"),
+            ("aquarium-task-v2.yaml", "confirm-incomplete-mulgae-provenance"),
+            ("aquarium-task-v2.yaml", "choose-review-route-direction"),
+            ("aquarium-task-v2.yaml", "authorize-current-review-route-resume"),
+            ("aquarium-goal-v2.yaml", "decide-planned-mulgae-review-operation"),
+            ("aquarium-goal-v2.yaml", "decide-changed-waiver-review-operation"),
+            ("aquarium-goal-v2.yaml", "confirm-first-route-evidence"),
+            ("aquarium-goal-v2.yaml", "confirm-waived-finding-validity"),
+            ("aquarium-goal-v2.yaml", "choose-terminal-review-route-direction"),
+            ("aquarium-validation-v2.yaml", "confirm-final-review-route-binding"),
+            ("aquarium-validation-v2.yaml", "confirm-assessed-final-review-provenance"),
+            ("aquarium-validation-v2.yaml", "determine-final-backend-applicability"),
+            ("aquarium-validation-v2.yaml", "choose-settled-route-direction"),
         )
         for name, node_id in node_cases:
             with self.subTest(procedure=name, node=node_id):
@@ -4770,112 +4628,118 @@ else:
                 self.assertEqual(status, "incompatible")
                 self.assertIn(f"missing_required_nodes:{node_id}", reasons)
 
-        cases = (
+        route_cases = (
             (
                 "aquarium-task-v2.yaml",
-                "validate-review-route-entry",
-                "planned",
+                "classify-review-route-change",
+                "unsettled",
+                "confirm-review-route-change-readiness",
+            ),
+            (
+                "aquarium-task-v2.yaml",
                 "authorize-planned-review-route",
+                "planned-mulgae",
+                "enter-mulgae-review-route",
             ),
             (
                 "aquarium-task-v2.yaml",
-                "validate-review-route-entry",
-                "changed",
-                "classify-review-route-change",
+                "confirm-review-route-binding",
+                "mulgae",
+                "decide-mulgae-review-operation",
             ),
             (
                 "aquarium-task-v2.yaml",
-                "classify-review-route-change",
-                "incomplete",
-                "confirm-review-route-change-readiness",
+                "decide-mulgae-review-operation",
+                "unsettled",
+                "confirm-incomplete-review-evidence",
             ),
             (
                 "aquarium-task-v2.yaml",
-                "classify-review-route-change",
-                "completed",
-                "authorize-completed-review-route",
-            ),
-            (
-                "aquarium-task-v2.yaml",
-                "confirm-review-route-change-readiness",
-                "safe",
-                "authorize-incomplete-review-route",
-            ),
-            (
-                "aquarium-task-v2.yaml",
-                "confirm-review-findings",
-                "resolved",
-                "decide-backend-check",
+                "confirm-first-review-evidence",
+                "waived",
+                "confirm-waived-provenance",
             ),
             (
                 "aquarium-task-v2.yaml",
                 "decide-backend-check",
-                "not-provided",
+                "non-failing",
                 "confirm-review-completion",
             ),
             (
+                "aquarium-task-v2.yaml",
+                "choose-review-route-direction",
+                "continue",
+                "prepare-review",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "validate-review-route-entry",
+                "resumed",
+                "authorize-current-review-route-resume",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "authorize-current-review-route-resume",
+                "mulgae",
+                "enter-mulgae-review-route",
+            ),
+            (
                 "aquarium-goal-v2.yaml",
-                "confirm-review-route-entry",
-                "changed",
                 "confirm-review-route-binding",
+                "changed-waiver",
+                "decide-changed-waiver-review-operation",
             ),
             (
                 "aquarium-goal-v2.yaml",
-                "confirm-review-provenance",
+                "decide-changed-waiver-review-operation",
+                "unsuccessful",
+                "confirm-incomplete-route-evidence",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-extra-assessment-ordinal",
+                "invalid-extra",
+                "record-evidence",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-first-route-evidence",
                 "waived",
-                "confirm-finding-validity",
+                "confirm-waived-finding-validity",
             ),
             (
                 "aquarium-goal-v2.yaml",
-                "confirm-hardening-record",
-                "recorded",
-                "record-hardening-handoff",
-            ),
-            (
-                "aquarium-validation-v2.yaml",
-                "confirm-extra-final-assessment-ordinal",
-                "authorized-extra",
-                "confirm-final-route-evidence",
-            ),
-            (
-                "aquarium-validation-v2.yaml",
-                "confirm-final-review-provenance",
-                "waived",
-                "confirm-final-review-findings",
-            ),
-            (
-                "aquarium-goal-v2.yaml",
-                "choose-user-direction",
-                "fix-and-review",
+                "choose-terminal-review-route-direction",
+                "change-route",
                 "complete-work",
             ),
             (
                 "aquarium-validation-v2.yaml",
-                "decide-required-evidence",
-                "complete",
-                "decide-current-blockers",
+                "decide-final-review-operation",
+                "unassessed",
+                "confirm-unassessed-final-review-provenance",
             ),
             (
                 "aquarium-validation-v2.yaml",
-                "decide-gaps",
-                "blocking-gaps",
-                "remediate",
+                "confirm-final-assessment-ordinal",
+                "invalid",
+                "record-incomplete",
             ),
             (
                 "aquarium-validation-v2.yaml",
-                "decide-re-audit",
-                "blocking-gaps",
-                "remediate",
+                "determine-final-backend-applicability",
+                "not-required",
+                "confirm-final-review-findings",
             ),
             (
                 "aquarium-validation-v2.yaml",
-                "choose-user-direction",
-                "stop",
-                "record-stopped",
+                "choose-settled-route-direction",
+                "recover",
+                "final-review",
             ),
         )
-        for name, node_id, option_id, destination in cases:
-            with self.subTest(procedure=name, node=node_id):
+        for name, node_id, option_id, destination in route_cases:
+            with self.subTest(procedure=name, node=node_id, option=option_id):
                 canonical = procedures.joinpath(name).read_bytes()
                 document = yaml.safe_load(canonical)
                 node = next(
@@ -4896,6 +4760,161 @@ else:
                     reasons,
                 )
 
+    def test_task_resume_authorization_rejects_structural_bypasses(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        canonical = procedures.joinpath("aquarium-task-v2.yaml").read_bytes()
+
+        mutations = (
+            ("missing-authorization", None, None),
+            (
+                "cross-provider-rewire",
+                "authorize-current-review-route-resume",
+                ("mulgae", "enter-orca-review-route"),
+            ),
+            (
+                "direct-review-bypass",
+                "validate-review-route-entry",
+                ("resumed", "review"),
+            ),
+        )
+        for name, node_id, route_mutation in mutations:
+            with self.subTest(mutation=name):
+                document = yaml.safe_load(canonical)
+                if node_id is None:
+                    document["graph"]["nodes"] = [
+                        node
+                        for node in document["graph"]["nodes"]
+                        if node["id"] != "authorize-current-review-route-resume"
+                    ]
+                else:
+                    option, destination = route_mutation
+                    node = next(
+                        item
+                        for item in document["graph"]["nodes"]
+                        if item["id"] == node_id
+                    )
+                    node["routes"][option]["to"] = destination
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    "aquarium-task-v2.yaml",
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                expected = (
+                    "missing_required_nodes:authorize-current-review-route-resume"
+                    if node_id is None
+                    else f"incompatible_route:{node_id}:{route_mutation[0]}"
+                )
+                self.assertIn(expected, reasons)
+
+    def test_task_direction_matrix_items_and_check_are_handler_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        canonical = procedures.joinpath("aquarium-task-v2.yaml").read_bytes()
+        cases = (
+            ("review-route-direction-record", "route-transition-admission"),
+            ("review-checkpoint-record", "route-direction-continuity"),
+        )
+        for definition_id, item_id in cases:
+            for field in (
+                "operation_id",
+                "operation_digest",
+                "required",
+                "required_when",
+            ):
+                with self.subTest(definition=definition_id, item=item_id, field=field):
+                    document = yaml.safe_load(canonical)
+                    item = next(
+                        candidate
+                        for candidate in document["node_definitions"][definition_id][
+                            "items"
+                        ]
+                        if candidate["id"] == item_id
+                    )
+                    if field == "required_when" and field not in item:
+                        continue
+                    item[field] = (
+                        "sha256:" + "0" * 64
+                        if field == "operation_digest"
+                        else "changed-operation"
+                        if field == "operation_id"
+                        else not item[field]
+                        if field == "required"
+                        else [{"item": "route-authorization-basis", "equals": "waived"}]
+                    )
+
+                    status, reasons = inspect_tools.inspect_podway_handler_contract(
+                        "aquarium-task-v2.yaml",
+                        yaml.safe_dump(document, sort_keys=False).encode(),
+                        canonical,
+                    )
+
+                    self.assertEqual(status, "incompatible")
+                    self.assertIn(
+                        f"incompatible_check_result:{definition_id}:{item_id}",
+                        reasons,
+                    )
+
+        for item_id in (
+            "checkpoint-requested-direction",
+            "route-direction-continuity",
+        ):
+            with self.subTest(removed_item=item_id):
+                document = yaml.safe_load(canonical)
+                items = document["node_definitions"]["review-checkpoint-record"][
+                    "items"
+                ]
+                document["node_definitions"]["review-checkpoint-record"]["items"] = [
+                    item for item in items if item["id"] != item_id
+                ]
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    "aquarium-task-v2.yaml",
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertTrue(
+                    any(
+                        reason.startswith(
+                            "missing_required_items:review-checkpoint-record:"
+                        )
+                        and item_id in reason
+                        for reason in reasons
+                    ),
+                    reasons,
+                )
+
+    def test_task_direction_matrix_rewire_is_not_compatible(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        canonical = procedures.joinpath("aquarium-task-v2.yaml").read_bytes()
+        document = yaml.safe_load(canonical)
+        definition = document["node_definitions"][
+            "incomplete-review-route-authorization-decision"
+        ]
+        option = next(
+            option
+            for option in definition["options"]
+            if option["id"] == "changed-waiver"
+        )
+        direction_guard = next(
+            guard
+            for guard in option["guards"]
+            if guard["evidence"].get("item") == "checkpoint-requested-direction"
+        )
+        direction_guard["equals"] = "switch-route"
+
+        status, reasons = inspect_tools.inspect_podway_handler_contract(
+            "aquarium-task-v2.yaml",
+            yaml.safe_dump(document, sort_keys=False).encode(),
+            canonical,
+        )
+
+        self.assertEqual(status, "unqualified")
+        self.assertEqual(reasons, ["unrecognized_semantic_customization"])
+
     def test_goal_and_validation_closeout_graph_is_a_handler_contract(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         removed_nodes = (
@@ -4913,9 +4932,7 @@ else:
                 canonical = procedures.joinpath(name).read_bytes()
                 document = yaml.safe_load(canonical)
                 document["graph"]["nodes"] = [
-                    node
-                    for node in document["graph"]["nodes"]
-                    if node["id"] != node_id
+                    node for node in document["graph"]["nodes"] if node["id"] != node_id
                 ]
 
                 status, reasons = inspect_tools.inspect_podway_handler_contract(
@@ -4948,12 +4965,6 @@ else:
             ),
             (
                 "aquarium-validation-v2.yaml",
-                "confirm-stopped-goal-assessment-core",
-                "ready",
-                "closeout",
-            ),
-            (
-                "aquarium-validation-v2.yaml",
                 "assess-goal",
                 "achieved",
                 "stopped-closeout",
@@ -4966,15 +4977,11 @@ else:
             ),
         )
         for name, node_id, option_id, destination in rewired_routes:
-            with self.subTest(
-                procedure=name, rewired_node=node_id, option=option_id
-            ):
+            with self.subTest(procedure=name, rewired_node=node_id, option=option_id):
                 canonical = procedures.joinpath(name).read_bytes()
                 document = yaml.safe_load(canonical)
                 node = next(
-                    item
-                    for item in document["graph"]["nodes"]
-                    if item["id"] == node_id
+                    item for item in document["graph"]["nodes"] if item["id"] == node_id
                 )
                 node["routes"][option_id]["to"] = destination
 
@@ -4985,9 +4992,24 @@ else:
                 )
 
                 self.assertEqual(status, "incompatible")
-                self.assertIn(
-                    f"incompatible_route:{node_id}:{option_id}", reasons
-                )
+                self.assertIn(f"incompatible_route:{node_id}:{option_id}", reasons)
+
+        canonical = procedures.joinpath("aquarium-validation-v2.yaml").read_bytes()
+        document = yaml.safe_load(canonical)
+        node = next(
+            item
+            for item in document["graph"]["nodes"]
+            if item["id"] == "confirm-stopped-goal-assessment-core"
+        )
+        self.assertEqual(node["next"], "assess-stopped-goal")
+        node["next"] = "closeout"
+        status, reasons = inspect_tools.inspect_podway_handler_contract(
+            "aquarium-validation-v2.yaml",
+            yaml.safe_dump(document, sort_keys=False).encode(),
+            canonical,
+        )
+        self.assertEqual(status, "unqualified")
+        self.assertEqual(reasons, ["unrecognized_semantic_customization"])
 
     def test_every_managed_procedure_requires_instructions_on_used_actions(
         self,
@@ -5151,8 +5173,14 @@ else:
         target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
         target.write_text(
             target.read_text(encoding="utf-8").replace(
-                "approved:\n          to: closeout\n          effect: advance",
-                "approved:\n          to: record-outcome\n          effect: advance",
+                "    items:\n      - id: plan-summary",
+                "    items:\n"
+                "      - id: local-note\n"
+                "        label: Local note\n"
+                "        type: text\n"
+                "        required: false\n"
+                "        max_length: 100\n"
+                "      - id: plan-summary",
                 1,
             ),
             encoding="utf-8",
@@ -5396,6 +5424,69 @@ else:
                 self.assertEqual(podway["readiness_status"], "ready")
                 target.write_bytes(source.joinpath(name).read_bytes())
 
+    def test_latest_prior_canonical_snapshots_are_exact_and_tamper_bounded(
+        self,
+    ) -> None:
+        fixtures = {
+            "aquarium-task-v2.yaml": (
+                TASK_V16_PROCEDURE_FIXTURE,
+                "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
+            ),
+            "aquarium-goal-v2.yaml": (
+                GOAL_V19_PROCEDURE_FIXTURE,
+                "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
+            ),
+            "aquarium-validation-v2.yaml": (
+                VALIDATION_V18_PROCEDURE_FIXTURE,
+                "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
+            ),
+        }
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        managed = self.repository / ".podway/procedures"
+        source = ROOT / "plugins/aquarium/assets/podway/procedures"
+
+        for name, (fixture, expected_digest) in fixtures.items():
+            with self.subTest(procedure=name, case="exact"):
+                legacy_bytes = fixture.read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(legacy_bytes).hexdigest(), expected_digest
+                )
+                target = managed / name
+                target.write_bytes(legacy_bytes)
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                entry = next(
+                    item
+                    for item in podway["managed_procedures"]
+                    if item["path"].endswith(name)
+                )
+                self.assertEqual(entry["update_explanation"], "prior_canonical")
+                self.assertEqual(entry["handler_contract_status"], "compatible")
+                self.assertEqual(podway["readiness_status"], "ready")
+                self.assertEqual(target.read_bytes(), legacy_bytes)
+
+            with self.subTest(procedure=name, case="tampered"):
+                target.write_text(
+                    fixture.read_text(encoding="utf-8").replace(
+                        "purpose: ", "purpose: Tampered ", 1
+                    ),
+                    encoding="utf-8",
+                )
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                entry = next(
+                    item
+                    for item in podway["managed_procedures"]
+                    if item["path"].endswith(name)
+                )
+                self.assertEqual(entry["update_explanation"], "local_customization")
+                self.assertEqual(entry["handler_contract_status"], "incompatible")
+                self.assertEqual(podway["readiness_status"], "degraded")
+                target.write_bytes(source.joinpath(name).read_bytes())
+
     def test_tampered_goal_v18_and_validation_v17_are_not_prior_canonical(
         self,
     ) -> None:
@@ -5480,6 +5571,7 @@ else:
                     "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
                     "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
                     "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
+                    "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
                 },
                 "aquarium-goal-v2.yaml": {
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -5495,6 +5587,7 @@ else:
                     "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
                     "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
                     "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
+                    "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
                 },
                 "aquarium-validation-v2.yaml": {
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -5508,6 +5601,7 @@ else:
                     "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
                     "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
                     "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
+                    "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
                 },
                 "aquarium-design-v2.yaml": {
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",

@@ -1,12 +1,13 @@
 # Workflow review routing
 
-This specification reserves the product contract for `EPIC-016`. The shared
+This specification describes the selectable routing contract delivered by
+`EPIC-016`. The shared
 [workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
 defines route selection, evidence, switching, waiver, and Low-settlement
-semantics. Task delivery implements selectable routing. `TASK-070` defines the
-compatible Epic and cold-validation integration unit, while `TASK-071` owns
-cross-route runtime qualification, manual acceptance, and current-behavior
-documentation promotion.
+semantics for Task delivery, Epic member delivery, whole-Epic review, and cold
+validation. The managed Procedures record route-specific recovery
+evidence; provider dispatch and report wording still require observed-agent
+acceptance.
 
 ## Purpose and authority
 
@@ -32,7 +33,7 @@ preferred route.
 | `mulgae` | Default route. It retains immutable capture, selected-role execution, recovery, publication, findings, CI, and retention under the Mulgae contract. |
 | `orca` | Requires an explicitly selected reviewer and an Orca-supported target. Orca supervises one fresh static reviewer in the current registered worktree. |
 | `native-codex` | Requires explicit selection and fresh delegation supplied by the current host. The subagent performs one static, report-only review with host-owned provenance. |
-| `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records that independent review was waived. |
+| `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
 The Dolgorae-backed Independent Review route remains disabled. The shared model
 must leave room for a future adapter, but `independent` is not a selectable route
@@ -77,7 +78,7 @@ rules.
 
 ## Common evidence
 
-The Procedures and handlers will record these route-neutral facts:
+The Procedures and handlers record these route-neutral facts:
 
 | Field | Meaning |
 | --- | --- |
@@ -88,6 +89,7 @@ The Procedures and handlers will record these route-neutral facts:
 | `backend-check-result` | `pass`, `fail`, or `not-provided`; absence of a backend check never replaces workflow verification |
 | `assessment-provenance` | Reviewer evidence or `coordinator-waiver` evidence |
 | `waiver-summary` | Required only for `waived`; records authority, target, reason, and limitations |
+| `prior-review-route` and `prior-review-operation` | The immediately preceding provider operation used for recovery; before any provider operation starts, both use their declared not-applicable state |
 
 The following combinations are valid for a completed checkpoint:
 
@@ -176,11 +178,12 @@ remains with Orca supervision. When no exact identity or native evidence can
 resolve an uncertain mutation, the workflow stops with an operational gap rather
 than launching another reviewer or closing through a waiver.
 
-New Procedure versions will carry this contract. Existing admitted Procedure
-sessions keep their immutable snapshots and Mulgae-only meaning. Aquarium will
-not rewrite their evidence, reinterpret a Mulgae run field as another backend,
-or migrate an active session in place. A workflow that needs the new contract
-must use the supported terminal and successor-session path.
+Pre-routing Procedure snapshots keep their immutable Mulgae-only meaning.
+Admitted selectable-routing snapshots keep the exact routes, fields, and graph
+semantics recorded by their own version. Aquarium does not rewrite either kind
+of evidence, reinterpret a Mulgae run field as another backend, or migrate an
+active session in place. A workflow that needs a newer contract uses the
+supported terminal and successor-session path.
 
 ## Non-goals
 

@@ -23,7 +23,7 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Safety and evidence](safety-and-evidence.md) defines authority, approval, review, and evidence-residency behavior.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
 - [Production setup status](production-status.md) owns the shipped user-global setup ledger, reporter, recorder, retention, and installation contracts.
-- [Workflow review routing](review-routing.md) reserves the unimplemented contract for selecting Mulgae, Orca, a native Codex subagent, or an explicit review waiver in Task, Epic, and validation workflows.
+- [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Orca, native Codex, and coordinator-waived review in Task, Epic, and validation workflows.
 
 ## Exact Authorities
 

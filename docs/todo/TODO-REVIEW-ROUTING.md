@@ -19,12 +19,12 @@ installation, staging, commit, release, or publication.
 
 ## Scope and task map
 
-| Task | Delivery boundary |
-| --- | --- |
-| `TASK-068` | Generalize review selection, valid evidence combinations, native-evidence deferral eligibility, lifecycle-safe route changes, readiness, waiver, and finding disposition. |
-| `TASK-069` | Deliver the complete Task path, including its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests. |
-| `TASK-070` | Deliver the complete Epic and validation paths, including their Procedures, compatibility checks, commit handoff, hardening deferral, and evidence consumption. |
-| `TASK-071` | Run cross-route integration qualification, legacy and manual scenarios, and promote current-behavior documentation. |
+| Task | Lifecycle | Delivery boundary |
+| --- | --- | --- |
+| `TASK-068` | Completed | Generalize review selection, valid evidence combinations, native-evidence deferral eligibility, lifecycle-safe route changes, readiness, waiver, and finding disposition. |
+| `TASK-069` | Completed | Deliver the complete Task path, including its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests. |
+| `TASK-070` | Completed | Deliver the complete Epic and validation paths, including their Procedures, compatibility checks, commit handoff, hardening deferral, and evidence consumption. |
+| `TASK-071` | In Progress | Run cross-route integration qualification, legacy and manual scenarios, and promote current-behavior documentation. |
 
 Implementation proceeds in dependency order. Each task keeps accepted durable
 behavior in the reserved specification or the current canonical owner and keeps
@@ -96,23 +96,26 @@ Update Task delivery to select and record one workflow review policy. Generalize
 `task-review` so it dispatches the selected delegated route or performs the
 waiver assessment without duplicating native backend lifecycles.
 
-The implementation owners are `task-handler`, `task-review`, and version 16 of
+The implementation owners are `task-handler`, `task-review`, and version 17 of
 `aquarium-task-v2`; the inspector contract and focused routing fixtures verify
 that compatible unit while legacy Procedure snapshots retain their meanings.
 
-The new Task Procedure version must record the effective route, completed and
-incomplete operations, assessment provenance, route-specific evidence, and the
-user's recovery choice. Failed attempts do not consume an ordinal. Existing
+The new Task Procedure version must record the effective route, prior active
+route identity, completed and incomplete operations, assessment provenance,
+route-specific evidence, and the user's recovery choice. `resume-current` stays
+bound to the actual preceding unsettled operation, passes through a
+provider-specific authorization decision, and can re-enter only that provider's
+existing route entry. It cannot switch providers, resume a waiver, or act as
+fallback. Failed attempts do not consume an ordinal. Existing
 finding confirmation, completion, priority, owner, Low settlement, goal
 assessment, and closeout decisions remain separate.
 
-Version 16 records prior-operation and lifecycle-readiness facts at the review
-checkpoint, so every route-change consumer receives them from a dominating
-source. Each executable closeout path has one path-owned session-goal assessment
-followed by its own bounded outcome and approval chain. On the stopped path, the
-boundary confirmation requires `stopped`; the assessment's schema-required
-achieved mapping requires `invalid-not-stopped`, so that mapping is unreachable.
-Version 15 remains an admitted immutable legacy snapshot.
+Version 17 keeps the version 16 evidence contract while splitting route entry,
+operation state, evidence, provenance, backend, settlement, and recovery into
+route-specific serial decisions that satisfy the Podway lint limits. Each
+executable closeout path has one path-owned session-goal assessment followed by
+its own bounded outcome and approval chain. Versions 15 and 16 remain admitted
+immutable legacy snapshots.
 
 Orca is eligible for a Task only when its complete staged target excludes
 unrelated index entries. An unsupported target returns to route selection rather
@@ -124,10 +127,9 @@ route-switch, and waived paths, including a prior Medium-or-higher finding that
 survives the switch and is assessed again on corrected bytes.
 
 The Task change is not complete until the plugin asset and repository-local
-Procedure copy match, the Task portion of `PODWAY_HANDLER_CONTRACTS` and its
-canonical digest are current, and the Task alignment fixtures and focused
-routing tests pass. Do not defer a required Task compatibility repair to
-`TASK-071`.
+Procedure copy match, the inspector-derived canonical structure and digest are
+current, and the Task alignment fixtures and focused routing tests pass. Do not
+defer a required Task compatibility repair to `TASK-071`.
 
 ## TASK-070: Integrate selectable review into Epic delivery and validation
 
@@ -137,11 +139,11 @@ direct audit facts, delegated review findings, verification, or completion
 assessment.
 
 The implementation owners are `epic-handler`, `epic-validator`, `task-commit`,
-the evidence-residency contract, version 19 of `aquarium-goal-v2`, and version 18
-of `aquarium-validation-v2`. These versions preserve the version 18 and version 17
-workflow meanings while expressing conditional native-review fields, zero-valued
-unconsumed ordinals, typed provenance, complete option routing, and path-bound goal
-assessment gates within the Podway v0.2.10 authoring bounds. Normal and stopped
+the evidence-residency contract, version 20 of `aquarium-goal-v2`, and version 19
+of `aquarium-validation-v2`. These versions preserve the version 19 and version 18
+workflow meanings while splitting route, operation, provenance, backend,
+settlement, and recovery checks into lint-clean serial decisions within the
+Podway v0.2.10 authoring bounds. Normal and stopped
 assessments use separate outcome, approval, and terminal chains. The applicable
 session-goal assessment therefore dominates its terminal. Inspector contracts and
 focused route fixtures verify the compatible unit while the exact older admitted

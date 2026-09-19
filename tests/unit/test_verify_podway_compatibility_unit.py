@@ -156,6 +156,123 @@ def test_completed_low_settlement_destination_is_procedure_specific(
 
 
 @pytest.mark.parametrize(
+    ("scenario", "direction", "basis", "rejection_node"),
+    (
+        (
+            "task-switch-with-waiver-basis-rejected",
+            "switch-route",
+            "explicit-waiver",
+            "validate-review-route-entry",
+        ),
+        (
+            "task-waive-with-route-change-basis-rejected",
+            "waive",
+            "explicit-route-change",
+            "validate-review-route-entry",
+        ),
+        (
+            "task-resume-with-explicit-change-rejected",
+            "resume-current",
+            "explicit-route-change",
+            "validate-review-route-entry",
+        ),
+        (
+            "task-planned-with-direction-rejected",
+            "switch-route",
+            None,
+            "authorize-planned-review-route",
+        ),
+        (
+            "task-completed-switch-with-waiver-basis-rejected",
+            "switch-route",
+            "explicit-waiver",
+            "validate-review-route-entry",
+        ),
+        (
+            "task-completed-waive-with-route-change-basis-rejected",
+            "waive",
+            "explicit-route-change",
+            "validate-review-route-entry",
+        ),
+    ),
+)
+def test_task_direction_mismatch_runtime_scenarios_reject_before_review(
+    scenario: str,
+    direction: str,
+    basis: str | None,
+    rejection_node: str,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    configuration = runtime.TASK_RESUME_SCENARIOS[scenario]
+
+    assert scenario in runtime.TASK_DIRECTION_MISMATCH_SCENARIOS
+    assert configuration["direction"] == direction
+    assert configuration.get("checkpoint_basis") == basis
+    assert configuration["rejection_node"] == rejection_node
+    assert rejection_node not in {
+        "enter-mulgae-review-route",
+        "enter-orca-review-route",
+        "enter-native-codex-review-route",
+        "enter-waived-review-route",
+        "review",
+    }
+
+
+@pytest.mark.parametrize(
+    ("scenario", "effective_route", "direction", "basis"),
+    (
+        (
+            "task-completed-switch-orca",
+            "orca",
+            "switch-route",
+            "explicit-route-change",
+        ),
+        (
+            "task-completed-waiver",
+            "waived",
+            "waive",
+            "explicit-waiver",
+        ),
+    ),
+)
+def test_completed_checkpoint_runtime_scenarios_map_to_guarded_next_ordinal(
+    scenario: str,
+    effective_route: str,
+    direction: str,
+    basis: str,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    configuration = runtime.TASK_RESUME_SCENARIOS[scenario]
+
+    assert scenario in runtime.TASK_COMPLETED_CHANGE_SCENARIOS
+    assert scenario in runtime.TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+    assert scenario not in runtime.TASK_DIRECTION_MISMATCH_SCENARIOS
+    assert configuration["route"] == "mulgae"
+    assert configuration["effective_route"] == effective_route
+    assert configuration["operation"] == "complete"
+    assert configuration["prior_operation"] == "completed"
+    assert configuration["readiness"] == "completed-checkpoint"
+    assert configuration["direction"] == direction
+    assert configuration["checkpoint_basis"] == basis
+
+
+def test_goal_recovery_runtime_scenario_preserves_changed_orca_provider() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+
+    assert runtime.GOAL_RECOVERY_SCENARIOS == {
+        "goal-resume-changed-orca-after-incomplete"
+    }
+
+
+def test_validation_recovery_runtime_scenario_preserves_previous_operation() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+
+    assert runtime.VALIDATION_RECOVERY_SCENARIOS == {
+        "validation-resume-changed-orca-after-incomplete"
+    }
+
+
+@pytest.mark.parametrize(
     "scenario",
     ["low-blocker-wait", "validation-low-blocker-wait"],
 )

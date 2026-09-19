@@ -34,11 +34,15 @@ A completed Task review records its optional backend check separately from revie
 
 Each member task uses one `aquarium-goal-v2` session, decides whether the current evidence is clean, blocking, Low-only, or inconsistent, and records any durable hardening deferral only on the supported Low-only route before goal assessment. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, re-audits the changed candidate, and repeats within the bounded review budget.
 
+Goal and validation review checkpoints use the same selectable routing contract as Task delivery. Mulgae remains the default; Orca, native Codex, and waiver require explicit selection. Recovery records the immediately preceding provider operation and current transition authority, so `resume-current` cannot return to the originally planned provider after an authorized switch. No route change resets ordinals, findings, dispositions, or remaining authority.
+
 Task-owned gaps reopen the owning task when the roadmap defines that path. Cross-task seam gaps use the epic identity. External gaps stop with the other repository owner, exact required revision, and missing evidence; Aquarium never edits another repository merely to close its own epic.
 
 ## Cold-Validate a Completed Epic
 
 `epic-validator` reconstructs a completed epic from roadmap, Git, current tests, canonical documentation, and independently verifiable evidence. It runs a direct audit, groups confirmed gaps by owner, implements bounded remediation, and performs one automatic confirmation path.
+
+The whole-Epic review uses only the selected route's prerequisites. A waiver launches no reviewer and does not replace the direct audit, workflow verification, or complete coordinator assessment.
 
 A confirmation-only Medium-or-higher finding stops for a new bounded correction-and-review authorization rather than entering an unbounded loop or accepting risk. Eligible Low findings are handled locally without another provider review, with the preceding review identified as predating changed bytes. A zero-finding audit creates no validation-record commit, and accepted runtime evidence never becomes roadmap history by default.
 

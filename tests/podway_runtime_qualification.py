@@ -43,15 +43,16 @@ SUCCESS_OPTIONS = {
     "decide-low-result": "passed",
     "decide-operational-evidence": "passed",
     "decide-review-basis": "native-review",
-    "confirm-review-route-context": "ready",
-    "confirm-review-route-entry": "planned",
     "decide-final-review": "validated",
     "confirm-final-review-route-binding": "bound",
-    "decide-final-review-operation": "completed",
-    "confirm-final-route-evidence": "mulgae-pass",
-    "confirm-extra-final-assessment-ordinal": "authorized-extra",
-    "confirm-final-review-provenance": "delegated",
-    "confirm-incomplete-final-review-provenance": "delegated",
+    "decide-final-review-operation": "assessed",
+    "confirm-final-assessment-ordinal": "admitted",
+    "confirm-assessed-final-review-provenance": "valid",
+    "confirm-unassessed-final-review-provenance": "valid",
+    "determine-final-backend-applicability": "required",
+    "confirm-final-route-settlement": "change-safe",
+    "choose-current-route-direction": "resume-current",
+    "choose-settled-route-direction": "recover",
     "decide-final-backend-check": "passed",
     "decide-final-review-readiness": "passed",
     "confirm-final-review-findings": "resolved",
@@ -65,26 +66,54 @@ SUCCESS_OPTIONS = {
     "decide-review": "clean",
     "validate-review-route-entry": "planned",
     "authorize-planned-review-route": "planned-mulgae",
+    "enter-mulgae-review-route": "start",
+    "enter-orca-review-route": "start",
+    "enter-native-codex-review-route": "start",
+    "enter-waived-review-route": "start",
     "confirm-goal-assessment-core": "ready",
     "confirm-stopped-goal-assessment-core": "ready",
     "confirm-stopped-goal-boundary": "confirmed",
     "confirm-review-route-binding": "mulgae",
-    "decide-review-operation": "completed",
+    "decide-mulgae-review-operation": "assessed",
+    "decide-orca-review-operation": "assessed",
+    "decide-native-codex-review-operation": "assessed",
+    "confirm-assessment-ordinal": "standard",
+    "confirm-first-review-evidence": "mulgae",
+    "confirm-extra-review-evidence": "mulgae",
+    "confirm-mulgae-provenance": "delegated",
+    "confirm-static-delegated-provenance": "delegated",
+    "confirm-waived-provenance": "waived",
+    "confirm-incomplete-mulgae-provenance": "delegated",
+    "confirm-incomplete-static-delegated-provenance": "delegated",
+    "decide-planned-mulgae-review-operation": "completed",
+    "decide-planned-orca-review-operation": "completed",
+    "decide-planned-native-codex-review-operation": "completed",
+    "decide-planned-waiver-review-operation": "waived",
+    "decide-changed-mulgae-review-operation": "completed",
+    "decide-changed-orca-review-operation": "completed",
+    "decide-changed-native-codex-review-operation": "completed",
+    "decide-changed-waiver-review-operation": "waived",
+    "confirm-completed-assessment-ordinal": "first",
+    "confirm-waived-assessment-ordinal": "first",
     "confirm-extra-assessment-ordinal": "authorized-extra",
-    "confirm-route-evidence": "mulgae-pass",
-    "confirm-review-evidence": "mulgae-pass",
-    "confirm-review-provenance": "delegated",
-    "confirm-incomplete-review-provenance": "delegated",
+    "confirm-first-route-evidence": "mulgae-pass",
+    "confirm-second-route-evidence": "mulgae-pass",
+    "confirm-extra-route-evidence": "mulgae-pass",
     "confirm-hardening-review-eligibility": "eligible",
     "confirm-hardening-record": "recorded",
-    "decide-backend-check": "passed",
+    "decide-backend-check": "non-failing",
     "decide-task-rework-authority": "remediation",
     "decide-implementation-owner": "clear",
     "decide-verification-owner": "clear",
     "decide-documentation-owner": "clear",
     "decide-verification": "passed",
     "confirm-review-findings": "resolved",
-    "confirm-finding-validity": "resolved",
+    "confirm-waived-review-findings": "resolved",
+    "confirm-mulgae-pass-finding-validity": "resolved",
+    "confirm-mulgae-fail-finding-validity": "resolved",
+    "confirm-orca-finding-validity": "resolved",
+    "confirm-native-codex-finding-validity": "resolved",
+    "confirm-waived-finding-validity": "resolved",
     "assess-goal": "achieved",
     "assess-stopped-goal": "not-achieved",
 }
@@ -206,6 +235,151 @@ ROUTE_QUALIFICATION_SCENARIOS = {
     )
     for route in ("mulgae", "orca", "native-codex", "waived")
 }
+
+GOAL_RECOVERY_SCENARIOS = {
+    "goal-resume-changed-orca-after-incomplete",
+}
+
+VALIDATION_RECOVERY_SCENARIOS = {
+    "validation-resume-changed-orca-after-incomplete",
+}
+
+TASK_RESUME_SCENARIOS = {
+    "task-resume-active-mulgae": {
+        "route": "mulgae",
+        "operation": "failed",
+        "prior_state": "active-or-unknown",
+        "readiness": "current-route-only",
+        "direction": "resume-current",
+    },
+    "task-current-only-switch-rejected": {
+        "route": "mulgae",
+        "operation": "failed",
+        "prior_state": "active-or-unknown",
+        "readiness": "current-route-only",
+        "direction": "switch-route",
+    },
+    "task-current-only-waive-rejected": {
+        "route": "mulgae",
+        "operation": "failed",
+        "prior_state": "active-or-unknown",
+        "readiness": "current-route-only",
+        "direction": "waive",
+    },
+    "task-resume-terminal-orca": {
+        "route": "orca",
+        "operation": "incomplete",
+        "prior_state": "terminal-incomplete-or-failed",
+        "readiness": "safe-to-change",
+        "direction": "resume-current",
+    },
+    "task-switch-with-waiver-basis-rejected": {
+        "route": "mulgae",
+        "effective_route": "waived",
+        "operation": "failed",
+        "prior_state": "terminal-incomplete-or-failed",
+        "readiness": "safe-to-change",
+        "direction": "switch-route",
+        "checkpoint_basis": "explicit-waiver",
+        "rejection_node": "validate-review-route-entry",
+        "rejection_option": "changed",
+    },
+    "task-waive-with-route-change-basis-rejected": {
+        "route": "mulgae",
+        "effective_route": "orca",
+        "operation": "failed",
+        "prior_state": "terminal-incomplete-or-failed",
+        "readiness": "safe-to-change",
+        "direction": "waive",
+        "checkpoint_basis": "explicit-route-change",
+        "rejection_node": "validate-review-route-entry",
+        "rejection_option": "changed",
+    },
+    "task-resume-with-explicit-change-rejected": {
+        "route": "mulgae",
+        "operation": "failed",
+        "prior_state": "terminal-incomplete-or-failed",
+        "readiness": "safe-to-change",
+        "direction": "resume-current",
+        "checkpoint_basis": "explicit-route-change",
+        "rejection_node": "validate-review-route-entry",
+        "rejection_option": "resumed",
+    },
+    "task-planned-with-direction-rejected": {
+        "route": "orca",
+        "operation": "failed",
+        "prior_state": "not-applicable",
+        "readiness": "not-applicable",
+        "direction": "switch-route",
+        "planned_only": True,
+        "rejection_node": "authorize-planned-review-route",
+        "rejection_option": "planned-orca",
+    },
+    "task-completed-switch-orca": {
+        "route": "mulgae",
+        "effective_route": "orca",
+        "operation": "complete",
+        "prior_operation": "completed",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "switch-route",
+        "checkpoint_basis": "explicit-route-change",
+        "completed_transition": True,
+    },
+    "task-completed-waiver": {
+        "route": "mulgae",
+        "effective_route": "waived",
+        "operation": "complete",
+        "prior_operation": "completed",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "waive",
+        "checkpoint_basis": "explicit-waiver",
+        "completed_transition": True,
+    },
+    "task-completed-switch-with-waiver-basis-rejected": {
+        "route": "mulgae",
+        "effective_route": "waived",
+        "operation": "complete",
+        "prior_operation": "completed",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "switch-route",
+        "checkpoint_basis": "explicit-waiver",
+        "completed_transition": True,
+        "rejection_node": "validate-review-route-entry",
+        "rejection_option": "changed",
+    },
+    "task-completed-waive-with-route-change-basis-rejected": {
+        "route": "mulgae",
+        "effective_route": "orca",
+        "operation": "complete",
+        "prior_operation": "completed",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "waive",
+        "checkpoint_basis": "explicit-route-change",
+        "completed_transition": True,
+        "rejection_node": "validate-review-route-entry",
+        "rejection_option": "changed",
+    },
+}
+
+TASK_DIRECTION_MISMATCH_SCENARIOS = {
+    scenario
+    for scenario, configuration in TASK_RESUME_SCENARIOS.items()
+    if "rejection_node" in configuration
+}
+
+TASK_COMPLETED_CHANGE_SCENARIOS = {
+    scenario
+    for scenario, configuration in TASK_RESUME_SCENARIOS.items()
+    if configuration.get("completed_transition")
+}
+
+TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS = (
+    TASK_COMPLETED_CHANGE_SCENARIOS - TASK_DIRECTION_MISMATCH_SCENARIOS
+)
 
 
 def route_qualification_provenance(route: str) -> str:
@@ -562,6 +736,7 @@ class ManagedRuntime:
         self.low_settlement_rounds: dict[str, int] = {}
         self.node_visits: dict[str, int] = {}
         self.goal_evidence_round = 0
+        self.validation_review_round = 0
         self.completed_assessments: dict[str, int] = {}
         self.correction_case_variants: dict[str, set[str]] = {}
         self.validation_source_basis_verified = False
@@ -1321,7 +1496,7 @@ class ManagedRuntime:
                 {
                     "item_id": item_id,
                     "expected_item_revision": items[item_id]["revision"],
-                    "record": value,
+                    **({"clear": True} if value is None else {"record": value}),
                 }
                 for item_id, value in records.items()
             ],
@@ -1390,6 +1565,8 @@ class ManagedRuntime:
         )
         route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
         qualified_route = route_qualification[1] if route_qualification else None
+        goal_recovery = self.scenario in GOAL_RECOVERY_SCENARIOS
+        validation_recovery = self.scenario in VALIDATION_RECOVERY_SCENARIOS
         if item_type == "text":
             maximum = constraints.get("max_length", 256)
             if route_qualification and item_id == "assessment-provenance":
@@ -1505,20 +1682,36 @@ class ManagedRuntime:
                 ("record-evidence", "unresolved-valid-findings"),
             }
             value = (
-                2 if (node, item_id) in low_counts else constraints.get("minimum", 0)
+                2
+                if (node, item_id) in low_counts
+                and route_qualification is None
+                and not goal_recovery
+                and not validation_recovery
+                else constraints.get("minimum", 0)
             )
             if (
                 self.current_procedure_id == "aquarium-task-v2"
                 and node == "prepare-review"
                 and item_id == "prior-assessment-ordinal"
             ):
-                value = max(0, self.node_visits.get("review", 0))
+                value = (
+                    1
+                    if self.scenario in TASK_COMPLETED_CHANGE_SCENARIOS
+                    else max(0, self.node_visits.get("review", 0))
+                )
             if (
                 self.current_procedure_id == "aquarium-task-v2"
                 and node == "review"
                 and item_id == "assessment-ordinal"
             ):
-                value = max(1, self.node_visits.get("review", 1))
+                value = (
+                    0
+                    if self.scenario in TASK_RESUME_SCENARIOS
+                    and self.scenario not in TASK_COMPLETED_CHANGE_SCENARIOS
+                    else 2
+                    if self.scenario in TASK_COMPLETED_CHANGE_SCENARIOS
+                    else max(1, self.node_visits.get("review", 1))
+                )
             if (
                 self.current_procedure_id == "aquarium-goal-v2"
                 and node == "record-evidence"
@@ -1530,7 +1723,12 @@ class ManagedRuntime:
                 and node == "record-evidence"
                 and item_id == "assessment-ordinal"
             ):
-                value = self.completed_assessments.get(self.current_procedure_id, 0) + 1
+                value = (
+                    0
+                    if goal_recovery and self.goal_evidence_round == 0
+                    else self.completed_assessments.get(self.current_procedure_id, 0)
+                    + 1
+                )
             if (
                 self.current_procedure_id == "aquarium-validation-v2"
                 and node == "final-review"
@@ -1542,7 +1740,12 @@ class ManagedRuntime:
                 and node == "final-review"
                 and item_id == "assessment-ordinal"
             ):
-                value = self.completed_assessments.get(self.current_procedure_id, 0) + 1
+                value = (
+                    0
+                    if validation_recovery and self.validation_review_round == 0
+                    else self.completed_assessments.get(self.current_procedure_id, 0)
+                    + 1
+                )
             if (
                 self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and node == "final-review"
@@ -1812,6 +2015,7 @@ class ManagedRuntime:
             return {"type": "integer", "value": value}
         if item_type == "choice":
             choices = constraints.get("choices", [])
+            task_resume = TASK_RESUME_SCENARIOS.get(self.scenario)
             goal_kind = None
             review_evidence_kind = None
             if self.scenario in GOAL_KIND_SCENARIOS:
@@ -1822,33 +2026,162 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
-                "review-route": qualified_route,
-                "effective-review-route": qualified_route,
+                "review-route": (
+                    "mulgae"
+                    if goal_recovery and node == "complete-work"
+                    else "orca"
+                    if goal_recovery and node == "record-evidence"
+                    else "mulgae"
+                    if validation_recovery and node == "capture-baseline"
+                    else "orca"
+                    if validation_recovery and node == "final-review"
+                    else task_resume.get("effective_route", task_resume["route"])
+                    if task_resume
+                    and (
+                        task_resume.get("completed_transition")
+                        or (node == "review" and self.node_visits.get("review", 0) > 1)
+                    )
+                    else task_resume["route"]
+                    if task_resume
+                    else qualified_route
+                ),
+                "effective-review-route": (
+                    task_resume.get("effective_route", task_resume["route"])
+                    if task_resume
+                    and (
+                        task_resume.get("completed_transition")
+                        or (
+                            node == "prepare-review"
+                            and self.node_visits.get("prepare-review", 0) > 1
+                        )
+                    )
+                    else task_resume["route"]
+                    if task_resume
+                    else qualified_route
+                ),
                 "review-operation": (
-                    "waived"
+                    ("incomplete" if self.goal_evidence_round == 0 else "complete")
+                    if goal_recovery
+                    else (
+                        "incomplete"
+                        if self.validation_review_round == 0
+                        else "complete"
+                    )
+                    if validation_recovery
+                    else (
+                        "waived"
+                        if task_resume.get("effective_route") == "waived"
+                        else "complete"
+                    )
+                    if task_resume
+                    and task_resume.get("completed_transition")
+                    and node == "review"
+                    else task_resume["operation"]
+                    if task_resume
+                    else "waived"
                     if qualified_route == "waived"
                     else "complete"
                     if qualified_route is not None
                     else None
                 ),
                 "route-authorization-basis": (
-                    "approved-plan"
-                    if route_qualification
+                    "explicit-route-change"
+                    if goal_recovery or validation_recovery
+                    else task_resume.get("checkpoint_basis", "resume-current")
+                    if task_resume
+                    and node == "prepare-review"
+                    and (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                    )
+                    else "approved-plan"
+                    if (route_qualification or task_resume)
                     and self.current_procedure_id == "aquarium-task-v2"
                     else "approved-envelope"
                     if route_qualification
                     and self.current_procedure_id == "aquarium-goal-v2"
                     else None
                 ),
+                "checkpoint-requested-direction": (
+                    task_resume["direction"]
+                    if task_resume
+                    and node == "prepare-review"
+                    and (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                        or task_resume.get("planned_only")
+                    )
+                    else "not-applicable"
+                    if self.current_procedure_id == "aquarium-task-v2"
+                    else None
+                ),
                 "prior-review-operation": (
                     "not-applicable"
+                    if validation_recovery and self.validation_review_round == 0
+                    else "incomplete"
+                    if validation_recovery
+                    else task_resume.get("prior_operation", task_resume["operation"])
+                    if task_resume
+                    and node == "prepare-review"
+                    and (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                    )
+                    else "not-applicable"
+                    if self.current_procedure_id == "aquarium-task-v2"
+                    else None
+                ),
+                "prior-review-route": (
+                    "mulgae"
+                    if validation_recovery and self.validation_review_round == 0
+                    else "orca"
+                    if validation_recovery
+                    else task_resume["route"]
+                    if task_resume
+                    and node == "prepare-review"
+                    and (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                    )
+                    else "not-applicable"
                     if self.current_procedure_id == "aquarium-task-v2"
                     else None
                 ),
                 "prior-route-change-readiness": (
-                    "not-applicable"
+                    task_resume["readiness"]
+                    if task_resume
+                    and node == "prepare-review"
+                    and (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                    )
+                    else "not-applicable"
                     if self.current_procedure_id == "aquarium-task-v2"
                     else None
+                ),
+                "prior-route-lifecycle-state": (
+                    "terminal-incomplete-or-failed"
+                    if goal_recovery
+                    else "not-started"
+                    if validation_recovery and self.validation_review_round == 0
+                    else "terminal-incomplete-or-failed"
+                    if validation_recovery
+                    else task_resume["prior_state"]
+                    if task_resume
+                    else None
+                ),
+                "route-change-readiness": (
+                    "safe-to-change"
+                    if goal_recovery or validation_recovery
+                    else task_resume["readiness"]
+                    if task_resume
+                    else None
+                ),
+                "requested-route-direction": (
+                    task_resume["direction"] if task_resume else None
+                ),
+                "route-direction": (
+                    "resume-current" if goal_recovery or validation_recovery else None
                 ),
                 "finding-count-consistency": (
                     "inconsistent"
@@ -1867,6 +2200,12 @@ class ManagedRuntime:
                 "assessment-provenance-kind": (
                     "coordinator-waiver"
                     if qualified_route == "waived"
+                    or (
+                        task_resume
+                        and task_resume.get("completed_transition")
+                        and node == "review"
+                        and task_resume.get("effective_route") == "waived"
+                    )
                     else "delegated-reviewer"
                 ),
                 "hardening-deferral-state": (
@@ -1915,6 +2254,8 @@ class ManagedRuntime:
                     "pass"
                     if qualified_route == "mulgae"
                     else "not-provided"
+                    if goal_recovery or validation_recovery
+                    else "not-provided"
                     if qualified_route is not None
                     else (
                         "fail"
@@ -1936,6 +2277,28 @@ class ManagedRuntime:
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
             if (
+                self.scenario in TASK_RESUME_SCENARIOS
+                and item_id == "route-transition-admission"
+            ):
+                outcome = (
+                    "fail"
+                    if self.scenario
+                    in {
+                        "task-current-only-switch-rejected",
+                        "task-current-only-waive-rejected",
+                    }
+                    else "pass"
+                )
+            elif (
+                self.scenario in TASK_RESUME_SCENARIOS
+                and item_id == "route-direction-continuity"
+            ):
+                outcome = (
+                    "fail"
+                    if self.scenario in TASK_DIRECTION_MISMATCH_SCENARIOS
+                    else "pass"
+                )
+            elif (
                 self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and node == "final-review"
                 and item_id == "final-review-result"
@@ -2067,6 +2430,48 @@ class ManagedRuntime:
                 if item.get("required_now") and not item.get("satisfied")
             ]
             route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
+            if (
+                (route_qualification or self.scenario in GOAL_RECOVERY_SCENARIOS)
+                and procedure_id == "aquarium-goal-v2"
+                and node == "complete-work"
+            ):
+                required.extend(
+                    item
+                    for item in current["active_items"]
+                    if item["item_id"]
+                    in {
+                        "review-route",
+                        "review-target-scope",
+                        "review-selection-summary",
+                    }
+                    and not item.get("satisfied")
+                    and item not in required
+                )
+            if (
+                self.scenario in GOAL_RECOVERY_SCENARIOS
+                and procedure_id == "aquarium-goal-v2"
+                and node == "record-evidence"
+            ):
+                required.extend(
+                    item
+                    for item in current["active_items"]
+                    if item["item_id"]
+                    in {"route-change-authority-reference", "route-direction"}
+                    and not item.get("satisfied")
+                    and item not in required
+                )
+            if (
+                self.scenario in VALIDATION_RECOVERY_SCENARIOS
+                and procedure_id == "aquarium-validation-v2"
+                and node == "final-review"
+            ):
+                required.extend(
+                    item
+                    for item in current["active_items"]
+                    if item["item_id"] == "route-direction"
+                    and not item.get("satisfied")
+                    and item not in required
+                )
             if route_qualification and route_qualification[1] == "waived":
                 required.extend(
                     item
@@ -2080,6 +2485,15 @@ class ManagedRuntime:
                 for item in required
                 if item["type"] != "artifact"
             }
+            if (
+                self.scenario == "task-resume-active-mulgae"
+                and node == "review"
+                and any(
+                    item["item_id"] == "waiver-summary"
+                    for item in current["active_items"]
+                )
+            ):
+                records["waiver-summary"] = None
             if not records:
                 if (
                     self.scenario == "standard"
@@ -2403,6 +2817,32 @@ class ManagedRuntime:
             node = observation["guidance"]["node"]["graph_node_id"]
             node_type = observation["guidance"]["node"]["node_type"]
             self.node_visits[node] = self.node_visits.get(node, 0) + 1
+            task_resume = TASK_RESUME_SCENARIOS.get(scenario)
+            if (
+                task_resume
+                and not task_resume.get("completed_transition")
+                and node == "review"
+                and self.node_visits[node] == 2
+            ):
+                route = task_resume["route"]
+                expected_entry = f"enter-{route}-review-route"
+                wrong_entries = {
+                    f"enter-{provider}-review-route"
+                    for provider in {"mulgae", "orca", "native-codex"} - {route}
+                    if self.node_visits.get(f"enter-{provider}-review-route", 0)
+                }
+                if self.node_visits.get(expected_entry) != 2 or wrong_entries:
+                    raise RuntimeQualificationError(
+                        "resume did not preserve the exact provider entry: "
+                        f"expected={expected_entry!r}; wrong={sorted(wrong_entries)!r}"
+                    )
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "same_provider_resume": route,
+                }
             if (
                 scenario == "task-confirmation-only-wait"
                 and node == "choose-user-direction"
@@ -2531,6 +2971,8 @@ class ManagedRuntime:
                     )
                 if procedure_id == "aquarium-goal-v2" and node == "record-evidence":
                     self.goal_evidence_round += 1
+                if procedure_id == "aquarium-validation-v2" and node == "final-review":
+                    self.validation_review_round += 1
                 if node == "record-low-disposition":
                     self.low_settlement_rounds[procedure_id] = (
                         self.low_settlement_rounds.get(procedure_id, 0) + 1
@@ -2540,6 +2982,98 @@ class ManagedRuntime:
                 raise RuntimeQualificationError(
                     f"unsupported graph node type: {node_type}"
                 )
+
+            if (
+                task_resume
+                and scenario in TASK_DIRECTION_MISMATCH_SCENARIOS
+                and node == task_resume["rejection_node"]
+            ):
+                self.reject_guarded_decision(
+                    observation, task_resume["rejection_option"]
+                )
+                if self.node_visits.get("review", 0) > (
+                    0
+                    if task_resume.get("planned_only")
+                    or task_resume.get("completed_transition")
+                    else 1
+                ):
+                    raise RuntimeQualificationError(
+                        "direction mismatch reached provider or waiver review"
+                    )
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "guard_rejected": task_resume["rejection_option"],
+                    "before_provider_or_waiver_review": True,
+                    "state_unchanged": True,
+                }
+
+            if task_resume and node == "choose-review-route-direction":
+                if scenario in {
+                    "task-current-only-switch-rejected",
+                    "task-current-only-waive-rejected",
+                }:
+                    self.reject_guarded_decision(observation, "continue")
+                    return {
+                        "scenario": scenario,
+                        "procedure_id": procedure_id,
+                        "node": node,
+                        "lifecycle": status["session"]["lifecycle"],
+                        "guard_rejected": task_resume["direction"],
+                        "state_unchanged": True,
+                    }
+                decision = self.decide(observation, "continue")
+                self.decision_destination(decision, "prepare-review")
+                continue
+
+            if task_resume and node == "authorize-current-review-route-resume":
+                route = task_resume["route"]
+                if scenario == "task-resume-active-mulgae":
+                    observation = self.reject_guarded_decision(observation, "orca")
+                decision = self.decide(observation, route)
+                self.decision_destination(decision, f"enter-{route}-review-route")
+                continue
+
+            if (
+                scenario in TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+                and node == "confirm-assessment-ordinal"
+            ):
+                transition = TASK_RESUME_SCENARIOS[scenario]
+                target_route = transition["effective_route"]
+                prior_ordinal = self.read_complete_evidence(
+                    observation, "prepare-review", "prior-assessment-ordinal"
+                )
+                current_ordinal = self.read_complete_evidence(
+                    observation, "review", "assessment-ordinal"
+                )
+                if (
+                    self.node_visits.get("validate-review-route-entry") != 1
+                    or self.node_visits.get("classify-review-route-change") != 1
+                    or self.node_visits.get("authorize-completed-review-route") != 1
+                    or self.node_visits.get(f"enter-{target_route}-review-route") != 1
+                    or self.node_visits.get("review") != 1
+                    or prior_ordinal != 1
+                    or current_ordinal != 2
+                ):
+                    raise RuntimeQualificationError(
+                        "completed-checkpoint transition skipped entry, "
+                        "classification, authorization, or next-ordinal guards: "
+                        f"scenario={scenario!r}; prior={prior_ordinal!r}; "
+                        f"current={current_ordinal!r}; visits={self.node_visits!r}"
+                    )
+                decision = self.decide(observation, "standard")
+                self.decision_destination(decision, "confirm-first-review-evidence")
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "completed_checkpoint_transition": target_route,
+                    "prior_ordinal": prior_ordinal,
+                    "current_ordinal": current_ordinal,
+                }
 
             if (
                 procedure_id == "aquarium-task-v2"
@@ -3163,33 +3697,195 @@ class ManagedRuntime:
             elif (
                 scenario == "standard"
                 and procedure_id == "aquarium-task-v2"
-                and node == "confirm-review-evidence"
+                and node == "confirm-first-review-evidence"
                 and not self.task_review_reworked
             ):
-                special_option = "mulgae-fail"
-            elif procedure_id == "aquarium-task-v2" and node in {
-                "confirm-assessment-ordinal",
-                "confirm-extra-assessment-ordinal",
-            }:
+                special_option = "mulgae"
+            elif (
+                procedure_id == "aquarium-task-v2"
+                and node == "confirm-assessment-ordinal"
+            ):
                 ordinal = self.node_visits.get("review", 1)
-                special_option = {
-                    1: "first",
-                    2: "second",
-                    3: "third",
-                    4: "fourth",
-                }.get(ordinal, "authorized-extra")
+                special_option = "standard" if ordinal <= 4 else "authorized-extra"
+            elif task_resume and node == "validate-review-route-entry":
+                special_option = (
+                    "changed"
+                    if (
+                        task_resume.get("completed_transition")
+                        or self.node_visits.get("prepare-review", 0) > 1
+                    )
+                    and task_resume.get("checkpoint_basis")
+                    in {"explicit-route-change", "explicit-waiver"}
+                    else "resumed"
+                    if self.node_visits.get("prepare-review", 0) > 1
+                    else "planned"
+                )
+            elif task_resume and node == "authorize-planned-review-route":
+                special_option = f"planned-{task_resume['route']}"
+            elif task_resume and node == "classify-review-route-change":
+                special_option = (
+                    "completed"
+                    if task_resume.get("completed_transition")
+                    else "unsettled"
+                )
+            elif task_resume and node == "confirm-review-route-change-readiness":
+                special_option = "safe"
+            elif task_resume and node == "authorize-incomplete-review-route":
+                target_route = task_resume.get("effective_route", task_resume["route"])
+                special_option = (
+                    "changed-waiver"
+                    if target_route == "waived"
+                    else f"changed-{target_route}"
+                )
+            elif task_resume and node == "authorize-completed-review-route":
+                target_route = task_resume.get("effective_route", task_resume["route"])
+                special_option = (
+                    "completed-change-waiver"
+                    if target_route == "waived"
+                    else f"completed-change-{target_route}"
+                )
+            elif task_resume and node == "confirm-review-route-binding":
+                special_option = (
+                    task_resume.get("effective_route", task_resume["route"])
+                    if task_resume.get("completed_transition")
+                    or self.node_visits.get("review", 0) > 1
+                    else task_resume["route"]
+                )
+            elif (
+                task_resume
+                and node.startswith("decide-")
+                and node.endswith("-review-operation")
+            ):
+                special_option = (
+                    "assessed"
+                    if task_resume.get("completed_transition")
+                    else "unsettled"
+                )
+            elif task_resume and node == "confirm-incomplete-review-evidence":
+                special_option = (
+                    "mulgae" if task_resume["route"] == "mulgae" else "static-delegated"
+                )
+            elif (
+                task_resume
+                and task_resume.get("completed_transition")
+                and node
+                in {"confirm-first-review-evidence", "confirm-extra-review-evidence"}
+            ):
+                target_route = (
+                    task_resume.get("effective_route", task_resume["route"])
+                    if task_resume.get("completed_transition")
+                    or self.node_visits.get("review", 0) > 1
+                    else task_resume["route"]
+                )
+                special_option = (
+                    "mulgae"
+                    if target_route == "mulgae"
+                    else "waived"
+                    if target_route == "waived"
+                    else "static-delegated"
+                )
             elif (
                 procedure_id == "aquarium-goal-v2"
                 and node == "confirm-review-route-binding"
             ):
                 special_option = "planned-mulgae"
-            elif (
-                procedure_id == "aquarium-goal-v2"
-                and node == "confirm-assessment-ordinal"
-            ) or (
-                procedure_id == "aquarium-validation-v2"
-                and node == "confirm-final-assessment-ordinal"
-            ):
+            if scenario in GOAL_RECOVERY_SCENARIOS:
+                if node == "confirm-review-route-binding":
+                    planned_route = self.read_complete_evidence(
+                        observation, "complete-work", "review-route"
+                    )
+                    current_route = self.read_complete_evidence(
+                        observation, "record-evidence", "review-route"
+                    )
+                    if planned_route != "mulgae" or current_route != "orca":
+                        raise RuntimeQualificationError(
+                            "Goal recovery changed its planned or current provider: "
+                            f"planned={planned_route!r}; current={current_route!r}"
+                        )
+                    if self.goal_evidence_round == 2 and (
+                        self.node_visits.get("decide-changed-orca-review-operation")
+                        != 1
+                        or self.node_visits.get("confirm-incomplete-route-evidence")
+                        != 1
+                        or self.node_visits.get(
+                            "choose-terminal-review-route-direction"
+                        )
+                        != 1
+                    ):
+                        raise RuntimeQualificationError(
+                            "Goal resume did not preserve the immediately preceding Orca operation"
+                        )
+                    special_option = "changed-orca"
+                elif node == "decide-changed-orca-review-operation":
+                    special_option = (
+                        "unsuccessful" if self.goal_evidence_round == 1 else "completed"
+                    )
+                elif node == "confirm-incomplete-route-evidence":
+                    special_option = "orca"
+                elif node == "confirm-orca-review-route-settlement":
+                    special_option = "terminal-safe"
+                elif node == "choose-terminal-review-route-direction":
+                    special_option = "resume-current"
+                elif node == "confirm-completed-assessment-ordinal":
+                    special_option = "first"
+                elif node == "confirm-first-route-evidence":
+                    special_option = "orca"
+            if scenario in VALIDATION_RECOVERY_SCENARIOS:
+                if node == "confirm-final-review-route-binding":
+                    planned_route = self.read_complete_evidence(
+                        observation, "capture-baseline", "review-route"
+                    )
+                    current_route = self.read_complete_evidence(
+                        observation, "final-review", "review-route"
+                    )
+                    prior_route = self.read_complete_evidence(
+                        observation, "final-review", "prior-review-route"
+                    )
+                    prior_operation = self.read_complete_evidence(
+                        observation, "final-review", "prior-review-operation"
+                    )
+                    expected_prior = (
+                        ("mulgae", "not-applicable")
+                        if self.validation_review_round == 1
+                        else ("orca", "incomplete")
+                    )
+                    if (
+                        planned_route != "mulgae"
+                        or current_route != "orca"
+                        or (prior_route, prior_operation) != expected_prior
+                    ):
+                        raise RuntimeQualificationError(
+                            "Validation recovery lost provider continuity: "
+                            f"planned={planned_route!r}; current={current_route!r}; "
+                            f"prior={(prior_route, prior_operation)!r}"
+                        )
+                    if self.validation_review_round == 2 and (
+                        self.node_visits.get(
+                            "confirm-unassessed-final-review-provenance"
+                        )
+                        != 1
+                        or self.node_visits.get("choose-settled-route-direction") != 1
+                    ):
+                        raise RuntimeQualificationError(
+                            "Validation resume skipped the prior Orca settlement"
+                        )
+                    special_option = "bound"
+                elif node == "decide-final-review-operation":
+                    special_option = (
+                        "unassessed"
+                        if self.validation_review_round == 1
+                        else "assessed"
+                    )
+                elif node == "confirm-final-route-settlement":
+                    special_option = "change-safe"
+                elif node == "choose-settled-route-direction":
+                    special_option = "recover"
+                elif node == "determine-final-backend-applicability":
+                    special_option = "not-required"
+            elif procedure_id == "aquarium-goal-v2" and node in {
+                "confirm-completed-assessment-ordinal",
+                "confirm-waived-assessment-ordinal",
+            }:
                 ordinal = self.completed_assessments.get(procedure_id, 0) + 1
                 special_option = (
                     "first"
@@ -3198,16 +3894,15 @@ class ManagedRuntime:
                     if ordinal == 2
                     else "authorized-extra"
                 )
-            elif node in {
-                "confirm-extra-assessment-ordinal",
-                "confirm-extra-final-assessment-ordinal",
-            }:
+            elif node == "confirm-extra-assessment-ordinal":
                 special_option = "authorized-extra"
             if route_qualification:
                 evidence_nodes = {
-                    "confirm-review-evidence": "review",
-                    "confirm-route-evidence": "record-evidence",
-                    "confirm-final-route-evidence": "final-review",
+                    "confirm-first-review-evidence": "review",
+                    "confirm-extra-review-evidence": "review",
+                    "confirm-first-route-evidence": "record-evidence",
+                    "confirm-second-route-evidence": "record-evidence",
+                    "confirm-extra-route-evidence": "record-evidence",
                 }
                 evidence_node = evidence_nodes.get(node)
                 if evidence_node is not None:
@@ -3224,8 +3919,6 @@ class ManagedRuntime:
                             "route qualification provenance was not preserved"
                         )
                 route_decisions = {
-                    "confirm-review-route-context": "ready",
-                    "confirm-review-route-entry": "planned",
                     "validate-review-route-entry": "planned",
                     "authorize-planned-review-route": (
                         f"planned-{qualified_route}"
@@ -3240,40 +3933,68 @@ class ManagedRuntime:
                         if procedure_id == "aquarium-goal-v2"
                         else qualified_route
                     ),
-                    "decide-review-operation": (
-                        "waived" if qualified_route == "waived" else "completed"
+                    "decide-final-review-operation": "assessed",
+                    "confirm-first-review-evidence": (
+                        "mulgae"
+                        if qualified_route == "mulgae"
+                        else "waived"
+                        if qualified_route == "waived"
+                        else "static-delegated"
                     ),
-                    "decide-final-review-operation": (
-                        "waived" if qualified_route == "waived" else "completed"
+                    "confirm-extra-review-evidence": (
+                        "mulgae"
+                        if qualified_route == "mulgae"
+                        else "waived"
+                        if qualified_route == "waived"
+                        else "static-delegated"
                     ),
-                    "confirm-review-evidence": (
+                    "confirm-first-route-evidence": (
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
                     ),
-                    "confirm-review-provenance": (
-                        "waived" if qualified_route == "waived" else "delegated"
-                    ),
-                    "confirm-route-evidence": (
+                    "confirm-second-route-evidence": (
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
                     ),
-                    "confirm-final-route-evidence": (
+                    "confirm-extra-route-evidence": (
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
                     ),
-                    "confirm-final-review-provenance": (
-                        "waived" if qualified_route == "waived" else "delegated"
+                    "decide-backend-check": ("non-failing"),
+                    "determine-final-backend-applicability": (
+                        "required" if qualified_route == "mulgae" else "not-required"
                     ),
-                    "decide-backend-check": (
-                        "passed" if qualified_route == "mulgae" else "not-provided"
-                    ),
-                    "decide-final-backend-check": (
-                        "passed" if qualified_route == "mulgae" else "not-provided"
-                    ),
+                    "decide-final-backend-check": "passed",
                 }
+                task_operation_nodes = {
+                    "mulgae": "decide-mulgae-review-operation",
+                    "orca": "decide-orca-review-operation",
+                    "native-codex": "decide-native-codex-review-operation",
+                }
+                if node == task_operation_nodes.get(qualified_route):
+                    special_option = "assessed"
+                task_provenance_nodes = {
+                    "mulgae": "confirm-mulgae-provenance",
+                    "orca": "confirm-static-delegated-provenance",
+                    "native-codex": "confirm-static-delegated-provenance",
+                    "waived": "confirm-waived-provenance",
+                }
+                if node == task_provenance_nodes.get(qualified_route):
+                    special_option = (
+                        "waived" if qualified_route == "waived" else "delegated"
+                    )
+                goal_operation_node = (
+                    "decide-planned-waiver-review-operation"
+                    if qualified_route == "waived"
+                    else f"decide-planned-{qualified_route}-review-operation"
+                )
+                if node == goal_operation_node:
+                    special_option = (
+                        "waived" if qualified_route == "waived" else "completed"
+                    )
                 special_option = route_decisions.get(node, special_option)
             option = (
                 special_option
@@ -3302,10 +4023,16 @@ class ManagedRuntime:
                 )
             decision = self.decide(observation, option)
             if (
-                procedure_id == "aquarium-goal-v2" and node == "confirm-route-evidence"
+                procedure_id == "aquarium-goal-v2"
+                and node
+                in {
+                    "confirm-first-route-evidence",
+                    "confirm-second-route-evidence",
+                    "confirm-extra-route-evidence",
+                }
             ) or (
                 procedure_id == "aquarium-validation-v2"
-                and node == "confirm-final-route-evidence"
+                and node == "confirm-assessed-final-review-provenance"
             ):
                 self.completed_assessments[procedure_id] = (
                     self.completed_assessments.get(procedure_id, 0) + 1
@@ -3391,6 +4118,11 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         ("aquarium-goal-v2.yaml", "goal-closeout-unmet-wait"),
         ("aquarium-validation-v2.yaml", "validation-medium-wait"),
         ("aquarium-task-v2.yaml", "task-confirmation-only-wait"),
+        *(
+            ("aquarium-task-v2.yaml", scenario)
+            for scenario in TASK_RESUME_SCENARIOS
+            if scenario not in TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+        ),
     )
     for offset, (procedure_name, scenario) in enumerate(wait_specs, start=2):
         with ManagedRuntime(
@@ -3411,12 +4143,24 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                 ROUTE_QUALIFICATION_SCENARIOS.items()
             )
         ),
+        *(
+            (scenario, "aquarium-goal-v2.yaml")
+            for scenario in sorted(GOAL_RECOVERY_SCENARIOS)
+        ),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in sorted(VALIDATION_RECOVERY_SCENARIOS)
+        ),
         ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
         ("task-completion-unverified", "aquarium-task-v2.yaml"),
         ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
         ("task-finding-inconsistent", "aquarium-task-v2.yaml"),
         ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
         ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
+        *(
+            (scenario, "aquarium-task-v2.yaml")
+            for scenario in sorted(TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS)
+        ),
         *(
             (scenario, "aquarium-task-v2.yaml")
             for scenario in (
@@ -3526,6 +4270,9 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         "wait_scenarios": wait_scenarios,
         "scenario_runs": scenario_runs,
         "route_contract_scenarios": sorted(ROUTE_QUALIFICATION_SCENARIOS),
+        "recovery_contract_scenarios": sorted(
+            GOAL_RECOVERY_SCENARIOS | VALIDATION_RECOVERY_SCENARIOS
+        ),
         "route_contract_scope": (
             "Procedure recording, guard rejection, and graph transitions only; "
             "provider dispatch, prerequisites, and side effects require observed-agent "

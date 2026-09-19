@@ -161,6 +161,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
         "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
         "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
+        "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
     },
     "aquarium-goal-v2.yaml": {
         "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -176,6 +177,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
         "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
         "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
+        "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
     },
     "aquarium-validation-v2.yaml": {
         "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -189,6 +191,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
         "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
         "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
+        "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
     },
     "aquarium-design-v2.yaml": {
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
@@ -200,1242 +203,9 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
     },
 }
 
-PODWAY_HANDLER_CONTRACTS = {
-    "aquarium-task-v2.yaml": {
-        "nodes": {
-            "prepare-implementation",
-            "implement",
-            "document",
-            "prepare-review",
-            "validate-review-route-entry",
-            "classify-review-route-change",
-            "confirm-review-route-change-readiness",
-            "authorize-planned-review-route",
-            "authorize-incomplete-review-route",
-            "authorize-completed-review-route",
-            "confirm-review-route-binding",
-            "decide-review-operation",
-            "confirm-assessment-ordinal",
-            "confirm-extra-assessment-ordinal",
-            "confirm-review-evidence",
-            "confirm-incomplete-review-evidence",
-            "confirm-review-provenance",
-            "confirm-incomplete-review-provenance",
-            "decide-backend-check",
-            "confirm-review-findings",
-            "confirm-review-completion",
-            "decide-review",
-            "decide-task-rework-authority",
-            "record-review-route-direction",
-            "confirm-review-route-settlement",
-            "choose-review-route-direction",
-            "record-review-route-stop",
-            "decide-implementation-owner",
-            "decide-verification-owner",
-            "decide-documentation-owner",
-            "await-user-direction",
-            "choose-user-direction",
-            "record-low-disposition",
-            "decide-low-result",
-            "decide-low-completion",
-            "confirm-goal-assessment-core",
-            "confirm-stopped-goal-assessment-core",
-            "record-stopped-goal-boundary",
-            "confirm-stopped-goal-boundary",
-            "assess-goal",
-            "assess-stopped-goal",
-            "record-stopped-outcome",
-            "approve-stopped-closeout",
-            "stopped-closeout",
-        },
-        "definition_items": {
-            "plan-record": {
-                "review-route",
-                "review-target-scope",
-                "review-selection-summary",
-            },
-            "review-checkpoint-record": {
-                "effective-review-route",
-                "route-authorization-basis",
-                "route-change-authority-reference",
-                "prior-review-operation",
-                "prior-route-change-readiness",
-                "prior-assessment-ordinal",
-                "finding-lineage-summary",
-                "remaining-review-authority-summary",
-                "corrected-target-summary",
-                "extra-assessment-authority-reference",
-            },
-            "implementation-entry-record": {"implementation-entry-summary"},
-            "review-record": {
-                "review-route",
-                "review-operation",
-                "assessment-ordinal",
-                "assessment-ordinal-continuity",
-                "review-evidence-reference",
-                "backend-check-result",
-                "assessment-provenance",
-                "assessment-provenance-kind",
-                "waiver-summary",
-                "finding-count-consistency",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-                "unresolved-implementation-findings",
-                "unresolved-documentation-findings",
-                "implementation-rework-obligations",
-                "verification-rework-obligations",
-                "documentation-rework-obligations",
-            },
-            "review-route-direction-record": {
-                "prior-route-lifecycle-state",
-                "route-change-readiness",
-                "route-direction-summary",
-            },
-            "review-route-stop-record": {
-                "route-stop-classification",
-                "route-stop-summary",
-            },
-            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
-            "low-disposition-record": {
-                "source-review-basis",
-                "low-disposition-summary",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-                "pending-low-dispositions",
-                "current-blocking-findings",
-                "before-target",
-                "after-target",
-                "coverage-relationship",
-                "low-disposition-verification",
-            },
-        },
-        "definition_choices": {
-            ("plan-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("review-checkpoint-record", "effective-review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("review-checkpoint-record", "route-authorization-basis"): {
-                "approved-plan",
-                "explicit-route-change",
-                "explicit-waiver",
-            },
-            ("review-checkpoint-record", "prior-review-operation"): {
-                "not-applicable",
-                "incomplete",
-                "failed",
-                "completed",
-            },
-            ("review-checkpoint-record", "prior-route-change-readiness"): {
-                "not-applicable",
-                "current-route-only",
-                "safe-to-change",
-                "completed-checkpoint",
-            },
-            ("review-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("review-record", "review-operation"): {
-                "complete",
-                "incomplete",
-                "failed",
-                "waived",
-            },
-            ("review-record", "backend-check-result"): {
-                "pass",
-                "fail",
-                "not-provided",
-            },
-            ("review-record", "assessment-provenance-kind"): {
-                "delegated-reviewer",
-                "coordinator-waiver",
-            },
-            ("stopped-goal-boundary-record", "goal-outcome-boundary"): {
-                "stopped",
-                "invalid-not-stopped",
-            },
-            ("review-route-direction-record", "prior-route-lifecycle-state"): {
-                "not-started",
-                "active-or-unknown",
-                "terminal-incomplete-or-failed",
-            },
-            ("review-route-direction-record", "route-change-readiness"): {
-                "current-route-only",
-                "safe-to-change",
-            },
-            ("review-record", "finding-count-consistency"): {
-                "consistent",
-                "inconsistent",
-            },
-            ("review-record", "review-mode"): {
-                "remediation-eligible",
-                "confirmation-only",
-            },
-        },
-        "routes": {
-            "decide-verification": {"failed": "verify"},
-            "validate-review-route-entry": {
-                "planned": "authorize-planned-review-route",
-                "changed": "classify-review-route-change",
-            },
-            "classify-review-route-change": {
-                "incomplete": "confirm-review-route-change-readiness",
-                "failed": "confirm-review-route-change-readiness",
-                "completed": "authorize-completed-review-route",
-            },
-            "confirm-review-route-change-readiness": {
-                "safe": "authorize-incomplete-review-route",
-            },
-            "authorize-planned-review-route": {
-                "planned-mulgae": "review",
-                "planned-orca": "review",
-                "planned-native-codex": "review",
-                "planned-waiver": "review",
-            },
-            "authorize-incomplete-review-route": {
-                "changed-mulgae": "review",
-                "changed-orca": "review",
-                "changed-native-codex": "review",
-                "changed-waiver": "review",
-            },
-            "authorize-completed-review-route": {
-                "completed-change-mulgae": "review",
-                "completed-change-orca": "review",
-                "completed-change-native-codex": "review",
-                "completed-change-waiver": "review",
-            },
-            "confirm-review-route-binding": {
-                "mulgae": "decide-review-operation",
-                "orca": "decide-review-operation",
-                "native-codex": "decide-review-operation",
-                "waived": "decide-review-operation",
-            },
-            "decide-review-operation": {
-                "completed": "confirm-assessment-ordinal",
-                "waived": "confirm-assessment-ordinal",
-                "incomplete": "confirm-incomplete-review-evidence",
-                "failed": "confirm-incomplete-review-evidence",
-            },
-            "confirm-assessment-ordinal": {
-                "first": "confirm-review-evidence",
-                "second": "confirm-review-evidence",
-                "third": "confirm-review-evidence",
-                "fourth": "confirm-review-evidence",
-                "authorized-extra": "confirm-extra-assessment-ordinal",
-            },
-            "confirm-extra-assessment-ordinal": {
-                "authorized-extra": "confirm-review-evidence",
-            },
-            "confirm-review-evidence": {
-                "mulgae-pass": "confirm-review-provenance",
-                "mulgae-fail": "confirm-review-provenance",
-                "orca": "confirm-review-provenance",
-                "native-codex": "confirm-review-provenance",
-                "waived": "confirm-review-provenance",
-            },
-            "confirm-review-provenance": {
-                "delegated": "confirm-review-findings",
-                "waived": "confirm-review-findings",
-            },
-            "decide-backend-check": {
-                "passed": "confirm-review-completion",
-                "failed": "decide-task-rework-authority",
-                "not-provided": "confirm-review-completion",
-            },
-            "confirm-review-findings": {"resolved": "decide-backend-check"},
-            "confirm-incomplete-review-evidence": {
-                "mulgae-pass": "confirm-incomplete-review-provenance",
-                "mulgae-fail": "confirm-incomplete-review-provenance",
-                "mulgae-not-provided": "confirm-incomplete-review-provenance",
-                "orca": "confirm-incomplete-review-provenance",
-                "native-codex": "confirm-incomplete-review-provenance",
-            },
-            "confirm-incomplete-review-provenance": {
-                "delegated": "record-review-route-direction",
-            },
-            "confirm-review-completion": {
-                "complete": "decide-review",
-                "unmet": "decide-task-rework-authority",
-                "unverified": "prepare-review",
-            },
-            "decide-review": {
-                "clean": "confirm-goal-assessment-core",
-                "blocking": "decide-task-rework-authority",
-                "low-disposition": "record-low-disposition",
-                "inconsistent": "prepare-review",
-            },
-            "decide-task-rework-authority": {
-                "remediation": "decide-implementation-owner",
-                "user-direction": "await-user-direction",
-            },
-            "decide-implementation-owner": {
-                "required": "implement",
-                "clear": "decide-verification-owner",
-            },
-            "decide-verification-owner": {
-                "required": "verify",
-                "clear": "decide-documentation-owner",
-            },
-            "decide-documentation-owner": {
-                "required": "document",
-                "clear": "prepare-review",
-            },
-            "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
-            "choose-user-direction": {
-                "fix-and-review": "decide-implementation-owner",
-                "stop": "confirm-stopped-goal-assessment-core",
-            },
-            "choose-review-route-direction": {
-                "resume-current": "review",
-                "switch-route": "prepare-review",
-                "waive": "prepare-review",
-                "stop": "record-review-route-stop",
-            },
-            "confirm-review-route-settlement": {
-                "not-started-safe": "choose-review-route-direction",
-                "active-current-only": "choose-review-route-direction",
-                "terminal-safe": "choose-review-route-direction",
-            },
-            "confirm-goal-assessment-core": {"ready": "assess-goal"},
-            "confirm-stopped-goal-assessment-core": {
-                "ready": "record-stopped-goal-boundary"
-            },
-            "confirm-stopped-goal-boundary": {"confirmed": "assess-stopped-goal"},
-            "assess-goal": {
-                "achieved": "record-outcome",
-                "not-achieved": "record-outcome",
-                "superseded": "record-outcome",
-            },
-            "assess-stopped-goal": {
-                "invalid-not-stopped": "record-stopped-outcome",
-                "stopped": "record-stopped-outcome",
-                "not-achieved": "record-stopped-outcome",
-                "superseded": "record-stopped-outcome",
-            },
-        },
-        "evidence": {
-            "implement": {
-                ("record-plan", "plan-summary"),
-                ("prepare-implementation", "implementation-entry-summary"),
-            },
-            "document": {
-                ("implement", "implementation-summary"),
-                ("implement", "source-revision"),
-                ("refine", "refinement-summary"),
-                ("verify", "verification-result"),
-                ("verify", "verification-observations"),
-                ("decide-verification", None),
-            },
-            "await-user-direction": {
-                ("review", "completion-assessment-summary"),
-                ("review", "completion-unmet-criteria"),
-                ("review", "completion-unverified-criteria"),
-                ("review", "assessment-provenance-kind"),
-            },
-            "record-review-route-direction": {
-                ("review", "assessment-provenance-kind"),
-            },
-            "validate-review-route-entry": {
-                ("prepare-review", "route-authorization-basis"),
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-            },
-            "classify-review-route-change": {
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-            },
-            "confirm-review-route-change-readiness": {
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-            },
-            "authorize-planned-review-route": {
-                ("record-plan", "review-route"),
-                ("prepare-review", "effective-review-route"),
-                ("prepare-review", "route-authorization-basis"),
-                ("prepare-review", "route-change-authority-reference"),
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "finding-lineage-summary"),
-                ("prepare-review", "remaining-review-authority-summary"),
-                ("prepare-review", "corrected-target-summary"),
-                ("prepare-review", "extra-assessment-authority-reference"),
-            },
-            "authorize-incomplete-review-route": {
-                ("record-plan", "review-route"),
-                ("prepare-review", "effective-review-route"),
-                ("prepare-review", "route-authorization-basis"),
-                ("prepare-review", "route-change-authority-reference"),
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "finding-lineage-summary"),
-                ("prepare-review", "remaining-review-authority-summary"),
-                ("prepare-review", "corrected-target-summary"),
-                ("prepare-review", "extra-assessment-authority-reference"),
-            },
-            "authorize-completed-review-route": {
-                ("record-plan", "review-route"),
-                ("prepare-review", "effective-review-route"),
-                ("prepare-review", "route-authorization-basis"),
-                ("prepare-review", "route-change-authority-reference"),
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "finding-lineage-summary"),
-                ("prepare-review", "remaining-review-authority-summary"),
-                ("prepare-review", "corrected-target-summary"),
-                ("prepare-review", "extra-assessment-authority-reference"),
-            },
-            "confirm-review-provenance": {
-                ("review", "review-operation"),
-                ("review", "assessment-provenance"),
-                ("review", "assessment-provenance-kind"),
-                ("review", "waiver-summary"),
-                ("review", "review-evidence-reference"),
-            },
-            "confirm-incomplete-review-provenance": {
-                ("review", "review-operation"),
-                ("review", "assessment-provenance"),
-                ("review", "assessment-provenance-kind"),
-                ("review", "waiver-summary"),
-                ("review", "review-evidence-reference"),
-            },
-            "review": {
-                ("record-plan", "review-route"),
-                ("record-plan", "review-target-scope"),
-                ("record-plan", "review-selection-summary"),
-                ("prepare-review", "effective-review-route"),
-                ("prepare-review", "route-authorization-basis"),
-                ("prepare-review", "route-change-authority-reference"),
-                ("prepare-review", "prior-review-operation"),
-                ("prepare-review", "prior-route-change-readiness"),
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "finding-lineage-summary"),
-                ("prepare-review", "remaining-review-authority-summary"),
-                ("prepare-review", "corrected-target-summary"),
-                ("authorize-planned-review-route", None),
-                ("authorize-incomplete-review-route", None),
-                ("authorize-completed-review-route", None),
-            },
-            "confirm-assessment-ordinal": {
-                ("prepare-review", "prior-assessment-ordinal"),
-                ("prepare-review", "extra-assessment-authority-reference"),
-                ("review", "assessment-ordinal"),
-                ("review", "assessment-ordinal-continuity"),
-                ("review", "review-mode"),
-            },
-            "confirm-extra-assessment-ordinal": {
-                ("review", "assessment-ordinal"),
-            },
-            "confirm-goal-assessment-core": {
-                ("record-plan", "plan-summary"),
-                ("implement", "implementation-summary"),
-                ("implement", "source-revision"),
-                ("verify", "verification-result"),
-                ("refine", "refinement-summary"),
-                ("document", "documentation-summary"),
-            },
-            "confirm-stopped-goal-assessment-core": {
-                ("record-plan", "plan-summary"),
-                ("implement", "implementation-summary"),
-                ("implement", "source-revision"),
-                ("verify", "verification-result"),
-                ("refine", "refinement-summary"),
-                ("document", "documentation-summary"),
-            },
-            "record-stopped-goal-boundary": {
-                ("confirm-stopped-goal-assessment-core", None),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-                ("record-review-route-stop", "route-stop-classification"),
-                ("record-review-route-stop", "route-stop-summary"),
-            },
-            "confirm-stopped-goal-boundary": {
-                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
-            },
-            "assess-goal": {
-                ("review", "completion-assessment-summary"),
-                ("review", "completion-unmet-criteria"),
-                ("review", "completion-unverified-criteria"),
-                ("review", "finding-count-consistency"),
-                ("review", "assessment-provenance-kind"),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-                (
-                    "record-review-route-direction",
-                    "prior-route-lifecycle-state",
-                ),
-                ("record-review-route-direction", "route-change-readiness"),
-                ("record-review-route-direction", "route-direction-summary"),
-                ("record-review-route-stop", "route-stop-classification"),
-                ("record-review-route-stop", "route-stop-summary"),
-            },
-            "assess-stopped-goal": {
-                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
-                ("review", "completion-assessment-summary"),
-                ("review", "completion-unmet-criteria"),
-                ("review", "completion-unverified-criteria"),
-                ("review", "finding-count-consistency"),
-                ("review", "assessment-provenance-kind"),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-                (
-                    "record-review-route-direction",
-                    "prior-route-lifecycle-state",
-                ),
-                ("record-review-route-direction", "route-change-readiness"),
-                ("record-review-route-direction", "route-direction-summary"),
-                ("record-review-route-stop", "route-stop-classification"),
-                ("record-review-route-stop", "route-stop-summary"),
-            },
-        },
-    },
-    "aquarium-goal-v2.yaml": {
-        "nodes": {
-            "decide-review-basis",
-            "confirm-review-route-context",
-            "confirm-review-route-entry",
-            "confirm-review-route-binding",
-            "decide-review-operation",
-            "confirm-assessment-ordinal",
-            "confirm-extra-assessment-ordinal",
-            "confirm-route-evidence",
-            "confirm-review-provenance",
-            "confirm-incomplete-route-evidence",
-            "confirm-incomplete-review-provenance",
-            "confirm-review-route-settlement",
-            "choose-review-route-direction",
-            "record-review-route-stop",
-            "decide-backend-check",
-            "decide-operational-evidence",
-            "confirm-finding-validity",
-            "confirm-completion-assessment",
-            "decide-evidence",
-            "decide-goal-rework-authority",
-            "record-hardening-deferral",
-            "decide-low-handling",
-            "confirm-hardening-review-eligibility",
-            "confirm-hardening-record",
-            "await-user-direction",
-            "choose-user-direction",
-            "record-low-disposition",
-            "decide-low-result",
-            "decide-low-completion",
-            "record-stopped-goal-boundary",
-            "confirm-goal-assessment-core",
-            "confirm-stopped-goal-assessment-core",
-            "assess-goal",
-            "assess-stopped-goal",
-            "record-outcome",
-            "approve-closeout",
-            "closeout",
-            "record-stopped-outcome",
-            "approve-stopped-closeout",
-            "stopped-closeout",
-        },
-        "definition_items": {
-            "work-record": {
-                "review-route",
-                "review-target-scope",
-                "review-selection-summary",
-            },
-            "evidence-record": {
-                "review-route",
-                "review-operation",
-                "assessment-ordinal",
-                "prior-assessment-ordinal",
-                "assessment-ordinal-continuity",
-                "review-evidence-reference",
-                "backend-check-result",
-                "assessment-provenance",
-                "assessment-provenance-kind",
-                "waiver-summary",
-                "route-authorization-basis",
-                "route-change-authority-reference",
-                "prior-route-lifecycle-state",
-                "route-change-readiness",
-                "route-direction",
-                "finding-lineage-summary",
-                "remaining-review-authority-summary",
-                "corrected-target-summary",
-                "extra-assessment-authority-reference",
-                "finding-count-consistency",
-                "goal-kind",
-                "review-evidence-kind",
-                "goal-verification-result",
-                "goal-review-readiness-result",
-                "confirmation-needed-findings",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-            },
-            "low-disposition-record": {
-                "source-review-basis",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-                "pending-low-dispositions",
-                "current-blocking-findings",
-                "before-target",
-                "after-target",
-                "coverage-relationship",
-                "low-disposition-verification",
-            },
-            "review-route-stop-record": {
-                "route-stop-classification",
-                "route-stop-summary",
-            },
-            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
-            "outcome-record": {"outcome-summary"},
-        },
-        "definition_choices": {
-            ("work-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("evidence-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("evidence-record", "review-operation"): {
-                "complete",
-                "incomplete",
-                "failed",
-                "waived",
-            },
-            ("evidence-record", "assessment-provenance-kind"): {
-                "delegated-reviewer",
-                "coordinator-waiver",
-            },
-            ("evidence-record", "backend-check-result"): {
-                "pass",
-                "fail",
-                "not-provided",
-            },
-            ("evidence-record", "finding-count-consistency"): {
-                "consistent",
-                "inconsistent",
-            },
-            ("evidence-record", "goal-kind"): {
-                "member-task",
-                "pre-validation-remediation",
-                "epic-closeout",
-            },
-            ("evidence-record", "review-evidence-kind"): {
-                "native-review",
-                "validated-closeout",
-            },
-            ("evidence-record", "review-mode"): {
-                "remediation-eligible",
-                "hardening-deferral-eligible",
-                "closeout-not-required",
-            },
-        },
-        "routes": {
-            "decide-review-basis": {
-                "native-review": "confirm-review-route-context",
-                "final-closeout": "record-closeout-substitute",
-                "invalid-substitute": "record-evidence",
-            },
-            "confirm-review-route-context": {
-                "ready": "confirm-review-route-entry",
-            },
-            "confirm-review-route-entry": {
-                "planned": "confirm-review-route-binding",
-                "changed": "confirm-review-route-binding",
-            },
-            "confirm-review-route-binding": {
-                "planned-mulgae": "decide-review-operation",
-                "planned-orca": "decide-review-operation",
-                "planned-native-codex": "decide-review-operation",
-                "planned-waiver": "decide-review-operation",
-                "changed-mulgae": "decide-review-operation",
-                "changed-orca": "decide-review-operation",
-                "changed-native-codex": "decide-review-operation",
-                "changed-waiver": "decide-review-operation",
-            },
-            "decide-review-operation": {
-                "completed": "confirm-assessment-ordinal",
-                "waived": "confirm-assessment-ordinal",
-                "incomplete": "confirm-incomplete-route-evidence",
-                "failed": "confirm-incomplete-route-evidence",
-            },
-            "confirm-assessment-ordinal": {
-                "first": "confirm-route-evidence",
-                "second": "confirm-route-evidence",
-                "authorized-extra": "confirm-extra-assessment-ordinal",
-            },
-            "confirm-extra-assessment-ordinal": {
-                "authorized-extra": "confirm-route-evidence",
-            },
-            "confirm-route-evidence": {
-                "mulgae-pass": "confirm-review-provenance",
-                "mulgae-fail": "confirm-review-provenance",
-                "orca": "confirm-review-provenance",
-                "native-codex": "confirm-review-provenance",
-                "waived": "confirm-review-provenance",
-            },
-            "confirm-review-provenance": {
-                "delegated": "confirm-finding-validity",
-                "waived": "confirm-finding-validity",
-            },
-            "confirm-incomplete-route-evidence": {
-                "mulgae": "confirm-incomplete-review-provenance",
-                "orca": "confirm-incomplete-review-provenance",
-                "native-codex": "confirm-incomplete-review-provenance",
-            },
-            "confirm-incomplete-review-provenance": {
-                "delegated": "confirm-review-route-settlement",
-                "waived": "confirm-review-route-settlement",
-            },
-            "confirm-review-route-settlement": {
-                "active-current-only": "choose-review-route-direction",
-                "not-started-safe": "choose-review-route-direction",
-                "terminal-safe": "choose-review-route-direction",
-            },
-            "choose-review-route-direction": {
-                "resume-current": "record-evidence",
-                "switch-route": "complete-work",
-                "waive": "complete-work",
-                "stop": "record-review-route-stop",
-            },
-            "decide-backend-check": {
-                "passed": "decide-operational-evidence",
-                "failed": "decide-goal-rework-authority",
-                "not-provided": "decide-operational-evidence",
-            },
-            "decide-operational-evidence": {
-                "passed": "confirm-completion-assessment",
-                "verification-incomplete": "complete-work",
-                "review-incomplete": "record-evidence",
-            },
-            "confirm-finding-validity": {
-                "resolved": "decide-backend-check",
-                "unresolved": "record-evidence",
-            },
-            "confirm-completion-assessment": {
-                "complete": "decide-evidence",
-                "unmet": "decide-goal-rework-authority",
-                "unverified": "record-evidence",
-            },
-            "decide-evidence": {
-                "clean": "confirm-goal-assessment-core",
-                "blocking": "decide-goal-rework-authority",
-                "low-only": "record-hardening-deferral",
-                "inconsistent": "record-evidence",
-            },
-            "decide-goal-rework-authority": {
-                "remediation": "complete-work",
-                "user-direction": "await-user-direction",
-            },
-            "decide-low-handling": {
-                "settle": "record-low-disposition",
-                "defer": "confirm-hardening-review-eligibility",
-            },
-            "confirm-hardening-review-eligibility": {
-                "eligible": "confirm-hardening-record",
-            },
-            "confirm-hardening-record": {
-                "recorded": "record-hardening-handoff",
-            },
-            "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
-            "choose-user-direction": {
-                "fix-and-review": "complete-work",
-                "stop": "record-stopped-goal-boundary",
-            },
-            "confirm-goal-assessment-core": {"ready": "assess-goal"},
-            "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
-            "assess-goal": {
-                "achieved": "record-outcome",
-                "not-achieved": "record-outcome",
-                "superseded": "record-outcome",
-            },
-            "approve-closeout": {
-                "approved": "closeout",
-                "changes-requested": "complete-work",
-            },
-            "assess-stopped-goal": {
-                "achieved": "record-stopped-outcome",
-                "not-achieved": "record-stopped-outcome",
-                "superseded": "record-stopped-outcome",
-            },
-            "approve-stopped-closeout": {
-                "approved": "stopped-closeout",
-                "changes-requested": "complete-work",
-            },
-        },
-        "evidence": {
-            "confirm-review-route-context": {
-                ("complete-work", "review-target-scope"),
-                ("complete-work", "review-selection-summary"),
-            },
-            "confirm-review-route-entry": {
-                ("record-evidence", "route-authorization-basis"),
-                ("record-evidence", "route-change-readiness"),
-                ("record-evidence", "prior-route-lifecycle-state"),
-            },
-            "confirm-review-route-binding": {
-                ("complete-work", "review-route"),
-                ("record-evidence", "review-route"),
-                ("record-evidence", "route-authorization-basis"),
-                ("record-evidence", "route-change-authority-reference"),
-            },
-            "confirm-extra-assessment-ordinal": {
-                ("record-evidence", "assessment-ordinal"),
-            },
-            "confirm-review-provenance": {
-                ("record-evidence", "review-operation"),
-                ("record-evidence", "review-evidence-reference"),
-                ("record-evidence", "assessment-provenance"),
-                ("record-evidence", "assessment-provenance-kind"),
-                ("record-evidence", "waiver-summary"),
-            },
-            "confirm-incomplete-review-provenance": {
-                ("record-evidence", "review-operation"),
-                ("record-evidence", "review-evidence-reference"),
-                ("record-evidence", "assessment-provenance"),
-                ("record-evidence", "assessment-provenance-kind"),
-                ("record-evidence", "waiver-summary"),
-            },
-            "confirm-hardening-review-eligibility": {
-                ("record-evidence", "review-route"),
-                ("record-evidence", "review-operation"),
-                ("record-evidence", "backend-check-result"),
-                ("record-evidence", "review-mode"),
-            },
-            "confirm-hardening-record": {
-                ("record-evidence", "assessment-ordinal"),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-publication-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-findings-query-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-native-target-sha256",
-                ),
-            },
-            "record-hardening-handoff": {
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-publication-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-findings-query-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-native-target-sha256",
-                ),
-            },
-            "await-user-direction": {
-                ("record-evidence", "completion-assessment-summary"),
-                ("record-evidence", "completion-unmet-criteria"),
-                ("record-evidence", "completion-unverified-criteria"),
-                ("record-low-disposition", "source-review-basis"),
-                ("record-low-disposition", "low-disposition-summary"),
-                ("record-low-disposition", "current-blocking-findings"),
-                ("record-low-disposition", "after-target"),
-            },
-            "assess-goal": {
-                ("confirm-goal-assessment-core", None),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-                ("record-review-route-stop", "route-stop-classification"),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-publication-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-findings-query-state",
-                ),
-                (
-                    "record-hardening-deferral",
-                    "hardening-deferral-native-target-sha256",
-                ),
-            },
-            "confirm-goal-assessment-core": {
-                ("complete-work", "work-summary"),
-                ("complete-work", "source-revision"),
-                ("record-evidence", "review-route"),
-                ("record-evidence", "review-operation"),
-                ("record-evidence", "assessment-ordinal"),
-                ("record-evidence", "review-evidence-reference"),
-                ("record-evidence", "backend-check-result"),
-                ("record-evidence", "assessment-provenance"),
-                ("record-evidence", "assessment-provenance-kind"),
-                ("record-evidence", "completion-assessment-summary"),
-                ("record-evidence", "completion-unmet-criteria"),
-                ("record-evidence", "completion-unverified-criteria"),
-                ("record-evidence", "finding-count-consistency"),
-            },
-            "assess-stopped-goal": {
-                ("confirm-stopped-goal-assessment-core", None),
-                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-                ("record-review-route-stop", "route-stop-classification"),
-            },
-            "confirm-stopped-goal-assessment-core": {
-                ("complete-work", "work-summary"),
-                ("complete-work", "source-revision"),
-                ("record-evidence", "assessment-provenance-kind"),
-                ("record-evidence", "completion-assessment-summary"),
-                ("record-evidence", "completion-unmet-criteria"),
-                ("record-evidence", "completion-unverified-criteria"),
-            },
-            "approve-closeout": {("record-outcome", "outcome-summary")},
-            "approve-stopped-closeout": {("record-stopped-outcome", "outcome-summary")},
-        },
-    },
-    "aquarium-validation-v2.yaml": {
-        "nodes": {
-            "record-audit-low-basis",
-            "remediate",
-            "re-audit",
-            "confirm-final-review-route-binding",
-            "decide-final-review-operation",
-            "confirm-final-assessment-ordinal",
-            "confirm-extra-final-assessment-ordinal",
-            "confirm-final-route-evidence",
-            "confirm-final-review-provenance",
-            "confirm-incomplete-final-route-evidence",
-            "confirm-incomplete-final-review-provenance",
-            "confirm-final-route-settlement",
-            "choose-final-route-direction",
-            "confirm-final-review-findings",
-            "decide-final-backend-check",
-            "decide-final-review-readiness",
-            "confirm-completion-assessment",
-            "decide-required-evidence",
-            "decide-current-blockers",
-            "decide-validation-rework-authority",
-            "decide-final-review",
-            "await-user-direction",
-            "choose-user-direction",
-            "record-stopped",
-            "record-low-disposition",
-            "decide-low-result",
-            "decide-low-completion",
-            "record-stopped-goal-boundary",
-            "confirm-goal-assessment-core",
-            "confirm-stopped-goal-assessment-core",
-            "assess-goal",
-            "assess-stopped-goal",
-            "record-outcome",
-            "approve-closeout",
-            "closeout",
-            "record-stopped-outcome",
-            "approve-stopped-closeout",
-            "stopped-closeout",
-        },
-        "definition_items": {
-            "baseline-record": {
-                "review-route",
-                "review-target-scope",
-                "review-selection-summary",
-            },
-            "audit-record": {
-                "blocking-gap-count",
-                "eligible-low-gap-count",
-                "confirmation-needed-gap-count",
-                "blocking-rework-authority",
-            },
-            "audit-low-basis-record": {
-                "audit-basis-target",
-                "audit-basis-status",
-                "audit-low-finding-count",
-                "audit-low-finding-identities",
-                "audit-low-basis-summary",
-            },
-            "final-review-record": {
-                "review-route",
-                "review-operation",
-                "assessment-ordinal",
-                "prior-assessment-ordinal",
-                "assessment-ordinal-continuity",
-                "review-evidence-reference",
-                "backend-check-result",
-                "assessment-provenance",
-                "assessment-provenance-kind",
-                "waiver-summary",
-                "route-authorization-basis",
-                "route-change-authority-reference",
-                "prior-route-lifecycle-state",
-                "route-change-readiness",
-                "route-direction",
-                "finding-lineage-summary",
-                "remaining-review-authority-summary",
-                "corrected-target-summary",
-                "extra-assessment-authority-reference",
-                "route-binding-result",
-                "applicable-obligation-summary",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-                "pending-applicable-low-dispositions",
-                "current-applicable-blockers",
-                "required-evidence-gaps",
-            },
-            "low-disposition-record": {
-                "source-review-basis",
-                "completion-assessment-summary",
-                "completion-unmet-criteria",
-                "completion-unverified-criteria",
-                "pending-low-dispositions",
-                "current-blocking-findings",
-                "before-target",
-                "after-target",
-                "coverage-relationship",
-                "low-disposition-verification",
-            },
-            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
-            "outcome-record": {"outcome-summary"},
-        },
-        "definition_choices": {
-            ("baseline-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("final-review-record", "review-route"): {
-                "mulgae",
-                "orca",
-                "native-codex",
-                "waived",
-            },
-            ("final-review-record", "review-operation"): {
-                "complete",
-                "incomplete",
-                "failed",
-                "waived",
-            },
-            ("final-review-record", "assessment-provenance-kind"): {
-                "delegated-reviewer",
-                "coordinator-waiver",
-            },
-            ("final-review-record", "backend-check-result"): {
-                "pass",
-                "fail",
-                "not-provided",
-            },
-            ("final-review-record", "review-mode"): {
-                "remediation-eligible",
-                "confirmation-only",
-            },
-        },
-        "routes": {
-            "decide-gaps": {
-                "blocking-gaps": "remediate",
-                "low-only": "record-audit-low-basis",
-                "user-direction": "await-user-direction",
-            },
-            "decide-re-audit": {
-                "blocking-gaps": "remediate",
-                "low-only": "record-audit-low-basis",
-                "user-direction": "await-user-direction",
-            },
-            "decide-final-review-operation": {
-                "completed": "confirm-final-assessment-ordinal",
-                "waived": "confirm-final-assessment-ordinal",
-                "incomplete": "confirm-incomplete-final-route-evidence",
-                "failed": "confirm-incomplete-final-route-evidence",
-            },
-            "confirm-final-review-route-binding": {
-                "bound": "decide-final-review-operation",
-                "invalid": "record-incomplete",
-            },
-            "confirm-final-assessment-ordinal": {
-                "first": "confirm-final-route-evidence",
-                "second": "confirm-final-route-evidence",
-                "authorized-extra": "confirm-extra-final-assessment-ordinal",
-            },
-            "confirm-extra-final-assessment-ordinal": {
-                "authorized-extra": "confirm-final-route-evidence",
-            },
-            "confirm-final-route-evidence": {
-                "mulgae-pass": "confirm-final-review-provenance",
-                "mulgae-fail": "confirm-final-review-provenance",
-                "orca": "confirm-final-review-provenance",
-                "native-codex": "confirm-final-review-provenance",
-                "waived": "confirm-final-review-provenance",
-            },
-            "confirm-final-review-provenance": {
-                "delegated": "confirm-final-review-findings",
-                "waived": "confirm-final-review-findings",
-            },
-            "confirm-incomplete-final-route-evidence": {
-                "mulgae": "confirm-incomplete-final-review-provenance",
-                "orca": "confirm-incomplete-final-review-provenance",
-                "native-codex": "confirm-incomplete-final-review-provenance",
-            },
-            "confirm-incomplete-final-review-provenance": {
-                "delegated": "confirm-final-route-settlement",
-                "waived": "confirm-final-route-settlement",
-            },
-            "confirm-final-route-settlement": {
-                "active-current-only": "choose-final-route-direction",
-                "not-started-safe": "choose-final-route-direction",
-                "terminal-safe": "choose-final-route-direction",
-            },
-            "choose-final-route-direction": {
-                "resume-current": "final-review",
-                "switch-route": "final-review",
-                "waive": "final-review",
-                "stop": "record-stopped",
-            },
-            "confirm-final-review-findings": {
-                "resolved": "decide-final-backend-check",
-                "unresolved": "record-incomplete",
-            },
-            "decide-final-backend-check": {
-                "passed": "decide-final-review-readiness",
-                "failed": "decide-validation-rework-authority",
-                "not-provided": "decide-final-review-readiness",
-            },
-            "decide-final-review-readiness": {
-                "passed": "confirm-completion-assessment",
-                "incomplete": "record-review-operation-incomplete",
-            },
-            "confirm-completion-assessment": {
-                "complete": "decide-required-evidence",
-                "unmet": "decide-validation-rework-authority",
-                "unverified": "record-incomplete",
-            },
-            "decide-required-evidence": {
-                "complete": "decide-current-blockers",
-                "incomplete": "record-incomplete",
-            },
-            "decide-current-blockers": {
-                "clear": "decide-final-review",
-                "blocking": "decide-validation-rework-authority",
-            },
-            "decide-validation-rework-authority": {
-                "remediation": "audit",
-                "user-direction": "await-user-direction",
-            },
-            "choose-user-direction": {
-                "fix-and-review": "audit",
-                "stop": "record-stopped",
-            },
-            "decide-final-review": {
-                "low-disposition": "record-low-disposition",
-                "validated": "confirm-goal-assessment-core",
-            },
-            "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
-            "confirm-goal-assessment-core": {"ready": "assess-goal"},
-            "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
-            "assess-goal": {
-                "achieved": "record-outcome",
-                "not-achieved": "record-outcome",
-                "superseded": "record-outcome",
-            },
-            "approve-closeout": {
-                "approved": "closeout",
-                "changes-requested": "audit",
-            },
-            "assess-stopped-goal": {
-                "achieved": "record-stopped-outcome",
-                "not-achieved": "record-stopped-outcome",
-                "superseded": "record-stopped-outcome",
-            },
-            "approve-stopped-closeout": {
-                "approved": "stopped-closeout",
-                "changes-requested": "audit",
-            },
-        },
-        "evidence": {
-            "confirm-extra-final-assessment-ordinal": {
-                ("final-review", "assessment-ordinal"),
-            },
-            "confirm-final-review-provenance": {
-                ("final-review", "review-operation"),
-                ("final-review", "review-evidence-reference"),
-                ("final-review", "assessment-provenance"),
-                ("final-review", "assessment-provenance-kind"),
-                ("final-review", "waiver-summary"),
-            },
-            "confirm-incomplete-final-review-provenance": {
-                ("final-review", "review-operation"),
-                ("final-review", "review-evidence-reference"),
-                ("final-review", "assessment-provenance"),
-                ("final-review", "assessment-provenance-kind"),
-                ("final-review", "waiver-summary"),
-            },
-            "await-user-direction": {
-                ("final-review", "completion-assessment-summary"),
-                ("final-review", "completion-unmet-criteria"),
-                ("final-review", "completion-unverified-criteria"),
-                ("record-low-disposition", "source-review-basis"),
-                ("record-low-disposition", "low-disposition-summary"),
-                ("record-low-disposition", "current-blocking-findings"),
-                ("record-low-disposition", "after-target"),
-            },
-            "assess-goal": {
-                ("confirm-goal-assessment-core", None),
-                ("final-review", "completion-assessment-summary"),
-                ("final-review", "completion-unmet-criteria"),
-                ("final-review", "completion-unverified-criteria"),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-            },
-            "confirm-goal-assessment-core": {
-                ("capture-baseline", "baseline-summary"),
-                ("final-review", "review-route"),
-                ("final-review", "review-operation"),
-                ("final-review", "assessment-ordinal"),
-                ("final-review", "review-evidence-reference"),
-                ("final-review", "backend-check-result"),
-                ("final-review", "assessment-provenance"),
-                ("final-review", "assessment-provenance-kind"),
-            },
-            "assess-stopped-goal": {
-                ("confirm-stopped-goal-assessment-core", None),
-                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
-                ("final-review", "completion-assessment-summary"),
-                ("final-review", "completion-unmet-criteria"),
-                ("final-review", "completion-unverified-criteria"),
-                ("await-user-direction", "direction-classification"),
-                ("await-user-direction", "direction-summary"),
-            },
-            "confirm-stopped-goal-assessment-core": {
-                ("capture-baseline", "baseline-summary"),
-                ("final-review", "review-route"),
-                ("final-review", "review-operation"),
-                ("final-review", "assessment-provenance-kind"),
-            },
-            "approve-closeout": {("record-outcome", "outcome-summary")},
-            "approve-stopped-closeout": {("record-stopped-outcome", "outcome-summary")},
-        },
-    },
-    "aquarium-design-v2.yaml": {},
-    "aquarium-war-room-v2.yaml": {},
-}
+# Current handler compatibility is derived from the canonical Procedure structure.
+# Prior canonical digests remain admitted above so immutable session snapshots keep
+# their established compatibility without weakening current structural checks.
 LEGACY_PODWAY_PROCEDURES = (
     "root-kernel-task-v2.yaml",
     "root-kernel-goal-v2.yaml",
@@ -1778,6 +548,15 @@ def inspect_podway_handler_contract(
     if not isinstance(document, dict):
         return "incompatible", ["procedure_document_invalid"]
 
+    if canonical_content is None:
+        return "not_checked", ["canonical_procedure_unavailable"]
+    try:
+        canonical = yaml.safe_load(canonical_content)
+    except (UnicodeDecodeError, yaml.YAMLError):
+        return "not_checked", ["canonical_procedure_unreadable"]
+    if not isinstance(canonical, dict):
+        return "not_checked", ["canonical_procedure_invalid"]
+
     definitions = document.get("node_definitions")
     graph = document.get("graph")
     raw_nodes = graph.get("nodes") if isinstance(graph, dict) else None
@@ -1793,7 +572,75 @@ def inspect_podway_handler_contract(
         for node in raw_nodes
         if isinstance(node, dict) and isinstance(node.get("id"), str)
     }
-    contract = PODWAY_HANDLER_CONTRACTS[name]
+    canonical_definitions = canonical.get("node_definitions")
+    canonical_graph = canonical.get("graph")
+    canonical_nodes = (
+        canonical_graph.get("nodes") if isinstance(canonical_graph, dict) else None
+    )
+    if not isinstance(canonical_definitions, dict) or not isinstance(
+        canonical_nodes, list
+    ):
+        return "not_checked", ["canonical_procedure_structure_missing"]
+
+    contract: dict[str, Any] = {
+        "nodes": {
+            node["id"]
+            for node in canonical_nodes
+            if isinstance(node, dict) and isinstance(node.get("id"), str)
+        },
+        "definition_items": {},
+        "definition_choices": {},
+        "check_results": {},
+        "routes": {},
+        "evidence": {},
+    }
+    for definition_id, definition in canonical_definitions.items():
+        if not isinstance(definition_id, str) or not isinstance(definition, dict):
+            continue
+        items = definition.get("items")
+        if not isinstance(items, list):
+            continue
+        required_items = {
+            item["id"]
+            for item in items
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        if required_items:
+            contract["definition_items"][definition_id] = required_items
+        for item in items:
+            if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+                continue
+            choices = item.get("choices")
+            if isinstance(choices, list) and choices:
+                contract["definition_choices"][(definition_id, item["id"])] = set(
+                    choices
+                )
+            if item.get("type") == "check_result":
+                contract["check_results"][(definition_id, item["id"])] = {
+                    "operation_id": item.get("operation_id"),
+                    "operation_digest": item.get("operation_digest"),
+                    "required": item.get("required"),
+                    "required_when": item.get("required_when"),
+                }
+    for node in canonical_nodes:
+        if not isinstance(node, dict) or not isinstance(node.get("id"), str):
+            continue
+        node_id = node["id"]
+        routes = node.get("routes")
+        if isinstance(routes, dict) and routes:
+            contract["routes"][node_id] = {
+                option: route.get("to")
+                for option, route in routes.items()
+                if isinstance(option, str) and isinstance(route, dict)
+            }
+        evidence_from = node.get("evidence_from")
+        if isinstance(evidence_from, list) and evidence_from:
+            contract["evidence"][node_id] = {
+                (entry["node"], item)
+                for entry in evidence_from
+                if isinstance(entry, dict) and isinstance(entry.get("node"), str)
+                for item in (entry.get("items") or [None])
+            }
     reasons: list[str] = []
     missing_nodes = sorted(contract.get("nodes", set()) - nodes.keys())
     if missing_nodes:
@@ -1831,6 +678,30 @@ def inspect_podway_handler_contract(
         )
         if not required_choices.issubset(observed_choices):
             reasons.append(f"missing_required_choices:{definition_id}:{item_id}")
+
+    for (definition_id, item_id), expected in contract.get("check_results", {}).items():
+        definition = definitions.get(definition_id)
+        items = definition.get("items") if isinstance(definition, dict) else None
+        item = next(
+            (
+                candidate
+                for candidate in items or []
+                if isinstance(candidate, dict) and candidate.get("id") == item_id
+            ),
+            None,
+        )
+        observed = (
+            {
+                "operation_id": item.get("operation_id"),
+                "operation_digest": item.get("operation_digest"),
+                "required": item.get("required"),
+                "required_when": item.get("required_when"),
+            }
+            if isinstance(item, dict)
+            else None
+        )
+        if observed != expected:
+            reasons.append(f"incompatible_check_result:{definition_id}:{item_id}")
 
     for node_id, required_routes in contract.get("routes", {}).items():
         node = nodes.get(node_id)
@@ -1885,12 +756,6 @@ def inspect_podway_handler_contract(
 
     if reasons:
         return "incompatible", reasons
-    if canonical_content is None:
-        return "not_checked", ["canonical_procedure_unavailable"]
-    try:
-        canonical = yaml.safe_load(canonical_content)
-    except (UnicodeDecodeError, yaml.YAMLError):
-        return "not_checked", ["canonical_procedure_unreadable"]
     if podway_handler_structure(document) != podway_handler_structure(canonical):
         return "unqualified", ["unrecognized_semantic_customization"]
     return "compatible", []
