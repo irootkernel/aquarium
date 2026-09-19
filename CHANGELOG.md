@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Let Task workflows select Mulgae, Orca, a fresh native Codex subagent, or an explicit delegated-review waiver while preserving route-specific evidence and bounded remediation.
 - Let Task, Epic, and validation workflows use a complete composite execution SOT when no dossier is declared and the user explicitly waives it, with a separate dossier recommendation before the final waiver for larger work.
 - Raise the minimum supported Podway version to v0.2.10 and qualify the existing managed Procedures against its official Apple Silicon release.
 - Accept stable Humanizer and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, and reject duplicate skills visible to the same Codex home.

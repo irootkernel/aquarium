@@ -45,7 +45,7 @@ PREDICATE_OPERATORS = (
 
 def normalized_guards(option: dict) -> set[tuple[str, str, str | None, str, object]]:
     result = set()
-    for guard in option["guards"]:
+    for guard in option.get("guards", []):
         operators = [name for name in PREDICATE_OPERATORS if name in guard]
         assert len(operators) == 1
         operator = operators[0]
@@ -60,6 +60,26 @@ def normalized_guards(option: dict) -> set[tuple[str, str, str | None, str, obje
             )
         )
     return result
+
+
+def guards_match(option: dict, values: dict[tuple[str, str], object]) -> bool:
+    for node, item, field, operator, expected in normalized_guards(option):
+        value = values.get((node, item))
+        if field is not None and isinstance(value, dict):
+            value = value.get(field)
+        if operator == "equals" and value != expected:
+            return False
+        if operator == "not_equals" and value == expected:
+            return False
+        if operator == "empty" and (value not in {None, "", ()}) == expected:
+            return False
+        if operator == "non_empty" and (value not in {None, "", ()}) != expected:
+            return False
+        if operator == "at_least" and (value is None or value < expected):
+            return False
+        if operator == "at_most" and (value is None or value > expected):
+            return False
+    return True
 
 
 def options(procedure: dict, definition_id: str) -> dict[str, dict]:
@@ -149,6 +169,34 @@ def test_correction_matrix_has_complete_inventory_metadata() -> None:
     }
 
 
+def test_task_review_route_fixture_covers_required_task_paths() -> None:
+    cases = load_json("review-routing-cases.json")["task_review_route_cases"]
+
+    assert [case["id"] for case in cases] == [
+        f"TR-{index:02d}" for index in range(1, 9)
+    ]
+    assert {case["route"] for case in cases} == {
+        "mulgae",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+    assert {
+        "completion-gates",
+        "blocking-finding-rework",
+        "ordinary-low-settlement",
+        "unverified-review-evidence",
+        "explicit-route-direction",
+        "coordinator-completion-gates",
+        "prior-blocking-finding-preserved-after-switch",
+    } <= {case["expected"] for case in cases}
+    assert all(
+        case["ordinal"] is None
+        for case in cases
+        if case["operation"] in {"incomplete", "failed"}
+    )
+
+
 def test_low_completion_routes_to_goal_assessment_without_a_review_loop() -> None:
     for name in (
         "aquarium-task-v2.yaml",
@@ -197,24 +245,63 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
         item["id"] for item in task["node_definitions"]["review-record"]["items"]
     }
     assert "extra-review-authorization" not in review_items
-    assert (
-        graph["confirm-review-findings"]["routes"]["resolved"]["to"]
-        == "decide-review-ci"
-    )
-    assert graph["decide-review-ci"]["routes"] == {
+    assert graph["document"]["next"] == "prepare-review"
+    assert graph["prepare-review"]["next"] == "authorize-review-route"
+    assert graph["review"]["next"] == "confirm-review-route-binding"
+    assert set(graph["confirm-review-route-binding"]["routes"]) == {
+        "mulgae",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+    assert graph["decide-review-operation"]["routes"] == {
+        "completed": {"to": "confirm-assessment-ordinal", "effect": "advance"},
+        "waived": {"to": "confirm-assessment-ordinal", "effect": "advance"},
+        "incomplete": {
+            "to": "confirm-incomplete-review-evidence",
+            "effect": "advance",
+        },
+        "failed": {
+            "to": "confirm-incomplete-review-evidence",
+            "effect": "advance",
+        },
+    }
+    assert set(graph["confirm-review-evidence"]["routes"]) == {
+        "mulgae-pass",
+        "mulgae-fail",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+    assert {
+        route["to"] for route in graph["confirm-review-evidence"]["routes"].values()
+    } == {"confirm-review-findings"}
+    assert graph["confirm-assessment-ordinal"]["routes"] == {
+        option: {"to": "confirm-review-evidence", "effect": "advance"}
+        for option in ("first", "second", "third", "fourth", "authorized-extra")
+    }
+    assert graph["decide-backend-check"]["routes"] == {
         "passed": {"to": "confirm-review-completion", "effect": "advance"},
         "failed": {"to": "decide-task-rework-authority", "effect": "advance"},
+        "not-provided": {
+            "to": "confirm-review-completion",
+            "effect": "advance",
+        },
     }
+    assert (
+        graph["confirm-review-findings"]["routes"]["resolved"]["to"]
+        == "decide-backend-check"
+    )
     assert graph["confirm-review-completion"]["routes"] == {
         "complete": {"to": "decide-review", "effect": "advance"},
         "unmet": {"to": "decide-task-rework-authority", "effect": "advance"},
-        "unverified": {"to": "review", "effect": "rework"},
+        "unverified": {"to": "prepare-review", "effect": "rework"},
     }
     assert graph["decide-review"]["routes"] == {
         "clean": {"to": "assess-goal", "effect": "advance"},
         "blocking": {"to": "decide-task-rework-authority", "effect": "advance"},
         "low-disposition": {"to": "record-low-disposition", "effect": "advance"},
-        "inconsistent": {"to": "review", "effect": "rework"},
+        "inconsistent": {"to": "prepare-review", "effect": "rework"},
     }
     assert graph["decide-task-rework-authority"]["routes"] == {
         "remediation": {"to": "decide-implementation-owner", "effect": "advance"},
@@ -235,6 +322,27 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
         },
         "stop": {"to": "assess-goal", "effect": "advance"},
     }
+    assert graph["choose-review-route-direction"]["routes"] == {
+        "resume-current": {"to": "review", "effect": "rework"},
+        "switch-route": {"to": "prepare-review", "effect": "rework"},
+        "waive": {"to": "prepare-review", "effect": "rework"},
+        "stop": {"to": "record-review-route-stop", "effect": "advance"},
+    }
+    assert graph["confirm-review-route-settlement"]["routes"] == {
+        "not-started-safe": {
+            "to": "choose-review-route-direction",
+            "effect": "advance",
+        },
+        "active-current-only": {
+            "to": "choose-review-route-direction",
+            "effect": "advance",
+        },
+        "terminal-safe": {
+            "to": "choose-review-route-direction",
+            "effect": "advance",
+        },
+    }
+    assert graph["record-review-route-stop"]["next"] == "assess-goal"
     assert (
         graph["decide-implementation-owner"]["routes"]["clear"]["to"]
         == "decide-verification-owner"
@@ -244,7 +352,7 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
         == "decide-documentation-owner"
     )
     assert graph["decide-documentation-owner"]["routes"]["clear"] == {
-        "to": "review",
+        "to": "prepare-review",
         "effect": "rework",
     }
     for definition_id, item_id in (
@@ -285,6 +393,307 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
             "equals",
             "consistent",
         ) in normalized_guards(review_options[option_id])
+
+
+def test_task_review_route_evidence_combinations_are_guarded() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    assert task["version"] == "13"
+
+    plan_items = {
+        item["id"]: item for item in task["node_definitions"]["plan-record"]["items"]
+    }
+    checkpoint_items = {
+        item["id"]: item
+        for item in task["node_definitions"]["review-checkpoint-record"]["items"]
+    }
+    review_items = {
+        item["id"]: item for item in task["node_definitions"]["review-record"]["items"]
+    }
+    routes = ["mulgae", "orca", "native-codex", "waived"]
+    assert plan_items["review-route"]["choices"] == routes
+    assert checkpoint_items["effective-review-route"]["choices"] == routes
+    assert checkpoint_items["route-authorization-basis"]["choices"] == [
+        "approved-plan",
+        "explicit-route-change",
+        "explicit-waiver",
+    ]
+    assert all(
+        checkpoint_items[item_id]["required"] is True
+        for item_id in (
+            "finding-lineage-summary",
+            "remaining-review-authority-summary",
+            "corrected-target-summary",
+        )
+    )
+    assert review_items["review-route"]["choices"] == routes
+    assert review_items["review-operation"]["choices"] == [
+        "complete",
+        "incomplete",
+        "failed",
+        "waived",
+    ]
+    assert review_items["backend-check-result"]["choices"] == [
+        "pass",
+        "fail",
+        "not-provided",
+    ]
+    assert review_items["assessment-ordinal"]["required"] is False
+    assert review_items["assessment-ordinal"]["required_when"] == [
+        {"item": "review-operation", "not_equals": "incomplete"},
+        {"item": "review-operation", "not_equals": "failed"},
+    ]
+    ordinal_check = review_items["assessment-ordinal-continuity"]
+    assert ordinal_check["type"] == "check_result"
+    assert ordinal_check["required"] is True
+    assert ordinal_check["operation_id"] == "aquarium-task-review-ordinal-continuity"
+    assert ordinal_check["operation_digest"] == (
+        "sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a"
+    )
+    assert ordinal_check["accepted_outcomes"] == ["pass", "fail", "inconclusive"]
+
+    operation_options = options(task, "review-operation-decision")
+    for option_id in ("incomplete", "failed"):
+        assert (
+            "review",
+            "assessment-ordinal",
+            None,
+            "empty",
+            True,
+        ) in normalized_guards(operation_options[option_id])
+
+    evidence_options = options(task, "review-evidence-decision")
+    assert set(evidence_options) == {
+        "mulgae-pass",
+        "mulgae-fail",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+    assert (
+        "review",
+        "backend-check-result",
+        None,
+        "equals",
+        "not-provided",
+    ) not in normalized_guards(evidence_options["mulgae-pass"])
+    assert (
+        "review",
+        "backend-check-result",
+        None,
+        "equals",
+        "not-provided",
+    ) in normalized_guards(evidence_options["orca"])
+    assert (
+        "review",
+        "backend-check-result",
+        None,
+        "equals",
+        "not-provided",
+    ) in normalized_guards(evidence_options["native-codex"])
+    assert {
+        ("review", "review-operation", None, "equals", "waived"),
+        (
+            "review",
+            "assessment-provenance",
+            None,
+            "equals",
+            "coordinator-waiver",
+        ),
+        ("review", "waiver-summary", None, "non_empty", True),
+    } <= normalized_guards(evidence_options["waived"])
+
+
+def test_task_route_fixtures_traverse_only_guarded_options() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    cases = load_json("review-routing-cases.json")["task_review_route_cases"]
+    route_authorization_options = options(task, "review-route-authorization-decision")
+    route_binding_options = options(task, "review-route-binding-decision")
+    operation_options = options(task, "review-operation-decision")
+    ordinal_options = options(task, "assessment-ordinal-decision")
+    completed_options = options(task, "review-evidence-decision")
+    incomplete_options = options(task, "incomplete-review-evidence-decision")
+    settlement_options = options(task, "review-route-settlement-decision")
+    recovery_options = options(task, "review-route-direction-decision")
+
+    for case in cases:
+        values = {
+            ("record-plan", "review-route"): case["plan_route"],
+            ("prepare-review", "effective-review-route"): case["route"],
+            (
+                "prepare-review",
+                "route-authorization-basis",
+            ): case["route_authorization_basis"],
+            (
+                "prepare-review",
+                "route-change-authority-reference",
+            ): case.get("route_change_authority_reference"),
+            (
+                "prepare-review",
+                "prior-assessment-ordinal",
+            ): case["prior_ordinal"],
+            ("review", "review-route"): case["route"],
+            ("review", "review-operation"): case["operation"],
+            ("review", "assessment-ordinal"): case["ordinal"],
+            ("review", "assessment-ordinal-continuity"): {"outcome": "pass"},
+            ("review", "review-mode"): (
+                "remediation-eligible"
+                if case["ordinal"] is None or case["ordinal"] <= 3
+                else "confirmation-only"
+            ),
+            ("review", "review-evidence-reference"): f"evidence:{case['id']}",
+            ("review", "backend-check-result"): case["backend_check"],
+            ("review", "assessment-provenance"): case["provenance"],
+            ("review", "waiver-summary"): case["waiver_summary"],
+        }
+        with_case = f"case {case['id']}"
+        assert guards_match(
+            route_authorization_options[case["route_authorization_option"]], values
+        ), with_case
+        assert guards_match(route_binding_options[case["route"]], values), with_case
+        assert guards_match(operation_options[case["operation_option"]], values), (
+            with_case
+        )
+        if "ordinal_option" in case:
+            assert guards_match(ordinal_options[case["ordinal_option"]], values), (
+                with_case
+            )
+        route_options = (
+            completed_options
+            if case["operation"] in {"complete", "waived"}
+            else incomplete_options
+        )
+        assert guards_match(route_options[case["evidence_option"]], values), with_case
+
+        if "settlement_option" in case:
+            values.update(
+                {
+                    (
+                        "record-review-route-direction",
+                        "prior-route-lifecycle-state",
+                    ): case["prior_state"],
+                    (
+                        "record-review-route-direction",
+                        "route-change-readiness",
+                    ): case["route_change_readiness"],
+                }
+            )
+            assert guards_match(
+                settlement_options[case["settlement_option"]], values
+            ), with_case
+            assert guards_match(recovery_options[case["recovery_option"]], values), (
+                with_case
+            )
+
+    invalid_static = {
+        ("review", "review-route"): "orca",
+        ("review", "backend-check-result"): "pass",
+        ("review", "review-evidence-reference"): "orca:delivery",
+        ("review", "assessment-provenance"): "coordinator-waiver",
+        ("review", "waiver-summary"): None,
+    }
+    assert not any(
+        guards_match(option, invalid_static) for option in incomplete_options.values()
+    )
+
+    unauthorized_initial_switch = {
+        ("record-plan", "review-route"): "mulgae",
+        ("prepare-review", "effective-review-route"): "orca",
+        ("prepare-review", "route-authorization-basis"): "approved-plan",
+        ("prepare-review", "route-change-authority-reference"): None,
+    }
+    assert not any(
+        guards_match(option, unauthorized_initial_switch)
+        for option in route_authorization_options.values()
+    )
+
+    active = {
+        (
+            "record-review-route-direction",
+            "prior-route-lifecycle-state",
+        ): "active-or-unknown",
+        (
+            "record-review-route-direction",
+            "route-change-readiness",
+        ): "current-route-only",
+    }
+    assert guards_match(settlement_options["active-current-only"], active)
+    assert not guards_match(recovery_options["switch-route"], active)
+    assert not guards_match(recovery_options["waive"], active)
+    assert guards_match(recovery_options["resume-current"], active)
+    assert guards_match(recovery_options["stop"], active)
+
+    active_bypass = {
+        **active,
+        ("record-plan", "review-route"): "mulgae",
+        ("prepare-review", "effective-review-route"): "orca",
+        ("prepare-review", "route-authorization-basis"): "explicit-route-change",
+        ("prepare-review", "route-change-authority-reference"): "attempted bypass",
+        ("prepare-review", "prior-assessment-ordinal"): 0,
+        ("review", "review-operation"): "incomplete",
+        ("review", "review-route"): "mulgae",
+    }
+    assert nodes(task)["choose-review-route-direction"]["routes"]["resume-current"] == {
+        "to": "review",
+        "effect": "rework",
+    }
+    assert not any(
+        guards_match(option, active_bypass)
+        for option_id, option in route_authorization_options.items()
+        if option_id.startswith(("changed-", "completed-change-"))
+    )
+    assert not guards_match(route_binding_options["orca"], active_bypass)
+
+    safe_switch = {
+        ("prepare-review", "effective-review-route"): "native-codex",
+        ("prepare-review", "route-authorization-basis"): "explicit-route-change",
+        ("prepare-review", "route-change-authority-reference"): "user switch",
+        (
+            "record-review-route-direction",
+            "route-change-readiness",
+        ): "safe-to-change",
+    }
+    assert guards_match(
+        route_authorization_options["changed-native-codex"], safe_switch
+    )
+
+    first_with_confirmation_mode = {
+        ("prepare-review", "prior-assessment-ordinal"): 0,
+        ("review", "assessment-ordinal"): 1,
+        ("review", "review-mode"): "confirmation-only",
+        ("review", "assessment-ordinal-continuity"): {"outcome": "pass"},
+    }
+    assert not guards_match(ordinal_options["first"], first_with_confirmation_mode)
+
+    unverified_extra_jump = {
+        ("prepare-review", "prior-assessment-ordinal"): 4,
+        ("prepare-review", "extra-assessment-authority-reference"): "user authority",
+        ("review", "assessment-ordinal"): 99,
+        ("review", "review-mode"): "confirmation-only",
+        ("review", "assessment-ordinal-continuity"): {"outcome": "fail"},
+    }
+    assert not guards_match(ordinal_options["authorized-extra"], unverified_extra_jump)
+
+    achieved = options(task, "goal-assessment")["achieved"]
+    assert not guards_match(
+        achieved,
+        {
+            (
+                "record-review-route-stop",
+                "route-stop-classification",
+            ): "stopped-unsuccessfully"
+        },
+    )
+
+    switched = next(case for case in cases if case["id"] == "TR-08")
+    assert switched["ordinal"] == 2
+    assert switched["prior_finding_lineage"] == ["F-1"]
+    assert switched["remaining_review_authority"] == "confirmation only"
+    assert switched["corrected_target_assessment"] is True
+    assert nodes(task)["choose-review-route-direction"]["routes"]["switch-route"] == {
+        "to": "prepare-review",
+        "effect": "rework",
+    }
+    assert "prepare-review" in task["manual_rework"]["allowed_targets"]
 
 
 def test_goal_routes_completion_findings_authority_and_low_handling_serially() -> None:

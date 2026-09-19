@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "12"
+version: "13"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -21,6 +21,29 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
+      - id: review-route
+        type: choice
+        prompt: Record the selected completion-review route for this Task envelope.
+        required: true
+        choices:
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: review-target-scope
+        type: text
+        prompt: Record the exact review target scope and excluded unrelated state.
+        required: true
+        min_length: 1
+        max_length: 1000
+        multiline: true
+      - id: review-selection-summary
+        type: text
+        prompt: Record the route selection authority, explicit Orca reviewer or native delegation requirement when applicable, and waiver authority and assurance limit when waived.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
       - id: plan-handoff-artifact
         type: artifact
         prompt: Attach the approved Markdown plan only for an explicit plan handoff.
@@ -30,14 +53,14 @@ node_definitions:
   implementation-entry-record:
     type: action
     title: Prepare implementation entry
-    intent: Bind implementation either to the approved plan or to an operationally complete failed review CI decision.
+    intent: Bind implementation either to the approved plan or to an admitted failed backend-check or semantic review decision.
     instructions:
       - Reconstruct the approved plan and exact first-entry or rework cause before delegating implementation.
       - Do not manufacture fresh authority or evidence from an older attempt.
     items:
       - id: implementation-entry-summary
         type: text
-        prompt: Record the approved-plan basis on first entry or the exact failed review CI and rework basis on CI re-entry.
+        prompt: Record the approved-plan basis on first entry or the exact admitted review evidence and rework basis on re-entry.
         required: true
         min_length: 1
         max_length: 3000
@@ -155,19 +178,284 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
+  review-checkpoint-record:
+    type: action
+    title: Prepare the review checkpoint
+    intent: Bind the next review operation to the approved route or one explicit route change while preserving completed-checkpoint lineage.
+    instructions:
+      - Use the approved plan route unless the user explicitly authorized one bounded route change or delegated-review waiver.
+      - For any route change after a started operation, carry its authoritative evidence reference, prior completed ordinal, findings, remaining authority, and corrected-target obligation.
+      - This action records authority and lineage only; it does not launch a reviewer, waive review, or consume an assessment ordinal.
+    items:
+      - id: effective-review-route
+        type: choice
+        prompt: Record the exact route authorized for the next review operation.
+        required: true
+        choices:
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: route-authorization-basis
+        type: choice
+        prompt: Record whether the route remains the approved plan route or comes from an explicit later change or waiver.
+        required: true
+        choices:
+          - approved-plan
+          - explicit-route-change
+          - explicit-waiver
+      - id: route-change-authority-reference
+        type: text
+        prompt: For an explicit change or waiver, record the user authority and prior operation or completed-checkpoint evidence reference.
+        required: false
+        required_when:
+          - item: route-authorization-basis
+            not_equals: approved-plan
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: prior-assessment-ordinal
+        type: integer
+        prompt: Record the number of the most recent completed assessment for this goal revision, using zero before the first completed checkpoint.
+        required: true
+        minimum: 0
+      - id: finding-lineage-summary
+        type: text
+        prompt: Preserve every earlier unresolved or corrected finding identity and its current disposition, or record none for the initial checkpoint.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: remaining-review-authority-summary
+        type: text
+        prompt: Record the remaining remediation and confirmation authority without resetting it for a route change.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: corrected-target-summary
+        type: text
+        prompt: Record the exact corrected target that still requires assessment, or state that no correction is pending.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: extra-assessment-authority-reference
+        type: text
+        prompt: Record explicit user authority for an assessment after ordinal four; otherwise leave absent.
+        required: false
+        min_length: 1
+        max_length: 2000
+        multiline: true
+  review-route-authorization-decision:
+    type: decision
+    title: Authorize the review route
+    objective: Admit only the approved plan route or an explicitly authorized later route change.
+    prompt: Which route authority applies to the next review operation?
+    options:
+      - id: planned-mulgae
+        label: Use planned Mulgae route
+        criteria: The approved plan and effective checkpoint route are both Mulgae.
+        guards:
+          - evidence: {node: record-plan, item: review-route}
+            equals: mulgae
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: mulgae
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: approved-plan
+      - id: planned-orca
+        label: Use planned Orca route
+        criteria: The approved plan and effective checkpoint route are both Orca.
+        guards:
+          - evidence: {node: record-plan, item: review-route}
+            equals: orca
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: orca
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: approved-plan
+      - id: planned-native-codex
+        label: Use planned native Codex route
+        criteria: The approved plan and effective checkpoint route are both native Codex.
+        guards:
+          - evidence: {node: record-plan, item: review-route}
+            equals: native-codex
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: native-codex
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: approved-plan
+      - id: planned-waiver
+        label: Use planned waiver route
+        criteria: The approved plan and effective checkpoint route are both the explicit waiver.
+        guards:
+          - evidence: {node: record-plan, item: review-route}
+            equals: waived
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: waived
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: approved-plan
+      - id: changed-mulgae
+        label: Use explicitly changed Mulgae route
+        criteria: A later explicit route change with prior-checkpoint lineage authorizes Mulgae.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: mulgae
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: changed-orca
+        label: Use explicitly changed Orca route
+        criteria: A later explicit route change with prior-checkpoint lineage authorizes Orca.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: orca
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: changed-native-codex
+        label: Use explicitly changed native Codex route
+        criteria: A later explicit route change with prior-checkpoint lineage authorizes native Codex.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: native-codex
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: changed-waiver
+        label: Use explicitly authorized waiver
+        criteria: A later explicit waiver with prior-checkpoint lineage authorizes coordinator assessment.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: waived
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-waiver
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: completed-change-mulgae
+        label: Change a completed checkpoint to Mulgae
+        criteria: Explicit authority changes a previously completed checkpoint to Mulgae while preserving its lineage.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: mulgae
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            at_least: 1
+          - evidence: {node: review, item: review-operation}
+            not_equals: incomplete
+          - evidence: {node: review, item: review-operation}
+            not_equals: failed
+      - id: completed-change-orca
+        label: Change a completed checkpoint to Orca
+        criteria: Explicit authority changes a previously completed checkpoint to Orca while preserving its lineage.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: orca
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            at_least: 1
+          - evidence: {node: review, item: review-operation}
+            not_equals: incomplete
+          - evidence: {node: review, item: review-operation}
+            not_equals: failed
+      - id: completed-change-native-codex
+        label: Change a completed checkpoint to native Codex
+        criteria: Explicit authority changes a previously completed checkpoint to native Codex while preserving its lineage.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: native-codex
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-route-change
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            at_least: 1
+          - evidence: {node: review, item: review-operation}
+            not_equals: incomplete
+          - evidence: {node: review, item: review-operation}
+            not_equals: failed
+      - id: completed-change-waiver
+        label: Waive after a completed checkpoint
+        criteria: Explicit waiver authority changes a previously completed checkpoint to coordinator assessment while preserving its lineage.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: waived
+          - evidence: {node: prepare-review, item: route-authorization-basis}
+            equals: explicit-waiver
+          - evidence: {node: prepare-review, item: route-change-authority-reference}
+            non_empty: true
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            at_least: 1
+          - evidence: {node: review, item: review-operation}
+            not_equals: incomplete
+          - evidence: {node: review, item: review-operation}
+            not_equals: failed
+    reason:
+      required: true
+      prompt: Explain the effective route, authority basis, and preserved checkpoint lineage.
   review-record:
     type: action
-    title: Record Mulgae review
-    intent: Record complete review capture and adjudicated findings.
+    title: Record selected completion review
+    intent: Record the route-specific operation, evidence, completion assessment, and adjudicated findings without claiming another backend's guarantees.
     instructions:
-      - Use task-review for one exact authorized full target and preserve original-root lineage, operational evidence, CI, and finding identities.
+      - Use task-review for the route selected in the approved plan and one exact authorized full target; preserve route-specific lifecycle evidence, provenance, backend checks, and finding lineage.
       - Review is report-only; do not edit files or start another root solely because eligible Low findings exist.
+      - An incomplete or failed operation consumes no assessment ordinal and stops for explicit route direction without automatic fallback.
     items:
-      - id: review-round
-        type: integer
-        prompt: Record the positive review ordinal, counting each original root once for the current goal revision.
+      - id: review-route
+        type: choice
+        prompt: Record the effective route for this operation.
         required: true
+        choices:
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: review-operation
+        type: choice
+        prompt: Record the authoritative operation state.
+        required: true
+        choices:
+          - complete
+          - incomplete
+          - failed
+          - waived
+      - id: assessment-ordinal
+        type: integer
+        prompt: Record the positive assessment ordinal only for a completed delegated review or completed waiver assessment.
+        required: false
+        required_when:
+          - item: review-operation
+            not_equals: incomplete
+          - item: review-operation
+            not_equals: failed
         minimum: 1
+      - id: assessment-ordinal-continuity
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-task-review-ordinal-continuity; Podway does not execute or attest the operation.
+        help: The declared operation is "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized remediation or confirmation mode." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        required: true
+        operation_id: aquarium-task-review-ordinal-continuity
+        operation_digest: sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
       - id: review-mode
         type: choice
         prompt: Record whether this round may trigger remediation or is confirmation-only.
@@ -175,16 +463,38 @@ node_definitions:
         choices:
           - remediation-eligible
           - confirmation-only
-      - id: review-run-id
+      - id: review-evidence-reference
         type: text
-        prompt: Record the exact committed Mulgae root or verified composite review run ID; verify the original root and role sources through review_composition for a composite.
+        prompt: Record the bounded native lifecycle, host-delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
         required: true
         min_length: 1
-        max_length: 128
+        max_length: 2000
+        multiline: true
+      - id: backend-check-result
+        type: choice
+        prompt: Record the authoritative native backend check, or not-provided when the selected route has no backend check.
+        required: true
+        choices:
+          - pass
+          - fail
+          - not-provided
+      - id: assessment-provenance
+        type: text
+        prompt: Record bounded reviewer provenance, or coordinator-waiver for an explicit waiver.
+        required: true
+        min_length: 1
+        max_length: 1000
+        multiline: true
+      - id: waiver-summary
+        type: text
+        prompt: For a waived route, record explicit authority, target, reason, and assurance limitation; otherwise leave absent.
+        required: false
+        min_length: 1
+        max_length: 3000
         multiline: true
       - id: review-summary
         type: text
-        prompt: Record target, operational completion, coverage, publication, CI decision, findings query, and dispositions.
+        prompt: Record target, route-specific operation and coverage, backend check, finding evidence, and dispositions without claiming another backend's guarantees.
         required: true
         min_length: 1
         max_length: 6000
@@ -206,16 +516,9 @@ node_definitions:
         prompt: Record the number of actual requirements assessed as unverified across all accepted selected-role reports.
         required: true
         minimum: 0
-      - id: ci-decision
-        type: choice
-        prompt: Record the exact Mulgae CI decision for this operationally complete review.
-        required: true
-        choices:
-          - pass
-          - fail
       - id: reported-severity-summary
         type: text
-        prompt: Record finding IDs and provider-reported severities before local adjudication, or none.
+        prompt: Record finding IDs and reviewer-reported severities before local adjudication, or none.
         required: true
         min_length: 1
         max_length: 4000
@@ -259,7 +562,7 @@ node_definitions:
         minimum: 0
       - id: implementation-rework-obligations
         type: integer
-        prompt: Record the routing total for CI remediation, unresolved implementation or refinement findings, and unmet completion criteria owned by implementation or refinement.
+        prompt: Record the routing total for backend-check remediation, unresolved implementation or refinement findings, and unmet completion criteria owned by implementation or refinement.
         required: true
         minimum: 0
       - id: documentation-rework-obligations
@@ -272,13 +575,377 @@ node_definitions:
         prompt: Record unmet completion criteria owned by verification. Assign every unmet criterion to implementation or refinement, verification, or documentation before routing.
         required: true
         minimum: 0
+  review-route-binding-decision:
+    type: decision
+    title: Bind review record to authorized route
+    objective: Reject a review record whose route differs from the authorized checkpoint route.
+    prompt: Does the review record use the authorized route?
+    options:
+      - id: mulgae
+        label: Authorized Mulgae record
+        criteria: The prepared and recorded routes are both Mulgae.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: mulgae
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+      - id: orca
+        label: Authorized Orca record
+        criteria: The prepared and recorded routes are both Orca.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: orca
+          - evidence: {node: review, item: review-route}
+            equals: orca
+      - id: native-codex
+        label: Authorized native Codex record
+        criteria: The prepared and recorded routes are both native Codex.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: native-codex
+          - evidence: {node: review, item: review-route}
+            equals: native-codex
+      - id: waived
+        label: Authorized waiver record
+        criteria: The prepared and recorded routes are both waived.
+        guards:
+          - evidence: {node: prepare-review, item: effective-review-route}
+            equals: waived
+          - evidence: {node: review, item: review-route}
+            equals: waived
+    reason:
+      required: true
+      prompt: Explain the authorized and recorded route identity.
+  review-operation-decision:
+    type: decision
+    title: Classify review operation
+    objective: Admit semantic review decisions only after a completed delegated review or waiver assessment.
+    prompt: What authoritative operation state was recorded?
+    evidence_guidance:
+      - Completed delegated routes use complete, a waiver uses waived, and failed or incomplete operations stop for explicit route direction without consuming an ordinal.
+    options:
+      - id: completed
+        label: Delegated review completed
+        criteria: A delegated route completed and recorded a positive assessment ordinal.
+        guards:
+          - evidence:
+              node: review
+              item: review-route
+            not_equals: waived
+          - evidence:
+              node: review
+              item: review-operation
+            equals: complete
+          - evidence:
+              node: review
+              item: assessment-ordinal
+            at_least: 1
+      - id: waived
+        label: Waiver assessment completed
+        criteria: The selected waived route completed its coordinator assessment and recorded a positive ordinal.
+        guards:
+          - evidence:
+              node: review
+              item: review-route
+            equals: waived
+          - evidence:
+              node: review
+              item: review-operation
+            equals: waived
+          - evidence:
+              node: review
+              item: assessment-ordinal
+            at_least: 1
+      - id: incomplete
+        label: Review operation incomplete
+        criteria: A delegated operation is incomplete and consumed no assessment ordinal.
+        guards:
+          - evidence:
+              node: review
+              item: review-route
+            not_equals: waived
+          - evidence:
+              node: review
+              item: review-operation
+            equals: incomplete
+          - evidence:
+              node: review
+              item: assessment-ordinal
+            empty: true
+      - id: failed
+        label: Review operation failed
+        criteria: A delegated operation failed and consumed no assessment ordinal.
+        guards:
+          - evidence:
+              node: review
+              item: review-route
+            not_equals: waived
+          - evidence:
+              node: review
+              item: review-operation
+            equals: failed
+          - evidence:
+              node: review
+              item: assessment-ordinal
+            empty: true
+    reason:
+      required: true
+      prompt: Explain the operation state and ordinal treatment using authoritative route evidence.
+  assessment-ordinal-decision:
+    type: decision
+    title: Validate assessment ordinal
+    objective: Consume exactly the next bounded ordinal after a completed delegated review or waiver assessment.
+    prompt: Does this completed checkpoint use the next authorized assessment ordinal?
+    options:
+      - id: first
+        label: First assessment
+        criteria: No earlier assessment completed and this checkpoint consumes ordinal one.
+        guards:
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            equals: 0
+          - evidence: {node: review, item: assessment-ordinal}
+            equals: 1
+          - evidence: {node: review, item: review-mode}
+            equals: remediation-eligible
+          - evidence: {node: review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: second
+        label: Second assessment
+        criteria: Ordinal one completed earlier and this checkpoint consumes ordinal two.
+        guards:
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            equals: 1
+          - evidence: {node: review, item: assessment-ordinal}
+            equals: 2
+          - evidence: {node: review, item: review-mode}
+            equals: remediation-eligible
+          - evidence: {node: review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: third
+        label: Third assessment
+        criteria: Ordinal two completed earlier and this checkpoint consumes ordinal three.
+        guards:
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            equals: 2
+          - evidence: {node: review, item: assessment-ordinal}
+            equals: 3
+          - evidence: {node: review, item: review-mode}
+            equals: remediation-eligible
+          - evidence: {node: review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: fourth
+        label: Fourth assessment
+        criteria: Ordinal three completed earlier and this confirmation consumes ordinal four.
+        guards:
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            equals: 3
+          - evidence: {node: review, item: assessment-ordinal}
+            equals: 4
+          - evidence: {node: review, item: review-mode}
+            equals: confirmation-only
+          - evidence: {node: review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: authorized-extra
+        label: User-authorized extra confirmation
+        criteria: At least four assessments completed and the user explicitly authorized this later confirmation checkpoint.
+        guards:
+          - evidence: {node: prepare-review, item: prior-assessment-ordinal}
+            at_least: 4
+          - evidence: {node: review, item: assessment-ordinal}
+            at_least: 5
+          - evidence: {node: review, item: review-mode}
+            equals: confirmation-only
+          - evidence: {node: prepare-review, item: extra-assessment-authority-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+    reason:
+      required: true
+      prompt: Explain the prior completed ordinal and authority for this newly consumed checkpoint.
+  review-evidence-decision:
+    type: decision
+    title: Validate route-specific review evidence
+    objective: Admit only the completed evidence combinations supported by the selected route.
+    prompt: Which valid route-specific evidence combination completed?
+    evidence_guidance:
+      - Reject cross-backend claims, missing Mulgae CI, delegated coordinator-waiver provenance, and waiver records without their explicit summary.
+    options:
+      - id: mulgae-pass
+        label: Mulgae evidence with passing CI
+        criteria: Mulgae completed with exact native evidence, reviewer provenance, and passing CI.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+          - evidence: {node: review, item: review-operation}
+            equals: complete
+          - evidence: {node: review, item: backend-check-result}
+            equals: pass
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: mulgae-fail
+        label: Mulgae evidence with failing CI
+        criteria: Mulgae completed with exact native evidence, reviewer provenance, and failing CI.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+          - evidence: {node: review, item: review-operation}
+            equals: complete
+          - evidence: {node: review, item: backend-check-result}
+            equals: fail
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: orca
+        label: Orca review evidence
+        criteria: Orca completed with authoritative lifecycle evidence and no backend check claim.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: orca
+          - evidence: {node: review, item: review-operation}
+            equals: complete
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: native-codex
+        label: Native Codex review evidence
+        criteria: A fresh host delegation completed with reviewer provenance and no backend check claim.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: native-codex
+          - evidence: {node: review, item: review-operation}
+            equals: complete
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: waived
+        label: Explicit waiver assessment
+        criteria: The coordinator completed the explicitly authorized waiver assessment with its assurance limitation.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: waived
+          - evidence: {node: review, item: review-operation}
+            equals: waived
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            non_empty: true
+    reason:
+      required: true
+      prompt: Explain why the selected route's completed evidence combination is admissible.
+  incomplete-review-evidence-decision:
+    type: decision
+    title: Validate incomplete route evidence
+    objective: Admit only failed or incomplete evidence combinations supported by the selected delegated route.
+    prompt: Which valid route-specific operation evidence was retained?
+    evidence_guidance:
+      - Static routes never claim a backend check, delegated routes never use coordinator-waiver provenance, and a waiver never records failed or incomplete.
+    options:
+      - id: mulgae-pass
+        label: Incomplete Mulgae operation with passing CI
+        criteria: The incomplete or failed Mulgae operation retained an observed passing backend check.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+          - evidence: {node: review, item: backend-check-result}
+            equals: pass
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: mulgae-fail
+        label: Incomplete Mulgae operation with failing CI
+        criteria: The incomplete or failed Mulgae operation retained an observed failing backend check.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+          - evidence: {node: review, item: backend-check-result}
+            equals: fail
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: mulgae-not-provided
+        label: Incomplete Mulgae operation without CI evidence
+        criteria: The incomplete or failed Mulgae operation produced no authoritative backend check.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: mulgae
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: orca
+        label: Incomplete Orca operation evidence
+        criteria: The incomplete or failed Orca operation retained native lifecycle provenance without a backend check claim.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: orca
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+      - id: native-codex
+        label: Incomplete native Codex operation evidence
+        criteria: The incomplete or failed host delegation retained provenance without a backend check claim.
+        guards:
+          - evidence: {node: review, item: review-route}
+            equals: native-codex
+          - evidence: {node: review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: review, item: review-evidence-reference}
+            non_empty: true
+          - evidence: {node: review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: review, item: waiver-summary}
+            empty: true
+    reason:
+      required: true
+      prompt: Explain why the failed or incomplete evidence combination is admissible for the selected route.
   review-decision:
     type: decision
     title: Classify review findings
-    objective: Classify the settled native finding state independently from CI, completion, and phase ownership.
+    objective: Classify the settled finding state independently from backend checks, completion, and phase ownership.
     prompt: What finding state remains after confirmation?
     evidence_guidance:
-      - Use native finding counts only; completion and CI are admitted by earlier serial decisions.
+      - Use finding counts only; completion and backend checks are admitted by earlier serial decisions.
     options:
       - id: clean
         label: Findings clean
@@ -369,7 +1036,7 @@ node_definitions:
   completion-status-decision:
     type: decision
     title: Classify completion status
-    objective: Classify completion independently from CI, findings, and rework ownership.
+    objective: Classify completion independently from backend checks, findings, and rework ownership.
     prompt: What is the aggregate completion state?
     evidence_guidance:
       - Unmet criteria may proceed to owned rework; unverified criteria require current evidence or bounded confirmation first.
@@ -409,31 +1076,39 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the selection using the criterion assessment and current evidence.
-  review-ci-decision:
+  backend-check-decision:
     type: decision
-    title: Evaluate review CI
-    objective: Admit semantic decisions only after the native review CI result passes.
-    prompt: Did the operationally complete review pass CI?
+    title: Evaluate backend check
+    objective: Keep an optional native backend check separate from workflow verification and semantic review decisions.
+    prompt: What backend check result applies to the admitted route evidence?
     options:
       - id: passed
-        label: CI passed
-        criteria: The recorded native review CI decision passed.
+        label: Backend check passed
+        criteria: The selected backend supplied a passing check.
         guards:
           - evidence:
               node: review
-              item: ci-decision
+              item: backend-check-result
             equals: pass
       - id: failed
-        label: CI failed
-        criteria: The recorded native review CI decision failed.
+        label: Backend check failed
+        criteria: The selected backend supplied a failing check that requires owned remediation.
         guards:
           - evidence:
               node: review
-              item: ci-decision
+              item: backend-check-result
             equals: fail
+      - id: not-provided
+        label: No backend check provided
+        criteria: The admitted route has no native backend check; workflow verification remains authoritative.
+        guards:
+          - evidence:
+              node: review
+              item: backend-check-result
+            equals: not-provided
     reason:
       required: true
-      prompt: Explain the selection using the recorded CI decision.
+      prompt: Explain the selection using the admitted route and recorded backend-check result.
   task-rework-authority-decision:
     type: decision
     title: Evaluate task rework authority
@@ -534,13 +1209,127 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the phase ownership decision.
+  review-route-direction-record:
+    type: action
+    title: Await review route direction
+    intent: Preserve failed or incomplete operation evidence and record the bounded choices without selecting for the user.
+    instructions:
+      - Record the selected route, last authoritative native state, every issued reference, settlement state, and supported recovery choices.
+      - Do not launch another reviewer, waive review, cancel native work, or consume an assessment ordinal while recording this action.
+      - A switch or waiver is admissible only after active or uncertain native work reaches an authoritative safe state through its owner.
+    items:
+      - id: prior-route-lifecycle-state
+        type: choice
+        prompt: Record the prior route's authoritative lifecycle state.
+        required: true
+        choices:
+          - not-started
+          - active-or-unknown
+          - terminal-incomplete-or-failed
+      - id: route-change-readiness
+        type: choice
+        prompt: Record whether another route or waiver may start from the authoritative prior state.
+        required: true
+        choices:
+          - current-route-only
+          - safe-to-change
+      - id: route-direction-summary
+        type: text
+        prompt: Record the operation gap, native state and references, settlement evidence, and bounded choices.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  review-route-settlement-decision:
+    type: decision
+    title: Validate review route settlement
+    objective: Prevent a route switch or waiver while prior native work is active or its terminal state is unknown.
+    prompt: Which authoritative lifecycle state permits route direction?
+    options:
+      - id: not-started-safe
+        label: Prior route did not start
+        criteria: Preflight failed before native work started, so a route change or waiver is safe.
+        guards:
+          - evidence: {node: record-review-route-direction, item: prior-route-lifecycle-state}
+            equals: not-started
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: active-current-only
+        label: Prior route remains active or unknown
+        criteria: Only current-route recovery or workflow stop is available while native state is active or unknown.
+        guards:
+          - evidence: {node: record-review-route-direction, item: prior-route-lifecycle-state}
+            equals: active-or-unknown
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: current-route-only
+      - id: terminal-safe
+        label: Prior route settled without completion
+        criteria: The terminal incomplete or failed operation is settled and a route change or waiver is safe.
+        guards:
+          - evidence: {node: record-review-route-direction, item: prior-route-lifecycle-state}
+            equals: terminal-incomplete-or-failed
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+    reason:
+      required: true
+      prompt: Explain the authoritative prior state and route-change readiness.
+  review-route-direction-decision:
+    type: decision
+    title: Record review route direction
+    objective: Continue only from the user's actual bounded recovery choice.
+    prompt: What did the user direct for the incomplete or failed review operation?
+    evidence_guidance:
+      - Leave this decision unset until the user explicitly chooses; switch-route and waive additionally require authoritative safe-state evidence from the prior route owner.
+    options:
+      - id: resume-current
+        label: Resume current route
+        criteria: The user directed native recovery or continuation through the current route owner.
+      - id: switch-route
+        label: Switch review route
+        criteria: The user selected another supported route after the prior operation reached an authoritative safe state.
+        guards:
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: waive
+        label: Waive delegated review
+        criteria: The user explicitly waived delegated review after the prior operation reached an authoritative safe state.
+        guards:
+          - evidence: {node: record-review-route-direction, item: route-change-readiness}
+            equals: safe-to-change
+      - id: stop
+        label: Stop Task advancement
+        criteria: The user stopped Aquarium advancement without implying native cancellation or settlement.
+    reason:
+      required: true
+      prompt: Record the explicit user direction, prior route state, and bounded authority.
+  review-route-stop-record:
+    type: action
+    title: Record unsuccessful review stop
+    intent: End Aquarium advancement without claiming review completion or native cancellation.
+    instructions:
+      - Preserve the prior route identity and last authoritative state; active or unknown native work remains with its owner unless separately authorized cancellation occurs.
+      - This record supports only a not-achieved task assessment.
+    items:
+      - id: route-stop-classification
+        type: choice
+        prompt: Record the unsuccessful workflow stop classification.
+        required: true
+        choices:
+          - stopped-unsuccessfully
+      - id: route-stop-summary
+        type: text
+        prompt: Record the retained operation evidence, native ownership, and absence of successful review completion.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
   user-direction-record:
     type: action
     title: Await user direction
     intent: Record exhausted task rework authority without choosing for the user.
     instructions:
       - Record the exact blocking issue set, reviewed target, and exhausted review authority, then stop at choose-user-direction until the user answers.
-      - Completing this action grants no source change, provider review, commit, or risk-acceptance authority.
+      - Completing this action grants no source change, review, commit, or risk-acceptance authority.
     items:
       - id: direction-classification
         type: choice
@@ -575,14 +1364,14 @@ node_definitions:
   low-disposition-record:
     type: action
     title: Record completed Low dispositions
-    intent: Record proportionate Low handling without claiming that the provider reviewed corrected or newly recorded bytes.
+    intent: Record proportionate Low handling without claiming that the selected reviewer assessed corrected or newly recorded bytes.
     instructions:
       - Freeze the exact eligible Low set from the selected review and apply only the supported disposition-owned work.
-      - Run required local checks and preserve honest review coverage; do not request another provider review or broad audit solely for Low.
+      - Run required local checks and preserve honest review coverage; do not request another delegated review or broad audit solely for Low.
     items:
       - id: source-review-basis
         type: text
-        prompt: Record the original root or direct-audit basis, effective result, reviewed target, goal revision, and finite finding-set identity.
+        prompt: Record the route evidence reference or direct-audit basis, effective result, reviewed target, goal revision, and finite finding-set identity.
         required: true
         min_length: 1
         max_length: 2000
@@ -741,11 +1530,16 @@ node_definitions:
     prompt: What is the outcome of the current task goal?
     evidence_guidance:
       - Read the approved plan, latest implementation, verification, documentation, and review evidence.
-      - A path reached from choose-user-direction after the user selected stop cannot select achieved; use the carried direction and completion evidence when assessing every criterion.
+      - A path reached after either user stop choice cannot select achieved; use the carried direction, route-stop classification, and completion evidence when assessing every criterion.
     options:
       - id: achieved
         label: Goal achieved
         criteria: Fresh criterion assessments support the current goal revision.
+        guards:
+          - evidence:
+              node: record-review-route-stop
+              item: route-stop-classification
+            empty: true
       - id: not-achieved
         label: Goal not achieved
         criteria: Fresh evidence does not support the current goal revision.
@@ -893,10 +1687,88 @@ graph:
             - verification-observations
         - node: decide-verification
           required: true
-      next: review
+      next: prepare-review
+    - id: prepare-review
+      use: review-checkpoint-record
+      evidence_from:
+        - node: record-plan
+          required: true
+          items:
+            - review-route
+            - review-target-scope
+            - review-selection-summary
+        - node: review
+          required: false
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - review-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - reported-severity-summary
+            - unresolved-valid-findings
+        - node: record-review-route-direction
+          required: false
+          items:
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction-summary
+      next: authorize-review-route
+    - id: authorize-review-route
+      use: review-route-authorization-decision
+      evidence_from:
+        - node: record-plan
+          required: true
+          items:
+            - review-route
+        - node: prepare-review
+          required: true
+          items:
+            - effective-review-route
+            - route-authorization-basis
+            - route-change-authority-reference
+            - prior-assessment-ordinal
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
+            - extra-assessment-authority-reference
+      routes:
+        planned-mulgae: {to: review, effect: advance}
+        planned-orca: {to: review, effect: advance}
+        planned-native-codex: {to: review, effect: advance}
+        planned-waiver: {to: review, effect: advance}
+        changed-mulgae: {to: review, effect: advance}
+        changed-orca: {to: review, effect: advance}
+        changed-native-codex: {to: review, effect: advance}
+        changed-waiver: {to: review, effect: advance}
+        completed-change-mulgae: {to: review, effect: advance}
+        completed-change-orca: {to: review, effect: advance}
+        completed-change-native-codex: {to: review, effect: advance}
+        completed-change-waiver: {to: review, effect: advance}
     - id: review
       use: review-record
       evidence_from:
+        - node: record-plan
+          required: true
+          items:
+            - review-route
+            - review-target-scope
+            - review-selection-summary
+        - node: prepare-review
+          required: true
+          items:
+            - effective-review-route
+            - route-authorization-basis
+            - route-change-authority-reference
+            - prior-assessment-ordinal
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
+        - node: authorize-review-route
+          required: true
         - node: verify
           required: true
           items:
@@ -905,7 +1777,142 @@ graph:
           required: true
           items:
             - documentation-summary
-      next: confirm-review-findings
+      next: confirm-review-route-binding
+    - id: confirm-review-route-binding
+      use: review-route-binding-decision
+      evidence_from:
+        - node: prepare-review
+          required: true
+          items:
+            - effective-review-route
+        - node: review
+          required: true
+          items:
+            - review-route
+      routes:
+        mulgae: {to: decide-review-operation, effect: advance}
+        orca: {to: decide-review-operation, effect: advance}
+        native-codex: {to: decide-review-operation, effect: advance}
+        waived: {to: decide-review-operation, effect: advance}
+    - id: decide-review-operation
+      use: review-operation-decision
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+      routes:
+        completed:
+          to: confirm-assessment-ordinal
+          effect: advance
+        waived:
+          to: confirm-assessment-ordinal
+          effect: advance
+        incomplete:
+          to: confirm-incomplete-review-evidence
+          effect: advance
+        failed:
+          to: confirm-incomplete-review-evidence
+          effect: advance
+    - id: confirm-assessment-ordinal
+      use: assessment-ordinal-decision
+      evidence_from:
+        - node: prepare-review
+          required: true
+          items:
+            - prior-assessment-ordinal
+            - extra-assessment-authority-reference
+        - node: review
+          required: true
+          items:
+            - assessment-ordinal
+            - assessment-ordinal-continuity
+            - review-mode
+      routes:
+        first: {to: confirm-review-evidence, effect: advance}
+        second: {to: confirm-review-evidence, effect: advance}
+        third: {to: confirm-review-evidence, effect: advance}
+        fourth: {to: confirm-review-evidence, effect: advance}
+        authorized-extra: {to: confirm-review-evidence, effect: advance}
+    - id: confirm-incomplete-review-evidence
+      use: incomplete-review-evidence-decision
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - waiver-summary
+      routes:
+        mulgae-pass:
+          to: record-review-route-direction
+          effect: advance
+        mulgae-fail:
+          to: record-review-route-direction
+          effect: advance
+        mulgae-not-provided:
+          to: record-review-route-direction
+          effect: advance
+        orca:
+          to: record-review-route-direction
+          effect: advance
+        native-codex:
+          to: record-review-route-direction
+          effect: advance
+    - id: confirm-review-evidence
+      use: review-evidence-decision
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - waiver-summary
+      routes:
+        mulgae-pass:
+          to: confirm-review-findings
+          effect: advance
+        mulgae-fail:
+          to: confirm-review-findings
+          effect: advance
+        orca:
+          to: confirm-review-findings
+          effect: advance
+        native-codex:
+          to: confirm-review-findings
+          effect: advance
+        waived:
+          to: confirm-review-findings
+          effect: advance
+    - id: decide-backend-check
+      use: backend-check-decision
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - backend-check-result
+      routes:
+        passed:
+          to: confirm-review-completion
+          effect: advance
+        failed:
+          to: decide-task-rework-authority
+          effect: advance
+        not-provided:
+          to: confirm-review-completion
+          effect: advance
     - id: confirm-review-findings
       use: review-confirmation-decision
       evidence_from:
@@ -915,25 +1922,11 @@ graph:
             - confirmation-needed-findings
       routes:
         resolved:
-          to: decide-review-ci
+          to: decide-backend-check
           effect: advance
         unresolved:
-          to: review
+          to: prepare-review
           effect: rework
-    - id: decide-review-ci
-      use: review-ci-decision
-      evidence_from:
-        - node: review
-          required: true
-          items:
-            - ci-decision
-      routes:
-        passed:
-          to: confirm-review-completion
-          effect: advance
-        failed:
-          to: decide-task-rework-authority
-          effect: advance
     - id: confirm-review-completion
       use: completion-status-decision
       evidence_from:
@@ -951,7 +1944,7 @@ graph:
           to: decide-task-rework-authority
           effect: advance
         unverified:
-          to: review
+          to: prepare-review
           effect: rework
     - id: decide-review
       use: review-decision
@@ -959,8 +1952,9 @@ graph:
         - node: review
           required: true
           items:
-            - review-round
-            - review-run-id
+            - review-route
+            - assessment-ordinal
+            - review-evidence-reference
             - review-summary
             - reported-severity-summary
             - effective-medium-or-higher-findings
@@ -978,7 +1972,7 @@ graph:
           to: record-low-disposition
           effect: advance
         inconsistent:
-          to: review
+          to: prepare-review
           effect: rework
     - id: decide-task-rework-authority
       use: task-rework-authority-decision
@@ -994,17 +1988,91 @@ graph:
         user-direction:
           to: await-user-direction
           effect: advance
+    - id: record-review-route-direction
+      use: review-route-direction-record
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - review-summary
+      next: confirm-review-route-settlement
+    - id: confirm-review-route-settlement
+      use: review-route-settlement-decision
+      evidence_from:
+        - node: record-review-route-direction
+          required: true
+          items:
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction-summary
+      routes:
+        not-started-safe:
+          to: choose-review-route-direction
+          effect: advance
+        active-current-only:
+          to: choose-review-route-direction
+          effect: advance
+        terminal-safe:
+          to: choose-review-route-direction
+          effect: advance
+    - id: choose-review-route-direction
+      use: review-route-direction-decision
+      evidence_from:
+        - node: record-review-route-direction
+          required: true
+          items:
+            - route-direction-summary
+      routes:
+        resume-current:
+          to: review
+          effect: rework
+        switch-route:
+          to: prepare-review
+          effect: rework
+        waive:
+          to: prepare-review
+          effect: rework
+        stop:
+          to: record-review-route-stop
+          effect: advance
+    - id: record-review-route-stop
+      use: review-route-stop-record
+      evidence_from:
+        - node: review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - review-evidence-reference
+        - node: record-review-route-direction
+          required: true
+          items:
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction-summary
+        - node: choose-review-route-direction
+          required: true
+      next: assess-goal
     - id: await-user-direction
       use: user-direction-record
       evidence_from:
         - node: review
           required: true
           items:
-            - review-round
+            - review-route
+            - review-operation
+            - assessment-ordinal
             - review-mode
-            - review-run-id
+            - review-evidence-reference
             - review-summary
-            - ci-decision
+            - backend-check-result
+            - assessment-provenance
+            - waiver-summary
             - completion-assessment-summary
             - completion-unmet-criteria
             - completion-unverified-criteria
@@ -1071,7 +2139,7 @@ graph:
           to: document
           effect: rework
         clear:
-          to: review
+          to: prepare-review
           effect: rework
     - id: record-low-disposition
       use: low-disposition-record
@@ -1080,7 +2148,7 @@ graph:
           required: true
           items:
             - review-summary
-            - review-run-id
+            - review-evidence-reference
             - completion-assessment-summary
             - completion-unmet-criteria
             - completion-unverified-criteria
@@ -1157,11 +2225,15 @@ graph:
         - node: review
           required: true
           items:
-            - review-round
+            - review-route
+            - review-operation
+            - assessment-ordinal
             - review-mode
-            - review-run-id
+            - review-evidence-reference
             - review-summary
-            - ci-decision
+            - backend-check-result
+            - assessment-provenance
+            - waiver-summary
             - completion-assessment-summary
             - completion-unmet-criteria
             - completion-unverified-criteria
@@ -1178,6 +2250,17 @@ graph:
           items:
             - direction-classification
             - direction-summary
+        - node: record-review-route-direction
+          required: false
+          items:
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction-summary
+        - node: record-review-route-stop
+          required: false
+          items:
+            - route-stop-classification
+            - route-stop-summary
         - node: record-low-disposition
           required: false
           items:
@@ -1223,6 +2306,7 @@ graph:
       terminal: true
 manual_rework:
   allowed_targets:
+    - prepare-review
     - implement
     - verify
     - refine

@@ -53,7 +53,11 @@ SUCCESS_OPTIONS = {
     "decide-gaps": "clean",
     "decide-quality": "passed",
     "decide-review": "clean",
-    "decide-review-ci": "passed",
+    "authorize-review-route": "planned-mulgae",
+    "confirm-review-route-binding": "mulgae",
+    "decide-review-operation": "completed",
+    "confirm-review-evidence": "mulgae-pass",
+    "decide-backend-check": "passed",
     "decide-task-rework-authority": "remediation",
     "decide-implementation-owner": "clear",
     "decide-verification-owner": "clear",
@@ -1431,6 +1435,18 @@ class ManagedRuntime:
                 2 if (node, item_id) in low_counts else constraints.get("minimum", 0)
             )
             if (
+                self.current_procedure_id == "aquarium-task-v2"
+                and node == "prepare-review"
+                and item_id == "prior-assessment-ordinal"
+            ):
+                value = max(0, self.node_visits.get("review", 0))
+            if (
+                self.current_procedure_id == "aquarium-task-v2"
+                and node == "review"
+                and item_id == "assessment-ordinal"
+            ):
+                value = max(1, self.node_visits.get("review", 1))
+            if (
                 self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and node == "final-review"
                 and item_id == "required-evidence-gaps"
@@ -1754,7 +1770,7 @@ class ManagedRuntime:
                 ),
                 "audit-basis-status": "applicable",
                 "coverage-relationship": "review-predates-low-delta",
-                "ci-decision": (
+                "backend-check-result": (
                     "fail"
                     if self.scenario == "standard"
                     and node == "review"
@@ -2381,7 +2397,7 @@ class ManagedRuntime:
 
             if (
                 procedure_id == "aquarium-task-v2"
-                and node == "decide-review-ci"
+                and node == "decide-backend-check"
                 and not self.task_review_reworked
                 and scenario == "standard"
             ):
@@ -2965,6 +2981,24 @@ class ManagedRuntime:
                 special_option = "final-closeout"
             elif scenario in STOP_EVIDENCE_SCENARIOS and node == "assess-goal":
                 special_option = "not-achieved"
+            elif (
+                scenario == "standard"
+                and procedure_id == "aquarium-task-v2"
+                and node == "confirm-review-evidence"
+                and not self.task_review_reworked
+            ):
+                special_option = "mulgae-fail"
+            elif (
+                procedure_id == "aquarium-task-v2"
+                and node == "confirm-assessment-ordinal"
+            ):
+                ordinal = self.node_visits.get("review", 1)
+                special_option = {
+                    1: "first",
+                    2: "second",
+                    3: "third",
+                    4: "fourth",
+                }.get(ordinal, "authorized-extra")
             option = (
                 special_option
                 or {

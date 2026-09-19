@@ -4509,7 +4509,17 @@ else:
     def test_serial_review_gate_nodes_and_routes_are_handler_contracts(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         node_cases = (
+            ("aquarium-task-v2.yaml", "prepare-review"),
+            ("aquarium-task-v2.yaml", "authorize-review-route"),
+            ("aquarium-task-v2.yaml", "confirm-review-route-binding"),
+            ("aquarium-task-v2.yaml", "decide-review-operation"),
+            ("aquarium-task-v2.yaml", "confirm-assessment-ordinal"),
+            ("aquarium-task-v2.yaml", "confirm-review-evidence"),
+            ("aquarium-task-v2.yaml", "confirm-incomplete-review-evidence"),
+            ("aquarium-task-v2.yaml", "decide-backend-check"),
             ("aquarium-task-v2.yaml", "confirm-review-findings"),
+            ("aquarium-task-v2.yaml", "confirm-review-route-settlement"),
+            ("aquarium-task-v2.yaml", "record-review-route-stop"),
             ("aquarium-validation-v2.yaml", "remediate"),
             ("aquarium-validation-v2.yaml", "re-audit"),
         )
@@ -4533,8 +4543,14 @@ else:
         cases = (
             (
                 "aquarium-task-v2.yaml",
-                "decide-review-ci",
-                "passed",
+                "confirm-review-findings",
+                "resolved",
+                "decide-backend-check",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "decide-backend-check",
+                "not-provided",
                 "confirm-review-completion",
             ),
             (
@@ -4808,7 +4824,7 @@ else:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         prior_digests = {
-            "aquarium-task-v2.yaml": "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
+            "aquarium-task-v2.yaml": "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
             "aquarium-goal-v2.yaml": "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
             "aquarium-validation-v2.yaml": "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
         }
@@ -4858,6 +4874,7 @@ else:
                     "b703da6c798801a396d144be1c9c71e0fdb05c95e9e293386bf83c0d238ef927",
                     "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
                     "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
+                    "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
                 },
                 "aquarium-goal-v2.yaml": {
                     "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",

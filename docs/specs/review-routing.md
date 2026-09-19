@@ -3,9 +3,9 @@
 This specification reserves the product contract for `EPIC-016`. The shared
 [workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
 defines route selection, evidence, switching, waiver, and Low-settlement
-semantics. The current Task, Epic, and validation handlers continue to require
-Mulgae until the owning integration tasks ship their skills, Procedures,
-inspectors, and tests.
+semantics. Task delivery implements the selectable route through its handler,
+review skill, Procedure, inspector, and focused tests. Epic and validation
+continue to require Mulgae until their owning integration task ships.
 
 ## Purpose and authority
 

@@ -1,10 +1,21 @@
 {
   "document_kind": "aquarium-operation-contract-fixture",
   "status": "implemented-caller-recorded-contract",
-  "scope": "The three shared operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
+  "scope": "The four selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
   "digest_rule": "SHA-256 over exact descriptor UTF-8 bytes, with no trailing newline.",
   "assurance_boundary": "Caller-recorded structured claims; neither Podway nor these descriptors execute tools or establish semantic truth.",
   "operations": [
+    {
+      "operation_id": "aquarium-task-review-ordinal-continuity",
+      "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized remediation or confirmation mode.",
+      "meaning": "A caller-recorded continuity and mode check over the prior and current Task review checkpoint, not a Podway calculation or reviewer execution claim.",
+      "operation_digest": "sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a",
+      "accepted_outcomes": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
     {
       "operation_id": "aquarium-goal-verification",
       "descriptor": "Verify all applicable repository-required checks for the current Aquarium goal candidate and report any failed, stale, unavailable, or inconclusive required evidence.",

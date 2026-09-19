@@ -96,6 +96,10 @@ Update Task delivery to select and record one workflow review policy. Generalize
 `task-review` so it dispatches the selected delegated route or performs the
 waiver assessment without duplicating native backend lifecycles.
 
+The implementation owners are `task-handler`, `task-review`, and version 13 of
+`aquarium-task-v2`; the inspector contract and focused routing fixtures verify
+that compatible unit while legacy Procedure snapshots retain their meanings.
+
 The new Task Procedure version must record the effective route, completed and
 incomplete operations, assessment provenance, route-specific evidence, and the
 user's recovery choice. Failed attempts do not consume an ordinal. Existing
