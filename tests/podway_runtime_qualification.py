@@ -3606,6 +3606,7 @@ class ManagedRuntime:
                     status=(
                         "unsatisfied"
                         if scenario in STOP_EVIDENCE_SCENARIOS
+                        or scenario in COMPLETION_GAP_SCENARIOS
                         else "satisfied"
                     ),
                 )
@@ -3719,7 +3720,10 @@ class ManagedRuntime:
                 scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
             ):
                 special_option = "final-closeout"
-            elif scenario in STOP_EVIDENCE_SCENARIOS and node in {
+            elif (
+                scenario in STOP_EVIDENCE_SCENARIOS
+                or scenario in COMPLETION_GAP_SCENARIOS
+            ) and node in {
                 "assess-goal",
                 "assess-stopped-goal",
             }:
