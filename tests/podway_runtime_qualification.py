@@ -742,6 +742,7 @@ class ManagedRuntime:
         self.validation_source_basis_verified = False
         self.low_blocker_readback_verified = False
         self.task_one_shot_decision_used = False
+        self.task_optional_waiver_absence_recorded = False
         self.goal_one_shot_decision_used = False
         self.fixture_target = ""
         self.current_procedure_id = ""
@@ -2500,6 +2501,7 @@ class ManagedRuntime:
             if (
                 self.scenario == "task-resume-active-mulgae"
                 and node == "review"
+                and not self.task_optional_waiver_absence_recorded
                 and any(
                     item["item_id"] == "waiver-summary"
                     for item in current["active_items"]
@@ -2536,6 +2538,8 @@ class ManagedRuntime:
                     self.validation_source_basis_verified = True
                 return
             self.record(current, records)
+            if "waiver-summary" in records and records["waiver-summary"] is None:
+                self.task_optional_waiver_absence_recorded = True
             current = self.observe()
         raise RuntimeQualificationError(
             "conditional action requirements did not converge"
