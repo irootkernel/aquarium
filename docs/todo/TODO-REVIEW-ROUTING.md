@@ -64,6 +64,10 @@ Define the shared contract consumed by every embedded completion review. Update
 review intent, finding disposition, evidence residency where needed, and workflow
 guidance so route policy is separate from backend lifecycle.
 
+The implementation owner is the
+[workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md).
+Handler integration remains with `TASK-069` and `TASK-070`.
+
 The implementation must:
 
 - represent `mulgae`, `orca`, `native-codex`, and `waived` without exposing the

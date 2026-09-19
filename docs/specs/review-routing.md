@@ -1,9 +1,11 @@
 # Workflow review routing
 
-This specification reserves an unimplemented contract for `EPIC-016`. Aquarium
-does not yet apply this contract. The current Task, Epic, and validation handlers
-continue to require Mulgae until the owning roadmap tasks ship the corresponding
-skills, references, Procedures, inspectors, and tests.
+This specification reserves the product contract for `EPIC-016`. The shared
+[workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
+defines route selection, evidence, switching, waiver, and Low-settlement
+semantics. The current Task, Epic, and validation handlers continue to require
+Mulgae until the owning integration tasks ship their skills, Procedures,
+inspectors, and tests.
 
 ## Purpose and authority
 

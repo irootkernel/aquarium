@@ -1,6 +1,6 @@
 ---
 name: orca-review
-description: "Run one supervised static review of a staged, HEAD, commit, or range target with a fresh requested reviewer through the local Orca runtime. Use when the user explicitly invokes $aquarium:orca-review or explicitly names a review target and reviewer, such as staged changes with Claude."
+description: "Run one supervised static review of a staged, HEAD, commit, or range target with a fresh requested reviewer through the local Orca runtime. Use when the user explicitly invokes $aquarium:orca-review, explicitly names a review target and reviewer, or an approved Aquarium handler delegates its selected Orca route."
 ---
 
 # Orca Review
@@ -10,10 +10,11 @@ Run the canonical Aquarium review contract with one fresh requested reviewer own
 ## Load the contracts
 
 1. Read [review-intent-contract.md](../../references/review-intent-contract.md) completely.
-2. Read [review-contract.md](../../references/review-contract.md) completely.
-3. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
-4. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
-5. Require the separately installed `$orca-cli` skill and apply its live version-matched guides.
+2. For an embedded Task, Epic, or validation delegation, read [review-routing-contract.md](../../references/review-routing-contract.md) completely.
+3. Read [review-contract.md](../../references/review-contract.md) completely.
+4. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
+5. Read [orca-supervision.md](../../references/orca-supervision.md) completely.
+6. Require the separately installed `$orca-cli` skill and apply its live version-matched guides.
 
 ## Establish the target
 
@@ -25,7 +26,7 @@ For `head`, `commit`, and `range`, resolve the requested revisions with ordinary
 
 `workspace` and `dirty` remain outside this workflow. Report the unsupported Orca scope and ask for an explicitly selected supported target or review route; Independent Review is disabled and is not a fallback. Never stage paths or reinterpret state merely to manufacture an Orca Review target.
 
-An explicit request naming the target and reviewer authorizes transmission of that target only. "Use orca-review with Claude to review the staged changes" and "Review the staged target with Claude" both select `staged` and the native Orca `claude` reviewer.
+An explicit request naming the target and reviewer authorizes transmission of that target only. An approved handler delegation is equivalent only when its current execution envelope names the same exact target, reviewer, Review Brief, and transmission scope. "Use orca-review with Claude to review the staged changes" and "Review the staged target with Claude" both select `staged` and the native Orca `claude` reviewer.
 
 If either the target or reviewer is missing, prefer structured ask/answer to obtain the missing selection; when unavailable, ask one focused question in ordinary conversation. Do not choose a default reviewer. Ask again only if the target, included paths, reviewer, or execution scope changes before Dispatch.
 

@@ -1,6 +1,6 @@
 # Review Finding Disposition
 
-Use this contract whenever Aquarium consumes findings from Mulgae Review, Orca Review, an explicitly selected native Codex review subagent, or the dormant Independent Review contract if that route is re-enabled. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent. A provider finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
+Use this contract whenever Aquarium consumes findings from Mulgae Review, Orca Review, an explicitly selected native Codex review subagent, a workflow review waiver, or the dormant Independent Review contract if that route is re-enabled. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent and [review-routing-contract.md](review-routing-contract.md) when an embedded workflow selects or changes routes. A reviewer or coordinator finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
 
 ## Adjudicate before acting
 
@@ -17,13 +17,13 @@ The effective priority, not the provider label, controls remediation. A finding 
 
 The disabled `$aquarium:independent-review` route itself only reports its refusal and alternative guidance; that refusal launches nothing. Exactly one explicitly preselected supported Orca or native Codex alternative may run only under its own contract, and native Codex additionally requires host fresh delegation. Multiple preselected alternatives require the user to choose one before anything launches. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, or standalone `$aquarium:orca-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
 
-An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope authorizes finding remediation only inside its existing work-unit, repository, behavior, check, staging, and review budget. Within that envelope, remediate without another user prompt and report the correction afterward. Stop first when a finding needs a product or authority choice, adds a requirement, expands scope or repository ownership, creates a new file not covered by the plan, requires a destructive or external action, cannot be isolated safely, or exceeds the remaining review budget.
+An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope authorizes finding remediation only inside its existing work-unit, repository, behavior, check, staging, and review budget. Within that envelope, remediate without another user prompt and report the correction afterward. Changing the selected route never erases a finding, resets the budget, or removes a corrected-target confirmation obligation. Stop first when a finding needs a product or authority choice, adds a requirement, expands scope or repository ownership, creates a new file not covered by the plan, requires a destructive or external action, cannot be isolated safely, or exceeds the remaining review budget.
 
 Confirmation-only review authority covers adjudication, reporting, and eligible local `Low` handling. It does not include another provider-review round. A valid `Medium` or higher finding therefore requires a new bounded remediation-and-review authorization when no approved round remains. Do not accept its risk, defer it, or claim completion.
 
 ## Remediate by effective priority
 
-A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and reviewed again on the corrected complete target. Keep the same backend, reviewer, purpose, and user-facing source scope where feasible. Mulgae creates a fresh native capture, and Orca reads the corrected live target. Independent Review would require a fresh capture if separately re-enabled. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
+A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and assessed again on the corrected complete target. Keep the same route, reviewer, purpose, and user-facing source scope where feasible. Mulgae creates a fresh native capture, Orca reads the corrected live target, native Codex requires a fresh report-only subagent, and a waiver requires a new coordinator assessment. Independent Review would require a fresh capture if separately re-enabled. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
 
 Classify a valid `Low` finding into exactly one disposition:
 
@@ -36,21 +36,27 @@ If no canonical deferred-feedback or TODO owner exists, report the proposed entr
 
 ## Settle one finite Low set
 
-Keep the source review facts separate from settlement state. Preserve the native
-original root or direct-audit basis, effective result identity, reviewed target,
-source finding IDs, and reported severities. Freeze the complete admitted set of
-eligible Low findings for the current work-unit and goal revision. Track effective
-priority, disposition, pending disposition count, current blocker count, final
-target, local verification, and coverage relationship independently. Historical
-Low counts never decrease merely because their required work is complete.
+Keep the source review facts separate from settlement state. Preserve the
+selected route, authoritative completed operation or waiver assessment, review
+evidence reference, reviewed target, finding identities and provenance, and
+reported severities. Mulgae additionally preserves its original root and
+effective result identity. Freeze the complete admitted set of eligible Low
+findings for the current work-unit and goal revision. Track effective priority,
+disposition, pending disposition count, current blocker count, final target,
+local verification, and coverage relationship independently. Historical Low
+counts never decrease merely because their required work is complete.
 
-Enter Low settlement only after the native invocation and finding query are
-complete, required coverage and publication evidence is available, CI and required
-verification pass, no finding needs confirmation, and no current blocker or
-effective Medium-or-higher finding remains. The admitted completion assessment must
-also have zero `unmet` and zero `unverified` criteria. Bind each provider finding by original
-root, effective result, and source finding ID; retain separate namespaces for
-direct-audit findings. Do not collapse findings because their prose is similar.
+Enter Low settlement only after the selected route has an authoritative
+completed operation or waiver assessment under the workflow review routing
+contract, every route-specific prerequisite is satisfied, required workflow
+verification passes, no finding needs confirmation, and no current blocker or
+effective Medium-or-higher finding remains. Mulgae additionally requires its
+complete findings query, coverage, committed publication, and CI evidence. The
+admitted completion assessment must also have zero `unmet` and zero `unverified`
+criteria. Bind each finding by route, review evidence reference, source identity,
+and reviewer or coordinator provenance. Retain separate namespaces for direct
+audit findings and waiver-assessment findings. Do not collapse findings because
+their prose is similar.
 
 Settlement completes only when every frozen finding has exactly one supported
 disposition, every required local check passes on the actual final target, the
@@ -62,13 +68,15 @@ local check, unavailable owner, changed requirement, unrelated delta, or repeate
 unchanged disposition is a specific incomplete state. Route it to its owner or
 wait; do not start another review to create a cleaner report.
 
-The complete Low-settlement composition carries the exact reviewed or audited
-basis and its native identities, the frozen eligible finding IDs and supported
-dispositions, before and after target identities, the exact permitted Low-only
-delta, required local check identities and current outcomes, zero pending
-dispositions and current blockers, the carried completion summary and zero unmet
-and unverified counts, and the coverage relationship. A handoff must
-carry that composition or state explicitly that no accepted Low-only delta applies.
+The complete Low-settlement composition carries the selected route, exact
+reviewed, waived, or audited basis and its authoritative evidence reference,
+route-specific native identities when applicable, finding provenance, the frozen
+eligible finding IDs and supported dispositions, before and after target
+identities, the exact permitted Low-only delta, required local check identities
+and current outcomes, zero pending dispositions and current blockers, the
+carried completion summary and zero unmet and unverified counts, and the coverage
+relationship. A handoff must carry that composition or state explicitly that no
+accepted Low-only delta applies.
 Invalid findings retain their adjudication but do not require a Low remediation
 disposition.
 

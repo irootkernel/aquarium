@@ -364,7 +364,7 @@ epic.
 
 ## EPIC-016: Add selectable workflow review routing
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Separate the requirement for completion review from the choice of review
 backend. Keep Mulgae as the default while allowing an approved Task, Epic, or
@@ -385,7 +385,7 @@ by `EPIC-014` and `EPIC-015`.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-068 | Generalize review routing and evidence contracts | Define route-neutral evidence combinations, lifecycle-safe switching, waiver semantics, route-specific readiness, and the Mulgae-only promoted hardening-deferral boundary. | Planned | EPIC-014; EPIC-015 |
+| TASK-068 | Generalize review routing and evidence contracts | Define route-neutral evidence combinations, lifecycle-safe switching, waiver semantics, route-specific readiness, and the Mulgae-only promoted hardening-deferral boundary. | Completed | EPIC-014; EPIC-015 |
 | TASK-069 | Integrate selectable review into Task delivery | Deliver Task routing with its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests as one compatible unit. | Planned | TASK-068 |
 | TASK-070 | Integrate selectable review into Epic delivery and validation | Deliver Epic and validation routing with compatible Procedures, commit handoff, hardening-deferral limits, evidence consumption, and focused tests. | Planned | TASK-068; TASK-069 |
 | TASK-071 | Qualify review routing and promote documentation | Run cross-route regression, timeout and switching scenarios, legacy-session and manual acceptance, then promote the reserved contract to shipped documentation. | Planned | TASK-069; TASK-070 |

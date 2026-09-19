@@ -1,6 +1,6 @@
 # Review Intent Contract
 
-Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion, and for the disabled `$aquarium:independent-review` entrypoint's refusal and routing decision. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
+Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion, and for the disabled `$aquarium:independent-review` entrypoint's refusal and routing decision. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. Embedded Task, Epic, and validation workflows also read [review-routing-contract.md](review-routing-contract.md) for selection, route-neutral evidence, switching, and waiver semantics. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
 
 ## Select the purpose
 
