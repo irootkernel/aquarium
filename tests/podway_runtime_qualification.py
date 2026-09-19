@@ -2313,7 +2313,10 @@ class ManagedRuntime:
             ):
                 outcome = VALIDATION_FINAL_REVIEW_SCENARIOS[self.scenario][0]
             elif (
-                self.scenario == "goal-operational-matrix" and node == "record-evidence"
+                self.scenario == "goal-operational-matrix"
+                and node == "record-evidence"
+                and item_id
+                in {"goal-verification-result", "goal-review-readiness-result"}
             ):
                 variant = GOAL_OPERATIONAL_VARIANTS[self.goal_evidence_round]
                 outcome = (
@@ -2438,10 +2441,7 @@ class ManagedRuntime:
                 if item.get("required_now") and not item.get("satisfied")
             ]
             route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
-            if (
-                procedure_id == "aquarium-goal-v2"
-                and node == "complete-work"
-            ):
+            if procedure_id == "aquarium-goal-v2" and node == "complete-work":
                 required.extend(
                     item
                     for item in current["active_items"]
@@ -2468,10 +2468,15 @@ class ManagedRuntime:
                     and item not in required
                 )
             if (
-                self.scenario == "medium-wait"
+                (
+                    (self.scenario == "medium-wait" and self.goal_evidence_round > 0)
+                    or (
+                        self.scenario == "goal-operational-matrix"
+                        and self.completed_assessments.get(procedure_id, 0) >= 2
+                    )
+                )
                 and procedure_id == "aquarium-goal-v2"
                 and node == "record-evidence"
-                and self.goal_evidence_round > 0
             ):
                 required.extend(
                     item
