@@ -705,6 +705,48 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     assert "current-rework-obligations" not in record_items
     assert "extra-review-authorization" not in record_items
     assert "authorized-rework-decision" not in goal["node_definitions"]
+    assert graph["decide-review-basis"]["routes"]["native-review"] == {
+        "to": "confirm-review-route-binding",
+        "effect": "advance",
+    }
+    assert set(graph["confirm-review-route-binding"]["routes"]) == {
+        "planned-mulgae",
+        "planned-orca",
+        "planned-native-codex",
+        "planned-waiver",
+        "changed-mulgae",
+        "changed-orca",
+        "changed-native-codex",
+        "changed-waiver",
+    }
+    binding_sources = {
+        source["node"]: set(source["items"])
+        for source in graph["confirm-review-route-binding"]["evidence_from"]
+    }
+    assert {
+        "review-route",
+        "review-target-scope",
+        "review-selection-summary",
+    } <= binding_sources["complete-work"]
+    assert "prior-route-lifecycle-state" in binding_sources["record-evidence"]
+    assert graph["decide-review-operation"]["routes"] == {
+        "completed": {"to": "confirm-assessment-ordinal", "effect": "advance"},
+        "waived": {"to": "confirm-assessment-ordinal", "effect": "advance"},
+        "incomplete": {
+            "to": "confirm-incomplete-route-evidence",
+            "effect": "advance",
+        },
+        "failed": {
+            "to": "confirm-incomplete-route-evidence",
+            "effect": "advance",
+        },
+    }
+    assert graph["choose-review-route-direction"]["routes"] == {
+        "resume-current": {"to": "record-evidence", "effect": "rework"},
+        "switch-route": {"to": "complete-work", "effect": "rework"},
+        "waive": {"to": "complete-work", "effect": "rework"},
+        "stop": {"to": "record-review-route-stop", "effect": "advance"},
+    }
     assert graph["confirm-completion-assessment"]["routes"] == {
         "complete": {"to": "decide-evidence", "effect": "advance"},
         "unmet": {"to": "decide-goal-rework-authority", "effect": "advance"},
@@ -763,6 +805,309 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "settle": {"to": "record-low-disposition", "effect": "advance"},
         "defer": {"to": "record-hardening-handoff", "effect": "advance"},
     }
+    hardening_items = {
+        item["id"]
+        for item in goal["node_definitions"]["hardening-deferral-record"]["items"]
+    }
+    assert {
+        "hardening-deferral-run-id",
+        "hardening-deferral-finding-ids",
+        "hardening-deferral-publication-state",
+        "hardening-deferral-findings-query-state",
+        "hardening-deferral-native-target-sha256",
+        "hardening-deferral-evidence-sha256",
+    } <= hardening_items
+    defer_guards = normalized_guards(options(goal, "low-handling-decision")["defer"])
+    assert (
+        "record-hardening-deferral",
+        "hardening-deferral-publication-state",
+        None,
+        "equals",
+        "committed",
+    ) in defer_guards
+    assert (
+        "record-hardening-deferral",
+        "hardening-deferral-findings-query-state",
+        None,
+        "equals",
+        "successful",
+    ) in defer_guards
+    assert (
+        "record-hardening-deferral",
+        "hardening-deferral-native-target-sha256",
+        None,
+        "non_empty",
+        True,
+    ) in defer_guards
+    for node_id in ("decide-low-handling", "record-hardening-handoff", "assess-goal"):
+        hardening_sources = {
+            source["node"]: set(source["items"])
+            for source in graph[node_id]["evidence_from"]
+        }
+        assert {
+            "hardening-deferral-publication-state",
+            "hardening-deferral-findings-query-state",
+            "hardening-deferral-native-target-sha256",
+        } <= hardening_sources["record-hardening-deferral"]
+
+
+def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> None:
+    fixture = load_json("review-routing-cases.json")
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    validation = load_procedure("aquarium-validation-v2.yaml")
+
+    goal_cases = fixture["goal_review_route_cases"]
+    validation_cases = fixture["validation_review_route_cases"]
+    assert {case["route"] for case in goal_cases} == {
+        "mulgae",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+    assert {case["route"] for case in validation_cases} == {
+        "mulgae",
+        "orca",
+        "native-codex",
+        "waived",
+    }
+
+    goal_choices = {
+        "route_authorization_option": set(
+            options(goal, "review-route-binding-decision")
+        ),
+        "operation_option": set(options(goal, "review-operation-decision")),
+        "ordinal_option": set(options(goal, "assessment-ordinal-decision")),
+    }
+    validation_choices = {
+        "operation_option": set(options(validation, "final-review-operation-decision")),
+        "ordinal_option": set(options(validation, "assessment-ordinal-decision")),
+    }
+    for case in goal_cases:
+        for field, choices in goal_choices.items():
+            if field in case:
+                assert case[field] in choices, case["id"]
+        values = {
+            ("complete-work", "review-route"): case["plan_route"],
+            ("complete-work", "review-target-scope"): "isolated exact target",
+            ("complete-work", "review-selection-summary"): (
+                "approved route, reviewer or waiver authority, prerequisites, and assurance"
+            ),
+            ("record-evidence", "review-route"): case["route"],
+            ("record-evidence", "review-operation"): case["operation"],
+            ("record-evidence", "prior-assessment-ordinal"): case["prior_ordinal"],
+            ("record-evidence", "assessment-ordinal"): case["ordinal"],
+            ("record-evidence", "assessment-ordinal-continuity"): {"outcome": "pass"},
+            ("record-evidence", "review-mode"): (
+                "remediation-eligible"
+                if case["ordinal"] in {None, 1}
+                else "hardening-deferral-eligible"
+            ),
+            ("record-evidence", "backend-check-result"): case["backend_check"],
+            ("record-evidence", "assessment-provenance"): case["provenance"],
+            ("record-evidence", "waiver-summary"): case.get("waiver_summary"),
+            ("record-evidence", "route-authorization-basis"): (
+                "explicit-route-change"
+                if case["route_authorization_option"].startswith("changed-")
+                else "approved-envelope"
+            ),
+            ("record-evidence", "route-change-authority-reference"): (
+                "explicit user direction"
+                if case["route_authorization_option"].startswith("changed-")
+                else None
+            ),
+            ("record-evidence", "route-change-readiness"): (
+                "safe-to-change" if "direction_option" in case else None
+            ),
+            ("record-evidence", "prior-route-lifecycle-state"): case.get(
+                "prior_lifecycle"
+            ),
+            ("record-evidence", "route-direction"): case.get("direction_option"),
+            ("record-evidence", "finding-lineage-summary"): case.get("finding_lineage"),
+            ("record-evidence", "remaining-review-authority-summary"): case.get(
+                "remaining_review_authority"
+            ),
+            ("record-evidence", "corrected-target-summary"): case.get(
+                "corrected_target"
+            ),
+        }
+        assert guards_match(
+            options(goal, "review-route-binding-decision")[
+                case["route_authorization_option"]
+            ],
+            values,
+        ), case["id"]
+        assert guards_match(
+            options(goal, "review-operation-decision")[case["operation_option"]],
+            values,
+        ), case["id"]
+        if case["ordinal"] is not None:
+            assert guards_match(
+                options(goal, "assessment-ordinal-decision")[case["ordinal_option"]],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(goal, "route-evidence-decision")[case["evidence_option"]],
+                values,
+            ), case["id"]
+        else:
+            assert guards_match(
+                options(goal, "incomplete-route-evidence-decision")[
+                    case["evidence_option"]
+                ],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(goal, "review-route-settlement-decision")[
+                    case["settlement_option"]
+                ],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(goal, "review-route-direction-decision")[
+                    case["direction_option"]
+                ],
+                values,
+            ), case["id"]
+    for case in validation_cases:
+        for field, choices in validation_choices.items():
+            if field in case:
+                assert case[field] in choices, case["id"]
+        values = {
+            ("final-review", "route-binding-result"): {
+                "outcome": case["route_binding"]
+            },
+            ("final-review", "review-route"): case["route"],
+            ("final-review", "review-operation"): case["operation"],
+            ("final-review", "prior-assessment-ordinal"): case["prior_ordinal"],
+            ("final-review", "assessment-ordinal"): case["ordinal"],
+            ("final-review", "assessment-ordinal-continuity"): {"outcome": "pass"},
+            ("final-review", "review-mode"): (
+                "remediation-eligible"
+                if case["ordinal"] in {None, 1}
+                else "confirmation-only"
+            ),
+            ("final-review", "backend-check-result"): case["backend_check"],
+            ("final-review", "assessment-provenance"): case["provenance"],
+            ("final-review", "waiver-summary"): case.get("waiver_summary"),
+            ("final-review", "route-change-readiness"): (
+                "current-route-only"
+                if case.get("settlement_option") == "active-current-only"
+                else "safe-to-change"
+                if case.get("settlement_option")
+                in {"not-started-safe", "terminal-safe"}
+                else None
+            ),
+            ("final-review", "prior-route-lifecycle-state"): case.get(
+                "prior_lifecycle"
+            ),
+            ("final-review", "route-direction"): case.get("direction_option"),
+            ("final-review", "finding-lineage-summary"): case.get("finding_lineage"),
+            ("final-review", "remaining-review-authority-summary"): case.get(
+                "remaining_review_authority"
+            ),
+            ("final-review", "corrected-target-summary"): case.get("corrected_target"),
+        }
+        assert guards_match(
+            options(validation, "final-review-route-binding-decision")["bound"],
+            values,
+        ), case["id"]
+        assert guards_match(
+            options(validation, "final-review-operation-decision")[
+                case["operation_option"]
+            ],
+            values,
+        ), case["id"]
+        if case["ordinal"] is not None:
+            assert guards_match(
+                options(validation, "assessment-ordinal-decision")[
+                    case["ordinal_option"]
+                ],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(validation, "final-route-evidence-decision")[
+                    case["evidence_option"]
+                ],
+                values,
+            ), case["id"]
+        else:
+            assert guards_match(
+                options(validation, "incomplete-final-route-evidence-decision")[
+                    case["evidence_option"]
+                ],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(validation, "final-route-settlement-decision")[
+                    case["settlement_option"]
+                ],
+                values,
+            ), case["id"]
+            assert guards_match(
+                options(validation, "final-route-direction-decision")[
+                    case["direction_option"]
+                ],
+                values,
+            ), case["id"]
+
+    assert any(case.get("direction_option") == "resume-current" for case in goal_cases)
+    assert any(case.get("direction_option") == "switch-route" for case in goal_cases)
+    assert any(
+        case.get("direction_option") == "resume-current" for case in validation_cases
+    )
+    assert any(
+        case.get("direction_option") == "switch-route" for case in validation_cases
+    )
+    assert any(case["operation"] == "waived" for case in goal_cases)
+    assert any(case["operation"] == "waived" for case in validation_cases)
+    completed_switch = next(case for case in goal_cases if case["id"] == "GR-06")
+    assert completed_switch["prior_ordinal"] == 1
+    assert completed_switch["ordinal"] == 2
+    assert completed_switch["finding_lineage"] == ["F-1"]
+    assert completed_switch["remaining_review_authority"] == "confirmation only"
+    assert completed_switch["corrected_target"] == "commit:corrected-target"
+    incomplete_switch = next(case for case in validation_cases if case["id"] == "VR-06")
+    assert incomplete_switch["next_route"] == "native-codex"
+    assert incomplete_switch["next_prior_ordinal"] == incomplete_switch["prior_ordinal"]
+    waived_after_finding = next(
+        case for case in validation_cases if case["id"] == "VR-07"
+    )
+    assert waived_after_finding["finding_lineage"] == ["F-1"]
+    assert waived_after_finding["remaining_review_authority"] == "confirmation only"
+    assert waived_after_finding["corrected_target"] == "commit:corrected-target"
+
+    active_bypass = {
+        ("final-review", "prior-route-lifecycle-state"): "active-or-unknown",
+        ("final-review", "route-change-readiness"): "safe-to-change",
+    }
+    validation_settlement = options(validation, "final-route-settlement-decision")
+    assert not any(
+        guards_match(option, active_bypass)
+        for option_id, option in validation_settlement.items()
+        if option_id != "active-current-only"
+    )
+    goal_active_bypass = {
+        ("record-evidence", "review-route"): "native-codex",
+        ("record-evidence", "route-authorization-basis"): ("explicit-route-change"),
+        ("record-evidence", "route-change-authority-reference"): "user direction",
+        ("record-evidence", "prior-route-lifecycle-state"): "active-or-unknown",
+        ("record-evidence", "route-change-readiness"): "safe-to-change",
+    }
+    assert not guards_match(
+        options(goal, "review-route-binding-decision")["changed-native-codex"],
+        goal_active_bypass,
+    )
+    goal_settlement = options(goal, "review-route-settlement-decision")
+    assert not any(
+        guards_match(option, goal_active_bypass)
+        for option_id, option in goal_settlement.items()
+        if option_id != "active-current-only"
+    )
+    invalid_binding = {("final-review", "route-binding-result"): {"outcome": "fail"}}
+    assert not guards_match(
+        options(validation, "final-review-route-binding-decision")["bound"],
+        invalid_binding,
+    )
 
 
 def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (
@@ -770,15 +1115,43 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
 ):
     procedure = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(procedure)
-    assert graph["final-review"]["next"] == "decide-final-review-operation"
+    assert graph["final-review"]["next"] == "confirm-final-review-route-binding"
+    assert graph["confirm-final-review-route-binding"]["routes"] == {
+        "bound": {"to": "decide-final-review-operation", "effect": "advance"},
+        "invalid": {"to": "record-incomplete", "effect": "advance"},
+    }
     assert graph["decide-final-review-operation"]["routes"] == {
-        "passed": {"to": "confirm-final-review-findings", "effect": "advance"},
-        "incomplete": {"to": "record-review-operation-incomplete", "effect": "advance"},
+        "completed": {
+            "to": "confirm-final-assessment-ordinal",
+            "effect": "advance",
+        },
+        "waived": {
+            "to": "confirm-final-assessment-ordinal",
+            "effect": "advance",
+        },
+        "incomplete": {
+            "to": "confirm-incomplete-final-route-evidence",
+            "effect": "advance",
+        },
+        "failed": {
+            "to": "confirm-incomplete-final-route-evidence",
+            "effect": "advance",
+        },
+    }
+    assert graph["choose-final-route-direction"]["routes"] == {
+        "resume-current": {"to": "final-review", "effect": "rework"},
+        "switch-route": {"to": "final-review", "effect": "rework"},
+        "waive": {"to": "final-review", "effect": "rework"},
+        "stop": {"to": "record-stopped", "effect": "advance"},
     }
     assert (
         graph["confirm-final-review-findings"]["routes"]["resolved"]["to"]
-        == "confirm-completion-assessment"
+        == "decide-final-backend-check"
     )
+    assert graph["decide-final-backend-check"]["routes"]["failed"] == {
+        "to": "decide-validation-rework-authority",
+        "effect": "advance",
+    }
     assert graph["confirm-completion-assessment"]["routes"] == {
         "complete": {"to": "decide-required-evidence", "effect": "advance"},
         "unmet": {"to": "decide-validation-rework-authority", "effect": "advance"},

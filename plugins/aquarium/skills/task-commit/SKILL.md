@@ -34,11 +34,11 @@ A handler commit handoff must include:
 - repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the user's commit authorization;
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
-- verification and review evidence identifying command, actor, exit status, reviewed snapshot, verdict, and review run when applicable, with inapplicable fields marked explicitly.
+- verification and review evidence identifying command, actor, exit status, reviewed snapshot, verdict, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed assessment ordinal when applicable, and waiver summary when applicable. Include a Mulgae run only for the Mulgae route; mark every inapplicable route-specific field explicitly rather than inventing an identity.
 - the complete Low-settlement composition defined by the shared finding-disposition contract, or an explicit statement that no accepted Low-only delta applies;
 - the release-note decision as exact `entry` text already present in the approved diff, `intentional no-note`, or `not-enrolled`;
 - zero or more staged promoted-evidence manifest paths paired with exact `sha256:<64-hex>` manifest digests and the owning workflow's current native-evidence, native-target-digest, and copied-projection validation result, or an explicit statement that no promoted evidence applies;
-- for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs used only for pre-commit verification, or an explicit statement that no hardening deferral applies.
+- for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs, committed publication, successful findings query, exact finding membership, authoritative native target digest, and promoted-manifest digest used for pre-commit verification. Every Orca, native Codex, or waiver handoff must instead state explicitly that no hardening deferral applies because those routes cannot supply the required native digest, publication, findings-query, and membership evidence.
 
 Reject a stale, ambiguous, or incomplete handoff rather than reconstructing approval.
 

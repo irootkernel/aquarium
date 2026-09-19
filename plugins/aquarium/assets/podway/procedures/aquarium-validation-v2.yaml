@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "14"
+version: "15"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for epic-wide audit, one automatic confirmation, user-directed follow-up, and validation closeout.
@@ -20,6 +20,29 @@ node_definitions:
         required: true
         min_length: 1
         max_length: 5000
+        multiline: true
+      - id: review-route
+        type: choice
+        prompt: Record the approved whole-Epic review route, or Mulgae when no alternative was selected.
+        required: true
+        choices:
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: review-target-scope
+        type: text
+        prompt: Record the exact committed candidate and route-specific target kind.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: review-selection-summary
+        type: text
+        prompt: Record selection authority, reviewer or waiver authority, prerequisites, and assurance limit.
+        required: true
+        min_length: 1
+        max_length: 3000
         multiline: true
       - id: plan-handoff-artifact
         type: artifact
@@ -48,7 +71,7 @@ node_definitions:
           - inconclusive
       - id: audit-summary
         type: text
-        prompt: Record the audited snapshot, matrix result, checks, Mulgae evidence, and confirmed gaps.
+        prompt: Record the audited snapshot, matrix result, checks, prior route evidence, and confirmed gaps under separate namespaces.
         required: true
         min_length: 1
         max_length: 8000
@@ -335,7 +358,7 @@ node_definitions:
     intent: Carry the finite Low-only audit set to the independently required final review without broad remediation.
     instructions:
       - Preserve the exact audit target and Low identities; do not re-audit to reduce the historical count.
-      - This record does not waive a required first provider review or a confirmation already owed after blocking remediation.
+      - This record does not waive a required first selected-route review or a confirmation already owed after blocking remediation.
     items:
       - id: audit-basis-target
         type: text
@@ -375,16 +398,39 @@ node_definitions:
   final-review-record:
     type: action
     title: Record final validation evidence
-    intent: Record the latest audit and complete whole-epic Mulgae result, including every confirmation finding that requires user direction.
+    intent: Record the latest audit and route-specific whole-Epic assessment, including every confirmation finding that requires user direction.
     instructions:
-      - Delegate only an independently required whole-epic review and preserve exact lineage, target, CI, coverage, publication, and finding query.
+      - Dispatch only the approved whole-Epic route and preserve its exact target, operation, evidence reference, provenance, optional backend check, and assurance limits.
       - Do not launch another provider root solely because Low findings or their accepted local delta remain.
       - Compose the current obligation summary from the selected audit basis and provider findings under separate namespaces; provider counts never erase an applicable audit Low set.
     items:
-      - id: review-round
-        type: integer
-        prompt: Record the positive whole-epic review ordinal, counting each original root once for the current validation goal revision.
+      - id: review-route
+        type: choice
+        prompt: Record the effective whole-Epic review route.
         required: true
+        choices:
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: review-operation
+        type: choice
+        prompt: Record the authoritative operation state.
+        required: true
+        choices:
+          - complete
+          - incomplete
+          - failed
+          - waived
+      - id: assessment-ordinal
+        type: integer
+        prompt: Record the positive ordinal only for a completed delegated review or waiver assessment.
+        required: false
+        required_when:
+          - item: review-operation
+            not_equals: incomplete
+          - item: review-operation
+            not_equals: failed
         minimum: 1
       - id: review-mode
         type: choice
@@ -393,12 +439,135 @@ node_definitions:
         choices:
           - remediation-eligible
           - confirmation-only
-      - id: review-run-id
+      - id: prior-assessment-ordinal
+        type: integer
+        prompt: Record the latest completed ordinal before this assessment, or zero initially.
+        required: true
+        minimum: 0
+      - id: assessment-ordinal-continuity
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-review-ordinal-continuity; Podway does not execute or attest the operation.
+        help: The declared operation is "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision and uses the authorized review mode." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        required: true
+        operation_id: aquarium-validation-review-ordinal-continuity
+        operation_digest: sha256:cc0d9686935cce4bab5d401211a3eb83201b371eff6d5f310fc587282dd728e0
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: review-evidence-reference
         type: text
-        prompt: Record the exact committed Mulgae root or verified composite review run ID; verify the original root and role sources through review_composition for a composite.
+        prompt: Record the bounded native lifecycle, delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
         required: true
         min_length: 1
-        max_length: 128
+        max_length: 2000
+        multiline: true
+      - id: backend-check-result
+        type: choice
+        prompt: Record the optional backend check without substituting it for workflow verification.
+        required: true
+        choices:
+          - pass
+          - fail
+          - not-provided
+      - id: assessment-provenance
+        type: text
+        prompt: Record reviewer provenance or exactly coordinator-waiver.
+        required: true
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: waiver-summary
+        type: text
+        prompt: For waiver, record review waived, authority, full-criteria assessment, and assurance limitation.
+        required: false
+        required_when:
+          - item: review-route
+            equals: waived
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: route-authorization-basis
+        type: choice
+        prompt: Record whether the route follows the approved envelope or an explicit later change.
+        required: true
+        choices:
+          - approved-envelope
+          - explicit-route-change
+          - explicit-waiver
+      - id: route-change-authority-reference
+        type: text
+        prompt: Record explicit route-change or waiver authority when applicable.
+        required: false
+        required_when:
+          - item: route-authorization-basis
+            not_equals: approved-envelope
+        min_length: 1
+        max_length: 2000
+        multiline: true
+      - id: prior-route-lifecycle-state
+        type: choice
+        prompt: Record the last authoritative prior-route state.
+        required: true
+        choices:
+          - not-started
+          - active-or-unknown
+          - terminal-incomplete-or-failed
+          - terminal-complete
+      - id: route-change-readiness
+        type: choice
+        prompt: Record whether only current-route recovery is safe or route change is admitted.
+        required: true
+        choices:
+          - current-route-only
+          - safe-to-change
+      - id: route-direction
+        type: choice
+        prompt: For incomplete or failed operations, record the user's explicit recovery direction.
+        required: false
+        choices:
+          - resume-current
+          - switch-route
+          - waive
+          - stop
+      - id: finding-lineage-summary
+        type: text
+        prompt: Preserve audit and earlier reviewer or waiver findings under separate namespaces.
+        required: true
+        min_length: 1
+        max_length: 5000
+        multiline: true
+      - id: remaining-review-authority-summary
+        type: text
+        prompt: Record remaining remediation and confirmation authority.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
+      - id: corrected-target-summary
+        type: text
+        prompt: Record the exact corrected committed target and reassessment obligations.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
+      - id: route-binding-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-review-route-binding; Podway does not execute or attest the operation.
+        help: The declared operation is "Verify that the effective whole-Epic review route matches the approved validation envelope or an explicit lifecycle-safe route-change or waiver authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        required: true
+        operation_id: aquarium-validation-review-route-binding
+        operation_digest: sha256:3dbe24916a00f015559890d695877311f32f658c38289cbce3ceb947c2b27ffd
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: extra-assessment-authority-reference
+        type: text
+        prompt: Record explicit user authority for an assessment beyond ordinal two.
+        required: false
+        min_length: 1
+        max_length: 2000
         multiline: true
       - id: final-review-summary
         type: text
@@ -427,10 +596,10 @@ node_definitions:
       - id: final-review-result
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-review; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify the complete whole-epic review, CI, coverage, publication, and findings query for the current Aquarium validation candidate." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
+        help: The declared operation is "Verify the selected route's completed whole-Epic evidence and workflow readiness for the current Aquarium validation candidate, including Mulgae-only coverage, publication, findings query, and backend requirements when applicable." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
         required: true
         operation_id: aquarium-validation-review
-        operation_digest: sha256:e1265561a8e3432f405ff7aaf54885ca9596a97f522a555f7d0f49083bc1b8ba
+        operation_digest: sha256:0bd34b1a0c4d016a26b1a853614ce56e8a5f1952e885732bb450120a6fe5a049
         accepted_outcomes:
           - pass
           - fail
@@ -601,33 +770,346 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the selection using the criterion assessment and current review authority.
-  final-review-operation-decision:
+  final-review-route-binding-decision:
     type: decision
-    title: Evaluate final review operation
-    objective: Admit semantic validation only after the whole-epic review operation passes.
-    prompt: Did the final review operation pass?
+    title: Bind the final review route
+    objective: Require the approved route or an explicitly authorized lifecycle-safe change.
+    prompt: Is the effective route bound to current authority?
     options:
-      - id: passed
-        label: Review operation passed
-        criteria: The complete review operation passed.
+      - id: bound
+        label: Route binding valid
+        criteria: The caller verified exact route, authority, and lifecycle-safe settlement.
         guards:
-          - evidence:
-              node: final-review
-              item: final-review-result
+          - evidence: {node: final-review, item: route-binding-result}
             field: outcome
             equals: pass
-      - id: incomplete
-        label: Review operation incomplete
-        criteria: The operation failed or was inconclusive.
+      - id: invalid
+        label: Route binding invalid
+        criteria: Route binding is failed or inconclusive.
         guards:
-          - evidence:
-              node: final-review
-              item: final-review-result
+          - evidence: {node: final-review, item: route-binding-result}
             field: outcome
             not_equals: pass
     reason:
       required: true
+      prompt: Explain the planned route, effective route, authority, and safe-state evidence.
+  assessment-ordinal-decision:
+    type: decision
+    title: Validate final assessment ordinal
+    objective: Consume exactly the next bounded ordinal for a completed assessment.
+    prompt: Does this checkpoint use the next authorized ordinal and mode?
+    options:
+      - id: first
+        label: First assessment
+        criteria: This is ordinal one in remediation mode.
+        guards:
+          - evidence: {node: final-review, item: prior-assessment-ordinal}
+            equals: 0
+          - evidence: {node: final-review, item: assessment-ordinal}
+            equals: 1
+          - evidence: {node: final-review, item: review-mode}
+            equals: remediation-eligible
+          - evidence: {node: final-review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: second
+        label: Second assessment
+        criteria: This is ordinal two in confirmation mode.
+        guards:
+          - evidence: {node: final-review, item: prior-assessment-ordinal}
+            equals: 1
+          - evidence: {node: final-review, item: assessment-ordinal}
+            equals: 2
+          - evidence: {node: final-review, item: review-mode}
+            equals: confirmation-only
+          - evidence: {node: final-review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+      - id: authorized-extra
+        label: User-authorized extra confirmation
+        criteria: A later confirmation has explicit authority and caller-verified exact continuity.
+        guards:
+          - evidence: {node: final-review, item: prior-assessment-ordinal}
+            at_least: 2
+          - evidence: {node: final-review, item: assessment-ordinal}
+            at_least: 3
+          - evidence: {node: final-review, item: review-mode}
+            equals: confirmation-only
+          - evidence: {node: final-review, item: extra-assessment-authority-reference}
+            non_empty: true
+          - evidence: {node: final-review, item: assessment-ordinal-continuity}
+            field: outcome
+            equals: pass
+    reason:
+      required: true
+      prompt: Explain the prior ordinal, current ordinal, mode, and authority.
+  final-route-evidence-decision:
+    type: decision
+    title: Validate final route evidence
+    objective: Admit only route-specific completed evidence combinations.
+    prompt: Which valid completed evidence combination is present?
+    options:
+      - id: mulgae-pass
+        label: Mulgae completed with passing backend
+        criteria: Mulgae completed with native provenance and a passing backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: mulgae
+          - evidence: {node: final-review, item: review-operation}
+            equals: complete
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: pass
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: mulgae-fail
+        label: Mulgae completed with failing backend
+        criteria: Mulgae completed and consumed its ordinal while the backend blocks success.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: mulgae
+          - evidence: {node: final-review, item: review-operation}
+            equals: complete
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: fail
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: orca
+        label: Orca completed
+        criteria: Orca completed with reviewer provenance and no backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: orca
+          - evidence: {node: final-review, item: review-operation}
+            equals: complete
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: native-codex
+        label: Native Codex completed
+        criteria: Fresh native Codex review completed with host provenance and no backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: native-codex
+          - evidence: {node: final-review, item: review-operation}
+            equals: complete
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: waived
+        label: Waiver assessment completed
+        criteria: Waiver has coordinator provenance, explicit summary, and no backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: waived
+          - evidence: {node: final-review, item: review-operation}
+            equals: waived
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: final-review, item: assessment-provenance}
+            equals: coordinator-waiver
+          - evidence: {node: final-review, item: waiver-summary}
+            non_empty: true
+    reason:
+      required: true
+      prompt: Explain the route-specific evidence and assurance limit.
+  incomplete-final-route-evidence-decision:
+    type: decision
+    title: Validate incomplete final route evidence
+    objective: Admit only delegated incomplete or failed operations without an ordinal.
+    prompt: Which route owns the incomplete or failed operation?
+    options:
+      - id: mulgae
+        label: Mulgae incomplete evidence
+        criteria: Mulgae retains native or preflight evidence without waiver provenance.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: mulgae
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: orca
+        label: Orca incomplete evidence
+        criteria: Orca retains lifecycle or preflight evidence and no backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: orca
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+      - id: native-codex
+        label: Native Codex incomplete evidence
+        criteria: Native Codex retains delegation or preflight evidence and no backend check.
+        guards:
+          - evidence: {node: final-review, item: review-route}
+            equals: native-codex
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+    reason:
+      required: true
+      prompt: Explain retained route evidence and absent ordinal.
+  final-backend-check-decision:
+    type: decision
+    title: Evaluate final backend check
+    objective: Keep the optional backend check separate from verification and semantic findings.
+    prompt: What backend-check state applies?
+    options:
+      - id: passed
+        label: Backend check passed
+        criteria: Mulgae supplied a passing backend check.
+        guards:
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: pass
+      - id: failed
+        label: Backend check failed
+        criteria: Mulgae supplied a failing backend check that blocks validation.
+        guards:
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: fail
+      - id: not-provided
+        label: Backend check not provided
+        criteria: Orca, native Codex, or waiver legitimately has no backend check.
+        guards:
+          - evidence: {node: final-review, item: backend-check-result}
+            equals: not-provided
+    reason:
+      required: true
+      prompt: Explain the route-specific backend state.
+  final-route-settlement-decision:
+    type: decision
+    title: Validate final route settlement
+    objective: Prevent a switch or waiver while prior native work is active or uncertain.
+    prompt: Is route change lifecycle-safe?
+    options:
+      - id: active-current-only
+        label: Current route only
+        criteria: Prior work is active or terminal state is unknown.
+        guards:
+          - evidence: {node: final-review, item: prior-route-lifecycle-state}
+            equals: active-or-unknown
+          - evidence: {node: final-review, item: route-change-readiness}
+            equals: current-route-only
+      - id: not-started-safe
+        label: Prior route did not start
+        criteria: Preflight failed before native work started, so route change or waiver is safe.
+        guards:
+          - evidence: {node: final-review, item: prior-route-lifecycle-state}
+            equals: not-started
+          - evidence: {node: final-review, item: route-change-readiness}
+            equals: safe-to-change
+      - id: terminal-safe
+        label: Prior route settled without completion
+        criteria: The incomplete or failed operation reached an authoritative terminal state.
+        guards:
+          - evidence: {node: final-review, item: prior-route-lifecycle-state}
+            equals: terminal-incomplete-or-failed
+          - evidence: {node: final-review, item: route-change-readiness}
+            equals: safe-to-change
+    reason:
+      required: true
+      prompt: Explain the native lifecycle state and route-change readiness.
+  final-route-direction-decision:
+    type: decision
+    title: Choose final review recovery
+    objective: Require explicit recovery direction without automatic fallback.
+    prompt: What did the user direct for the incomplete or failed operation?
+    options:
+      - id: resume-current
+        label: Resume current route
+        criteria: Continue through the current route owner.
+        guards:
+          - evidence: {node: final-review, item: route-direction}
+            equals: resume-current
+      - id: switch-route
+        label: Switch route
+        criteria: Switch after authoritative safe settlement.
+        guards:
+          - evidence: {node: final-review, item: route-direction}
+            equals: switch-route
+          - evidence: {node: final-review, item: route-change-readiness}
+            equals: safe-to-change
+      - id: waive
+        label: Waive delegated review
+        criteria: Waive after authoritative safe settlement.
+        guards:
+          - evidence: {node: final-review, item: route-direction}
+            equals: waive
+          - evidence: {node: final-review, item: route-change-readiness}
+            equals: safe-to-change
+      - id: stop
+        label: Stop validation
+        criteria: Stop without implying native cancellation.
+        guards:
+          - evidence: {node: final-review, item: route-direction}
+            equals: stop
+    reason:
+      required: true
+      prompt: Record explicit direction and retained route state.
+  final-review-operation-decision:
+    type: decision
+    title: Evaluate final review operation
+    objective: Separate completed assessments from incomplete or failed operations.
+    prompt: What is the authoritative final review operation state?
+    options:
+      - id: completed
+        label: Delegated review completed
+        criteria: A delegated reviewer completed the selected route.
+        guards:
+          - evidence:
+              node: final-review
+              item: review-operation
+            equals: complete
+      - id: waived
+        label: Review waived and assessed
+        criteria: The coordinator completed the authorized waiver assessment.
+        guards:
+          - evidence: {node: final-review, item: review-operation}
+            equals: waived
+      - id: incomplete
+        label: Review operation incomplete
+        criteria: The operation remains incomplete and consumed no ordinal.
+        guards:
+          - evidence: {node: final-review, item: review-operation}
+            equals: incomplete
+          - evidence: {node: final-review, item: assessment-ordinal}
+            empty: true
+      - id: failed
+        label: Review operation failed
+        criteria: The operation failed and consumed no ordinal.
+        guards:
+          - evidence: {node: final-review, item: review-operation}
+            equals: failed
+          - evidence: {node: final-review, item: assessment-ordinal}
+            empty: true
+    reason:
+      required: true
       prompt: Explain the recorded operation result.
+  final-review-readiness-decision:
+    type: decision
+    title: Evaluate final review readiness
+    objective: Admit semantic validation only after route-specific review readiness passes.
+    prompt: Did the route-specific final review readiness check pass?
+    options:
+      - id: passed
+        label: Review readiness passed
+        criteria: The caller-supplied selected-route readiness check passed.
+        guards:
+          - evidence: {node: final-review, item: final-review-result}
+            field: outcome
+            equals: pass
+      - id: incomplete
+        label: Review readiness incomplete
+        criteria: The readiness check failed or is inconclusive.
+        guards:
+          - evidence: {node: final-review, item: final-review-result}
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Explain the route-specific readiness result.
   final-review-confirmation-decision:
     type: decision
     title: Confirm final findings
@@ -770,14 +1252,14 @@ node_definitions:
   low-disposition-record:
     type: action
     title: Record completed Low dispositions
-    intent: Record proportionate Low handling without claiming that the provider reviewed corrected or newly recorded bytes.
+    intent: Record proportionate Low handling without claiming that the selected reviewer assessed corrected or newly recorded bytes.
     instructions:
       - Freeze the eligible Low set across direct-audit and provider namespaces and apply only supported dispositions.
       - Verify the exact permitted target delta locally; do not run another review or broad re-audit solely for Low.
     items:
       - id: source-review-basis
         type: text
-        prompt: Record validation goal revision, audit and original-root review basis, effective result, reviewed target, and finite finding-set identity.
+        prompt: Record validation goal revision, audit basis, route evidence reference, effective result, reviewed target, and finite finding-set identity.
         required: true
         min_length: 1
         max_length: 2500
@@ -955,6 +1437,13 @@ node_definitions:
       - id: achieved
         label: Goal achieved
         criteria: This assessment was reached from validated with zero current final-review pending dispositions, blockers, and evidence gaps, or from completed record-low-disposition with zero pending dispositions and current blockers, a passing Low-disposition verification result, and the exact accepted final target; required audit and review evidence is operationally complete, and every historical finding remains recorded under its source namespace.
+        guards:
+          - evidence: {node: record-stopped, item: disposition-summary}
+            empty: true
+          - evidence: {node: record-incomplete, item: disposition-summary}
+            empty: true
+          - evidence: {node: record-review-operation-incomplete, item: disposition-summary}
+            empty: true
       - id: not-achieved
         label: Goal not achieved
         criteria: Fresh evidence does not support the current validation goal, including every path reached from record-stopped, record-incomplete, or record-review-operation-incomplete; those dispositions can never select achieved.
@@ -1131,21 +1620,167 @@ graph:
             - audit-low-finding-count
             - audit-low-finding-identities
             - audit-low-basis-summary
-      next: decide-final-review-operation
+      next: confirm-final-review-route-binding
+    - id: confirm-final-review-route-binding
+      use: final-review-route-binding-decision
+      evidence_from:
+        - node: capture-baseline
+          required: true
+          items:
+            - review-route
+            - review-target-scope
+            - review-selection-summary
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - route-authorization-basis
+            - route-change-authority-reference
+            - route-binding-result
+            - route-change-readiness
+      routes:
+        bound:
+          to: decide-final-review-operation
+          effect: advance
+        invalid:
+          to: record-incomplete
+          effect: advance
     - id: decide-final-review-operation
       use: final-review-operation-decision
       evidence_from:
         - node: final-review
           required: true
           items:
-            - final-review-result
-            - final-review-observations
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
       routes:
-        passed:
-          to: confirm-final-review-findings
+        completed:
+          to: confirm-final-assessment-ordinal
+          effect: advance
+        waived:
+          to: confirm-final-assessment-ordinal
           effect: advance
         incomplete:
-          to: record-review-operation-incomplete
+          to: confirm-incomplete-final-route-evidence
+          effect: advance
+        failed:
+          to: confirm-incomplete-final-route-evidence
+          effect: advance
+    - id: confirm-final-assessment-ordinal
+      use: assessment-ordinal-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - prior-assessment-ordinal
+            - assessment-ordinal
+            - assessment-ordinal-continuity
+            - review-mode
+            - extra-assessment-authority-reference
+      routes:
+        first:
+          to: confirm-final-route-evidence
+          effect: advance
+        second:
+          to: confirm-final-route-evidence
+          effect: advance
+        authorized-extra:
+          to: confirm-final-route-evidence
+          effect: advance
+    - id: confirm-final-route-evidence
+      use: final-route-evidence-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - waiver-summary
+      routes:
+        mulgae-pass:
+          to: confirm-final-review-findings
+          effect: advance
+        mulgae-fail:
+          to: confirm-final-review-findings
+          effect: advance
+        orca:
+          to: confirm-final-review-findings
+          effect: advance
+        native-codex:
+          to: confirm-final-review-findings
+          effect: advance
+        waived:
+          to: confirm-final-review-findings
+          effect: advance
+    - id: confirm-incomplete-final-route-evidence
+      use: incomplete-final-route-evidence-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+      routes:
+        mulgae:
+          to: confirm-final-route-settlement
+          effect: advance
+        orca:
+          to: confirm-final-route-settlement
+          effect: advance
+        native-codex:
+          to: confirm-final-route-settlement
+          effect: advance
+    - id: confirm-final-route-settlement
+      use: final-route-settlement-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction
+      routes:
+        active-current-only:
+          to: choose-final-route-direction
+          effect: advance
+        not-started-safe:
+          to: choose-final-route-direction
+          effect: advance
+        terminal-safe:
+          to: choose-final-route-direction
+          effect: advance
+    - id: choose-final-route-direction
+      use: final-route-direction-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - route-direction
+            - route-change-readiness
+      routes:
+        resume-current:
+          to: final-review
+          effect: rework
+        switch-route:
+          to: final-review
+          effect: rework
+        waive:
+          to: final-review
+          effect: rework
+        stop:
+          to: record-stopped
           effect: advance
     - id: confirm-final-review-findings
       use: final-review-confirmation-decision
@@ -1156,10 +1791,43 @@ graph:
             - confirmation-needed-findings
       routes:
         resolved:
-          to: confirm-completion-assessment
+          to: decide-final-backend-check
           effect: advance
         unresolved:
           to: record-incomplete
+          effect: advance
+    - id: decide-final-backend-check
+      use: final-backend-check-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - backend-check-result
+      routes:
+        passed:
+          to: decide-final-review-readiness
+          effect: advance
+        failed:
+          to: decide-validation-rework-authority
+          effect: advance
+        not-provided:
+          to: decide-final-review-readiness
+          effect: advance
+    - id: decide-final-review-readiness
+      use: final-review-readiness-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - final-review-result
+            - final-review-observations
+      routes:
+        passed:
+          to: confirm-completion-assessment
+          effect: advance
+        incomplete:
+          to: record-review-operation-incomplete
           effect: advance
     - id: confirm-completion-assessment
       use: completion-status-decision
@@ -1228,9 +1896,9 @@ graph:
         - node: final-review
           required: true
           items:
-            - review-round
+            - assessment-ordinal
             - review-mode
-            - review-run-id
+            - review-evidence-reference
             - final-review-summary
             - final-review-result
             - reported-severity-summary
@@ -1313,7 +1981,7 @@ graph:
         - node: final-review
           required: true
           items:
-            - review-run-id
+            - review-evidence-reference
             - final-review-summary
             - completion-assessment-summary
             - completion-unmet-criteria
@@ -1388,6 +2056,12 @@ graph:
           required: false
           items:
             - final-review-result
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
             - unresolved-valid-findings
             - confirmation-needed-findings
             - medium-or-higher-findings

@@ -43,7 +43,11 @@ SUCCESS_OPTIONS = {
     "decide-operational-evidence": "passed",
     "decide-review-basis": "native-review",
     "decide-final-review": "validated",
-    "decide-final-review-operation": "passed",
+    "confirm-final-review-route-binding": "bound",
+    "decide-final-review-operation": "completed",
+    "confirm-final-route-evidence": "mulgae-pass",
+    "decide-final-backend-check": "passed",
+    "decide-final-review-readiness": "passed",
     "confirm-final-review-findings": "resolved",
     "confirm-completion-assessment": "complete",
     "confirm-review-completion": "complete",
@@ -56,6 +60,7 @@ SUCCESS_OPTIONS = {
     "authorize-review-route": "planned-mulgae",
     "confirm-review-route-binding": "mulgae",
     "decide-review-operation": "completed",
+    "confirm-route-evidence": "mulgae-pass",
     "confirm-review-evidence": "mulgae-pass",
     "decide-backend-check": "passed",
     "decide-task-rework-authority": "remediation",
@@ -503,6 +508,7 @@ class ManagedRuntime:
         self.low_settlement_rounds: dict[str, int] = {}
         self.node_visits: dict[str, int] = {}
         self.goal_evidence_round = 0
+        self.completed_assessments: dict[str, int] = {}
         self.correction_case_variants: dict[str, set[str]] = {}
         self.validation_source_basis_verified = False
         self.low_blocker_readback_verified = False
@@ -1413,10 +1419,10 @@ class ManagedRuntime:
                 )
             elif item_id in {"audit-basis-target", "before-target", "after-target"}:
                 value = self.fixture_target
-            elif (
-                self.scenario == "goal-hardening-defer"
-                and item_id == "hardening-deferral-evidence-sha256"
-            ):
+            elif self.scenario == "goal-hardening-defer" and item_id in {
+                "hardening-deferral-evidence-sha256",
+                "hardening-deferral-native-target-sha256",
+            }:
                 value = (
                     "sha256:"
                     + hashlib.sha256(b"qualification-hardening-deferral").hexdigest()
@@ -1446,6 +1452,30 @@ class ManagedRuntime:
                 and item_id == "assessment-ordinal"
             ):
                 value = max(1, self.node_visits.get("review", 1))
+            if (
+                self.current_procedure_id == "aquarium-goal-v2"
+                and node == "record-evidence"
+                and item_id == "prior-assessment-ordinal"
+            ):
+                value = self.completed_assessments.get(self.current_procedure_id, 0)
+            if (
+                self.current_procedure_id == "aquarium-goal-v2"
+                and node == "record-evidence"
+                and item_id == "assessment-ordinal"
+            ):
+                value = self.completed_assessments.get(self.current_procedure_id, 0) + 1
+            if (
+                self.current_procedure_id == "aquarium-validation-v2"
+                and node == "final-review"
+                and item_id == "prior-assessment-ordinal"
+            ):
+                value = self.completed_assessments.get(self.current_procedure_id, 0)
+            if (
+                self.current_procedure_id == "aquarium-validation-v2"
+                and node == "final-review"
+                and item_id == "assessment-ordinal"
+            ):
+                value = self.completed_assessments.get(self.current_procedure_id, 0) + 1
             if (
                 self.scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
                 and node == "final-review"
@@ -1755,16 +1785,27 @@ class ManagedRuntime:
                     else review_evidence_kind or "native-review"
                 ),
                 "review-mode": (
-                    "confirmation-only"
-                    if self.scenario
-                    in VALIDATION_CONFIRMATION_SCENARIOS | TASK_CONFIRMATION_SCENARIOS
+                    "closeout-not-required"
+                    if self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
                     else (
-                        "hardening-deferral-eligible"
-                        if self.scenario in {"medium-wait", "goal-hardening-defer"}
+                        "confirmation-only"
+                        if self.current_procedure_id == "aquarium-validation-v2"
+                        and node == "final-review"
+                        and self.completed_assessments.get(self.current_procedure_id, 0)
+                        > 0
                         else (
-                            "closeout-not-required"
-                            if self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
-                            else "remediation-eligible"
+                            "hardening-deferral-eligible"
+                            if self.current_procedure_id == "aquarium-goal-v2"
+                            and node == "record-evidence"
+                            and self.completed_assessments.get(
+                                self.current_procedure_id, 0
+                            )
+                            > 0
+                            else (
+                                "confirmation-only"
+                                if self.scenario in TASK_CONFIRMATION_SCENARIOS
+                                else "remediation-eligible"
+                            )
                         )
                     )
                 ),
@@ -2187,6 +2228,8 @@ class ManagedRuntime:
         self.current_procedure_id = procedure_id
         self.scenario = scenario
         self.node_visits = {}
+        if scenario == "goal-hardening-defer":
+            self.completed_assessments[procedure_id] = 1
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
         expected = [
@@ -2606,7 +2649,7 @@ class ManagedRuntime:
                 expected_outcome, expected_gaps, expected_option = (
                     VALIDATION_FINAL_REVIEW_SCENARIOS[scenario]
                 )
-                if node == "decide-final-review-operation":
+                if node == "decide-final-review-readiness":
                     actual_outcome = self.read_complete_evidence(
                         observation, "final-review", "final-review-result"
                     ).get("outcome")
@@ -2615,7 +2658,7 @@ class ManagedRuntime:
                             "validation final-review operation evidence changed"
                         )
                 if (
-                    node == "decide-final-review-operation"
+                    node == "decide-final-review-readiness"
                     and expected_outcome != "pass"
                 ):
                     observation = self.reject_guarded_decision(observation, "passed")
@@ -2999,6 +3042,26 @@ class ManagedRuntime:
                     3: "third",
                     4: "fourth",
                 }.get(ordinal, "authorized-extra")
+            elif (
+                procedure_id == "aquarium-goal-v2"
+                and node == "confirm-review-route-binding"
+            ):
+                special_option = "planned-mulgae"
+            elif (
+                procedure_id == "aquarium-goal-v2"
+                and node == "confirm-assessment-ordinal"
+            ) or (
+                procedure_id == "aquarium-validation-v2"
+                and node == "confirm-final-assessment-ordinal"
+            ):
+                ordinal = self.completed_assessments.get(procedure_id, 0) + 1
+                special_option = (
+                    "first"
+                    if ordinal == 1
+                    else "second"
+                    if ordinal == 2
+                    else "authorized-extra"
+                )
             option = (
                 special_option
                 or {
@@ -3025,6 +3088,15 @@ class ManagedRuntime:
                     f"no successful qualification option for {procedure_id}:{node}"
                 )
             decision = self.decide(observation, option)
+            if (
+                procedure_id == "aquarium-goal-v2" and node == "confirm-route-evidence"
+            ) or (
+                procedure_id == "aquarium-validation-v2"
+                and node == "confirm-final-route-evidence"
+            ):
+                self.completed_assessments[procedure_id] = (
+                    self.completed_assessments.get(procedure_id, 0) + 1
+                )
             if (
                 scenario == "standard"
                 and procedure_id == "aquarium-validation-v2"

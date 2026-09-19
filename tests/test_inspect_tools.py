@@ -4825,8 +4825,8 @@ else:
         self.install_managed_podway_procedures()
         prior_digests = {
             "aquarium-task-v2.yaml": "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
-            "aquarium-goal-v2.yaml": "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
-            "aquarium-validation-v2.yaml": "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
+            "aquarium-goal-v2.yaml": "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
+            "aquarium-validation-v2.yaml": "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
         }
         managed = self.repository.resolve() / ".podway/procedures"
         before = {name: (managed / name).read_bytes() for name in prior_digests}
@@ -4886,6 +4886,7 @@ else:
                     "42eee85a406f46c3c7c40a467bfa1764d1e0b3042247b0604564ea20547f8d96",
                     "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
                     "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
+                    "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
                 },
                 "aquarium-validation-v2.yaml": {
                     "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
@@ -4895,6 +4896,7 @@ else:
                     "9f3c0a0628f6ea820dbffee2355b949a2d2459e595ea3044d9aa53d81482eb5c",
                     "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
                     "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
+                    "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
                 },
                 "aquarium-design-v2.yaml": {
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
