@@ -2481,7 +2481,6 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
-            - waiver-summary
       routes:
         mulgae:
           to: confirm-incomplete-mulgae-provenance
