@@ -53,7 +53,7 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-validation-v2.yaml",
             "19",
-            "b491e0c01e1118c42ed0c6eaa6b80f8a463bd1e46c65fe94de614be2dc9b142a",
+            "d8b4ae01d5477bb3862f80620da5bf32f303b4fac88e64dc0ade0170d963e2df",
             "aquarium-validation-v18.yaml",
             "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
         ),
