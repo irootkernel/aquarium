@@ -25,6 +25,7 @@ COMMAND_TIMEOUT_SECONDS = 20
 READINESS_TIMEOUT_SECONDS = 20
 PROCESS_EXIT_TIMEOUT_SECONDS = 10
 RUN_TIMEOUT_SECONDS = 240
+MAX_GRAPH_STEPS = 128
 REPEAT_COUNT = 2
 CONTRACT_MANIFEST_DIGEST = (
     "sha256:bff8af8f57f1390446333cc56775ca71209e99bd3ff6fd556c39906b77a90635"
@@ -1196,8 +1197,10 @@ class ManagedRuntime:
         rejected = self.decide(observation, option, expected_exit=None)
         observed_code = error_code(rejected) if rejected.returncode != 0 else None
         if rejected.returncode == 0 or observed_code != expected_code:
+            node = observation["guidance"]["node"]["graph_node_id"]
             raise RuntimeQualificationError(
-                f"guarded option was not rejected: option={option!r}; "
+                f"guarded option was not rejected: scenario={self.scenario}; "
+                f"node={node}; option={option!r}; "
                 f"exit={rejected.returncode}; code={observed_code!r}; "
                 f"expected_code={expected_code!r}"
             )
@@ -2836,7 +2839,7 @@ class ManagedRuntime:
                 installed.read_bytes() + b"unknown_runtime_field: true\n"
             )
 
-        for _ in range(100):
+        for _ in range(MAX_GRAPH_STEPS):
             observation = self.observe()
             status = observation["status"]
             if status["procedure"]["digest"] != digest:
@@ -3134,7 +3137,9 @@ class ManagedRuntime:
                 and not self.task_review_reworked
                 and scenario == "standard"
             ):
-                observation = self.reject_guarded_decision(observation, "passed")
+                observation = self.reject_guarded_decision(
+                    observation, "passed", expected_code="OPTION_NOT_ALLOWED"
+                )
                 self.task_review_guard_failure = True
                 self.decide(observation, "failed")
                 self.task_review_reworked = True
@@ -4102,7 +4107,10 @@ class ManagedRuntime:
             ):
                 raise RuntimeQualificationError("decision result is invalid")
         else:
-            raise RuntimeQualificationError(f"{procedure_id} exceeded 100 graph steps")
+            raise RuntimeQualificationError(
+                f"{procedure_id} exceeded {MAX_GRAPH_STEPS} graph steps: "
+                f"node_visits={self.node_visits!r}"
+            )
 
         terminal = self.observe()
         terminal_status = terminal["status"]
