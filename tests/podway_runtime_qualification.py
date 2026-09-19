@@ -2777,6 +2777,8 @@ class ManagedRuntime:
         self.node_visits = {}
         if scenario in {"goal-hardening-defer", "medium-wait"}:
             self.completed_assessments[procedure_id] = 1
+        if scenario == "validation-medium-wait":
+            self.completed_assessments[procedure_id] = 1
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
         expected = [
