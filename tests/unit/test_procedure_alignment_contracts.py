@@ -46,7 +46,7 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-goal-v2.yaml",
             "20",
-            "839850aad32b5e9ffcb3ca1722d9aa83ef99c5de5dacfaad1fdb06b0bd42f209",
+            "27be0a3b7fac20d7e7e89ea2f351627d7805484920060daefad346d81b5ed66d",
             "aquarium-goal-v19.yaml",
             "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
         ),

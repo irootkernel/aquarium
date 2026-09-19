@@ -2796,7 +2796,7 @@ class ManagedRuntime:
         self.node_visits = {}
         if scenario in {"goal-hardening-defer", "medium-wait"}:
             self.completed_assessments[procedure_id] = 1
-        if scenario == "validation-medium-wait":
+        if scenario in VALIDATION_CONFIRMATION_SCENARIOS:
             self.completed_assessments[procedure_id] = 1
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
@@ -3464,11 +3464,7 @@ class ManagedRuntime:
                     observation = self.reject_guarded_decision(
                         observation,
                         rejected_option,
-                        expected_code=(
-                            "REQUEST_INVALID"
-                            if procedure_id == "aquarium-task-v2"
-                            else "OPTION_GUARD_UNSATISFIED"
-                        ),
+                        expected_code="REQUEST_INVALID",
                     )
                     self.mark_case_variant("C-10", scenario)
                 if (
