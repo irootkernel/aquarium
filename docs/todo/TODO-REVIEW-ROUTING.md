@@ -96,7 +96,7 @@ Update Task delivery to select and record one workflow review policy. Generalize
 `task-review` so it dispatches the selected delegated route or performs the
 waiver assessment without duplicating native backend lifecycles.
 
-The implementation owners are `task-handler`, `task-review`, and version 15 of
+The implementation owners are `task-handler`, `task-review`, and version 16 of
 `aquarium-task-v2`; the inspector contract and focused routing fixtures verify
 that compatible unit while legacy Procedure snapshots retain their meanings.
 
@@ -105,6 +105,14 @@ incomplete operations, assessment provenance, route-specific evidence, and the
 user's recovery choice. Failed attempts do not consume an ordinal. Existing
 finding confirmation, completion, priority, owner, Low settlement, goal
 assessment, and closeout decisions remain separate.
+
+Version 16 records prior-operation and lifecycle-readiness facts at the review
+checkpoint, so every route-change consumer receives them from a dominating
+source. Each executable closeout path has one path-owned session-goal assessment
+followed by its own bounded outcome and approval chain. On the stopped path, the
+boundary confirmation requires `stopped`; the assessment's schema-required
+achieved mapping requires `invalid-not-stopped`, so that mapping is unreachable.
+Version 15 remains an admitted immutable legacy snapshot.
 
 Orca is eligible for a Task only when its complete staged target excludes
 unrelated index entries. An unsupported target returns to route selection rather

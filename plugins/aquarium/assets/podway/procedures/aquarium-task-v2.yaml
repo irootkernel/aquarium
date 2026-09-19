@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "15"
+version: "16"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -214,6 +214,24 @@ node_definitions:
         min_length: 1
         max_length: 2000
         multiline: true
+      - id: prior-review-operation
+        type: choice
+        prompt: Carry the prior review operation state from its authoritative evidence, or record not-applicable for the initial planned route.
+        required: true
+        choices:
+          - not-applicable
+          - incomplete
+          - failed
+          - completed
+      - id: prior-route-change-readiness
+        type: choice
+        prompt: Carry whether the prior operation is settled for change or was already completed, or record not-applicable for the initial planned route.
+        required: true
+        choices:
+          - not-applicable
+          - current-route-only
+          - safe-to-change
+          - completed-checkpoint
       - id: prior-assessment-ordinal
         type: integer
         prompt: Record the number of the most recent completed assessment for this goal revision, using zero before the first completed checkpoint.
@@ -261,6 +279,14 @@ node_definitions:
               node: prepare-review
               item: route-authorization-basis
             equals: approved-plan
+          - evidence:
+              node: prepare-review
+              item: prior-review-operation
+            equals: not-applicable
+          - evidence:
+              node: prepare-review
+              item: prior-route-change-readiness
+            equals: not-applicable
       - id: changed
         label: Enter an authorized route change
         criteria: The checkpoint records an explicit route change or waiver authority.
@@ -269,6 +295,14 @@ node_definitions:
               node: prepare-review
               item: route-authorization-basis
             not_equals: approved-plan
+          - evidence:
+              node: prepare-review
+              item: prior-review-operation
+            not_equals: not-applicable
+          - evidence:
+              node: prepare-review
+              item: prior-route-change-readiness
+            not_equals: not-applicable
     reason:
       required: true
       prompt: Explain whether the route comes from the approved plan or later explicit authority.
@@ -283,33 +317,37 @@ node_definitions:
         criteria: The prior native operation is incomplete and still requires safe settlement before changing routes.
         guards:
           - evidence:
-              node: review
-              item: review-operation
+              node: prepare-review
+              item: prior-review-operation
             equals: incomplete
       - id: failed
         label: Prior operation failed
         criteria: The prior native operation failed and still requires safe settlement before changing routes.
         guards:
           - evidence:
-              node: review
-              item: review-operation
+              node: prepare-review
+              item: prior-review-operation
             equals: failed
       - id: completed
         label: Prior checkpoint completed
         criteria: The prior assessment completed and its lineage must be preserved by the route change.
         guards:
           - evidence:
-              node: review
-              item: review-operation
+              node: prepare-review
+              item: prior-review-operation
             not_equals: incomplete
           - evidence:
-              node: review
-              item: review-operation
+              node: prepare-review
+              item: prior-review-operation
             not_equals: failed
           - evidence:
               node: prepare-review
               item: prior-assessment-ordinal
             at_least: 1
+          - evidence:
+              node: prepare-review
+              item: prior-route-change-readiness
+            equals: completed-checkpoint
     reason:
       required: true
       prompt: Explain the prior operation state that owns the route-change path.
@@ -324,8 +362,8 @@ node_definitions:
         criteria: The authoritative lifecycle evidence permits an explicit route change or waiver.
         guards:
           - evidence:
-              node: record-review-route-direction
-              item: route-change-readiness
+              node: prepare-review
+              item: prior-route-change-readiness
             equals: safe-to-change
     reason:
       required: true
@@ -426,8 +464,8 @@ node_definitions:
               item: route-change-authority-reference
             non_empty: true
           - evidence:
-              node: record-review-route-direction
-              item: route-change-readiness
+              node: prepare-review
+              item: prior-route-change-readiness
             equals: safe-to-change
       - id: changed-orca
         label: Use explicitly changed Orca route
@@ -446,8 +484,8 @@ node_definitions:
               item: route-change-authority-reference
             non_empty: true
           - evidence:
-              node: record-review-route-direction
-              item: route-change-readiness
+              node: prepare-review
+              item: prior-route-change-readiness
             equals: safe-to-change
       - id: changed-native-codex
         label: Use explicitly changed native Codex route
@@ -466,8 +504,8 @@ node_definitions:
               item: route-change-authority-reference
             non_empty: true
           - evidence:
-              node: record-review-route-direction
-              item: route-change-readiness
+              node: prepare-review
+              item: prior-route-change-readiness
             equals: safe-to-change
       - id: changed-waiver
         label: Use explicitly authorized waiver
@@ -486,8 +524,8 @@ node_definitions:
               item: route-change-authority-reference
             non_empty: true
           - evidence:
-              node: record-review-route-direction
-              item: route-change-readiness
+              node: prepare-review
+              item: prior-route-change-readiness
             equals: safe-to-change
     reason:
       required: true
@@ -1859,33 +1897,37 @@ node_definitions:
   stopped-goal-assessment:
     type: decision
     title: Assess the stopped task goal
-    objective: Determine the current roadmap task goal after an explicit user or review-route stop without allowing an achieved outcome.
+    objective: Determine the current roadmap task goal without permitting an achieved outcome after an explicit stop.
     prompt: What non-achieved outcome applies to the stopped task goal?
     evidence_guidance:
-      - Read the carried direction or route-stop classification, completion evidence, and core task evidence.
-      - A stopped path cannot select achieved.
+      - Read the confirmed stopped boundary, carried direction or route-stop evidence, and current completion evidence.
+      - This path cannot select achieved; assess whether the goal is not achieved or superseded.
     options:
-      - id: achieved
-        label: Goal achieved unavailable after stop
-        criteria: This option is mechanically unavailable because the path-bound stop record permits only a non-achieved or superseded outcome.
+      - id: invalid-not-stopped
+        label: Invalid non-stopped boundary
+        criteria: This option is structurally required by goal tracking but is unavailable after the stopped-boundary confirmation.
         guards:
           - evidence:
               node: record-stopped-goal-boundary
               item: goal-outcome-boundary
             equals: invalid-not-stopped
+      - id: stopped
+        label: Goal stopped without achievement
+        criteria: The explicit stop leaves the current goal revision unachieved.
       - id: not-achieved
         label: Goal not achieved
-        criteria: The explicit stop leaves the current goal revision unsupported.
+        criteria: Fresh evidence does not support the current goal revision.
       - id: superseded
         label: Goal superseded
-        criteria: The explicit stop records that the current goal revision is no longer desired.
+        criteria: The current goal revision is no longer the desired outcome.
     reason:
       required: true
-      prompt: Explain the stopped outcome using the carried direction, completion assessment, and task evidence.
+      prompt: Explain the non-achieved outcome using the stopped boundary, criterion assessments, and carried stop evidence.
     assessment:
       target: session_goal
       outcomes:
-        achieved: achieved
+        invalid-not-stopped: achieved
+        stopped: not_achieved
         not-achieved: not_achieved
         superseded: superseded
   stopped-goal-boundary-record:
@@ -2089,6 +2131,8 @@ graph:
           required: true
           items:
             - route-authorization-basis
+            - prior-review-operation
+            - prior-route-change-readiness
       routes:
         planned:
           to: authorize-planned-review-route
@@ -2103,10 +2147,8 @@ graph:
           required: true
           items:
             - prior-assessment-ordinal
-        - node: review
-          required: true
-          items:
-            - review-operation
+            - prior-review-operation
+            - prior-route-change-readiness
       routes:
         incomplete:
           to: confirm-review-route-change-readiness
@@ -2120,10 +2162,11 @@ graph:
     - id: confirm-review-route-change-readiness
       use: review-route-change-readiness-decision
       evidence_from:
-        - node: record-review-route-direction
+        - node: prepare-review
           required: true
           items:
-            - route-change-readiness
+            - prior-review-operation
+            - prior-route-change-readiness
       routes:
         safe:
           to: authorize-incomplete-review-route
@@ -2172,15 +2215,13 @@ graph:
             - effective-review-route
             - route-authorization-basis
             - route-change-authority-reference
+            - prior-review-operation
+            - prior-route-change-readiness
             - prior-assessment-ordinal
             - finding-lineage-summary
             - remaining-review-authority-summary
             - corrected-target-summary
             - extra-assessment-authority-reference
-        - node: record-review-route-direction
-          required: true
-          items:
-            - route-change-readiness
       routes:
         changed-mulgae:
           to: review
@@ -2207,6 +2248,8 @@ graph:
             - effective-review-route
             - route-authorization-basis
             - route-change-authority-reference
+            - prior-review-operation
+            - prior-route-change-readiness
             - prior-assessment-ordinal
             - finding-lineage-summary
             - remaining-review-authority-summary
@@ -2240,6 +2283,8 @@ graph:
             - effective-review-route
             - route-authorization-basis
             - route-change-authority-reference
+            - prior-review-operation
+            - prior-route-change-readiness
             - prior-assessment-ordinal
             - finding-lineage-summary
             - remaining-review-authority-summary
@@ -2809,8 +2854,6 @@ graph:
     - id: assess-goal
       use: goal-assessment
       evidence_from:
-        - node: confirm-goal-assessment-core
-          required: true
         - node: review
           required: true
           items:
@@ -2905,8 +2948,6 @@ graph:
     - id: assess-stopped-goal
       use: stopped-goal-assessment
       evidence_from:
-        - node: confirm-stopped-goal-assessment-core
-          required: true
         - node: record-stopped-goal-boundary
           required: true
           items:
@@ -2966,14 +3007,17 @@ graph:
             - coverage-relationship
             - low-disposition-verification
       routes:
-        achieved:
-          to: record-outcome
+        invalid-not-stopped:
+          to: record-stopped-outcome
+          effect: advance
+        stopped:
+          to: record-stopped-outcome
           effect: advance
         not-achieved:
-          to: record-outcome
+          to: record-stopped-outcome
           effect: advance
         superseded:
-          to: record-outcome
+          to: record-stopped-outcome
           effect: advance
     - id: record-outcome
       use: outcome-record
@@ -2981,10 +3025,6 @@ graph:
     - id: approve-closeout
       use: approval-decision
       evidence_from:
-        - node: assess-goal
-          required: false
-        - node: assess-stopped-goal
-          required: false
         - node: record-outcome
           required: true
           items:
@@ -2997,6 +3037,26 @@ graph:
           to: refine
           effect: rework
     - id: closeout
+      use: closeout-record
+      terminal: true
+    - id: record-stopped-outcome
+      use: outcome-record
+      next: approve-stopped-closeout
+    - id: approve-stopped-closeout
+      use: approval-decision
+      evidence_from:
+        - node: record-stopped-outcome
+          required: true
+          items:
+            - outcome-summary
+      routes:
+        approved:
+          to: stopped-closeout
+          effect: advance
+        changes-requested:
+          to: refine
+          effect: rework
+    - id: stopped-closeout
       use: closeout-record
       terminal: true
 manual_rework:

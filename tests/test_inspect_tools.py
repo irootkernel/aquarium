@@ -27,6 +27,7 @@ GLOBAL_SCRIPT = (
 )
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
+TASK_V15_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v15.yaml"
 GOAL_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v17.yaml"
 VALIDATION_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v16.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
@@ -4514,14 +4515,24 @@ else:
         cases = {
             "aquarium-task-v2.yaml": {
                 "validate-review-route-entry": {
-                    "prepare-review": {"route-authorization-basis"},
+                    "prepare-review": {
+                        "route-authorization-basis",
+                        "prior-review-operation",
+                        "prior-route-change-readiness",
+                    },
                 },
                 "classify-review-route-change": {
-                    "prepare-review": {"prior-assessment-ordinal"},
-                    "review": {"review-operation"},
+                    "prepare-review": {
+                        "prior-assessment-ordinal",
+                        "prior-review-operation",
+                        "prior-route-change-readiness",
+                    },
                 },
                 "confirm-review-route-change-readiness": {
-                    "record-review-route-direction": {"route-change-readiness"},
+                    "prepare-review": {
+                        "prior-review-operation",
+                        "prior-route-change-readiness",
+                    },
                 },
                 "authorize-planned-review-route": {
                     "record-plan": {"review-route"},
@@ -4536,14 +4547,17 @@ else:
                         "effective-review-route",
                         "route-authorization-basis",
                         "route-change-authority-reference",
+                        "prior-review-operation",
+                        "prior-route-change-readiness",
                     },
-                    "record-review-route-direction": {"route-change-readiness"},
                 },
                 "authorize-completed-review-route": {
                     "prepare-review": {
                         "effective-review-route",
                         "route-authorization-basis",
                         "route-change-authority-reference",
+                        "prior-review-operation",
+                        "prior-route-change-readiness",
                     },
                 },
                 "confirm-goal-assessment-core": {
@@ -4566,8 +4580,8 @@ else:
                     "review": {"assessment-provenance-kind"},
                 },
                 "assess-stopped-goal": {
-                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
                     "review": {"assessment-provenance-kind"},
+                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
                 },
             },
             "aquarium-goal-v2.yaml": {
@@ -4718,7 +4732,11 @@ else:
             ("aquarium-task-v2.yaml", "confirm-stopped-goal-assessment-core"),
             ("aquarium-task-v2.yaml", "record-stopped-goal-boundary"),
             ("aquarium-task-v2.yaml", "confirm-stopped-goal-boundary"),
+            ("aquarium-task-v2.yaml", "assess-goal"),
             ("aquarium-task-v2.yaml", "assess-stopped-goal"),
+            ("aquarium-task-v2.yaml", "record-stopped-outcome"),
+            ("aquarium-task-v2.yaml", "approve-stopped-closeout"),
+            ("aquarium-task-v2.yaml", "stopped-closeout"),
             ("aquarium-goal-v2.yaml", "confirm-review-route-context"),
             ("aquarium-goal-v2.yaml", "confirm-review-route-entry"),
             ("aquarium-goal-v2.yaml", "confirm-extra-assessment-ordinal"),
@@ -5040,8 +5058,8 @@ else:
         target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
         target.write_text(
             target.read_text(encoding="utf-8").replace(
-                "to: record-outcome\n          effect: advance",
-                "to: closeout\n          effect: advance",
+                "approved:\n          to: closeout\n          effect: advance",
+                "approved:\n          to: record-outcome\n          effect: advance",
                 1,
             ),
             encoding="utf-8",
@@ -5164,6 +5182,61 @@ else:
         self.install_managed_podway_procedures()
         target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
         legacy = TASK_V14_PROCEDURE_FIXTURE.read_text(encoding="utf-8")
+        target.write_text(
+            legacy.replace(
+                "Deliver one approved roadmap task through the complete Aquarium evidence workflow.",
+                "Deliver one tampered roadmap task through the complete Aquarium evidence workflow.",
+                1,
+            ),
+            encoding="utf-8",
+        )
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+
+        self.assertEqual(entry["update_explanation"], "local_customization")
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertTrue(entry["handler_contract_reasons"])
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
+
+    def test_actual_task_v15_prior_canonical_preserves_readiness(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        legacy_bytes = TASK_V15_PROCEDURE_FIXTURE.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(legacy_bytes).hexdigest(),
+            "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
+        )
+        target.write_bytes(legacy_bytes)
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+
+        self.assertEqual(entry["update_explanation"], "prior_canonical")
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "compatible")
+        self.assertEqual(entry["handler_contract_reasons"], [])
+        self.assertFalse(entry["matches_source"])
+        self.assertEqual(target.read_bytes(), legacy_bytes)
+        self.assertEqual(podway["readiness_status"], "ready")
+        self.assertEqual(podway["status"], "configured")
+
+    def test_tampered_task_v15_is_not_admitted_as_prior_canonical(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        legacy = TASK_V15_PROCEDURE_FIXTURE.read_text(encoding="utf-8")
         target.write_text(
             legacy.replace(
                 "Deliver one approved roadmap task through the complete Aquarium evidence workflow.",
@@ -5313,6 +5386,7 @@ else:
                     "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
                     "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
                     "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
+                    "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
                 },
                 "aquarium-goal-v2.yaml": {
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",

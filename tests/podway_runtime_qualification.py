@@ -1839,6 +1839,16 @@ class ManagedRuntime:
                     and self.current_procedure_id == "aquarium-goal-v2"
                     else None
                 ),
+                "prior-review-operation": (
+                    "not-applicable"
+                    if self.current_procedure_id == "aquarium-task-v2"
+                    else None
+                ),
+                "prior-route-change-readiness": (
+                    "not-applicable"
+                    if self.current_procedure_id == "aquarium-task-v2"
+                    else None
+                ),
                 "finding-count-consistency": (
                     "inconsistent"
                     if (
@@ -2878,7 +2888,14 @@ class ManagedRuntime:
                             raise RuntimeQualificationError(
                                 "stop path lost finding-count consistency"
                             )
-                    observation = self.reject_guarded_decision(observation, "achieved")
+                    rejected_option = (
+                        "invalid-not-stopped"
+                        if procedure_id == "aquarium-task-v2"
+                        else "achieved"
+                    )
+                    observation = self.reject_guarded_decision(
+                        observation, rejected_option
+                    )
                     self.mark_case_variant("C-10", scenario)
                 if (
                     scenario == "task-completion-unverified"
