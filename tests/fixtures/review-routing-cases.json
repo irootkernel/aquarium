@@ -7,6 +7,30 @@
     "Automatic provider-root counts exclude native exact recovery and refer to additional roots in the described scope.",
     "Native tests and observed-agent tests prove different boundaries; neither substitutes for the other."
   ],
+  "task_071_qualification_inventory": {
+    "scope": "Bounded cross-route contract qualification for the three managed review Procedures.",
+    "automated": [
+      "route-choice-inventory",
+      "completed-route-evidence-cross-product",
+      "active-or-unknown-route-change-rejection",
+      "incomplete-operation-does-not-consume-ordinal",
+      "terminal-incomplete-switch-reuses-pending-ordinal",
+      "completed-change-consumes-next-ordinal-with-lineage",
+      "mulgae-backend-required",
+      "static-route-backend-forbidden",
+      "waiver-operation-provenance-summary-required",
+      "mulgae-only-hardening-deferral"
+    ],
+    "master_observed_agent_acceptance": [
+      "selected-provider-dispatch",
+      "provider-prerequisite-enforcement",
+      "provider-side-effect-boundaries",
+      "legacy-session-resume-and-switch-behavior",
+      "coordinator-waiver-report-language"
+    ],
+    "route_choices": ["mulgae", "orca", "native-codex", "waived"],
+    "excluded_route_labels": ["independent"]
+  },
   "correction_acceptance_matrix": [
     {"id": "C-01", "evidence_class": "native-procedure", "runner": "tests/podway_runtime_qualification.py", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
     {"id": "C-02", "evidence_class": "native-and-recording-contract", "runner": "tests/podway_runtime_qualification.py and observed agent campaign", "implementation_status": "implemented", "execution_status": "not-recorded-by-this-fixture"},
@@ -30,7 +54,7 @@
     {"id": "TR-02", "plan_route": "native-codex", "route": "native-codex", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-native-codex", "prior_ordinal": 0, "operation": "complete", "backend_check": "not-provided", "ordinal": 1, "ordinal_option": "first", "provenance": "host-delegation", "waiver_summary": null, "operation_option": "completed", "evidence_option": "native-codex", "expected": "blocking-finding-rework"},
     {"id": "TR-03", "plan_route": "orca", "route": "orca", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-orca", "prior_ordinal": 0, "operation": "complete", "backend_check": "not-provided", "ordinal": 1, "ordinal_option": "first", "provenance": "orca-reviewer", "waiver_summary": null, "operation_option": "completed", "evidence_option": "orca", "expected": "ordinary-low-settlement"},
     {"id": "TR-04", "plan_route": "native-codex", "route": "native-codex", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-native-codex", "prior_ordinal": 0, "operation": "complete", "backend_check": "not-provided", "ordinal": 1, "ordinal_option": "first", "provenance": "host-delegation", "waiver_summary": null, "operation_option": "completed", "evidence_option": "native-codex", "expected": "unverified-review-evidence"},
-    {"id": "TR-05", "plan_route": "orca", "route": "orca", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-orca", "prior_ordinal": 0, "operation": "incomplete", "backend_check": "not-provided", "ordinal": null, "provenance": "orca-lifecycle", "waiver_summary": null, "operation_option": "incomplete", "evidence_option": "orca", "prior_state": "terminal-incomplete-or-failed", "route_change_readiness": "safe-to-change", "settlement_option": "terminal-safe", "recovery_option": "switch-route", "next_route": "native-codex", "expected": "explicit-route-direction"},
+    {"id": "TR-05", "plan_route": "orca", "route": "orca", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-orca", "prior_ordinal": 0, "operation": "incomplete", "backend_check": "not-provided", "ordinal": null, "provenance": "orca-lifecycle", "waiver_summary": null, "operation_option": "incomplete", "evidence_option": "orca", "prior_state": "terminal-incomplete-or-failed", "route_change_readiness": "safe-to-change", "settlement_option": "terminal-safe", "recovery_option": "switch-route", "next_route": "native-codex", "next_prior_ordinal": 0, "expected": "explicit-route-direction"},
     {"id": "TR-06", "plan_route": "mulgae", "route": "mulgae", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-mulgae", "prior_ordinal": 0, "operation": "failed", "backend_check": "not-provided", "ordinal": null, "provenance": "mulgae-operation", "waiver_summary": null, "operation_option": "failed", "evidence_option": "mulgae-not-provided", "prior_state": "active-or-unknown", "route_change_readiness": "current-route-only", "settlement_option": "active-current-only", "recovery_option": "resume-current", "expected": "explicit-route-direction"},
     {"id": "TR-07", "plan_route": "waived", "route": "waived", "route_authorization_basis": "approved-plan", "route_authorization_option": "planned-waiver", "prior_ordinal": 0, "operation": "waived", "backend_check": "not-provided", "ordinal": 1, "ordinal_option": "first", "provenance": "coordinator-waiver", "waiver_summary": "authority, target, reason, and assurance limitation", "operation_option": "waived", "evidence_option": "waived", "expected": "coordinator-completion-gates"},
     {"id": "TR-08", "plan_route": "mulgae", "route": "native-codex", "route_authorization_basis": "explicit-route-change", "route_authorization_option": "completed-change-native-codex", "route_change_authority_reference": "explicit user change after completed ordinal 1", "prior_ordinal": 1, "operation": "complete", "backend_check": "not-provided", "ordinal": 2, "ordinal_option": "second", "provenance": "fresh-host-delegation", "waiver_summary": null, "operation_option": "completed", "evidence_option": "native-codex", "prior_finding_lineage": ["F-1"], "remaining_review_authority": "confirmation only", "corrected_target_assessment": true, "expected": "prior-blocking-finding-preserved-after-switch"}
@@ -41,7 +65,8 @@
     {"id": "GR-03", "plan_route": "native-codex", "route": "native-codex", "route_authorization_option": "planned-native-codex", "prior_ordinal": 0, "ordinal": 1, "ordinal_option": "first", "operation": "complete", "operation_option": "completed", "backend_check": "not-provided", "evidence_option": "native-codex", "provenance": "host-delegation", "expected": "completion-gates"},
     {"id": "GR-04", "plan_route": "waived", "route": "waived", "route_authorization_option": "planned-waiver", "prior_ordinal": 0, "ordinal": 1, "ordinal_option": "first", "operation": "waived", "operation_option": "waived", "backend_check": "not-provided", "evidence_option": "waived", "provenance": "coordinator-waiver", "waiver_summary": "authority, target, reason, and assurance limitation", "expected": "limited-assurance-completion-gates"},
     {"id": "GR-05", "plan_route": "orca", "route": "orca", "route_authorization_option": "planned-orca", "prior_ordinal": 0, "ordinal": null, "operation": "incomplete", "operation_option": "incomplete", "backend_check": "not-provided", "evidence_option": "orca", "provenance": "orca-lifecycle", "prior_lifecycle": "terminal-incomplete-or-failed", "settlement_option": "terminal-safe", "direction_option": "resume-current", "expected": "same-pending-ordinal"},
-    {"id": "GR-06", "plan_route": "mulgae", "route": "native-codex", "route_authorization_option": "changed-native-codex", "prior_ordinal": 1, "ordinal": 2, "ordinal_option": "second", "operation": "complete", "operation_option": "completed", "backend_check": "not-provided", "evidence_option": "native-codex", "provenance": "fresh-host-delegation", "prior_lifecycle": "terminal-complete", "direction_option": "switch-route", "finding_lineage": ["F-1"], "remaining_review_authority": "confirmation only", "corrected_target": "commit:corrected-target", "expected": "next-ordinal-with-lineage"}
+    {"id": "GR-06", "plan_route": "mulgae", "route": "native-codex", "route_authorization_option": "changed-native-codex", "prior_ordinal": 1, "ordinal": 2, "ordinal_option": "second", "operation": "complete", "operation_option": "completed", "backend_check": "not-provided", "evidence_option": "native-codex", "provenance": "fresh-host-delegation", "prior_lifecycle": "terminal-complete", "direction_option": "switch-route", "finding_lineage": ["F-1"], "remaining_review_authority": "confirmation only", "corrected_target": "commit:corrected-target", "expected": "next-ordinal-with-lineage"},
+    {"id": "GR-07", "plan_route": "orca", "route": "orca", "route_authorization_option": "planned-orca", "prior_ordinal": 0, "ordinal": null, "operation": "incomplete", "operation_option": "incomplete", "backend_check": "not-provided", "evidence_option": "orca", "provenance": "orca-lifecycle", "prior_lifecycle": "terminal-incomplete-or-failed", "settlement_option": "terminal-safe", "direction_option": "switch-route", "next_route": "native-codex", "next_prior_ordinal": 0, "expected": "same-pending-ordinal"}
   ],
   "validation_review_route_cases": [
     {"id": "VR-01", "route": "mulgae", "route_binding": "pass", "prior_ordinal": 0, "ordinal": 1, "ordinal_option": "first", "operation": "complete", "operation_option": "completed", "backend_check": "pass", "evidence_option": "mulgae-pass", "provenance": "mulgae-reviewer", "expected": "completion-gates"},

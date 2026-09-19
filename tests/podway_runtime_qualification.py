@@ -173,6 +173,39 @@ GOAL_KIND_SCENARIOS = {
     "goal-kind-member-native": ("member-task", "native-review"),
 }
 
+ROUTE_QUALIFICATION_SCENARIOS = {
+    f"{procedure_id.removeprefix('aquarium-').removesuffix('-v2')}-route-{route}": (
+        procedure_id,
+        route,
+    )
+    for procedure_id in (
+        "aquarium-task-v2",
+        "aquarium-goal-v2",
+        "aquarium-validation-v2",
+    )
+    for route in ("mulgae", "orca", "native-codex", "waived")
+}
+
+
+def route_qualification_provenance(route: str) -> str:
+    return {
+        "mulgae": "mulgae-reviewer:official-runtime",
+        "orca": "orca-reviewer:official-runtime",
+        "native-codex": "host-delegation:official-runtime",
+        "waived": "coordinator-waiver",
+    }[route]
+
+
+def route_qualification_evidence_reference(route: str, scenario: str) -> str:
+    kind = {
+        "mulgae": "mulgae-root",
+        "orca": "orca-lifecycle",
+        "native-codex": "host-delegation",
+        "waived": "coordinator-waiver",
+    }[route]
+    return f"{kind}:official-runtime:{scenario}"
+
+
 EXPECTED_NATIVE_CASE_VARIANTS = {
     "C-01": {"audit-2-provider-0"},
     "C-02": {"audit-2-provider-1"},
@@ -1334,9 +1367,22 @@ class ManagedRuntime:
             if self.scenario in LOW_BLOCKER_SCENARIOS
             else None
         )
+        route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
+        qualified_route = route_qualification[1] if route_qualification else None
         if item_type == "text":
             maximum = constraints.get("max_length", 256)
-            if item_id == "implementation-summary":
+            if route_qualification and item_id == "assessment-provenance":
+                value = route_qualification_provenance(qualified_route)
+            elif route_qualification and item_id == "review-evidence-reference":
+                value = route_qualification_evidence_reference(
+                    qualified_route, self.scenario
+                )
+            elif route_qualification and item_id == "waiver-summary":
+                value = (
+                    "review waived by fixture authority for the exact target; "
+                    "no delegated-review assurance is claimed"
+                )
+            elif item_id == "implementation-summary":
                 value = (
                     f"runtime-{self.run_index}-{self.command_sequence}-" + "x" * 5000
                 )[:maximum]
@@ -1755,6 +1801,24 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
+                "review-route": qualified_route,
+                "effective-review-route": qualified_route,
+                "review-operation": (
+                    "waived"
+                    if qualified_route == "waived"
+                    else "complete"
+                    if qualified_route is not None
+                    else None
+                ),
+                "route-authorization-basis": (
+                    "approved-plan"
+                    if route_qualification
+                    and self.current_procedure_id == "aquarium-task-v2"
+                    else "approved-envelope"
+                    if route_qualification
+                    and self.current_procedure_id == "aquarium-goal-v2"
+                    else None
+                ),
                 "finding-count-consistency": (
                     "inconsistent"
                     if (
@@ -1812,11 +1876,17 @@ class ManagedRuntime:
                 "audit-basis-status": "applicable",
                 "coverage-relationship": "review-predates-low-delta",
                 "backend-check-result": (
-                    "fail"
-                    if self.scenario == "standard"
-                    and node == "review"
-                    and not self.task_review_reworked
-                    else "pass"
+                    "pass"
+                    if qualified_route == "mulgae"
+                    else "not-provided"
+                    if qualified_route is not None
+                    else (
+                        "fail"
+                        if self.scenario == "standard"
+                        and node == "review"
+                        and not self.task_review_reworked
+                        else "pass"
+                    )
                 ),
                 "reproduction-state": "reproduced",
             }.get(item_id)
@@ -1960,6 +2030,15 @@ class ManagedRuntime:
                 for item in current["active_items"]
                 if item.get("required_now") and not item.get("satisfied")
             ]
+            route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
+            if route_qualification and route_qualification[1] == "waived":
+                required.extend(
+                    item
+                    for item in current["active_items"]
+                    if item["item_id"] == "waiver-summary"
+                    and not item.get("satisfied")
+                    and item not in required
+                )
             records = {
                 item["item_id"]: self.value_for(item, node)
                 for item in required
@@ -2227,6 +2306,12 @@ class ManagedRuntime:
         procedure_id = preview["procedure_id"]
         self.current_procedure_id = procedure_id
         self.scenario = scenario
+        route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(scenario)
+        qualified_route = route_qualification[1] if route_qualification else None
+        if route_qualification and route_qualification[0] != procedure_id:
+            raise RuntimeQualificationError(
+                f"route scenario {scenario!r} does not target {procedure_id!r}"
+            )
         self.node_visits = {}
         if scenario == "goal-hardening-defer":
             self.completed_assessments[procedure_id] = 1
@@ -3062,6 +3147,69 @@ class ManagedRuntime:
                     if ordinal == 2
                     else "authorized-extra"
                 )
+            if route_qualification:
+                evidence_nodes = {
+                    "confirm-review-evidence": "review",
+                    "confirm-route-evidence": "record-evidence",
+                    "confirm-final-route-evidence": "final-review",
+                }
+                evidence_node = evidence_nodes.get(node)
+                if evidence_node is not None:
+                    evidence_reference = self.read_complete_evidence(
+                        observation, evidence_node, "review-evidence-reference"
+                    )
+                    provenance = self.read_complete_evidence(
+                        observation, evidence_node, "assessment-provenance"
+                    )
+                    if evidence_reference != route_qualification_evidence_reference(
+                        qualified_route, scenario
+                    ) or provenance != route_qualification_provenance(qualified_route):
+                        raise RuntimeQualificationError(
+                            "route qualification provenance was not preserved"
+                        )
+                route_decisions = {
+                    "authorize-review-route": (
+                        f"planned-{qualified_route}"
+                        if qualified_route != "waived"
+                        else "planned-waiver"
+                    ),
+                    "confirm-review-route-binding": (
+                        f"planned-{qualified_route}"
+                        if procedure_id == "aquarium-goal-v2"
+                        and qualified_route != "waived"
+                        else "planned-waiver"
+                        if procedure_id == "aquarium-goal-v2"
+                        else qualified_route
+                    ),
+                    "decide-review-operation": (
+                        "waived" if qualified_route == "waived" else "completed"
+                    ),
+                    "decide-final-review-operation": (
+                        "waived" if qualified_route == "waived" else "completed"
+                    ),
+                    "confirm-review-evidence": (
+                        "mulgae-pass"
+                        if qualified_route == "mulgae"
+                        else qualified_route
+                    ),
+                    "confirm-route-evidence": (
+                        "mulgae-pass"
+                        if qualified_route == "mulgae"
+                        else qualified_route
+                    ),
+                    "confirm-final-route-evidence": (
+                        "mulgae-pass"
+                        if qualified_route == "mulgae"
+                        else qualified_route
+                    ),
+                    "decide-backend-check": (
+                        "passed" if qualified_route == "mulgae" else "not-provided"
+                    ),
+                    "decide-final-backend-check": (
+                        "passed" if qualified_route == "mulgae" else "not-provided"
+                    ),
+                }
+                special_option = route_decisions.get(node, special_option)
             option = (
                 special_option
                 or {
@@ -3190,6 +3338,12 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
             merge_case_variants(case_variants, runtime.correction_case_variants)
     scenario_runs: list[dict[str, Any]] = []
     bounded_scenarios = (
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _route) in (
+                ROUTE_QUALIFICATION_SCENARIOS.items()
+            )
+        ),
         ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
         ("task-completion-unverified", "aquarium-task-v2.yaml"),
         ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
@@ -3304,6 +3458,12 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,
         "scenario_runs": scenario_runs,
+        "route_contract_scenarios": sorted(ROUTE_QUALIFICATION_SCENARIOS),
+        "route_contract_scope": (
+            "Procedure recording, guard rejection, and graph transitions only; "
+            "provider dispatch, prerequisites, and side effects require observed-agent "
+            "acceptance"
+        ),
         "correction_matrix_cases": sorted(case_variants),
         "correction_matrix_results": correction_matrix_results,
         "runtime_runs": receipts,

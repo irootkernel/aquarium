@@ -169,6 +169,39 @@ def test_correction_matrix_has_complete_inventory_metadata() -> None:
     }
 
 
+def test_task_071_qualification_inventory_keeps_observed_boundaries_explicit() -> None:
+    inventory = load_json("review-routing-cases.json")[
+        "task_071_qualification_inventory"
+    ]
+
+    assert inventory["route_choices"] == [
+        "mulgae",
+        "orca",
+        "native-codex",
+        "waived",
+    ]
+    assert inventory["excluded_route_labels"] == ["independent"]
+    assert set(inventory["automated"]) == {
+        "route-choice-inventory",
+        "completed-route-evidence-cross-product",
+        "active-or-unknown-route-change-rejection",
+        "incomplete-operation-does-not-consume-ordinal",
+        "terminal-incomplete-switch-reuses-pending-ordinal",
+        "completed-change-consumes-next-ordinal-with-lineage",
+        "mulgae-backend-required",
+        "static-route-backend-forbidden",
+        "waiver-operation-provenance-summary-required",
+        "mulgae-only-hardening-deferral",
+    }
+    assert set(inventory["master_observed_agent_acceptance"]) == {
+        "selected-provider-dispatch",
+        "provider-prerequisite-enforcement",
+        "provider-side-effect-boundaries",
+        "legacy-session-resume-and-switch-behavior",
+        "coordinator-waiver-report-language",
+    }
+
+
 def test_task_review_route_fixture_covers_required_task_paths() -> None:
     cases = load_json("review-routing-cases.json")["task_review_route_cases"]
 
@@ -1069,6 +1102,18 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
     incomplete_switch = next(case for case in validation_cases if case["id"] == "VR-06")
     assert incomplete_switch["next_route"] == "native-codex"
     assert incomplete_switch["next_prior_ordinal"] == incomplete_switch["prior_ordinal"]
+    terminal_switches = (
+        next(
+            case for case in fixture["task_review_route_cases"] if case["id"] == "TR-05"
+        ),
+        next(case for case in goal_cases if case["id"] == "GR-07"),
+        incomplete_switch,
+    )
+    assert all(case["ordinal"] is None for case in terminal_switches)
+    assert all(
+        case["next_prior_ordinal"] == case["prior_ordinal"]
+        for case in terminal_switches
+    )
     waived_after_finding = next(
         case for case in validation_cases if case["id"] == "VR-07"
     )
@@ -1108,6 +1153,251 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         options(validation, "final-review-route-binding-decision")["bound"],
         invalid_binding,
     )
+
+
+def test_managed_review_route_choices_exclude_independent() -> None:
+    expected = ["mulgae", "orca", "native-codex", "waived"]
+    cases = (
+        ("aquarium-task-v2.yaml", "plan-record", "review-route"),
+        ("aquarium-task-v2.yaml", "review-record", "review-route"),
+        ("aquarium-goal-v2.yaml", "work-record", "review-route"),
+        ("aquarium-goal-v2.yaml", "evidence-record", "review-route"),
+        ("aquarium-validation-v2.yaml", "final-review-record", "review-route"),
+    )
+    for name, definition_id, item_id in cases:
+        procedure = load_procedure(name)
+        item = next(
+            item
+            for item in procedure["node_definitions"][definition_id]["items"]
+            if item["id"] == item_id
+        )
+        assert item["choices"] == expected
+        assert "independent" not in item["choices"]
+
+
+def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
+    cases = (
+        ("aquarium-task-v2.yaml", "review-evidence-decision", "review"),
+        ("aquarium-goal-v2.yaml", "route-evidence-decision", "record-evidence"),
+        (
+            "aquarium-validation-v2.yaml",
+            "final-route-evidence-decision",
+            "final-review",
+        ),
+    )
+    route_options = {
+        "mulgae": "mulgae-pass",
+        "orca": "orca",
+        "native-codex": "native-codex",
+        "waived": "waived",
+    }
+    for name, definition_id, evidence_node in cases:
+        procedure_options = options(load_procedure(name), definition_id)
+        for route, option_id in route_options.items():
+            with_route = {
+                (evidence_node, "review-route"): route,
+                (evidence_node, "review-operation"): (
+                    "waived" if route == "waived" else "complete"
+                ),
+                (evidence_node, "backend-check-result"): (
+                    "pass" if route == "mulgae" else "not-provided"
+                ),
+                (evidence_node, "review-evidence-reference"): "fixture:evidence",
+                (evidence_node, "assessment-provenance"): (
+                    "coordinator-waiver" if route == "waived" else "reviewer"
+                ),
+                (evidence_node, "waiver-summary"): (
+                    "review waived by authority with an assurance limitation"
+                    if route == "waived"
+                    else None
+                ),
+            }
+            option = procedure_options[option_id]
+            assert guards_match(option, with_route), (name, route)
+
+            wrong_route = dict(with_route)
+            wrong_route[(evidence_node, "review-route")] = (
+                "mulgae" if route == "waived" else "waived"
+            )
+            assert not guards_match(option, wrong_route), (name, route, "route")
+
+            wrong_operation = dict(with_route)
+            wrong_operation[(evidence_node, "review-operation")] = (
+                "complete" if route == "waived" else "waived"
+            )
+            assert not guards_match(option, wrong_operation), (
+                name,
+                route,
+                "operation",
+            )
+
+            wrong_backend = dict(with_route)
+            wrong_backend[(evidence_node, "backend-check-result")] = (
+                "not-provided" if route == "mulgae" else "pass"
+            )
+            assert not guards_match(option, wrong_backend), (name, route, "backend")
+
+            wrong_provenance = dict(with_route)
+            wrong_provenance[(evidence_node, "assessment-provenance")] = (
+                "reviewer" if route == "waived" else "coordinator-waiver"
+            )
+            assert not guards_match(option, wrong_provenance), (
+                name,
+                route,
+                "provenance",
+            )
+
+            if route == "waived":
+                missing_summary = dict(with_route)
+                missing_summary[(evidence_node, "waiver-summary")] = None
+                assert not guards_match(option, missing_summary), (
+                    name,
+                    route,
+                    "summary",
+                )
+
+
+def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
+    cases = (
+        (
+            "aquarium-task-v2.yaml",
+            "review",
+            "review-operation-decision",
+            "review-route-settlement-decision",
+            "review-route-direction-decision",
+            "record-review-route-direction",
+        ),
+        (
+            "aquarium-goal-v2.yaml",
+            "record-evidence",
+            "review-operation-decision",
+            "review-route-settlement-decision",
+            "review-route-direction-decision",
+            "record-evidence",
+        ),
+        (
+            "aquarium-validation-v2.yaml",
+            "final-review",
+            "final-review-operation-decision",
+            "final-route-settlement-decision",
+            "final-route-direction-decision",
+            "final-review",
+        ),
+    )
+    for (
+        name,
+        evidence_node,
+        operation_id,
+        settlement_id,
+        direction_id,
+        state_node,
+    ) in cases:
+        procedure = load_procedure(name)
+        incomplete = options(procedure, operation_id)["incomplete"]
+        without_ordinal = {
+            (evidence_node, "review-route"): "orca",
+            (evidence_node, "review-operation"): "incomplete",
+            (evidence_node, "assessment-ordinal"): None,
+        }
+        assert guards_match(incomplete, without_ordinal)
+        with_consumed_ordinal = dict(without_ordinal)
+        with_consumed_ordinal[(evidence_node, "assessment-ordinal")] = 1
+        assert not guards_match(incomplete, with_consumed_ordinal)
+
+        active = {
+            (state_node, "prior-route-lifecycle-state"): "active-or-unknown",
+            (state_node, "route-change-readiness"): "current-route-only",
+            (state_node, "route-direction"): "switch-route",
+        }
+        settlement = options(procedure, settlement_id)
+        assert guards_match(settlement["active-current-only"], active)
+        directions = options(procedure, direction_id)
+        assert not guards_match(directions["switch-route"], active)
+        active_waive = dict(active)
+        active_waive[(state_node, "route-direction")] = "waive"
+        assert not guards_match(directions["waive"], active_waive)
+
+        terminal = dict(active)
+        terminal[(state_node, "prior-route-lifecycle-state")] = (
+            "terminal-incomplete-or-failed"
+        )
+        terminal[(state_node, "route-change-readiness")] = "safe-to-change"
+        assert guards_match(settlement["terminal-safe"], terminal)
+        assert guards_match(directions["switch-route"], terminal)
+        terminal[(state_node, "route-direction")] = "waive"
+        assert guards_match(directions["waive"], terminal)
+        assert without_ordinal[(evidence_node, "assessment-ordinal")] is None
+
+
+def test_completed_route_changes_keep_next_ordinal_and_finding_lineage() -> None:
+    fixture = load_json("review-routing-cases.json")
+    completed_cases = (
+        next(
+            case for case in fixture["task_review_route_cases"] if case["id"] == "TR-08"
+        ),
+        next(
+            case for case in fixture["goal_review_route_cases"] if case["id"] == "GR-06"
+        ),
+        next(
+            case
+            for case in fixture["validation_review_route_cases"]
+            if case["id"] == "VR-07"
+        ),
+    )
+    for case in completed_cases:
+        assert case["prior_ordinal"] == 1
+        assert case["ordinal"] == 2
+        assert (case.get("prior_finding_lineage") or case.get("finding_lineage")) == [
+            "F-1"
+        ]
+        assert case["remaining_review_authority"] == "confirmation only"
+
+    lineage_items = {
+        "finding-lineage-summary",
+        "remaining-review-authority-summary",
+        "corrected-target-summary",
+    }
+    definitions = (
+        ("aquarium-task-v2.yaml", "review-checkpoint-record"),
+        ("aquarium-goal-v2.yaml", "evidence-record"),
+        ("aquarium-validation-v2.yaml", "final-review-record"),
+    )
+    for name, definition_id in definitions:
+        procedure = load_procedure(name)
+        actual = {
+            item["id"] for item in procedure["node_definitions"][definition_id]["items"]
+        }
+        assert lineage_items <= actual
+
+
+def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    defer = options(goal, "low-handling-decision")["defer"]
+    valid = {
+        ("record-hardening-deferral", "hardening-deferral-state"): "recorded",
+        ("record-evidence", "review-route"): "mulgae",
+        ("record-evidence", "review-operation"): "complete",
+        ("record-evidence", "backend-check-result"): "pass",
+        ("record-evidence", "review-mode"): "hardening-deferral-eligible",
+        ("record-evidence", "assessment-ordinal"): 2,
+        (
+            "record-hardening-deferral",
+            "hardening-deferral-publication-state",
+        ): "committed",
+        (
+            "record-hardening-deferral",
+            "hardening-deferral-findings-query-state",
+        ): "successful",
+        (
+            "record-hardening-deferral",
+            "hardening-deferral-native-target-sha256",
+        ): "sha256:fixture",
+    }
+    assert guards_match(defer, valid)
+    for route in ("orca", "native-codex", "waived"):
+        invalid = dict(valid)
+        invalid[("record-evidence", "review-route")] = route
+        assert not guards_match(defer, invalid), route
 
 
 def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (
