@@ -144,8 +144,8 @@ def test_decision_destination_uses_decision_result_target() -> None:
     ("procedure_id", "expected"),
     (
         ("aquarium-task-v2", "confirm-goal-assessment-core"),
-        ("aquarium-goal-v2", "assess-goal"),
-        ("aquarium-validation-v2", "assess-goal"),
+        ("aquarium-goal-v2", "confirm-goal-assessment-core"),
+        ("aquarium-validation-v2", "confirm-goal-assessment-core"),
     ),
 )
 def test_completed_low_settlement_destination_is_procedure_specific(

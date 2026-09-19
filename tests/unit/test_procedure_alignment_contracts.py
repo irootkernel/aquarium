@@ -33,6 +33,31 @@ def test_installed_procedure_sources_match_canonical_copies() -> None:
         ).read_bytes()
 
 
+def test_task_070_current_and_prior_procedure_identities_are_exact() -> None:
+    identities = (
+        (
+            "aquarium-goal-v2.yaml",
+            "18",
+            "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
+            "aquarium-goal-v17.yaml",
+            "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
+        ),
+        (
+            "aquarium-validation-v2.yaml",
+            "17",
+            "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
+            "aquarium-validation-v16.yaml",
+            "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
+        ),
+    )
+    for current_name, version, current_digest, prior_name, prior_digest in identities:
+        current = PROCEDURES / current_name
+        prior = FIXTURES / prior_name
+        assert load_procedure(current_name)["version"] == version
+        assert hashlib.sha256(current.read_bytes()).hexdigest() == current_digest
+        assert hashlib.sha256(prior.read_bytes()).hexdigest() == prior_digest
+
+
 PREDICATE_OPERATORS = (
     "equals",
     "not_equals",
@@ -242,13 +267,8 @@ def test_low_completion_routes_to_goal_assessment_without_a_review_loop() -> Non
         assert nodes["decide-low-result"]["routes"]["passed"]["to"] == (
             "decide-low-completion"
         )
-        expected = (
-            "confirm-goal-assessment-core"
-            if name == "aquarium-task-v2.yaml"
-            else "assess-goal"
-        )
         assert nodes["decide-low-completion"]["routes"]["completed"] == {
-            "to": expected,
+            "to": "confirm-goal-assessment-core",
             "effect": "advance",
         }
 
@@ -600,19 +620,15 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
     ) in normalized_guards(extra_ordinal_options["authorized-extra"])
 
 
-def test_review_procedure_decision_options_fit_podway_v0210_guard_limit() -> None:
-    for name in (
-        "aquarium-task-v2.yaml",
-        "aquarium-goal-v2.yaml",
-        "aquarium-validation-v2.yaml",
-    ):
-        procedure = load_procedure(name)
+def test_managed_procedure_decision_options_fit_podway_v0210_guard_limit() -> None:
+    for path in sorted(PROCEDURES.glob("aquarium-*-v2.yaml")):
+        procedure = yaml.safe_load(path.read_text(encoding="utf-8"))
         for definition_id, definition in procedure["node_definitions"].items():
             if definition.get("type") != "decision":
                 continue
             for option in definition.get("options", []):
                 assert len(option.get("guards", [])) <= 4, (
-                    name,
+                    path.name,
                     definition_id,
                     option["id"],
                 )
@@ -630,35 +646,81 @@ def test_managed_procedure_decisions_fit_podway_v0210_option_limit() -> None:
             )
 
 
-def test_managed_evidence_item_limits_isolate_task_070_legacy_sources() -> None:
-    known_task_070_legacy_sources = {
-        ("aquarium-goal-v2.yaml", "decide-evidence", "record-evidence", 18),
-        ("aquarium-goal-v2.yaml", "assess-goal", "record-evidence", 18),
-        ("aquarium-validation-v2.yaml", "assess-goal", "final-review", 20),
-    }
-    oversized = set()
+def test_managed_procedures_fit_podway_v0210_evidence_bounds() -> None:
     for path in sorted(PROCEDURES.glob("aquarium-*-v2.yaml")):
         procedure = yaml.safe_load(path.read_text(encoding="utf-8"))
         for node in procedure["graph"]["nodes"]:
+            evidence_from = node.get("evidence_from", [])
+            assert len(evidence_from) <= 8, (path.name, node["id"])
             for source in node.get("evidence_from", []):
-                selected_count = len(source.get("items", []))
-                if selected_count > 16:
-                    oversized.add(
-                        (path.name, node["id"], source["node"], selected_count)
-                    )
-    assert oversized == known_task_070_legacy_sources
+                assert len(source.get("items", [])) <= 16, (
+                    path.name,
+                    node["id"],
+                    source["node"],
+                )
 
 
-def test_task_procedure_fits_podway_v0210_evidence_bounds() -> None:
-    task = load_procedure("aquarium-task-v2.yaml")
-    for node in task["graph"]["nodes"]:
-        evidence_from = node.get("evidence_from", [])
-        assert len(evidence_from) <= 8, node["id"]
-        for source in evidence_from:
-            assert len(source.get("items", [])) <= 16, (
-                node["id"],
-                source["node"],
-            )
+def test_task_070_serial_gates_preserve_every_prior_selected_evidence_item() -> None:
+    cases = (
+        (
+            "aquarium-goal-v2.yaml",
+            "aquarium-goal-v17.yaml",
+            "decide-evidence",
+            ("decide-evidence",),
+        ),
+        (
+            "aquarium-goal-v2.yaml",
+            "aquarium-goal-v17.yaml",
+            "assess-goal",
+            ("confirm-goal-assessment-core", "assess-goal"),
+        ),
+        (
+            "aquarium-goal-v2.yaml",
+            "aquarium-goal-v17.yaml",
+            "assess-goal",
+            ("confirm-stopped-goal-assessment-core", "assess-stopped-goal"),
+        ),
+        (
+            "aquarium-validation-v2.yaml",
+            "aquarium-validation-v16.yaml",
+            "assess-goal",
+            ("confirm-goal-assessment-core", "assess-goal"),
+        ),
+        (
+            "aquarium-validation-v2.yaml",
+            "aquarium-validation-v16.yaml",
+            "assess-goal",
+            ("confirm-stopped-goal-assessment-core", "assess-stopped-goal"),
+        ),
+    )
+
+    def selected_items(node: dict) -> set[tuple[str, str]]:
+        return {
+            (source["node"], item)
+            for source in node.get("evidence_from", [])
+            for item in source.get("items", [])
+        }
+
+    for current_name, prior_name, prior_node_id, current_node_ids in cases:
+        current = nodes(load_procedure(current_name))
+        prior = nodes(
+            yaml.safe_load((FIXTURES / prior_name).read_text(encoding="utf-8"))
+        )
+        preserved = set().union(
+            *(selected_items(current[node_id]) for node_id in current_node_ids)
+        )
+        prior_selected = selected_items(prior[prior_node_id])
+        if current_node_ids == ("confirm-goal-assessment-core", "assess-goal"):
+            prior_selected -= {
+                ("record-stopped", "disposition-summary"),
+                ("record-incomplete", "disposition-summary"),
+                ("record-review-operation-incomplete", "disposition-summary"),
+            }
+        assert prior_selected <= preserved, (
+            current_name,
+            prior_node_id,
+            current_node_ids,
+        )
 
 
 def test_task_route_authorization_paths_cannot_cross_select() -> None:
@@ -1047,7 +1109,7 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "unverified": {"to": "record-evidence", "effect": "rework"},
     }
     assert graph["decide-evidence"]["routes"] == {
-        "clean": {"to": "assess-goal", "effect": "advance"},
+        "clean": {"to": "confirm-goal-assessment-core", "effect": "advance"},
         "blocking": {"to": "decide-goal-rework-authority", "effect": "advance"},
         "low-only": {"to": "record-hardening-deferral", "effect": "advance"},
         "inconsistent": {"to": "record-evidence", "effect": "rework"},
@@ -1152,6 +1214,7 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         hardening_sources = {
             source["node"]: set(source["items"])
             for source in graph[node_id]["evidence_from"]
+            if "items" in source
         }
         assert {
             "hardening-deferral-publication-state",
@@ -1214,12 +1277,17 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             ("record-evidence", "assessment-ordinal-continuity"): {"outcome": "pass"},
             ("record-evidence", "review-mode"): (
                 "remediation-eligible"
-                if case["ordinal"] in {None, 1}
+                if case["ordinal"] in {0, 1}
                 else "hardening-deferral-eligible"
             ),
             ("record-evidence", "backend-check-result"): case["backend_check"],
             ("record-evidence", "review-evidence-reference"): "fixture:evidence",
             ("record-evidence", "assessment-provenance"): case["provenance"],
+            ("record-evidence", "assessment-provenance-kind"): (
+                "coordinator-waiver"
+                if case["operation"] == "waived"
+                else "delegated-reviewer"
+            ),
             ("record-evidence", "waiver-summary"): case.get("waiver_summary"),
             ("record-evidence", "route-authorization-basis"): (
                 "explicit-route-change"
@@ -1246,6 +1314,15 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 "corrected_target"
             ),
         }
+        if case["expected"] == "same-pending-ordinal":
+            assert case["ordinal"] == 0, case["id"]
+            assert (
+                case.get("next_prior_ordinal", case["prior_ordinal"])
+                == case["prior_ordinal"]
+            ), case["id"]
+            assert (
+                values[("record-evidence", "review-mode")] == "remediation-eligible"
+            ), case["id"]
         assert guards_match(goal_context_options["ready"], values), case["id"]
         entry_option = (
             "changed"
@@ -1263,7 +1340,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             options(goal, "review-operation-decision")[case["operation_option"]],
             values,
         ), case["id"]
-        if case["ordinal"] is not None:
+        if case["operation"] in {"complete", "waived"}:
             assert guards_match(
                 options(goal, "assessment-ordinal-decision")[case["ordinal_option"]],
                 values,
@@ -1315,12 +1392,17 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             ("final-review", "assessment-ordinal-continuity"): {"outcome": "pass"},
             ("final-review", "review-mode"): (
                 "remediation-eligible"
-                if case["ordinal"] in {None, 1}
+                if case["ordinal"] in {0, 1}
                 else "confirmation-only"
             ),
             ("final-review", "backend-check-result"): case["backend_check"],
             ("final-review", "review-evidence-reference"): "fixture:evidence",
             ("final-review", "assessment-provenance"): case["provenance"],
+            ("final-review", "assessment-provenance-kind"): (
+                "coordinator-waiver"
+                if case["operation"] == "waived"
+                else "delegated-reviewer"
+            ),
             ("final-review", "waiver-summary"): case.get("waiver_summary"),
             ("final-review", "route-change-readiness"): (
                 "current-route-only"
@@ -1340,6 +1422,15 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             ),
             ("final-review", "corrected-target-summary"): case.get("corrected_target"),
         }
+        if case["expected"] == "same-pending-ordinal":
+            assert case["ordinal"] == 0, case["id"]
+            assert (
+                case.get("next_prior_ordinal", case["prior_ordinal"])
+                == case["prior_ordinal"]
+            ), case["id"]
+            assert values[("final-review", "review-mode")] == "remediation-eligible", (
+                case["id"]
+            )
         assert guards_match(
             options(validation, "final-review-route-binding-decision")["bound"],
             values,
@@ -1350,7 +1441,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             ],
             values,
         ), case["id"]
-        if case["ordinal"] is not None:
+        if case["operation"] in {"complete", "waived"}:
             assert guards_match(
                 options(validation, "assessment-ordinal-decision")[
                     case["ordinal_option"]
@@ -1419,7 +1510,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         incomplete_switch,
     )
     assert terminal_switches[0]["ordinal"] == 0
-    assert all(case["ordinal"] is None for case in terminal_switches[1:])
+    assert all(case["ordinal"] == 0 for case in terminal_switches[1:])
     assert all(
         case["next_prior_ordinal"] == case["prior_ordinal"]
         for case in terminal_switches
@@ -1631,9 +1722,7 @@ def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
         without_ordinal = {
             (evidence_node, "review-route"): "orca",
             (evidence_node, "review-operation"): "incomplete",
-            (evidence_node, "assessment-ordinal"): (
-                0 if name == "aquarium-task-v2.yaml" else None
-            ),
+            (evidence_node, "assessment-ordinal"): (0),
         }
         assert guards_match(incomplete, without_ordinal)
         with_consumed_ordinal = dict(without_ordinal)
@@ -1662,10 +1751,7 @@ def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
         assert guards_match(directions["switch-route"], terminal)
         terminal[(state_node, "route-direction")] = "waive"
         assert guards_match(directions["waive"], terminal)
-        expected_unconsumed = 0 if name == "aquarium-task-v2.yaml" else None
-        assert without_ordinal[(evidence_node, "assessment-ordinal")] == (
-            expected_unconsumed
-        )
+        assert without_ordinal[(evidence_node, "assessment-ordinal")] == 0
 
 
 def test_completed_route_changes_keep_next_ordinal_and_finding_lineage() -> None:
@@ -1825,7 +1911,8 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
         "waived",
     }
     assert graph["confirm-incomplete-final-review-provenance"]["routes"] == {
-        "delegated": {"to": "confirm-final-route-settlement", "effect": "advance"}
+        "delegated": {"to": "confirm-final-route-settlement", "effect": "advance"},
+        "waived": {"to": "confirm-final-route-settlement", "effect": "advance"},
     }
     assert graph["choose-final-route-direction"]["routes"] == {
         "resume-current": {"to": "final-review", "effect": "rework"},
@@ -1940,10 +2027,16 @@ def test_stop_paths_preserve_completion_and_direction_for_goal_assessment() -> N
     for name, completion_node, has_count_consistency in cases:
         procedure = load_procedure(name)
         graph = nodes(procedure)
-        assessment_sources = graph["assess-goal"]["evidence_from"]
+        assessment_sources = (
+            graph["assess-stopped-goal"]["evidence_from"]
+            if "assess-stopped-goal" in graph
+            else graph["assess-goal"]["evidence_from"]
+        )
+        core_sources = graph["confirm-stopped-goal-assessment-core"]["evidence_from"]
+        all_sources = [*core_sources, *assessment_sources]
         selected_completion = {
             item
-            for source in assessment_sources
+            for source in all_sources
             if source["node"] == completion_node
             for item in source.get("items", [])
         }
@@ -1959,6 +2052,18 @@ def test_stop_paths_preserve_completion_and_direction_for_goal_assessment() -> N
             has_count_consistency
         )
         assert {"direction-classification", "direction-summary"} <= (selected_direction)
+
+        stopped_options = options(procedure, "stopped-goal-assessment")
+        assert not guards_match(
+            stopped_options["achieved"],
+            {
+                ("record-stopped-goal-boundary", "goal-outcome-boundary"): (
+                    "stopped"
+                    if name != "aquarium-validation-v2.yaml"
+                    else "stopped-or-incomplete"
+                )
+            },
+        )
 
         wait_sources = graph["await-user-direction"]["evidence_from"]
         wait_completion = {

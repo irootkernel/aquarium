@@ -162,6 +162,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
     },
     "aquarium-goal-v2.yaml": {
+        "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
         "99dfe92a75accee69717154a13ea18b6e25a493e2674d78543f3780b8993a375",
         "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
         "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
@@ -175,6 +176,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
     },
     "aquarium-validation-v2.yaml": {
+        "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
         "d3108415bc54a96c200a1189149c514428f53367eae3778c4440d23f8b55a800",
         "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
         "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
@@ -691,6 +693,11 @@ PODWAY_HANDLER_CONTRACTS = {
             "record-low-disposition",
             "decide-low-result",
             "decide-low-completion",
+            "record-stopped-goal-boundary",
+            "confirm-goal-assessment-core",
+            "confirm-stopped-goal-assessment-core",
+            "assess-goal",
+            "assess-stopped-goal",
         },
         "definition_items": {
             "work-record": {
@@ -707,6 +714,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "review-evidence-reference",
                 "backend-check-result",
                 "assessment-provenance",
+                "assessment-provenance-kind",
                 "waiver-summary",
                 "route-authorization-basis",
                 "route-change-authority-reference",
@@ -743,6 +751,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "route-stop-classification",
                 "route-stop-summary",
             },
+            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
         },
         "definition_choices": {
             ("work-record", "review-route"): {
@@ -762,6 +771,10 @@ PODWAY_HANDLER_CONTRACTS = {
                 "incomplete",
                 "failed",
                 "waived",
+            },
+            ("evidence-record", "assessment-provenance-kind"): {
+                "delegated-reviewer",
+                "coordinator-waiver",
             },
             ("evidence-record", "backend-check-result"): {
                 "pass",
@@ -842,6 +855,7 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "confirm-incomplete-review-provenance": {
                 "delegated": "confirm-review-route-settlement",
+                "waived": "confirm-review-route-settlement",
             },
             "confirm-review-route-settlement": {
                 "active-current-only": "choose-review-route-direction",
@@ -874,7 +888,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "unverified": "record-evidence",
             },
             "decide-evidence": {
-                "clean": "assess-goal",
+                "clean": "confirm-goal-assessment-core",
                 "blocking": "decide-goal-rework-authority",
                 "low-only": "record-hardening-deferral",
                 "inconsistent": "record-evidence",
@@ -894,11 +908,13 @@ PODWAY_HANDLER_CONTRACTS = {
                 "recorded": "record-hardening-handoff",
             },
             "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "assess-goal"},
+            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
             "choose-user-direction": {
                 "fix-and-review": "complete-work",
-                "stop": "assess-goal",
+                "stop": "record-stopped-goal-boundary",
             },
+            "confirm-goal-assessment-core": {"ready": "assess-goal"},
+            "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
         },
         "evidence": {
             "confirm-review-route-context": {
@@ -923,12 +939,14 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("record-evidence", "review-operation"),
                 ("record-evidence", "review-evidence-reference"),
                 ("record-evidence", "assessment-provenance"),
+                ("record-evidence", "assessment-provenance-kind"),
                 ("record-evidence", "waiver-summary"),
             },
             "confirm-incomplete-review-provenance": {
                 ("record-evidence", "review-operation"),
                 ("record-evidence", "review-evidence-reference"),
                 ("record-evidence", "assessment-provenance"),
+                ("record-evidence", "assessment-provenance-kind"),
                 ("record-evidence", "waiver-summary"),
             },
             "confirm-hardening-review-eligibility": {
@@ -976,16 +994,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("record-low-disposition", "after-target"),
             },
             "assess-goal": {
-                ("record-evidence", "review-route"),
-                ("record-evidence", "review-operation"),
-                ("record-evidence", "assessment-ordinal"),
-                ("record-evidence", "review-evidence-reference"),
-                ("record-evidence", "backend-check-result"),
-                ("record-evidence", "assessment-provenance"),
-                ("record-evidence", "completion-assessment-summary"),
-                ("record-evidence", "completion-unmet-criteria"),
-                ("record-evidence", "completion-unverified-criteria"),
-                ("record-evidence", "finding-count-consistency"),
+                ("confirm-goal-assessment-core", None),
                 ("await-user-direction", "direction-classification"),
                 ("await-user-direction", "direction-summary"),
                 ("record-review-route-stop", "route-stop-classification"),
@@ -1001,6 +1010,36 @@ PODWAY_HANDLER_CONTRACTS = {
                     "record-hardening-deferral",
                     "hardening-deferral-native-target-sha256",
                 ),
+            },
+            "confirm-goal-assessment-core": {
+                ("complete-work", "work-summary"),
+                ("complete-work", "source-revision"),
+                ("record-evidence", "review-route"),
+                ("record-evidence", "review-operation"),
+                ("record-evidence", "assessment-ordinal"),
+                ("record-evidence", "review-evidence-reference"),
+                ("record-evidence", "backend-check-result"),
+                ("record-evidence", "assessment-provenance"),
+                ("record-evidence", "assessment-provenance-kind"),
+                ("record-evidence", "completion-assessment-summary"),
+                ("record-evidence", "completion-unmet-criteria"),
+                ("record-evidence", "completion-unverified-criteria"),
+                ("record-evidence", "finding-count-consistency"),
+            },
+            "assess-stopped-goal": {
+                ("confirm-stopped-goal-assessment-core", None),
+                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
+                ("record-review-route-stop", "route-stop-classification"),
+            },
+            "confirm-stopped-goal-assessment-core": {
+                ("complete-work", "work-summary"),
+                ("complete-work", "source-revision"),
+                ("record-evidence", "assessment-provenance-kind"),
+                ("record-evidence", "completion-assessment-summary"),
+                ("record-evidence", "completion-unmet-criteria"),
+                ("record-evidence", "completion-unverified-criteria"),
             },
         },
     },
@@ -1033,6 +1072,11 @@ PODWAY_HANDLER_CONTRACTS = {
             "record-low-disposition",
             "decide-low-result",
             "decide-low-completion",
+            "record-stopped-goal-boundary",
+            "confirm-goal-assessment-core",
+            "confirm-stopped-goal-assessment-core",
+            "assess-goal",
+            "assess-stopped-goal",
         },
         "definition_items": {
             "baseline-record": {
@@ -1062,6 +1106,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "review-evidence-reference",
                 "backend-check-result",
                 "assessment-provenance",
+                "assessment-provenance-kind",
                 "waiver-summary",
                 "route-authorization-basis",
                 "route-change-authority-reference",
@@ -1093,6 +1138,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "coverage-relationship",
                 "low-disposition-verification",
             },
+            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
         },
         "definition_choices": {
             ("baseline-record", "review-route"): {
@@ -1112,6 +1158,10 @@ PODWAY_HANDLER_CONTRACTS = {
                 "incomplete",
                 "failed",
                 "waived",
+            },
+            ("final-review-record", "assessment-provenance-kind"): {
+                "delegated-reviewer",
+                "coordinator-waiver",
             },
             ("final-review-record", "backend-check-result"): {
                 "pass",
@@ -1170,6 +1220,7 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "confirm-incomplete-final-review-provenance": {
                 "delegated": "confirm-final-route-settlement",
+                "waived": "confirm-final-route-settlement",
             },
             "confirm-final-route-settlement": {
                 "active-current-only": "choose-final-route-direction",
@@ -1218,10 +1269,12 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "decide-final-review": {
                 "low-disposition": "record-low-disposition",
-                "validated": "assess-goal",
+                "validated": "confirm-goal-assessment-core",
             },
             "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "assess-goal"},
+            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
+            "confirm-goal-assessment-core": {"ready": "assess-goal"},
+            "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
         },
         "evidence": {
             "confirm-extra-final-assessment-ordinal": {
@@ -1231,12 +1284,14 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("final-review", "review-operation"),
                 ("final-review", "review-evidence-reference"),
                 ("final-review", "assessment-provenance"),
+                ("final-review", "assessment-provenance-kind"),
                 ("final-review", "waiver-summary"),
             },
             "confirm-incomplete-final-review-provenance": {
                 ("final-review", "review-operation"),
                 ("final-review", "review-evidence-reference"),
                 ("final-review", "assessment-provenance"),
+                ("final-review", "assessment-provenance-kind"),
                 ("final-review", "waiver-summary"),
             },
             "await-user-direction": {
@@ -1249,17 +1304,37 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("record-low-disposition", "after-target"),
             },
             "assess-goal": {
+                ("confirm-goal-assessment-core", None),
+                ("final-review", "completion-assessment-summary"),
+                ("final-review", "completion-unmet-criteria"),
+                ("final-review", "completion-unverified-criteria"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
+            },
+            "confirm-goal-assessment-core": {
+                ("capture-baseline", "baseline-summary"),
                 ("final-review", "review-route"),
                 ("final-review", "review-operation"),
                 ("final-review", "assessment-ordinal"),
                 ("final-review", "review-evidence-reference"),
                 ("final-review", "backend-check-result"),
                 ("final-review", "assessment-provenance"),
+                ("final-review", "assessment-provenance-kind"),
+            },
+            "assess-stopped-goal": {
+                ("confirm-stopped-goal-assessment-core", None),
+                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
                 ("final-review", "completion-assessment-summary"),
                 ("final-review", "completion-unmet-criteria"),
                 ("final-review", "completion-unverified-criteria"),
                 ("await-user-direction", "direction-classification"),
                 ("await-user-direction", "direction-summary"),
+            },
+            "confirm-stopped-goal-assessment-core": {
+                ("capture-baseline", "baseline-summary"),
+                ("final-review", "review-route"),
+                ("final-review", "review-operation"),
+                ("final-review", "assessment-provenance-kind"),
             },
         },
     },

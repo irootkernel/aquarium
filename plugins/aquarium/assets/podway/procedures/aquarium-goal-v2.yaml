@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "17"
+version: "18"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -114,16 +114,12 @@ node_definitions:
           - waived
       - id: assessment-ordinal
         type: integer
-        prompt: Record the positive ordinal only for a completed delegated review or waiver assessment.
+        prompt: Record zero when an incomplete or failed native operation consumed no assessment, or the positive ordinal for a completed delegated review or waiver assessment.
         required: false
         required_when:
           - item: review-evidence-kind
             equals: native-review
-          - item: review-operation
-            not_equals: incomplete
-          - item: review-operation
-            not_equals: failed
-        minimum: 1
+        minimum: 0
       - id: prior-assessment-ordinal
         type: integer
         prompt: Record the latest completed ordinal before this operation, or zero for the first assessment.
@@ -177,13 +173,20 @@ node_definitions:
         min_length: 1
         max_length: 2000
         multiline: true
+      - id: assessment-provenance-kind
+        type: choice
+        prompt: Classify whether the assessment came from a delegated reviewer or an explicit coordinator waiver.
+        required: false
+        required_when:
+          - item: review-evidence-kind
+            equals: native-review
+        choices:
+          - delegated-reviewer
+          - coordinator-waiver
       - id: waiver-summary
         type: text
         prompt: For waiver, record review waived, authority, full-criteria assessment, and assurance limitation.
         required: false
-        required_when:
-          - item: review-route
-            equals: waived
         min_length: 1
         max_length: 4000
         multiline: true
@@ -202,9 +205,6 @@ node_definitions:
         type: text
         prompt: Record explicit route-change or waiver authority when the effective route differs from the approved route.
         required: false
-        required_when:
-          - item: route-authorization-basis
-            not_equals: approved-envelope
         min_length: 1
         max_length: 2000
         multiline: true
@@ -365,9 +365,13 @@ node_definitions:
         label: Review context ready
         criteria: The approved review target and selection summary are both recorded.
         guards:
-          - evidence: {node: complete-work, item: review-target-scope}
+          - evidence:
+              node: complete-work
+              item: review-target-scope
             non_empty: true
-          - evidence: {node: complete-work, item: review-selection-summary}
+          - evidence:
+              node: complete-work
+              item: review-selection-summary
             non_empty: true
     reason:
       required: true
@@ -382,17 +386,25 @@ node_definitions:
         label: Enter the approved route
         criteria: The checkpoint retains the approved review envelope.
         guards:
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: approved-envelope
       - id: changed
         label: Enter an authorized route change
         criteria: Explicit authority changes the route only after prior work is safe to leave.
         guards:
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             not_equals: approved-envelope
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: safe-to-change
-          - evidence: {node: record-evidence, item: prior-route-lifecycle-state}
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
             not_equals: active-or-unknown
     reason:
       required: true
@@ -407,81 +419,129 @@ node_definitions:
         label: Planned Mulgae route
         criteria: Mulgae matches the approved envelope.
         guards:
-          - evidence: {node: complete-work, item: review-route}
+          - evidence:
+              node: complete-work
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: approved-envelope
       - id: planned-orca
         label: Planned Orca route
         criteria: Orca matches the approved envelope.
         guards:
-          - evidence: {node: complete-work, item: review-route}
+          - evidence:
+              node: complete-work
+              item: review-route
             equals: orca
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: orca
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: approved-envelope
       - id: planned-native-codex
         label: Planned native Codex route
         criteria: Native Codex matches the approved envelope.
         guards:
-          - evidence: {node: complete-work, item: review-route}
+          - evidence:
+              node: complete-work
+              item: review-route
             equals: native-codex
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: native-codex
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: approved-envelope
       - id: planned-waiver
         label: Planned waiver route
         criteria: Waiver matches the approved envelope.
         guards:
-          - evidence: {node: complete-work, item: review-route}
+          - evidence:
+              node: complete-work
+              item: review-route
             equals: waived
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: waived
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: approved-envelope
       - id: changed-mulgae
         label: Authorized Mulgae change
         criteria: Mulgae has explicit safe route-change authority.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: explicit-route-change
-          - evidence: {node: record-evidence, item: route-change-authority-reference}
+          - evidence:
+              node: record-evidence
+              item: route-change-authority-reference
             non_empty: true
       - id: changed-orca
         label: Authorized Orca change
         criteria: Orca has explicit safe route-change authority.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: orca
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: explicit-route-change
-          - evidence: {node: record-evidence, item: route-change-authority-reference}
+          - evidence:
+              node: record-evidence
+              item: route-change-authority-reference
             non_empty: true
       - id: changed-native-codex
         label: Authorized native Codex change
         criteria: Native Codex has explicit safe route-change authority.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: native-codex
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: explicit-route-change
-          - evidence: {node: record-evidence, item: route-change-authority-reference}
+          - evidence:
+              node: record-evidence
+              item: route-change-authority-reference
             non_empty: true
       - id: changed-waiver
         label: Authorized waiver change
         criteria: Waiver has explicit safe waiver authority.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: waived
-          - evidence: {node: record-evidence, item: route-authorization-basis}
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
             equals: explicit-waiver
-          - evidence: {node: record-evidence, item: route-change-authority-reference}
+          - evidence:
+              node: record-evidence
+              item: route-change-authority-reference
             non_empty: true
     reason:
       required: true
@@ -496,30 +556,50 @@ node_definitions:
         label: Delegated review completed
         criteria: A delegated reviewer completed the selected route.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
+            at_least: 1
       - id: waived
         label: Review waived and assessed
         criteria: The coordinator completed the authorized waiver assessment.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: waived
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
+            at_least: 1
       - id: incomplete
         label: Review incomplete
         criteria: The selected operation remains incomplete and consumed no ordinal.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: incomplete
-          - evidence: {node: record-evidence, item: assessment-ordinal}
-            empty: true
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
+            equals: 0
       - id: failed
         label: Review failed
         criteria: The selected operation failed and consumed no ordinal.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: failed
-          - evidence: {node: record-evidence, item: assessment-ordinal}
-            empty: true
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
+            equals: 0
     reason:
       required: true
       prompt: Explain the operation state and ordinal treatment.
@@ -533,39 +613,63 @@ node_definitions:
         label: First assessment
         criteria: This is ordinal one in remediation mode.
         guards:
-          - evidence: {node: record-evidence, item: prior-assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: prior-assessment-ordinal
             equals: 0
-          - evidence: {node: record-evidence, item: assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
             equals: 1
-          - evidence: {node: record-evidence, item: review-mode}
+          - evidence:
+              node: record-evidence
+              item: review-mode
             equals: remediation-eligible
-          - evidence: {node: record-evidence, item: assessment-ordinal-continuity}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal-continuity
             field: outcome
             equals: pass
       - id: second
         label: Second assessment
         criteria: This is ordinal two in bounded hardening mode.
         guards:
-          - evidence: {node: record-evidence, item: prior-assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: prior-assessment-ordinal
             equals: 1
-          - evidence: {node: record-evidence, item: assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
             equals: 2
-          - evidence: {node: record-evidence, item: review-mode}
+          - evidence:
+              node: record-evidence
+              item: review-mode
             equals: hardening-deferral-eligible
-          - evidence: {node: record-evidence, item: assessment-ordinal-continuity}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal-continuity
             field: outcome
             equals: pass
       - id: authorized-extra
         label: User-authorized extra assessment
         criteria: A later confirmation has explicit authority and caller-verified exact continuity.
         guards:
-          - evidence: {node: record-evidence, item: prior-assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: prior-assessment-ordinal
             at_least: 2
-          - evidence: {node: record-evidence, item: review-mode}
+          - evidence:
+              node: record-evidence
+              item: review-mode
             equals: hardening-deferral-eligible
-          - evidence: {node: record-evidence, item: extra-assessment-authority-reference}
+          - evidence:
+              node: record-evidence
+              item: extra-assessment-authority-reference
             non_empty: true
-          - evidence: {node: record-evidence, item: assessment-ordinal-continuity}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal-continuity
             field: outcome
             equals: pass
     reason:
@@ -581,7 +685,9 @@ node_definitions:
         label: User-authorized extra ordinal
         criteria: A user-authorized extra assessment consumes ordinal three or later.
         guards:
-          - evidence: {node: record-evidence, item: assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
             at_least: 3
     reason:
       required: true
@@ -596,61 +702,101 @@ node_definitions:
         label: Mulgae completed with passing backend
         criteria: Mulgae completed with native provenance and a passing backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: pass
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: mulgae-fail
         label: Mulgae completed with failing backend
         criteria: Mulgae completed and consumed its ordinal while the backend check blocks success.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: fail
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: orca
         label: Orca completed
         criteria: Orca completed with reviewer provenance and no backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: orca
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: native-codex
         label: Native Codex completed
         criteria: Fresh native Codex review completed with host provenance and no backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: native-codex
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: waived
         label: Waiver assessment completed
         criteria: Waiver has coordinator provenance, explicit summary, and no backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: waived
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: waived
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             equals: coordinator-waiver
     reason:
       required: true
@@ -665,25 +811,41 @@ node_definitions:
         label: Delegated review provenance
         criteria: A delegated route has reviewer provenance, exact evidence, and no waiver summary.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             not_equals: waived
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
-          - evidence: {node: record-evidence, item: waiver-summary}
+          - evidence:
+              node: record-evidence
+              item: waiver-summary
             empty: true
-          - evidence: {node: record-evidence, item: review-evidence-reference}
+          - evidence:
+              node: record-evidence
+              item: review-evidence-reference
             non_empty: true
       - id: waived
         label: Coordinator waiver provenance
         criteria: A completed waiver assessment has coordinator provenance, exact evidence, and an explicit assurance summary.
         guards:
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: waived
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             equals: coordinator-waiver
-          - evidence: {node: record-evidence, item: waiver-summary}
+          - evidence:
+              node: record-evidence
+              item: waiver-summary
             non_empty: true
-          - evidence: {node: record-evidence, item: review-evidence-reference}
+          - evidence:
+              node: record-evidence
+              item: review-evidence-reference
             non_empty: true
     reason:
       required: true
@@ -698,29 +860,45 @@ node_definitions:
         label: Mulgae incomplete evidence
         criteria: Mulgae retains native or preflight evidence without waiver provenance.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: orca
         label: Orca incomplete evidence
         criteria: Orca retains lifecycle or preflight evidence and no backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: orca
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
       - id: native-codex
         label: Native Codex incomplete evidence
         criteria: Native Codex retains delegation or preflight evidence and no backend check.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: native-codex
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
-          - evidence: {node: record-evidence, item: assessment-provenance}
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
             not_equals: coordinator-waiver
     reason:
       required: true
@@ -735,19 +913,25 @@ node_definitions:
         label: Backend check passed
         criteria: Mulgae supplied a passing backend check.
         guards:
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: pass
       - id: failed
         label: Backend check failed
         criteria: Mulgae supplied a failing backend check that blocks success.
         guards:
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: fail
       - id: not-provided
         label: Backend check not provided
         criteria: Orca, native Codex, or waiver legitimately has no backend check.
         guards:
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: not-provided
     reason:
       required: true
@@ -762,25 +946,37 @@ node_definitions:
         label: Current route only
         criteria: Prior work is active or terminal state is unknown.
         guards:
-          - evidence: {node: record-evidence, item: prior-route-lifecycle-state}
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
             equals: active-or-unknown
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: current-route-only
       - id: not-started-safe
         label: Prior route did not start
         criteria: Preflight failed before native work started, so route change or waiver is safe.
         guards:
-          - evidence: {node: record-evidence, item: prior-route-lifecycle-state}
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
             equals: not-started
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: safe-to-change
       - id: terminal-safe
         label: Prior route settled without completion
         criteria: The incomplete or failed operation reached an authoritative terminal state.
         guards:
-          - evidence: {node: record-evidence, item: prior-route-lifecycle-state}
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
             equals: terminal-incomplete-or-failed
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: safe-to-change
     reason:
       required: true
@@ -795,29 +991,41 @@ node_definitions:
         label: Resume current route
         criteria: Continue through the current route owner.
         guards:
-          - evidence: {node: record-evidence, item: route-direction}
+          - evidence:
+              node: record-evidence
+              item: route-direction
             equals: resume-current
       - id: switch-route
         label: Switch route
         criteria: Switch after authoritative safe settlement.
         guards:
-          - evidence: {node: record-evidence, item: route-direction}
+          - evidence:
+              node: record-evidence
+              item: route-direction
             equals: switch-route
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: safe-to-change
       - id: waive
         label: Waive delegated review
         criteria: Waive after authoritative safe settlement.
         guards:
-          - evidence: {node: record-evidence, item: route-direction}
+          - evidence:
+              node: record-evidence
+              item: route-direction
             equals: waive
-          - evidence: {node: record-evidence, item: route-change-readiness}
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
             equals: safe-to-change
       - id: stop
         label: Stop Goal advancement
         criteria: Stop without implying native cancellation.
         guards:
-          - evidence: {node: record-evidence, item: route-direction}
+          - evidence:
+              node: record-evidence
+              item: route-direction
             equals: stop
     reason:
       required: true
@@ -1051,6 +1259,7 @@ node_definitions:
             equals: recorded
         min_length: 71
         max_length: 71
+        multiline: false
       - id: hardening-deferral-publication-state
         type: choice
         prompt: Record the exact Mulgae publication state for the deferral evidence.
@@ -1249,13 +1458,21 @@ node_definitions:
         label: Hardening review eligible
         criteria: Mulgae completed with passing backend evidence in hardening-deferral mode.
         guards:
-          - evidence: {node: record-evidence, item: review-route}
+          - evidence:
+              node: record-evidence
+              item: review-route
             equals: mulgae
-          - evidence: {node: record-evidence, item: review-operation}
+          - evidence:
+              node: record-evidence
+              item: review-operation
             equals: complete
-          - evidence: {node: record-evidence, item: backend-check-result}
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
             equals: pass
-          - evidence: {node: record-evidence, item: review-mode}
+          - evidence:
+              node: record-evidence
+              item: review-mode
             equals: hardening-deferral-eligible
     reason:
       required: true
@@ -1270,13 +1487,21 @@ node_definitions:
         label: Hardening record complete
         criteria: The deferral has a later assessment, committed evidence, a successful findings query, and an exact native target digest.
         guards:
-          - evidence: {node: record-evidence, item: assessment-ordinal}
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
             at_least: 2
-          - evidence: {node: record-hardening-deferral, item: hardening-deferral-publication-state}
+          - evidence:
+              node: record-hardening-deferral
+              item: hardening-deferral-publication-state
             equals: committed
-          - evidence: {node: record-hardening-deferral, item: hardening-deferral-findings-query-state}
+          - evidence:
+              node: record-hardening-deferral
+              item: hardening-deferral-findings-query-state
             equals: successful
-          - evidence: {node: record-hardening-deferral, item: hardening-deferral-native-target-sha256}
+          - evidence:
+              node: record-hardening-deferral
+              item: hardening-deferral-native-target-sha256
             non_empty: true
     reason:
       required: true
@@ -1479,6 +1704,35 @@ node_definitions:
     reason:
       required: true
       prompt: Record the actual user direction and exact authority.
+  goal-assessment-core-decision:
+    type: decision
+    title: Confirm core Goal evidence for goal assessment
+    objective: Carry the current work and review evidence through one bounded gate before goal assessment.
+    prompt: Is the core Goal evidence ready for goal assessment?
+    evidence_guidance:
+      - Read the latest work revision and all selected review, verification, completion, and finding evidence.
+      - Preserve their current relationship in the decision reason; this gate does not itself assess the session goal.
+    options:
+      - id: ready
+        label: Core Goal evidence ready
+        criteria: The selected current Goal evidence is coherent and ready for goal assessment.
+    reason:
+      required: true
+      prompt: Explain how the selected core evidence is current and ready for goal assessment.
+  stopped-goal-boundary-record:
+    type: action
+    title: Bind the stopped Goal outcome
+    intent: Preserve the explicit stop path before a non-achieved goal assessment.
+    instructions:
+      - Record this boundary only after an explicit user stop or review-route stop.
+      - Do not relabel stopped work as achieved or start replacement work.
+    items:
+      - id: goal-outcome-boundary
+        type: choice
+        prompt: Record the path-bound outcome class for this stopped Goal.
+        required: true
+        choices:
+          - stopped
   goal-assessment:
     type: decision
     title: Assess the goal
@@ -1491,11 +1745,6 @@ node_definitions:
       - id: achieved
         label: Goal achieved
         criteria: Fresh criterion assessments support the current goal revision.
-        guards:
-          - evidence:
-              node: record-review-route-stop
-              item: route-stop-classification
-            empty: true
       - id: not-achieved
         label: Goal not achieved
         criteria: Fresh evidence does not support the current goal revision.
@@ -1505,6 +1754,38 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the outcome using criterion assessments and evidence.
+    assessment:
+      target: session_goal
+      outcomes:
+        achieved: achieved
+        not-achieved: not_achieved
+        superseded: superseded
+  stopped-goal-assessment:
+    type: decision
+    title: Assess the stopped Goal
+    objective: Determine the current Goal outcome after an explicit stop without allowing an achieved outcome.
+    prompt: What non-achieved outcome applies to the stopped Goal?
+    evidence_guidance:
+      - Read the carried direction or route-stop record, completion evidence, and core Goal evidence.
+      - A stopped path cannot select achieved.
+    options:
+      - id: achieved
+        label: Goal achieved unavailable after stop
+        criteria: This option is mechanically unavailable because the path-bound stop record permits only a non-achieved or superseded outcome.
+        guards:
+          - evidence:
+              node: record-stopped-goal-boundary
+              item: goal-outcome-boundary
+            not_equals: stopped
+      - id: not-achieved
+        label: Goal not achieved
+        criteria: The explicit stop leaves the current Goal revision unsupported.
+      - id: superseded
+        label: Goal superseded
+        criteria: The explicit stop records that the current Goal revision is no longer desired.
+    reason:
+      required: true
+      prompt: Explain the stopped outcome using the carried direction, completion assessment, and Goal evidence.
     assessment:
       target: session_goal
       outcomes:
@@ -1667,6 +1948,7 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - assessment-provenance-kind
       routes:
         completed:
           to: confirm-assessment-ordinal
@@ -1724,6 +2006,7 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - assessment-provenance-kind
             - waiver-summary
       routes:
         mulgae-pass:
@@ -1753,6 +2036,7 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - assessment-provenance-kind
       routes:
         mulgae:
           to: confirm-incomplete-review-provenance
@@ -1772,9 +2056,13 @@ graph:
             - review-operation
             - review-evidence-reference
             - assessment-provenance
+            - assessment-provenance-kind
             - waiver-summary
       routes:
         delegated:
+          to: confirm-review-route-settlement
+          effect: advance
+        waived:
           to: confirm-review-route-settlement
           effect: advance
     - id: confirm-review-provenance
@@ -1786,6 +2074,7 @@ graph:
             - review-operation
             - review-evidence-reference
             - assessment-provenance
+            - assessment-provenance-kind
             - waiver-summary
       routes:
         delegated:
@@ -1846,7 +2135,7 @@ graph:
             - prior-route-lifecycle-state
             - route-change-readiness
             - route-direction
-      next: assess-goal
+      next: record-stopped-goal-boundary
     - id: decide-backend-check
       use: backend-check-decision
       evidence_from:
@@ -2016,6 +2305,7 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - assessment-provenance-kind
             - waiver-summary
             - evidence-summary
             - completion-assessment-summary
@@ -2024,12 +2314,15 @@ graph:
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
             - effective-low-findings
+        - node: record-evidence
+          required: true
+          items:
             - finding-count-consistency
             - confirmation-needed-findings
             - finding-disposition-summary
       routes:
         clean:
-          to: assess-goal
+          to: confirm-goal-assessment-core
           effect: advance
         blocking:
           to: decide-goal-rework-authority
@@ -2087,7 +2380,7 @@ graph:
           to: complete-work
           effect: rework
         stop:
-          to: assess-goal
+          to: record-stopped-goal-boundary
           effect: advance
     - id: record-low-disposition
       use: low-disposition-record
@@ -2140,7 +2433,7 @@ graph:
             - low-disposition-verification
       routes:
         completed:
-          to: assess-goal
+          to: confirm-goal-assessment-core
           effect: advance
         incomplete:
           to: record-low-disposition
@@ -2163,9 +2456,12 @@ graph:
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
             - hardening-deferral-native-target-sha256
-      next: assess-goal
-    - id: assess-goal
-      use: goal-assessment
+      next: confirm-goal-assessment-core
+    - id: record-stopped-goal-boundary
+      use: stopped-goal-boundary-record
+      next: confirm-stopped-goal-assessment-core
+    - id: confirm-goal-assessment-core
+      use: goal-assessment-core-decision
       evidence_from:
         - node: complete-work
           required: true
@@ -2182,6 +2478,7 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - assessment-provenance-kind
             - waiver-summary
             - evidence-summary
             - completion-assessment-summary
@@ -2190,6 +2487,112 @@ graph:
             - finding-count-consistency
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
+      routes:
+        ready:
+          to: assess-goal
+          effect: advance
+    - id: confirm-stopped-goal-assessment-core
+      use: goal-assessment-core-decision
+      evidence_from:
+        - node: complete-work
+          required: true
+          items:
+            - work-summary
+            - source-revision
+        - node: record-evidence
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-mode
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - assessment-provenance-kind
+            - waiver-summary
+            - evidence-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - finding-count-consistency
+            - unresolved-valid-findings
+            - effective-medium-or-higher-findings
+      routes:
+        ready:
+          to: assess-stopped-goal
+          effect: advance
+    - id: assess-goal
+      use: goal-assessment
+      evidence_from:
+        - node: confirm-goal-assessment-core
+          required: true
+        - node: record-evidence
+          required: true
+          items:
+            - effective-low-findings
+            - confirmation-needed-findings
+            - finding-disposition-summary
+        - node: await-user-direction
+          required: false
+          items:
+            - direction-classification
+            - direction-summary
+        - node: record-hardening-deferral
+          required: false
+          items:
+            - hardening-deferral-state
+            - hardening-deferral-run-id
+            - hardening-deferral-finding-ids
+            - hardening-deferral-summary
+            - hardening-deferral-owner
+            - hardening-deferral-evidence-path
+            - hardening-deferral-evidence-sha256
+            - hardening-deferral-publication-state
+            - hardening-deferral-findings-query-state
+            - hardening-deferral-native-target-sha256
+        - node: record-hardening-handoff
+          required: false
+          items:
+            - hardening-handoff-summary
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - pending-low-dispositions
+            - current-blocking-findings
+            - before-target
+            - after-target
+            - coverage-relationship
+            - low-disposition-verification
+        - node: record-review-route-stop
+          required: false
+          items:
+            - route-stop-classification
+            - route-stop-summary
+      routes:
+        achieved:
+          to: closeout
+          effect: advance
+        not-achieved:
+          to: closeout
+          effect: advance
+        superseded:
+          to: closeout
+          effect: advance
+    - id: assess-stopped-goal
+      use: stopped-goal-assessment
+      evidence_from:
+        - node: confirm-stopped-goal-assessment-core
+          required: true
+        - node: record-stopped-goal-boundary
+          required: true
+          items:
+            - goal-outcome-boundary
+        - node: record-evidence
+          required: true
+          items:
             - effective-low-findings
             - confirmation-needed-findings
             - finding-disposition-summary

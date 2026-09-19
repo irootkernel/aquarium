@@ -129,10 +129,13 @@ direct audit facts, delegated review findings, verification, or completion
 assessment.
 
 The implementation owners are `epic-handler`, `epic-validator`, `task-commit`,
-the evidence-residency contract, version 17 of `aquarium-goal-v2`, and version 16
-of `aquarium-validation-v2`. Their inspector contracts and focused route fixtures
-verify the compatible unit while older admitted Procedure snapshots retain their
-original meanings.
+the evidence-residency contract, version 18 of `aquarium-goal-v2`, and version 17
+of `aquarium-validation-v2`. These versions preserve the version 17 and version 16
+workflow meanings while expressing conditional native-review fields, zero-valued
+unconsumed ordinals, typed provenance, complete option routing, and path-bound goal
+assessment gates within the Podway v0.2.10 authoring bounds. Their inspector
+contracts and focused route fixtures verify the compatible unit while the exact
+older admitted Procedure snapshots retain their original meanings.
 
 Committed Epic and validation candidates may use Orca `HEAD`, commit, or range
 targets when the exact scope is supported. Member-task candidates follow the
@@ -161,6 +164,12 @@ The Epic and validation changes are not complete until each plugin asset matches
 its repository-local Procedure copy, their inspector contracts and digests are
 current, and their alignment fixtures and focused routing tests pass. Do not
 defer required Goal or Validation compatibility repairs to `TASK-071`.
+
+Compatibility remediation also requires every managed Procedure decision to stay
+within eight options and four guards, every placement to stay within eight evidence
+references, and every evidence reference to select at most sixteen items. Preserve
+all previously selected evidence across serial gates rather than dropping fields to
+meet those limits.
 
 ## TASK-071: Qualify routing and promote documentation
 

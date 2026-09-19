@@ -124,9 +124,7 @@ VALIDATION_CONFIRMATION_SCENARIOS = {
 
 
 def completed_low_settlement_destination(procedure_id: str) -> str:
-    if procedure_id == "aquarium-task-v2":
-        return "confirm-goal-assessment-core"
-    return "assess-goal"
+    return "confirm-goal-assessment-core"
 
 
 GOAL_OPERATIONAL_VARIANTS = (
@@ -2418,7 +2416,7 @@ class ManagedRuntime:
                     if procedure_id == "aquarium-validation-v2"
                     else "confirm-stopped-goal-assessment-core"
                     if procedure_id == "aquarium-task-v2"
-                    else "assess-goal"
+                    else "record-stopped-goal-boundary"
                 )
                 self.decision_destination(decision, expected_destination)
                 continue
@@ -2802,7 +2800,7 @@ class ManagedRuntime:
                     continue
                 if node == "decide-final-review" and expected_option == "validated":
                     decision = self.decide(observation, "validated")
-                    self.decision_destination(decision, "assess-goal")
+                    self.decision_destination(decision, "confirm-goal-assessment-core")
                     self.mark_case_variant("C-16", scenario)
                     continue
 
@@ -2880,6 +2878,7 @@ class ManagedRuntime:
                             raise RuntimeQualificationError(
                                 "stop path lost finding-count consistency"
                             )
+                    observation = self.reject_guarded_decision(observation, "achieved")
                     self.mark_case_variant("C-10", scenario)
                 if (
                     scenario == "task-completion-unverified"

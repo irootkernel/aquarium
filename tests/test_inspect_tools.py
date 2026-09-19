@@ -27,6 +27,8 @@ GLOBAL_SCRIPT = (
 )
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
+GOAL_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v17.yaml"
+VALIDATION_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v16.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -4460,7 +4462,7 @@ else:
             ),
             (
                 "aquarium-goal-v2.yaml",
-                "assess-goal",
+                "confirm-goal-assessment-core",
                 "record-evidence",
                 "finding-count-consistency",
             ),
@@ -5185,6 +5187,115 @@ else:
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
+    def test_actual_goal_v17_and_validation_v16_preserve_readiness(self) -> None:
+        fixtures = {
+            "aquarium-goal-v2.yaml": (
+                GOAL_V17_PROCEDURE_FIXTURE,
+                "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
+            ),
+            "aquarium-validation-v2.yaml": (
+                VALIDATION_V16_PROCEDURE_FIXTURE,
+                "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
+            ),
+        }
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        managed = self.repository / ".podway/procedures"
+        source = ROOT / "plugins/aquarium/assets/podway/procedures"
+
+        for name, (fixture, expected_digest) in fixtures.items():
+            with self.subTest(procedure=name):
+                legacy_bytes = fixture.read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(legacy_bytes).hexdigest(), expected_digest
+                )
+                target = managed / name
+                target.write_bytes(legacy_bytes)
+
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                entry = next(
+                    item
+                    for item in podway["managed_procedures"]
+                    if item["path"].endswith(name)
+                )
+
+                self.assertEqual(entry["update_explanation"], "prior_canonical")
+                self.assertEqual(entry["source_state"], "valid_customization")
+                self.assertEqual(entry["handler_contract_status"], "compatible")
+                self.assertEqual(entry["handler_contract_reasons"], [])
+                self.assertFalse(entry["matches_source"])
+                self.assertEqual(target.read_bytes(), legacy_bytes)
+                self.assertEqual(podway["readiness_status"], "ready")
+                target.write_bytes(source.joinpath(name).read_bytes())
+
+    def test_tampered_goal_v17_and_validation_v16_are_not_prior_canonical(
+        self,
+    ) -> None:
+        fixtures = {
+            "aquarium-goal-v2.yaml": GOAL_V17_PROCEDURE_FIXTURE,
+            "aquarium-validation-v2.yaml": VALIDATION_V16_PROCEDURE_FIXTURE,
+        }
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        managed = self.repository / ".podway/procedures"
+        source = ROOT / "plugins/aquarium/assets/podway/procedures"
+
+        for name, fixture in fixtures.items():
+            with self.subTest(procedure=name):
+                legacy = fixture.read_text(encoding="utf-8")
+                target = managed / name
+                target.write_text(
+                    legacy.replace("purpose: ", "purpose: Tampered ", 1),
+                    encoding="utf-8",
+                )
+
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                entry = next(
+                    item
+                    for item in podway["managed_procedures"]
+                    if item["path"].endswith(name)
+                )
+
+                self.assertEqual(entry["update_explanation"], "local_customization")
+                self.assertEqual(entry["handler_contract_status"], "incompatible")
+                self.assertNotEqual(entry["handler_contract_reasons"], [])
+                self.assertEqual(podway["readiness_status"], "degraded")
+                target.write_bytes(source.joinpath(name).read_bytes())
+
+    def test_unknown_current_goal_and_validation_digests_are_not_prior_canonical(
+        self,
+    ) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        managed = self.repository / ".podway/procedures"
+
+        for name in ("aquarium-goal-v2.yaml", "aquarium-validation-v2.yaml"):
+            with self.subTest(procedure=name):
+                target = managed / name
+                canonical = target.read_text(encoding="utf-8")
+                target.write_text(
+                    canonical.replace("description: ", "description: Customized ", 1),
+                    encoding="utf-8",
+                )
+
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                entry = next(
+                    item
+                    for item in podway["managed_procedures"]
+                    if item["path"].endswith(name)
+                )
+
+                self.assertEqual(entry["update_explanation"], "local_customization")
+                self.assertNotEqual(entry["update_explanation"], "prior_canonical")
+                self.assertEqual(entry["handler_contract_status"], "compatible")
+                target.write_text(canonical, encoding="utf-8")
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
@@ -5204,6 +5315,7 @@ else:
                     "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
                     "99dfe92a75accee69717154a13ea18b6e25a493e2674d78543f3780b8993a375",
                     "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
                     "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
@@ -5217,6 +5329,7 @@ else:
                     "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
                     "d3108415bc54a96c200a1189149c514428f53367eae3778c4440d23f8b55a800",
                     "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
                     "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
