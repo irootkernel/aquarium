@@ -2431,8 +2431,7 @@ class ManagedRuntime:
             ]
             route_qualification = ROUTE_QUALIFICATION_SCENARIOS.get(self.scenario)
             if (
-                (route_qualification or self.scenario in GOAL_RECOVERY_SCENARIOS)
-                and procedure_id == "aquarium-goal-v2"
+                procedure_id == "aquarium-goal-v2"
                 and node == "complete-work"
             ):
                 required.extend(
