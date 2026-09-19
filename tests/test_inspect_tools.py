@@ -4510,12 +4510,16 @@ else:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         node_cases = (
             ("aquarium-task-v2.yaml", "prepare-review"),
+            ("aquarium-task-v2.yaml", "validate-review-route-entry"),
             ("aquarium-task-v2.yaml", "authorize-review-route"),
             ("aquarium-task-v2.yaml", "confirm-review-route-binding"),
             ("aquarium-task-v2.yaml", "decide-review-operation"),
             ("aquarium-task-v2.yaml", "confirm-assessment-ordinal"),
+            ("aquarium-task-v2.yaml", "confirm-extra-assessment-ordinal"),
             ("aquarium-task-v2.yaml", "confirm-review-evidence"),
             ("aquarium-task-v2.yaml", "confirm-incomplete-review-evidence"),
+            ("aquarium-task-v2.yaml", "confirm-review-provenance"),
+            ("aquarium-task-v2.yaml", "confirm-incomplete-review-provenance"),
             ("aquarium-task-v2.yaml", "decide-backend-check"),
             ("aquarium-task-v2.yaml", "confirm-review-findings"),
             ("aquarium-task-v2.yaml", "confirm-review-route-settlement"),
@@ -4875,6 +4879,7 @@ else:
                     "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
                     "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
                     "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
+                    "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
                 },
                 "aquarium-goal-v2.yaml": {
                     "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",

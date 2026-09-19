@@ -279,7 +279,10 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
     }
     assert "extra-review-authorization" not in review_items
     assert graph["document"]["next"] == "prepare-review"
-    assert graph["prepare-review"]["next"] == "authorize-review-route"
+    assert graph["prepare-review"]["next"] == "validate-review-route-entry"
+    assert {
+        route["to"] for route in graph["validate-review-route-entry"]["routes"].values()
+    } == {"authorize-review-route"}
     assert graph["review"]["next"] == "confirm-review-route-binding"
     assert set(graph["confirm-review-route-binding"]["routes"]) == {
         "mulgae",
@@ -308,10 +311,36 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
     }
     assert {
         route["to"] for route in graph["confirm-review-evidence"]["routes"].values()
-    } == {"confirm-review-findings"}
+    } == {"confirm-review-provenance"}
+    assert graph["confirm-review-provenance"]["routes"] == {
+        "delegated": {"to": "confirm-review-findings", "effect": "advance"},
+        "waived": {"to": "confirm-review-findings", "effect": "advance"},
+    }
+    assert {
+        route["to"]
+        for route in graph["confirm-incomplete-review-evidence"]["routes"].values()
+    } == {"confirm-incomplete-review-provenance"}
+    assert graph["confirm-incomplete-review-provenance"]["routes"] == {
+        "delegated": {
+            "to": "record-review-route-direction",
+            "effect": "advance",
+        }
+    }
     assert graph["confirm-assessment-ordinal"]["routes"] == {
-        option: {"to": "confirm-review-evidence", "effect": "advance"}
-        for option in ("first", "second", "third", "fourth", "authorized-extra")
+        "first": {"to": "confirm-review-evidence", "effect": "advance"},
+        "second": {"to": "confirm-review-evidence", "effect": "advance"},
+        "third": {"to": "confirm-review-evidence", "effect": "advance"},
+        "fourth": {"to": "confirm-review-evidence", "effect": "advance"},
+        "authorized-extra": {
+            "to": "confirm-extra-assessment-ordinal",
+            "effect": "advance",
+        },
+    }
+    assert graph["confirm-extra-assessment-ordinal"]["routes"] == {
+        "authorized-extra": {
+            "to": "confirm-review-evidence",
+            "effect": "advance",
+        }
     }
     assert graph["decide-backend-check"]["routes"] == {
         "passed": {"to": "confirm-review-completion", "effect": "advance"},
@@ -430,7 +459,7 @@ def test_task_review_uses_serial_ci_completion_finding_and_owner_gates() -> None
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "13"
+    assert task["version"] == "14"
 
     plan_items = {
         item["id"]: item for item in task["node_definitions"]["plan-record"]["items"]
@@ -523,6 +552,7 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
         "equals",
         "not-provided",
     ) in normalized_guards(evidence_options["native-codex"])
+    provenance_options = options(task, "review-provenance-decision")
     assert {
         ("review", "review-operation", None, "equals", "waived"),
         (
@@ -533,18 +563,55 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
             "coordinator-waiver",
         ),
         ("review", "waiver-summary", None, "non_empty", True),
-    } <= normalized_guards(evidence_options["waived"])
+        ("review", "review-evidence-reference", None, "non_empty", True),
+    } <= normalized_guards(provenance_options["waived"])
+    assert {
+        (
+            "review",
+            "assessment-provenance",
+            None,
+            "not_equals",
+            "coordinator-waiver",
+        ),
+        ("review", "waiver-summary", None, "empty", True),
+        ("review", "review-evidence-reference", None, "non_empty", True),
+    } <= normalized_guards(provenance_options["delegated"])
+
+    extra_ordinal_options = options(task, "assessment-extra-ordinal-decision")
+    assert set(extra_ordinal_options) == {"authorized-extra"}
+    assert (
+        "review",
+        "assessment-ordinal",
+        None,
+        "at_least",
+        5,
+    ) in normalized_guards(extra_ordinal_options["authorized-extra"])
+
+
+def test_task_decision_options_fit_podway_v0210_guard_limit() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    for definition_id, definition in task["node_definitions"].items():
+        if definition.get("type") != "decision":
+            continue
+        for option in definition.get("options", []):
+            assert len(option.get("guards", [])) <= 4, (
+                definition_id,
+                option["id"],
+            )
 
 
 def test_task_route_fixtures_traverse_only_guarded_options() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
     cases = load_json("review-routing-cases.json")["task_review_route_cases"]
+    route_entry_options = options(task, "review-route-entry-decision")
     route_authorization_options = options(task, "review-route-authorization-decision")
     route_binding_options = options(task, "review-route-binding-decision")
     operation_options = options(task, "review-operation-decision")
     ordinal_options = options(task, "assessment-ordinal-decision")
+    extra_ordinal_options = options(task, "assessment-extra-ordinal-decision")
     completed_options = options(task, "review-evidence-decision")
     incomplete_options = options(task, "incomplete-review-evidence-decision")
+    provenance_options = options(task, "review-provenance-decision")
     settlement_options = options(task, "review-route-settlement-decision")
     recovery_options = options(task, "review-route-direction-decision")
 
@@ -577,8 +644,18 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
             ("review", "backend-check-result"): case["backend_check"],
             ("review", "assessment-provenance"): case["provenance"],
             ("review", "waiver-summary"): case["waiver_summary"],
+            (
+                "record-review-route-direction",
+                "route-change-readiness",
+            ): case.get("route_change_readiness"),
         }
         with_case = f"case {case['id']}"
+        entry_option = (
+            "planned"
+            if case["route_authorization_basis"] == "approved-plan"
+            else "changed-after-completion"
+        )
+        assert guards_match(route_entry_options[entry_option], values), with_case
         assert guards_match(
             route_authorization_options[case["route_authorization_option"]], values
         ), with_case
@@ -628,6 +705,33 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
         guards_match(option, invalid_static) for option in incomplete_options.values()
     )
 
+    delegated_incomplete = {
+        ("review", "review-operation"): "incomplete",
+        ("review", "review-evidence-reference"): "native:incomplete-operation",
+        ("review", "assessment-provenance"): "fresh-reviewer",
+        ("review", "waiver-summary"): None,
+    }
+    delegated_provenance = provenance_options["delegated"]
+    assert guards_match(delegated_provenance, delegated_incomplete)
+
+    delegated_failed = dict(delegated_incomplete)
+    delegated_failed[("review", "review-operation")] = "failed"
+    assert guards_match(delegated_provenance, delegated_failed)
+
+    missing_reference = dict(delegated_incomplete)
+    missing_reference[("review", "review-evidence-reference")] = None
+    assert not guards_match(delegated_provenance, missing_reference)
+
+    waiver_provenance = dict(delegated_incomplete)
+    waiver_provenance[("review", "assessment-provenance")] = "coordinator-waiver"
+    assert not guards_match(delegated_provenance, waiver_provenance)
+
+    unexpected_waiver_summary = dict(delegated_incomplete)
+    unexpected_waiver_summary[("review", "waiver-summary")] = (
+        "waiver evidence is invalid for an incomplete delegated review"
+    )
+    assert not guards_match(delegated_provenance, unexpected_waiver_summary)
+
     unauthorized_initial_switch = {
         ("record-plan", "review-route"): "mulgae",
         ("prepare-review", "effective-review-route"): "orca",
@@ -671,8 +775,8 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
     }
     assert not any(
         guards_match(option, active_bypass)
-        for option_id, option in route_authorization_options.items()
-        if option_id.startswith(("changed-", "completed-change-"))
+        for option_id, option in route_entry_options.items()
+        if option_id.startswith("changed-after-")
     )
     assert not guards_match(route_binding_options["orca"], active_bypass)
 
@@ -687,6 +791,30 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
     }
     assert guards_match(
         route_authorization_options["changed-native-codex"], safe_switch
+    )
+
+    safe_after_incomplete = {
+        ("prepare-review", "route-authorization-basis"): "explicit-route-change",
+        (
+            "record-review-route-direction",
+            "route-change-readiness",
+        ): "safe-to-change",
+        ("review", "review-operation"): "incomplete",
+    }
+    assert guards_match(
+        route_entry_options["changed-after-incomplete"], safe_after_incomplete
+    )
+    assert not guards_match(
+        route_entry_options["changed-after-failure"], safe_after_incomplete
+    )
+
+    safe_after_failure = dict(safe_after_incomplete)
+    safe_after_failure[("review", "review-operation")] = "failed"
+    assert guards_match(
+        route_entry_options["changed-after-failure"], safe_after_failure
+    )
+    assert not guards_match(
+        route_entry_options["changed-after-incomplete"], safe_after_failure
     )
 
     first_with_confirmation_mode = {
@@ -705,6 +833,18 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
         ("review", "assessment-ordinal-continuity"): {"outcome": "fail"},
     }
     assert not guards_match(ordinal_options["authorized-extra"], unverified_extra_jump)
+    assert guards_match(
+        extra_ordinal_options["authorized-extra"],
+        {
+            ("review", "assessment-ordinal"): 5,
+        },
+    )
+    assert not guards_match(
+        extra_ordinal_options["authorized-extra"],
+        {
+            ("review", "assessment-ordinal"): 4,
+        },
+    )
 
     achieved = options(task, "goal-assessment")["achieved"]
     assert not guards_match(
@@ -1193,6 +1333,11 @@ def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
     }
     for name, definition_id, evidence_node in cases:
         procedure_options = options(load_procedure(name), definition_id)
+        provenance_options = (
+            options(load_procedure(name), "review-provenance-decision")
+            if name == "aquarium-task-v2.yaml"
+            else None
+        )
         for route, option_id in route_options.items():
             with_route = {
                 (evidence_node, "review-route"): route,
@@ -1241,16 +1386,39 @@ def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
             wrong_provenance[(evidence_node, "assessment-provenance")] = (
                 "reviewer" if route == "waived" else "coordinator-waiver"
             )
-            assert not guards_match(option, wrong_provenance), (
-                name,
-                route,
-                "provenance",
-            )
+            if provenance_options is None:
+                assert not guards_match(option, wrong_provenance), (
+                    name,
+                    route,
+                    "provenance",
+                )
+            else:
+                provenance_option = provenance_options[
+                    "waived" if route == "waived" else "delegated"
+                ]
+                assert guards_match(provenance_option, with_route), (name, route)
+                assert not guards_match(provenance_option, wrong_provenance), (
+                    name,
+                    route,
+                    "provenance",
+                )
+                missing_reference = dict(with_route)
+                missing_reference[(evidence_node, "review-evidence-reference")] = None
+                assert not guards_match(provenance_option, missing_reference), (
+                    name,
+                    route,
+                    "evidence-reference",
+                )
 
             if route == "waived":
                 missing_summary = dict(with_route)
                 missing_summary[(evidence_node, "waiver-summary")] = None
-                assert not guards_match(option, missing_summary), (
+                summary_option = (
+                    provenance_options["waived"]
+                    if provenance_options is not None
+                    else option
+                )
+                assert not guards_match(summary_option, missing_summary), (
                     name,
                     route,
                     "summary",

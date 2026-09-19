@@ -57,11 +57,15 @@ SUCCESS_OPTIONS = {
     "decide-gaps": "clean",
     "decide-quality": "passed",
     "decide-review": "clean",
+    "validate-review-route-entry": "planned",
     "authorize-review-route": "planned-mulgae",
     "confirm-review-route-binding": "mulgae",
     "decide-review-operation": "completed",
+    "confirm-extra-assessment-ordinal": "authorized-extra",
     "confirm-route-evidence": "mulgae-pass",
     "confirm-review-evidence": "mulgae-pass",
+    "confirm-review-provenance": "delegated",
+    "confirm-incomplete-review-provenance": "delegated",
     "decide-backend-check": "passed",
     "decide-task-rework-authority": "remediation",
     "decide-implementation-owner": "clear",
@@ -3116,10 +3120,10 @@ class ManagedRuntime:
                 and not self.task_review_reworked
             ):
                 special_option = "mulgae-fail"
-            elif (
-                procedure_id == "aquarium-task-v2"
-                and node == "confirm-assessment-ordinal"
-            ):
+            elif procedure_id == "aquarium-task-v2" and node in {
+                "confirm-assessment-ordinal",
+                "confirm-extra-assessment-ordinal",
+            }:
                 ordinal = self.node_visits.get("review", 1)
                 special_option = {
                     1: "first",
@@ -3168,6 +3172,7 @@ class ManagedRuntime:
                             "route qualification provenance was not preserved"
                         )
                 route_decisions = {
+                    "validate-review-route-entry": "planned",
                     "authorize-review-route": (
                         f"planned-{qualified_route}"
                         if qualified_route != "waived"
@@ -3191,6 +3196,9 @@ class ManagedRuntime:
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
+                    ),
+                    "confirm-review-provenance": (
+                        "waived" if qualified_route == "waived" else "delegated"
                     ),
                     "confirm-route-evidence": (
                         "mulgae-pass"

@@ -158,6 +158,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "35adb91998294f3c271e4ca7cba5ee1c8b94ce1265a828ff92cd206bc68d6e9c",
         "fb3d9a05dca7b09e34164b7a3022f0ab3fc2c742d1a3771064ac9174d0de43e7",
         "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
+        "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
     },
     "aquarium-goal-v2.yaml": {
         "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
@@ -198,12 +199,16 @@ PODWAY_HANDLER_CONTRACTS = {
             "implement",
             "document",
             "prepare-review",
+            "validate-review-route-entry",
             "authorize-review-route",
             "confirm-review-route-binding",
             "decide-review-operation",
             "confirm-assessment-ordinal",
+            "confirm-extra-assessment-ordinal",
             "confirm-review-evidence",
             "confirm-incomplete-review-evidence",
+            "confirm-review-provenance",
+            "confirm-incomplete-review-provenance",
             "decide-backend-check",
             "confirm-review-findings",
             "confirm-review-completion",
@@ -336,6 +341,12 @@ PODWAY_HANDLER_CONTRACTS = {
         },
         "routes": {
             "decide-verification": {"failed": "verify"},
+            "validate-review-route-entry": {
+                "planned": "authorize-review-route",
+                "changed-after-incomplete": "authorize-review-route",
+                "changed-after-failure": "authorize-review-route",
+                "changed-after-completion": "authorize-review-route",
+            },
             "authorize-review-route": {
                 "planned-mulgae": "review",
                 "planned-orca": "review",
@@ -367,13 +378,20 @@ PODWAY_HANDLER_CONTRACTS = {
                 "second": "confirm-review-evidence",
                 "third": "confirm-review-evidence",
                 "fourth": "confirm-review-evidence",
+                "authorized-extra": "confirm-extra-assessment-ordinal",
+            },
+            "confirm-extra-assessment-ordinal": {
                 "authorized-extra": "confirm-review-evidence",
             },
             "confirm-review-evidence": {
-                "mulgae-pass": "confirm-review-findings",
-                "mulgae-fail": "confirm-review-findings",
-                "orca": "confirm-review-findings",
-                "native-codex": "confirm-review-findings",
+                "mulgae-pass": "confirm-review-provenance",
+                "mulgae-fail": "confirm-review-provenance",
+                "orca": "confirm-review-provenance",
+                "native-codex": "confirm-review-provenance",
+                "waived": "confirm-review-provenance",
+            },
+            "confirm-review-provenance": {
+                "delegated": "confirm-review-findings",
                 "waived": "confirm-review-findings",
             },
             "decide-backend-check": {
@@ -383,11 +401,14 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "confirm-review-findings": {"resolved": "decide-backend-check"},
             "confirm-incomplete-review-evidence": {
-                "mulgae-pass": "record-review-route-direction",
-                "mulgae-fail": "record-review-route-direction",
-                "mulgae-not-provided": "record-review-route-direction",
-                "orca": "record-review-route-direction",
-                "native-codex": "record-review-route-direction",
+                "mulgae-pass": "confirm-incomplete-review-provenance",
+                "mulgae-fail": "confirm-incomplete-review-provenance",
+                "mulgae-not-provided": "confirm-incomplete-review-provenance",
+                "orca": "confirm-incomplete-review-provenance",
+                "native-codex": "confirm-incomplete-review-provenance",
+            },
+            "confirm-incomplete-review-provenance": {
+                "delegated": "record-review-route-direction",
             },
             "confirm-review-completion": {
                 "complete": "decide-review",
@@ -452,6 +473,24 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("review", "completion-unmet-criteria"),
                 ("review", "completion-unverified-criteria"),
             },
+            "validate-review-route-entry": {
+                ("prepare-review", "route-authorization-basis"),
+                ("prepare-review", "prior-assessment-ordinal"),
+                ("review", "review-operation"),
+                ("record-review-route-direction", "route-change-readiness"),
+            },
+            "confirm-review-provenance": {
+                ("review", "review-operation"),
+                ("review", "assessment-provenance"),
+                ("review", "waiver-summary"),
+                ("review", "review-evidence-reference"),
+            },
+            "confirm-incomplete-review-provenance": {
+                ("review", "review-operation"),
+                ("review", "assessment-provenance"),
+                ("review", "waiver-summary"),
+                ("review", "review-evidence-reference"),
+            },
             "review": {
                 ("record-plan", "review-route"),
                 ("record-plan", "review-target-scope"),
@@ -470,6 +509,9 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("review", "assessment-ordinal"),
                 ("review", "assessment-ordinal-continuity"),
                 ("review", "review-mode"),
+            },
+            "confirm-extra-assessment-ordinal": {
+                ("review", "assessment-ordinal"),
             },
             "assess-goal": {
                 ("review", "completion-assessment-summary"),
