@@ -588,16 +588,22 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
     ) in normalized_guards(extra_ordinal_options["authorized-extra"])
 
 
-def test_task_decision_options_fit_podway_v0210_guard_limit() -> None:
-    task = load_procedure("aquarium-task-v2.yaml")
-    for definition_id, definition in task["node_definitions"].items():
-        if definition.get("type") != "decision":
-            continue
-        for option in definition.get("options", []):
-            assert len(option.get("guards", [])) <= 4, (
-                definition_id,
-                option["id"],
-            )
+def test_review_procedure_decision_options_fit_podway_v0210_guard_limit() -> None:
+    for name in (
+        "aquarium-task-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-validation-v2.yaml",
+    ):
+        procedure = load_procedure(name)
+        for definition_id, definition in procedure["node_definitions"].items():
+            if definition.get("type") != "decision":
+                continue
+            for option in definition.get("options", []):
+                assert len(option.get("guards", [])) <= 4, (
+                    name,
+                    definition_id,
+                    option["id"],
+                )
 
 
 def test_task_route_fixtures_traverse_only_guarded_options() -> None:
@@ -879,8 +885,15 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     assert "extra-review-authorization" not in record_items
     assert "authorized-rework-decision" not in goal["node_definitions"]
     assert graph["decide-review-basis"]["routes"]["native-review"] == {
-        "to": "confirm-review-route-binding",
+        "to": "confirm-review-route-context",
         "effect": "advance",
+    }
+    assert graph["confirm-review-route-context"]["routes"] == {
+        "ready": {"to": "confirm-review-route-entry", "effect": "advance"},
+    }
+    assert graph["confirm-review-route-entry"]["routes"] == {
+        "planned": {"to": "confirm-review-route-binding", "effect": "advance"},
+        "changed": {"to": "confirm-review-route-binding", "effect": "advance"},
     }
     assert set(graph["confirm-review-route-binding"]["routes"]) == {
         "planned-mulgae",
@@ -892,16 +905,22 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "changed-native-codex",
         "changed-waiver",
     }
-    binding_sources = {
+    context_sources = {
         source["node"]: set(source["items"])
-        for source in graph["confirm-review-route-binding"]["evidence_from"]
+        for source in graph["confirm-review-route-context"]["evidence_from"]
+    }
+    assert {"review-target-scope", "review-selection-summary"} <= context_sources[
+        "complete-work"
+    ]
+    entry_sources = {
+        source["node"]: set(source["items"])
+        for source in graph["confirm-review-route-entry"]["evidence_from"]
     }
     assert {
-        "review-route",
-        "review-target-scope",
-        "review-selection-summary",
-    } <= binding_sources["complete-work"]
-    assert "prior-route-lifecycle-state" in binding_sources["record-evidence"]
+        "route-authorization-basis",
+        "route-change-readiness",
+        "prior-route-lifecycle-state",
+    } <= entry_sources["record-evidence"]
     assert graph["decide-review-operation"]["routes"] == {
         "completed": {"to": "confirm-assessment-ordinal", "effect": "advance"},
         "waived": {"to": "confirm-assessment-ordinal", "effect": "advance"},
@@ -976,7 +995,16 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     assert graph["record-hardening-deferral"]["next"] == "decide-low-handling"
     assert graph["decide-low-handling"]["routes"] == {
         "settle": {"to": "record-low-disposition", "effect": "advance"},
-        "defer": {"to": "record-hardening-handoff", "effect": "advance"},
+        "defer": {
+            "to": "confirm-hardening-review-eligibility",
+            "effect": "advance",
+        },
+    }
+    assert graph["confirm-hardening-review-eligibility"]["routes"] == {
+        "eligible": {"to": "confirm-hardening-record", "effect": "advance"},
+    }
+    assert graph["confirm-hardening-record"]["routes"] == {
+        "recorded": {"to": "record-hardening-handoff", "effect": "advance"},
     }
     hardening_items = {
         item["id"]
@@ -990,7 +1018,9 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "hardening-deferral-native-target-sha256",
         "hardening-deferral-evidence-sha256",
     } <= hardening_items
-    defer_guards = normalized_guards(options(goal, "low-handling-decision")["defer"])
+    defer_guards = normalized_guards(
+        options(goal, "hardening-record-decision")["recorded"]
+    )
     assert (
         "record-hardening-deferral",
         "hardening-deferral-publication-state",
@@ -1012,7 +1042,11 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "non_empty",
         True,
     ) in defer_guards
-    for node_id in ("decide-low-handling", "record-hardening-handoff", "assess-goal"):
+    for node_id in (
+        "confirm-hardening-record",
+        "record-hardening-handoff",
+        "assess-goal",
+    ):
         hardening_sources = {
             source["node"]: set(source["items"])
             for source in graph[node_id]["evidence_from"]
@@ -1051,6 +1085,12 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         "operation_option": set(options(goal, "review-operation-decision")),
         "ordinal_option": set(options(goal, "assessment-ordinal-decision")),
     }
+    goal_context_options = options(goal, "review-route-context-decision")
+    goal_entry_options = options(goal, "review-route-entry-decision")
+    goal_provenance_options = options(goal, "review-provenance-decision")
+    validation_provenance_options = options(
+        validation, "final-review-provenance-decision"
+    )
     validation_choices = {
         "operation_option": set(options(validation, "final-review-operation-decision")),
         "ordinal_option": set(options(validation, "assessment-ordinal-decision")),
@@ -1076,6 +1116,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 else "hardening-deferral-eligible"
             ),
             ("record-evidence", "backend-check-result"): case["backend_check"],
+            ("record-evidence", "review-evidence-reference"): "fixture:evidence",
             ("record-evidence", "assessment-provenance"): case["provenance"],
             ("record-evidence", "waiver-summary"): case.get("waiver_summary"),
             ("record-evidence", "route-authorization-basis"): (
@@ -1103,6 +1144,13 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 "corrected_target"
             ),
         }
+        assert guards_match(goal_context_options["ready"], values), case["id"]
+        entry_option = (
+            "changed"
+            if case["route_authorization_option"].startswith("changed-")
+            else "planned"
+        )
+        assert guards_match(goal_entry_options[entry_option], values), case["id"]
         assert guards_match(
             options(goal, "review-route-binding-decision")[
                 case["route_authorization_option"]
@@ -1122,6 +1170,12 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 options(goal, "route-evidence-decision")[case["evidence_option"]],
                 values,
             ), case["id"]
+            provenance_option = (
+                "waived" if case["operation"] == "waived" else "delegated"
+            )
+            assert guards_match(goal_provenance_options[provenance_option], values), (
+                case["id"]
+            )
         else:
             assert guards_match(
                 options(goal, "incomplete-route-evidence-decision")[
@@ -1141,6 +1195,9 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 ],
                 values,
             ), case["id"]
+            assert guards_match(goal_provenance_options["delegated"], values), case[
+                "id"
+            ]
     for case in validation_cases:
         for field, choices in validation_choices.items():
             if field in case:
@@ -1160,6 +1217,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 else "confirmation-only"
             ),
             ("final-review", "backend-check-result"): case["backend_check"],
+            ("final-review", "review-evidence-reference"): "fixture:evidence",
             ("final-review", "assessment-provenance"): case["provenance"],
             ("final-review", "waiver-summary"): case.get("waiver_summary"),
             ("final-review", "route-change-readiness"): (
@@ -1203,6 +1261,12 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 ],
                 values,
             ), case["id"]
+            provenance_option = (
+                "waived" if case["operation"] == "waived" else "delegated"
+            )
+            assert guards_match(
+                validation_provenance_options[provenance_option], values
+            ), case["id"]
         else:
             assert guards_match(
                 options(validation, "incomplete-final-route-evidence-decision")[
@@ -1222,6 +1286,9 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 ],
                 values,
             ), case["id"]
+            assert guards_match(validation_provenance_options["delegated"], values), (
+                case["id"]
+            )
 
     assert any(case.get("direction_option") == "resume-current" for case in goal_cases)
     assert any(case.get("direction_option") == "switch-route" for case in goal_cases)
@@ -1279,8 +1346,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         ("record-evidence", "route-change-readiness"): "safe-to-change",
     }
     assert not guards_match(
-        options(goal, "review-route-binding-decision")["changed-native-codex"],
-        goal_active_bypass,
+        options(goal, "review-route-entry-decision")["changed"], goal_active_bypass
     )
     goal_settlement = options(goal, "review-route-settlement-decision")
     assert not any(
@@ -1333,11 +1399,12 @@ def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
     }
     for name, definition_id, evidence_node in cases:
         procedure_options = options(load_procedure(name), definition_id)
-        provenance_options = (
-            options(load_procedure(name), "review-provenance-decision")
-            if name == "aquarium-task-v2.yaml"
-            else None
-        )
+        provenance_definition = {
+            "aquarium-task-v2.yaml": "review-provenance-decision",
+            "aquarium-goal-v2.yaml": "review-provenance-decision",
+            "aquarium-validation-v2.yaml": "final-review-provenance-decision",
+        }[name]
+        provenance_options = options(load_procedure(name), provenance_definition)
         for route, option_id in route_options.items():
             with_route = {
                 (evidence_node, "review-route"): route,
@@ -1386,39 +1453,29 @@ def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
             wrong_provenance[(evidence_node, "assessment-provenance")] = (
                 "reviewer" if route == "waived" else "coordinator-waiver"
             )
-            if provenance_options is None:
-                assert not guards_match(option, wrong_provenance), (
-                    name,
-                    route,
-                    "provenance",
-                )
-            else:
-                provenance_option = provenance_options[
-                    "waived" if route == "waived" else "delegated"
-                ]
-                assert guards_match(provenance_option, with_route), (name, route)
-                assert not guards_match(provenance_option, wrong_provenance), (
-                    name,
-                    route,
-                    "provenance",
-                )
-                missing_reference = dict(with_route)
-                missing_reference[(evidence_node, "review-evidence-reference")] = None
-                assert not guards_match(provenance_option, missing_reference), (
-                    name,
-                    route,
-                    "evidence-reference",
-                )
+            provenance_option = provenance_options[
+                "waived" if route == "waived" else "delegated"
+            ]
+            assert guards_match(provenance_option, with_route), (name, route)
+            assert not guards_match(provenance_option, wrong_provenance), (
+                name,
+                route,
+                "provenance",
+            )
+            missing_reference = dict(with_route)
+            missing_reference[(evidence_node, "review-evidence-reference")] = None
+            assert not guards_match(provenance_option, missing_reference), (
+                name,
+                route,
+                "evidence-reference",
+            )
 
             if route == "waived":
                 missing_summary = dict(with_route)
                 missing_summary[(evidence_node, "waiver-summary")] = None
-                summary_option = (
-                    provenance_options["waived"]
-                    if provenance_options is not None
-                    else option
-                )
-                assert not guards_match(summary_option, missing_summary), (
+                assert not guards_match(
+                    provenance_options["waived"], missing_summary
+                ), (
                     name,
                     route,
                     "summary",
@@ -1541,6 +1598,8 @@ def test_completed_route_changes_keep_next_ordinal_and_finding_lineage() -> None
 def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
     goal = load_procedure("aquarium-goal-v2.yaml")
     defer = options(goal, "low-handling-decision")["defer"]
+    eligibility = options(goal, "hardening-review-eligibility-decision")["eligible"]
+    record = options(goal, "hardening-record-decision")["recorded"]
     valid = {
         ("record-hardening-deferral", "hardening-deferral-state"): "recorded",
         ("record-evidence", "review-route"): "mulgae",
@@ -1562,10 +1621,51 @@ def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
         ): "sha256:fixture",
     }
     assert guards_match(defer, valid)
+    assert guards_match(eligibility, valid)
+    assert guards_match(record, valid)
     for route in ("orca", "native-codex", "waived"):
         invalid = dict(valid)
         invalid[("record-evidence", "review-route")] = route
-        assert not guards_match(defer, invalid), route
+        assert not guards_match(eligibility, invalid), route
+    for key in (
+        ("record-evidence", "assessment-ordinal"),
+        ("record-hardening-deferral", "hardening-deferral-publication-state"),
+        ("record-hardening-deferral", "hardening-deferral-findings-query-state"),
+        ("record-hardening-deferral", "hardening-deferral-native-target-sha256"),
+    ):
+        invalid = dict(valid)
+        invalid[key] = None
+        assert not guards_match(record, invalid), key
+
+
+def test_goal_and_validation_extra_ordinals_require_the_serial_minimum() -> None:
+    cases = (
+        ("aquarium-goal-v2.yaml", "record-evidence"),
+        ("aquarium-validation-v2.yaml", "final-review"),
+    )
+    for name, evidence_node in cases:
+        procedure = load_procedure(name)
+        ordinal = options(procedure, "assessment-ordinal-decision")["authorized-extra"]
+        extra = options(procedure, "assessment-extra-ordinal-decision")[
+            "authorized-extra"
+        ]
+        values = {
+            (evidence_node, "prior-assessment-ordinal"): 2,
+            (evidence_node, "assessment-ordinal"): 3,
+            (evidence_node, "review-mode"): (
+                "hardening-deferral-eligible"
+                if name == "aquarium-goal-v2.yaml"
+                else "confirmation-only"
+            ),
+            (evidence_node, "extra-assessment-authority-reference"): "user authority",
+            (evidence_node, "assessment-ordinal-continuity"): {"outcome": "pass"},
+        }
+        assert guards_match(ordinal, values), name
+        assert guards_match(extra, values), name
+        below_minimum = dict(values)
+        below_minimum[(evidence_node, "assessment-ordinal")] = 2
+        assert guards_match(ordinal, below_minimum), name
+        assert not guards_match(extra, below_minimum), name
 
 
 def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (
@@ -1595,6 +1695,23 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
             "to": "confirm-incomplete-final-route-evidence",
             "effect": "advance",
         },
+    }
+    assert graph["confirm-final-assessment-ordinal"]["routes"]["authorized-extra"] == {
+        "to": "confirm-extra-final-assessment-ordinal",
+        "effect": "advance",
+    }
+    assert graph["confirm-extra-final-assessment-ordinal"]["routes"] == {
+        "authorized-extra": {
+            "to": "confirm-final-route-evidence",
+            "effect": "advance",
+        }
+    }
+    assert set(graph["confirm-final-review-provenance"]["routes"]) == {
+        "delegated",
+        "waived",
+    }
+    assert graph["confirm-incomplete-final-review-provenance"]["routes"] == {
+        "delegated": {"to": "confirm-final-route-settlement", "effect": "advance"}
     }
     assert graph["choose-final-route-direction"]["routes"] == {
         "resume-current": {"to": "final-review", "effect": "rework"},

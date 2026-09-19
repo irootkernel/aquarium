@@ -4506,6 +4506,130 @@ else:
                     reasons,
                 )
 
+    def test_compatibility_serial_gate_evidence_is_a_handler_contract(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = {
+            "aquarium-goal-v2.yaml": {
+                "confirm-review-route-context": {
+                    "complete-work": {
+                        "review-target-scope",
+                        "review-selection-summary",
+                    },
+                },
+                "confirm-review-route-entry": {
+                    "record-evidence": {
+                        "route-authorization-basis",
+                        "route-change-readiness",
+                        "prior-route-lifecycle-state",
+                    },
+                },
+                "confirm-review-route-binding": {
+                    "complete-work": {"review-route"},
+                    "record-evidence": {
+                        "review-route",
+                        "route-authorization-basis",
+                        "route-change-authority-reference",
+                    },
+                },
+                "confirm-extra-assessment-ordinal": {
+                    "record-evidence": {"assessment-ordinal"},
+                },
+                "confirm-review-provenance": {
+                    "record-evidence": {
+                        "review-operation",
+                        "review-evidence-reference",
+                        "assessment-provenance",
+                        "waiver-summary",
+                    },
+                },
+                "confirm-incomplete-review-provenance": {
+                    "record-evidence": {
+                        "review-operation",
+                        "review-evidence-reference",
+                        "assessment-provenance",
+                        "waiver-summary",
+                    },
+                },
+                "confirm-hardening-review-eligibility": {
+                    "record-evidence": {
+                        "review-route",
+                        "review-operation",
+                        "backend-check-result",
+                        "review-mode",
+                    },
+                },
+                "confirm-hardening-record": {
+                    "record-evidence": {"assessment-ordinal"},
+                    "record-hardening-deferral": {
+                        "hardening-deferral-publication-state",
+                        "hardening-deferral-findings-query-state",
+                        "hardening-deferral-native-target-sha256",
+                    },
+                },
+            },
+            "aquarium-validation-v2.yaml": {
+                "confirm-extra-final-assessment-ordinal": {
+                    "final-review": {"assessment-ordinal"},
+                },
+                "confirm-final-review-provenance": {
+                    "final-review": {
+                        "review-operation",
+                        "review-evidence-reference",
+                        "assessment-provenance",
+                        "waiver-summary",
+                    },
+                },
+                "confirm-incomplete-final-review-provenance": {
+                    "final-review": {
+                        "review-operation",
+                        "review-evidence-reference",
+                        "assessment-provenance",
+                        "waiver-summary",
+                    },
+                },
+            },
+        }
+        for name, node_contracts in cases.items():
+            canonical = procedures.joinpath(name).read_bytes()
+            for node_id, source_contracts in node_contracts.items():
+                for source_id, item_ids in source_contracts.items():
+                    for item_id in item_ids:
+                        with self.subTest(
+                            procedure=name,
+                            node=node_id,
+                            source=source_id,
+                            item=item_id,
+                        ):
+                            document = yaml.safe_load(canonical)
+                            node = next(
+                                entry
+                                for entry in document["graph"]["nodes"]
+                                if entry["id"] == node_id
+                            )
+                            source = next(
+                                entry
+                                for entry in node["evidence_from"]
+                                if entry["node"] == source_id
+                            )
+                            source["items"][source["items"].index(item_id)] = (
+                                "removed-contract-item"
+                            )
+
+                            status, reasons = (
+                                inspect_tools.inspect_podway_handler_contract(
+                                    name,
+                                    yaml.safe_dump(document, sort_keys=False).encode(),
+                                    canonical,
+                                )
+                            )
+
+                            self.assertEqual(status, "incompatible")
+                            self.assertIn(
+                                "missing_required_evidence:"
+                                f"{node_id}:{source_id}:{item_id}",
+                                reasons,
+                            )
+
     def test_serial_review_gate_nodes_and_routes_are_handler_contracts(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         node_cases = (
@@ -4524,8 +4648,21 @@ else:
             ("aquarium-task-v2.yaml", "confirm-review-findings"),
             ("aquarium-task-v2.yaml", "confirm-review-route-settlement"),
             ("aquarium-task-v2.yaml", "record-review-route-stop"),
+            ("aquarium-goal-v2.yaml", "confirm-review-route-context"),
+            ("aquarium-goal-v2.yaml", "confirm-review-route-entry"),
+            ("aquarium-goal-v2.yaml", "confirm-extra-assessment-ordinal"),
+            ("aquarium-goal-v2.yaml", "confirm-review-provenance"),
+            ("aquarium-goal-v2.yaml", "confirm-incomplete-review-provenance"),
+            ("aquarium-goal-v2.yaml", "confirm-hardening-review-eligibility"),
+            ("aquarium-goal-v2.yaml", "confirm-hardening-record"),
             ("aquarium-validation-v2.yaml", "remediate"),
             ("aquarium-validation-v2.yaml", "re-audit"),
+            ("aquarium-validation-v2.yaml", "confirm-extra-final-assessment-ordinal"),
+            ("aquarium-validation-v2.yaml", "confirm-final-review-provenance"),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-incomplete-final-review-provenance",
+            ),
         )
         for name, node_id in node_cases:
             with self.subTest(procedure=name, node=node_id):
@@ -4556,6 +4693,36 @@ else:
                 "decide-backend-check",
                 "not-provided",
                 "confirm-review-completion",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-review-route-entry",
+                "changed",
+                "confirm-review-route-binding",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-review-provenance",
+                "waived",
+                "confirm-finding-validity",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-hardening-record",
+                "recorded",
+                "record-hardening-handoff",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-extra-final-assessment-ordinal",
+                "authorized-extra",
+                "confirm-final-route-evidence",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-final-review-provenance",
+                "waived",
+                "confirm-final-review-findings",
             ),
             (
                 "aquarium-goal-v2.yaml",
@@ -4882,6 +5049,7 @@ else:
                     "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "99dfe92a75accee69717154a13ea18b6e25a493e2674d78543f3780b8993a375",
                     "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
                     "5150a2ad3b33823a8935bd445155054bb0de037436c2d4121ae0892bd94e08c4",
                     "f6d456438ba69a06fb322e4c2220bb824233c2ab239df1f68157c139ebb3a8c5",
@@ -4894,6 +5062,7 @@ else:
                     "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "d3108415bc54a96c200a1189149c514428f53367eae3778c4440d23f8b55a800",
                     "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",
                     "423655c9d8b14c97820f36738c1ef32905bc26452113c69d886058f2bb54f8b3",
                     "bc454955ef56d9607a9128a085177eb8557f8b24774cba59ddca3c0db88428e8",

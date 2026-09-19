@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "15"
+version: "16"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for epic-wide audit, one automatic confirmation, user-directed follow-up, and validation closeout.
@@ -831,8 +831,6 @@ node_definitions:
         guards:
           - evidence: {node: final-review, item: prior-assessment-ordinal}
             at_least: 2
-          - evidence: {node: final-review, item: assessment-ordinal}
-            at_least: 3
           - evidence: {node: final-review, item: review-mode}
             equals: confirmation-only
           - evidence: {node: final-review, item: extra-assessment-authority-reference}
@@ -843,6 +841,21 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the prior ordinal, current ordinal, mode, and authority.
+  assessment-extra-ordinal-decision:
+    type: decision
+    title: Validate the extra final assessment ordinal
+    objective: Require every user-authorized extra assessment to consume ordinal three or later.
+    prompt: Does this user-authorized extra assessment consume an allowed ordinal?
+    options:
+      - id: authorized-extra
+        label: User-authorized extra ordinal
+        criteria: A user-authorized extra assessment consumes ordinal three or later.
+        guards:
+          - evidence: {node: final-review, item: assessment-ordinal}
+            at_least: 3
+    reason:
+      required: true
+      prompt: Explain the admitted extra assessment ordinal.
   final-route-evidence-decision:
     type: decision
     title: Validate final route evidence
@@ -909,11 +922,42 @@ node_definitions:
             equals: not-provided
           - evidence: {node: final-review, item: assessment-provenance}
             equals: coordinator-waiver
-          - evidence: {node: final-review, item: waiver-summary}
-            non_empty: true
     reason:
       required: true
       prompt: Explain the route-specific evidence and assurance limit.
+  final-review-provenance-decision:
+    type: decision
+    title: Validate final review provenance
+    objective: Keep delegated-review provenance separate from explicit waiver evidence for completed and incomplete operations.
+    prompt: Which provenance and waiver-evidence combination applies to this operation?
+    options:
+      - id: delegated
+        label: Delegated review provenance
+        criteria: A delegated route has reviewer provenance, exact evidence, and no waiver summary.
+        guards:
+          - evidence: {node: final-review, item: review-operation}
+            not_equals: waived
+          - evidence: {node: final-review, item: assessment-provenance}
+            not_equals: coordinator-waiver
+          - evidence: {node: final-review, item: waiver-summary}
+            empty: true
+          - evidence: {node: final-review, item: review-evidence-reference}
+            non_empty: true
+      - id: waived
+        label: Coordinator waiver provenance
+        criteria: A completed waiver assessment has coordinator provenance, exact evidence, and an explicit assurance summary.
+        guards:
+          - evidence: {node: final-review, item: review-operation}
+            equals: waived
+          - evidence: {node: final-review, item: assessment-provenance}
+            equals: coordinator-waiver
+          - evidence: {node: final-review, item: waiver-summary}
+            non_empty: true
+          - evidence: {node: final-review, item: review-evidence-reference}
+            non_empty: true
+    reason:
+      required: true
+      prompt: Explain the authoritative reviewer or waiver provenance.
   incomplete-final-route-evidence-decision:
     type: decision
     title: Validate incomplete final route evidence
@@ -1689,6 +1733,17 @@ graph:
           to: confirm-final-route-evidence
           effect: advance
         authorized-extra:
+          to: confirm-extra-final-assessment-ordinal
+          effect: advance
+    - id: confirm-extra-final-assessment-ordinal
+      use: assessment-extra-ordinal-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - assessment-ordinal
+      routes:
+        authorized-extra:
           to: confirm-final-route-evidence
           effect: advance
     - id: confirm-final-route-evidence
@@ -1706,19 +1761,19 @@ graph:
             - waiver-summary
       routes:
         mulgae-pass:
-          to: confirm-final-review-findings
+          to: confirm-final-review-provenance
           effect: advance
         mulgae-fail:
-          to: confirm-final-review-findings
+          to: confirm-final-review-provenance
           effect: advance
         orca:
-          to: confirm-final-review-findings
+          to: confirm-final-review-provenance
           effect: advance
         native-codex:
-          to: confirm-final-review-findings
+          to: confirm-final-review-provenance
           effect: advance
         waived:
-          to: confirm-final-review-findings
+          to: confirm-final-review-provenance
           effect: advance
     - id: confirm-incomplete-final-route-evidence
       use: incomplete-final-route-evidence-decision
@@ -1734,13 +1789,44 @@ graph:
             - assessment-provenance
       routes:
         mulgae:
-          to: confirm-final-route-settlement
+          to: confirm-incomplete-final-review-provenance
           effect: advance
         orca:
-          to: confirm-final-route-settlement
+          to: confirm-incomplete-final-review-provenance
           effect: advance
         native-codex:
+          to: confirm-incomplete-final-review-provenance
+          effect: advance
+    - id: confirm-incomplete-final-review-provenance
+      use: final-review-provenance-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-operation
+            - review-evidence-reference
+            - assessment-provenance
+            - waiver-summary
+      routes:
+        delegated:
           to: confirm-final-route-settlement
+          effect: advance
+    - id: confirm-final-review-provenance
+      use: final-review-provenance-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-operation
+            - review-evidence-reference
+            - assessment-provenance
+            - waiver-summary
+      routes:
+        delegated:
+          to: confirm-final-review-findings
+          effect: advance
+        waived:
+          to: confirm-final-review-findings
           effect: advance
     - id: confirm-final-route-settlement
       use: final-route-settlement-decision

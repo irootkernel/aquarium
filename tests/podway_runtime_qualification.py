@@ -42,10 +42,15 @@ SUCCESS_OPTIONS = {
     "decide-low-result": "passed",
     "decide-operational-evidence": "passed",
     "decide-review-basis": "native-review",
+    "confirm-review-route-context": "ready",
+    "confirm-review-route-entry": "planned",
     "decide-final-review": "validated",
     "confirm-final-review-route-binding": "bound",
     "decide-final-review-operation": "completed",
     "confirm-final-route-evidence": "mulgae-pass",
+    "confirm-extra-final-assessment-ordinal": "authorized-extra",
+    "confirm-final-review-provenance": "delegated",
+    "confirm-incomplete-final-review-provenance": "delegated",
     "decide-final-backend-check": "passed",
     "decide-final-review-readiness": "passed",
     "confirm-final-review-findings": "resolved",
@@ -66,6 +71,8 @@ SUCCESS_OPTIONS = {
     "confirm-review-evidence": "mulgae-pass",
     "confirm-review-provenance": "delegated",
     "confirm-incomplete-review-provenance": "delegated",
+    "confirm-hardening-review-eligibility": "eligible",
+    "confirm-hardening-record": "recorded",
     "decide-backend-check": "passed",
     "decide-task-rework-authority": "remediation",
     "decide-implementation-owner": "clear",
@@ -2907,6 +2914,8 @@ class ManagedRuntime:
                 if scenario == "goal-hardening-defer" and (
                     self.node_visits.get("record-hardening-deferral") != 1
                     or self.node_visits.get("decide-low-handling") != 1
+                    or self.node_visits.get("confirm-hardening-review-eligibility") != 1
+                    or self.node_visits.get("confirm-hardening-record") != 1
                     or self.node_visits.get("record-hardening-handoff") != 1
                 ):
                     raise RuntimeQualificationError(
@@ -3151,6 +3160,11 @@ class ManagedRuntime:
                     if ordinal == 2
                     else "authorized-extra"
                 )
+            elif node in {
+                "confirm-extra-assessment-ordinal",
+                "confirm-extra-final-assessment-ordinal",
+            }:
+                special_option = "authorized-extra"
             if route_qualification:
                 evidence_nodes = {
                     "confirm-review-evidence": "review",
@@ -3172,6 +3186,8 @@ class ManagedRuntime:
                             "route qualification provenance was not preserved"
                         )
                 route_decisions = {
+                    "confirm-review-route-context": "ready",
+                    "confirm-review-route-entry": "planned",
                     "validate-review-route-entry": "planned",
                     "authorize-review-route": (
                         f"planned-{qualified_route}"
@@ -3209,6 +3225,9 @@ class ManagedRuntime:
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
+                    ),
+                    "confirm-final-review-provenance": (
+                        "waived" if qualified_route == "waived" else "delegated"
                     ),
                     "decide-backend-check": (
                         "passed" if qualified_route == "mulgae" else "not-provided"

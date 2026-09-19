@@ -129,7 +129,7 @@ direct audit facts, delegated review findings, verification, or completion
 assessment.
 
 The implementation owners are `epic-handler`, `epic-validator`, `task-commit`,
-the evidence-residency contract, version 16 of `aquarium-goal-v2`, and version 15
+the evidence-residency contract, version 17 of `aquarium-goal-v2`, and version 16
 of `aquarium-validation-v2`. Their inspector contracts and focused route fixtures
 verify the compatible unit while older admitted Procedure snapshots retain their
 original meanings.
