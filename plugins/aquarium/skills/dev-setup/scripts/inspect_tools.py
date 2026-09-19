@@ -175,6 +175,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
         "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
         "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
+        "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
     },
     "aquarium-validation-v2.yaml": {
         "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -187,6 +188,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "9f3c0a0628f6ea820dbffee2355b949a2d2459e595ea3044d9aa53d81482eb5c",
         "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
         "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
+        "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
     },
     "aquarium-design-v2.yaml": {
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
@@ -737,6 +739,12 @@ PODWAY_HANDLER_CONTRACTS = {
             "confirm-stopped-goal-assessment-core",
             "assess-goal",
             "assess-stopped-goal",
+            "record-outcome",
+            "approve-closeout",
+            "closeout",
+            "record-stopped-outcome",
+            "approve-stopped-closeout",
+            "stopped-closeout",
         },
         "definition_items": {
             "work-record": {
@@ -791,6 +799,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "route-stop-summary",
             },
             "stopped-goal-boundary-record": {"goal-outcome-boundary"},
+            "outcome-record": {"outcome-summary"},
         },
         "definition_choices": {
             ("work-record", "review-route"): {
@@ -954,6 +963,24 @@ PODWAY_HANDLER_CONTRACTS = {
             },
             "confirm-goal-assessment-core": {"ready": "assess-goal"},
             "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
+            "assess-goal": {
+                "achieved": "record-outcome",
+                "not-achieved": "record-outcome",
+                "superseded": "record-outcome",
+            },
+            "approve-closeout": {
+                "approved": "closeout",
+                "changes-requested": "complete-work",
+            },
+            "assess-stopped-goal": {
+                "achieved": "record-stopped-outcome",
+                "not-achieved": "record-stopped-outcome",
+                "superseded": "record-stopped-outcome",
+            },
+            "approve-stopped-closeout": {
+                "approved": "stopped-closeout",
+                "changes-requested": "complete-work",
+            },
         },
         "evidence": {
             "confirm-review-route-context": {
@@ -1080,6 +1107,8 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("record-evidence", "completion-unmet-criteria"),
                 ("record-evidence", "completion-unverified-criteria"),
             },
+            "approve-closeout": {("record-outcome", "outcome-summary")},
+            "approve-stopped-closeout": {("record-stopped-outcome", "outcome-summary")},
         },
     },
     "aquarium-validation-v2.yaml": {
@@ -1116,6 +1145,12 @@ PODWAY_HANDLER_CONTRACTS = {
             "confirm-stopped-goal-assessment-core",
             "assess-goal",
             "assess-stopped-goal",
+            "record-outcome",
+            "approve-closeout",
+            "closeout",
+            "record-stopped-outcome",
+            "approve-stopped-closeout",
+            "stopped-closeout",
         },
         "definition_items": {
             "baseline-record": {
@@ -1178,6 +1213,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "low-disposition-verification",
             },
             "stopped-goal-boundary-record": {"goal-outcome-boundary"},
+            "outcome-record": {"outcome-summary"},
         },
         "definition_choices": {
             ("baseline-record", "review-route"): {
@@ -1314,6 +1350,24 @@ PODWAY_HANDLER_CONTRACTS = {
             "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
             "confirm-goal-assessment-core": {"ready": "assess-goal"},
             "confirm-stopped-goal-assessment-core": {"ready": "assess-stopped-goal"},
+            "assess-goal": {
+                "achieved": "record-outcome",
+                "not-achieved": "record-outcome",
+                "superseded": "record-outcome",
+            },
+            "approve-closeout": {
+                "approved": "closeout",
+                "changes-requested": "audit",
+            },
+            "assess-stopped-goal": {
+                "achieved": "record-stopped-outcome",
+                "not-achieved": "record-stopped-outcome",
+                "superseded": "record-stopped-outcome",
+            },
+            "approve-stopped-closeout": {
+                "approved": "stopped-closeout",
+                "changes-requested": "audit",
+            },
         },
         "evidence": {
             "confirm-extra-final-assessment-ordinal": {
@@ -1375,6 +1429,8 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("final-review", "review-operation"),
                 ("final-review", "assessment-provenance-kind"),
             },
+            "approve-closeout": {("record-outcome", "outcome-summary")},
+            "approve-stopped-closeout": {("record-stopped-outcome", "outcome-summary")},
         },
     },
     "aquarium-design-v2.yaml": {},

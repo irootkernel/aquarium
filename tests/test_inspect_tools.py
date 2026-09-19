@@ -28,8 +28,8 @@ GLOBAL_SCRIPT = (
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
 TASK_V15_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v15.yaml"
-GOAL_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v17.yaml"
-VALIDATION_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v16.yaml"
+GOAL_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v18.yaml"
+VALIDATION_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v17.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -4896,6 +4896,99 @@ else:
                     reasons,
                 )
 
+    def test_goal_and_validation_closeout_graph_is_a_handler_contract(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        removed_nodes = (
+            ("aquarium-goal-v2.yaml", "assess-goal"),
+            ("aquarium-goal-v2.yaml", "record-outcome"),
+            ("aquarium-goal-v2.yaml", "approve-stopped-closeout"),
+            ("aquarium-goal-v2.yaml", "stopped-closeout"),
+            ("aquarium-validation-v2.yaml", "assess-stopped-goal"),
+            ("aquarium-validation-v2.yaml", "record-stopped-outcome"),
+            ("aquarium-validation-v2.yaml", "approve-closeout"),
+            ("aquarium-validation-v2.yaml", "closeout"),
+        )
+        for name, node_id in removed_nodes:
+            with self.subTest(procedure=name, removed_node=node_id):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                document["graph"]["nodes"] = [
+                    node
+                    for node in document["graph"]["nodes"]
+                    if node["id"] != node_id
+                ]
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(f"missing_required_nodes:{node_id}", reasons)
+
+        rewired_routes = (
+            (
+                "aquarium-goal-v2.yaml",
+                "confirm-goal-assessment-core",
+                "ready",
+                "stopped-closeout",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "assess-stopped-goal",
+                "achieved",
+                "closeout",
+            ),
+            (
+                "aquarium-goal-v2.yaml",
+                "approve-closeout",
+                "approved",
+                "stopped-closeout",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "confirm-stopped-goal-assessment-core",
+                "ready",
+                "closeout",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "assess-goal",
+                "achieved",
+                "stopped-closeout",
+            ),
+            (
+                "aquarium-validation-v2.yaml",
+                "approve-stopped-closeout",
+                "approved",
+                "closeout",
+            ),
+        )
+        for name, node_id, option_id, destination in rewired_routes:
+            with self.subTest(
+                procedure=name, rewired_node=node_id, option=option_id
+            ):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                node = next(
+                    item
+                    for item in document["graph"]["nodes"]
+                    if item["id"] == node_id
+                )
+                node["routes"][option_id]["to"] = destination
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"incompatible_route:{node_id}:{option_id}", reasons
+                )
+
     def test_every_managed_procedure_requires_instructions_on_used_actions(
         self,
     ) -> None:
@@ -5115,8 +5208,8 @@ else:
         self.install_managed_podway_procedures()
         prior_digests = {
             "aquarium-task-v2.yaml": "fac0b829ad7ec179ad02d8d098e633cfed44659ee1d93ae36cdb806a9110236a",
-            "aquarium-goal-v2.yaml": "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
-            "aquarium-validation-v2.yaml": "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
+            "aquarium-goal-v2.yaml": "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
+            "aquarium-validation-v2.yaml": "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
         }
         managed = self.repository.resolve() / ".podway/procedures"
         before = {name: (managed / name).read_bytes() for name in prior_digests}
@@ -5260,15 +5353,15 @@ else:
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
-    def test_actual_goal_v17_and_validation_v16_preserve_readiness(self) -> None:
+    def test_actual_goal_v18_and_validation_v17_preserve_readiness(self) -> None:
         fixtures = {
             "aquarium-goal-v2.yaml": (
-                GOAL_V17_PROCEDURE_FIXTURE,
-                "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
+                GOAL_V18_PROCEDURE_FIXTURE,
+                "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
             ),
             "aquarium-validation-v2.yaml": (
-                VALIDATION_V16_PROCEDURE_FIXTURE,
-                "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
+                VALIDATION_V17_PROCEDURE_FIXTURE,
+                "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
             ),
         }
         self.install_fake_tools()
@@ -5303,12 +5396,12 @@ else:
                 self.assertEqual(podway["readiness_status"], "ready")
                 target.write_bytes(source.joinpath(name).read_bytes())
 
-    def test_tampered_goal_v17_and_validation_v16_are_not_prior_canonical(
+    def test_tampered_goal_v18_and_validation_v17_are_not_prior_canonical(
         self,
     ) -> None:
         fixtures = {
-            "aquarium-goal-v2.yaml": GOAL_V17_PROCEDURE_FIXTURE,
-            "aquarium-validation-v2.yaml": VALIDATION_V16_PROCEDURE_FIXTURE,
+            "aquarium-goal-v2.yaml": GOAL_V18_PROCEDURE_FIXTURE,
+            "aquarium-validation-v2.yaml": VALIDATION_V17_PROCEDURE_FIXTURE,
         }
         self.install_fake_tools()
         self.install_managed_podway_procedures()
@@ -5401,6 +5494,7 @@ else:
                     "97e73a08bb10167dc93da803ba899f19388affec000b4b3014a4e032ca57569b",
                     "9ee8fb5c63ca3129e1a104c54c2e0dde0beb7939b70ab7da66431cde4ba490c7",
                     "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
+                    "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
                 },
                 "aquarium-validation-v2.yaml": {
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -5413,6 +5507,7 @@ else:
                     "53a20b71169bb206237474342f9c33f205e347f82686a7729b1c6447312523df",
                     "aa89b01cd7007563861789304f11853e969fa0312676b8a256013dee808b7904",
                     "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
+                    "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
                 },
                 "aquarium-design-v2.yaml": {
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",

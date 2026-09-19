@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "19"
+version: "18"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -1806,38 +1806,6 @@ node_definitions:
         min_length: 1
         max_length: 3000
         multiline: true
-  outcome-record:
-    type: action
-    title: Record the assessed Goal outcome
-    intent: Preserve the assessment and any remaining commitments before closeout approval.
-    instructions:
-      - Record the actual Goal assessment without treating terminal Procedure state as roadmap success.
-      - Preserve commit, hardening, and publication handoffs without creating new authority.
-    items:
-      - id: outcome-summary
-        type: text
-        prompt: Record the assessed Goal outcome and remaining handoff commitments.
-        required: true
-        min_length: 1
-        max_length: 3000
-        multiline: true
-  approval-decision:
-    type: decision
-    title: Record final Goal approval
-    objective: Close only when the exact assessed Goal outcome and handoffs are accepted.
-    prompt: Did the user accept the assessed Goal outcome and exact handoff state?
-    evidence_guidance:
-      - Read the path-owned assessed outcome and exact final repository evidence.
-    options:
-      - id: approved
-        label: Final approval granted
-        criteria: The assessed outcome and every applicable handoff are accepted.
-      - id: changes-requested
-        label: Changes requested
-        criteria: The user requested a correction or identified an unmet closeout gate.
-    reason:
-      required: true
-      prompt: Record the user's decision and the exact approved boundary.
   closeout-record:
     type: action
     title: Record goal closeout
@@ -2605,13 +2573,13 @@ graph:
             - route-stop-summary
       routes:
         achieved:
-          to: record-outcome
+          to: closeout
           effect: advance
         not-achieved:
-          to: record-outcome
+          to: closeout
           effect: advance
         superseded:
-          to: record-outcome
+          to: closeout
           effect: advance
     - id: assess-stopped-goal
       use: stopped-goal-assessment
@@ -2668,52 +2636,15 @@ graph:
             - route-stop-summary
       routes:
         achieved:
-          to: record-stopped-outcome
-          effect: advance
-        not-achieved:
-          to: record-stopped-outcome
-          effect: advance
-        superseded:
-          to: record-stopped-outcome
-          effect: advance
-    - id: record-outcome
-      use: outcome-record
-      next: approve-closeout
-    - id: approve-closeout
-      use: approval-decision
-      evidence_from:
-        - node: record-outcome
-          required: true
-          items:
-            - outcome-summary
-      routes:
-        approved:
           to: closeout
           effect: advance
-        changes-requested:
-          to: complete-work
-          effect: rework
-    - id: closeout
-      use: closeout-record
-      terminal: true
-    - id: record-stopped-outcome
-      use: outcome-record
-      next: approve-stopped-closeout
-    - id: approve-stopped-closeout
-      use: approval-decision
-      evidence_from:
-        - node: record-stopped-outcome
-          required: true
-          items:
-            - outcome-summary
-      routes:
-        approved:
-          to: stopped-closeout
+        not-achieved:
+          to: closeout
           effect: advance
-        changes-requested:
-          to: complete-work
-          effect: rework
-    - id: stopped-closeout
+        superseded:
+          to: closeout
+          effect: advance
+    - id: closeout
       use: closeout-record
       terminal: true
 manual_rework:

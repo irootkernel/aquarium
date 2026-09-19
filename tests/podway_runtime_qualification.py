@@ -32,6 +32,7 @@ CONTRACT_MANIFEST_DIGEST = (
 
 SUCCESS_OPTIONS = {
     "approve-closeout": "approved",
+    "approve-stopped-closeout": "approved",
     "approve-diff": "approved",
     "classify-scope": "task",
     "decide-cause": "established",

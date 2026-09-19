@@ -137,13 +137,15 @@ direct audit facts, delegated review findings, verification, or completion
 assessment.
 
 The implementation owners are `epic-handler`, `epic-validator`, `task-commit`,
-the evidence-residency contract, version 18 of `aquarium-goal-v2`, and version 17
-of `aquarium-validation-v2`. These versions preserve the version 17 and version 16
+the evidence-residency contract, version 19 of `aquarium-goal-v2`, and version 18
+of `aquarium-validation-v2`. These versions preserve the version 18 and version 17
 workflow meanings while expressing conditional native-review fields, zero-valued
 unconsumed ordinals, typed provenance, complete option routing, and path-bound goal
-assessment gates within the Podway v0.2.10 authoring bounds. Their inspector
-contracts and focused route fixtures verify the compatible unit while the exact
-older admitted Procedure snapshots retain their original meanings.
+assessment gates within the Podway v0.2.10 authoring bounds. Normal and stopped
+assessments use separate outcome, approval, and terminal chains. The applicable
+session-goal assessment therefore dominates its terminal. Inspector contracts and
+focused route fixtures verify the compatible unit while the exact older admitted
+Procedure snapshots retain their original meanings.
 
 Committed Epic and validation candidates may use Orca `HEAD`, commit, or range
 targets when the exact scope is supported. Member-task candidates follow the

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from itertools import pairwise
 from pathlib import Path
 
 import yaml
@@ -37,17 +38,17 @@ def test_task_070_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-goal-v2.yaml",
-            "18",
+            "19",
+            "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
+            "aquarium-goal-v18.yaml",
             "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
-            "aquarium-goal-v17.yaml",
-            "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "17",
+            "18",
+            "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
+            "aquarium-validation-v17.yaml",
             "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
-            "aquarium-validation-v16.yaml",
-            "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -116,6 +117,39 @@ def options(procedure: dict, definition_id: str) -> dict[str, dict]:
 
 def nodes(procedure: dict) -> dict[str, dict]:
     return {node["id"]: node for node in procedure["graph"]["nodes"]}
+
+
+def graph_edges(procedure: dict) -> dict[str, set[str]]:
+    edges = {node_id: set() for node_id in nodes(procedure)}
+    for node_id, node in nodes(procedure).items():
+        if "next" in node:
+            edges[node_id].add(node["next"])
+        edges[node_id].update(route["to"] for route in node.get("routes", {}).values())
+    return edges
+
+
+def reachable_nodes(
+    edges: dict[str, set[str]], entry: str, *, without: str | None = None
+) -> set[str]:
+    if entry == without:
+        return set()
+    reached: set[str] = set()
+    pending = [entry]
+    while pending:
+        node_id = pending.pop()
+        if node_id == without or node_id in reached:
+            continue
+        reached.add(node_id)
+        pending.extend(edges[node_id] - reached)
+    return reached
+
+
+def graph_predecessors(edges: dict[str, set[str]]) -> dict[str, set[str]]:
+    predecessors = {node_id: set() for node_id in edges}
+    for source, destinations in edges.items():
+        for destination in destinations:
+            predecessors[destination].add(source)
+    return predecessors
 
 
 def test_selected_shared_operation_descriptors_match_declared_slots() -> None:
@@ -678,31 +712,31 @@ def test_task_070_serial_gates_preserve_every_prior_selected_evidence_item() -> 
     cases = (
         (
             "aquarium-goal-v2.yaml",
-            "aquarium-goal-v17.yaml",
+            "aquarium-goal-v18.yaml",
             "decide-evidence",
             ("decide-evidence",),
         ),
         (
             "aquarium-goal-v2.yaml",
-            "aquarium-goal-v17.yaml",
+            "aquarium-goal-v18.yaml",
             "assess-goal",
             ("confirm-goal-assessment-core", "assess-goal"),
         ),
         (
             "aquarium-goal-v2.yaml",
-            "aquarium-goal-v17.yaml",
+            "aquarium-goal-v18.yaml",
             "assess-goal",
             ("confirm-stopped-goal-assessment-core", "assess-stopped-goal"),
         ),
         (
             "aquarium-validation-v2.yaml",
-            "aquarium-validation-v16.yaml",
+            "aquarium-validation-v17.yaml",
             "assess-goal",
             ("confirm-goal-assessment-core", "assess-goal"),
         ),
         (
             "aquarium-validation-v2.yaml",
-            "aquarium-validation-v16.yaml",
+            "aquarium-validation-v17.yaml",
             "assess-goal",
             ("confirm-stopped-goal-assessment-core", "assess-stopped-goal"),
         ),
@@ -2176,6 +2210,85 @@ def test_task_closeout_paths_each_have_one_dominating_goal_assessment() -> None:
         "to": "stopped-closeout",
         "effect": "advance",
     }
+
+
+def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> None:
+    cases = (
+        ("aquarium-goal-v2.yaml", "complete-work", "stopped"),
+        ("aquarium-validation-v2.yaml", "audit", "stopped-or-incomplete"),
+    )
+    for name, rework_target, stopped_boundary in cases:
+        procedure = load_procedure(name)
+        graph = nodes(procedure)
+        edges = graph_edges(procedure)
+        predecessors = graph_predecessors(edges)
+        entry = procedure["graph"]["entry"]
+        chains = (
+            (
+                "confirm-goal-assessment-core",
+                "assess-goal",
+                "record-outcome",
+                "approve-closeout",
+                "closeout",
+            ),
+            (
+                "record-stopped-goal-boundary",
+                "confirm-stopped-goal-assessment-core",
+                "assess-stopped-goal",
+                "record-stopped-outcome",
+                "approve-stopped-closeout",
+                "stopped-closeout",
+            ),
+        )
+
+        for chain in chains:
+            terminal = chain[-1]
+            assert terminal in reachable_nodes(edges, entry)
+            for dominator in chain[:-1]:
+                assert terminal not in reachable_nodes(
+                    edges, entry, without=dominator
+                ), f"{name}: {dominator} does not dominate {terminal}"
+            for predecessor, node_id in pairwise(chain):
+                assert predecessors[node_id] == {predecessor}
+
+        normal_chain, stopped_chain = map(set, chains)
+        assert not {
+            (source, destination)
+            for source in normal_chain
+            for destination in edges[source] & stopped_chain
+        }
+        assert not {
+            (source, destination)
+            for source in stopped_chain
+            for destination in edges[source] & normal_chain
+        }
+
+        assert {route["to"] for route in graph["assess-goal"]["routes"].values()} == {
+            "record-outcome"
+        }
+        assert graph["record-outcome"]["next"] == "approve-closeout"
+        assert graph["approve-closeout"]["routes"] == {
+            "approved": {"to": "closeout", "effect": "advance"},
+            "changes-requested": {"to": rework_target, "effect": "rework"},
+        }
+        assert {
+            route["to"] for route in graph["assess-stopped-goal"]["routes"].values()
+        } == {"record-stopped-outcome"}
+        assert graph["record-stopped-outcome"]["next"] == ("approve-stopped-closeout")
+        assert graph["approve-stopped-closeout"]["routes"] == {
+            "approved": {"to": "stopped-closeout", "effect": "advance"},
+            "changes-requested": {"to": rework_target, "effect": "rework"},
+        }
+        stopped = options(procedure, "stopped-goal-assessment")["achieved"]
+        assert not guards_match(
+            stopped,
+            {
+                (
+                    "record-stopped-goal-boundary",
+                    "goal-outcome-boundary",
+                ): stopped_boundary
+            },
+        )
 
 
 def test_review_evidence_uses_one_source_entry_and_only_needed_items() -> None:
