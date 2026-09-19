@@ -26,6 +26,7 @@ GLOBAL_SCRIPT = (
     ROOT / "plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py"
 )
 MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
+TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -4509,6 +4510,64 @@ else:
     def test_compatibility_serial_gate_evidence_is_a_handler_contract(self) -> None:
         procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
         cases = {
+            "aquarium-task-v2.yaml": {
+                "validate-review-route-entry": {
+                    "prepare-review": {"route-authorization-basis"},
+                },
+                "classify-review-route-change": {
+                    "prepare-review": {"prior-assessment-ordinal"},
+                    "review": {"review-operation"},
+                },
+                "confirm-review-route-change-readiness": {
+                    "record-review-route-direction": {"route-change-readiness"},
+                },
+                "authorize-planned-review-route": {
+                    "record-plan": {"review-route"},
+                    "prepare-review": {
+                        "effective-review-route",
+                        "route-authorization-basis",
+                        "route-change-authority-reference",
+                    },
+                },
+                "authorize-incomplete-review-route": {
+                    "prepare-review": {
+                        "effective-review-route",
+                        "route-authorization-basis",
+                        "route-change-authority-reference",
+                    },
+                    "record-review-route-direction": {"route-change-readiness"},
+                },
+                "authorize-completed-review-route": {
+                    "prepare-review": {
+                        "effective-review-route",
+                        "route-authorization-basis",
+                        "route-change-authority-reference",
+                    },
+                },
+                "confirm-goal-assessment-core": {
+                    "record-plan": {"plan-summary"},
+                    "implement": {"implementation-summary", "source-revision"},
+                    "verify": {"verification-result"},
+                    "refine": {"refinement-summary"},
+                    "document": {"documentation-summary"},
+                },
+                "confirm-stopped-goal-boundary": {
+                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
+                },
+                "record-review-route-direction": {
+                    "review": {"assessment-provenance-kind"},
+                },
+                "await-user-direction": {
+                    "review": {"assessment-provenance-kind"},
+                },
+                "assess-goal": {
+                    "review": {"assessment-provenance-kind"},
+                },
+                "assess-stopped-goal": {
+                    "record-stopped-goal-boundary": {"goal-outcome-boundary"},
+                    "review": {"assessment-provenance-kind"},
+                },
+            },
             "aquarium-goal-v2.yaml": {
                 "confirm-review-route-context": {
                     "complete-work": {
@@ -4610,6 +4669,7 @@ else:
                                 entry
                                 for entry in node["evidence_from"]
                                 if entry["node"] == source_id
+                                and item_id in entry.get("items", [])
                             )
                             source["items"][source["items"].index(item_id)] = (
                                 "removed-contract-item"
@@ -4635,7 +4695,11 @@ else:
         node_cases = (
             ("aquarium-task-v2.yaml", "prepare-review"),
             ("aquarium-task-v2.yaml", "validate-review-route-entry"),
-            ("aquarium-task-v2.yaml", "authorize-review-route"),
+            ("aquarium-task-v2.yaml", "classify-review-route-change"),
+            ("aquarium-task-v2.yaml", "confirm-review-route-change-readiness"),
+            ("aquarium-task-v2.yaml", "authorize-planned-review-route"),
+            ("aquarium-task-v2.yaml", "authorize-incomplete-review-route"),
+            ("aquarium-task-v2.yaml", "authorize-completed-review-route"),
             ("aquarium-task-v2.yaml", "confirm-review-route-binding"),
             ("aquarium-task-v2.yaml", "decide-review-operation"),
             ("aquarium-task-v2.yaml", "confirm-assessment-ordinal"),
@@ -4648,6 +4712,11 @@ else:
             ("aquarium-task-v2.yaml", "confirm-review-findings"),
             ("aquarium-task-v2.yaml", "confirm-review-route-settlement"),
             ("aquarium-task-v2.yaml", "record-review-route-stop"),
+            ("aquarium-task-v2.yaml", "confirm-goal-assessment-core"),
+            ("aquarium-task-v2.yaml", "confirm-stopped-goal-assessment-core"),
+            ("aquarium-task-v2.yaml", "record-stopped-goal-boundary"),
+            ("aquarium-task-v2.yaml", "confirm-stopped-goal-boundary"),
+            ("aquarium-task-v2.yaml", "assess-stopped-goal"),
             ("aquarium-goal-v2.yaml", "confirm-review-route-context"),
             ("aquarium-goal-v2.yaml", "confirm-review-route-entry"),
             ("aquarium-goal-v2.yaml", "confirm-extra-assessment-ordinal"),
@@ -4682,6 +4751,36 @@ else:
                 self.assertIn(f"missing_required_nodes:{node_id}", reasons)
 
         cases = (
+            (
+                "aquarium-task-v2.yaml",
+                "validate-review-route-entry",
+                "planned",
+                "authorize-planned-review-route",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "validate-review-route-entry",
+                "changed",
+                "classify-review-route-change",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "classify-review-route-change",
+                "incomplete",
+                "confirm-review-route-change-readiness",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "classify-review-route-change",
+                "completed",
+                "authorize-completed-review-route",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "confirm-review-route-change-readiness",
+                "safe",
+                "authorize-incomplete-review-route",
+            ),
             (
                 "aquarium-task-v2.yaml",
                 "confirm-review-findings",
@@ -5031,11 +5130,67 @@ else:
         self.assertEqual(podway["status"], "configured")
         self.assertFalse(podway["migration_required"])
 
+    def test_actual_task_v14_prior_canonical_preserves_readiness(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        legacy_bytes = TASK_V14_PROCEDURE_FIXTURE.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(legacy_bytes).hexdigest(),
+            "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
+        )
+        target.write_bytes(legacy_bytes)
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+
+        self.assertEqual(entry["update_explanation"], "prior_canonical")
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "compatible")
+        self.assertEqual(entry["handler_contract_reasons"], [])
+        self.assertFalse(entry["matches_source"])
+        self.assertEqual(target.read_bytes(), legacy_bytes)
+        self.assertEqual(podway["readiness_status"], "ready")
+        self.assertEqual(podway["status"], "configured")
+
+    def test_tampered_task_v14_is_not_admitted_as_prior_canonical(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
+        legacy = TASK_V14_PROCEDURE_FIXTURE.read_text(encoding="utf-8")
+        target.write_text(
+            legacy.replace(
+                "Deliver one approved roadmap task through the complete Aquarium evidence workflow.",
+                "Deliver one tampered roadmap task through the complete Aquarium evidence workflow.",
+                1,
+            ),
+            encoding="utf-8",
+        )
+
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        entry = next(
+            item
+            for item in podway["managed_procedures"]
+            if item["path"].endswith("aquarium-task-v2.yaml")
+        )
+
+        self.assertEqual(entry["update_explanation"], "local_customization")
+        self.assertEqual(entry["source_state"], "valid_customization")
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertTrue(entry["handler_contract_reasons"])
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
                     "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
                     "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
                     "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",

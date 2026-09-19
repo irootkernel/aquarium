@@ -63,7 +63,10 @@ SUCCESS_OPTIONS = {
     "decide-quality": "passed",
     "decide-review": "clean",
     "validate-review-route-entry": "planned",
-    "authorize-review-route": "planned-mulgae",
+    "authorize-planned-review-route": "planned-mulgae",
+    "confirm-goal-assessment-core": "ready",
+    "confirm-stopped-goal-assessment-core": "ready",
+    "confirm-stopped-goal-boundary": "confirmed",
     "confirm-review-route-binding": "mulgae",
     "decide-review-operation": "completed",
     "confirm-extra-assessment-ordinal": "authorized-extra",
@@ -82,6 +85,7 @@ SUCCESS_OPTIONS = {
     "confirm-review-findings": "resolved",
     "confirm-finding-validity": "resolved",
     "assess-goal": "achieved",
+    "assess-stopped-goal": "not-achieved",
 }
 
 TASK_OWNER_SCENARIOS = {
@@ -117,6 +121,13 @@ VALIDATION_CONFIRMATION_SCENARIOS = {
     "validation-medium-wait",
     "validation-stop-preserves-completion",
 }
+
+
+def completed_low_settlement_destination(procedure_id: str) -> str:
+    if procedure_id == "aquarium-task-v2":
+        return "confirm-goal-assessment-core"
+    return "assess-goal"
+
 
 GOAL_OPERATIONAL_VARIANTS = (
     ("verification-fail-review-pass", "fail", "pass", "verification-incomplete"),
@@ -1844,6 +1855,11 @@ class ManagedRuntime:
                     )
                     else "consistent"
                 ),
+                "assessment-provenance-kind": (
+                    "coordinator-waiver"
+                    if qualified_route == "waived"
+                    else "delegated-reviewer"
+                ),
                 "hardening-deferral-state": (
                     "recorded"
                     if self.scenario == "goal-hardening-defer"
@@ -2400,6 +2416,8 @@ class ManagedRuntime:
                 expected_destination = (
                     "record-stopped"
                     if procedure_id == "aquarium-validation-v2"
+                    else "confirm-stopped-goal-assessment-core"
+                    if procedure_id == "aquarium-task-v2"
                     else "assess-goal"
                 )
                 self.decision_destination(decision, expected_destination)
@@ -2808,7 +2826,7 @@ class ManagedRuntime:
                 self.mark_case_variant("C-07", procedure_id)
                 continue
 
-            if node == "assess-goal":
+            if node in {"assess-goal", "assess-stopped-goal"}:
                 if scenario in STOP_EVIDENCE_SCENARIOS:
                     expected_procedure, completion_source = STOP_EVIDENCE_SCENARIOS[
                         scenario
@@ -3120,7 +3138,10 @@ class ManagedRuntime:
                 scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
             ):
                 special_option = "final-closeout"
-            elif scenario in STOP_EVIDENCE_SCENARIOS and node == "assess-goal":
+            elif scenario in STOP_EVIDENCE_SCENARIOS and node in {
+                "assess-goal",
+                "assess-stopped-goal",
+            }:
                 special_option = "not-achieved"
             elif (
                 scenario == "standard"
@@ -3189,7 +3210,7 @@ class ManagedRuntime:
                     "confirm-review-route-context": "ready",
                     "confirm-review-route-entry": "planned",
                     "validate-review-route-entry": "planned",
-                    "authorize-review-route": (
+                    "authorize-planned-review-route": (
                         f"planned-{qualified_route}"
                         if qualified_route != "waived"
                         else "planned-waiver"
@@ -3279,7 +3300,9 @@ class ManagedRuntime:
             ):
                 self.decision_destination(decision, "record-low-disposition")
             if node == "decide-low-completion" and option == "completed":
-                self.decision_destination(decision, "assess-goal")
+                self.decision_destination(
+                    decision, completed_low_settlement_destination(procedure_id)
+                )
                 self.low_settlement_procedures.add(procedure_id)
                 self.mark_case_variant("C-03", procedure_id)
             payload = json_payload(decision)

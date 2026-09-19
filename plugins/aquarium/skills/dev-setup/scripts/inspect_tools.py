@@ -148,6 +148,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
         "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
         "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
         "ff32214898ddb5a737e7a4c55447a16976d42da34b70cacc11c3b286d695cc77",
@@ -202,7 +203,11 @@ PODWAY_HANDLER_CONTRACTS = {
             "document",
             "prepare-review",
             "validate-review-route-entry",
-            "authorize-review-route",
+            "classify-review-route-change",
+            "confirm-review-route-change-readiness",
+            "authorize-planned-review-route",
+            "authorize-incomplete-review-route",
+            "authorize-completed-review-route",
             "confirm-review-route-binding",
             "decide-review-operation",
             "confirm-assessment-ordinal",
@@ -228,6 +233,11 @@ PODWAY_HANDLER_CONTRACTS = {
             "record-low-disposition",
             "decide-low-result",
             "decide-low-completion",
+            "confirm-goal-assessment-core",
+            "confirm-stopped-goal-assessment-core",
+            "record-stopped-goal-boundary",
+            "confirm-stopped-goal-boundary",
+            "assess-stopped-goal",
         },
         "definition_items": {
             "plan-record": {
@@ -254,6 +264,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "review-evidence-reference",
                 "backend-check-result",
                 "assessment-provenance",
+                "assessment-provenance-kind",
                 "waiver-summary",
                 "finding-count-consistency",
                 "completion-assessment-summary",
@@ -274,6 +285,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "route-stop-classification",
                 "route-stop-summary",
             },
+            "stopped-goal-boundary-record": {"goal-outcome-boundary"},
             "low-disposition-record": {
                 "source-review-basis",
                 "low-disposition-summary",
@@ -323,6 +335,14 @@ PODWAY_HANDLER_CONTRACTS = {
                 "fail",
                 "not-provided",
             },
+            ("review-record", "assessment-provenance-kind"): {
+                "delegated-reviewer",
+                "coordinator-waiver",
+            },
+            ("stopped-goal-boundary-record", "goal-outcome-boundary"): {
+                "stopped",
+                "invalid-not-stopped",
+            },
             ("review-route-direction-record", "prior-route-lifecycle-state"): {
                 "not-started",
                 "active-or-unknown",
@@ -344,20 +364,30 @@ PODWAY_HANDLER_CONTRACTS = {
         "routes": {
             "decide-verification": {"failed": "verify"},
             "validate-review-route-entry": {
-                "planned": "authorize-review-route",
-                "changed-after-incomplete": "authorize-review-route",
-                "changed-after-failure": "authorize-review-route",
-                "changed-after-completion": "authorize-review-route",
+                "planned": "authorize-planned-review-route",
+                "changed": "classify-review-route-change",
             },
-            "authorize-review-route": {
+            "classify-review-route-change": {
+                "incomplete": "confirm-review-route-change-readiness",
+                "failed": "confirm-review-route-change-readiness",
+                "completed": "authorize-completed-review-route",
+            },
+            "confirm-review-route-change-readiness": {
+                "safe": "authorize-incomplete-review-route",
+            },
+            "authorize-planned-review-route": {
                 "planned-mulgae": "review",
                 "planned-orca": "review",
                 "planned-native-codex": "review",
                 "planned-waiver": "review",
+            },
+            "authorize-incomplete-review-route": {
                 "changed-mulgae": "review",
                 "changed-orca": "review",
                 "changed-native-codex": "review",
                 "changed-waiver": "review",
+            },
+            "authorize-completed-review-route": {
                 "completed-change-mulgae": "review",
                 "completed-change-orca": "review",
                 "completed-change-native-codex": "review",
@@ -418,7 +448,7 @@ PODWAY_HANDLER_CONTRACTS = {
                 "unverified": "prepare-review",
             },
             "decide-review": {
-                "clean": "assess-goal",
+                "clean": "confirm-goal-assessment-core",
                 "blocking": "decide-task-rework-authority",
                 "low-disposition": "record-low-disposition",
                 "inconsistent": "prepare-review",
@@ -440,10 +470,10 @@ PODWAY_HANDLER_CONTRACTS = {
                 "clear": "prepare-review",
             },
             "decide-low-result": {"passed": "decide-low-completion"},
-            "decide-low-completion": {"completed": "assess-goal"},
+            "decide-low-completion": {"completed": "confirm-goal-assessment-core"},
             "choose-user-direction": {
                 "fix-and-review": "decide-implementation-owner",
-                "stop": "assess-goal",
+                "stop": "confirm-stopped-goal-assessment-core",
             },
             "choose-review-route-direction": {
                 "resume-current": "review",
@@ -455,6 +485,15 @@ PODWAY_HANDLER_CONTRACTS = {
                 "not-started-safe": "choose-review-route-direction",
                 "active-current-only": "choose-review-route-direction",
                 "terminal-safe": "choose-review-route-direction",
+            },
+            "confirm-goal-assessment-core": {"ready": "assess-goal"},
+            "confirm-stopped-goal-assessment-core": {
+                "ready": "record-stopped-goal-boundary"
+            },
+            "confirm-stopped-goal-boundary": {"confirmed": "assess-stopped-goal"},
+            "assess-stopped-goal": {
+                "not-achieved": "record-outcome",
+                "superseded": "record-outcome",
             },
         },
         "evidence": {
@@ -474,22 +513,66 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("review", "completion-assessment-summary"),
                 ("review", "completion-unmet-criteria"),
                 ("review", "completion-unverified-criteria"),
+                ("review", "assessment-provenance-kind"),
+            },
+            "record-review-route-direction": {
+                ("review", "assessment-provenance-kind"),
             },
             "validate-review-route-entry": {
                 ("prepare-review", "route-authorization-basis"),
+            },
+            "classify-review-route-change": {
                 ("prepare-review", "prior-assessment-ordinal"),
                 ("review", "review-operation"),
+            },
+            "confirm-review-route-change-readiness": {
                 ("record-review-route-direction", "route-change-readiness"),
+            },
+            "authorize-planned-review-route": {
+                ("record-plan", "review-route"),
+                ("prepare-review", "effective-review-route"),
+                ("prepare-review", "route-authorization-basis"),
+                ("prepare-review", "route-change-authority-reference"),
+                ("prepare-review", "prior-assessment-ordinal"),
+                ("prepare-review", "finding-lineage-summary"),
+                ("prepare-review", "remaining-review-authority-summary"),
+                ("prepare-review", "corrected-target-summary"),
+                ("prepare-review", "extra-assessment-authority-reference"),
+            },
+            "authorize-incomplete-review-route": {
+                ("record-plan", "review-route"),
+                ("prepare-review", "effective-review-route"),
+                ("prepare-review", "route-authorization-basis"),
+                ("prepare-review", "route-change-authority-reference"),
+                ("prepare-review", "prior-assessment-ordinal"),
+                ("prepare-review", "finding-lineage-summary"),
+                ("prepare-review", "remaining-review-authority-summary"),
+                ("prepare-review", "corrected-target-summary"),
+                ("prepare-review", "extra-assessment-authority-reference"),
+                ("record-review-route-direction", "route-change-readiness"),
+            },
+            "authorize-completed-review-route": {
+                ("record-plan", "review-route"),
+                ("prepare-review", "effective-review-route"),
+                ("prepare-review", "route-authorization-basis"),
+                ("prepare-review", "route-change-authority-reference"),
+                ("prepare-review", "prior-assessment-ordinal"),
+                ("prepare-review", "finding-lineage-summary"),
+                ("prepare-review", "remaining-review-authority-summary"),
+                ("prepare-review", "corrected-target-summary"),
+                ("prepare-review", "extra-assessment-authority-reference"),
             },
             "confirm-review-provenance": {
                 ("review", "review-operation"),
                 ("review", "assessment-provenance"),
+                ("review", "assessment-provenance-kind"),
                 ("review", "waiver-summary"),
                 ("review", "review-evidence-reference"),
             },
             "confirm-incomplete-review-provenance": {
                 ("review", "review-operation"),
                 ("review", "assessment-provenance"),
+                ("review", "assessment-provenance-kind"),
                 ("review", "waiver-summary"),
                 ("review", "review-evidence-reference"),
             },
@@ -504,6 +587,9 @@ PODWAY_HANDLER_CONTRACTS = {
                 ("prepare-review", "finding-lineage-summary"),
                 ("prepare-review", "remaining-review-authority-summary"),
                 ("prepare-review", "corrected-target-summary"),
+                ("authorize-planned-review-route", None),
+                ("authorize-incomplete-review-route", None),
+                ("authorize-completed-review-route", None),
             },
             "confirm-assessment-ordinal": {
                 ("prepare-review", "prior-assessment-ordinal"),
@@ -515,11 +601,39 @@ PODWAY_HANDLER_CONTRACTS = {
             "confirm-extra-assessment-ordinal": {
                 ("review", "assessment-ordinal"),
             },
+            "confirm-goal-assessment-core": {
+                ("record-plan", "plan-summary"),
+                ("implement", "implementation-summary"),
+                ("implement", "source-revision"),
+                ("verify", "verification-result"),
+                ("refine", "refinement-summary"),
+                ("document", "documentation-summary"),
+            },
+            "confirm-stopped-goal-assessment-core": {
+                ("record-plan", "plan-summary"),
+                ("implement", "implementation-summary"),
+                ("implement", "source-revision"),
+                ("verify", "verification-result"),
+                ("refine", "refinement-summary"),
+                ("document", "documentation-summary"),
+            },
+            "record-stopped-goal-boundary": {
+                ("confirm-stopped-goal-assessment-core", None),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
+                ("record-review-route-stop", "route-stop-classification"),
+                ("record-review-route-stop", "route-stop-summary"),
+            },
+            "confirm-stopped-goal-boundary": {
+                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
+            },
             "assess-goal": {
+                ("confirm-goal-assessment-core", None),
                 ("review", "completion-assessment-summary"),
                 ("review", "completion-unmet-criteria"),
                 ("review", "completion-unverified-criteria"),
                 ("review", "finding-count-consistency"),
+                ("review", "assessment-provenance-kind"),
                 ("await-user-direction", "direction-classification"),
                 ("await-user-direction", "direction-summary"),
                 (
@@ -528,6 +642,19 @@ PODWAY_HANDLER_CONTRACTS = {
                 ),
                 ("record-review-route-direction", "route-change-readiness"),
                 ("record-review-route-direction", "route-direction-summary"),
+                ("record-review-route-stop", "route-stop-classification"),
+                ("record-review-route-stop", "route-stop-summary"),
+            },
+            "assess-stopped-goal": {
+                ("confirm-stopped-goal-assessment-core", None),
+                ("record-stopped-goal-boundary", "goal-outcome-boundary"),
+                ("review", "completion-assessment-summary"),
+                ("review", "completion-unmet-criteria"),
+                ("review", "completion-unverified-criteria"),
+                ("review", "finding-count-consistency"),
+                ("review", "assessment-provenance-kind"),
+                ("await-user-direction", "direction-classification"),
+                ("await-user-direction", "direction-summary"),
                 ("record-review-route-stop", "route-stop-classification"),
                 ("record-review-route-stop", "route-stop-summary"),
             },
@@ -1469,6 +1596,9 @@ def inspect_podway_handler_contract(
     """Check only the structural Procedure surface consumed by Aquarium handlers."""
     if content is None:
         return "not_checked", ["procedure_bytes_unavailable"]
+    content_digest = hashlib.sha256(content).hexdigest()
+    if content_digest in PODWAY_PRIOR_CANONICAL_SHA256.get(name, set()):
+        return "compatible", []
     if yaml is None:
         return "not_checked", ["pyyaml_unavailable"]
     try:

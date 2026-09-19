@@ -141,6 +141,21 @@ def test_decision_destination_uses_decision_result_target() -> None:
 
 
 @pytest.mark.parametrize(
+    ("procedure_id", "expected"),
+    (
+        ("aquarium-task-v2", "confirm-goal-assessment-core"),
+        ("aquarium-goal-v2", "assess-goal"),
+        ("aquarium-validation-v2", "assess-goal"),
+    ),
+)
+def test_completed_low_settlement_destination_is_procedure_specific(
+    procedure_id: str, expected: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    assert runtime.completed_low_settlement_destination(procedure_id) == expected
+
+
+@pytest.mark.parametrize(
     "scenario",
     ["low-blocker-wait", "validation-low-blocker-wait"],
 )
