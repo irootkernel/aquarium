@@ -2927,6 +2927,10 @@ graph:
             - effective-low-findings
             - confirmation-needed-findings
             - finding-disposition-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - finding-count-consistency
         - node: await-user-direction
           required: false
           items:
