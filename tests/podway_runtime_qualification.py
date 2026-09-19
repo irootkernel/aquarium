@@ -2460,6 +2460,19 @@ class ManagedRuntime:
                     and item not in required
                 )
             if (
+                self.scenario == "medium-wait"
+                and procedure_id == "aquarium-goal-v2"
+                and node == "record-evidence"
+                and self.goal_evidence_round > 0
+            ):
+                required.extend(
+                    item
+                    for item in current["active_items"]
+                    if item["item_id"] == "extra-assessment-authority-reference"
+                    and not item.get("satisfied")
+                    and item not in required
+                )
+            if (
                 self.scenario in VALIDATION_RECOVERY_SCENARIOS
                 and procedure_id == "aquarium-validation-v2"
                 and node == "final-review"
@@ -2762,7 +2775,7 @@ class ManagedRuntime:
                 f"route scenario {scenario!r} does not target {procedure_id!r}"
             )
         self.node_visits = {}
-        if scenario == "goal-hardening-defer":
+        if scenario in {"goal-hardening-defer", "medium-wait"}:
             self.completed_assessments[procedure_id] = 1
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
