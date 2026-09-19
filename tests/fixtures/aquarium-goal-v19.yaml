@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "20"
+version: "19"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -355,6 +355,60 @@ node_definitions:
         min_length: 1
         max_length: 7000
         multiline: true
+  review-route-context-decision:
+    type: decision
+    title: Validate the Goal review context
+    objective: Require a bounded target and selection record before route authorization.
+    prompt: Is the Goal review context complete?
+    options:
+      - id: ready
+        label: Review context ready
+        criteria: The approved review target and selection summary are both recorded.
+        guards:
+          - evidence:
+              node: complete-work
+              item: review-target-scope
+            non_empty: true
+          - evidence:
+              node: complete-work
+              item: review-selection-summary
+            non_empty: true
+    reason:
+      required: true
+      prompt: Explain the bounded target and route-selection authority.
+  review-route-entry-decision:
+    type: decision
+    title: Validate the Goal review route entry
+    objective: Separate the approved envelope from an explicitly authorized lifecycle-safe change.
+    prompt: Which route-entry state applies to this checkpoint?
+    options:
+      - id: planned
+        label: Enter the approved route
+        criteria: The checkpoint retains the approved review envelope.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
+            equals: approved-envelope
+      - id: changed
+        label: Enter an authorized route change
+        criteria: Explicit authority changes the route only after prior work is safe to leave.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: route-authorization-basis
+            not_equals: approved-envelope
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
+            equals: safe-to-change
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
+            not_equals: active-or-unknown
+    reason:
+      required: true
+      prompt: Explain the carried route authority and prior-operation lifecycle state.
   review-route-binding-decision:
     type: decision
     title: Bind the Goal review route
@@ -441,10 +495,6 @@ node_definitions:
               node: record-evidence
               item: route-change-authority-reference
             non_empty: true
-          - evidence:
-              node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
       - id: changed-orca
         label: Authorized Orca change
         criteria: Orca has explicit safe route-change authority.
@@ -461,10 +511,6 @@ node_definitions:
               node: record-evidence
               item: route-change-authority-reference
             non_empty: true
-          - evidence:
-              node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
       - id: changed-native-codex
         label: Authorized native Codex change
         criteria: Native Codex has explicit safe route-change authority.
@@ -481,10 +527,6 @@ node_definitions:
               node: record-evidence
               item: route-change-authority-reference
             non_empty: true
-          - evidence:
-              node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
       - id: changed-waiver
         label: Authorized waiver change
         criteria: Waiver has explicit safe waiver authority.
@@ -501,10 +543,6 @@ node_definitions:
               node: record-evidence
               item: route-change-authority-reference
             non_empty: true
-          - evidence:
-              node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
     reason:
       required: true
       prompt: Explain the approved route, effective route, authorization basis, and safe-state evidence.
@@ -538,18 +576,26 @@ node_definitions:
               node: record-evidence
               item: assessment-ordinal
             at_least: 1
-      - id: unsuccessful
-        label: Review incomplete or failed
-        criteria: The selected delegated operation is incomplete or failed and consumed no ordinal; review-operation retains the exact state.
+      - id: incomplete
+        label: Review incomplete
+        criteria: The selected operation remains incomplete and consumed no ordinal.
         guards:
           - evidence:
               node: record-evidence
               item: review-operation
-            not_equals: complete
+            equals: incomplete
+          - evidence:
+              node: record-evidence
+              item: assessment-ordinal
+            equals: 0
+      - id: failed
+        label: Review failed
+        criteria: The selected operation failed and consumed no ordinal.
+        guards:
           - evidence:
               node: record-evidence
               item: review-operation
-            not_equals: waived
+            equals: failed
           - evidence:
               node: record-evidence
               item: assessment-ordinal
@@ -557,67 +603,6 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the operation state and ordinal treatment.
-  changed-review-operation-decision:
-    type: decision
-    title: Classify the authorized changed Goal review operation
-    objective: Preserve lifecycle-safe route-change authority while separating completed assessments from incomplete or failed operations.
-    prompt: What is the authoritative operation state after the safe route change?
-    options:
-      - id: completed
-        label: Delegated review completed
-        criteria: A delegated reviewer completed the safely changed route.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: review-operation
-            equals: complete
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: record-evidence
-              item: prior-route-lifecycle-state
-            not_equals: active-or-unknown
-      - id: waived
-        label: Review waived and assessed
-        criteria: The coordinator completed the authorized waiver assessment after safe prior-route settlement.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: review-operation
-            equals: waived
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: record-evidence
-              item: prior-route-lifecycle-state
-            not_equals: active-or-unknown
-      - id: unsuccessful
-        label: Review incomplete or failed
-        criteria: The changed delegated operation is incomplete or failed and consumed no ordinal; review-operation retains the exact state.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: review-operation
-            not_equals: complete
-          - evidence:
-              node: record-evidence
-              item: review-operation
-            not_equals: waived
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal
-            equals: 0
-          - evidence:
-              node: record-evidence
-              item: prior-route-lifecycle-state
-            not_equals: active-or-unknown
-    reason:
-      required: true
-      prompt: Explain the operation state, ordinal treatment, and prior-route settlement.
   assessment-ordinal-decision:
     type: decision
     title: Validate Goal assessment ordinal
@@ -704,17 +689,9 @@ node_definitions:
               node: record-evidence
               item: assessment-ordinal
             at_least: 3
-      - id: invalid-extra
-        label: Invalid extra ordinal
-        criteria: The recorded extra assessment ordinal is below three and must be corrected.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal
-            at_most: 2
     reason:
       required: true
-      prompt: Explain the admitted or rejected extra assessment ordinal.
+      prompt: Explain the admitted extra assessment ordinal.
   route-evidence-decision:
     type: decision
     title: Validate completed route evidence
@@ -824,6 +801,55 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the route-specific evidence combination and assurance limit.
+  review-provenance-decision:
+    type: decision
+    title: Validate Goal review provenance
+    objective: Keep delegated-review provenance separate from explicit waiver evidence for completed and incomplete operations.
+    prompt: Which provenance and waiver-evidence combination applies to this operation?
+    options:
+      - id: delegated
+        label: Delegated review provenance
+        criteria: A delegated route has reviewer provenance, exact evidence, and no waiver summary.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: review-operation
+            not_equals: waived
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
+            not_equals: coordinator-waiver
+          - evidence:
+              node: record-evidence
+              item: waiver-summary
+            empty: true
+          - evidence:
+              node: record-evidence
+              item: review-evidence-reference
+            non_empty: true
+      - id: waived
+        label: Coordinator waiver provenance
+        criteria: A completed waiver assessment has coordinator provenance, exact evidence, and an explicit assurance summary.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: review-operation
+            equals: waived
+          - evidence:
+              node: record-evidence
+              item: assessment-provenance-kind
+            equals: coordinator-waiver
+          - evidence:
+              node: record-evidence
+              item: waiver-summary
+            non_empty: true
+          - evidence:
+              node: record-evidence
+              item: review-evidence-reference
+            non_empty: true
+    reason:
+      required: true
+      prompt: Explain the authoritative reviewer or waiver provenance.
   incomplete-route-evidence-decision:
     type: decision
     title: Validate incomplete route evidence
@@ -841,7 +867,7 @@ node_definitions:
           - evidence:
               node: record-evidence
               item: assessment-provenance-kind
-            equals: delegated-reviewer
+            not_equals: coordinator-waiver
       - id: orca
         label: Orca incomplete evidence
         criteria: Orca retains lifecycle or preflight evidence and no backend check.
@@ -857,7 +883,7 @@ node_definitions:
           - evidence:
               node: record-evidence
               item: assessment-provenance-kind
-            equals: delegated-reviewer
+            not_equals: coordinator-waiver
       - id: native-codex
         label: Native Codex incomplete evidence
         criteria: Native Codex retains delegation or preflight evidence and no backend check.
@@ -873,10 +899,43 @@ node_definitions:
           - evidence:
               node: record-evidence
               item: assessment-provenance-kind
-            equals: delegated-reviewer
+            not_equals: coordinator-waiver
     reason:
       required: true
       prompt: Explain the retained route evidence and absent ordinal.
+  backend-check-decision:
+    type: decision
+    title: Evaluate Goal backend check
+    objective: Keep the optional backend check separate from verification and semantic findings.
+    prompt: What backend-check state applies?
+    options:
+      - id: passed
+        label: Backend check passed
+        criteria: Mulgae supplied a passing backend check.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
+            equals: pass
+      - id: failed
+        label: Backend check failed
+        criteria: Mulgae supplied a failing backend check that blocks success.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
+            equals: fail
+      - id: not-provided
+        label: Backend check not provided
+        criteria: Orca, native Codex, or waiver legitimately has no backend check.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: backend-check-result
+            equals: not-provided
+    reason:
+      required: true
+      prompt: Explain the route-specific backend state.
   review-route-settlement-decision:
     type: decision
     title: Validate recovery settlement
@@ -936,18 +995,26 @@ node_definitions:
               node: record-evidence
               item: route-direction
             equals: resume-current
-      - id: change-route
-        label: Switch route or waive review
-        criteria: Switch route or waive delegated review after authoritative safe settlement; route-direction retains the exact user choice.
+      - id: switch-route
+        label: Switch route
+        criteria: Switch after authoritative safe settlement.
         guards:
           - evidence:
               node: record-evidence
               item: route-direction
-            not_equals: resume-current
+            equals: switch-route
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
+            equals: safe-to-change
+      - id: waive
+        label: Waive delegated review
+        criteria: Waive after authoritative safe settlement.
+        guards:
           - evidence:
               node: record-evidence
               item: route-direction
-            not_equals: stop
+            equals: waive
           - evidence:
               node: record-evidence
               item: route-change-readiness
@@ -994,20 +1061,12 @@ node_definitions:
     options:
       - id: native-review
         label: Use native review evidence
-        criteria: The goal uses its required native review evidence with a bounded target and selection record.
+        criteria: The goal uses its required native review evidence.
         guards:
           - evidence:
               node: record-evidence
               item: review-evidence-kind
             equals: native-review
-          - evidence:
-              node: complete-work
-              item: review-target-scope
-            non_empty: true
-          - evidence:
-              node: complete-work
-              item: review-selection-summary
-            non_empty: true
       - id: final-closeout
         label: Use final-closeout validation
         criteria: This is the final closeout and its exact successful validation evidence is the supported substitute.
@@ -1124,41 +1183,6 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the current confirmation state and required evidence.
-  waived-finding-validity-decision:
-    type: decision
-    title: Confirm waived-review finding validity
-    objective: Preserve explicit waiver evidence while withholding routing until every confirmation is resolved.
-    prompt: Have all findings received a supported validity disposition under the authorized waiver?
-    evidence_guidance:
-      - Resolve the same findings from authorized evidence; confirmation does not itself consume another selected-route assessment ordinal.
-    options:
-      - id: resolved
-        label: Findings confirmed
-        criteria: No finding still needs confirmation and the explicit waiver assurance summary is present.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: confirmation-needed-findings
-            equals: 0
-          - evidence:
-              node: record-evidence
-              item: waiver-summary
-            non_empty: true
-      - id: unresolved
-        label: Confirmation required
-        criteria: At least one finding still needs confirmation under the explicit waiver.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: confirmation-needed-findings
-            at_least: 1
-          - evidence:
-              node: record-evidence
-              item: waiver-summary
-            non_empty: true
-    reason:
-      required: true
-      prompt: Explain the current confirmation state, waiver evidence, and required support.
   hardening-deferral-record:
     type: action
     title: Record epic hardening deferral
@@ -1450,12 +1474,9 @@ node_definitions:
               node: record-evidence
               item: review-mode
             equals: hardening-deferral-eligible
-      - id: ineligible
-        label: Hardening review ineligible
-        criteria: The required completed Mulgae review, passing backend, or hardening mode is absent and the review evidence must be corrected.
     reason:
       required: true
-      prompt: Explain the admitted or rejected review route, operation, backend state, and mode.
+      prompt: Explain the admitted review route, operation, backend state, and mode.
   hardening-record-decision:
     type: decision
     title: Validate hardening deferral record
@@ -1482,12 +1503,9 @@ node_definitions:
               node: record-hardening-deferral
               item: hardening-deferral-native-target-sha256
             non_empty: true
-      - id: incomplete
-        label: Hardening record incomplete
-        criteria: The required assessment, publication, findings query, or native target evidence must be corrected.
     reason:
       required: true
-      prompt: Explain the admitted or incomplete hardening deferral evidence.
+      prompt: Explain the admitted hardening deferral evidence.
   low-disposition-record:
     type: action
     title: Record completed Low dispositions
@@ -1698,12 +1716,9 @@ node_definitions:
       - id: ready
         label: Core Goal evidence ready
         criteria: The selected current Goal evidence is coherent and ready for goal assessment.
-      - id: needs-rework
-        label: Core Goal evidence needs rework
-        criteria: The selected current Goal evidence is stale, incomplete, or incoherent and must be corrected before assessment.
     reason:
       required: true
-      prompt: Explain how the selected core evidence is ready or what must be corrected before goal assessment.
+      prompt: Explain how the selected core evidence is current and ready for goal assessment.
   stopped-goal-boundary-record:
     type: action
     title: Bind the stopped Goal outcome
@@ -1856,11 +1871,6 @@ graph:
     - id: decide-review-basis
       use: review-basis-decision
       evidence_from:
-        - node: complete-work
-          required: true
-          items:
-            - review-target-scope
-            - review-selection-summary
         - node: record-evidence
           required: true
           items:
@@ -1868,7 +1878,7 @@ graph:
             - review-evidence-kind
       routes:
         native-review:
-          to: confirm-review-route-binding
+          to: confirm-review-route-context
           effect: advance
         final-closeout:
           to: record-closeout-substitute
@@ -1888,6 +1898,34 @@ graph:
             - goal-verification-result
             - goal-review-readiness-result
       next: decide-operational-evidence
+    - id: confirm-review-route-context
+      use: review-route-context-decision
+      evidence_from:
+        - node: complete-work
+          required: true
+          items:
+            - review-target-scope
+            - review-selection-summary
+      routes:
+        ready:
+          to: confirm-review-route-entry
+          effect: advance
+    - id: confirm-review-route-entry
+      use: review-route-entry-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - route-authorization-basis
+            - route-change-readiness
+            - prior-route-lifecycle-state
+      routes:
+        planned:
+          to: confirm-review-route-binding
+          effect: advance
+        changed:
+          to: confirm-review-route-binding
+          effect: advance
     - id: confirm-review-route-binding
       use: review-route-binding-decision
       evidence_from:
@@ -1907,30 +1945,30 @@ graph:
             - prior-route-lifecycle-state
       routes:
         planned-mulgae:
-          to: decide-planned-mulgae-review-operation
+          to: decide-review-operation
           effect: advance
         planned-orca:
-          to: decide-planned-orca-review-operation
+          to: decide-review-operation
           effect: advance
         planned-native-codex:
-          to: decide-planned-native-codex-review-operation
+          to: decide-review-operation
           effect: advance
         planned-waiver:
-          to: decide-planned-waiver-review-operation
+          to: decide-review-operation
           effect: advance
         changed-mulgae:
-          to: decide-changed-mulgae-review-operation
+          to: decide-review-operation
           effect: advance
         changed-orca:
-          to: decide-changed-orca-review-operation
+          to: decide-review-operation
           effect: advance
         changed-native-codex:
-          to: decide-changed-native-codex-review-operation
+          to: decide-review-operation
           effect: advance
         changed-waiver:
-          to: decide-changed-waiver-review-operation
+          to: decide-review-operation
           effect: advance
-    - id: decide-planned-mulgae-review-operation
+    - id: decide-review-operation
       use: review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -1945,180 +1983,18 @@ graph:
             - assessment-provenance-kind
       routes:
         completed:
-          to: confirm-completed-assessment-ordinal
+          to: confirm-assessment-ordinal
           effect: advance
         waived:
-          to: confirm-waived-assessment-ordinal
+          to: confirm-assessment-ordinal
           effect: advance
-        unsuccessful:
+        incomplete:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-planned-orca-review-operation
-      use: review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
+        failed:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-planned-native-codex-review-operation
-      use: review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: decide-planned-waiver-review-operation
-      use: review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: decide-changed-mulgae-review-operation
-      use: changed-review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - prior-route-lifecycle-state
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: decide-changed-orca-review-operation
-      use: changed-review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - prior-route-lifecycle-state
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: decide-changed-native-codex-review-operation
-      use: changed-review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - prior-route-lifecycle-state
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: decide-changed-waiver-review-operation
-      use: changed-review-operation-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - prior-route-lifecycle-state
-      routes:
-        completed:
-          to: confirm-completed-assessment-ordinal
-          effect: advance
-        waived:
-          to: confirm-waived-assessment-ordinal
-          effect: advance
-        unsuccessful:
-          to: confirm-incomplete-route-evidence
-          effect: advance
-    - id: confirm-completed-assessment-ordinal
+    - id: confirm-assessment-ordinal
       use: assessment-ordinal-decision
       evidence_from:
         - node: record-evidence
@@ -2131,31 +2007,10 @@ graph:
             - extra-assessment-authority-reference
       routes:
         first:
-          to: confirm-first-route-evidence
+          to: confirm-route-evidence
           effect: advance
         second:
-          to: confirm-second-route-evidence
-          effect: advance
-        authorized-extra:
-          to: confirm-extra-assessment-ordinal
-          effect: advance
-    - id: confirm-waived-assessment-ordinal
-      use: assessment-ordinal-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - prior-assessment-ordinal
-            - assessment-ordinal
-            - assessment-ordinal-continuity
-            - review-mode
-            - extra-assessment-authority-reference
-      routes:
-        first:
-          to: confirm-first-route-evidence
-          effect: advance
-        second:
-          to: confirm-second-route-evidence
+          to: confirm-route-evidence
           effect: advance
         authorized-extra:
           to: confirm-extra-assessment-ordinal
@@ -2169,41 +2024,9 @@ graph:
             - assessment-ordinal
       routes:
         authorized-extra:
-          to: confirm-extra-route-evidence
+          to: confirm-route-evidence
           effect: advance
-        invalid-extra:
-          to: record-evidence
-          effect: rework
-    - id: confirm-first-route-evidence
-      use: route-evidence-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-      routes:
-        mulgae-pass:
-          to: confirm-mulgae-pass-finding-validity
-          effect: advance
-        mulgae-fail:
-          to: confirm-mulgae-fail-finding-validity
-          effect: advance
-        orca:
-          to: confirm-orca-finding-validity
-          effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
-          effect: advance
-        waived:
-          to: confirm-waived-finding-validity
-          effect: advance
-    - id: confirm-second-route-evidence
+    - id: confirm-route-evidence
       use: route-evidence-decision
       evidence_from:
         - node: record-evidence
@@ -2219,49 +2042,19 @@ graph:
             - waiver-summary
       routes:
         mulgae-pass:
-          to: confirm-mulgae-pass-finding-validity
+          to: confirm-review-provenance
           effect: advance
         mulgae-fail:
-          to: confirm-mulgae-fail-finding-validity
+          to: confirm-review-provenance
           effect: advance
         orca:
-          to: confirm-orca-finding-validity
+          to: confirm-review-provenance
           effect: advance
         native-codex:
-          to: confirm-native-codex-finding-validity
+          to: confirm-review-provenance
           effect: advance
         waived:
-          to: confirm-waived-finding-validity
-          effect: advance
-    - id: confirm-extra-route-evidence
-      use: route-evidence-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - waiver-summary
-      routes:
-        mulgae-pass:
-          to: confirm-mulgae-pass-finding-validity
-          effect: advance
-        mulgae-fail:
-          to: confirm-mulgae-fail-finding-validity
-          effect: advance
-        orca:
-          to: confirm-orca-finding-validity
-          effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
-          effect: advance
-        waived:
-          to: confirm-waived-finding-validity
+          to: confirm-review-provenance
           effect: advance
     - id: confirm-incomplete-route-evidence
       use: incomplete-route-evidence-decision
@@ -2278,15 +2071,51 @@ graph:
             - assessment-provenance-kind
       routes:
         mulgae:
-          to: confirm-mulgae-review-route-settlement
+          to: confirm-incomplete-review-provenance
           effect: advance
         orca:
-          to: confirm-orca-review-route-settlement
+          to: confirm-incomplete-review-provenance
           effect: advance
         native-codex:
-          to: confirm-native-codex-review-route-settlement
+          to: confirm-incomplete-review-provenance
           effect: advance
-    - id: confirm-mulgae-review-route-settlement
+    - id: confirm-incomplete-review-provenance
+      use: review-provenance-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - review-operation
+            - review-evidence-reference
+            - assessment-provenance
+            - assessment-provenance-kind
+            - waiver-summary
+      routes:
+        delegated:
+          to: confirm-review-route-settlement
+          effect: advance
+        waived:
+          to: confirm-review-route-settlement
+          effect: advance
+    - id: confirm-review-provenance
+      use: review-provenance-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - review-operation
+            - review-evidence-reference
+            - assessment-provenance
+            - assessment-provenance-kind
+            - waiver-summary
+      routes:
+        delegated:
+          to: confirm-finding-validity
+          effect: advance
+        waived:
+          to: confirm-finding-validity
+          effect: advance
+    - id: confirm-review-route-settlement
       use: review-route-settlement-decision
       evidence_from:
         - node: record-evidence
@@ -2297,107 +2126,30 @@ graph:
             - route-direction
       routes:
         active-current-only:
-          to: choose-active-review-route-direction
+          to: choose-review-route-direction
           effect: advance
         not-started-safe:
-          to: choose-not-started-review-route-direction
+          to: choose-review-route-direction
           effect: advance
         terminal-safe:
-          to: choose-terminal-review-route-direction
+          to: choose-review-route-direction
           effect: advance
-    - id: confirm-orca-review-route-settlement
-      use: review-route-settlement-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - prior-route-lifecycle-state
-            - route-change-readiness
-            - route-direction
-      routes:
-        active-current-only:
-          to: choose-active-review-route-direction
-          effect: advance
-        not-started-safe:
-          to: choose-not-started-review-route-direction
-          effect: advance
-        terminal-safe:
-          to: choose-terminal-review-route-direction
-          effect: advance
-    - id: confirm-native-codex-review-route-settlement
-      use: review-route-settlement-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - prior-route-lifecycle-state
-            - route-change-readiness
-            - route-direction
-      routes:
-        active-current-only:
-          to: choose-active-review-route-direction
-          effect: advance
-        not-started-safe:
-          to: choose-not-started-review-route-direction
-          effect: advance
-        terminal-safe:
-          to: choose-terminal-review-route-direction
-          effect: advance
-    - id: choose-active-review-route-direction
+    - id: choose-review-route-direction
       use: review-route-direction-decision
       evidence_from:
         - node: record-evidence
           required: true
           items:
-            - review-route
-            - prior-route-lifecycle-state
             - route-direction
             - route-change-readiness
       routes:
         resume-current:
           to: record-evidence
           effect: rework
-        change-route:
+        switch-route:
           to: complete-work
           effect: rework
-        stop:
-          to: record-review-route-stop
-          effect: advance
-    - id: choose-not-started-review-route-direction
-      use: review-route-direction-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - prior-route-lifecycle-state
-            - route-direction
-            - route-change-readiness
-      routes:
-        resume-current:
-          to: record-evidence
-          effect: rework
-        change-route:
-          to: complete-work
-          effect: rework
-        stop:
-          to: record-review-route-stop
-          effect: advance
-    - id: choose-terminal-review-route-direction
-      use: review-route-direction-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - prior-route-lifecycle-state
-            - route-direction
-            - route-change-readiness
-      routes:
-        resume-current:
-          to: record-evidence
-          effect: rework
-        change-route:
+        waive:
           to: complete-work
           effect: rework
         stop:
@@ -2416,6 +2168,24 @@ graph:
             - route-change-readiness
             - route-direction
       next: record-stopped-goal-boundary
+    - id: decide-backend-check
+      use: backend-check-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - review-route
+            - backend-check-result
+      routes:
+        passed:
+          to: decide-operational-evidence
+          effect: advance
+        failed:
+          to: decide-goal-rework-authority
+          effect: advance
+        not-provided:
+          to: decide-operational-evidence
+          effect: advance
     - id: decide-operational-evidence
       use: operational-evidence-decision
       evidence_from:
@@ -2434,7 +2204,7 @@ graph:
         review-incomplete:
           to: record-evidence
           effect: rework
-    - id: confirm-mulgae-pass-finding-validity
+    - id: confirm-finding-validity
       use: finding-validity-decision
       evidence_from:
         - node: record-evidence
@@ -2443,64 +2213,7 @@ graph:
             - confirmation-needed-findings
       routes:
         resolved:
-          to: decide-operational-evidence
-          effect: advance
-        unresolved:
-          to: record-evidence
-          effect: rework
-    - id: confirm-mulgae-fail-finding-validity
-      use: finding-validity-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - confirmation-needed-findings
-      routes:
-        resolved:
-          to: decide-goal-rework-authority
-          effect: advance
-        unresolved:
-          to: record-evidence
-          effect: rework
-    - id: confirm-orca-finding-validity
-      use: finding-validity-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - confirmation-needed-findings
-      routes:
-        resolved:
-          to: decide-operational-evidence
-          effect: advance
-        unresolved:
-          to: record-evidence
-          effect: rework
-    - id: confirm-native-codex-finding-validity
-      use: finding-validity-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - confirmation-needed-findings
-      routes:
-        resolved:
-          to: decide-operational-evidence
-          effect: advance
-        unresolved:
-          to: record-evidence
-          effect: rework
-    - id: confirm-waived-finding-validity
-      use: waived-finding-validity-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - confirmation-needed-findings
-            - waiver-summary
-      routes:
-        resolved:
-          to: decide-operational-evidence
+          to: decide-backend-check
           effect: advance
         unresolved:
           to: record-evidence
@@ -2589,9 +2302,6 @@ graph:
         eligible:
           to: confirm-hardening-record
           effect: advance
-        ineligible:
-          to: record-evidence
-          effect: rework
     - id: confirm-hardening-record
       use: hardening-record-decision
       evidence_from:
@@ -2609,9 +2319,6 @@ graph:
         recorded:
           to: record-hardening-handoff
           effect: advance
-        incomplete:
-          to: record-hardening-deferral
-          effect: rework
     - id: decide-evidence
       use: evidence-decision
       evidence_from:
@@ -2816,9 +2523,6 @@ graph:
         ready:
           to: assess-goal
           effect: advance
-        needs-rework:
-          to: record-evidence
-          effect: rework
     - id: confirm-stopped-goal-assessment-core
       use: goal-assessment-core-decision
       evidence_from:
@@ -2850,9 +2554,6 @@ graph:
         ready:
           to: assess-stopped-goal
           effect: advance
-        needs-rework:
-          to: record-evidence
-          effect: rework
     - id: assess-goal
       use: goal-assessment
       evidence_from:

@@ -1,7 +1,7 @@
 {
   "document_kind": "aquarium-operation-contract-fixture",
   "status": "implemented-caller-recorded-contract",
-  "scope": "The eight selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
+  "scope": "The nine selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
   "digest_rule": "SHA-256 over exact descriptor UTF-8 bytes, with no trailing newline.",
   "assurance_boundary": "Caller-recorded structured claims; neither Podway nor these descriptors execute tools or establish semantic truth.",
   "operations": [
@@ -10,6 +10,17 @@
       "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized remediation or confirmation mode.",
       "meaning": "A caller-recorded continuity and mode check over the prior and current Task review checkpoint, not a Podway calculation or reviewer execution claim.",
       "operation_digest": "sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a",
+      "accepted_outcomes": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    {
+      "operation_id": "aquarium-task-review-route-direction-continuity",
+      "descriptor": "Validate exactly one Task review checkpoint direction: approved-plan uses not-applicable; resume-current uses resume-current with an incomplete or failed prior operation whose route equals the effective provider; explicit-route-change uses switch-route with a non-waived effective provider, requiring safe-to-change and a preserved pending ordinal after an incomplete or failed operation, or completed-checkpoint, a prior completed ordinal of at least one, preserved lineage, and consumption of the next ordinal after a completed operation; explicit-waiver uses waive with effective waived under the same state-specific readiness, lineage, and ordinal rules.",
+      "meaning": "A caller-recorded matrix check over checkpoint direction, route basis, prior lifecycle, change readiness, and effective provider route.",
+      "operation_digest": "sha256:2b7ed39dae811563236b629a7f934f69924fdba16728b403b8a5f581abd0fbdd",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -62,9 +73,9 @@
     },
     {
       "operation_id": "aquarium-validation-review-route-binding",
-      "descriptor": "Verify that the effective whole-Epic review route matches the approved validation envelope or an explicit lifecycle-safe route-change or waiver authority.",
-      "meaning": "A caller-recorded binding check over planned and effective route, authority, and native lifecycle settlement.",
-      "operation_digest": "sha256:3dbe24916a00f015559890d695877311f32f658c38289cbce3ceb947c2b27ffd",
+      "descriptor": "Verify that the effective whole-Epic review route preserves the immediately preceding provider operation and lifecycle evidence, and matches the approved validation envelope or current explicit lifecycle-safe route-change or waiver authority.",
+      "meaning": "A caller-recorded binding check over the planned route, immediately preceding provider operation, effective route, current authority, and native lifecycle settlement.",
+      "operation_digest": "sha256:f09440c6be2cf4090ec0317a17e7a1042975236476f3386e7a55b6067200a21a",
       "accepted_outcomes": [
         "pass",
         "fail",
