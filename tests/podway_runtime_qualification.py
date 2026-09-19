@@ -2474,7 +2474,7 @@ class ManagedRuntime:
                 (
                     (self.scenario == "medium-wait" and self.goal_evidence_round > 0)
                     or (
-                        self.scenario == "goal-operational-matrix"
+                        self.scenario in {"standard", "goal-operational-matrix"}
                         and self.completed_assessments.get(procedure_id, 0) >= 2
                     )
                 )
