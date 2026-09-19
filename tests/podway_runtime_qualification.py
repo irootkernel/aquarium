@@ -1186,17 +1186,20 @@ class ManagedRuntime:
         }
 
     def reject_guarded_decision(
-        self, observation: dict[str, Any], option: str
+        self,
+        observation: dict[str, Any],
+        option: str,
+        *,
+        expected_code: str = "OPTION_GUARD_UNSATISFIED",
     ) -> dict[str, Any]:
         before = self.domain_state(observation)
         rejected = self.decide(observation, option, expected_exit=None)
-        if (
-            rejected.returncode == 0
-            or error_code(rejected) != "OPTION_GUARD_UNSATISFIED"
-        ):
+        observed_code = error_code(rejected) if rejected.returncode != 0 else None
+        if rejected.returncode == 0 or observed_code != expected_code:
             raise RuntimeQualificationError(
                 f"guarded option was not rejected: option={option!r}; "
-                f"exit={rejected.returncode}"
+                f"exit={rejected.returncode}; code={observed_code!r}; "
+                f"expected_code={expected_code!r}"
             )
         after = self.observe()
         after_state = self.domain_state(after)
@@ -3459,7 +3462,13 @@ class ManagedRuntime:
                         else "achieved"
                     )
                     observation = self.reject_guarded_decision(
-                        observation, rejected_option
+                        observation,
+                        rejected_option,
+                        expected_code=(
+                            "REQUEST_INVALID"
+                            if procedure_id == "aquarium-task-v2"
+                            else "OPTION_GUARD_UNSATISFIED"
+                        ),
                     )
                     self.mark_case_variant("C-10", scenario)
                 if (
