@@ -3607,6 +3607,11 @@ class ManagedRuntime:
                         "unsatisfied"
                         if scenario in STOP_EVIDENCE_SCENARIOS
                         or scenario in COMPLETION_GAP_SCENARIOS
+                        or (
+                            scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+                            and VALIDATION_FINAL_REVIEW_SCENARIOS[scenario][2]
+                            != "validated"
+                        )
                         else "satisfied"
                     ),
                 )
