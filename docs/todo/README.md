@@ -12,6 +12,9 @@ Before an epic becomes `Completed`, its final closeout must classify and promote
 - [Astra skill modernization dossier](TODO-ASTRA-SKILLS.md) defines the scope and
   acceptance for `EPIC-012`, `TASK-043` through `TASK-046`, and the local producer
   source checks needed for integration.
+- [Workflow review routing dossier](TODO-REVIEW-ROUTING.md) defines the execution
+  scope and acceptance for `EPIC-016` and `TASK-068` through `TASK-071`.
+
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.

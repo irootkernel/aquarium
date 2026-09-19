@@ -361,3 +361,31 @@ epic.
 | TASK-065 | Add standalone Mulgae change and completion review | Add the report-only `mulgae-review` entrypoint for staged changes and named Task or Epic completion without duplicating native lifecycle or starting remediation. | Completed | TASK-064 |
 | TASK-066 | Align Orca and explicit native Codex subagent guidance | Carry the shared brief through Orca Dispatch and result handling, and describe explicitly chosen host-native subagent reviews without claiming unsupported guarantees. | Completed | TASK-063 |
 | TASK-067 | Qualify and document the review contract | Verify integrated approval decisions and routing, align canonical and public documentation, and complete deterministic checks plus Master's separate manual acceptance. | Completed | TASK-064, TASK-065, TASK-066 |
+
+## EPIC-016: Add selectable workflow review routing
+
+**Status:** `Planned`
+
+Separate the requirement for completion review from the choice of review
+backend. Keep Mulgae as the default while allowing an approved Task, Epic, or
+cold-validation workflow to use Orca, a fresh native Codex subagent, or an
+explicit delegated-review waiver. Backend failure stops for user direction and
+never selects another route automatically.
+
+Every route retains its own target, execution, storage, recovery, and evidence
+guarantees. A waiver launches no reviewer and may support completion only after
+the coordinator assesses the complete requirement set from current authorized
+evidence. Reports must preserve the reduced assurance and every earlier finding.
+Independent Review remains disabled; its re-enablement is outside this epic.
+
+This epic builds on the bounded Procedure and review-intent contracts delivered
+by `EPIC-014` and `EPIC-015`.
+
+**Detailed SOT:** [`TODO-REVIEW-ROUTING.md`](../todo/TODO-REVIEW-ROUTING.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-068 | Generalize review routing and evidence contracts | Define route-neutral evidence combinations, lifecycle-safe switching, waiver semantics, route-specific readiness, and the Mulgae-only promoted hardening-deferral boundary. | Planned | EPIC-014; EPIC-015 |
+| TASK-069 | Integrate selectable review into Task delivery | Deliver Task routing with its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests as one compatible unit. | Planned | TASK-068 |
+| TASK-070 | Integrate selectable review into Epic delivery and validation | Deliver Epic and validation routing with compatible Procedures, commit handoff, hardening-deferral limits, evidence consumption, and focused tests. | Planned | TASK-068; TASK-069 |
+| TASK-071 | Qualify review routing and promote documentation | Run cross-route regression, timeout and switching scenarios, legacy-session and manual acceptance, then promote the reserved contract to shipped documentation. | Planned | TASK-069; TASK-070 |
