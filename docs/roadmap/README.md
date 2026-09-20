@@ -44,6 +44,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 | EPIC-016 | Add selectable workflow review routing | Completed |
+| EPIC-017 | Add Web Pro Review | Planned |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -395,3 +396,27 @@ native to the selected route and does not imply release or installation.
 | TASK-069 | Integrate selectable review into Task delivery | Deliver Task routing with its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests as one compatible unit. | Completed | TASK-068 |
 | TASK-070 | Integrate selectable review into Epic delivery and validation | Deliver Epic and validation routing with compatible Procedures, commit handoff, hardening-deferral limits, evidence consumption, and focused tests. | Completed | TASK-068; TASK-069 |
 | TASK-071 | Qualify review routing and promote documentation | Run cross-route regression, timeout and switching scenarios, legacy-session and manual acceptance, then promote the reserved contract to shipped documentation. | Completed | TASK-069; TASK-070 |
+
+## EPIC-017: Add Web Pro Review
+
+**Status:** `Planned`
+
+Add an independently callable Web Pro Review backed by `codex-chatgpt-web` and
+the exact `chatgpt-web/pro` model. Extend the selectable routing contract from
+`EPIC-016` with a `web-pro` peer route so Task, Epic, and cold-validation
+workflows can select it initially or switch to it after the preceding route
+reaches an authoritative safe state.
+
+Web Pro Review does not depend on or join Orca, Mulgae, Dolgorae, or Independent
+Review. It never runs as an automatic fallback. Calls from another Codex home,
+including `~/.codex-hsy`, use the primary Codex Web bridge profile without
+copying account state into the caller's home.
+
+**Detailed SOT:** [`TODO-WEB-PRO-REVIEW.md`](../todo/TODO-WEB-PRO-REVIEW.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-072 | Define the Web Pro Review contract | Freeze target, account, transmission, execution, result, recovery, and EPIC-016 adapter requirements. | Planned | EPIC-015; EPIC-016 |
+| TASK-073 | Implement primary-profile Web Pro execution | Add the standalone skill, deterministic runner, and global readiness inspection without copying a checkout or account state. | Planned | TASK-072 |
+| TASK-074 | Add Web Pro to selectable review routing | Extend Task, Epic, and validation handlers and new Procedure versions with route-specific Web Pro evidence and recovery. | Planned | TASK-072; TASK-073 |
+| TASK-075 | Qualify and document Web Pro Review | Complete deterministic, integration, compatibility, account-bound runtime, manual acceptance, and canonical documentation checks. | Planned | TASK-073; TASK-074 |
