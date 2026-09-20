@@ -364,7 +364,7 @@ epic.
 
 ## EPIC-016: Add selectable workflow review routing
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Separate the requirement for completion review from the choice of review
 backend. Keep Mulgae as the default while allowing an approved Task, Epic, or
@@ -381,11 +381,16 @@ Independent Review remains disabled; its re-enablement is outside this epic.
 This epic builds on the bounded Procedure and review-intent contracts delivered
 by `EPIC-014` and `EPIC-015`.
 
-**Detailed SOT:** [`TODO-REVIEW-ROUTING.md`](../todo/TODO-REVIEW-ROUTING.md)
+Master accepted the separately observed route selection, prerequisite isolation,
+failure recovery, provider continuity, legacy-session, and waiver behavior on
+2026-09-20. The accepted implementation keeps review execution and evidence
+native to the selected route and does not imply release or installation.
+
+**Canonical Outcomes:** [Review routing](../specs/review-routing.md), [Workflow contracts](../specs/workflow-contracts.md), [Capability catalog](../specs/capabilities.md), [Local interfaces](../specs/local-interfaces.md), [Review routing contract](../../plugins/aquarium/references/review-routing-contract.md), [Procedure node contracts](../../plugins/aquarium/references/procedure-node-contracts.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-068 | Generalize review routing and evidence contracts | Define route-neutral evidence combinations, lifecycle-safe switching, waiver semantics, route-specific readiness, and the Mulgae-only promoted hardening-deferral boundary. | Completed | EPIC-014; EPIC-015 |
 | TASK-069 | Integrate selectable review into Task delivery | Deliver Task routing with its skills, Procedure copies, inspector contract, digests, fixtures, and focused tests as one compatible unit. | Completed | TASK-068 |
 | TASK-070 | Integrate selectable review into Epic delivery and validation | Deliver Epic and validation routing with compatible Procedures, commit handoff, hardening-deferral limits, evidence consumption, and focused tests. | Completed | TASK-068; TASK-069 |
-| TASK-071 | Qualify review routing and promote documentation | Run cross-route regression, timeout and switching scenarios, legacy-session and manual acceptance, then promote the reserved contract to shipped documentation. | In Progress | TASK-069; TASK-070 |
+| TASK-071 | Qualify review routing and promote documentation | Run cross-route regression, timeout and switching scenarios, legacy-session and manual acceptance, then promote the reserved contract to shipped documentation. | Completed | TASK-069; TASK-070 |
