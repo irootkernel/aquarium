@@ -520,7 +520,7 @@ node_definitions:
         multiline: true
       - id: prior-review-route
         type: choice
-        prompt: Record the immediately preceding provider route, or not-applicable before any provider operation starts.
+        prompt: Record the immediately preceding review route, or not-applicable before any review operation starts.
         required: true
         choices:
           - not-applicable
@@ -530,7 +530,7 @@ node_definitions:
           - waived
       - id: prior-review-operation
         type: choice
-        prompt: Record the immediately preceding provider operation state, or not-applicable before any provider operation starts.
+        prompt: Record the immediately preceding review operation state, or not-applicable before any review operation starts.
         required: true
         choices:
           - not-applicable
