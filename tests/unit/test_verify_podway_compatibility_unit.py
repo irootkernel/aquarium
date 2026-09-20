@@ -250,10 +250,48 @@ def test_completed_checkpoint_runtime_scenarios_map_to_guarded_next_ordinal(
     assert configuration["route"] == "mulgae"
     assert configuration["effective_route"] == effective_route
     assert configuration["operation"] == "complete"
-    assert configuration["prior_operation"] == "completed"
+    assert configuration["prior_operation"] == "complete"
     assert configuration["readiness"] == "completed-checkpoint"
     assert configuration["direction"] == direction
     assert configuration["checkpoint_basis"] == basis
+
+
+@pytest.mark.parametrize(
+    ("scenario", "route", "prior_operation"),
+    (
+        ("task-completed-continue-mulgae", "mulgae", "complete"),
+        ("task-completed-continue-orca", "orca", "complete"),
+        ("task-completed-continue-native-codex", "native-codex", "complete"),
+        ("task-completed-continue-waiver", "waived", "waived"),
+    ),
+)
+def test_completed_current_runtime_scenarios_preserve_route_and_consume_next_ordinal(
+    scenario: str, route: str, prior_operation: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    configuration = runtime.TASK_RESUME_SCENARIOS[scenario]
+
+    assert scenario in runtime.TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+    assert configuration["route"] == route
+    assert configuration["effective_route"] == route
+    assert configuration["prior_operation"] == prior_operation
+    assert configuration["readiness"] == "completed-checkpoint"
+    assert configuration["direction"] == "continue-current"
+    assert configuration["checkpoint_basis"] == "continued-checkpoint"
+
+
+def test_completed_waiver_runtime_scenario_can_switch_to_delegated_route() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    scenario = "task-completed-waiver-switch-native-codex"
+    configuration = runtime.TASK_RESUME_SCENARIOS[scenario]
+
+    assert scenario in runtime.TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+    assert configuration["route"] == "waived"
+    assert configuration["effective_route"] == "native-codex"
+    assert configuration["prior_operation"] == "waived"
+    assert configuration["readiness"] == "completed-checkpoint"
+    assert configuration["direction"] == "switch-route"
+    assert configuration["checkpoint_basis"] == "explicit-route-change"
 
 
 def test_goal_recovery_runtime_scenario_preserves_changed_orca_provider() -> None:

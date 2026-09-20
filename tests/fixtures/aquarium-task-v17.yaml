@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "18"
+version: "17"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -181,9 +181,9 @@ node_definitions:
   review-checkpoint-record:
     type: action
     title: Prepare the review checkpoint
-    intent: Bind the next review operation to the approved route, a completed-checkpoint continuation, or one explicit route change while preserving lineage.
+    intent: Bind the next review operation to the approved route or one explicit route change while preserving completed-checkpoint lineage.
     instructions:
-      - Use the approved plan route for the first checkpoint, continue the same completed route only through its bounded correction authority, or use one explicitly authorized route change or delegated-review waiver.
+      - Use the approved plan route unless the user explicitly authorized one bounded route change or delegated-review waiver.
       - For any route change after a started operation, carry its authoritative evidence reference, prior completed ordinal, findings, remaining authority, and corrected-target obligation.
       - This action records authority and lineage only; it does not launch a reviewer, waive review, or consume an assessment ordinal.
     items:
@@ -198,11 +198,10 @@ node_definitions:
           - waived
       - id: route-authorization-basis
         type: choice
-        prompt: Record whether the route starts from the approved plan, continues a completed checkpoint, resumes an unsettled operation, or comes from an explicit later change or waiver.
+        prompt: Record whether the route remains the approved plan route or comes from an explicit later change or waiver.
         required: true
         choices:
           - approved-plan
-          - continued-checkpoint
           - explicit-route-change
           - explicit-waiver
           - resume-current
@@ -212,13 +211,12 @@ node_definitions:
         required: true
         choices:
           - not-applicable
-          - continue-current
           - resume-current
           - switch-route
           - waive
       - id: route-change-authority-reference
         type: text
-        prompt: For a completed continuation, explicit change, or waiver, record the user authority and prior operation or completed-checkpoint evidence reference.
+        prompt: For an explicit change or waiver, record the user authority and prior operation or completed-checkpoint evidence reference.
         required: false
         required_when:
           - item: route-authorization-basis
@@ -232,10 +230,9 @@ node_definitions:
         required: true
         choices:
           - not-applicable
-          - complete
           - incomplete
           - failed
-          - waived
+          - completed
       - id: prior-review-route
         type: choice
         prompt: Carry the prior review operation's exact route identity, or record not-applicable for the initial planned route.
@@ -291,13 +288,13 @@ node_definitions:
       - id: route-direction-continuity
         type: check_result
         prompt: Record the caller-supplied continuity result binding the requested checkpoint direction to its exact authorization basis, prior lifecycle, readiness, and effective provider route.
-        help: "The declared operation is \"Validate exactly one Task review checkpoint direction: approved-plan uses not-applicable for the initial plan route; resume-current uses resume-current with an incomplete or failed prior operation whose route equals the effective provider; continued-checkpoint uses continue-current with an exact complete or waived prior operation, completed-checkpoint readiness, an unchanged effective route, a prior completed ordinal of at least one, preserved finding lineage and correction authority, and consumption of the next ordinal; explicit-route-change uses switch-route with a non-waived effective provider, requiring safe-to-change and a preserved pending ordinal after an incomplete or failed operation, or completed-checkpoint, an exact complete or waived prior operation, a prior completed ordinal of at least one, preserved lineage, and consumption of the next ordinal; explicit-waiver uses waive with effective waived under the same state-specific readiness, lineage, and ordinal rules.\" The matching digest identifies only this abstract slot contract and does not prove that any operation ran."
+        help: "The declared operation is \"Validate exactly one Task review checkpoint direction: approved-plan uses not-applicable; resume-current uses resume-current with an incomplete or failed prior operation whose route equals the effective provider; explicit-route-change uses switch-route with a non-waived effective provider, requiring safe-to-change and a preserved pending ordinal after an incomplete or failed operation, or completed-checkpoint, a prior completed ordinal of at least one, preserved lineage, and consumption of the next ordinal after a completed operation; explicit-waiver uses waive with effective waived under the same state-specific readiness, lineage, and ordinal rules.\" The matching digest identifies only this abstract slot contract and does not prove that any operation ran."
         required: false
         required_when:
           - item: route-authorization-basis
             not_equals: approved-plan
         operation_id: aquarium-task-review-route-direction-continuity
-        operation_digest: sha256:b1ce53cd8a97f86b2316ba016c704e70829a8bdfb31ded802cf6a08485c2715f
+        operation_digest: sha256:2b7ed39dae811563236b629a7f934f69924fdba16728b403b8a5f581abd0fbdd
         accepted_outcomes:
           - pass
           - fail
@@ -345,27 +342,6 @@ node_definitions:
               item: route-direction-continuity
             field: outcome
             equals: pass
-      - id: continued
-        label: Continue the completed route
-        criteria: The fresh checkpoint carries bounded correction authority and a passing continuity result for the exact preceding completed route.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: route-authorization-basis
-            equals: continued-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            not_equals: not-applicable
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: route-direction-continuity
-            field: outcome
-            equals: pass
       - id: resumed
         label: Resume the current route
         criteria: The fresh checkpoint carries a passing continuity result for the exact preceding unsettled provider operation and explicit resume-current direction.
@@ -374,6 +350,14 @@ node_definitions:
               node: prepare-review
               item: route-authorization-basis
             equals: resume-current
+          - evidence:
+              node: prepare-review
+              item: prior-review-operation
+            not_equals: completed
+          - evidence:
+              node: prepare-review
+              item: prior-review-operation
+            not_equals: not-applicable
           - evidence:
               node: prepare-review
               item: route-direction-continuity
@@ -388,30 +372,26 @@ node_definitions:
     objective: Route an authorized change according to whether the prior operation was incomplete, failed, or completed.
     prompt: Which prior-operation state governs this route change?
     options:
-      - id: unsettled-incomplete
-        label: Prior operation incomplete
-        criteria: The exact incomplete state remains in checkpoint evidence and requires safe settlement before changing routes.
+      - id: unsettled
+        label: Prior operation unsettled
+        criteria: The exact incomplete or failed state remains in checkpoint evidence and requires safe settlement before changing routes.
         guards:
           - evidence:
               node: prepare-review
               item: prior-review-operation
-            equals: incomplete
-      - id: unsettled-failed
-        label: Prior operation failed
-        criteria: The exact failed state remains in checkpoint evidence and requires safe settlement before changing routes.
+            not_equals: completed
+          - evidence:
+              node: prepare-review
+              item: prior-review-operation
+            not_equals: not-applicable
+      - id: completed
+        label: Prior checkpoint completed
+        criteria: The prior assessment completed and its lineage must be preserved by the route change.
         guards:
           - evidence:
               node: prepare-review
               item: prior-review-operation
-            equals: failed
-      - id: completed-delegated-mulgae
-        label: Prior Mulgae checkpoint completed
-        criteria: The prior Mulgae assessment completed and its lineage must be preserved by the route change.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: complete
+            equals: completed
           - evidence:
               node: prepare-review
               item: prior-assessment-ordinal
@@ -420,147 +400,9 @@ node_definitions:
               node: prepare-review
               item: prior-route-change-readiness
             equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: mulgae
-      - id: completed-delegated-orca
-        label: Prior Orca checkpoint completed
-        criteria: The prior Orca assessment completed and its lineage must be preserved by the route change.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: complete
-          - evidence:
-              node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: orca
-      - id: completed-delegated-native-codex
-        label: Prior native Codex checkpoint completed
-        criteria: The prior native Codex assessment completed and its lineage must be preserved by the route change.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: complete
-          - evidence:
-              node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: native-codex
-      - id: completed-waiver
-        label: Prior waiver checkpoint completed
-        criteria: The prior waiver assessment completed and its lineage must be preserved by the route change.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: waived
-          - evidence:
-              node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: waived
     reason:
       required: true
       prompt: Explain the prior operation state that owns the route-change path.
-  completed-current-review-state-decision:
-    type: decision
-    title: Classify the completed current review
-    objective: Continue only an exact completed delegated review or waiver assessment without changing its route.
-    prompt: Which completed operation owns this same-route continuation?
-    options:
-      - id: delegated
-        label: Continue a completed delegated review
-        criteria: A delegated review completed, consumed an ordinal, and remains ready for its bounded same-route confirmation.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: complete
-          - evidence:
-              node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            not_equals: waived
-      - id: waiver
-        label: Continue a completed waiver assessment
-        criteria: A waiver assessment completed, consumed an ordinal, and remains ready for its bounded same-route reassessment.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: waived
-          - evidence:
-              node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-route-change-readiness
-            equals: completed-checkpoint
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: waived
-    reason:
-      required: true
-      prompt: Explain the exact completed operation and ordinal that authorize this same-route continuation.
-  resumed-review-state-decision:
-    type: decision
-    title: Classify the unsettled current review
-    objective: Resume only an exact incomplete or failed delegated review operation.
-    prompt: Which unsettled operation owns this same-route resume?
-    options:
-      - id: incomplete
-        label: Resume an incomplete review
-        criteria: The immediately preceding delegated operation is exactly incomplete.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: incomplete
-      - id: failed
-        label: Resume a failed review
-        criteria: The immediately preceding delegated operation is exactly failed.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: failed
-    reason:
-      required: true
-      prompt: Explain the exact unsettled operation that permits current-route recovery.
   review-route-change-readiness-decision:
     type: decision
     title: Confirm incomplete review route-change readiness
@@ -937,95 +779,6 @@ node_definitions:
     reason:
       required: true
       prompt: Explain the changed route, explicit authority, and preserved completed-checkpoint lineage.
-  completed-current-review-route-authorization-decision:
-    type: decision
-    title: Authorize the completed current review route
-    objective: Admit only the same route that completed the preceding checkpoint under fresh bounded correction authority.
-    prompt: Which completed route may continue to its next assessment?
-    options:
-      - id: continued-mulgae
-        label: Continue Mulgae
-        criteria: The completed Mulgae route remains effective under fresh bounded correction authority.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: effective-review-route
-            equals: mulgae
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: mulgae
-          - evidence:
-              node: prepare-review
-              item: checkpoint-requested-direction
-            equals: continue-current
-          - evidence:
-              node: prepare-review
-              item: route-change-authority-reference
-            non_empty: true
-      - id: continued-orca
-        label: Continue Orca
-        criteria: The completed Orca route remains effective under fresh bounded correction authority.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: effective-review-route
-            equals: orca
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: orca
-          - evidence:
-              node: prepare-review
-              item: checkpoint-requested-direction
-            equals: continue-current
-          - evidence:
-              node: prepare-review
-              item: route-change-authority-reference
-            non_empty: true
-      - id: continued-native-codex
-        label: Continue native Codex
-        criteria: The completed native Codex route remains effective under fresh bounded correction authority.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: effective-review-route
-            equals: native-codex
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: native-codex
-          - evidence:
-              node: prepare-review
-              item: checkpoint-requested-direction
-            equals: continue-current
-          - evidence:
-              node: prepare-review
-              item: route-change-authority-reference
-            non_empty: true
-      - id: continued-waiver
-        label: Continue the waiver assessment
-        criteria: The completed waiver route remains effective under fresh bounded correction authority.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: effective-review-route
-            equals: waived
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: waived
-          - evidence:
-              node: prepare-review
-              item: checkpoint-requested-direction
-            equals: continue-current
-          - evidence:
-              node: prepare-review
-              item: route-change-authority-reference
-            non_empty: true
-    reason:
-      required: true
-      prompt: Explain how the prior route, completed operation, and one-time authority admit this next assessment.
   review-record:
     type: action
     title: Record selected completion review
@@ -1263,51 +1016,27 @@ node_definitions:
   review-operation-decision:
     type: decision
     title: Classify review operation
-    objective: Admit delegated-review semantics only after an exact completed or unsettled operation.
+    objective: Admit semantic review decisions only after a completed delegated review or waiver assessment.
     prompt: What authoritative operation state was recorded?
     evidence_guidance:
-      - Completed delegated routes use complete. Waiver records bypass this delegated-operation decision, while failed or incomplete operations stop for explicit route direction without consuming an ordinal.
+      - Completed delegated routes use complete, a waiver uses waived, and failed or incomplete operations stop for explicit route direction without consuming an ordinal.
     options:
       - id: assessed
         label: Review assessment completed
-        criteria: The exact complete delegated operation remains in review evidence and consumed a positive assessment ordinal.
+        criteria: The exact complete or waived operation remains in review evidence and consumed a positive assessment ordinal.
         guards:
-          - evidence:
-              node: review
-              item: review-operation
-            equals: complete
           - evidence:
               node: review
               item: assessment-ordinal
             at_least: 1
-      - id: incomplete
-        label: Review operation incomplete
-        criteria: The exact incomplete operation remains in review evidence and consumed no assessment ordinal.
+      - id: unsettled
+        label: Review operation unsettled
+        criteria: The exact incomplete or failed operation remains in review evidence and consumed no assessment ordinal.
         guards:
           - evidence:
               node: review
               item: review-route
             not_equals: waived
-          - evidence:
-              node: review
-              item: review-operation
-            equals: incomplete
-          - evidence:
-              node: review
-              item: assessment-ordinal
-            equals: 0
-      - id: failed
-        label: Review operation failed
-        criteria: The exact failed operation remains in review evidence and consumed no assessment ordinal.
-        guards:
-          - evidence:
-              node: review
-              item: review-route
-            not_equals: waived
-          - evidence:
-              node: review
-              item: review-operation
-            equals: failed
           - evidence:
               node: review
               item: assessment-ordinal
@@ -2402,11 +2131,8 @@ graph:
         changed:
           to: classify-review-route-change
           effect: advance
-        continued:
-          to: classify-completed-current-review
-          effect: advance
         resumed:
-          to: classify-resumed-review
+          to: authorize-current-review-route-resume
           effect: advance
     - id: classify-review-route-change
       use: review-route-change-state-decision
@@ -2419,55 +2145,11 @@ graph:
             - prior-review-route
             - prior-route-change-readiness
       routes:
-        unsettled-incomplete:
+        unsettled:
           to: confirm-review-route-change-readiness
           effect: advance
-        unsettled-failed:
-          to: confirm-review-route-change-readiness
-          effect: advance
-        completed-delegated-mulgae:
+        completed:
           to: authorize-completed-review-route
-          effect: advance
-        completed-delegated-orca:
-          to: authorize-completed-review-route
-          effect: advance
-        completed-delegated-native-codex:
-          to: authorize-completed-review-route
-          effect: advance
-        completed-waiver:
-          to: authorize-completed-review-route
-          effect: advance
-    - id: classify-completed-current-review
-      use: completed-current-review-state-decision
-      evidence_from:
-        - node: prepare-review
-          required: true
-          items:
-            - prior-assessment-ordinal
-            - prior-review-operation
-            - prior-review-route
-            - prior-route-change-readiness
-      routes:
-        delegated:
-          to: authorize-completed-current-review-route
-          effect: advance
-        waiver:
-          to: authorize-completed-current-review-route
-          effect: advance
-    - id: classify-resumed-review
-      use: resumed-review-state-decision
-      evidence_from:
-        - node: prepare-review
-          required: true
-          items:
-            - prior-review-operation
-            - prior-review-route
-      routes:
-        incomplete:
-          to: authorize-current-review-route-resume
-          effect: advance
-        failed:
-          to: authorize-current-review-route-resume
           effect: advance
     - id: confirm-review-route-change-readiness
       use: review-route-change-readiness-decision
@@ -2588,41 +2270,6 @@ graph:
         completed-change-waiver:
           to: enter-waived-review-route
           effect: advance
-    - id: authorize-completed-current-review-route
-      use: completed-current-review-route-authorization-decision
-      evidence_from:
-        - node: record-plan
-          required: true
-          items:
-            - review-route
-        - node: prepare-review
-          required: true
-          items:
-            - effective-review-route
-            - route-authorization-basis
-            - checkpoint-requested-direction
-            - route-change-authority-reference
-            - prior-review-operation
-            - prior-review-route
-            - prior-route-change-readiness
-            - prior-assessment-ordinal
-            - finding-lineage-summary
-            - remaining-review-authority-summary
-            - corrected-target-summary
-            - extra-assessment-authority-reference
-      routes:
-        continued-mulgae:
-          to: enter-mulgae-review-route
-          effect: advance
-        continued-orca:
-          to: enter-orca-review-route
-          effect: advance
-        continued-native-codex:
-          to: enter-native-codex-review-route
-          effect: advance
-        continued-waiver:
-          to: enter-waived-review-route
-          effect: advance
     - id: enter-mulgae-review-route
       use: authorized-review-route-entry-decision
       evidence_from:
@@ -2715,8 +2362,6 @@ graph:
           required: false
         - node: authorize-completed-review-route
           required: false
-        - node: authorize-completed-current-review-route
-          required: false
         - node: verify
           required: true
           items:
@@ -2766,10 +2411,7 @@ graph:
         assessed:
           to: confirm-assessment-ordinal
           effect: advance
-        incomplete:
-          to: confirm-incomplete-review-evidence
-          effect: advance
-        failed:
+        unsettled:
           to: confirm-incomplete-review-evidence
           effect: advance
     - id: decide-orca-review-operation
@@ -2786,10 +2428,7 @@ graph:
         assessed:
           to: confirm-assessment-ordinal
           effect: advance
-        incomplete:
-          to: confirm-incomplete-review-evidence
-          effect: advance
-        failed:
+        unsettled:
           to: confirm-incomplete-review-evidence
           effect: advance
     - id: decide-native-codex-review-operation
@@ -2806,10 +2445,7 @@ graph:
         assessed:
           to: confirm-assessment-ordinal
           effect: advance
-        incomplete:
-          to: confirm-incomplete-review-evidence
-          effect: advance
-        failed:
+        unsettled:
           to: confirm-incomplete-review-evidence
           effect: advance
     - id: confirm-assessment-ordinal

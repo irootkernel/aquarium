@@ -410,6 +410,41 @@ def task_rows(lines: list[str]) -> list[dict[str, str]]:
     return tasks
 
 
+def epic_summary_rows(text: str) -> list[dict[str, str]] | None:
+    lines = text.splitlines()
+    section_start: int | None = None
+    for index, line in enumerate(lines):
+        if re.fullmatch(r"##\s+Epic Summary\s*", line, re.IGNORECASE):
+            section_start = index + 1
+            break
+    if section_start is None:
+        return None
+
+    rows: list[dict[str, str]] = []
+    headers: list[str] | None = None
+    for line in lines[section_start:]:
+        if line.startswith("## "):
+            break
+        if not line.lstrip().startswith("|"):
+            headers = None
+            continue
+        cells = table_cells(line)
+        if not cells:
+            continue
+        if headers is None:
+            headers = [cell.casefold() for cell in cells]
+            continue
+        if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+            continue
+        if not headers or headers[0] != "epic" or "status" not in headers:
+            continue
+        status_index = headers.index("status")
+        if status_index >= len(cells) or not re.fullmatch(r"EPIC-[0-9]{3,}", cells[0]):
+            continue
+        rows.append({"id": cells[0], "status": cells[status_index]})
+    return rows
+
+
 def epic_sections(text: str) -> list[tuple[str, list[str]]]:
     lines = text.splitlines()
     headings: list[tuple[int, str]] = []
@@ -587,6 +622,51 @@ def inspect_roadmap(
         seen.update(identifiers)
         findings.extend(inspect_epic_lifecycle(epic, path, inventory, readable))
         epics.append(epic)
+
+    summary_rows = epic_summary_rows(text)
+    if summary_rows is not None:
+        summary_counts = Counter(row["id"] for row in summary_rows)
+        for identifier in sorted(
+            value for value, count in summary_counts.items() if count > 1
+        ):
+            findings.append(
+                finding(
+                    "roadmap_epic_summary_duplicate",
+                    "error",
+                    f"{identifier} appears more than once in Epic Summary.",
+                    path.as_posix(),
+                )
+            )
+        summary = {row["id"]: row["status"] for row in summary_rows}
+        sections = {epic["id"]: epic["status"] for epic in epics}
+        for identifier in sorted(sections.keys() - summary.keys()):
+            findings.append(
+                finding(
+                    "roadmap_epic_summary_missing",
+                    "error",
+                    f"{identifier} is defined in the roadmap but missing from Epic Summary.",
+                    path.as_posix(),
+                )
+            )
+        for identifier in sorted(summary.keys() - sections.keys()):
+            findings.append(
+                finding(
+                    "roadmap_epic_summary_orphaned",
+                    "error",
+                    f"{identifier} appears in Epic Summary without a roadmap section.",
+                    path.as_posix(),
+                )
+            )
+        for identifier in sorted(summary.keys() & sections.keys()):
+            if summary[identifier] != sections[identifier]:
+                findings.append(
+                    finding(
+                        "roadmap_epic_summary_status_mismatch",
+                        "error",
+                        f"{identifier} has status {summary[identifier]!r} in Epic Summary and {sections[identifier]!r} in its section.",
+                        path.as_posix(),
+                    )
+                )
     return {
         "scope": scope["name"],
         "path": path.as_posix(),

@@ -441,6 +441,95 @@ def test_duplicate_current_roadmap_identifier_is_nonconforming(tmp_path: Path) -
     assert "duplicate_roadmap_identifier" in finding_codes(payload)
 
 
+@pytest.mark.parametrize(
+    ("summary_rows", "expected_code"),
+    [
+        ("| EPIC-002 | Second | Planned |\n", "roadmap_epic_summary_missing"),
+        (
+            "| EPIC-001 | First | Completed |\n| EPIC-999 | Orphan | Planned |\n",
+            "roadmap_epic_summary_orphaned",
+        ),
+        ("| EPIC-001 | First | Completed |\n", "roadmap_epic_summary_status_mismatch"),
+    ],
+)
+def test_epic_summary_must_match_explicit_sections(
+    tmp_path: Path, summary_rows: str, expected_code: str
+) -> None:
+    repository = tmp_path / expected_code
+    initialize(repository)
+    make_single_scope(repository)
+    summary = (
+        "## Epic Summary\n\n"
+        "| Epic | Title | Status |\n"
+        "| --- | --- | --- |\n"
+        f"{summary_rows}\n"
+    )
+    path = repository / "docs/roadmap/README.md"
+    path.write_text(summary + roadmap(), encoding="utf-8")
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert expected_code in finding_codes(payload)
+
+
+def test_matching_epic_summary_is_conforming(tmp_path: Path) -> None:
+    repository = tmp_path / "matching-summary"
+    initialize(repository)
+    make_single_scope(repository)
+    summary = (
+        "## Epic Summary\n\n"
+        "| Epic | Title | Status |\n"
+        "| --- | --- | --- |\n"
+        "| EPIC-001 | First | Planned |\n\n"
+    )
+    path = repository / "docs/roadmap/README.md"
+    path.write_text(summary + roadmap(), encoding="utf-8")
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert not {
+        "roadmap_epic_summary_missing",
+        "roadmap_epic_summary_orphaned",
+        "roadmap_epic_summary_status_mismatch",
+    } & finding_codes(payload)
+
+
+@pytest.mark.parametrize(
+    ("order", "summary_rows"),
+    (
+        (
+            "matching-last",
+            "| EPIC-001 | First | Completed |\n| EPIC-001 | First | Planned |\n",
+        ),
+        (
+            "matching-first",
+            "| EPIC-001 | First | Planned |\n| EPIC-001 | First | Completed |\n",
+        ),
+    ),
+)
+def test_duplicate_epic_summary_rows_are_nonconforming(
+    tmp_path: Path, order: str, summary_rows: str
+) -> None:
+    repository = tmp_path / f"duplicate-summary-{order}"
+    initialize(repository)
+    make_single_scope(repository)
+    summary = (
+        "## Epic Summary\n\n"
+        "| Epic | Title | Status |\n"
+        "| --- | --- | --- |\n"
+        f"{summary_rows}\n"
+    )
+    path = repository / "docs/roadmap/README.md"
+    path.write_text(summary + roadmap(), encoding="utf-8")
+    commit_all(repository)
+
+    _, payload = inspect(repository)
+
+    assert "roadmap_epic_summary_duplicate" in finding_codes(payload)
+
+
 def test_dependency_table_does_not_define_tasks(tmp_path: Path) -> None:
     repository = tmp_path / "dependency-table"
     initialize(repository)

@@ -18,9 +18,9 @@
     },
     {
       "operation_id": "aquarium-task-review-route-direction-continuity",
-      "descriptor": "Validate exactly one Task review checkpoint direction: approved-plan uses not-applicable; resume-current uses resume-current with an incomplete or failed prior operation whose route equals the effective provider; explicit-route-change uses switch-route with a non-waived effective provider, requiring safe-to-change and a preserved pending ordinal after an incomplete or failed operation, or completed-checkpoint, a prior completed ordinal of at least one, preserved lineage, and consumption of the next ordinal after a completed operation; explicit-waiver uses waive with effective waived under the same state-specific readiness, lineage, and ordinal rules.",
+      "descriptor": "Validate exactly one Task review checkpoint direction: approved-plan uses not-applicable for the initial plan route; resume-current uses resume-current with an incomplete or failed prior operation whose route equals the effective provider; continued-checkpoint uses continue-current with an exact complete or waived prior operation, completed-checkpoint readiness, an unchanged effective route, a prior completed ordinal of at least one, preserved finding lineage and correction authority, and consumption of the next ordinal; explicit-route-change uses switch-route with a non-waived effective provider, requiring safe-to-change and a preserved pending ordinal after an incomplete or failed operation, or completed-checkpoint, an exact complete or waived prior operation, a prior completed ordinal of at least one, preserved lineage, and consumption of the next ordinal; explicit-waiver uses waive with effective waived under the same state-specific readiness, lineage, and ordinal rules.",
       "meaning": "A caller-recorded matrix check over checkpoint direction, route basis, prior lifecycle, change readiness, and effective provider route.",
-      "operation_digest": "sha256:2b7ed39dae811563236b629a7f934f69924fdba16728b403b8a5f581abd0fbdd",
+      "operation_digest": "sha256:b1ce53cd8a97f86b2316ba016c704e70829a8bdfb31ded802cf6a08485c2715f",
       "accepted_outcomes": [
         "pass",
         "fail",

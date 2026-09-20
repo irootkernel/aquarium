@@ -43,6 +43,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-013 | Record and report production setup status | Completed |
 | EPIC-014 | Align Procedure contracts and bound Low-finding convergence | Completed |
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
+| EPIC-016 | Add selectable workflow review routing | Completed |
 
 ## EPIC-001: Adopt Podway v0.2.6
 

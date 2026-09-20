@@ -334,7 +334,7 @@ TASK_RESUME_SCENARIOS = {
         "route": "mulgae",
         "effective_route": "orca",
         "operation": "complete",
-        "prior_operation": "completed",
+        "prior_operation": "complete",
         "prior_state": "terminal-complete",
         "readiness": "completed-checkpoint",
         "direction": "switch-route",
@@ -345,7 +345,7 @@ TASK_RESUME_SCENARIOS = {
         "route": "mulgae",
         "effective_route": "waived",
         "operation": "complete",
-        "prior_operation": "completed",
+        "prior_operation": "complete",
         "prior_state": "terminal-complete",
         "readiness": "completed-checkpoint",
         "direction": "waive",
@@ -356,7 +356,7 @@ TASK_RESUME_SCENARIOS = {
         "route": "mulgae",
         "effective_route": "waived",
         "operation": "complete",
-        "prior_operation": "completed",
+        "prior_operation": "complete",
         "prior_state": "terminal-complete",
         "readiness": "completed-checkpoint",
         "direction": "switch-route",
@@ -369,7 +369,7 @@ TASK_RESUME_SCENARIOS = {
         "route": "mulgae",
         "effective_route": "orca",
         "operation": "complete",
-        "prior_operation": "completed",
+        "prior_operation": "complete",
         "prior_state": "terminal-complete",
         "readiness": "completed-checkpoint",
         "direction": "waive",
@@ -377,6 +377,65 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "rejection_node": "validate-review-route-entry",
         "rejection_option": "changed",
+    },
+    "task-completed-continue-mulgae": {
+        "route": "mulgae",
+        "effective_route": "mulgae",
+        "operation": "complete",
+        "prior_operation": "complete",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "continue-current",
+        "checkpoint_basis": "continued-checkpoint",
+        "completed_transition": True,
+        "continued_checkpoint": True,
+    },
+    "task-completed-continue-waiver": {
+        "route": "waived",
+        "effective_route": "waived",
+        "operation": "waived",
+        "prior_operation": "waived",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "continue-current",
+        "checkpoint_basis": "continued-checkpoint",
+        "completed_transition": True,
+        "continued_checkpoint": True,
+    },
+    "task-completed-continue-orca": {
+        "route": "orca",
+        "effective_route": "orca",
+        "operation": "complete",
+        "prior_operation": "complete",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "continue-current",
+        "checkpoint_basis": "continued-checkpoint",
+        "completed_transition": True,
+        "continued_checkpoint": True,
+    },
+    "task-completed-continue-native-codex": {
+        "route": "native-codex",
+        "effective_route": "native-codex",
+        "operation": "complete",
+        "prior_operation": "complete",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "continue-current",
+        "checkpoint_basis": "continued-checkpoint",
+        "completed_transition": True,
+        "continued_checkpoint": True,
+    },
+    "task-completed-waiver-switch-native-codex": {
+        "route": "waived",
+        "effective_route": "native-codex",
+        "operation": "waived",
+        "prior_operation": "waived",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "switch-route",
+        "checkpoint_basis": "explicit-route-change",
+        "completed_transition": True,
     },
 }
 
@@ -3177,14 +3236,41 @@ class ManagedRuntime:
                 current_ordinal = self.read_complete_evidence(
                     observation, "review", "assessment-ordinal"
                 )
+                lineage = self.read_complete_evidence(
+                    observation, "prepare-review", "finding-lineage-summary"
+                )
+                authority = self.read_complete_evidence(
+                    observation,
+                    "prepare-review",
+                    "remaining-review-authority-summary",
+                )
+                corrected_target = self.read_complete_evidence(
+                    observation, "prepare-review", "corrected-target-summary"
+                )
                 if (
                     self.node_visits.get("validate-review-route-entry") != 1
-                    or self.node_visits.get("classify-review-route-change") != 1
-                    or self.node_visits.get("authorize-completed-review-route") != 1
+                    or self.node_visits.get(
+                        "classify-completed-current-review"
+                        if transition.get("continued_checkpoint")
+                        else "classify-review-route-change"
+                    )
+                    != 1
+                    or self.node_visits.get(
+                        "authorize-completed-current-review-route"
+                        if transition.get("continued_checkpoint")
+                        else "authorize-completed-review-route"
+                    )
+                    != 1
                     or self.node_visits.get(f"enter-{target_route}-review-route") != 1
                     or self.node_visits.get("review") != 1
                     or prior_ordinal != 1
                     or current_ordinal != 2
+                    or not isinstance(lineage, str)
+                    or not lineage
+                    or not isinstance(authority, str)
+                    or not authority
+                    or not isinstance(corrected_target, str)
+                    or not corrected_target
                 ):
                     raise RuntimeQualificationError(
                         "completed-checkpoint transition skipped entry, "
@@ -3199,9 +3285,14 @@ class ManagedRuntime:
                     "procedure_id": procedure_id,
                     "node": node,
                     "lifecycle": status["session"]["lifecycle"],
-                    "completed_checkpoint_transition": target_route,
+                    "completed_checkpoint_transition": (
+                        f"continued-{target_route}"
+                        if transition.get("continued_checkpoint")
+                        else target_route
+                    ),
                     "prior_ordinal": prior_ordinal,
                     "current_ordinal": current_ordinal,
+                    "lineage_preserved": True,
                 }
 
             if (
@@ -3859,7 +3950,9 @@ class ManagedRuntime:
                 special_option = "standard" if ordinal <= 4 else "authorized-extra"
             elif task_resume and node == "validate-review-route-entry":
                 special_option = (
-                    "changed"
+                    "continued"
+                    if task_resume.get("continued_checkpoint")
+                    else "changed"
                     if (
                         task_resume.get("completed_transition")
                         or self.node_visits.get("prepare-review", 0) > 1
@@ -3874,10 +3967,18 @@ class ManagedRuntime:
                 special_option = f"planned-{task_resume['route']}"
             elif task_resume and node == "classify-review-route-change":
                 special_option = (
-                    "completed"
+                    "completed-waiver"
+                    if task_resume.get("prior_operation") == "waived"
+                    else f"completed-delegated-{task_resume['route']}"
                     if task_resume.get("completed_transition")
-                    else "unsettled"
+                    else f"unsettled-{task_resume['operation']}"
                 )
+            elif task_resume and node == "classify-completed-current-review":
+                special_option = (
+                    "waiver" if task_resume["route"] == "waived" else "delegated"
+                )
+            elif task_resume and node == "classify-resumed-review":
+                special_option = task_resume["operation"]
             elif task_resume and node == "confirm-review-route-change-readiness":
                 special_option = "safe"
             elif task_resume and node == "authorize-incomplete-review-route":
@@ -3894,6 +3995,8 @@ class ManagedRuntime:
                     if target_route == "waived"
                     else f"completed-change-{target_route}"
                 )
+            elif task_resume and node == "authorize-completed-current-review-route":
+                special_option = f"continued-{task_resume['route']}"
             elif task_resume and node == "confirm-review-route-binding":
                 special_option = (
                     task_resume.get("effective_route", task_resume["route"])
@@ -3909,7 +4012,7 @@ class ManagedRuntime:
                 special_option = (
                     "assessed"
                     if task_resume.get("completed_transition")
-                    else "unsettled"
+                    else task_resume["operation"]
                 )
             elif task_resume and node == "confirm-incomplete-review-evidence":
                 special_option = (

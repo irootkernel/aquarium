@@ -104,6 +104,8 @@ waiver automatically. Offer only the actions supported by current authority:
 
 - `resume-current`: continue or recover the current native operation through
   its owner;
+- `continue-current` (Task only): run the next authorized assessment on the
+  same route after an exact completed delegated review or waiver assessment;
 - `switch-route`: select one supported route after the prior operation reaches
   an authoritative safe state;
 - `waive`: record an explicit waiver after the prior operation reaches an
@@ -123,6 +125,14 @@ A timeout is not terminal evidence. An uncertain mutation or missing native
 identity is an operational gap, not permission to launch another reviewer.
 Changing route does not reset the goal revision, remediation budget, findings,
 or corrected-target confirmation obligation.
+
+For Task checkpoints, `continue-current` requires the effective route to equal
+the immediately preceding `complete` or `waived` route. It retains that
+checkpoint's consumed ordinal, findings, lineage, and remaining authority, then
+assigns the next ordinal to the fresh assessment. Task `resume-current` admits
+only an immediately preceding `incomplete` or `failed` operation and retains its
+pending ordinal. Goal and validation keep their existing route-direction
+vocabulary.
 
 Each fresh Goal or validation checkpoint carries the immediately preceding
 review route and operation. Its caller-recorded route-binding check must compare

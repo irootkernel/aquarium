@@ -74,6 +74,32 @@ def test_task_parser_ignores_non_task_tables() -> None:
     assert inspect_docs.task_rows(lines) == []
 
 
+def test_epic_summary_parser_is_optional_and_section_bounded() -> None:
+    assert inspect_docs.epic_summary_rows("# Roadmap\n\n## EPIC-001: First\n") is None
+
+    text = """\
+# Roadmap
+
+## Epic Summary
+
+| Epic | Title | Status |
+| --- | --- | --- |
+| EPIC-001 | First | Completed |
+
+## EPIC-001: First
+
+**Status:** `Completed`
+
+| Epic | Status |
+| --- | --- |
+| EPIC-999 | Planned |
+"""
+
+    assert inspect_docs.epic_summary_rows(text) == [
+        {"id": "EPIC-001", "status": "Completed"}
+    ]
+
+
 def test_sensitive_paths_are_excluded_without_reading_values() -> None:
     assert inspect_docs.sensitive_path(Path(".env.example"))
     assert inspect_docs.sensitive_path(Path("docs/ops/key-rotation.md"))

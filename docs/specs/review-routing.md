@@ -47,6 +47,13 @@ Selecting Orca also records its reviewer. Each delegated route records its sourc
 scope and transmission boundary. Selecting `waived` records the target, the
 explicit waiver, its reason, and the resulting assurance limitation.
 
+A Task follow-up checkpoint on the same route uses `continue-current` after an
+exact `complete` or `waived` operation. It preserves the completed ordinal,
+finding lineage, and correction authority, then consumes the next ordinal for
+the fresh assessment. Task `resume-current` is reserved for an `incomplete` or
+`failed` operation that has not consumed an ordinal. Goal and validation retain
+their existing route-direction vocabulary.
+
 When no alternative is requested, Aquarium selects Mulgae. If the selected route
 is unavailable or cannot represent the target, the workflow stops before another
 provider call and asks the user to choose one of these actions:
@@ -106,8 +113,9 @@ operation state.
 
 Existing finding, priority, disposition, Review Brief, criterion assessment, and
 verification facts remain separate. An incomplete or failed attempt does not
-consume an assessment ordinal. Switching routes after a completed checkpoint
-uses the next ordinal and preserves every prior evidence reference and finding.
+consume an assessment ordinal. Continuing or switching after a completed
+checkpoint uses the next ordinal and preserves every prior evidence reference
+and finding.
 
 Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
 MCP gap blocks only the Mulgae route. Orca readiness blocks only Orca. Missing

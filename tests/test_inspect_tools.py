@@ -29,6 +29,7 @@ MULGAE_MCP_FIXTURES = ROOT / "tests/fixtures/codex-mcp-get-mulgae.json"
 TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
 TASK_V15_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v15.yaml"
 TASK_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v16.yaml"
+TASK_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v17.yaml"
 GOAL_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v18.yaml"
 GOAL_V19_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v19.yaml"
 VALIDATION_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v17.yaml"
@@ -4632,7 +4633,7 @@ else:
             (
                 "aquarium-task-v2.yaml",
                 "classify-review-route-change",
-                "unsettled",
+                "unsettled-incomplete",
                 "confirm-review-route-change-readiness",
             ),
             (
@@ -4650,7 +4651,13 @@ else:
             (
                 "aquarium-task-v2.yaml",
                 "decide-mulgae-review-operation",
-                "unsettled",
+                "incomplete",
+                "confirm-incomplete-review-evidence",
+            ),
+            (
+                "aquarium-task-v2.yaml",
+                "decide-mulgae-review-operation",
+                "failed",
                 "confirm-incomplete-review-evidence",
             ),
             (
@@ -4675,7 +4682,7 @@ else:
                 "aquarium-task-v2.yaml",
                 "validate-review-route-entry",
                 "resumed",
-                "authorize-current-review-route-resume",
+                "classify-resumed-review",
             ),
             (
                 "aquarium-task-v2.yaml",
@@ -5429,8 +5436,8 @@ else:
     ) -> None:
         fixtures = {
             "aquarium-task-v2.yaml": (
-                TASK_V16_PROCEDURE_FIXTURE,
-                "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
+                TASK_V17_PROCEDURE_FIXTURE,
+                "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
             ),
             "aquarium-goal-v2.yaml": (
                 GOAL_V19_PROCEDURE_FIXTURE,
@@ -5572,6 +5579,7 @@ else:
                     "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
                     "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
                     "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
+                    "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
                 },
                 "aquarium-goal-v2.yaml": {
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",

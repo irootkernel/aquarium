@@ -162,6 +162,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "a1661abed9aac01e10cd0475707d8e8f6e060eeaf6cc495ceb9f4b1ea91ef516",
         "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
         "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
+        "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
     },
     "aquarium-goal-v2.yaml": {
         "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
