@@ -25,19 +25,6 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-GLOBAL_SCRIPT_DIRECTORY = str(
-    Path(__file__).resolve().parents[2] / "dev-setup-global/scripts"
-)
-if GLOBAL_SCRIPT_DIRECTORY not in sys.path:
-    sys.path.insert(0, GLOBAL_SCRIPT_DIRECTORY)
-
-try:
-    import verify_dolgorae_release as dolgorae_release
-except ModuleNotFoundError as error:
-    if error.name != "verify_dolgorae_release":
-        raise
-    dolgorae_release = None
-
 SCHEMA_VERSION = "aquarium-dev-setup-inspection.v21"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
@@ -138,7 +125,7 @@ HUMANIZE_KOREAN_SKILL_FILES = (
     "references/scholarship.md",
     "references/web-service-spec.md",
 )
-IM_NOT_AI_SUPPORTED_RELEASE = "v2.3.2"
+IM_NOT_AI_MINIMUM_VERSION = "2.3.2"
 PODWAY_PROCEDURES = (
     "aquarium-task-v2.yaml",
     "aquarium-goal-v2.yaml",
@@ -770,10 +757,10 @@ def supported_sanho_version(version: str | None) -> bool:
 
 
 def supported_dolgorae_version(version: str | None) -> bool:
-    return bool(
-        dolgorae_release
-        and dolgorae_release.canonical_supported_tag(version) is not None
-    )
+    if not version:
+        return False
+    match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
+    return bool(match and int(match.group(1)) >= 2)
 
 
 def supported_gaori_version(version: str | None) -> bool:
@@ -1963,10 +1950,7 @@ def is_arm64_macho(path: Path) -> bool:
 def inspect_dolgorae(
     repository: Path,
     timeout_seconds: float,
-    verify_official_release: bool = False,
 ) -> dict[str, Any]:
-    if dolgorae_release is None:
-        raise RuntimeError("global Dolgorae release verifier is unavailable")
     discovered = shutil.which("dolgorae")
     tool = base_tool("dolgorae")
     tool["version_supported"] = False
@@ -1981,27 +1965,13 @@ def inspect_dolgorae(
     tool["safe_location"] = False
     tool["arm64_macho"] = False
     tool["executable_sha256"] = None
-    tool["official_executable"] = False
     tool["file_identity"] = None
     tool["identity_stable"] = False
     tool["capability_sha256"] = None
     tool["capabilities_compatible"] = False
-    tool["release_verification"] = {
-        "schema_version": dolgorae_release.SCHEMA_VERSION,
-        "status": "not_requested",
-    }
-
-    def verify_release(version: str | None) -> dict[str, Any]:
-        try:
-            return dolgorae_release.verify_release(version, timeout_seconds)
-        except dolgorae_release.ReleaseVerificationError as error:
-            return dolgorae_release.failure_result(error)
-
     if not discovered:
         tool["probes"]["version"] = skipped_probe("executable_missing")
         tool["probes"]["capabilities"] = skipped_probe("executable_missing")
-        if verify_official_release:
-            tool["release_verification"] = verify_release(None)
         return tool
 
     executable = Path(discovered)
@@ -2039,8 +2009,6 @@ def inspect_dolgorae(
     ):
         tool["probes"]["version"] = skipped_probe("executable_unsafe")
         tool["probes"]["capabilities"] = skipped_probe("executable_unsafe")
-        if verify_official_release:
-            tool["release_verification"] = verify_release(None)
         tool["status"] = "degraded"
         return tool
 
@@ -2072,27 +2040,6 @@ def inspect_dolgorae(
             normalized_probe_result["error_code"] = "unexpected_version_envelope"
     tool["probes"]["version"] = normalized_probe_result
     tool["version_supported"] = supported_dolgorae_version(tool["version"])
-
-    release = None
-    if verify_official_release and tool["version_supported"]:
-        tool["release_verification"] = verify_release(tool["version"])
-        if tool["release_verification"]["status"] == "verified":
-            release = tool["release_verification"]["release"]
-            tool["official_executable"] = (
-                tool["executable_sha256"] == release["executable_sha256"]
-            )
-    elif verify_official_release:
-        version_unknown = tool["version"] is None
-        tool["release_verification"] = dolgorae_release.failure_result(
-            dolgorae_release.ReleaseVerificationError(
-                "version_unknown" if version_unknown else "unsupported_version",
-                (
-                    "Dolgorae version could not be determined"
-                    if version_unknown
-                    else dolgorae_release.UNSUPPORTED_VERSION_MESSAGE
-                ),
-            )
-        )
 
     raw_capabilities_probe = run_command(
         [str(executable.resolve()), "runtime", "capabilities"],
@@ -2148,18 +2095,14 @@ def inspect_dolgorae(
         )
     except OSError:
         tool["identity_stable"] = False
-    if not tool["identity_stable"]:
-        tool["official_executable"] = False
     tool["status"] = (
         "installed"
         if valid_envelope
         and tool["version_supported"]
         and tool["platform"]["supported"]
         and tool["arm64_macho"]
-        and tool["official_executable"]
         and tool["identity_stable"]
         and valid_capabilities
-        and release is not None
         else "degraded"
     )
     return tool
@@ -3619,6 +3562,7 @@ def inspect_writing_skill(
     expected_target: Path | None,
     supported_release: str | None = None,
     minimum_version: str | None = None,
+    require_version: bool = True,
     roots: tuple[Path, ...] | None = None,
 ) -> dict[str, Any]:
     agent_skill = inspect_agent_skill(skill_name, expected_files, roots)
@@ -3652,11 +3596,11 @@ def inspect_writing_skill(
         )
         if skill_entry["present"] and not skill_entry["symlinked"]:
             version = frontmatter_version(Path(installation["path"]) / "SKILL.md")
-    version_supported = (
-        supported_stable_version(version, tuple(map(int, minimum_version.split("."))))
-        if minimum_version is not None
-        else None
-    )
+    version_supported = None
+    if minimum_version is not None and (version is not None or require_version):
+        version_supported = supported_stable_version(
+            version, tuple(map(int, minimum_version.split(".")))
+        )
     ready = structurally_ready and (version_supported is not False)
     return {
         "catalog_status": "active",
@@ -3709,7 +3653,8 @@ def inspect_im_not_ai() -> dict[str, Any]:
         skill_name="humanize-korean",
         expected_files=HUMANIZE_KOREAN_SKILL_FILES,
         expected_target=target,
-        supported_release=IM_NOT_AI_SUPPORTED_RELEASE,
+        minimum_version=IM_NOT_AI_MINIMUM_VERSION,
+        require_version=False,
         roots=roots,
     )
     if target is None:

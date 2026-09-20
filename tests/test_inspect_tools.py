@@ -13,7 +13,6 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
-from typing import Self
 from unittest import mock
 
 import yaml
@@ -41,7 +40,6 @@ NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
 sys.path.insert(0, str(SCRIPT.parent))
 
 import inspect_tools
-import verify_dolgorae_release
 
 
 class InspectToolsTest(unittest.TestCase):
@@ -266,46 +264,6 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         )
         executable.chmod(0o700)
         return executable, hashlib.sha256(executable.read_bytes()).hexdigest()
-
-    def dolgorae_release_metadata(
-        self,
-        tag: str = "v0.1.3",
-        *,
-        prerelease: bool = False,
-        commit: str = "4" * 40,
-        archive_sha: str = "8" * 64,
-        executable_sha: str = "c" * 64,
-    ) -> dict[str, object]:
-        archive = f"dolgorae-{tag}-aarch64-apple-darwin.tar.gz"
-        return {
-            "tag_name": tag,
-            "draft": False,
-            "prerelease": prerelease,
-            "target_commitish": commit,
-            "body": (
-                f"- Archive: `{archive}`.\n"
-                f"- Archive SHA-256: `{archive_sha}`.\n"
-                f"- Contained executable SHA-256: `{executable_sha}`.\n"
-                f"- Release commit: `{commit}`.\n"
-            ),
-            "assets": [
-                {
-                    "name": archive,
-                    "browser_download_url": (
-                        "https://github.com/irootkernel/dolgorae/releases/"
-                        f"download/{tag}/{archive}"
-                    ),
-                    "digest": f"sha256:{archive_sha}",
-                },
-                {
-                    "name": f"{archive}.sha256",
-                    "browser_download_url": (
-                        "https://github.com/irootkernel/dolgorae/releases/"
-                        f"download/{tag}/{archive}.sha256"
-                    ),
-                },
-            ],
-        }
 
     def install_fake_tools(
         self,
@@ -2174,37 +2132,22 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             unsupported["probes"]["doctor"]["reason"], "unsupported_runtime"
         )
 
-    def test_dolgorae_requires_verified_supported_machine_binary(self) -> None:
+    def test_dolgorae_requires_supported_machine_binary(self) -> None:
         capabilities = self.dolgorae_capabilities()
         _executable, digest = self.write_fake_dolgorae(capabilities)
-        verification = {
-            "schema_version": "aquarium-dolgorae-release-verification.v1",
-            "status": "verified",
-            "supported_version_range": ">=v0.1.2,<v0.2.0",
-            "release": {"tag": "v0.1.2", "executable_sha256": digest},
-        }
         with (
             mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=verification,
-            ) as verifier,
             mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
             mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
             mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
         ):
             tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
             )
 
-        verifier.assert_called_once_with("0.1.2", NORMAL_PROBE_TIMEOUT_SECONDS)
         self.assertEqual(tool["status"], "installed")
         self.assertEqual(tool["version"], "0.1.2")
         self.assertTrue(tool["version_supported"])
-        self.assertTrue(tool["official_executable"])
         self.assertTrue(tool["identity_stable"])
         self.assertTrue(tool["arm64_macho"])
         self.assertTrue(tool["capabilities_compatible"])
@@ -2217,7 +2160,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             tool["capability_sha256"], hashlib.sha256(canonical).hexdigest()
         )
 
-    def test_dolgorae_rejects_invalid_version_json_before_release_lookup(self) -> None:
+    def test_dolgorae_rejects_invalid_version_json(self) -> None:
         self.write_fake_dolgorae(self.dolgorae_capabilities())
         valid = {"name": "dolgorae", "version": "v0.1.2"}
         cases = [
@@ -2266,29 +2209,16 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 with (
                     mock.patch.dict(os.environ, self.environment, clear=True),
                     mock.patch.object(inspect_tools, "run_command", side_effect=run),
-                    mock.patch.object(
-                        inspect_tools.dolgorae_release, "verify_release"
-                    ) as verify,
                 ):
                     result = inspect_tools.inspect_dolgorae(
-                        self.repository,
-                        NORMAL_PROBE_TIMEOUT_SECONDS,
-                        verify_official_release=True,
+                        self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
                     )
-                verify.assert_not_called()
                 self.assertIsNone(result["version"])
-                self.assertFalse(result["official_executable"])
                 self.assertEqual(result["status"], "degraded")
 
     def test_dolgorae_inspection_detects_executable_drift_after_probes(self) -> None:
         capabilities = self.dolgorae_capabilities()
-        executable, digest = self.write_fake_dolgorae(capabilities)
-        verification = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2", "executable_sha256": digest},
-        }
+        executable, _digest = self.write_fake_dolgorae(capabilities)
         real_run_command = inspect_tools.run_command
         probe_count = 0
 
@@ -2304,11 +2234,6 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
 
         with (
             mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=verification,
-            ),
             mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
             mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
             mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
@@ -2317,14 +2242,11 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             ),
         ):
             tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
             )
 
         self.assertEqual(tool["status"], "degraded")
         self.assertFalse(tool["identity_stable"])
-        self.assertFalse(tool["official_executable"])
 
     def test_dolgorae_v010_and_prereleases_are_not_supported(self) -> None:
         self.assertFalse(inspect_tools.supported_dolgorae_version("0.1.0"))
@@ -2605,28 +2527,15 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def test_dolgorae_inspection_rejects_incompatible_capabilities(self) -> None:
         capabilities = self.dolgorae_capabilities()
         capabilities["controller_carrier_root"] = "home/.dolgorae/other"
-        _executable, digest = self.write_fake_dolgorae(capabilities)
-        verification = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2", "executable_sha256": digest},
-        }
+        self.write_fake_dolgorae(capabilities)
         with (
             mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=verification,
-            ),
             mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
             mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
             mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
         ):
             tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
             )
 
         self.assertEqual(tool["status"], "degraded")
@@ -2636,112 +2545,21 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             "incompatible_capabilities",
         )
 
-    def test_dolgorae_inspection_without_release_flag_is_degraded(self) -> None:
-        capabilities = self.dolgorae_capabilities()
-        self.write_fake_dolgorae(capabilities)
-        with (
-            mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release, "verify_release"
-            ) as verifier,
-            mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
-            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
-            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
-        ):
-            tool = inspect_tools.inspect_dolgorae(
-                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
-            )
-
-        verifier.assert_not_called()
-        self.assertEqual(tool["status"], "degraded")
-        self.assertEqual(tool["release_verification"]["status"], "not_requested")
-        self.assertTrue(tool["capabilities_compatible"])
-        self.assertFalse(tool["official_executable"])
-
-    def test_dolgorae_inspection_rejects_checksum_mismatch(self) -> None:
-        self.write_fake_dolgorae(self.dolgorae_capabilities())
-        verification = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2", "executable_sha256": "0" * 64},
-        }
-        with (
-            mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=verification,
-            ),
-            mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
-            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
-            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
-        ):
-            tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
-            )
-
-        self.assertEqual(tool["status"], "degraded")
-        self.assertFalse(tool["official_executable"])
-
-    def test_dolgorae_inspection_reports_release_metadata_failure(self) -> None:
-        self.write_fake_dolgorae(self.dolgorae_capabilities())
-        failure = verify_dolgorae_release.ReleaseVerificationError(
-            "metadata_unavailable", "metadata unavailable"
-        )
-        with (
-            mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                side_effect=failure,
-            ),
-            mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
-            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
-            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
-        ):
-            tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
-            )
-
-        self.assertEqual(tool["status"], "degraded")
-        self.assertEqual(
-            tool["release_verification"]["error"]["code"],
-            "metadata_unavailable",
-        )
-
     def test_dolgorae_inspection_distinguishes_unknown_and_unsupported_versions(
         self,
     ) -> None:
-        for version, expected_code in (
-            ("invalid", "version_unknown"),
-            ("0.1.0", "unsupported_version"),
-            ("0.1.1", "unsupported_version"),
-        ):
+        for version in ("invalid", "0.1.0", "0.1.1"):
             with self.subTest(version=version):
                 self.write_fake_dolgorae(
                     self.dolgorae_capabilities(version), version=version
                 )
-                with (
-                    mock.patch.dict(os.environ, self.environment, clear=True),
-                    mock.patch.object(
-                        inspect_tools.dolgorae_release, "verify_release"
-                    ) as verifier,
-                ):
+                with mock.patch.dict(os.environ, self.environment, clear=True):
                     tool = inspect_tools.inspect_dolgorae(
-                        self.repository,
-                        NORMAL_PROBE_TIMEOUT_SECONDS,
-                        verify_official_release=True,
+                        self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
                     )
-                verifier.assert_not_called()
-                self.assertEqual(
-                    tool["release_verification"]["error"]["code"], expected_code
-                )
-                if expected_code == "version_unknown":
+                self.assertEqual(tool["status"], "degraded")
+                self.assertFalse(tool["version_supported"])
+                if version == "invalid":
                     self.assertEqual(
                         tool["probes"]["version"]["error_code"],
                         "unexpected_version_envelope",
@@ -2777,19 +2595,13 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     mock.patch.object(
                         inspect_tools, "run_command", return_value=raw_probe
                     ),
-                    mock.patch.object(
-                        inspect_tools.dolgorae_release, "verify_release"
-                    ) as verifier,
                 ):
                     tool = inspect_tools.inspect_dolgorae(
-                        self.repository,
-                        NORMAL_PROBE_TIMEOUT_SECONDS,
-                        verify_official_release=True,
+                        self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(tool["status"], "degraded")
                 self.assertEqual(tool["probes"]["version"]["error_code"], expected_code)
                 self.assertIsNone(tool["version"])
-                verifier.assert_not_called()
 
     def test_dolgorae_inspection_preserves_capabilities_probe_failure(self) -> None:
         executable = self.bin_directory / "dolgorae"
@@ -2815,42 +2627,25 @@ else:
         self.assertEqual(tool["status"], "degraded")
         self.assertEqual(tool["probes"]["capabilities"]["error_code"], "invalid_json")
 
-    def test_dolgorae_inspection_skips_unsafe_executable_and_recommends_release(
-        self,
-    ) -> None:
+    def test_dolgorae_inspection_skips_unsafe_executable(self) -> None:
         unsafe_bin = self.home / ".aquarium-dev/bin"
         unsafe_bin.mkdir(parents=True)
         executable, _digest = self.write_fake_dolgorae(self.dolgorae_capabilities())
         executable.replace(unsafe_bin / "dolgorae")
         unsafe_environment = self.environment | {"PATH": f"{unsafe_bin}:/usr/bin:/bin"}
-        recommendation = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2"},
-        }
         with (
             mock.patch.dict(os.environ, unsafe_environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=recommendation,
-            ) as verifier,
             mock.patch.object(inspect_tools, "run_command") as run_command,
         ):
             tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
             )
 
-        verifier.assert_called_once_with(None, NORMAL_PROBE_TIMEOUT_SECONDS)
         run_command.assert_not_called()
         self.assertEqual(tool["status"], "degraded")
         self.assertFalse(tool["safe_location"])
         self.assertEqual(tool["probes"]["version"]["reason"], "executable_unsafe")
         self.assertEqual(tool["probes"]["capabilities"]["reason"], "executable_unsafe")
-        self.assertEqual(tool["release_verification"]["status"], "verified")
 
     def test_dolgorae_inspection_skips_symlinked_executable(self) -> None:
         target = self.base / "dolgorae-target"
@@ -2859,54 +2654,16 @@ else:
         (self.bin_directory / "dolgorae").symlink_to(target)
         with (
             mock.patch.dict(os.environ, self.environment, clear=True),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value={
-                    "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-                    "status": "verified",
-                    "release": {"tag": "v0.1.2"},
-                },
-            ),
             mock.patch.object(inspect_tools, "run_command") as run_command,
         ):
             tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS
             )
 
         run_command.assert_not_called()
         self.assertTrue(tool["symlinked"])
         self.assertEqual(tool["status"], "degraded")
         self.assertEqual(tool["probes"]["version"]["reason"], "executable_unsafe")
-
-    def test_dolgorae_inspection_verifies_recommendation_when_binary_is_missing(
-        self,
-    ) -> None:
-        recommendation = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2"},
-        }
-        with (
-            mock.patch.object(inspect_tools.shutil, "which", return_value=None),
-            mock.patch.object(
-                inspect_tools.dolgorae_release,
-                "verify_release",
-                return_value=recommendation,
-            ) as verifier,
-        ):
-            tool = inspect_tools.inspect_dolgorae(
-                self.repository,
-                NORMAL_PROBE_TIMEOUT_SECONDS,
-                verify_official_release=True,
-            )
-
-        verifier.assert_called_once_with(None, NORMAL_PROBE_TIMEOUT_SECONDS)
-        self.assertEqual(tool["status"], "missing")
-        self.assertEqual(tool["release_verification"]["status"], "verified")
 
     def test_dolgorae_arm64_macho_detection(self) -> None:
         arm64 = self.base / "arm64"
@@ -2929,557 +2686,6 @@ else:
         self.assertFalse(inspect_tools.is_arm64_macho(x86_64))
         self.assertFalse(inspect_tools.is_arm64_macho(short))
         self.assertFalse(inspect_tools.is_arm64_macho(self.base / "missing"))
-
-    def test_dolgorae_release_verifier_selects_latest_supported_patch(self) -> None:
-        commit = "4" * 40
-        tag_object = "5" * 40
-
-        releases = [
-            self.dolgorae_release_metadata("v0.1.2"),
-            self.dolgorae_release_metadata("v0.1.3", prerelease=True),
-            self.dolgorae_release_metadata("v0.1.3"),
-            self.dolgorae_release_metadata("v0.2.0"),
-        ]
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if url.endswith("releases?per_page=100&page=1"):
-                return releases
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": tag_object}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": commit}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release(None, 1.0, fetcher)
-
-        self.assertEqual(result["status"], "verified")
-        self.assertEqual(result["release"]["tag"], "v0.1.3")
-        self.assertEqual(result["supported_version_range"], ">=v0.1.2,<v0.2.0")
-
-    def test_dolgorae_release_verifier_paginates_bounded_listing(self) -> None:
-        commit = "4" * 40
-        tag_object = "5" * 40
-        unsupported = [
-            self.dolgorae_release_metadata("v0.2.0")
-            for _index in range(verify_dolgorae_release.RELEASES_PER_PAGE)
-        ]
-        requested: list[str] = []
-
-        def fetcher(url: str, _timeout: float) -> object:
-            requested.append(url)
-            if url.endswith("page=1"):
-                return unsupported
-            if url.endswith("page=2"):
-                return [self.dolgorae_release_metadata("v0.1.5")]
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": tag_object}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": commit}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release(None, 1.0, fetcher)
-
-        self.assertEqual(result["release"]["tag"], "v0.1.5")
-        self.assertTrue(any(url.endswith("page=2") for url in requested))
-        self.assertFalse(any(url.endswith("page=3") for url in requested))
-
-    def test_dolgorae_release_verifier_fails_at_listing_page_limit(self) -> None:
-        requested: list[str] = []
-        full_page = [
-            self.dolgorae_release_metadata("v0.2.0")
-            for _index in range(verify_dolgorae_release.RELEASES_PER_PAGE)
-        ]
-
-        def fetcher(url: str, _timeout: float) -> object:
-            requested.append(url)
-            return full_page
-
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.verify_release(None, 1.0, fetcher)
-
-        self.assertEqual(context.exception.code, "release_listing_limit")
-        self.assertEqual(len(requested), verify_dolgorae_release.MAX_RELEASE_PAGES)
-        self.assertTrue(requested[-1].endswith("page=10"))
-
-    def test_dolgorae_release_verifier_pins_v012_identity(self) -> None:
-        pinned = verify_dolgorae_release.PINNED_RELEASES["v0.1.2"]
-        release = self.dolgorae_release_metadata(
-            "v0.1.2",
-            commit=pinned["source_commit"],
-            archive_sha=pinned["archive_sha256"],
-            executable_sha=pinned["executable_sha256"],
-        )
-        tag_object = "5" * 40
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": tag_object}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": pinned["source_commit"]}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release("0.1.2", 1.0, fetcher)
-        self.assertEqual(result["release"]["source_commit"], pinned["source_commit"])
-
-        for field in ("source_commit", "archive_sha256", "executable_sha256"):
-            with self.subTest(field=field):
-                changed = copy.deepcopy(release)
-                changed_commit = pinned["source_commit"]
-                if field == "archive_sha256":
-                    changed["assets"][0]["digest"] = f"sha256:{'0' * 64}"
-                elif field == "executable_sha256":
-                    changed["body"] = changed["body"].replace(
-                        pinned["executable_sha256"], "0" * 64
-                    )
-                else:
-                    changed_commit = "1" * 40
-
-                def changed_fetcher(
-                    url: str,
-                    timeout: float,
-                    release_metadata: dict[str, object] = changed,
-                    release_commit: str = changed_commit,
-                ) -> object:
-                    if "/releases/tags/" in url:
-                        return release_metadata
-                    if "/git/tags/" in url:
-                        return {"object": {"type": "commit", "sha": release_commit}}
-                    return fetcher(url, timeout)
-
-                with self.assertRaises(
-                    verify_dolgorae_release.ReleaseVerificationError
-                ) as context:
-                    verify_dolgorae_release.verify_release(
-                        "v0.1.2", 1.0, changed_fetcher
-                    )
-                self.assertEqual(context.exception.code, "pinned_release_mismatch")
-
-    def test_dolgorae_release_verifier_uses_structured_identity_sources(self) -> None:
-        release = self.dolgorae_release_metadata()
-        release["target_commitish"] = "main"
-        release["body"] = (
-            "Human-readable release notes may change.\r\n"
-            f"+ __Contained executable SHA-256__: {('c' * 64)}\r\n"
-        )
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": "5" * 40}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": "4" * 40}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
-        self.assertEqual(result["release"]["tag"], "v0.1.3")
-        self.assertEqual(result["release"]["source_commit"], "4" * 40)
-        self.assertEqual(result["release"]["archive_sha256"], "8" * 64)
-
-    def test_dolgorae_release_verifier_accepts_wrapped_digest_declaration(
-        self,
-    ) -> None:
-        release = self.dolgorae_release_metadata()
-        release["body"] = (
-            "Contained executable SHA-256:\n"
-            f"  `{('c' * 64)}`.\n"
-            "A later paragraph mentions Contained executable SHA-256 without declaring it.\n"
-        )
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": "5" * 40}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": "4" * 40}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
-
-        self.assertEqual(result["release"]["executable_sha256"], "c" * 64)
-
-    def test_dolgorae_release_verifier_ignores_example_digests(self) -> None:
-        release = self.dolgorae_release_metadata()
-        release["body"] = (
-            "```text\n"
-            f"Contained executable SHA-256: {'0' * 64}\n"
-            "```\n"
-            f"    Contained executable SHA-256: {'1' * 64}\n"
-            f"- contained executable sha-256: `{('c' * 64)}`.\n"
-        )
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": "5" * 40}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": "4" * 40}}
-            raise AssertionError(url)
-
-        result = verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
-
-        self.assertEqual(result["release"]["executable_sha256"], "c" * 64)
-
-    def test_dolgorae_release_verifier_rejects_invalid_release_identity(self) -> None:
-        cases: list[tuple[str, object, str]] = []
-        duplicate = self.dolgorae_release_metadata()
-        duplicate["assets"].append(copy.deepcopy(duplicate["assets"][0]))
-        cases.append(("duplicate asset", duplicate, "duplicate_asset"))
-
-        wrong_url = self.dolgorae_release_metadata()
-        wrong_url["assets"][0]["browser_download_url"] = "https://example.invalid/a"
-        cases.append(("wrong asset URL", wrong_url, "invalid_asset"))
-
-        malformed_digest = self.dolgorae_release_metadata()
-        malformed_digest["assets"][0]["digest"] = f"sha512:{'0' * 64}"
-        cases.append(
-            ("malformed archive digest", malformed_digest, "archive_digest_mismatch")
-        )
-
-        missing_asset = self.dolgorae_release_metadata()
-        missing_asset["assets"].pop()
-        cases.append(("missing asset", missing_asset, "missing_asset"))
-
-        missing_note = self.dolgorae_release_metadata()
-        missing_note["body"] = "- Archive: `missing`.\n"
-        cases.append(
-            ("missing release note identity", missing_note, "invalid_release_notes")
-        )
-
-        conflicting_note = self.dolgorae_release_metadata()
-        conflicting_note["body"] += f"Contained executable SHA-256: {'0' * 64}\n"
-        cases.append(
-            ("conflicting executable digest", conflicting_note, "invalid_release_notes")
-        )
-
-        draft = self.dolgorae_release_metadata()
-        draft["draft"] = True
-        cases.append(("draft", draft, "unsupported_release"))
-
-        for name, release, expected_code in cases:
-            with self.subTest(name=name):
-                with self.assertRaises(
-                    verify_dolgorae_release.ReleaseVerificationError
-                ) as context:
-                    verify_dolgorae_release.verify_release(
-                        "v0.1.3",
-                        1.0,
-                        lambda url, _timeout, item=release: (
-                            item
-                            if "/releases/tags/" in url
-                            else (_ for _ in ()).throw(AssertionError(url))
-                        ),
-                    )
-                self.assertEqual(context.exception.code, expected_code)
-
-    def test_dolgorae_release_verifier_rejects_invalid_annotated_tag(self) -> None:
-        release = self.dolgorae_release_metadata()
-
-        def fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "commit", "sha": "5" * 40}}
-            raise AssertionError(url)
-
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.verify_release("v0.1.3", 1.0, fetcher)
-        self.assertEqual(context.exception.code, "invalid_tag")
-
-        def malformed_peel_fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": "5" * 40}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": "not-a-commit"}}
-            raise AssertionError(url)
-
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.verify_release(
-                "v0.1.3", 1.0, malformed_peel_fetcher
-            )
-        self.assertEqual(context.exception.code, "invalid_tag")
-
-        def numeric_peel_fetcher(url: str, _timeout: float) -> object:
-            if "/releases/tags/" in url:
-                return release
-            if "/git/ref/tags/" in url:
-                return {"object": {"type": "tag", "sha": "5" * 40}}
-            if "/git/tags/" in url:
-                return {"object": {"type": "commit", "sha": int("4" * 40)}}
-            raise AssertionError(url)
-
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.verify_release("v0.1.3", 1.0, numeric_peel_fetcher)
-        self.assertEqual(context.exception.code, "invalid_tag")
-
-    def test_dolgorae_release_fetch_rejects_untrusted_or_malformed_responses(
-        self,
-    ) -> None:
-        class Response:
-            def __init__(self, url: str, content: bytes) -> None:
-                self.url = url
-                self.content = content
-
-            def __enter__(self) -> Self:
-                return self
-
-            def __exit__(self, *_arguments: object) -> None:
-                return None
-
-            def geturl(self) -> str:
-                return self.url
-
-            def read(self, _limit: int) -> bytes:
-                return self.content
-
-        class BrokenResponse(Response):
-            def read(self, _limit: int) -> bytes:
-                raise verify_dolgorae_release.http.client.IncompleteRead(b"")
-
-        endpoint = f"{verify_dolgorae_release.API_ROOT}/releases/tags/v0.1.3"
-        cases = (
-            (
-                "redirect",
-                Response("https://example.invalid/release", b"{}"),
-                "unexpected_endpoint",
-            ),
-            (
-                "oversized",
-                Response(
-                    endpoint, b"x" * (verify_dolgorae_release.MAX_RESPONSE_BYTES + 1)
-                ),
-                "metadata_too_large",
-            ),
-            (
-                "duplicate JSON key",
-                Response(endpoint, b'{"tag":"a","tag":"b"}'),
-                "invalid_metadata",
-            ),
-        )
-        for name, response, expected_code in cases:
-            with self.subTest(name=name):
-                with (
-                    mock.patch.object(
-                        verify_dolgorae_release.urllib.request,
-                        "urlopen",
-                        return_value=response,
-                    ),
-                    self.assertRaises(
-                        verify_dolgorae_release.ReleaseVerificationError
-                    ) as context,
-                ):
-                    verify_dolgorae_release.fetch_json(endpoint, 1.0)
-                self.assertEqual(context.exception.code, expected_code)
-
-        for name, urlopen_result in (
-            (
-                "network error",
-                mock.DEFAULT,
-            ),
-            (
-                "incomplete response",
-                BrokenResponse(endpoint, b""),
-            ),
-        ):
-            with self.subTest(name=name):
-                urlopen = (
-                    mock.patch.object(
-                        verify_dolgorae_release.urllib.request,
-                        "urlopen",
-                        side_effect=verify_dolgorae_release.urllib.error.URLError(
-                            "unavailable"
-                        ),
-                    )
-                    if urlopen_result is mock.DEFAULT
-                    else mock.patch.object(
-                        verify_dolgorae_release.urllib.request,
-                        "urlopen",
-                        return_value=urlopen_result,
-                    )
-                )
-                with (
-                    urlopen,
-                    self.assertRaises(
-                        verify_dolgorae_release.ReleaseVerificationError
-                    ) as context,
-                ):
-                    verify_dolgorae_release.fetch_json(endpoint, 1.0)
-                self.assertEqual(context.exception.code, "metadata_unavailable")
-
-        with self.assertRaises(
-            verify_dolgorae_release.ReleaseVerificationError
-        ) as context:
-            verify_dolgorae_release.fetch_json("https://example.invalid/release", 1.0)
-        self.assertEqual(context.exception.code, "unexpected_endpoint")
-
-    def test_dolgorae_release_fetch_maps_not_found_and_omits_credentials(self) -> None:
-        endpoint = f"{verify_dolgorae_release.API_ROOT}/releases/tags/v0.1.3"
-        not_found = verify_dolgorae_release.urllib.error.HTTPError(
-            endpoint, 404, "not found", {}, None
-        )
-        with (
-            mock.patch.object(
-                verify_dolgorae_release.urllib.request,
-                "urlopen",
-                side_effect=not_found,
-            ),
-            self.assertRaises(
-                verify_dolgorae_release.ReleaseVerificationError
-            ) as context,
-        ):
-            verify_dolgorae_release.fetch_json(endpoint, 1.0)
-        self.assertEqual(context.exception.code, "release_not_found")
-        not_found.close()
-
-        server_error = verify_dolgorae_release.urllib.error.HTTPError(
-            endpoint, 500, "server error", {}, None
-        )
-        with (
-            mock.patch.object(
-                verify_dolgorae_release.urllib.request,
-                "urlopen",
-                side_effect=server_error,
-            ),
-            self.assertRaises(
-                verify_dolgorae_release.ReleaseVerificationError
-            ) as context,
-        ):
-            verify_dolgorae_release.fetch_json(endpoint, 1.0)
-        self.assertEqual(context.exception.code, "metadata_unavailable")
-        server_error.close()
-
-        response = mock.MagicMock()
-        response.__enter__.return_value = response
-        response.geturl.return_value = endpoint
-        response.read.return_value = b"{}"
-        requests: list[object] = []
-
-        def urlopen(request: object, timeout: float) -> object:
-            requests.append(request)
-            self.assertEqual(timeout, 1.0)
-            return response
-
-        with mock.patch.object(
-            verify_dolgorae_release.urllib.request,
-            "urlopen",
-            side_effect=urlopen,
-        ):
-            self.assertEqual(verify_dolgorae_release.fetch_json(endpoint, 1.0), {})
-        self.assertEqual(len(requests), 1)
-        request = requests[0]
-        self.assertIsInstance(request, verify_dolgorae_release.urllib.request.Request)
-        headers = {name.lower(): value for name, value in request.header_items()}
-        self.assertNotIn("authorization", headers)
-        self.assertEqual(headers["user-agent"], "aquarium-dolgorae-release-verifier/1")
-
-    def test_dolgorae_release_verifier_cli_emits_versioned_json(self) -> None:
-        verification = {
-            "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-            "status": "verified",
-            "supported_version_range": verify_dolgorae_release.SUPPORTED_VERSION_RANGE,
-            "release": {"tag": "v0.1.2"},
-        }
-        output = io.StringIO()
-        with (
-            mock.patch.object(
-                verify_dolgorae_release,
-                "verify_release",
-                return_value=verification,
-            ) as verifier,
-            mock.patch.object(
-                sys, "argv", ["verify_dolgorae_release.py", "--version", "0.1.2"]
-            ),
-            mock.patch.object(sys, "stdout", output),
-        ):
-            exit_code = verify_dolgorae_release.main()
-
-        self.assertEqual(exit_code, 0)
-        verifier.assert_called_once_with("0.1.2", 10.0)
-        self.assertEqual(json.loads(output.getvalue()), verification)
-
-    def test_dolgorae_release_verifier_cli_emits_failure_json(self) -> None:
-        output = io.StringIO()
-        failure = verify_dolgorae_release.ReleaseVerificationError(
-            "release_not_found", "release not found"
-        )
-        with (
-            mock.patch.object(
-                verify_dolgorae_release, "verify_release", side_effect=failure
-            ),
-            mock.patch.object(sys, "argv", ["verify_dolgorae_release.py"]),
-            mock.patch.object(sys, "stdout", output),
-        ):
-            exit_code = verify_dolgorae_release.main()
-
-        self.assertEqual(exit_code, 1)
-        self.assertEqual(
-            json.loads(output.getvalue()),
-            {
-                "schema_version": verify_dolgorae_release.SCHEMA_VERSION,
-                "status": "failed",
-                "error": {
-                    "code": "release_not_found",
-                    "message": "release not found",
-                },
-            },
-        )
-
-    def test_dolgorae_release_verifier_rejects_invalid_timeout(self) -> None:
-        for timeout in (0.0, -1.0, float("inf"), float("nan")):
-            with (
-                self.subTest(timeout=timeout),
-                self.assertRaises(
-                    verify_dolgorae_release.ReleaseVerificationError
-                ) as context,
-            ):
-                verify_dolgorae_release.verify_release("v0.1.2", timeout)
-            self.assertEqual(context.exception.code, "invalid_timeout")
-
-    def test_dolgorae_release_verifier_rejects_explicit_unsupported_version(
-        self,
-    ) -> None:
-        for version in ("0.1.0", "v0.2.0", "v0.1.3-rc.1"):
-            with (
-                self.subTest(version=version),
-                self.assertRaises(
-                    verify_dolgorae_release.ReleaseVerificationError
-                ) as context,
-            ):
-                verify_dolgorae_release.verify_release(
-                    version,
-                    1.0,
-                    lambda url, _timeout: (_ for _ in ()).throw(AssertionError(url)),
-                )
-            self.assertEqual(context.exception.code, "unsupported_version")
-
-        output = io.StringIO()
-        with (
-            mock.patch.object(
-                sys,
-                "argv",
-                ["verify_dolgorae_release.py", "--version", "0.1.0"],
-            ),
-            mock.patch.object(sys, "stdout", output),
-        ):
-            exit_code = verify_dolgorae_release.main()
-        self.assertEqual(exit_code, 1)
-        self.assertEqual(
-            json.loads(output.getvalue())["error"]["code"], "unsupported_version"
-        )
 
     def test_removed_global_flags_are_rejected(self) -> None:
         for flag in ("--verify-dolgorae-release", "--include-ouroboros"):
@@ -3729,7 +2935,7 @@ else:
         self.assertEqual(im_not_ai["status"], "unverifiable")
         self.assertIsNone(im_not_ai["version"])
         self.assertIsNone(im_not_ai["version_supported"])
-        self.assertEqual(im_not_ai["supported_release"], "v2.3.2")
+        self.assertEqual(im_not_ai["supported_range"], ">=2.3.2")
         self.assertEqual(
             im_not_ai["expected_target"],
             str(self.codex_home / "skills/humanize-korean"),
@@ -3742,7 +2948,10 @@ else:
     def test_writing_skill_extra_missing_and_symlinked_files(self) -> None:
         humanizer = self.install_humanizer_skill()
         humanizer.joinpath("README.md").write_text("extra\n", encoding="utf-8")
-        self.install_im_not_ai_skill(include_license=False)
+        im_not_ai = self.install_im_not_ai_skill()
+        im_not_ai.joinpath("references/future.md").write_text(
+            "release-owned\n", encoding="utf-8"
+        )
 
         tools = json.loads(self.inspect_global().stdout)["tools"]
 
@@ -3752,8 +2961,18 @@ else:
             tools["humanizer"]["agent_skill"]["installations"][0]["unexpected_entries"],
             [],
         )
-        self.assertEqual(tools["im-not-ai"]["status"], "degraded")
-        self.assertFalse(tools["im-not-ai"]["installed"])
+        self.assertEqual(tools["im-not-ai"]["status"], "unverifiable")
+        self.assertTrue(tools["im-not-ai"]["installed"])
+        self.assertEqual(
+            tools["im-not-ai"]["agent_skill"]["installations"][0]["unexpected_entries"],
+            [],
+        )
+
+        shutil.rmtree(self.codex_home / "skills/humanize-korean")
+        self.install_im_not_ai_skill(include_license=False)
+        im_not_ai = json.loads(self.inspect_global().stdout)["tools"]["im-not-ai"]
+        self.assertEqual(im_not_ai["status"], "degraded")
+        self.assertFalse(im_not_ai["installed"])
 
         shutil.rmtree(self.codex_home / "skills/humanize-korean")
         source = self.install_im_not_ai_skill(root=self.base / "source-skills")

@@ -14,7 +14,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Let Task, Epic, and validation workflows use a complete composite execution SOT when no dossier is declared and the user explicitly waives it, with a separate dossier recommendation before the final waiver for larger work.
 - Raise the minimum supported Podway version to v0.2.10 and qualify the existing managed Procedures against its official Apple Silicon release.
 - Run the Podway compatibility matrix in bounded parallel runtime batches without dropping any Procedure, correction, routing, recovery, or failure scenario, and expose the gate as a configured Gaori command.
-- Accept stable Humanizer and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, and reject duplicate skills visible to the same Codex home.
+- Accept stable Humanizer, im-not-ai, and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, reject duplicate skills visible to the same Codex home, and remove Dolgorae's dedicated release-verification path from global setup.
 
 ## v0.1.16 - 2026-09-16
 

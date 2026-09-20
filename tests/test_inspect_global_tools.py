@@ -51,7 +51,7 @@ def test_aquarium_runtime_probe_preserves_failure_reason(tmp_path, monkeypatch, 
 
     monkeypatch.setattr(inspect_global_tools.subprocess, "run", probe)
     payload = inspect_global_tools.inspect_global(
-        str(tmp_path), 3.5, False, components=("aquarium-dev",)
+        str(tmp_path), 3.5, components=("aquarium-dev",)
     )["tools"]["aquarium-dev"]
     if case == "broken":
         assert payload == {"status": "broken", "problem": "receipt missing"}
@@ -165,7 +165,7 @@ def test_aquarium_status_component_scope_is_isolated(tmp_path, monkeypatch):
     )
 
     payload = inspect_global_tools.inspect_global(
-        str(tmp_path), 1.0, False, components=("aquarium-status",)
+        str(tmp_path), 1.0, components=("aquarium-status",)
     )
 
     assert payload["tools"] == {"aquarium-status": diagnosis}
@@ -183,7 +183,7 @@ def test_other_component_scope_skips_aquarium_status(tmp_path, monkeypatch):
     )
 
     payload = inspect_global_tools.inspect_global(
-        str(tmp_path), 1.0, False, components=("lora",)
+        str(tmp_path), 1.0, components=("lora",)
     )
 
     assert payload["tools"] == {"lora": {"status": "configured"}}
@@ -244,7 +244,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v4"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v5"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
@@ -365,7 +365,7 @@ class TestInspectGlobalTools:
 
         with mock.patch.dict(os.environ, self.environment, clear=True):
             payload = inspect_global_tools.inspect_global(
-                str(self.repository), 1.0, False, components=("gaori",)
+                str(self.repository), 1.0, components=("gaori",)
             )
         assert set(payload["tools"]) == {"gaori"}
         gaori = payload["tools"]["gaori"]
@@ -459,15 +459,13 @@ class TestInspectGlobalTools:
                 return_value={"status": "unavailable"},
             ),
         ):
-            inspect_global_tools.inspect_global(str(self.repository), 3.5, True)
+            inspect_global_tools.inspect_global(str(self.repository), 3.5)
 
         inspect_ouroboros_global.assert_called_once_with(
             inspector, Path(self.repository.anchor), 3.5, (), False
         )
         inspector.inspect_dolgorae.assert_called_once_with(
-            Path(self.repository.anchor),
-            3.5,
-            verify_official_release=True,
+            Path(self.repository.anchor), 3.5
         )
         assert len(inspect_versioned.mock_calls) == 3
         assert all(
@@ -514,15 +512,12 @@ class TestInspectGlobalTools:
             payload = inspect_global_tools.inspect_global(
                 str(self.repository),
                 3.5,
-                True,
                 components=("dolgorae",),
             )
 
         assert list(payload["tools"]) == ["dolgorae"]
         inspector.inspect_dolgorae.assert_called_once_with(
-            Path(self.repository.anchor),
-            3.5,
-            verify_official_release=True,
+            Path(self.repository.anchor), 3.5
         )
         inspect_versioned.assert_not_called()
         inspect_sorage.assert_not_called()
@@ -979,7 +974,6 @@ class TestInspectGlobalTools:
         inspect.assert_called_once_with(
             str(self.repository),
             10.0,
-            False,
             True,
             inspect_global_tools.GLOBAL_COMPONENTS,
             (),
@@ -1004,7 +998,6 @@ class TestInspectGlobalTools:
                     "dolgorae",
                     "--component",
                     "podway",
-                    "--verify-dolgorae-release",
                 ],
             ),
             mock.patch.object(
@@ -1018,7 +1011,6 @@ class TestInspectGlobalTools:
         inspect.assert_called_once_with(
             str(self.repository),
             10.0,
-            True,
             False,
             ("dolgorae", "podway"),
             (),
@@ -1029,7 +1021,7 @@ class TestInspectGlobalTools:
     @pytest.mark.parametrize(
         "arguments",
         (
-            ("--component", "sorage", "--verify-dolgorae-release"),
+            ("--verify-dolgorae-release",),
             ("--component", "dolgorae", "--include-sorage-initialization"),
             ("--component", "unknown"),
         ),
@@ -1558,7 +1550,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v4"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v5"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),
@@ -2079,7 +2071,7 @@ def test_dolgorae_paired_skill_is_independent_and_exposes_freshness_evidence(
         },
     )
     payload = inspect_global_tools.inspect_global(
-        str(tmp_path), 1.0, False, components=("dolgorae",)
+        str(tmp_path), 1.0, components=("dolgorae",)
     )
     assert list(payload["tools"]) == ["dolgorae"]
     tool = payload["tools"]["dolgorae"]

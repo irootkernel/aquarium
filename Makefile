@@ -29,7 +29,6 @@ PYTHON_FILES := \
 	plugins/aquarium/tools/aquarium-status/status_store.py \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
-	plugins/aquarium/skills/dev-setup-global/scripts/verify_dolgorae_release.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_ouroboros.py \
 	plugins/aquarium/tools/aquarium-dev/dev_contract.py \

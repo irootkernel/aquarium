@@ -395,10 +395,11 @@ null action. Launcher state is `unsafe` before all other launcher states, then
 `unknown`, `missing`, `managed_outdated`, and `managed_current`.
 
 The global inspector advances to
-`aquarium-dev-setup-global-inspection.v4`. Its only incompatible addition is a
-default-selected and explicitly selectable `tools.aquarium-status` member whose
-value is the runtime inspection envelope above. The global skill consumes that
-structured member and never infers runtime state from prose.
+`aquarium-dev-setup-global-inspection.v5`. Version 4 added the default-selected
+and explicitly selectable `tools.aquarium-status` member whose value is the
+runtime inspection envelope above. Version 5 removes Dolgorae's dedicated
+release-verification fields and CLI option. The global skill consumes structured
+component results and never infers runtime state from prose.
 
 ## Setup ownership and retry protocol
 
