@@ -25,6 +25,11 @@ commands:
     tags: [e2e, python]
     parser: pytest
     timeout_sec: 1800
+  test-podway-compat:
+    command: ["make", "test-podway-compat"]
+    tags: [compatibility, make, podway]
+    parser: generic
+    timeout_sec: 3600
 redaction:
   patterns:
     - name: credential-assignment

@@ -4,8 +4,12 @@ import copy
 import importlib.util
 import json
 import os
+import socket
 import subprocess
+import tempfile
+import threading
 from pathlib import Path
+from typing import Self
 
 import pytest
 
@@ -153,6 +157,357 @@ def test_completed_low_settlement_destination_is_procedure_specific(
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     assert runtime.completed_low_settlement_destination(procedure_id) == expected
+
+
+def test_runtime_job_inventory_preserves_behavior_scope() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    waits = runtime.wait_scenario_specs()
+    terminals = runtime.terminal_scenario_specs()
+    reusable = runtime.reusable_scenario_specs()
+    isolated = runtime.isolated_scenario_specs()
+    jobs = runtime.runtime_jobs()
+
+    expected_waits = {
+        ("aquarium-goal-v2.yaml", "low-blocker-wait"),
+        ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
+        ("aquarium-goal-v2.yaml", "medium-wait"),
+        ("aquarium-goal-v2.yaml", "goal-closeout-unmet-wait"),
+        ("aquarium-validation-v2.yaml", "validation-medium-wait"),
+        ("aquarium-task-v2.yaml", "task-confirmation-only-wait"),
+        ("aquarium-task-v2.yaml", "task-resume-active-mulgae"),
+        ("aquarium-task-v2.yaml", "task-current-only-switch-rejected"),
+        ("aquarium-task-v2.yaml", "task-current-only-waive-rejected"),
+        ("aquarium-task-v2.yaml", "task-resume-terminal-orca"),
+        ("aquarium-task-v2.yaml", "task-switch-with-waiver-basis-rejected"),
+        ("aquarium-task-v2.yaml", "task-waive-with-route-change-basis-rejected"),
+        ("aquarium-task-v2.yaml", "task-resume-with-explicit-change-rejected"),
+        ("aquarium-task-v2.yaml", "task-planned-with-direction-rejected"),
+        (
+            "aquarium-task-v2.yaml",
+            "task-completed-switch-with-waiver-basis-rejected",
+        ),
+        (
+            "aquarium-task-v2.yaml",
+            "task-completed-waive-with-route-change-basis-rejected",
+        ),
+    }
+    expected_terminals = {
+        ("task-route-mulgae", "aquarium-task-v2.yaml"),
+        ("task-route-orca", "aquarium-task-v2.yaml"),
+        ("task-route-native-codex", "aquarium-task-v2.yaml"),
+        ("task-route-waived", "aquarium-task-v2.yaml"),
+        ("goal-route-mulgae", "aquarium-goal-v2.yaml"),
+        ("goal-route-orca", "aquarium-goal-v2.yaml"),
+        ("goal-route-native-codex", "aquarium-goal-v2.yaml"),
+        ("goal-route-waived", "aquarium-goal-v2.yaml"),
+        ("validation-route-mulgae", "aquarium-validation-v2.yaml"),
+        ("validation-route-orca", "aquarium-validation-v2.yaml"),
+        ("validation-route-native-codex", "aquarium-validation-v2.yaml"),
+        ("validation-route-waived", "aquarium-validation-v2.yaml"),
+        ("goal-resume-changed-orca-after-incomplete", "aquarium-goal-v2.yaml"),
+        ("goal-resume-provider-mismatch-rejected", "aquarium-goal-v2.yaml"),
+        (
+            "validation-resume-changed-orca-after-incomplete",
+            "aquarium-validation-v2.yaml",
+        ),
+        (
+            "validation-resume-provider-mismatch-rejected",
+            "aquarium-validation-v2.yaml",
+        ),
+        (
+            "validation-waiver-followup-preserves-prior",
+            "aquarium-validation-v2.yaml",
+        ),
+        ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
+        ("task-completion-unverified", "aquarium-task-v2.yaml"),
+        ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
+        ("task-finding-inconsistent", "aquarium-task-v2.yaml"),
+        ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
+        ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
+        ("task-completed-continue-mulgae", "aquarium-task-v2.yaml"),
+        ("task-completed-continue-native-codex", "aquarium-task-v2.yaml"),
+        ("task-completed-continue-orca", "aquarium-task-v2.yaml"),
+        ("task-completed-continue-waiver", "aquarium-task-v2.yaml"),
+        ("task-completed-switch-orca", "aquarium-task-v2.yaml"),
+        ("task-completed-waiver", "aquarium-task-v2.yaml"),
+        ("task-completed-waiver-switch-native-codex", "aquarium-task-v2.yaml"),
+        ("task-completion-implementation-owner", "aquarium-task-v2.yaml"),
+        ("task-completion-verification-owner", "aquarium-task-v2.yaml"),
+        ("task-completion-documentation-owner", "aquarium-task-v2.yaml"),
+        ("task-completion-owner-inconsistent", "aquarium-task-v2.yaml"),
+        ("goal-completion-unmet", "aquarium-goal-v2.yaml"),
+        ("goal-completion-unverified", "aquarium-goal-v2.yaml"),
+        ("validation-completion-unmet", "aquarium-validation-v2.yaml"),
+        ("validation-completion-unverified", "aquarium-validation-v2.yaml"),
+        ("goal-kind-member-closeout", "aquarium-goal-v2.yaml"),
+        ("goal-kind-prevalidation-closeout", "aquarium-goal-v2.yaml"),
+        ("goal-kind-epic-closeout", "aquarium-goal-v2.yaml"),
+        ("goal-kind-member-native", "aquarium-goal-v2.yaml"),
+        ("validation-review-fail", "aquarium-validation-v2.yaml"),
+        ("validation-review-inconclusive", "aquarium-validation-v2.yaml"),
+        ("validation-review-pass-gaps-1", "aquarium-validation-v2.yaml"),
+        ("validation-review-pass-gaps-0", "aquarium-validation-v2.yaml"),
+        ("task-stop-preserves-completion", "aquarium-task-v2.yaml"),
+        ("goal-stop-preserves-completion", "aquarium-goal-v2.yaml"),
+        ("validation-stop-preserves-completion", "aquarium-validation-v2.yaml"),
+        ("validation-provider-low-settlement", "aquarium-validation-v2.yaml"),
+    }
+
+    assert set(waits) == expected_waits
+    assert set(terminals) == expected_terminals
+    assert len(waits) == 16
+    assert len(terminals) == 50
+    assert len({scenario for _procedure, scenario in waits}) == len(waits)
+    assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
+    assert sum(job["kind"] == "wait" for job in jobs) == len(waits)
+    assert sum(job["kind"] == "terminal" for job in jobs) == 4
+    assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 9
+    assert len(reusable) == 41
+    assert sorted(
+        spec for job in jobs if job["kind"] == "terminal" for spec in job["scenarios"]
+    ) == sorted(reusable)
+    assert sorted(
+        (job["scenario"], job["procedure_name"])
+        for job in jobs
+        if job["kind"] == "isolated"
+    ) == sorted(isolated)
+    assert sorted((*reusable, *isolated)) == sorted(terminals)
+    assert [
+        (job["procedure_name"], job["scenario"])
+        for job in jobs
+        if job["kind"] == "wait"
+    ] == list(waits)
+    assert 1 + len(jobs) == 32  # one deliberate cleanup probe plus scheduled roots
+    assert 5 + len(waits) + len(terminals) == 71
+    assert (
+        sum(
+            scenario == runtime.VALIDATION_PROVIDER_LOW_SCENARIO
+            for scenario, _procedure in terminals
+        )
+        == 1
+    )
+    assert runtime.MAX_PARALLEL_RUNTIMES == 4
+
+
+def test_prepare_scenario_restores_procedure_and_resets_session_state(
+    tmp_path: Path,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    source = procedures / "aquarium-task-v2.yaml"
+    source.write_bytes(b"id: aquarium-task-v2\n")
+    other_source = procedures / "aquarium-goal-v2.yaml"
+    other_source.write_bytes(b"id: aquarium-goal-v2\n")
+    sandbox = tmp_path / "sandbox"
+    installed = sandbox / ".podway" / "procedures"
+    installed.mkdir(parents=True)
+    target = installed / source.name
+    target.write_bytes(b"mutated: true\n")
+    other_target = installed / other_source.name
+    other_target.write_bytes(b"other-mutated: true\n")
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", procedures, 1
+    )
+    managed.sandbox = sandbox
+    managed.fixture_target = "fixture-target"
+    managed.command_sequence = 7
+    managed.correction_case_variants = {"C-16": {"variant"}}
+    managed.task_review_reworked = True
+    managed.node_visits = {"review": 3}
+    managed.completed_assessments = {"aquarium-task-v2": 2}
+
+    managed.prepare_scenario(source.name)
+
+    assert target.read_bytes() == source.read_bytes()
+    assert other_target.read_bytes() == other_source.read_bytes()
+    assert managed.fixture_target == "fixture-target"
+    assert managed.command_sequence == 7
+    assert managed.correction_case_variants == {"C-16": {"variant"}}
+    assert managed.task_review_reworked is False
+    assert managed.node_visits == {}
+    assert managed.completed_assessments == {}
+    assert managed.deadline is not None
+
+
+def test_execute_runtime_job_stops_between_scenarios_and_cleans_up(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    cancel_event = threading.Event()
+    driven: list[str] = []
+    cleanup: list[bool] = []
+
+    class FakeRuntime:
+        def __init__(self, *_args: object) -> None:
+            self.correction_case_variants: dict[str, set[str]] = {}
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            cleanup.append(True)
+
+        def prepare_scenario(self, _procedure_name: str) -> None:
+            pass
+
+        def drive_procedure(
+            self, _procedure_name: str, *, scenario: str = "standard"
+        ) -> None:
+            driven.append(scenario)
+            cancel_event.set()
+
+    monkeypatch.setattr(runtime, "ManagedRuntime", FakeRuntime)
+    job = {
+        "kind": "terminal",
+        "batch_id": "terminal-test",
+        "scenarios": (
+            ("first", "aquarium-task-v2.yaml"),
+            ("second", "aquarium-goal-v2.yaml"),
+        ),
+        "order": 1,
+    }
+
+    with pytest.raises(runtime.RuntimeJobCancelled, match="between scenarios"):
+        runtime.execute_runtime_job(
+            tmp_path / "podway",
+            tmp_path / "podwayd",
+            tmp_path / "procedures",
+            job,
+            cancel_event,
+        )
+
+    assert driven == ["first"]
+    assert cleanup == [True]
+
+
+def test_execute_runtime_jobs_signals_peer_cancellation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    rendezvous = threading.Barrier(2)
+    peer_cancelled = threading.Event()
+    jobs = [
+        {"kind": "test", "batch_id": "failure", "order": 1},
+        {"kind": "test", "batch_id": "peer", "order": 2},
+    ]
+
+    def fake_execute_runtime_job(
+        _binary: Path,
+        _daemon: Path,
+        _procedures: Path,
+        job: dict[str, object],
+        cancel_event: threading.Event,
+    ) -> dict[str, object]:
+        rendezvous.wait(timeout=2)
+        if job["batch_id"] == "failure":
+            raise runtime.RuntimeQualificationError("injected failure")
+        if cancel_event.wait(timeout=2):
+            peer_cancelled.set()
+        raise runtime.RuntimeJobCancelled("peer cancelled")
+
+    monkeypatch.setattr(runtime, "runtime_jobs", lambda: jobs)
+    monkeypatch.setattr(runtime, "execute_runtime_job", fake_execute_runtime_job)
+
+    with pytest.raises(runtime.RuntimeQualificationError, match="injected failure"):
+        runtime.execute_runtime_jobs(
+            tmp_path / "podway",
+            tmp_path / "podwayd",
+            tmp_path / "procedures",
+        )
+
+    assert peer_cancelled.is_set()
+
+
+def test_lifecycle_job_renews_each_scenario_deadline(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    procedures = tmp_path / "procedures"
+    procedures.mkdir()
+    names = [
+        "aquarium-design-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-task-v2.yaml",
+        "aquarium-validation-v2.yaml",
+        "aquarium-war-room-v2.yaml",
+    ]
+    for name in names:
+        (procedures / name).write_text(f"id: {name}\n", encoding="utf-8")
+    renewals: list[str] = []
+    driven: list[str] = []
+
+    class FakeRuntime:
+        task_required_failure = True
+        task_list_limit = True
+        task_guard_failure = True
+        task_verification_reworked = True
+        task_review_reworked = True
+        task_medium_reworked = True
+        task_review_guard_failure = True
+        task_evidence_reworked = True
+        task_stale_token = True
+        task_snapshot_immutable = True
+
+        def __init__(self, *_args: object) -> None:
+            self.low_settlement_procedures = {
+                "aquarium-task-v2",
+                "aquarium-goal-v2",
+                "aquarium-validation-v2",
+            }
+            self.correction_case_variants: dict[str, set[str]] = {}
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            pass
+
+        def renew_deadline(self) -> None:
+            renewals.append("renewed")
+
+        def drive_procedure(self, name: str, *, scenario: str = "standard") -> None:
+            assert scenario == "standard"
+            driven.append(name)
+
+        def exercise_pagination(self) -> None:
+            driven.append("pagination")
+
+    monkeypatch.setattr(runtime, "ManagedRuntime", FakeRuntime)
+    result = runtime.execute_runtime_job(
+        tmp_path / "podway",
+        tmp_path / "podwayd",
+        procedures,
+        {"kind": "lifecycle", "batch_id": "lifecycle", "order": 1},
+        threading.Event(),
+    )
+
+    assert driven == [*names, "pagination"]
+    assert len(renewals) == len(names) + 1
+    assert result["lifecycle_run"]["cleanup"] == "passed"
+
+
+def test_terminate_removes_owned_stale_socket_after_daemon_exit() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    with tempfile.TemporaryDirectory(
+        prefix="podway-socket-", dir="/private/tmp"
+    ) as root:
+        root_path = Path(root)
+        managed = runtime.ManagedRuntime(
+            root_path / "podway",
+            root_path / "podwayd",
+            root_path / "procedures",
+            1,
+        )
+        managed.dev_home = root_path
+        run_directory = root_path / "run"
+        run_directory.mkdir()
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stale_socket:
+            stale_socket.bind(str(managed.socket))
+
+        managed.terminate()
+
+        assert not managed.socket.exists()
 
 
 @pytest.mark.parametrize(
@@ -393,7 +748,7 @@ def test_low_blocker_readback_requires_exact_scenario_content(
         assert managed.low_blocker_readback_verified is False
 
 
-def test_workspace_removal_replay_requires_success_with_v6_receipt() -> None:
+def test_workspace_removal_replay_requires_success_with_v7_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(
         removal_replay_process(), "/tmp/repository", None
@@ -401,7 +756,7 @@ def test_workspace_removal_replay_requires_success_with_v6_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v6"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v7"
     )
     assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.10"
 

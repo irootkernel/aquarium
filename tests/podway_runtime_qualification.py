@@ -13,7 +13,9 @@ import subprocess
 import tempfile
 import time
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
+from threading import Event
 from typing import Any, Self
 
 OUTPUT_SCHEMA = "podway.output/v3"
@@ -26,7 +28,7 @@ READINESS_TIMEOUT_SECONDS = 20
 PROCESS_EXIT_TIMEOUT_SECONDS = 10
 RUN_TIMEOUT_SECONDS = 360
 MAX_GRAPH_STEPS = 128
-REPEAT_COUNT = 2
+MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
     "sha256:bff8af8f57f1390446333cc56775ca71209e99bd3ff6fd556c39906b77a90635"
 )
@@ -259,6 +261,12 @@ VALIDATION_WAIVER_FOLLOWUP_SCENARIOS = {
     "validation-waiver-followup-preserves-prior",
 }
 
+VALIDATION_PROVIDER_LOW_SCENARIO = "validation-provider-low-settlement"
+VALIDATION_LOW_SETTLEMENT_SCENARIOS = {
+    "standard",
+    VALIDATION_PROVIDER_LOW_SCENARIO,
+}
+
 TASK_RESUME_SCENARIOS = {
     "task-resume-active-mulgae": {
         "route": "mulgae",
@@ -455,6 +463,12 @@ TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS = (
     TASK_COMPLETED_CHANGE_SCENARIOS - TASK_DIRECTION_MISMATCH_SCENARIOS
 )
 
+ISOLATED_BOUNDED_SCENARIOS = (
+    TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+    | GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
+    | VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
+)
+
 
 def route_qualification_provenance(route: str) -> str:
     return {
@@ -552,8 +566,98 @@ CASE_ASSERTIONS = {
 }
 
 
+def wait_scenario_specs() -> tuple[tuple[str, str], ...]:
+    return (
+        ("aquarium-goal-v2.yaml", "low-blocker-wait"),
+        ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
+        ("aquarium-goal-v2.yaml", "medium-wait"),
+        ("aquarium-goal-v2.yaml", "goal-closeout-unmet-wait"),
+        ("aquarium-validation-v2.yaml", "validation-medium-wait"),
+        ("aquarium-task-v2.yaml", "task-confirmation-only-wait"),
+        *(
+            ("aquarium-task-v2.yaml", scenario)
+            for scenario in TASK_RESUME_SCENARIOS
+            if scenario not in TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
+        ),
+    )
+
+
+def terminal_scenario_specs() -> tuple[tuple[str, str], ...]:
+    return (
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _route) in (
+                ROUTE_QUALIFICATION_SCENARIOS.items()
+            )
+        ),
+        *(
+            (scenario, "aquarium-goal-v2.yaml")
+            for scenario in sorted(GOAL_RECOVERY_SCENARIOS)
+        ),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in sorted(VALIDATION_RECOVERY_SCENARIOS)
+        ),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in sorted(VALIDATION_WAIVER_FOLLOWUP_SCENARIOS)
+        ),
+        ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
+        ("task-completion-unverified", "aquarium-task-v2.yaml"),
+        ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
+        ("task-finding-inconsistent", "aquarium-task-v2.yaml"),
+        ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
+        ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
+        *(
+            (scenario, "aquarium-task-v2.yaml")
+            for scenario in sorted(TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS)
+        ),
+        *(
+            (scenario, "aquarium-task-v2.yaml")
+            for scenario in (
+                *TASK_OWNER_SCENARIOS,
+                "task-completion-owner-inconsistent",
+            )
+        ),
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _gap) in COMPLETION_GAP_SCENARIOS.items()
+        ),
+        *((scenario, "aquarium-goal-v2.yaml") for scenario in GOAL_KIND_SCENARIOS),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
+        ),
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _source) in STOP_EVIDENCE_SCENARIOS.items()
+        ),
+        (VALIDATION_PROVIDER_LOW_SCENARIO, "aquarium-validation-v2.yaml"),
+    )
+
+
+def reusable_scenario_specs() -> tuple[tuple[str, str], ...]:
+    return tuple(
+        spec
+        for spec in terminal_scenario_specs()
+        if spec[0] not in ISOLATED_BOUNDED_SCENARIOS
+    )
+
+
+def isolated_scenario_specs() -> tuple[tuple[str, str], ...]:
+    return tuple(
+        spec
+        for spec in terminal_scenario_specs()
+        if spec[0] in ISOLATED_BOUNDED_SCENARIOS
+    )
+
+
 class RuntimeQualificationError(RuntimeError):
     """One bounded external-artifact runtime assertion failed."""
+
+
+class RuntimeJobCancelled(RuntimeQualificationError):
+    """One runtime job stopped after a peer job failed."""
 
 
 class ExpectedCleanupProbe(RuntimeError):
@@ -795,6 +899,11 @@ class ManagedRuntime:
         self.log = None
         self.deadline: float | None = None
         self.command_sequence = 0
+        self.correction_case_variants: dict[str, set[str]] = {}
+        self.fixture_target = ""
+        self.reset_scenario_state()
+
+    def reset_scenario_state(self) -> None:
         self.old_page_token: str | None = None
         self.task_verification_reworked = False
         self.task_review_reworked = False
@@ -812,16 +921,35 @@ class ManagedRuntime:
         self.goal_evidence_round = 0
         self.validation_review_round = 0
         self.completed_assessments: dict[str, int] = {}
-        self.correction_case_variants: dict[str, set[str]] = {}
         self.validation_source_basis_verified = False
         self.validation_waiver_continuity_verified = False
         self.low_blocker_readback_verified = False
         self.task_one_shot_decision_used = False
         self.task_optional_waiver_absence_recorded = False
         self.goal_one_shot_decision_used = False
-        self.fixture_target = ""
         self.current_procedure_id = ""
         self.scenario = "standard"
+
+    def prepare_scenario(self, procedure_name: str) -> None:
+        assert self.sandbox is not None
+        self.reset_scenario_state()
+        self.renew_deadline()
+        if not (self.procedures / procedure_name).is_file():
+            raise RuntimeQualificationError(
+                f"canonical Procedure is missing: {procedure_name}"
+            )
+        target_directory = self.sandbox / ".podway" / "procedures"
+        for source in sorted(self.procedures.glob("*.yaml")):
+            target = target_directory / source.name
+            source_bytes = source.read_bytes()
+            target.write_bytes(source_bytes)
+            if target.read_bytes() != source_bytes:
+                raise RuntimeQualificationError(
+                    f"canonical Procedure restore changed bytes: {source.name}"
+                )
+
+    def renew_deadline(self) -> None:
+        self.deadline = time.monotonic() + RUN_TIMEOUT_SECONDS
 
     def __enter__(self) -> Self:
         try:
@@ -1128,9 +1256,15 @@ class ManagedRuntime:
                 "release-qualification daemon survived shutdown"
             )
         if self.dev_home is not None and self.socket.exists():
-            raise RuntimeQualificationError(
-                "release-qualification socket survived shutdown"
-            )
+            if self.socket.is_symlink() or not self.socket.is_socket():
+                raise RuntimeQualificationError(
+                    "release-qualification socket path changed type"
+                )
+            self.socket.unlink()
+            if self.socket.exists():
+                raise RuntimeQualificationError(
+                    "release-qualification socket survived cleanup"
+                )
 
     def daemon_is_alive(self) -> bool:
         if self.daemon_pid is None:
@@ -1582,11 +1716,19 @@ class ManagedRuntime:
                 for item_id, value in records.items()
             ],
         }
-        output_result(
-            self.raw(
+        try:
+            completed = self.raw(
                 ["record", "--stdin", "--json"],
                 stdin=json.dumps(document).encode("utf-8"),
-            ),
+            )
+        except RuntimeQualificationError as error:
+            raise RuntimeQualificationError(
+                "record_many failed: "
+                f"scenario={self.scenario}; node={current['node']}; "
+                f"items={sorted(records)}; {error}"
+            ) from error
+        output_result(
+            completed,
             "item.record_many",
             "podway.item-record-many-result/v1",
         )
@@ -1627,15 +1769,18 @@ class ManagedRuntime:
         constraints = item.get("constraints", {})
         provider_low_ids = (
             ["provider:R1:L1"]
-            if self.scenario == "standard"
+            if self.scenario == VALIDATION_PROVIDER_LOW_SCENARIO
             and self.current_procedure_id == "aquarium-validation-v2"
-            and self.run_index == 2
             else []
         )
         audit_low_ids = (
             ["audit:A1:L1", "audit:A1:L2"]
             if self.current_procedure_id == "aquarium-validation-v2"
-            and self.scenario in {"standard", "validation-low-blocker-wait"}
+            and self.scenario
+            in {
+                *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
+                "validation-low-blocker-wait",
+            }
             else []
         )
         applicable_low_ids = [*audit_low_ids, *provider_low_ids]
@@ -1987,7 +2132,11 @@ class ManagedRuntime:
             ):
                 value = 1
             if (
-                self.scenario in {"standard", "validation-low-blocker-wait"}
+                self.scenario
+                in {
+                    *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
+                    "validation-low-blocker-wait",
+                }
                 and node == "final-review"
                 and item_id
                 in {
@@ -1997,7 +2146,11 @@ class ManagedRuntime:
             ):
                 value = len(provider_low_ids)
             if (
-                self.scenario in {"standard", "validation-low-blocker-wait"}
+                self.scenario
+                in {
+                    *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
+                    "validation-low-blocker-wait",
+                }
                 and node == "final-review"
                 and item_id == "pending-applicable-low-dispositions"
             ):
@@ -2495,7 +2648,7 @@ class ManagedRuntime:
             ):
                 outcome = "inconclusive"
             elif (
-                self.scenario == "standard"
+                self.scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                 and node == "record-low-disposition"
                 and self.low_settlement_rounds.get(self.current_procedure_id, 0) == 0
             ):
@@ -2680,7 +2833,7 @@ class ManagedRuntime:
                 records["waiver-summary"] = None
             if not records:
                 if (
-                    self.scenario == "standard"
+                    self.scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                     and procedure_id == "aquarium-validation-v2"
                     and node == "final-review"
                 ):
@@ -3570,7 +3723,7 @@ class ManagedRuntime:
                     continue
 
             if (
-                scenario == "standard"
+                scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                 and node == "decide-low-result"
                 and self.low_settlement_rounds.get(procedure_id) == 1
             ):
@@ -3580,7 +3733,7 @@ class ManagedRuntime:
                 continue
 
             if (
-                scenario == "standard"
+                scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                 and node == "decide-low-completion"
                 and self.low_settlement_rounds.get(procedure_id) == 2
             ):
@@ -3721,7 +3874,7 @@ class ManagedRuntime:
                         "goal hardening deferral did not traverse its complete handoff"
                     )
                 if (
-                    scenario == "standard"
+                    scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                     and procedure_id == "aquarium-validation-v2"
                     and procedure_id in self.low_settlement_procedures
                 ):
@@ -3763,7 +3916,7 @@ class ManagedRuntime:
                         observation, "record-low-disposition", "after-target"
                     )
                     expected_ids = ["audit:A1:L1", "audit:A1:L2"]
-                    if self.run_index == 2:
+                    if scenario == VALIDATION_PROVIDER_LOW_SCENARIO:
                         expected_ids.append("provider:R1:L1")
                     disposition_ids = [
                         item["id"] for item in settlement["dispositions"]
@@ -3789,10 +3942,14 @@ class ManagedRuntime:
                             f"fixture_target={self.fixture_target!r}; "
                             f"node_visits={self.node_visits!r}"
                         )
-                    case_id = "C-02" if self.run_index == 2 else "C-01"
+                    case_id = (
+                        "C-02"
+                        if scenario == VALIDATION_PROVIDER_LOW_SCENARIO
+                        else "C-01"
+                    )
                     variant = (
                         "audit-2-provider-1"
-                        if self.run_index == 2
+                        if scenario == VALIDATION_PROVIDER_LOW_SCENARIO
                         else "audit-2-provider-0"
                     )
                     self.mark_case_variant(case_id, variant)
@@ -3817,7 +3974,7 @@ class ManagedRuntime:
                 )
             special_option = None
             if (
-                scenario == "standard"
+                scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                 and procedure_id == "aquarium-validation-v2"
                 and node == "decide-final-review"
             ):
@@ -3842,7 +3999,8 @@ class ManagedRuntime:
                         "applicable-obligation-summary",
                     )
                 )
-                expected_pending = 3 if self.run_index == 2 else 2
+                provider_low_expected = scenario == VALIDATION_PROVIDER_LOW_SCENARIO
+                expected_pending = 3 if provider_low_expected else 2
                 if (
                     final_result.get("outcome") != "pass"
                     or pending != expected_pending
@@ -3851,7 +4009,7 @@ class ManagedRuntime:
                     or obligations.get("audit_low_ids")
                     != ["audit:A1:L1", "audit:A1:L2"]
                     or obligations.get("provider_low_ids")
-                    != (["provider:R1:L1"] if self.run_index == 2 else [])
+                    != (["provider:R1:L1"] if provider_low_expected else [])
                 ):
                     raise RuntimeQualificationError(
                         "validation final-review fixture did not establish the intended basis"
@@ -4325,11 +4483,19 @@ class ManagedRuntime:
                     else None,
                     "decide-final-review": "low-disposition"
                     if procedure_id == "aquarium-validation-v2"
-                    and scenario in {"standard", "validation-low-blocker-wait"}
+                    and scenario
+                    in {
+                        *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
+                        "validation-low-blocker-wait",
+                    }
                     else None,
                     "decide-gaps": "low-only"
                     if procedure_id == "aquarium-validation-v2"
-                    and scenario in {"standard", "validation-low-blocker-wait"}
+                    and scenario
+                    in {
+                        *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
+                        "validation-low-blocker-wait",
+                    }
                     else None,
                     "decide-review": "low-disposition"
                     if procedure_id == "aquarium-task-v2" and scenario == "standard"
@@ -4358,7 +4524,7 @@ class ManagedRuntime:
                     self.completed_assessments.get(procedure_id, 0) + 1
                 )
             if (
-                scenario == "standard"
+                scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
                 and procedure_id == "aquarium-validation-v2"
                 and node == "decide-final-review"
             ):
@@ -4416,119 +4582,137 @@ def merge_case_variants(
         destination.setdefault(case_id, set()).update(variants)
 
 
-def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, Any]:
-    """Run two fresh isolated official-artifact runtime passes."""
-    procedures = repository / "plugins/aquarium/assets/podway/procedures"
-    probe_root: Path | None = None
-    try:
-        with ManagedRuntime(binary, daemon, procedures, 0) as cleanup_probe:
-            probe_root = cleanup_probe.root
-            raise ExpectedCleanupProbe("deliberate failure cleanup probe")
-    except ExpectedCleanupProbe:
-        pass
-    if probe_root is None or probe_root.exists():
-        raise RuntimeQualificationError(
-            "failure cleanup probe left its disposable runtime root"
+def runtime_jobs() -> list[dict[str, Any]]:
+    reusable_specs = reusable_scenario_specs()
+    terminal_batches = tuple(
+        (
+            f"terminal-{index + 1}",
+            reusable_specs[index::MAX_PARALLEL_RUNTIMES],
         )
-    with ManagedRuntime(binary, daemon, procedures, REPEAT_COUNT + 1) as runtime:
-        workspace_removal = runtime.exercise_workspace_removal()
-    wait_scenarios: list[dict[str, Any]] = []
-    case_variants: dict[str, set[str]] = {}
-    wait_specs = (
-        ("aquarium-goal-v2.yaml", "low-blocker-wait"),
-        ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
-        ("aquarium-goal-v2.yaml", "medium-wait"),
-        ("aquarium-goal-v2.yaml", "goal-closeout-unmet-wait"),
-        ("aquarium-validation-v2.yaml", "validation-medium-wait"),
-        ("aquarium-task-v2.yaml", "task-confirmation-only-wait"),
-        *(
-            ("aquarium-task-v2.yaml", scenario)
-            for scenario in TASK_RESUME_SCENARIOS
-            if scenario not in TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
-        ),
+        for index in range(MAX_PARALLEL_RUNTIMES)
     )
-    for offset, (procedure_name, scenario) in enumerate(wait_specs, start=2):
-        with ManagedRuntime(
-            binary, daemon, procedures, REPEAT_COUNT + offset
-        ) as runtime:
-            result = runtime.drive_procedure(procedure_name, scenario=scenario)
-            if result is None:
+    jobs: list[dict[str, Any]] = []
+    jobs.extend(
+        {
+            "kind": "terminal",
+            "batch_id": batch_id,
+            "scenarios": specs,
+        }
+        for batch_id, specs in terminal_batches
+    )
+    jobs.append({"kind": "lifecycle", "batch_id": "canonical-lifecycle"})
+    jobs.extend(
+        {
+            "kind": "isolated",
+            "batch_id": f"isolated-{scenario}",
+            "procedure_name": procedure_name,
+            "scenario": scenario,
+        }
+        for scenario, procedure_name in isolated_scenario_specs()
+    )
+    jobs.append({"kind": "workspace-removal", "batch_id": "workspace-removal"})
+    jobs.extend(
+        {
+            "kind": "wait",
+            "batch_id": f"wait-{scenario}",
+            "procedure_name": procedure_name,
+            "scenario": scenario,
+        }
+        for procedure_name, scenario in wait_scenario_specs()
+    )
+    for order, job in enumerate(jobs, start=1):
+        job["order"] = order
+    return jobs
+
+
+def execute_runtime_job(
+    binary: Path,
+    daemon: Path,
+    procedures: Path,
+    job: dict[str, Any],
+    cancel_event: Event,
+) -> dict[str, Any]:
+    started = time.monotonic()
+    batch_id = job["batch_id"]
+    batch = {
+        "batch_id": batch_id,
+        "kind": job["kind"],
+        "scenario_count": 0,
+        "cleanup": "pending-context-exit",
+    }
+    result: dict[str, Any] = {
+        "order": job["order"],
+        "batch": batch,
+        "case_variants": {},
+    }
+    if cancel_event.is_set():
+        raise RuntimeJobCancelled(f"runtime job cancelled before start: {batch_id}")
+    with ManagedRuntime(binary, daemon, procedures, job["order"]) as runtime:
+        if job["kind"] == "workspace-removal":
+            result["workspace_removal"] = runtime.exercise_workspace_removal()
+        elif job["kind"] == "wait":
+            wait_result = runtime.drive_procedure(
+                job["procedure_name"], scenario=job["scenario"]
+            )
+            if wait_result is None:
                 raise RuntimeQualificationError(
-                    f"{scenario} did not produce a bounded wait result"
+                    f"{job['scenario']} did not produce a bounded wait result"
                 )
-            wait_scenarios.append(result)
-            merge_case_variants(case_variants, runtime.correction_case_variants)
-    scenario_runs: list[dict[str, Any]] = []
-    bounded_scenarios = (
-        *(
-            (scenario, f"{procedure_id}.yaml")
-            for scenario, (procedure_id, _route) in (
-                ROUTE_QUALIFICATION_SCENARIOS.items()
+            wait_result["batch_id"] = batch_id
+            result["wait_scenario"] = wait_result
+            batch["scenario_count"] = 1
+        elif job["kind"] == "terminal":
+            scenario_runs = []
+            for scenario, procedure_name in job["scenarios"]:
+                if cancel_event.is_set():
+                    raise RuntimeJobCancelled(
+                        f"runtime job cancelled between scenarios: {batch_id}"
+                    )
+                runtime.prepare_scenario(procedure_name)
+                wait_result = runtime.drive_procedure(procedure_name, scenario=scenario)
+                if wait_result is not None:
+                    raise RuntimeQualificationError(
+                        f"{scenario} stopped before terminal completion"
+                    )
+                scenario_runs.append(
+                    {
+                        "scenario": scenario,
+                        "procedure_id": procedure_name.removesuffix(".yaml"),
+                        "batch_id": batch_id,
+                    }
+                )
+            result["scenario_runs"] = scenario_runs
+            batch["scenario_count"] = len(scenario_runs)
+        elif job["kind"] == "isolated":
+            bounded_result = runtime.drive_procedure(
+                job["procedure_name"], scenario=job["scenario"]
             )
-        ),
-        *(
-            (scenario, "aquarium-goal-v2.yaml")
-            for scenario in sorted(GOAL_RECOVERY_SCENARIOS)
-        ),
-        *(
-            (scenario, "aquarium-validation-v2.yaml")
-            for scenario in sorted(VALIDATION_RECOVERY_SCENARIOS)
-        ),
-        *(
-            (scenario, "aquarium-validation-v2.yaml")
-            for scenario in sorted(VALIDATION_WAIVER_FOLLOWUP_SCENARIOS)
-        ),
-        ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
-        ("task-completion-unverified", "aquarium-task-v2.yaml"),
-        ("task-completion-mixed-owners", "aquarium-task-v2.yaml"),
-        ("task-finding-inconsistent", "aquarium-task-v2.yaml"),
-        ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
-        ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
-        *(
-            (scenario, "aquarium-task-v2.yaml")
-            for scenario in sorted(TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS)
-        ),
-        *(
-            (scenario, "aquarium-task-v2.yaml")
-            for scenario in (
-                *TASK_OWNER_SCENARIOS,
-                "task-completion-owner-inconsistent",
-            )
-        ),
-        *(
-            (scenario, f"{procedure_id}.yaml")
-            for scenario, (procedure_id, _gap) in COMPLETION_GAP_SCENARIOS.items()
-        ),
-        *((scenario, "aquarium-goal-v2.yaml") for scenario in GOAL_KIND_SCENARIOS),
-        *(
-            (scenario, "aquarium-validation-v2.yaml")
-            for scenario in VALIDATION_FINAL_REVIEW_SCENARIOS
-        ),
-        *(
-            (scenario, f"{procedure_id}.yaml")
-            for scenario, (procedure_id, _source) in STOP_EVIDENCE_SCENARIOS.items()
-        ),
-    )
-    for offset, (scenario, procedure_name) in enumerate(
-        bounded_scenarios, start=REPEAT_COUNT + len(wait_specs) + 2
-    ):
-        with ManagedRuntime(binary, daemon, procedures, offset) as runtime:
-            runtime.drive_procedure(procedure_name, scenario=scenario)
-            merge_case_variants(case_variants, runtime.correction_case_variants)
-            scenario_runs.append(
+            if bounded_result is None:
+                raise RuntimeQualificationError(
+                    f"{job['scenario']} did not produce a bounded result"
+                )
+            result["scenario_runs"] = [
                 {
-                    "scenario": scenario,
-                    "procedure_id": procedure_name.removesuffix(".yaml"),
-                    "cleanup": "pending-context-exit",
+                    "scenario": job["scenario"],
+                    "procedure_id": job["procedure_name"].removesuffix(".yaml"),
+                    "batch_id": batch_id,
                 }
-            )
-        scenario_runs[-1]["cleanup"] = "passed"
-    receipts: list[dict[str, Any]] = []
-    for run_index in range(1, REPEAT_COUNT + 1):
-        started = time.monotonic()
-        with ManagedRuntime(binary, daemon, procedures, run_index) as runtime:
-            for name in sorted(path.name for path in procedures.glob("*.yaml")):
+            ]
+            batch["scenario_count"] = 1
+        elif job["kind"] == "lifecycle":
+            names = sorted(path.name for path in procedures.glob("*.yaml"))
+            for name in names:
+                if cancel_event.is_set():
+                    raise RuntimeJobCancelled(
+                        f"runtime job cancelled between scenarios: {batch_id}"
+                    )
+                runtime.renew_deadline()
                 runtime.drive_procedure(name)
+            if cancel_event.is_set():
+                raise RuntimeJobCancelled(
+                    f"runtime job cancelled before pagination: {batch_id}"
+                )
+            runtime.renew_deadline()
             runtime.exercise_pagination()
             seam_results = {
                 "conditional_required_item": runtime.task_required_failure,
@@ -4555,23 +4739,118 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
                 raise RuntimeQualificationError(
                     f"runtime seams were not exercised: {missing}"
                 )
-            merge_case_variants(case_variants, runtime.correction_case_variants)
-            elapsed = time.monotonic() - started
-            if elapsed > RUN_TIMEOUT_SECONDS:
-                raise RuntimeQualificationError(
-                    "isolated runtime exceeded overall deadline"
-                )
-            receipts.append(
-                {
-                    "run": run_index,
-                    "procedure_count": 5,
-                    "seams": sorted(seam_results),
-                    "correction_matrix_cases": sorted(runtime.correction_case_variants),
-                    "elapsed_seconds": round(elapsed, 3),
-                    "cleanup": "pending-context-exit",
-                }
+            result["lifecycle_run"] = {
+                "pass": "canonical",
+                "procedure_count": len(names),
+                "procedures": [name.removesuffix(".yaml") for name in names],
+                "pagination": "passed",
+                "seams": sorted(seam_results),
+                "correction_matrix_cases": sorted(runtime.correction_case_variants),
+                "cleanup": "pending-context-exit",
+            }
+            batch["scenario_count"] = len(names)
+        else:
+            raise RuntimeQualificationError(
+                f"unknown runtime qualification job: {job['kind']}"
             )
-        receipts[-1]["cleanup"] = "passed"
+        result["case_variants"] = runtime.correction_case_variants
+    elapsed = time.monotonic() - started
+    batch["cleanup"] = "passed"
+    batch["elapsed_seconds"] = round(elapsed, 3)
+    if "lifecycle_run" in result:
+        result["lifecycle_run"]["cleanup"] = "passed"
+        result["lifecycle_run"]["elapsed_seconds"] = round(elapsed, 3)
+    return result
+
+
+def execute_runtime_jobs(
+    binary: Path, daemon: Path, procedures: Path
+) -> dict[str, Any]:
+    jobs = runtime_jobs()
+    completed: dict[int, dict[str, Any]] = {}
+    cancel_event = Event()
+    executor = ThreadPoolExecutor(max_workers=MAX_PARALLEL_RUNTIMES)
+    futures: dict[Future[dict[str, Any]], int] = {
+        executor.submit(
+            execute_runtime_job,
+            binary,
+            daemon,
+            procedures,
+            job,
+            cancel_event,
+        ): job["order"]
+        for job in jobs
+    }
+    try:
+        for future in as_completed(futures):
+            result = future.result()
+            completed[result["order"]] = result
+    except BaseException:
+        cancel_event.set()
+        for future in futures:
+            future.cancel()
+        raise
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
+
+    terminal_order = {
+        scenario: index
+        for index, (scenario, _procedure) in enumerate(terminal_scenario_specs())
+    }
+    wait_scenarios: list[dict[str, Any]] = []
+    scenario_runs: list[dict[str, Any]] = []
+    lifecycle_runs: list[dict[str, Any]] = []
+    runtime_batches: list[dict[str, Any]] = []
+    workspace_removal: dict[str, Any] | None = None
+    case_variants: dict[str, set[str]] = {}
+    for result in (completed[order] for order in sorted(completed)):
+        runtime_batches.append(result["batch"])
+        merge_case_variants(case_variants, result["case_variants"])
+        if "workspace_removal" in result:
+            workspace_removal = result["workspace_removal"]
+        if "wait_scenario" in result:
+            wait_scenarios.append(result["wait_scenario"])
+        if "scenario_runs" in result:
+            scenario_runs.extend(result["scenario_runs"])
+        if "lifecycle_run" in result:
+            lifecycle_runs.append(result["lifecycle_run"])
+
+    scenario_runs.sort(key=lambda item: terminal_order[item["scenario"]])
+    if workspace_removal is None or len(lifecycle_runs) != 1:
+        raise RuntimeQualificationError(
+            "runtime qualification job inventory was incomplete"
+        )
+    return {
+        "workspace_removal": workspace_removal,
+        "wait_scenarios": wait_scenarios,
+        "scenario_runs": scenario_runs,
+        "lifecycle_runs": lifecycle_runs,
+        "runtime_batches": runtime_batches,
+        "case_variants": case_variants,
+    }
+
+
+def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, Any]:
+    """Qualify the official artifact with bounded parallel runtime batches."""
+    procedures = repository / "plugins/aquarium/assets/podway/procedures"
+    probe_root: Path | None = None
+    try:
+        with ManagedRuntime(binary, daemon, procedures, 0) as cleanup_probe:
+            probe_root = cleanup_probe.root
+            raise ExpectedCleanupProbe("deliberate failure cleanup probe")
+    except ExpectedCleanupProbe:
+        pass
+    if probe_root is None or probe_root.exists():
+        raise RuntimeQualificationError(
+            "failure cleanup probe left its disposable runtime root"
+        )
+    runtime_results = execute_runtime_jobs(binary, daemon, procedures)
+    workspace_removal = runtime_results["workspace_removal"]
+    wait_scenarios = runtime_results["wait_scenarios"]
+    scenario_runs = runtime_results["scenario_runs"]
+    lifecycle_runs = runtime_results["lifecycle_runs"]
+    runtime_batches = runtime_results["runtime_batches"]
+    case_variants = runtime_results["case_variants"]
     if case_variants != EXPECTED_NATIVE_CASE_VARIANTS:
         raise RuntimeQualificationError(
             "correction matrix scenarios were incomplete: "
@@ -4590,8 +4869,9 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
     return {
         "runtime_mode": RUNTIME_MODE,
         "daemon_status_schema": "podway.daemon-status-result/v3",
-        "runtime_repeat_count": REPEAT_COUNT,
+        "canonical_lifecycle_pass_count": 1,
         "runtime_procedure_count": 5,
+        "max_parallel_runtimes": MAX_PARALLEL_RUNTIMES,
         "failure_cleanup": "passed",
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,
@@ -4607,5 +4887,6 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         ),
         "correction_matrix_cases": sorted(case_variants),
         "correction_matrix_results": correction_matrix_results,
-        "runtime_runs": receipts,
+        "lifecycle_runs": lifecycle_runs,
+        "runtime_batches": runtime_batches,
     }

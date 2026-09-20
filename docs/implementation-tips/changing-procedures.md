@@ -29,7 +29,15 @@ The Task Procedure's `assess-goal` placement intentionally consumes the final no
 
 ## Compatibility Evidence
 
-A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.10 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> make test-podway-compat` against the exact Aquarium candidate.
+A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.10 compatibility, run `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> gaori run test-podway-compat` against the exact Aquarium candidate. Use the authoritative `make test-podway-compat` target directly only when Gaori is unavailable.
+
+### Maintaining the compatibility matrix
+
+- Register each native scenario exactly once in the centralized wait or terminal inventory. The inventory unit test owns the exact scenario and runtime-root counts.
+- Share a runtime only between scenarios that reach terminal disposition. A scenario that returns with an active or otherwise nonterminal session must keep its own runtime root.
+- Before each scenario in a reused runtime, restore the canonical Procedure bytes, reset scenario-local state, and renew the scenario deadline. Preserve runtime-level command sequencing and accumulated correction-case evidence.
+- Keep the four-runtime concurrency limit unless an official-artifact run proves a different bound and verifies cleanup on both success and failure. Keep the configured Gaori timeout above the observed worst-case duration.
+- When receipt fields or their meaning change, increase the receipt schema and update `TESTING.md`, the local-interface catalog, and focused unit assertions in the same change.
 
 Procedure validators prove declaration and graph invariants only. Native scenario
 tests cover executable routing and rejection behavior. Agent-observed scenarios
