@@ -4633,8 +4633,8 @@ else:
             (
                 "aquarium-task-v2.yaml",
                 "classify-review-route-change",
-                "unsettled-incomplete",
-                "confirm-review-route-change-readiness",
+                "unsettled",
+                "authorize-incomplete-review-route",
             ),
             (
                 "aquarium-task-v2.yaml",
@@ -4651,13 +4651,7 @@ else:
             (
                 "aquarium-task-v2.yaml",
                 "decide-mulgae-review-operation",
-                "incomplete",
-                "confirm-incomplete-review-evidence",
-            ),
-            (
-                "aquarium-task-v2.yaml",
-                "decide-mulgae-review-operation",
-                "failed",
+                "unsettled",
                 "confirm-incomplete-review-evidence",
             ),
             (
@@ -4682,7 +4676,7 @@ else:
                 "aquarium-task-v2.yaml",
                 "validate-review-route-entry",
                 "resumed",
-                "classify-resumed-review",
+                "authorize-current-review-route-resume",
             ),
             (
                 "aquarium-task-v2.yaml",

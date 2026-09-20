@@ -3249,15 +3249,15 @@ class ManagedRuntime:
                 )
                 if (
                     self.node_visits.get("validate-review-route-entry") != 1
-                    or self.node_visits.get(
-                        "classify-completed-current-review"
-                        if transition.get("continued_checkpoint")
-                        else "classify-review-route-change"
+                    or (
+                        not transition.get("continued_checkpoint")
+                        and self.node_visits.get("classify-review-route-change") != 1
                     )
-                    != 1
                     or self.node_visits.get(
                         "authorize-completed-current-review-route"
                         if transition.get("continued_checkpoint")
+                        else "authorize-completed-waiver-review-route"
+                        if transition.get("prior_operation") == "waived"
                         else "authorize-completed-review-route"
                     )
                     != 1
@@ -3959,7 +3959,7 @@ class ManagedRuntime:
                     )
                     and task_resume.get("checkpoint_basis")
                     in {"explicit-route-change", "explicit-waiver"}
-                    else "resumed"
+                    else f"resumed-{task_resume['operation']}"
                     if self.node_visits.get("prepare-review", 0) > 1
                     else "planned"
                 )
@@ -3969,18 +3969,10 @@ class ManagedRuntime:
                 special_option = (
                     "completed-waiver"
                     if task_resume.get("prior_operation") == "waived"
-                    else f"completed-delegated-{task_resume['route']}"
+                    else "completed-delegated"
                     if task_resume.get("completed_transition")
-                    else f"unsettled-{task_resume['operation']}"
+                    else "unsettled"
                 )
-            elif task_resume and node == "classify-completed-current-review":
-                special_option = (
-                    "waiver" if task_resume["route"] == "waived" else "delegated"
-                )
-            elif task_resume and node == "classify-resumed-review":
-                special_option = task_resume["operation"]
-            elif task_resume and node == "confirm-review-route-change-readiness":
-                special_option = "safe"
             elif task_resume and node == "authorize-incomplete-review-route":
                 target_route = task_resume.get("effective_route", task_resume["route"])
                 special_option = (
@@ -4012,7 +4004,7 @@ class ManagedRuntime:
                 special_option = (
                     "assessed"
                     if task_resume.get("completed_transition")
-                    else task_resume["operation"]
+                    else "unsettled"
                 )
             elif task_resume and node == "confirm-incomplete-review-evidence":
                 special_option = (
