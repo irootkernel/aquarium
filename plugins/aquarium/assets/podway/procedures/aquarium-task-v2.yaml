@@ -2640,6 +2640,9 @@ graph:
           required: true
           items:
             - prior-assessment-ordinal
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
             - extra-assessment-authority-reference
         - node: review
           required: true

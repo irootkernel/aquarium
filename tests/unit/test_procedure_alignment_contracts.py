@@ -39,7 +39,7 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-task-v2.yaml",
             "18",
-            "18a368a4c00b75dc8184602078b900d78ec8b3849c249cbe536a203a6ef573b1",
+            "a9492e56a72b8e97f103561a5361aab1143d32043302694af089619e5ff948a4",
             "aquarium-task-v17.yaml",
             "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
         ),
@@ -433,6 +433,17 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
             "effect": "advance",
         },
     }
+    assessment_sources = {
+        source["node"]: set(source["items"])
+        for source in graph["confirm-assessment-ordinal"]["evidence_from"]
+    }
+    assert {
+        "prior-assessment-ordinal",
+        "finding-lineage-summary",
+        "remaining-review-authority-summary",
+        "corrected-target-summary",
+        "extra-assessment-authority-reference",
+    } <= assessment_sources["prepare-review"]
     for gate in ("confirm-first-review-evidence", "confirm-extra-review-evidence"):
         assert set(graph[gate]["routes"]) == {"mulgae", "static-delegated", "waived"}
     assert graph["decide-backend-check"]["routes"] == {
