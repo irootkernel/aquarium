@@ -3988,7 +3988,8 @@ class ManagedRuntime:
                     else f"completed-change-{target_route}"
                 )
             elif task_resume and node == "authorize-completed-current-review-route":
-                special_option = f"continued-{task_resume['route']}"
+                route = task_resume["route"]
+                special_option = f"continued-{'waiver' if route == 'waived' else route}"
             elif task_resume and node == "confirm-review-route-binding":
                 special_option = (
                     task_resume.get("effective_route", task_resume["route"])
