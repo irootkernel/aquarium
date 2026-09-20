@@ -334,12 +334,16 @@ node_definitions:
         guards:
           - evidence:
               node: prepare-review
-              item: prior-review-operation
+              item: checkpoint-requested-direction
             not_equals: not-applicable
           - evidence:
               node: prepare-review
-              item: prior-route-change-readiness
-            not_equals: not-applicable
+              item: checkpoint-requested-direction
+            not_equals: continue-current
+          - evidence:
+              node: prepare-review
+              item: checkpoint-requested-direction
+            not_equals: resume-current
           - evidence:
               node: prepare-review
               item: route-direction-continuity
@@ -351,16 +355,12 @@ node_definitions:
         guards:
           - evidence:
               node: prepare-review
-              item: prior-review-operation
-            not_equals: incomplete
+              item: route-authorization-basis
+            equals: continued-checkpoint
           - evidence:
               node: prepare-review
-              item: prior-review-operation
-            not_equals: failed
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            not_equals: not-applicable
+              item: checkpoint-requested-direction
+            equals: continue-current
           - evidence:
               node: prepare-review
               item: route-direction-continuity
@@ -372,16 +372,12 @@ node_definitions:
         guards:
           - evidence:
               node: prepare-review
-              item: prior-review-operation
-            not_equals: complete
+              item: route-authorization-basis
+            equals: resume-current
           - evidence:
               node: prepare-review
-              item: prior-review-operation
-            not_equals: waived
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            not_equals: not-applicable
+              item: checkpoint-requested-direction
+            equals: resume-current
           - evidence:
               node: prepare-review
               item: route-direction-continuity
@@ -412,42 +408,26 @@ node_definitions:
               node: prepare-review
               item: prior-review-operation
             not_equals: not-applicable
-      - id: completed-delegated
-        label: Prior delegated checkpoint completed
-        criteria: The exact delegated checkpoint retains its ordinal and lineage.
+      - id: completed
+        label: Prior checkpoint completed
+        criteria: The exact delegated or waived checkpoint retains its ordinal and lineage after continuity passes.
         guards:
           - evidence:
               node: prepare-review
               item: prior-review-operation
-            equals: complete
+            not_equals: incomplete
           - evidence:
               node: prepare-review
-              item: prior-assessment-ordinal
-            at_least: 1
+              item: prior-review-operation
+            not_equals: failed
           - evidence:
               node: prepare-review
-              item: prior-review-route
-            not_equals: waived
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
+              item: prior-review-operation
             not_equals: not-applicable
-      - id: completed-waiver
-        label: Prior waiver checkpoint completed
-        criteria: The prior waiver assessment completed and its lineage must be preserved by the route change.
-        guards:
-          - evidence:
-              node: prepare-review
-              item: prior-review-operation
-            equals: waived
           - evidence:
               node: prepare-review
               item: prior-assessment-ordinal
             at_least: 1
-          - evidence:
-              node: prepare-review
-              item: prior-review-route
-            equals: waived
     reason:
       required: true
       prompt: Explain the prior operation state that owns the route-change path.
@@ -2275,11 +2255,8 @@ graph:
         unsettled:
           to: authorize-incomplete-review-route
           effect: advance
-        completed-delegated:
+        completed:
           to: authorize-completed-review-route
-          effect: advance
-        completed-waiver:
-          to: authorize-completed-waiver-review-route
           effect: advance
     - id: authorize-planned-review-route
       use: planned-review-route-authorization-decision
@@ -2349,41 +2326,6 @@ graph:
           to: enter-waived-review-route
           effect: advance
     - id: authorize-completed-review-route
-      use: completed-review-route-authorization-decision
-      evidence_from:
-        - node: record-plan
-          required: true
-          items:
-            - review-route
-        - node: prepare-review
-          required: true
-          items:
-            - effective-review-route
-            - route-authorization-basis
-            - checkpoint-requested-direction
-            - route-change-authority-reference
-            - prior-review-operation
-            - prior-review-route
-            - prior-route-change-readiness
-            - prior-assessment-ordinal
-            - finding-lineage-summary
-            - remaining-review-authority-summary
-            - corrected-target-summary
-            - extra-assessment-authority-reference
-      routes:
-        completed-change-mulgae:
-          to: enter-mulgae-review-route
-          effect: advance
-        completed-change-orca:
-          to: enter-orca-review-route
-          effect: advance
-        completed-change-native-codex:
-          to: enter-native-codex-review-route
-          effect: advance
-        completed-change-waiver:
-          to: enter-waived-review-route
-          effect: advance
-    - id: authorize-completed-waiver-review-route
       use: completed-review-route-authorization-decision
       evidence_from:
         - node: record-plan
