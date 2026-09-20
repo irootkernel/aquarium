@@ -110,6 +110,12 @@ fallback. Failed attempts do not consume an ordinal. Existing
 finding confirmation, completion, priority, owner, Low settlement, goal
 assessment, and closeout decisions remain separate.
 
+Goal and validation recovery also record the immediately preceding route and
+operation and require a caller-recorded binding result over the effective route,
+requested direction, lifecycle settlement, findings, ordinal, goal revision, and
+remaining authority. Earlier change authority cannot make a mismatched
+`resume-current` provider valid.
+
 Version 17 keeps the version 16 evidence contract while splitting route entry,
 operation state, evidence, provenance, backend, settlement, and recovery into
 route-specific serial decisions that satisfy the Podway lint limits. Each

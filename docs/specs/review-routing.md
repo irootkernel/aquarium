@@ -90,6 +90,7 @@ The Procedures and handlers record these route-neutral facts:
 | `assessment-provenance` | Reviewer evidence or `coordinator-waiver` evidence |
 | `waiver-summary` | Required only for `waived`; records authority, target, reason, and limitations |
 | `prior-review-route` and `prior-review-operation` | The immediately preceding provider operation used for recovery; before any provider operation starts, both use their declared not-applicable state |
+| `route-binding-result` | Caller-recorded check that binds the effective route to the immediately preceding operation, current direction and authority, lifecycle settlement, findings, ordinal, goal revision, and remaining authority; Podway does not execute or attest it |
 
 The following combinations are valid for a completed checkpoint:
 
