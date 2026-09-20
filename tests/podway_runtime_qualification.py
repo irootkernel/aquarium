@@ -3959,7 +3959,7 @@ class ManagedRuntime:
                     )
                     and task_resume.get("checkpoint_basis")
                     in {"explicit-route-change", "explicit-waiver"}
-                    else f"resumed-{task_resume['operation']}"
+                    else "resumed"
                     if self.node_visits.get("prepare-review", 0) > 1
                     else "planned"
                 )
