@@ -89,7 +89,7 @@ The Procedures and handlers record these route-neutral facts:
 | `backend-check-result` | `pass`, `fail`, or `not-provided`; absence of a backend check never replaces workflow verification |
 | `assessment-provenance` | Reviewer evidence or `coordinator-waiver` evidence |
 | `waiver-summary` | Required only for `waived`; records authority, target, reason, and limitations |
-| `prior-review-route` and `prior-review-operation` | The immediately preceding provider operation used for recovery; before any provider operation starts, both use their declared not-applicable state |
+| `prior-review-route` and `prior-review-operation` | The immediately preceding review route and operation used for recovery or follow-up; a completed waiver is preserved as `waived`/`waived`, while both fields use their declared not-applicable state before any review operation starts |
 | `route-binding-result` | Caller-recorded check that binds the effective route to the immediately preceding operation, current direction and authority, lifecycle settlement, findings, ordinal, goal revision, and remaining authority; Podway does not execute or attest it |
 
 The following combinations are valid for a completed checkpoint:
