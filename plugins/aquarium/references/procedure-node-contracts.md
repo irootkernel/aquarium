@@ -30,7 +30,11 @@ unless the placement selects it.
 not invoke the task phase skills. `complete-work` returns the work summary, source
 revision, and conditional plan-handoff artifact. `record-evidence` returns the goal
 kind, review-evidence kind, typed verification and review-readiness results, and
-applicable review and finding records.
+applicable review and finding records. Native review evidence also carries the
+immediately preceding route and operation plus a caller-recorded route-binding
+check. That check binds the effective route to the requested direction, lifecycle
+settlement, findings, goal revision, ordinal, and remaining authority, so
+`resume-current` cannot enter a provider other than the preceding unsettled one.
 Operational evidence, finding confirmation, completion, finding class, rework
 authority, and Low handling form a serial routing chain. Finding-count consistency
 is a guard axis of the finding-class decision. Unverified completion

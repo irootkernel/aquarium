@@ -237,8 +237,13 @@ ROUTE_QUALIFICATION_SCENARIOS = {
     for route in ("mulgae", "orca", "native-codex", "waived")
 }
 
+GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
+    "goal-resume-provider-mismatch-rejected",
+}
+
 GOAL_RECOVERY_SCENARIOS = {
     "goal-resume-changed-orca-after-incomplete",
+    *GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS,
 }
 
 VALIDATION_RECOVERY_SCENARIOS = {
@@ -2047,6 +2052,11 @@ class ManagedRuntime:
                 "review-route": (
                     "mulgae"
                     if goal_recovery and node == "complete-work"
+                    else "native-codex"
+                    if goal_recovery
+                    and node == "record-evidence"
+                    and self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                    and self.goal_evidence_round > 0
                     else "orca"
                     if goal_recovery and node == "record-evidence"
                     else "mulgae"
@@ -2132,6 +2142,10 @@ class ManagedRuntime:
                     if validation_recovery and self.validation_review_round == 0
                     else "incomplete"
                     if validation_recovery
+                    else "not-applicable"
+                    if goal_recovery and self.goal_evidence_round == 0
+                    else "incomplete"
+                    if goal_recovery
                     else task_resume.get("prior_operation", task_resume["operation"])
                     if task_resume
                     and node == "prepare-review"
@@ -2148,6 +2162,10 @@ class ManagedRuntime:
                     if validation_recovery and self.validation_review_round == 0
                     else "orca"
                     if validation_recovery
+                    else "mulgae"
+                    if goal_recovery and self.goal_evidence_round == 0
+                    else "orca"
+                    if goal_recovery
                     else task_resume["route"]
                     if task_resume
                     and node == "prepare-review"
@@ -2291,6 +2309,12 @@ class ManagedRuntime:
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
             if (
+                self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                and item_id == "route-binding-result"
+                and self.goal_evidence_round > 0
+            ):
+                outcome = "fail"
+            elif (
                 self.scenario in TASK_RESUME_SCENARIOS
                 and item_id == "route-transition-admission"
             ):
@@ -3838,6 +3862,20 @@ class ManagedRuntime:
                 and node == "confirm-review-route-binding"
             ):
                 special_option = "planned-mulgae"
+            if (
+                scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                and node == "confirm-review-route-binding"
+                and self.goal_evidence_round == 2
+            ):
+                self.reject_guarded_decision(observation, "changed-native-codex")
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "guard_rejected": "changed-native-codex",
+                    "state_unchanged": True,
+                }
             if scenario in GOAL_RECOVERY_SCENARIOS:
                 if node == "confirm-review-route-binding":
                     planned_route = self.read_complete_evidence(

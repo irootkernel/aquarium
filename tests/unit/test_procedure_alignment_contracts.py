@@ -46,7 +46,7 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-goal-v2.yaml",
             "20",
-            "27be0a3b7fac20d7e7e89ea2f351627d7805484920060daefad346d81b5ed66d",
+            "21023a496b2c3bd3d6da1c3bf28db02f8f4449224bdae75be0e58d724fddfc4e",
             "aquarium-goal-v19.yaml",
             "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
         ),
@@ -1092,6 +1092,14 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         "waived",
     }
     binding = options(goal, "review-route-binding-decision")
+    goal_record_items = {
+        item["id"] for item in goal["node_definitions"]["evidence-record"]["items"]
+    }
+    assert {
+        "prior-review-route",
+        "prior-review-operation",
+        "route-binding-result",
+    } <= goal_record_items
     planned_operation = options(goal, "review-operation-decision")
     changed_operation = options(goal, "changed-review-operation-decision")
     goal_ordinal = options(goal, "assessment-ordinal-decision")
@@ -1118,6 +1126,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 else "hardening-deferral-eligible"
             ),
             ("record-evidence", "assessment-ordinal-continuity"): {"outcome": "pass"},
+            ("record-evidence", "route-binding-result"): {"outcome": "pass"},
             ("record-evidence", "prior-route-lifecycle-state"): case.get(
                 "prior_lifecycle", "not-started"
             ),

@@ -208,6 +208,26 @@ node_definitions:
         min_length: 1
         max_length: 2000
         multiline: true
+      - id: prior-review-route
+        type: choice
+        prompt: Record the immediately preceding review route, or not-applicable before any review operation starts.
+        required: true
+        choices:
+          - not-applicable
+          - mulgae
+          - orca
+          - native-codex
+          - waived
+      - id: prior-review-operation
+        type: choice
+        prompt: Record the immediately preceding review operation state, or not-applicable before any review operation starts.
+        required: true
+        choices:
+          - not-applicable
+          - complete
+          - incomplete
+          - failed
+          - waived
       - id: prior-route-lifecycle-state
         type: choice
         prompt: For incomplete or failed operations, record the last authoritative prior-route state.
@@ -239,6 +259,20 @@ node_definitions:
           - switch-route
           - waive
           - stop
+      - id: route-binding-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-goal-review-route-binding; Podway does not execute or attest the operation.
+        help: The declared operation is "Verify that the effective Goal review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        required: false
+        required_when:
+          - item: review-evidence-kind
+            equals: native-review
+        operation_id: aquarium-goal-review-route-binding
+        operation_digest: sha256:b2ca6dfab76630882c281060a69a33e1c13b6da4f7b382059c791ffc49fe32a9
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
       - id: finding-lineage-summary
         type: text
         prompt: Preserve earlier findings and dispositions across this checkpoint and any route change.
@@ -377,6 +411,11 @@ node_definitions:
               node: record-evidence
               item: route-authorization-basis
             equals: approved-envelope
+          - evidence:
+              node: record-evidence
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: planned-orca
         label: Planned Orca route
         criteria: Orca matches the approved envelope.
@@ -393,6 +432,11 @@ node_definitions:
               node: record-evidence
               item: route-authorization-basis
             equals: approved-envelope
+          - evidence:
+              node: record-evidence
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: planned-native-codex
         label: Planned native Codex route
         criteria: Native Codex matches the approved envelope.
@@ -409,6 +453,11 @@ node_definitions:
               node: record-evidence
               item: route-authorization-basis
             equals: approved-envelope
+          - evidence:
+              node: record-evidence
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: planned-waiver
         label: Planned waiver route
         criteria: Waiver matches the approved envelope.
@@ -425,6 +474,11 @@ node_definitions:
               node: record-evidence
               item: route-authorization-basis
             equals: approved-envelope
+          - evidence:
+              node: record-evidence
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: changed-mulgae
         label: Authorized Mulgae change
         criteria: Mulgae has explicit safe route-change authority.
@@ -443,8 +497,9 @@ node_definitions:
             non_empty: true
           - evidence:
               node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: changed-orca
         label: Authorized Orca change
         criteria: Orca has explicit safe route-change authority.
@@ -463,8 +518,9 @@ node_definitions:
             non_empty: true
           - evidence:
               node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: changed-native-codex
         label: Authorized native Codex change
         criteria: Native Codex has explicit safe route-change authority.
@@ -483,8 +539,9 @@ node_definitions:
             non_empty: true
           - evidence:
               node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
+              item: route-binding-result
+            field: outcome
+            equals: pass
       - id: changed-waiver
         label: Authorized waiver change
         criteria: Waiver has explicit safe waiver authority.
@@ -503,8 +560,9 @@ node_definitions:
             non_empty: true
           - evidence:
               node: record-evidence
-              item: route-change-readiness
-            equals: safe-to-change
+              item: route-binding-result
+            field: outcome
+            equals: pass
     reason:
       required: true
       prompt: Explain the approved route, effective route, authorization basis, and safe-state evidence.
@@ -1905,6 +1963,9 @@ graph:
             - route-change-authority-reference
             - route-change-readiness
             - prior-route-lifecycle-state
+            - prior-review-route
+            - prior-review-operation
+            - route-binding-result
       routes:
         planned-mulgae:
           to: decide-planned-mulgae-review-operation

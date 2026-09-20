@@ -1,7 +1,7 @@
 {
   "document_kind": "aquarium-operation-contract-fixture",
   "status": "implemented-caller-recorded-contract",
-  "scope": "The nine selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
+  "scope": "The ten selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
   "digest_rule": "SHA-256 over exact descriptor UTF-8 bytes, with no trailing newline.",
   "assurance_boundary": "Caller-recorded structured claims; neither Podway nor these descriptors execute tools or establish semantic truth.",
   "operations": [
@@ -32,6 +32,17 @@
       "descriptor": "Verify that the completed Epic member review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized review mode.",
       "meaning": "A caller-recorded continuity and mode check over the prior and current Epic member review checkpoint.",
       "operation_digest": "sha256:9de0457a2997291e8678c2bda1f3e123ac158799f1e6b32a1c968ff846f4f91b",
+      "accepted_outcomes": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    {
+      "operation_id": "aquarium-goal-review-route-binding",
+      "descriptor": "Verify that the effective Goal review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority.",
+      "meaning": "A caller-recorded binding check over the planned route, immediately preceding review operation, effective route, current authority, and native lifecycle settlement.",
+      "operation_digest": "sha256:b2ca6dfab76630882c281060a69a33e1c13b6da4f7b382059c791ffc49fe32a9",
       "accepted_outcomes": [
         "pass",
         "fail",

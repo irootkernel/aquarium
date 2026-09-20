@@ -124,6 +124,14 @@ identity is an operational gap, not permission to launch another reviewer.
 Changing route does not reset the goal revision, remediation budget, findings,
 or corrected-target confirmation obligation.
 
+Each fresh Goal or validation checkpoint carries the immediately preceding
+review route and operation. Its caller-recorded route-binding check must compare
+those values with the effective route, requested direction, lifecycle settlement,
+findings, ordinal, goal revision, and remaining authority. A `resume-current`
+checkpoint fails that check when the effective provider differs from the
+immediately preceding unsettled provider; earlier route-change authority cannot
+authorize that mismatch.
+
 For `stop`, preserve the prior operation rather than treating the choice as
 native cancellation or settlement. If it is active or its terminal state is
 unknown, report its identity and last authoritative state, leave it with its

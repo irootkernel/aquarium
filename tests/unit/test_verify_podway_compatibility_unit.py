@@ -260,7 +260,8 @@ def test_goal_recovery_runtime_scenario_preserves_changed_orca_provider() -> Non
     runtime = verify_podway_compatibility.podway_runtime_qualification
 
     assert runtime.GOAL_RECOVERY_SCENARIOS == {
-        "goal-resume-changed-orca-after-incomplete"
+        "goal-resume-changed-orca-after-incomplete",
+        "goal-resume-provider-mismatch-rejected",
     }
 
 
