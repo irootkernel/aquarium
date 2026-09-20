@@ -1966,6 +1966,11 @@ graph:
             - prior-review-route
             - prior-review-operation
             - route-binding-result
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
+            - prior-assessment-ordinal
+            - assessment-ordinal
       routes:
         planned-mulgae:
           to: decide-planned-mulgae-review-operation

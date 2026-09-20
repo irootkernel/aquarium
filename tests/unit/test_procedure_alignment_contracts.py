@@ -46,14 +46,14 @@ def test_task_071_current_and_prior_procedure_identities_are_exact() -> None:
         (
             "aquarium-goal-v2.yaml",
             "20",
-            "21023a496b2c3bd3d6da1c3bf28db02f8f4449224bdae75be0e58d724fddfc4e",
+            "bf0eaa45855755136f9fc439ec654c6351cbec5cb1d7b50999c104bf0dda56b2",
             "aquarium-goal-v19.yaml",
             "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
         ),
         (
             "aquarium-validation-v2.yaml",
             "19",
-            "d8b4ae01d5477bb3862f80620da5bf32f303b4fac88e64dc0ade0170d963e2df",
+            "bc13b16e9f4b49990261ffbd3b2dd66f092699f858645f0ce4da2a1a73523866",
             "aquarium-validation-v18.yaml",
             "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
         ),
@@ -1068,6 +1068,12 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         for item in validation["node_definitions"]["final-review-record"]["items"]
     }
     assert {"prior-review-route", "prior-review-operation"} <= final_review_items
+    final_review_definitions = {
+        item["id"]: item
+        for item in validation["node_definitions"]["final-review-record"]["items"]
+    }
+    assert "waived" in final_review_definitions["prior-review-route"]["choices"]
+    assert "waived" in final_review_definitions["prior-review-operation"]["choices"]
     binding_items = {
         item
         for source in nodes(validation)["confirm-final-review-route-binding"][
@@ -1083,6 +1089,11 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         "route-direction",
         "route-change-readiness",
         "route-binding-result",
+        "finding-lineage-summary",
+        "remaining-review-authority-summary",
+        "corrected-target-summary",
+        "prior-assessment-ordinal",
+        "assessment-ordinal",
     } <= binding_items
 
     assert {case["route"] for case in goal_cases} == {
@@ -1100,6 +1111,22 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
         "prior-review-operation",
         "route-binding-result",
     } <= goal_record_items
+    goal_binding_items = {
+        item
+        for source in nodes(goal)["confirm-review-route-binding"]["evidence_from"]
+        if source["node"] == "record-evidence"
+        for item in source["items"]
+    }
+    assert {
+        "prior-review-route",
+        "prior-review-operation",
+        "route-binding-result",
+        "finding-lineage-summary",
+        "remaining-review-authority-summary",
+        "corrected-target-summary",
+        "prior-assessment-ordinal",
+        "assessment-ordinal",
+    } <= goal_binding_items
     planned_operation = options(goal, "review-operation-decision")
     changed_operation = options(goal, "changed-review-operation-decision")
     goal_ordinal = options(goal, "assessment-ordinal-decision")

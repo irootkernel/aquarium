@@ -84,9 +84,9 @@
     },
     {
       "operation_id": "aquarium-validation-review-route-binding",
-      "descriptor": "Verify that the effective whole-Epic review route preserves the immediately preceding provider operation and lifecycle evidence, and matches the approved validation envelope or current explicit lifecycle-safe route-change or waiver authority.",
-      "meaning": "A caller-recorded binding check over the planned route, immediately preceding provider operation, effective route, current authority, and native lifecycle settlement.",
-      "operation_digest": "sha256:f09440c6be2cf4090ec0317a17e7a1042975236476f3386e7a55b6067200a21a",
+      "descriptor": "Verify that the effective whole-Epic review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved validation envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority.",
+      "meaning": "A caller-recorded binding check over the planned route, immediately preceding review operation, effective route, requested direction, lifecycle settlement, findings, ordinal, goal revision, and remaining authority.",
+      "operation_digest": "sha256:231042f4ce3156ba7b9a770e23960766ebe5cf3167b774d01b1365970f2c8792",
       "accepted_outcomes": [
         "pass",
         "fail",

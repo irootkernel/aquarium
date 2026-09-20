@@ -527,6 +527,7 @@ node_definitions:
           - mulgae
           - orca
           - native-codex
+          - waived
       - id: prior-review-operation
         type: choice
         prompt: Record the immediately preceding provider operation state, or not-applicable before any provider operation starts.
@@ -536,6 +537,7 @@ node_definitions:
           - complete
           - incomplete
           - failed
+          - waived
       - id: prior-route-lifecycle-state
         type: choice
         prompt: Record the last authoritative prior-route state.
@@ -585,10 +587,10 @@ node_definitions:
       - id: route-binding-result
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-review-route-binding; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the effective whole-Epic review route preserves the immediately preceding provider operation and lifecycle evidence, and matches the approved validation envelope or current explicit lifecycle-safe route-change or waiver authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the effective whole-Epic review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved validation envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-validation-review-route-binding
-        operation_digest: sha256:f09440c6be2cf4090ec0317a17e7a1042975236476f3386e7a55b6067200a21a
+        operation_digest: sha256:231042f4ce3156ba7b9a770e23960766ebe5cf3167b774d01b1365970f2c8792
         accepted_outcomes:
           - pass
           - fail
@@ -1704,6 +1706,11 @@ graph:
             - route-direction
             - route-binding-result
             - route-change-readiness
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
+            - prior-assessment-ordinal
+            - assessment-ordinal
       routes:
         bound:
           to: decide-final-review-operation

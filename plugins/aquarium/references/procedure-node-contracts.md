@@ -68,7 +68,7 @@ envelope and keep their triggering set. A required corrected-target confirmation
 still runs. Low-only audit or confirmation results use local settlement without a
 new broad audit. Final review preserves applicable audit and provider identities
 under separate namespaces. Its route-binding check consumes the planned route,
-effective route, immediately preceding provider route and operation, native
+effective route, immediately preceding review route and operation, native
 lifecycle state, requested direction, and current transition authority. It then
 admits operation, finding confirmation, completion, required evidence, and
 current blockers through separate serial decisions before

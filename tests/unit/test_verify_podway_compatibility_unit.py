@@ -269,7 +269,11 @@ def test_validation_recovery_runtime_scenario_preserves_previous_operation() -> 
     runtime = verify_podway_compatibility.podway_runtime_qualification
 
     assert runtime.VALIDATION_RECOVERY_SCENARIOS == {
-        "validation-resume-changed-orca-after-incomplete"
+        "validation-resume-changed-orca-after-incomplete",
+        "validation-resume-provider-mismatch-rejected",
+    }
+    assert runtime.VALIDATION_WAIVER_FOLLOWUP_SCENARIOS == {
+        "validation-waiver-followup-preserves-prior"
     }
 
 

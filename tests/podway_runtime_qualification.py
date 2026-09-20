@@ -246,8 +246,17 @@ GOAL_RECOVERY_SCENARIOS = {
     *GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS,
 }
 
+VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
+    "validation-resume-provider-mismatch-rejected",
+}
+
 VALIDATION_RECOVERY_SCENARIOS = {
     "validation-resume-changed-orca-after-incomplete",
+    *VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS,
+}
+
+VALIDATION_WAIVER_FOLLOWUP_SCENARIOS = {
+    "validation-waiver-followup-preserves-prior",
 }
 
 TASK_RESUME_SCENARIOS = {
@@ -746,6 +755,7 @@ class ManagedRuntime:
         self.completed_assessments: dict[str, int] = {}
         self.correction_case_variants: dict[str, set[str]] = {}
         self.validation_source_basis_verified = False
+        self.validation_waiver_continuity_verified = False
         self.low_blocker_readback_verified = False
         self.task_one_shot_decision_used = False
         self.task_optional_waiver_absence_recorded = False
@@ -1579,6 +1589,9 @@ class ManagedRuntime:
         qualified_route = route_qualification[1] if route_qualification else None
         goal_recovery = self.scenario in GOAL_RECOVERY_SCENARIOS
         validation_recovery = self.scenario in VALIDATION_RECOVERY_SCENARIOS
+        validation_waiver_followup = (
+            self.scenario in VALIDATION_WAIVER_FOLLOWUP_SCENARIOS
+        )
         if item_type == "text":
             maximum = constraints.get("max_length", 256)
             if route_qualification and item_id == "assessment-provenance":
@@ -1857,7 +1870,10 @@ class ManagedRuntime:
                     value = 1
                 elif item_id == "effective-medium-or-higher-findings":
                     value = 0
-            if self.scenario in VALIDATION_CONFIRMATION_SCENARIOS:
+            if (
+                self.scenario in VALIDATION_CONFIRMATION_SCENARIOS
+                or validation_waiver_followup
+            ):
                 if node == "audit" and item_id in {
                     "confirmed-gap-count",
                     "blocking-gap-count",
@@ -1883,6 +1899,28 @@ class ManagedRuntime:
                         "required-evidence-gaps",
                     }:
                         value = 0
+            if (
+                validation_waiver_followup
+                and node == "final-review"
+                and self.validation_review_round == 0
+            ):
+                if item_id in {
+                    "unresolved-valid-findings",
+                    "medium-or-higher-findings",
+                    "medium-findings",
+                    "current-applicable-blockers",
+                }:
+                    value = 1
+                elif item_id in {
+                    "blocker-findings",
+                    "critical-findings",
+                    "high-findings",
+                    "low-findings",
+                    "confirmation-needed-findings",
+                    "pending-applicable-low-dispositions",
+                    "required-evidence-gaps",
+                }:
+                    value = 0
             if (
                 self.scenario == "validation-stop-preserves-completion"
                 and node == "final-review"
@@ -2062,7 +2100,16 @@ class ManagedRuntime:
                     else "mulgae"
                     if validation_recovery and node == "capture-baseline"
                     else "orca"
+                    if validation_recovery
+                    and node == "final-review"
+                    and not (
+                        self.scenario in VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                        and self.validation_review_round > 0
+                    )
+                    else "native-codex"
                     if validation_recovery and node == "final-review"
+                    else "waived"
+                    if validation_waiver_followup and node == "final-review"
                     else task_review_route
                     if task_review_route is not None
                     else qualified_route
@@ -2090,6 +2137,8 @@ class ManagedRuntime:
                         else "complete"
                     )
                     if validation_recovery
+                    else "waived"
+                    if validation_waiver_followup
                     else (
                         "waived"
                         if task_resume.get("effective_route") == "waived"
@@ -2109,6 +2158,8 @@ class ManagedRuntime:
                 "route-authorization-basis": (
                     "explicit-route-change"
                     if goal_recovery or validation_recovery
+                    else "approved-envelope"
+                    if validation_waiver_followup
                     else task_resume.get("checkpoint_basis", "resume-current")
                     if task_resume
                     and node == "prepare-review"
@@ -2143,6 +2194,10 @@ class ManagedRuntime:
                     else "incomplete"
                     if validation_recovery
                     else "not-applicable"
+                    if validation_waiver_followup and self.validation_review_round == 0
+                    else "waived"
+                    if validation_waiver_followup
+                    else "not-applicable"
                     if goal_recovery and self.goal_evidence_round == 0
                     else "incomplete"
                     if goal_recovery
@@ -2162,6 +2217,10 @@ class ManagedRuntime:
                     if validation_recovery and self.validation_review_round == 0
                     else "orca"
                     if validation_recovery
+                    else "not-applicable"
+                    if validation_waiver_followup and self.validation_review_round == 0
+                    else "waived"
+                    if validation_waiver_followup
                     else "mulgae"
                     if goal_recovery and self.goal_evidence_round == 0
                     else "orca"
@@ -2196,6 +2255,10 @@ class ManagedRuntime:
                     if validation_recovery and self.validation_review_round == 0
                     else "terminal-incomplete-or-failed"
                     if validation_recovery
+                    else "not-started"
+                    if validation_waiver_followup and self.validation_review_round == 0
+                    else "terminal-complete"
+                    if validation_waiver_followup
                     else task_resume["prior_state"]
                     if task_resume
                     else None
@@ -2230,6 +2293,7 @@ class ManagedRuntime:
                 "assessment-provenance-kind": (
                     "coordinator-waiver"
                     if qualified_route == "waived"
+                    or validation_waiver_followup
                     or (
                         task_resume
                         and task_resume.get("completed_transition")
@@ -2286,6 +2350,7 @@ class ManagedRuntime:
                     else "not-provided"
                     if goal_recovery
                     or validation_recovery
+                    or validation_waiver_followup
                     or task_review_route is not None
                     else "not-provided"
                     if qualified_route is not None
@@ -2312,6 +2377,10 @@ class ManagedRuntime:
                 self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
                 and item_id == "route-binding-result"
                 and self.goal_evidence_round > 0
+            ) or (
+                self.scenario in VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                and item_id == "route-binding-result"
+                and self.validation_review_round > 0
             ):
                 outcome = "fail"
             elif (
@@ -3432,6 +3501,14 @@ class ManagedRuntime:
                 continue
 
             if node in {"assess-goal", "assess-stopped-goal"}:
+                if (
+                    scenario in VALIDATION_WAIVER_FOLLOWUP_SCENARIOS
+                    and not self.validation_waiver_continuity_verified
+                ):
+                    raise RuntimeQualificationError(
+                        "Validation waiver follow-up reached assessment without "
+                        "preserving its prior checkpoint"
+                    )
                 if scenario in STOP_EVIDENCE_SCENARIOS:
                     expected_procedure, completion_source = STOP_EVIDENCE_SCENARIOS[
                         scenario
@@ -3876,6 +3953,22 @@ class ManagedRuntime:
                     "guard_rejected": "changed-native-codex",
                     "state_unchanged": True,
                 }
+            if (
+                scenario in VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
+                and node == "confirm-final-review-route-binding"
+                and self.validation_review_round == 2
+            ):
+                self.reject_guarded_decision(observation, "bound")
+                decision = self.decide(observation, "invalid")
+                self.decision_destination(decision, "record-incomplete")
+                return {
+                    "scenario": scenario,
+                    "procedure_id": procedure_id,
+                    "node": node,
+                    "lifecycle": status["session"]["lifecycle"],
+                    "guard_rejected": "bound",
+                    "state_unchanged": True,
+                }
             if scenario in GOAL_RECOVERY_SCENARIOS:
                 if node == "confirm-review-route-binding":
                     planned_route = self.read_complete_evidence(
@@ -3969,6 +4062,54 @@ class ManagedRuntime:
                     special_option = "recover"
                 elif node == "determine-final-backend-applicability":
                     special_option = "not-required"
+            if scenario in VALIDATION_WAIVER_FOLLOWUP_SCENARIOS:
+                if (
+                    node == "confirm-final-review-route-binding"
+                    and self.validation_review_round == 2
+                ):
+                    prior_route = self.read_complete_evidence(
+                        observation, "final-review", "prior-review-route"
+                    )
+                    prior_operation = self.read_complete_evidence(
+                        observation, "final-review", "prior-review-operation"
+                    )
+                    prior_ordinal = self.read_complete_evidence(
+                        observation, "final-review", "prior-assessment-ordinal"
+                    )
+                    current_ordinal = self.read_complete_evidence(
+                        observation, "final-review", "assessment-ordinal"
+                    )
+                    lineage = self.read_complete_evidence(
+                        observation, "final-review", "finding-lineage-summary"
+                    )
+                    if (
+                        (prior_route, prior_operation) != ("waived", "waived")
+                        or prior_ordinal != 1
+                        or current_ordinal != 2
+                        or not isinstance(lineage, str)
+                        or not lineage
+                    ):
+                        raise RuntimeQualificationError(
+                            "Validation waiver follow-up lost prior assessment evidence: "
+                            f"prior={(prior_route, prior_operation)!r}; "
+                            f"ordinals={(prior_ordinal, current_ordinal)!r}"
+                        )
+                    self.validation_waiver_continuity_verified = True
+                    special_option = "bound"
+                elif node == "confirm-assessed-final-review-provenance":
+                    special_option = "valid"
+                elif node == "determine-final-backend-applicability":
+                    special_option = "not-required"
+                elif (
+                    node == "decide-current-blockers"
+                    and self.validation_review_round == 1
+                ):
+                    special_option = "blocking"
+                elif (
+                    node == "decide-validation-rework-authority"
+                    and self.validation_review_round == 1
+                ):
+                    special_option = "remediation"
             elif procedure_id == "aquarium-goal-v2" and node in {
                 "confirm-completed-assessment-ordinal",
                 "confirm-waived-assessment-ordinal",
@@ -4240,6 +4381,10 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         *(
             (scenario, "aquarium-validation-v2.yaml")
             for scenario in sorted(VALIDATION_RECOVERY_SCENARIOS)
+        ),
+        *(
+            (scenario, "aquarium-validation-v2.yaml")
+            for scenario in sorted(VALIDATION_WAIVER_FOLLOWUP_SCENARIOS)
         ),
         ("goal-operational-matrix", "aquarium-goal-v2.yaml"),
         ("task-completion-unverified", "aquarium-task-v2.yaml"),
