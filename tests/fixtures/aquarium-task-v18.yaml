@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "19"
+version: "18"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -32,7 +32,7 @@ node_definitions:
           - waived
       - id: review-target-scope
         type: text
-        prompt: Record the Task identity, objective and authorities, base revision, exact staged or captured candidate, ordered work commits when present, included paths and artifacts, and excluded state.
+        prompt: Record the exact review target scope and excluded unrelated state.
         required: true
         min_length: 1
         max_length: 1000
@@ -276,18 +276,15 @@ node_definitions:
         multiline: true
       - id: corrected-target-summary
         type: text
-        prompt: Record the prior review and target, frozen finding IDs, correction commits or capture delta, invalidated criteria, directly affected paths, callers, contracts and tests, or state that no correction is pending.
+        prompt: Record the exact corrected target that still requires assessment, or state that no correction is pending.
         required: true
         min_length: 1
         max_length: 2000
         multiline: true
       - id: extra-assessment-authority-reference
         type: text
-        prompt: Record explicit user authority for an assessment after ordinal three; otherwise leave absent.
+        prompt: Record explicit user authority for an assessment after ordinal four; otherwise leave absent.
         required: false
-        required_when:
-          - item: prior-assessment-ordinal
-            at_least: 3
         min_length: 1
         max_length: 2000
         multiline: true
@@ -879,7 +876,7 @@ node_definitions:
     title: Record selected completion review
     intent: Record the route-specific operation, evidence, completion assessment, and adjudicated findings without claiming another backend's guarantees.
     instructions:
-      - Use task-review for the route selected in the approved plan and the exact named Task candidate, including its goal, authorities, work commits or staged capture, changed paths, artifacts, verification evidence, and excluded state; preserve route-specific lifecycle evidence, provenance, backend checks, and finding lineage.
+      - Use task-review for the route selected in the approved plan and one exact authorized full target; preserve route-specific lifecycle evidence, provenance, backend checks, and finding lineage.
       - Review is report-only; do not edit files or start another root solely because eligible Low findings exist.
       - An incomplete or failed operation consumes no assessment ordinal and stops for explicit route direction without automatic fallback.
     items:
@@ -909,10 +906,10 @@ node_definitions:
       - id: assessment-ordinal-continuity
         type: check_result
         prompt: Record the caller-supplied result for aquarium-task-review-ordinal-continuity; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized remediation or confirmation mode." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-task-review-ordinal-continuity
-        operation_digest: sha256:f24fd938a34ac6ae43e581a79937e0af729fb9da84165bcb4a20c37ec96f6e7d
+        operation_digest: sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a
         accepted_outcomes:
           - pass
           - fail
@@ -924,13 +921,6 @@ node_definitions:
         choices:
           - remediation-eligible
           - confirmation-only
-      - id: assessment-kind
-        type: choice
-        prompt: Record whether this checkpoint evaluates the named Task work unit or confirms its frozen remediation set.
-        required: true
-        choices:
-          - work-unit
-          - remediation-confirmation
       - id: review-evidence-reference
         type: text
         prompt: Record the bounded native lifecycle, host-delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
@@ -1164,43 +1154,39 @@ node_definitions:
     objective: Consume exactly the next bounded ordinal after a completed delegated review or waiver assessment.
     prompt: Does this completed checkpoint use the next authorized assessment ordinal?
     options:
-      - id: work-unit
-        label: Work-unit assessment
-        criteria: Ordinal one or two evaluates the exact named Task under remediation authority; the continuity check verifies the exact next ordinal.
+      - id: standard
+        label: Standard bounded assessment
+        criteria: The exact first through fourth ordinal remains in evidence, and the caller-supplied continuity check passed for the recorded prior and current ordinals.
         guards:
+          - evidence:
+              node: prepare-review
+              item: prior-assessment-ordinal
+            at_most: 3
           - evidence:
               node: review
               item: assessment-ordinal
-            at_most: 2
-          - evidence:
-              node: review
-              item: assessment-kind
-            equals: work-unit
-          - evidence:
-              node: review
-              item: review-mode
-            equals: remediation-eligible
+            at_most: 4
           - evidence:
               node: review
               item: assessment-ordinal-continuity
             field: outcome
             equals: pass
-      - id: remediation-confirmation
-        label: Remediation confirmation
-        criteria: Ordinal three or a user-authorized later checkpoint confirms only the frozen correction set and its direct regression surface; the continuity check verifies any required extra authority.
+      - id: authorized-extra
+        label: User-authorized extra confirmation
+        criteria: At least four assessments completed and the user explicitly authorized this later confirmation checkpoint.
         guards:
           - evidence:
               node: review
               item: assessment-ordinal
-            at_least: 3
-          - evidence:
-              node: review
-              item: assessment-kind
-            equals: remediation-confirmation
+            at_least: 5
           - evidence:
               node: review
               item: review-mode
             equals: confirmation-only
+          - evidence:
+              node: prepare-review
+              item: extra-assessment-authority-reference
+            non_empty: true
           - evidence:
               node: review
               item: assessment-ordinal-continuity
@@ -2606,12 +2592,11 @@ graph:
             - assessment-ordinal
             - assessment-ordinal-continuity
             - review-mode
-            - assessment-kind
       routes:
-        work-unit:
+        standard:
           to: confirm-first-review-evidence
           effect: advance
-        remediation-confirmation:
+        authorized-extra:
           to: confirm-extra-review-evidence
           effect: advance
     - id: confirm-incomplete-review-evidence

@@ -100,7 +100,7 @@ through the exact flow above. Transport success does not make the review clean.
 
 ## Count and Verify Review Evidence
 
-A round completes only when the full-target root or its verified composite has
+A round completes only when the exact assessment-target root or its verified composite has
 terminal authoritative status, `coverage_status=complete`,
 `publication_status=committed`, and a successful findings query. Count it once
 for the original root within the current goal revision. Preflight, reads,
@@ -120,8 +120,9 @@ Approval also requires passing CI and the owning workflow's completed finding
 dispositions. Track `structured_extraction_status` independently; `reports_only`
 does not waive coverage, publication, CI, or adjudication requirements. After code
 or other target changes, recovery of an old capture cannot establish current
-review evidence. The next provider review is the next authorized full-target
-root round. `followup` and `delta` cannot substitute for it.
+review evidence. The next provider review is the next authorized assessment kind
+against the precisely supplied target. `followup` and `delta` cannot substitute
+for its root round.
 
 Mulgae runtime-log v4, run-status v3, and invocation-status v2 remain native
 diagnostic contracts owned by the same-release paired skill. Safe public

@@ -29,10 +29,13 @@ TASK_V14_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v14.yaml"
 TASK_V15_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v15.yaml"
 TASK_V16_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v16.yaml"
 TASK_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v17.yaml"
+TASK_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v18.yaml"
 GOAL_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v18.yaml"
 GOAL_V19_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v19.yaml"
+GOAL_V20_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v20.yaml"
 VALIDATION_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v17.yaml"
 VALIDATION_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v18.yaml"
+VALIDATION_V19_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v19.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -3599,7 +3602,7 @@ else:
             (
                 "aquarium-goal-v2.yaml",
                 "evidence-record",
-                "hardening-deferral-eligible",
+                "confirmation-only",
             ),
             (
                 "aquarium-validation-v2.yaml",
@@ -3626,6 +3629,37 @@ else:
                 self.assertEqual(status, "incompatible")
                 self.assertIn(
                     f"missing_required_choices:{definition_id}:review-mode",
+                    reasons,
+                )
+
+    def test_assessment_kinds_are_handler_choice_contracts(self) -> None:
+        procedures = ROOT / "plugins/aquarium/assets/podway/procedures"
+        cases = (
+            ("aquarium-task-v2.yaml", "review-record"),
+            ("aquarium-goal-v2.yaml", "evidence-record"),
+            ("aquarium-validation-v2.yaml", "final-review-record"),
+        )
+        for name, definition_id in cases:
+            with self.subTest(procedure=name):
+                canonical = procedures.joinpath(name).read_bytes()
+                document = yaml.safe_load(canonical)
+                definition = document["node_definitions"][definition_id]
+                assessment_kind = next(
+                    item
+                    for item in definition["items"]
+                    if item["id"] == "assessment-kind"
+                )
+                assessment_kind["choices"].remove("remediation-confirmation")
+
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    yaml.safe_dump(document, sort_keys=False).encode(),
+                    canonical,
+                )
+
+                self.assertEqual(status, "incompatible")
+                self.assertIn(
+                    f"missing_required_choices:{definition_id}:assessment-kind",
                     reasons,
                 )
 
@@ -4649,16 +4683,16 @@ else:
     ) -> None:
         fixtures = {
             "aquarium-task-v2.yaml": (
-                TASK_V17_PROCEDURE_FIXTURE,
-                "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
+                TASK_V18_PROCEDURE_FIXTURE,
+                "fd08ef0db9bf78d3557dd4c89c3f600c864b57930a01491e3ea2dc39a0985655",
             ),
             "aquarium-goal-v2.yaml": (
-                GOAL_V19_PROCEDURE_FIXTURE,
-                "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
+                GOAL_V20_PROCEDURE_FIXTURE,
+                "bf0eaa45855755136f9fc439ec654c6351cbec5cb1d7b50999c104bf0dda56b2",
             ),
             "aquarium-validation-v2.yaml": (
-                VALIDATION_V18_PROCEDURE_FIXTURE,
-                "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
+                VALIDATION_V19_PROCEDURE_FIXTURE,
+                "0a70a6e7d8dc39c88a37b425256ec9b1be88d9326cd3d9a170a4aeac7e4eddef",
             ),
         }
         self.install_fake_tools()
@@ -4793,6 +4827,7 @@ else:
                     "0f32062f6a28202f3a8ad16dde36039a9b0db5d91f80268330e3019feb418824",
                     "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
                     "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
+                    "fd08ef0db9bf78d3557dd4c89c3f600c864b57930a01491e3ea2dc39a0985655",
                 },
                 "aquarium-goal-v2.yaml": {
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -4809,6 +4844,7 @@ else:
                     "0a9753d144c46db9e6ea81c9355545c76455a66c66f22352448d7e3d650391e7",
                     "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
                     "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
+                    "bf0eaa45855755136f9fc439ec654c6351cbec5cb1d7b50999c104bf0dda56b2",
                 },
                 "aquarium-validation-v2.yaml": {
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -4823,6 +4859,7 @@ else:
                     "46a30dc2747ccd1985d50fce95c232b38e5e566326ad9f518a388647bdadb63f",
                     "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
                     "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
+                    "0a70a6e7d8dc39c88a37b425256ec9b1be88d9326cd3d9a170a4aeac7e4eddef",
                 },
                 "aquarium-design-v2.yaml": {
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",

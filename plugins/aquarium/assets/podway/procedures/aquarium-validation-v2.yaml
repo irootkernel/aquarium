@@ -1,9 +1,9 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "19"
+version: "20"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
-description: A bounded Podway procedure for epic-wide audit, one automatic confirmation, user-directed follow-up, and validation closeout.
+description: A bounded Podway procedure for two whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
 goal_tracking: true
 node_definitions:
   baseline-record:
@@ -32,7 +32,7 @@ node_definitions:
           - waived
       - id: review-target-scope
         type: text
-        prompt: Record the exact committed candidate and route-specific target kind.
+        prompt: Record the exact Epic goal and acceptance authority, committed candidate identity, relevant correction commits or captured delta, changed paths and artifacts, verification evidence, and excluded state supplied to the route.
         required: true
         min_length: 1
         max_length: 2000
@@ -99,6 +99,64 @@ node_definitions:
       - id: blocking-rework-authority
         type: choice
         prompt: Record whether the current exact blocking set has an existing remediation envelope or requires user direction.
+        required: true
+        choices:
+          - current-envelope
+          - user-direction
+  remediation-confirmation-audit-record:
+    type: action
+    title: Confirm one Validation remediation
+    intent: Confirm only the frozen correction set and its directly affected regression surface after one remediation pass.
+    instructions:
+      - Check only the frozen finding IDs, correction delta, invalidated criteria, directly affected callers, contracts, and tests, and correction-caused regressions.
+      - Do not reopen the whole Epic, admit unrelated findings into this correction loop, or authorize another correction pass.
+    items:
+      - id: audit-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-remediation-confirmation-audit; Podway does not execute or attest the operation.
+        help: The declared operation is "Confirm only the frozen Validation finding IDs, correction delta, invalidated criteria, directly affected callers, contracts, and tests, and correction-caused regressions without reopening unrelated Epic scope." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
+        required: true
+        operation_id: aquarium-validation-remediation-confirmation-audit
+        operation_digest: sha256:791d1cfb7ba42dfb7665b3784a4d7ee68ec14510d0e6c7aa0528c089069e9e9c
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: audit-summary
+        type: text
+        prompt: Record the frozen findings, correction delta, invalidated criteria, direct regression surface, checks, and remaining gaps.
+        required: true
+        min_length: 1
+        max_length: 8000
+        multiline: true
+      - id: confirmed-gap-count
+        type: integer
+        prompt: Record the number of confirmed gaps remaining in the frozen correction scope.
+        required: true
+        minimum: 0
+      - id: blocking-gap-count
+        type: integer
+        prompt: Record blockers and effective Medium-or-higher gaps remaining in the frozen correction scope.
+        required: true
+        minimum: 0
+      - id: eligible-low-gap-count
+        type: integer
+        prompt: Record eligible Low gaps remaining in the frozen correction scope.
+        required: true
+        minimum: 0
+      - id: confirmation-needed-gap-count
+        type: integer
+        prompt: Record frozen-scope gaps whose validity or required evidence still needs confirmation.
+        required: true
+        minimum: 0
+      - id: direction-required-gap-count
+        type: integer
+        prompt: Record the combined blocking and confirmation-needed gaps that require a fresh user decision after this one-shot correction.
+        required: true
+        minimum: 0
+      - id: blocking-rework-authority
+        type: choice
+        prompt: Record that this one-shot correction authority is consumed when any blocking gap remains.
         required: true
         choices:
           - current-envelope
@@ -222,11 +280,11 @@ node_definitions:
       prompt: Explain the selection using the audit evidence.
   re-audit-decision:
     type: decision
-    title: Evaluate remediation re-audit
-    objective: Route the remediated candidate by operational state, validity, severity, and remaining authority.
-    prompt: What does the fresh re-audit require?
+    title: Evaluate remediation confirmation
+    objective: Settle one narrow remediation confirmation without authorizing another correction cycle.
+    prompt: What does the frozen-scope remediation confirmation require?
     evidence_guidance:
-      - Read the selected re-audit result, summary, and confirmed gap count.
+      - Read the frozen correction scope, confirmation result, remaining gap counts, and consumed one-shot authority.
     options:
       - id: clean
         label: Re-audit clean
@@ -239,7 +297,7 @@ node_definitions:
             equals: pass
           - evidence:
               node: re-audit
-              item: blocking-gap-count
+              item: confirmed-gap-count
             equals: 0
           - evidence:
               node: re-audit
@@ -247,11 +305,11 @@ node_definitions:
             equals: 0
           - evidence:
               node: re-audit
-              item: confirmation-needed-gap-count
+              item: direction-required-gap-count
             equals: 0
-      - id: blocking-gaps
-        label: Blocking gaps remain with authority
-        criteria: At least one blocker remains and the existing caller envelope authorizes another owned remediation cycle.
+      - id: user-direction
+        label: Remaining gaps require fresh direction
+        criteria: A blocking or confirmation-needed gap remains after the one authorized correction and must return to a fresh user decision.
         guards:
           - evidence:
               node: re-audit
@@ -260,16 +318,8 @@ node_definitions:
             equals: pass
           - evidence:
               node: re-audit
-              item: blocking-gap-count
+              item: direction-required-gap-count
             at_least: 1
-          - evidence:
-              node: re-audit
-              item: confirmation-needed-gap-count
-            equals: 0
-          - evidence:
-              node: re-audit
-              item: blocking-rework-authority
-            equals: current-envelope
       - id: low-only
         label: Only eligible Low gaps remain
         criteria: Route Low-only re-audit evidence forward without another broad remediation or audit.
@@ -281,50 +331,12 @@ node_definitions:
             equals: pass
           - evidence:
               node: re-audit
-              item: blocking-gap-count
+              item: direction-required-gap-count
             equals: 0
           - evidence:
               node: re-audit
               item: eligible-low-gap-count
             at_least: 1
-          - evidence:
-              node: re-audit
-              item: confirmation-needed-gap-count
-            equals: 0
-      - id: confirmation-required
-        label: Gap confirmation required
-        criteria: Re-audit evidence still needs confirmation before routing.
-        guards:
-          - evidence:
-              node: re-audit
-              item: audit-result
-            field: outcome
-            equals: pass
-          - evidence:
-              node: re-audit
-              item: confirmation-needed-gap-count
-            at_least: 1
-      - id: user-direction
-        label: Blocking remediation needs direction
-        criteria: A blocker remains after the current correction envelope is exhausted.
-        guards:
-          - evidence:
-              node: re-audit
-              item: audit-result
-            field: outcome
-            equals: pass
-          - evidence:
-              node: re-audit
-              item: blocking-gap-count
-            at_least: 1
-          - evidence:
-              node: re-audit
-              item: confirmation-needed-gap-count
-            equals: 0
-          - evidence:
-              node: re-audit
-              item: blocking-rework-authority
-            equals: user-direction
       - id: incomplete
         label: Re-audit incomplete
         criteria: The external re-audit result failed or is inconclusive.
@@ -336,7 +348,7 @@ node_definitions:
             not_equals: pass
     reason:
       required: true
-      prompt: Explain the selection using the re-audit evidence.
+      prompt: Explain the selection using the frozen-scope remediation confirmation evidence.
   remediation-record:
     type: action
     title: Remediate confirmed gaps
@@ -434,6 +446,13 @@ node_definitions:
         choices:
           - remediation-eligible
           - confirmation-only
+      - id: assessment-kind
+        type: choice
+        prompt: Record whether the assessment covers the named Epic work unit or only confirms the frozen correction set and directly affected regression surface.
+        required: true
+        choices:
+          - work-unit
+          - remediation-confirmation
       - id: prior-assessment-ordinal
         type: integer
         prompt: Record the latest completed ordinal before this assessment, or zero initially.
@@ -442,10 +461,10 @@ node_definitions:
       - id: assessment-ordinal-continuity
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-review-ordinal-continuity; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision and uses the authorized review mode." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-validation-review-ordinal-continuity
-        operation_digest: sha256:cc0d9686935cce4bab5d401211a3eb83201b371eff6d5f310fc587282dd728e0
+        operation_digest: sha256:eb4cda4c47e4171a30b4a2e2a5f8c488a8c9afc5694a23602560bd6bc3084687
         accepted_outcomes:
           - pass
           - fail
@@ -579,7 +598,7 @@ node_definitions:
         multiline: true
       - id: corrected-target-summary
         type: text
-        prompt: Record the exact corrected committed target and reassessment obligations.
+        prompt: Record the prior review identity, frozen finding IDs, exact corrected committed target and correction commits or delta, invalidated criteria, directly affected callers, contracts, and tests, and the bounded regression surface.
         required: true
         min_length: 1
         max_length: 3000
@@ -597,10 +616,10 @@ node_definitions:
           - inconclusive
       - id: extra-assessment-authority-reference
         type: text
-        prompt: Record explicit user authority for an assessment beyond ordinal two.
+        prompt: Record explicit user authority for one additional correction and one next remediation confirmation after ordinal three.
         required: false
         required_when:
-          - item: assessment-ordinal
+          - item: prior-assessment-ordinal
             at_least: 3
         min_length: 1
         max_length: 2000
@@ -837,16 +856,45 @@ node_definitions:
     type: decision
     title: Validate final assessment ordinal
     objective: Consume exactly the next bounded ordinal for a completed assessment.
-    prompt: Is the completed assessment ordinal admitted by the continuity check?
+    prompt: Does this completed assessment use the next authorized ordinal, assessment kind, and review mode?
     options:
-      - id: admitted
-        label: Assessment ordinal admitted
-        criteria: A positive ordinal passed the exact continuity and authorized-mode check; ordinal three or later also carries explicit user authority.
+      - id: work-unit
+        label: Work-unit assessment
+        criteria: Ordinal one or two reviews the named whole-Epic work unit and may trigger remediation; the continuity check verifies the exact next ordinal.
         guards:
           - evidence:
               node: final-review
               item: assessment-ordinal
-            at_least: 1
+            at_most: 2
+          - evidence:
+              node: final-review
+              item: assessment-kind
+            equals: work-unit
+          - evidence:
+              node: final-review
+              item: review-mode
+            equals: remediation-eligible
+          - evidence:
+              node: final-review
+              item: assessment-ordinal-continuity
+            field: outcome
+            equals: pass
+      - id: remediation-confirmation
+        label: Remediation confirmation
+        criteria: Ordinal three or a user-authorized later checkpoint confirms only the frozen finding set, correction delta, invalidated criteria, directly affected contracts and tests, and correction-caused regressions; the continuity check verifies any required extra authority.
+        guards:
+          - evidence:
+              node: final-review
+              item: assessment-ordinal
+            at_least: 3
+          - evidence:
+              node: final-review
+              item: assessment-kind
+            equals: remediation-confirmation
+          - evidence:
+              node: final-review
+              item: review-mode
+            equals: confirmation-only
           - evidence:
               node: final-review
               item: assessment-ordinal-continuity
@@ -863,7 +911,7 @@ node_definitions:
             not_equals: pass
     reason:
       required: true
-      prompt: Explain the prior ordinal, current ordinal, mode, continuity result, and any extra authority.
+      prompt: Explain the prior ordinal, current ordinal, assessment kind, mode, continuity result, and any extra authority.
   assessment-provenance-decision:
     type: decision
     title: Validate assessment provenance
@@ -1580,10 +1628,10 @@ graph:
           to: record-audit-low-basis
           effect: advance
         confirmation-required:
-          to: audit
-          effect: rework
+          to: record-confirmation-incomplete
+          effect: advance
         user-direction:
-          to: await-user-direction
+          to: await-audit-direction
           effect: advance
         incomplete:
           to: record-incomplete
@@ -1592,7 +1640,7 @@ graph:
       use: remediation-record
       next: re-audit
     - id: re-audit
-      use: audit-record
+      use: remediation-confirmation-audit-record
       evidence_from:
         - node: remediate
           required: true
@@ -1611,25 +1659,52 @@ graph:
             - blocking-gap-count
             - eligible-low-gap-count
             - confirmation-needed-gap-count
+            - direction-required-gap-count
             - blocking-rework-authority
       routes:
         clean:
           to: final-review
           effect: advance
-        blocking-gaps:
-          to: remediate
-          effect: rework
+        user-direction:
+          to: await-audit-direction
+          effect: advance
         low-only:
           to: record-audit-low-basis
           effect: advance
-        confirmation-required:
-          to: re-audit
-          effect: rework
-        user-direction:
-          to: await-user-direction
-          effect: advance
         incomplete:
           to: record-incomplete
+          effect: advance
+    - id: await-audit-direction
+      use: user-direction-record
+      evidence_from:
+        - node: audit
+          required: false
+          items:
+            - audit-summary
+            - blocking-gap-count
+            - blocking-rework-authority
+        - node: re-audit
+          required: false
+          items:
+            - audit-summary
+            - blocking-gap-count
+            - direction-required-gap-count
+            - blocking-rework-authority
+      next: choose-audit-direction
+    - id: choose-audit-direction
+      use: review-direction-decision
+      evidence_from:
+        - node: await-audit-direction
+          required: true
+          items:
+            - direction-classification
+            - direction-summary
+      routes:
+        fix-and-review:
+          to: audit
+          effect: rework
+        stop:
+          to: record-stopped
           effect: advance
     - id: record-audit-low-basis
       use: audit-low-basis-record
@@ -1748,15 +1823,41 @@ graph:
             - assessment-ordinal
             - assessment-ordinal-continuity
             - review-mode
+            - assessment-kind
             - extra-assessment-authority-reference
       routes:
-        admitted:
+        work-unit:
           to: confirm-assessed-final-review-provenance
+          effect: advance
+        remediation-confirmation:
+          to: confirm-remediation-assessed-final-review-provenance
           effect: advance
         invalid:
           to: record-incomplete
           effect: advance
     - id: confirm-assessed-final-review-provenance
+      use: assessment-provenance-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - assessment-provenance-kind
+            - assessment-provenance-result
+            - waiver-summary
+      routes:
+        valid:
+          to: determine-final-backend-applicability
+          effect: advance
+        invalid:
+          to: record-incomplete
+          effect: advance
+    - id: confirm-remediation-assessed-final-review-provenance
       use: assessment-provenance-decision
       evidence_from:
         - node: final-review
@@ -2046,7 +2147,7 @@ graph:
             - direction-summary
       routes:
         fix-and-review:
-          to: audit
+          to: final-review
           effect: rework
         stop:
           to: record-stopped
@@ -2116,6 +2217,9 @@ graph:
       use: disposition-record
       next: record-stopped-goal-boundary
     - id: record-incomplete
+      use: disposition-record
+      next: record-stopped-goal-boundary
+    - id: record-confirmation-incomplete
       use: disposition-record
       next: record-stopped-goal-boundary
     - id: record-review-operation-incomplete

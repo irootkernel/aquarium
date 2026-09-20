@@ -1,15 +1,15 @@
 {
   "document_kind": "aquarium-operation-contract-fixture",
   "status": "implemented-caller-recorded-contract",
-  "scope": "The ten selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
+  "scope": "The eleven selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
   "digest_rule": "SHA-256 over exact descriptor UTF-8 bytes, with no trailing newline.",
   "assurance_boundary": "Caller-recorded structured claims; neither Podway nor these descriptors execute tools or establish semantic truth.",
   "operations": [
     {
       "operation_id": "aquarium-task-review-ordinal-continuity",
-      "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized remediation or confirmation mode.",
-      "meaning": "A caller-recorded continuity and mode check over the prior and current Task review checkpoint, not a Podway calculation or reviewer execution claim.",
-      "operation_digest": "sha256:1deb80ea497dac646d84cdb76b7f23a72c1700fbb47c2cc05a1166ba5ec5ca5a",
+      "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current Task review checkpoint, not a Podway calculation or reviewer execution claim.",
+      "operation_digest": "sha256:f24fd938a34ac6ae43e581a79937e0af729fb9da84165bcb4a20c37ec96f6e7d",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -29,9 +29,9 @@
     },
     {
       "operation_id": "aquarium-goal-review-ordinal-continuity",
-      "descriptor": "Verify that the completed Epic member review consumes exactly the next assessment ordinal for the current goal revision and uses the authorized review mode.",
-      "meaning": "A caller-recorded continuity and mode check over the prior and current Epic member review checkpoint.",
-      "operation_digest": "sha256:9de0457a2997291e8678c2bda1f3e123ac158799f1e6b32a1c968ff846f4f91b",
+      "descriptor": "Verify that the completed Goal review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current Goal review checkpoint.",
+      "operation_digest": "sha256:4ee55182be30b1b9a74c02e0cb7913f3d041ae0ddeffb2b8bf63b476482d1ac4",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -73,9 +73,9 @@
     },
     {
       "operation_id": "aquarium-validation-review-ordinal-continuity",
-      "descriptor": "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision and uses the authorized review mode.",
-      "meaning": "A caller-recorded continuity and mode check over the prior and current whole-Epic assessment.",
-      "operation_digest": "sha256:cc0d9686935cce4bab5d401211a3eb83201b371eff6d5f310fc587282dd728e0",
+      "descriptor": "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current whole-Epic assessment.",
+      "operation_digest": "sha256:eb4cda4c47e4171a30b4a2e2a5f8c488a8c9afc5694a23602560bd6bc3084687",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -87,6 +87,17 @@
       "descriptor": "Verify that the effective whole-Epic review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved validation envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority.",
       "meaning": "A caller-recorded binding check over the planned route, immediately preceding review operation, effective route, requested direction, lifecycle settlement, findings, ordinal, goal revision, and remaining authority.",
       "operation_digest": "sha256:231042f4ce3156ba7b9a770e23960766ebe5cf3167b774d01b1365970f2c8792",
+      "accepted_outcomes": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    {
+      "operation_id": "aquarium-validation-remediation-confirmation-audit",
+      "descriptor": "Confirm only the frozen Validation finding IDs, correction delta, invalidated criteria, directly affected callers, contracts, and tests, and correction-caused regressions without reopening unrelated Epic scope.",
+      "meaning": "A caller-recorded narrow confirmation of one authorized Validation correction, not a new whole-Epic audit or authority for another correction.",
+      "operation_digest": "sha256:791d1cfb7ba42dfb7665b3784a4d7ee68ec14510d0e6c7aa0528c089069e9e9c",
       "accepted_outcomes": [
         "pass",
         "fail",

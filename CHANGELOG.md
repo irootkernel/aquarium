@@ -16,6 +16,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Run the Podway compatibility matrix in bounded parallel runtime batches without dropping any Procedure, correction, routing, recovery, or failure scenario, and expose the gate as a configured Gaori command.
 - Accept stable Humanizer, im-not-ai, and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, reject duplicate skills visible to the same Codex home, and remove Dolgorae's dedicated release-verification path from global setup.
 
+### Fixed
+
+- Bound Task, Epic, and cold-validation convergence to two precisely scoped work-unit assessments plus one correction-only remediation confirmation, then require one-shot user authority for each later correction and confirmation.
+
 ## v0.1.16 - 2026-09-16
 
 ### Added

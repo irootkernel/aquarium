@@ -38,7 +38,7 @@ Before an authorized dispatch through an enabled route, build one concise Review
 | Candidate and context | The exact native source scope and revisions, included and excluded state, and contextual sources available to the reviewer. |
 | Completion checkpoint | Readiness before closeout or assessment of an already claimed outcome, including the obligations due now. |
 | Verification evidence | Relevant checks, candidate identities, unavailable evidence, author-reported results, and checks the reviewer may not run. |
-| Invocation metadata | Existing goal revision, ordinal, review mode, selected roles, and lineage required by the owning workflow. |
+| Invocation metadata | Existing goal revision, ordinal, assessment kind, review mode, selected roles, and lineage required by the owning workflow. |
 | Requested result | Findings and limitations for `change`; findings, every criterion assessment, and evidence gaps for `completion`. |
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
@@ -93,11 +93,22 @@ Referenced sources must be readable in the selected review environment. A host-o
 
 When a transport or readability limit makes original authority or required evidence unavailable in the selected review environment, disclose the exact omitted context. Mark a criterion `unverified` when that omission prevents a supported assessment from the evidence the reviewer can read. If readable evidence already establishes a concrete gap, assess the criterion as `unmet` under the rules below. A Review Brief omission alone does not affect the assessment when the reviewer can independently read the original authority and applicable evidence. A coordinator summary of material the reviewer cannot read remains coordinator evidence and does not establish provider or role coverage.
 
+## Bind the assessment kind
+
+Every embedded completion checkpoint uses one of these assessment kinds:
+
+- `work-unit` evaluates the named Task, Epic, or explicit work objective against its actual criteria. The brief identifies the work unit, goal revision, authority, non-goals, base revision, exact candidate, ordered work commits when they exist, included changed paths and artifacts, excluded state, and verification evidence. For an uncommitted Task, use the exact base HEAD plus the index tree or native capture identity and staged path inventory instead of inventing a commit.
+- `remediation-confirmation` evaluates only a frozen set of earlier findings, the correction delta, invalidated criteria, directly affected callers, contracts and tests, and regressions caused by that correction. The brief identifies the prior review, previous target, source finding IDs, correction commits or capture delta, affected paths and criteria, and required checks.
+
+The exact candidate remains available as reviewer context in both kinds. Context access does not authorize a repository-wide audit. A `work-unit` assessment reports defects in the named objective and candidate, not unrelated pre-existing issues. A `remediation-confirmation` may add a new blocker only when the correction caused it or made it directly reachable. Route an unrelated observation to the repository's future-work owner without widening the current review.
+
+Carry unaffected criterion assessments from the latest admitted `work-unit` assessment only when the correction and current evidence prove that they remain valid. Reassess every invalidated criterion. If the changed surface, requirement set, or evidence impact cannot be bounded, stop and obtain authority for a new goal revision or another `work-unit` assessment instead of treating the pass as remediation confirmation.
+
 ## Assess change and completion
 
 For `change`, inspect the intended effect plus relevant implementation, callers, contracts, and tests. Separate pre-existing issues from defects introduced or made reachable by the change. Do not expand into an unrelated repository-wide audit.
 
-For `completion`, start with the applicable requirements and trace them to implementation, production wiring, consumers, tests, documentation, and required artifacts. Inspect unchanged code when needed to detect missing wiring, modules, migrations, recovery, or acceptance evidence. For an Epic, cover every applicable member requirement and integration seam. For a member Task, apply current parent-Epic constraints without requiring unfinished future members prematurely.
+For a `work-unit` completion assessment, start with the applicable requirements and trace them to implementation, production wiring, consumers, tests, documentation, and required artifacts. Inspect unchanged code when needed to detect missing wiring, modules, migrations, recovery, or acceptance evidence. For an Epic, cover every applicable member requirement and integration seam. For a member Task, apply current parent-Epic constraints without requiring unfinished future members prematurely. For `remediation-confirmation`, reassess the frozen findings, correction delta, directly affected criteria, and direct regression surface while carrying only the unaffected criteria permitted above.
 
 Every enabled completion reviewer must reconcile the Review Brief's criterion set with the named work unit's original authority and applicable member requirements. Assess a reconciled requirement omitted from the brief as `met`, `unmet`, `unverified`, or `not-applicable` from the readable evidence. Mark it `unverified` only when the requirement is unreadable, its conflict remains unresolved, or the available evidence is insufficient. Neither the brief nor a coordinator summary may narrow the authoritative completion basis silently.
 

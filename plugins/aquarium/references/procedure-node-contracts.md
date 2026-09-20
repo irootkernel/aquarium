@@ -20,7 +20,7 @@ unless the placement selects it.
 | Refine | `task-refine` consumes the current implementation result | Limit work to authorized cleanup and return the exact refined target |
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
-| Review and serial routing | `task-review` receives the exact full target, ordinal, mode, and source scope; the checkpoint carries the prior operation's route identity, and `task-handler` adjudicates route entry, confirmation, CI, completion, finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | `resume-current` reads the actual preceding unsettled operation and explicit direction, authorizes only Mulgae, Orca, or native Codex, and re-enters only the matching existing provider entry; it cannot switch providers, resume a waiver, bypass authorization, or act as fallback. `continue-current` reads an exact completed delegated or waived operation, requires the same effective route and `completed-checkpoint` readiness, preserves lineage and authority, and consumes the next ordinal. Switching or waiving after incomplete or failed work requires `safe-to-change` and preserves the pending ordinal; after a completed checkpoint it requires `completed-checkpoint`, preserves lineage, and consumes the next ordinal. Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each confirmation-only correction consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
+| Review and serial routing | `task-review` receives the named Task objective and criteria, exact candidate, relevant work or correction commits or staged capture, included and excluded paths, verification evidence, ordinal, assessment kind, mode, and source scope; the checkpoint carries the prior operation's route identity, and `task-handler` adjudicates route entry, confirmation, CI, completion, finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | Ordinals one and two are `work-unit`; ordinal three and every explicitly authorized later checkpoint are `remediation-confirmation` and inspect only the frozen correction set and direct regression surface. `resume-current` reads the actual preceding unsettled operation and explicit direction, authorizes only Mulgae, Orca, or native Codex, and re-enters only the matching existing provider entry; it cannot switch providers, resume a waiver, bypass authorization, or act as fallback. `continue-current` reads an exact completed delegated or waived operation, requires the same effective route and `completed-checkpoint` readiness, preserves lineage and authority, and consumes the next ordinal. Switching or waiving after incomplete or failed work requires `safe-to-change` and preserves the pending ordinal; after a completed checkpoint it requires `completed-checkpoint`, preserves lineage, and consumes the next ordinal. Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each correction after ordinal three consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
 | Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
 | Assessment and closeout | `task-handler` consumes the carried completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
 
@@ -50,10 +50,10 @@ consistency when present, and any user direction. A stop direction must produce 
 not-achieved assessment rather than closing the goal.
 
 Each `choose-user-direction: fix-and-review` decision authorizes its one transition
-back to work and the next review ordinal. Later rework reaches a fresh unset choice;
+back to work and one next-ordinal remediation confirmation. Later rework reaches a fresh unset choice;
 no recorded authorization survives the pass or context restoration. The narrow
-second-review hardening handoff remains available when independently reached, but
-no caller starts a second review merely to qualify for it.
+ordinal-two hardening handoff remains available when independently reached, but
+no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
@@ -66,8 +66,11 @@ is descriptive and never routes remediation by itself.
 
 Blocking corrections return to remediation only within the caller's existing
 envelope and keep their triggering set. A required corrected-target confirmation
-still runs. Low-only audit or confirmation results use local settlement without a
-new broad audit. Final review preserves applicable audit and provider identities
+still runs. The first two completed assessments cover the precisely supplied Epic
+work unit. Ordinal three and every authorized later assessment cover only the
+frozen findings, correction delta, invalidated criteria, directly affected
+contracts and tests, and correction-caused regressions. Low-only audit or
+confirmation results use local settlement without a new work-unit audit. Final review preserves applicable audit and provider identities
 under separate namespaces. Its route-binding check consumes the planned route,
 effective route, immediately preceding review route and operation, native
 lifecycle state, requested direction, and current transition authority. It then
@@ -77,6 +80,9 @@ the final Low-or-validated choice. When another Medium-or-higher correction need
 select the supported `user-direction` route, record only the current issue set and
 exhausted authority at `await-user-direction`, complete that action, and stop at
 `choose-user-direction` with the actual choice unset until the user answers.
+Each `fix-and-review` answer authorizes one correction and one next remediation
+confirmation. A broadened objective or changed surface requires a new goal
+revision or work-unit assessment instead.
 Validation assessment consumes the carried completion summary and gap counts,
 their consistency when present, and any user direction. A stop direction must
 produce a not-achieved assessment rather than validating or closing the epic.
