@@ -30,7 +30,7 @@ Every commit in an enrolled repository carries exactly one release-note decision
 - `intentional no-note`: the change has no independently useful shipped outcome;
 - `not-enrolled`: no release-notes authority is declared.
 
-A managed delivery workflow settles the decision during documentation, before review and closeout. A direct `$aquarium:task-commit` invocation may prepare only one concise changelog hunk after the user approves its exact text; that hunk becomes part of the final commit snapshot and invalidates any earlier approval that did not include it. Never infer `intentional no-note` from a commit prefix alone.
+A managed delivery workflow prepares the decision during documentation, before review and closeout. For an Epic member Task, final Goal approval accepts the exact entry bytes or non-entry decision before the handler invokes `$aquarium:task-commit`. A direct `$aquarium:task-commit` invocation may prepare only one concise changelog hunk after the user approves its exact text. In either path, the hunk becomes part of the final commit snapshot, and a later byte change makes the exact-candidate approval stale. Never infer `intentional no-note` from a commit prefix alone.
 
 An exact release-handler settlement, retarget, release-state transition, or next-cycle initialization uses `intentional no-note`: its changelog edit records other commits or release-cycle metadata and must not add a self-referential entry. This exception requires the handler's exact approved hunk and grants no general changelog rewrite authority.
 

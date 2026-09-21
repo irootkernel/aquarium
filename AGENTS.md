@@ -26,6 +26,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 ### 4. Carry Authorization Forward
 
 - Continue already approved work without asking for confirmation again. Ask only when a material change exceeds that authorization or an applicable rule requires a distinct approval.
+- An approved `epic-handler` execution envelope carries one-commit authority for the normal completion of each planned member Task. After final Goal approval accepts the exact candidate, including its lifecycle, record, and release-note decisions, commit it through `$aquarium:task-commit` without asking Master again solely for commit approval. Reopened-task corrections, Epic remediation or closeout, extra commits, and any material departure from the envelope require their own authority.
 - Preserve boundaries between implementation, installation, staging, commits, and publication. Check for relevant state changes before acting on an approved proposal.
 
 ### 5. Verify in Proportion to Risk

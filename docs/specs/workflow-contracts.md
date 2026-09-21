@@ -30,7 +30,7 @@ A completed Task review records its optional backend check separately from revie
 
 ## Deliver One Epic
 
-`epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, orders member tasks by dependency and roadmap order, and completes one isolated task commit at a time.
+`epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, orders member tasks by dependency and roadmap order, and completes one isolated task commit at a time. The approved Epic execution envelope authorizes the normal completion commit for each planned member Task. After verification and review, final Goal approval accepts the exact candidate, including its lifecycle, record, and release-note decisions. An approved candidate then passes to `task-commit` without another commit question, and the resulting commit SHA is recorded during Goal closeout. A `changes-requested` decision returns to work before any commit. Remediation, closeout, additional commits, push, and publication remain separate effects.
 
 Each member task uses one `aquarium-goal-v2` session, decides whether the current evidence is clean, blocking, Low-only, or inconsistent, and records any durable hardening deferral only on the supported Low-only route before goal assessment. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, and converges under the same two-work-unit plus one-remediation-confirmation boundary.
 

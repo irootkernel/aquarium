@@ -5,7 +5,7 @@ description: "Prepare and create one authorized Git commit while reconciling roa
 
 # Task Commit
 
-Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one explicitly approved release-note hunk when needed, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
+Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one release-note hunk accepted as exact text through direct approval or a valid handler handoff, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
 
 ## Establish the Commit Boundary
 
@@ -16,7 +16,7 @@ Create one authorized commit through a shared roadmap-aware boundary. Read [evid
 5. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
 6. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
 
-When a commit belongs to active Podway-managed Aquarium work, require an explicit commit handoff from the current Aquarium execution context. Accept it regardless of which Aquarium skill started or advanced the session; never require returning to a prior skill. Do not offer an independent path around the managed workflow's approvals and evidence.
+When a commit belongs to active Podway-managed Aquarium work, require an explicit commit handoff from the current Aquarium execution context. Accept it regardless of which Aquarium skill started or advanced the session; never require returning to a prior skill. For the normal completion of a planned Epic member Task, require both the unchanged approved `epic-handler` envelope as commit-effect authority and final Goal approval of the exact candidate. Do not ask the user to authorize the commit effect again when both remain current and complete. Do not extend that carried authority to reopened-task corrections, remediation, Epic closeout, checkpoints, or additional commits, and do not offer an independent path around the managed workflow's approvals and evidence.
 
 ## Reconcile Roadmap Context
 
@@ -31,12 +31,12 @@ When the commit is outside managed workflow work:
 
 A handler commit handoff must include:
 
-- repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the user's commit authorization;
+- repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the authorization source: either the user's direct one-commit authorization or, for a normal planned Epic member-Task completion, the current approved Epic envelope plus final Goal approval of the exact candidate;
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, exact reviewed and final target identities, verdict, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, and waiver summary when applicable. Include a Mulgae run only for the Mulgae route; mark every inapplicable route-specific field explicitly rather than inventing an identity.
 - the complete Low-settlement composition defined by the shared finding-disposition contract, or an explicit statement that no accepted Low-only delta applies;
-- the release-note decision as exact `entry` text already present in the approved diff, `intentional no-note`, or `not-enrolled`;
+- the release-note decision as exact `entry` text already present in the approved diff, `intentional no-note`, or `not-enrolled`; for a member Task, final Goal approval must cover that exact decision and any entry bytes;
 - zero or more staged promoted-evidence manifest paths paired with exact `sha256:<64-hex>` manifest digests and the owning workflow's current native-evidence, native-target-digest, and copied-projection validation result, or an explicit statement that no promoted evidence applies;
 - for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs, committed publication, successful findings query, exact finding membership, authoritative native target digest, and promoted-manifest digest used for pre-commit verification. Every Orca, native Codex, or waiver handoff must instead state explicitly that no hardening deferral applies because those routes cannot supply the required native digest, publication, findings-query, and membership evidence.
 
@@ -46,11 +46,11 @@ A release-handler commit handoff must name the repository, intended and previous
 
 For a direct commit without a managed-workflow handoff, inspect the complete intended diff and require the user to approve one exact concise entry or `intentional no-note` when release notes are enrolled. If an entry is needed but absent, show one proposed changelog hunk and obtain approval before applying it.
 
-Apply no other documentation change, re-run the release-notes inspector and applicable documentation check, and treat the resulting hunk as part of the final commit scope. Any earlier commit approval that did not include those bytes is stale. For an unenrolled repository record `not-enrolled` and do not create or infer an authority.
+Apply no other documentation change, re-run the release-notes inspector and applicable documentation check, and treat the resulting hunk as part of the final commit scope. Exact-candidate approval that did not include those bytes is stale. For an unenrolled repository record `not-enrolled` and do not create or infer an authority.
 
 ## Prepare the Exact Commit
 
-Apply only the lifecycle or record edit explicitly selected by the user or supplied by a valid handler handoff. Preserve the selected task's exact current state for an approved checkpoint. Any other code, test, documentation, or roadmap change after approval makes that approval stale.
+Apply only the lifecycle or record edit explicitly selected by the user or supplied by a valid handler handoff. Preserve the selected task's exact current state for an approved checkpoint. For a direct commit, any other code, test, documentation, or roadmap change after approval makes that approval stale. For a planned Epic member Task, implementation inside the approved envelope before final Goal approval is expected; any candidate change after that approval or its handoff makes the exact-candidate acceptance stale.
 
 Require the release-note decision to match the final diff. An `entry` must appear exactly once under the current open target in the authorized changelog path. `intentional no-note` normally permits no changelog edit, and `not-enrolled` is valid only when no authority is declared.
 

@@ -49,6 +49,14 @@ assessment consumes the carried completion summary and gap counts, their
 consistency when present, and any user direction. A stop direction must produce a
 not-achieved assessment rather than closing the goal.
 
+For a member Task, final Goal approval accepts the assessed outcome and exact
+candidate, including its lifecycle, record, and release-note decisions. An approved
+candidate consumes the Epic envelope's member-Task authority through `task-commit`
+before the handler records closeout with the resulting commit SHA. A
+`changes-requested` decision returns to work before any commit and leaves that
+one-commit authority unused. Final Goal approval is outcome acceptance, not a second
+authorization for the commit effect.
+
 Each `choose-user-direction: fix-and-review` decision authorizes its one transition
 back to work and one next-ordinal remediation confirmation. Later rework reaches a fresh unset choice;
 no recorded authorization survives the pass or context restoration. The narrow

@@ -20,6 +20,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Bound Task, Epic, and cold-validation convergence to two precisely scoped work-unit assessments plus one correction-only remediation confirmation, then require one-shot user authority for each later correction and confirmation.
 - Require the executing agent to load the release-matched Gaori or Mulgae skill, preserve one native operation while waiting, and consume each supported Mulgae release's exact response contracts.
+- Let an approved Epic execution envelope authorize each planned member Task's normal completion commit after final Goal acceptance, without repeating the commit question or weakening exact release-note and publication approval boundaries.
 
 ## v0.1.16 - 2026-09-16
 
