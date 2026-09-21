@@ -120,6 +120,8 @@ When the open release requires Podway v0.2.10 compatibility, verify the official
 PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> gaori run test-podway-compat
 ```
 
+The invocation above expresses the required command and environment; it does not bypass the installed `$use-gaori` skill's execution and completion-waiting policy. The executing agent must load that skill and let it select the supported transport. An attached MCP path is eligible only when it demonstrably preserves the exact `PODWAY_BIN`; changing the agent shell environment does not prove that an already running MCP server received it. When the native contract requires CLI execution, start the CLI once and await that same process handle. Do not start another MCP server, restart an attached server, or alter host configuration to manufacture eligibility.
+
 The configured Gaori command wraps the authoritative `make test-podway-compat` target with its repository-owned timeout. If Gaori is unavailable, run that Make target directly with the same `PODWAY_BIN`; do not replace the configured command with an ad hoc Gaori run that uses the shorter default timeout. A local development binary is development-contract evidence only and cannot satisfy this distribution gate. In light mode, the required prior test confirmation must cover this result for the exact Aquarium candidate SHA; in full mode, run it in addition to the complete local release gate. Podway's own exact release-candidate gate remains authoritative for runtime record enforcement and Podway distribution readiness.
 
 #### Full Release

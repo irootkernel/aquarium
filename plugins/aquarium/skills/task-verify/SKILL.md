@@ -34,7 +34,7 @@ Before running a check, account for current user-run evidence:
 
 Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when Gaori or another evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists. Stop and escalate to the orchestrator when a required gate is permanently blocked by repository policy, environment, or authority; never substitute a narrower check for it.
 
-When a selected check uses Gaori, read [gaori-integration.md](../../references/gaori-integration.md) and delegate execution to `$use-gaori`. Supply the exact repository-owned command and current target. Preserve an existing invocation across continuation and consume its terminal result through the shared contract.
+When a selected check uses Gaori, read [gaori-integration.md](../../references/gaori-integration.md). The agent that performs the check must load and follow the installed `$use-gaori` skill before selecting a transport or starting work. Supply the exact repository-owned command and current target. Preserve an existing invocation across continuation and consume its terminal result through the shared contract.
 
 Return command results, evidence quality, and verification acceptance separately. Apply the shared prerequisite routing and optional direct-command fallback without recreating the native execution procedure here.
 

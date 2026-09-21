@@ -13,7 +13,7 @@ Run one standalone review through Mulgae and return an advisory report. This ski
 2. Read [mulgae-review-contract.md](../../references/mulgae-review-contract.md) completely.
 3. Read [finding-disposition.md](../../references/finding-disposition.md) completely.
 4. Read [evidence-residency.md](../../references/evidence-residency.md) completely.
-5. Require the separately installed `$use-mulgae` skill and follow its release-matched instructions.
+5. Require the agent that will perform the review to load the separately installed `$use-mulgae` skill in its own execution context and follow its release-matched instructions before selecting a transport or starting work.
 
 ## Resolve purpose and target
 

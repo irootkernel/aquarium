@@ -69,7 +69,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 | `test-e2e` | `make test-e2e` | pytest | `pytest` |
 | `test-podway-compat` | `make test-podway-compat` | Mixed Python and Podway runtime output | `generic` |
 
-The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. Run it with `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> gaori run test-podway-compat`. Its configured 3600-second timeout covers the bounded parallel runtime matrix without relying on Gaori's shorter ad-hoc default.
+The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. The required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> gaori run test-podway-compat`; this expresses the command and environment rather than bypassing `$use-gaori`. The executing agent must load that skill and let it select the transport and completion-waiting path. An attached MCP path is eligible only when it demonstrably preserves the exact environment input. Changing the agent shell environment does not prove that an already running MCP server received it. When the native contract selects CLI, run it once and await the same process handle. Do not start or restart an MCP server or change host configuration to make MCP eligible. The configured 3600-second timeout covers the bounded parallel runtime matrix without relying on Gaori's shorter ad-hoc default.
 
 ## E2E Environment
 

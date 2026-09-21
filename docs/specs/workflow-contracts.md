@@ -48,11 +48,11 @@ After ordinal three, a Medium-or-higher finding or affected completion gap stops
 
 ## Native Check and Review Execution
 
-`use-gaori` and `use-mulgae` own asynchronous execution and native lifecycle decisions. Aquarium phase skills pass exact authorized inputs and consume terminal evidence through the [Gaori integration contract](../../plugins/aquarium/references/gaori-integration.md) and the Mulgae contract below. Pending invocations and cancellation acknowledgements do not satisfy phase postconditions.
+`use-gaori` and `use-mulgae` own asynchronous execution, completion waiting, and native lifecycle decisions. The agent performing an operation loads the applicable installed skill in its own execution context before transport selection or start; a coordinator's loaded context does not establish this for a delegated worker. Aquarium phase skills pass exact authorized inputs, preserve one started operation, and consume terminal evidence through the [Gaori integration contract](../../plugins/aquarium/references/gaori-integration.md) and the Mulgae contract below. Pending invocations and cancellation acknowledgements do not satisfy phase postconditions or authorize a competing observation loop.
 
 ## Review Targets
 
-The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns v8 response consumption, asynchronous waiting, failed-run and composite recovery, and exact round accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next authorized assessment kind against its precisely supplied target; recovery of an older capture cannot prove corrected bytes.
+The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns the exact v0.1.21 v8/Doctor v2 and v0.1.22 v11/Doctor v5 response combinations, asynchronous waiting, failed-run and composite recovery, and exact round accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next authorized assessment kind against its precisely supplied target; recovery of an older capture cannot prove corrected bytes.
 
 Each enabled route retains its native target vocabulary. Standalone Mulgae Review accepts `stage`, `workspace`, `dirty`, `diff`, or `patch`; Orca Review accepts `staged`, `HEAD`, one commit, or a two-dot or three-dot range. A roadmap task, epic, or explicitly scoped special investigation must resolve to a target supported by the selected route. Dirty working-tree content is never silently added to a committed target.
 

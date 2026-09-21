@@ -1,7 +1,8 @@
 # Mulgae Review Contract
 
-Use Mulgae v0.1.21 or a supported later stable v0.1.x release. The same-release
-`$use-mulgae` skill owns native execution, retention, cancellation, and recovery.
+Use one of the exact supported Mulgae releases below. The same-release
+`$use-mulgae` skill owns native execution, waiting, retention, cancellation, and
+recovery.
 This contract owns how Aquarium consumes those results in an approved Task or
 Epic review and in the explicitly requested standalone report-only entrypoint.
 Read [finding-disposition.md](finding-disposition.md) and
@@ -19,10 +20,29 @@ through the native objective input, roles, and approved source-transmission
 scope. An owning workflow also supplies its goal revision, review ordinal, and
 mode. A standalone invocation includes those values only when the request
 provides them as context and never manufactures them. Bind preflight and
-execution to those same inputs. Current command
-responses use `mulgae-command-result.v8`; setup consumes Doctor v2 and review
-preflight uses v3. Historical v5, v6, and v7 readability does not admit those
-versions as current command responses.
+execution to those same inputs.
+
+The agent that will select the transport or start the review must first load the
+installed `$use-mulgae` skill in its own execution context and follow its
+same-release instructions. Naming the skill or loading it only in a coordinator
+does not load it for a delegated worker. Already loaded guidance may be reused
+while its version, scope, and relevant state remain applicable. If the skill or
+a required capability is missing, use the prerequisite and fallback contracts
+below; do not reconstruct a Mulgae lifecycle from memory or Aquarium examples.
+
+Aquarium supports these release and response combinations:
+
+| Mulgae release | Command envelope | Doctor | Review preflight | Configuration |
+| --- | --- | --- | --- | --- |
+| `v0.1.21` | `mulgae-command-result.v8` | `mulgae-doctor-result.v2` | `mulgae-review-preflight.v3` | Config v3 |
+| `v0.1.22` | `mulgae-command-result.v11` | `mulgae-doctor-result.v5` | `mulgae-review-preflight.v5` | Config v4 |
+
+Use only the combination for the observed CLI and same-release skill. Historical
+command-envelope readability does not admit another release as a current
+response, and an unlisted later schema or release is unsupported until Aquarium
+adds and verifies its exact combination. Doctor v5 still exposes the field named
+`config_v3`; consume that native field name without treating it as the project
+configuration version.
 
 Global CLI or required paired-skill gaps belong to `$aquarium:dev-setup-global`;
 repository configuration and required project MCP gaps belong to
@@ -34,10 +54,22 @@ that authority cannot be established, return the missing prerequisite rather
 than reconstructing a lifecycle from Aquarium examples.
 
 A pending invocation represents unfinished work. It establishes neither review
-completion nor a durable run ID. Preserve its identity and delegate continuation to the paired skill. Do not
-advance a workflow from a start or cancellation acknowledgement, or infer live
-state from completed run inventory. Return terminal run identity and evidence
-only when the native result supplies them.
+completion nor a durable run ID. Preserve its identity and delegate continuation
+and completion waiting to the paired skill. Do not advance a workflow from a
+start or cancellation acknowledgement, or infer live state from completed run
+inventory. Return terminal run identity and evidence only when the native result
+supplies them.
+
+Once the paired skill starts an operation, Aquarium does not add a competing
+observation loop. Do not issue recurring status queries, inspect files or
+processes for liveness, start another observer while an earlier observer remains
+pending, or start another review to produce a progress update. Repeated bounded
+host waits on the same deferred handle are not native polling. If an observer
+actually times out or fails, let `$use-mulgae` continue or recover the existing
+operation under its native contract. A user-requested progress response uses
+only the observation that contract permits and leaves the original operation
+authoritative. Aquarium defines no polling interval, universal wait duration,
+retry quota, or timeout policy.
 
 Before delegating a new root, the Aquarium caller must establish an independent
 reason and remaining authority for that exact target. When an owning workflow
