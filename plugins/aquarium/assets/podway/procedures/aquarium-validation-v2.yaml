@@ -1,9 +1,9 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "20"
+version: "21"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
-description: A bounded Podway procedure for two whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
+description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
 goal_tracking: true
 node_definitions:
   baseline-record:
@@ -461,10 +461,10 @@ node_definitions:
       - id: assessment-ordinal-continuity
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-review-ordinal-continuity; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-validation-review-ordinal-continuity
-        operation_digest: sha256:eb4cda4c47e4171a30b4a2e2a5f8c488a8c9afc5694a23602560bd6bc3084687
+        operation_digest: sha256:65c863b9bf42718e20d1a947f47161ae1826cde4c263531157319f8e2a4dff61
         accepted_outcomes:
           - pass
           - fail
@@ -616,11 +616,11 @@ node_definitions:
           - inconclusive
       - id: extra-assessment-authority-reference
         type: text
-        prompt: Record explicit user authority for one additional correction and one next remediation confirmation after ordinal three.
+        prompt: Record explicit user authority for one additional correction and one next remediation confirmation after ordinal four.
         required: false
         required_when:
           - item: prior-assessment-ordinal
-            at_least: 3
+            at_least: 4
         min_length: 1
         max_length: 2000
         multiline: true
@@ -860,12 +860,12 @@ node_definitions:
     options:
       - id: work-unit
         label: Work-unit assessment
-        criteria: Ordinal one or two reviews the named whole-Epic work unit and may trigger remediation; the continuity check verifies the exact next ordinal.
+        criteria: Ordinals one through three review the named whole-Epic work unit and may trigger remediation; the continuity check verifies the exact next ordinal.
         guards:
           - evidence:
               node: final-review
               item: assessment-ordinal
-            at_most: 2
+            at_most: 3
           - evidence:
               node: final-review
               item: assessment-kind
@@ -881,12 +881,12 @@ node_definitions:
             equals: pass
       - id: remediation-confirmation
         label: Remediation confirmation
-        criteria: Ordinal three or a user-authorized later checkpoint confirms only the frozen finding set, correction delta, invalidated criteria, directly affected contracts and tests, and correction-caused regressions; the continuity check verifies any required extra authority.
+        criteria: Ordinal four or a user-authorized later checkpoint confirms only the frozen finding set, correction delta, invalidated criteria, directly affected contracts and tests, and correction-caused regressions; the continuity check verifies any required extra authority.
         guards:
           - evidence:
               node: final-review
               item: assessment-ordinal
-            at_least: 3
+            at_least: 4
           - evidence:
               node: final-review
               item: assessment-kind

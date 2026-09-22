@@ -57,7 +57,7 @@ workflow-lifecycle decisions:
 | --- | --- |
 | `review-route` | `mulgae`, `orca`, `native-codex`, or `waived`. |
 | `assessment-ordinal` | Positive ordinal assigned only after a delegated review completes or a waiver assessment completes for the current goal revision. |
-| `assessment-kind` | `work-unit` for the first two assessments or `remediation-confirmation` for ordinal three and later. |
+| `assessment-kind` | `work-unit` for the first three assessments or `remediation-confirmation` for ordinal four and later. |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived`. |
 | `review-evidence-reference` | Bounded native lifecycle, delegation, or waiver evidence sufficient to recover the checkpoint. |
 | `backend-check-result` | `pass`, `fail`, or `not-provided`. It never replaces workflow verification. |
@@ -129,9 +129,9 @@ or corrected-target confirmation obligation.
 
 ## Bound assessment convergence
 
-Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed Low-only settlement. For one goal revision, ordinals one and two use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal three uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
+Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed Low-only settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
 
-Ordinal three and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining Medium-or-higher finding or completion gap after ordinal three stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
+Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining Medium-or-higher finding or completion gap after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
 
 A material objective, requirement, or changed-surface expansion requires an explicitly approved new goal revision or work-unit assessment. Do not reset ordinals, silently broaden a remediation confirmation, or use unrelated observations to extend the current loop.
 

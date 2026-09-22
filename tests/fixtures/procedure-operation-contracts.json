@@ -7,9 +7,9 @@
   "operations": [
     {
       "operation_id": "aquarium-task-review-ordinal-continuity",
-      "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "descriptor": "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four.",
       "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current Task review checkpoint, not a Podway calculation or reviewer execution claim.",
-      "operation_digest": "sha256:f24fd938a34ac6ae43e581a79937e0af729fb9da84165bcb4a20c37ec96f6e7d",
+      "operation_digest": "sha256:583d4da553c2e3f7b69dc35f5c49b28333e4e38fcebc3048f5de5c49a14eb493",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -29,9 +29,9 @@
     },
     {
       "operation_id": "aquarium-goal-review-ordinal-continuity",
-      "descriptor": "Verify that the completed Goal review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "descriptor": "Verify that the completed Goal review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four.",
       "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current Goal review checkpoint.",
-      "operation_digest": "sha256:4ee55182be30b1b9a74c02e0cb7913f3d041ae0ddeffb2b8bf63b476482d1ac4",
+      "operation_digest": "sha256:aadeb50709f607d2d7aea0f2221c9c5f89f657b0c24d2e59321fdfcfdaa29c2c",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -73,9 +73,9 @@
     },
     {
       "operation_id": "aquarium-validation-review-ordinal-continuity",
-      "descriptor": "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three.",
+      "descriptor": "Verify that the completed whole-Epic review consumes exactly the next assessment ordinal for the current validation goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four.",
       "meaning": "A caller-recorded continuity, assessment-kind, mode, and authority check over the prior and current whole-Epic assessment.",
-      "operation_digest": "sha256:eb4cda4c47e4171a30b4a2e2a5f8c488a8c9afc5694a23602560bd6bc3084687",
+      "operation_digest": "sha256:65c863b9bf42718e20d1a947f47161ae1826cde4c263531157319f8e2a4dff61",
       "accepted_outcomes": [
         "pass",
         "fail",

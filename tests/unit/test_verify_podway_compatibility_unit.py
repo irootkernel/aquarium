@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Self
 
 import pytest
+import yaml
 
 SCRIPT = Path(__file__).parents[1] / "verify_podway_compatibility.py"
 SPEC = importlib.util.spec_from_file_location("verify_podway_compatibility", SCRIPT)
@@ -157,6 +158,86 @@ def test_completed_low_settlement_destination_is_procedure_specific(
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     assert runtime.completed_low_settlement_destination(procedure_id) == expected
+
+
+@pytest.mark.parametrize(
+    ("scenario", "review_visits", "expected"),
+    (
+        ("standard", 1, 1),
+        ("standard", 2, 2),
+        ("standard", 3, 3),
+        ("standard", 4, 4),
+        ("task-confirmation-only-wait", 1, 3),
+        ("task-confirmation-only-wait", 2, 4),
+        ("task-confirmation-only-wait", 3, 5),
+        ("task-completed-continue-mulgae", 3, 2),
+        ("task-resume-active-mulgae", 3, 0),
+    ),
+)
+def test_task_assessment_ordinal_uses_one_scenario_aware_calculation(
+    tmp_path: Path, scenario: str, review_visits: int, expected: int
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway",
+        tmp_path / "podwayd",
+        tmp_path / "procedures",
+        1,
+    )
+    managed.scenario = scenario
+    managed.node_visits["review"] = review_visits
+
+    assert managed.task_assessment_ordinal() == expected
+
+
+@pytest.mark.parametrize(
+    ("ordinal", "expected"),
+    (
+        (0, "work-unit"),
+        (1, "work-unit"),
+        (2, "work-unit"),
+        (3, "work-unit"),
+        (4, "remediation-confirmation"),
+        (5, "remediation-confirmation"),
+    ),
+)
+def test_task_review_kind_uses_the_ordinal_three_boundary(
+    ordinal: int, expected: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    assert runtime.task_review_kind(ordinal) == expected
+
+
+@pytest.mark.parametrize("ordinal", (-1, True, 1.5, "4"))
+def test_task_review_kind_rejects_invalid_ordinals(ordinal: object) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    with pytest.raises(runtime.RuntimeQualificationError, match="invalid Task"):
+        runtime.task_review_kind(ordinal)
+
+
+def test_goal_completed_assessment_counter_matches_ordinal_route_destinations() -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    goal_path = (
+        Path(__file__).parents[2]
+        / "plugins/aquarium/assets/podway/procedures/aquarium-goal-v2.yaml"
+    )
+    goal = yaml.safe_load(goal_path.read_text(encoding="utf-8"))
+    graph = {node["id"]: node for node in goal["graph"]["nodes"]}
+    ordinal_nodes = {
+        "confirm-completed-assessment-ordinal",
+        "confirm-waived-assessment-ordinal",
+    }
+    destinations = {
+        route["to"]
+        for node_id in ordinal_nodes
+        for route in graph[node_id]["routes"].values()
+        if route["to"] != "confirm-extra-assessment-ordinal"
+    }
+    destinations.add(
+        graph["confirm-extra-assessment-ordinal"]["routes"]["authorized-extra"]["to"]
+    )
+
+    assert runtime.GOAL_COMPLETED_ASSESSMENT_NODES == destinations
 
 
 def test_runtime_job_inventory_preserves_behavior_scope() -> None:

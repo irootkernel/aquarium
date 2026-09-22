@@ -86,8 +86,8 @@ pending invocation, remaining review authority, and independent reason for the
 pass. Do not dispatch when the only reason is eligible Low settlement, a completed
 Low disposition, or the permitted Low-only target delta. Resume an exact pending
 native invocation through its owning skill. Review budgets are maxima, not rounds
-that must be consumed. The first two completed assessments may evaluate the exact
-named work unit. Ordinal three and later assess only the frozen correction set and
+that must be consumed. The first three completed assessments may evaluate the exact
+named work unit. Ordinal four and later assess only the frozen correction set and
 its direct regression surface. A goal revision or context label alone does not
 reset consumed review authority. Only an explicitly approved new goal scope or
 one bounded additional remediation confirmation creates authority, with prior

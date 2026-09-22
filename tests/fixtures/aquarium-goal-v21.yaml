@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "22"
+version: "21"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -139,13 +139,13 @@ node_definitions:
       - id: assessment-ordinal-continuity
         type: check_result
         prompt: Record the caller-supplied result for aquarium-goal-review-ordinal-continuity; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the completed Goal review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the completed Goal review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: false
         required_when:
           - item: review-evidence-kind
             equals: native-review
         operation_id: aquarium-goal-review-ordinal-continuity
-        operation_digest: sha256:aadeb50709f607d2d7aea0f2221c9c5f89f657b0c24d2e59321fdfcfdaa29c2c
+        operation_digest: sha256:4ee55182be30b1b9a74c02e0cb7913f3d041ae0ddeffb2b8bf63b476482d1ac4
         accepted_outcomes:
           - pass
           - fail
@@ -313,7 +313,7 @@ node_definitions:
         multiline: true
       - id: extra-assessment-authority-reference
         type: text
-        prompt: Record explicit user authority for an assessment after ordinal four.
+        prompt: Record explicit user authority for an assessment after ordinal three.
         required: false
         min_length: 1
         max_length: 2000
@@ -732,35 +732,14 @@ node_definitions:
               item: assessment-ordinal-continuity
             field: outcome
             equals: pass
-      - id: third
-        label: Third assessment
-        criteria: Ordinal three evaluates the corrected named work unit under remediation authority.
+      - id: remediation-confirmation
+        label: Initial remediation confirmation
+        criteria: Ordinal three confirms only the frozen correction set and its direct regression surface.
         guards:
           - evidence:
               node: record-evidence
               item: assessment-ordinal
             equals: 3
-          - evidence:
-              node: record-evidence
-              item: review-mode
-            equals: remediation-eligible
-          - evidence:
-              node: record-evidence
-              item: assessment-kind
-            equals: work-unit
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal-continuity
-            field: outcome
-            equals: pass
-      - id: remediation-confirmation
-        label: Initial remediation confirmation
-        criteria: Ordinal four confirms only the frozen correction set and its direct regression surface.
-        guards:
-          - evidence:
-              node: record-evidence
-              item: assessment-ordinal
-            equals: 4
           - evidence:
               node: record-evidence
               item: review-mode
@@ -776,12 +755,12 @@ node_definitions:
             equals: pass
       - id: authorized-extra
         label: User-authorized extra confirmation
-        criteria: Four assessments completed and the user explicitly authorized one later remediation confirmation.
+        criteria: Three assessments completed and the user explicitly authorized one later remediation confirmation.
         guards:
           - evidence:
               node: record-evidence
               item: assessment-ordinal
-            at_least: 5
+            at_least: 4
           - evidence:
               node: record-evidence
               item: review-mode
@@ -801,29 +780,29 @@ node_definitions:
   assessment-extra-ordinal-decision:
     type: decision
     title: Validate the extra Goal assessment ordinal
-    objective: Require every user-authorized extra assessment to consume ordinal five or later.
+    objective: Require every user-authorized extra assessment to consume ordinal four or later.
     prompt: Does this user-authorized extra assessment consume an allowed ordinal?
     options:
       - id: authorized-extra
         label: User-authorized extra ordinal
-        criteria: A user-authorized extra assessment consumes ordinal five or later.
+        criteria: A user-authorized extra assessment consumes ordinal four or later.
         guards:
           - evidence:
               node: record-evidence
               item: assessment-ordinal
-            at_least: 5
+            at_least: 4
           - evidence:
               node: record-evidence
               item: extra-assessment-authority-reference
             non_empty: true
       - id: invalid-extra
         label: Invalid extra ordinal
-        criteria: The recorded extra assessment ordinal is below five and must be corrected.
+        criteria: The recorded extra assessment ordinal is below four and must be corrected.
         guards:
           - evidence:
               node: record-evidence
               item: assessment-ordinal
-            at_most: 4
+            at_most: 3
     reason:
       required: true
       prompt: Explain the admitted or rejected extra assessment ordinal.
@@ -2257,9 +2236,6 @@ graph:
         second:
           to: confirm-second-route-evidence
           effect: advance
-        third:
-          to: confirm-third-route-evidence
-          effect: advance
         remediation-confirmation:
           to: confirm-extra-route-evidence
           effect: advance
@@ -2284,9 +2260,6 @@ graph:
           effect: advance
         second:
           to: confirm-second-route-evidence
-          effect: advance
-        third:
-          to: confirm-third-route-evidence
           effect: advance
         remediation-confirmation:
           to: confirm-extra-route-evidence
@@ -2339,36 +2312,6 @@ graph:
           to: confirm-waived-finding-validity
           effect: advance
     - id: confirm-second-route-evidence
-      use: route-evidence-decision
-      evidence_from:
-        - node: record-evidence
-          required: true
-          items:
-            - review-route
-            - review-operation
-            - assessment-ordinal
-            - review-evidence-reference
-            - backend-check-result
-            - assessment-provenance
-            - assessment-provenance-kind
-            - waiver-summary
-      routes:
-        mulgae-pass:
-          to: confirm-mulgae-pass-finding-validity
-          effect: advance
-        mulgae-fail:
-          to: confirm-mulgae-fail-finding-validity
-          effect: advance
-        orca:
-          to: confirm-orca-finding-validity
-          effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
-          effect: advance
-        waived:
-          to: confirm-waived-finding-validity
-          effect: advance
-    - id: confirm-third-route-evidence
       use: route-evidence-decision
       evidence_from:
         - node: record-evidence

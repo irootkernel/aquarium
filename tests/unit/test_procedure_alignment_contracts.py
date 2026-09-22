@@ -38,24 +38,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "19",
+            "20",
+            "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
+            "aquarium-task-v19.yaml",
             "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
-            "aquarium-task-v18.yaml",
-            "fd08ef0db9bf78d3557dd4c89c3f600c864b57930a01491e3ea2dc39a0985655",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "21",
+            "22",
+            "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
+            "aquarium-goal-v21.yaml",
             "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
-            "aquarium-goal-v20.yaml",
-            "bf0eaa45855755136f9fc439ec654c6351cbec5cb1d7b50999c104bf0dda56b2",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "20",
+            "21",
+            "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
+            "aquarium-validation-v20.yaml",
             "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
-            "aquarium-validation-v19.yaml",
-            "0a70a6e7d8dc39c88a37b425256ec9b1be88d9326cd3d9a170a4aeac7e4eddef",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -302,7 +302,7 @@ def test_task_review_route_fixture_covers_required_task_paths() -> None:
     cases = load_json("review-routing-cases.json")["task_review_route_cases"]
 
     assert [case["id"] for case in cases] == [
-        f"TR-{index:02d}" for index in range(1, 16)
+        f"TR-{index:02d}" for index in range(1, 18)
     ]
     assert {case["route"] for case in cases} == {
         "mulgae",
@@ -489,7 +489,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "19"
+    assert task["version"] == "20"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -570,13 +570,16 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
     second = dict(first)
     second[("review", "assessment-ordinal")] = 2
     assert guards_match(ordinal["work-unit"], second)
+    third = dict(first)
+    third[("review", "assessment-ordinal")] = 3
+    assert guards_match(ordinal["work-unit"], third)
     confirmation = dict(first)
-    confirmation[("review", "assessment-ordinal")] = 3
+    confirmation[("review", "assessment-ordinal")] = 4
     confirmation[("review", "assessment-kind")] = "remediation-confirmation"
     confirmation[("review", "review-mode")] = "confirmation-only"
     assert guards_match(ordinal["remediation-confirmation"], confirmation)
     authorized = {
-        ("review", "assessment-ordinal"): 4,
+        ("review", "assessment-ordinal"): 5,
         ("review", "assessment-kind"): "remediation-confirmation",
         ("review", "review-mode"): "confirmation-only",
         ("review", "assessment-ordinal-continuity"): {"outcome": "pass"},
@@ -649,6 +652,19 @@ def test_managed_procedure_decisions_fit_podway_v0210_option_limit() -> None:
                 path.name,
                 definition_id,
             )
+
+
+def test_assessment_ordinal_routes_have_distinct_effective_destinations() -> None:
+    for path in sorted(PROCEDURES.glob("aquarium-*-v2.yaml")):
+        procedure = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for node in procedure["graph"]["nodes"]:
+            if node.get("use") != "assessment-ordinal-decision":
+                continue
+            pairs = [
+                (route["to"], route["effect"])
+                for route in node.get("routes", {}).values()
+            ]
+            assert len(pairs) == len(set(pairs)), (path.name, node["id"], pairs)
 
 
 def test_managed_procedures_fit_podway_v0210_evidence_bounds() -> None:
@@ -1057,7 +1073,11 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
                         "prior_ordinal"
                     ],
                     ("review", "assessment-ordinal-continuity"): {"outcome": "pass"},
-                    ("review", "review-mode"): "remediation-eligible",
+                    ("review", "review-mode"): (
+                        "confirmation-only"
+                        if case["assessment_kind"] == "remediation-confirmation"
+                        else "remediation-eligible"
+                    ),
                     ("review", "assessment-kind"): case["assessment_kind"],
                 }
             )
@@ -1166,8 +1186,17 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         "invalid-extra": {"to": "record-evidence", "effect": "rework"},
     }
     for node_id in (
+        "confirm-completed-assessment-ordinal",
+        "confirm-waived-assessment-ordinal",
+    ):
+        assert graph[node_id]["routes"]["third"] == {
+            "to": "confirm-third-route-evidence",
+            "effect": "advance",
+        }
+    for node_id in (
         "confirm-first-route-evidence",
         "confirm-second-route-evidence",
+        "confirm-third-route-evidence",
         "confirm-extra-route-evidence",
     ):
         assert set(graph[node_id]["routes"]) == {
@@ -1296,7 +1325,11 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
                 else "delegated-reviewer"
             ),
             ("record-evidence", "review-mode"): (
-                "remediation-eligible" if case["ordinal"] > 0 else "confirmation-only"
+                "confirmation-only"
+                if case.get("assessment_kind") == "remediation-confirmation"
+                else "remediation-eligible"
+                if case["ordinal"] > 0
+                else "confirmation-only"
             ),
             ("record-evidence", "assessment-kind"): case.get("assessment_kind"),
             ("record-evidence", "assessment-ordinal-continuity"): {"outcome": "pass"},
@@ -1350,7 +1383,11 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
             ("final-review", "assessment-ordinal"): case["ordinal"],
             ("final-review", "assessment-kind"): case.get("assessment_kind"),
             ("final-review", "review-mode"): (
-                "remediation-eligible" if case["ordinal"] > 0 else "confirmation-only"
+                "confirmation-only"
+                if case.get("assessment_kind") == "remediation-confirmation"
+                else "remediation-eligible"
+                if case["ordinal"] > 0
+                else "confirmation-only"
             ),
             ("final-review", "assessment-ordinal-continuity"): {"outcome": "pass"},
             ("final-review", "assessment-provenance-result"): {"outcome": "pass"},
@@ -1518,7 +1555,9 @@ def test_completed_route_changes_keep_next_ordinal_and_finding_lineage() -> None
         assert (case.get("prior_finding_lineage") or case.get("finding_lineage")) == [
             "F-1"
         ]
-        assert case["remaining_review_authority"] == "confirmation only"
+        assert case["remaining_review_authority"] == (
+            "one work-unit and one confirmation"
+        )
 
     lineage_items = {
         "finding-lineage-summary",
@@ -1586,8 +1625,8 @@ def test_goal_and_validation_extra_ordinals_require_current_authority() -> None:
     ordinal = options(goal, "assessment-ordinal-decision")["authorized-extra"]
     extra = options(goal, "assessment-extra-ordinal-decision")
     values = {
-        ("record-evidence", "prior-assessment-ordinal"): 3,
-        ("record-evidence", "assessment-ordinal"): 4,
+        ("record-evidence", "prior-assessment-ordinal"): 4,
+        ("record-evidence", "assessment-ordinal"): 5,
         ("record-evidence", "assessment-kind"): "remediation-confirmation",
         ("record-evidence", "review-mode"): "confirmation-only",
         ("record-evidence", "extra-assessment-authority-reference"): "user authority",
@@ -1596,23 +1635,51 @@ def test_goal_and_validation_extra_ordinals_require_current_authority() -> None:
     assert guards_match(ordinal, values)
     assert guards_match(extra["authorized-extra"], values)
     below_minimum = dict(values)
-    below_minimum[("record-evidence", "assessment-ordinal")] = 2
+    below_minimum[("record-evidence", "assessment-ordinal")] = 4
     assert not guards_match(extra["authorized-extra"], below_minimum)
     assert guards_match(extra["invalid-extra"], below_minimum)
 
     validation = load_procedure("aquarium-validation-v2.yaml")
+    final_items = {
+        item["id"]: item
+        for item in validation["node_definitions"]["final-review-record"]["items"]
+    }
+    assert final_items["extra-assessment-authority-reference"]["required_when"] == [
+        {"item": "prior-assessment-ordinal", "at_least": 4}
+    ]
+    graph = nodes(validation)
+    final_sources = {
+        source["node"]: set(source["items"])
+        for source in graph["confirm-final-assessment-ordinal"]["evidence_from"]
+    }
+    assert "extra-assessment-authority-reference" in final_sources["final-review"]
     admitted = options(validation, "assessment-ordinal-decision")[
         "remediation-confirmation"
     ]
     assert guards_match(
         admitted,
         {
-            ("final-review", "assessment-ordinal"): 4,
+            ("final-review", "assessment-ordinal"): 5,
             ("final-review", "assessment-kind"): "remediation-confirmation",
             ("final-review", "review-mode"): "confirmation-only",
             ("final-review", "assessment-ordinal-continuity"): {"outcome": "pass"},
         },
     )
+
+
+def test_validation_rework_authority_enters_remediation_before_reaudit() -> None:
+    validation = load_procedure("aquarium-validation-v2.yaml")
+    graph = nodes(validation)
+
+    assert graph["decide-validation-rework-authority"]["routes"]["remediation"] == {
+        "to": "audit",
+        "effect": "rework",
+    }
+    assert graph["decide-gaps"]["routes"]["blocking-gaps"] == {
+        "to": "remediate",
+        "effect": "advance",
+    }
+    assert graph["remediate"]["next"] == "re-audit"
 
 
 def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (

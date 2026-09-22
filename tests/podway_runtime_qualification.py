@@ -66,6 +66,7 @@ SUCCESS_OPTIONS = {
     "decide-current-blockers": "clear",
     "decide-validation-rework-authority": "remediation",
     "decide-gaps": "clean",
+    "decide-re-audit": "clean",
     "decide-quality": "passed",
     "decide-review": "clean",
     "validate-review-route-entry": "planned",
@@ -102,6 +103,7 @@ SUCCESS_OPTIONS = {
     "confirm-extra-assessment-ordinal": "authorized-extra",
     "confirm-first-route-evidence": "mulgae-pass",
     "confirm-second-route-evidence": "mulgae-pass",
+    "confirm-third-route-evidence": "mulgae-pass",
     "confirm-extra-route-evidence": "mulgae-pass",
     "confirm-hardening-review-eligibility": "eligible",
     "confirm-hardening-record": "recorded",
@@ -121,6 +123,15 @@ SUCCESS_OPTIONS = {
     "assess-goal": "achieved",
     "assess-stopped-goal": "not-achieved",
 }
+
+GOAL_COMPLETED_ASSESSMENT_NODES = frozenset(
+    {
+        "confirm-first-route-evidence",
+        "confirm-second-route-evidence",
+        "confirm-third-route-evidence",
+        "confirm-extra-route-evidence",
+    }
+)
 
 TASK_OWNER_SCENARIOS = {
     "task-completion-implementation-owner": "implementation-rework-obligations",
@@ -159,6 +170,12 @@ VALIDATION_CONFIRMATION_SCENARIOS = {
 
 def completed_low_settlement_destination(procedure_id: str) -> str:
     return "confirm-goal-assessment-core"
+
+
+def task_review_kind(ordinal: int) -> str:
+    if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal < 0:
+        raise RuntimeQualificationError(f"invalid Task assessment ordinal: {ordinal!r}")
+    return "work-unit" if ordinal <= 3 else "remediation-confirmation"
 
 
 GOAL_OPERATIONAL_VARIANTS = (
@@ -929,8 +946,21 @@ class ManagedRuntime:
         self.task_optional_waiver_absence_recorded = False
         self.goal_one_shot_decision_used = False
         self.validation_one_shot_decision_used = False
+        self.validation_extra_authority_rejected = False
         self.current_procedure_id = ""
         self.scenario = "standard"
+
+    def task_assessment_ordinal(self) -> int:
+        if (
+            self.scenario in TASK_RESUME_SCENARIOS
+            and self.scenario not in TASK_COMPLETED_CHANGE_SCENARIOS
+        ):
+            return 0
+        if self.scenario in TASK_CONFIRMATION_SCENARIOS:
+            return 2 + self.node_visits.get("review", 1)
+        if self.scenario in TASK_COMPLETED_CHANGE_SCENARIOS:
+            return 2
+        return max(1, self.node_visits.get("review", 1))
 
     def prepare_scenario(self, procedure_name: str) -> None:
         assert self.sandbox is not None
@@ -1937,16 +1967,7 @@ class ManagedRuntime:
                 and node == "review"
                 and item_id == "assessment-ordinal"
             ):
-                value = (
-                    0
-                    if self.scenario in TASK_RESUME_SCENARIOS
-                    and self.scenario not in TASK_COMPLETED_CHANGE_SCENARIOS
-                    else 2 + self.node_visits.get("review", 1)
-                    if self.scenario in TASK_CONFIRMATION_SCENARIOS
-                    else 2
-                    if self.scenario in TASK_COMPLETED_CHANGE_SCENARIOS
-                    else max(1, self.node_visits.get("review", 1))
-                )
+                value = self.task_assessment_ordinal()
             if (
                 self.current_procedure_id == "aquarium-goal-v2"
                 and node == "record-evidence"
@@ -2091,6 +2112,15 @@ class ManagedRuntime:
                     "confirmation-needed-gap-count",
                 }:
                     value = 0
+                if (
+                    self.scenario == "validation-medium-wait"
+                    and node == "audit"
+                    and self.node_visits.get("audit") == 2
+                ):
+                    if item_id in {"confirmed-gap-count", "blocking-gap-count"}:
+                        value = 1
+                    elif item_id == "blocking-rework-authority":
+                        value = "current-envelope"
                 if self.scenario == "validation-medium-wait" and node == "final-review":
                     if item_id in {
                         "unresolved-valid-findings",
@@ -2205,7 +2235,7 @@ class ManagedRuntime:
             if (
                 self.scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "review"
-                and self.node_visits.get("review") in {2, 3}
+                and self.node_visits.get("review") in {1, 2, 3}
                 and item_id
                 in {
                     "completion-unmet-criteria",
@@ -2543,7 +2573,7 @@ class ManagedRuntime:
                         if self.current_procedure_id == "aquarium-validation-v2"
                         and node == "final-review"
                         and self.completed_assessments.get(self.current_procedure_id, 0)
-                        >= 2
+                        >= 3
                         else (
                             "confirmation-only"
                             if self.current_procedure_id == "aquarium-goal-v2"
@@ -2551,18 +2581,13 @@ class ManagedRuntime:
                             and self.completed_assessments.get(
                                 self.current_procedure_id, 0
                             )
-                            >= 2
+                            >= 3
                             else (
                                 "confirmation-only"
-                                if (
-                                    self.scenario in TASK_CONFIRMATION_SCENARIOS
-                                    and self.node_visits.get("review", 0) >= 1
-                                )
-                                or (
-                                    self.current_procedure_id == "aquarium-task-v2"
-                                    and node == "review"
-                                    and self.node_visits.get("review", 0) >= 3
-                                )
+                                if self.current_procedure_id == "aquarium-task-v2"
+                                and node == "review"
+                                and task_review_kind(self.task_assessment_ordinal())
+                                == "remediation-confirmation"
                                 else "remediation-eligible"
                             )
                         )
@@ -2575,16 +2600,14 @@ class ManagedRuntime:
                     if (
                         self.current_procedure_id == "aquarium-task-v2"
                         and node == "review"
-                        and (
-                            self.scenario in TASK_CONFIRMATION_SCENARIOS
-                            or self.node_visits.get("review", 0) >= 3
-                        )
+                        and task_review_kind(self.task_assessment_ordinal())
+                        == "remediation-confirmation"
                     )
                     or (
                         self.current_procedure_id
                         in {"aquarium-goal-v2", "aquarium-validation-v2"}
                         and self.completed_assessments.get(self.current_procedure_id, 0)
-                        >= 2
+                        >= 3
                     )
                     else "work-unit"
                 ),
@@ -2813,7 +2836,7 @@ class ManagedRuntime:
                     and item not in required
                 )
             if (
-                self.completed_assessments.get(procedure_id, 0) >= 3
+                self.completed_assessments.get(procedure_id, 0) >= 4
                 and procedure_id == "aquarium-goal-v2"
                 and node == "record-evidence"
             ):
@@ -2844,6 +2867,51 @@ class ManagedRuntime:
                     and not item.get("satisfied")
                     and item not in required
                 )
+            if (
+                self.scenario == "validation-medium-wait"
+                and procedure_id == "aquarium-validation-v2"
+                and node == "final-review"
+                and self.completed_assessments.get(procedure_id, 0) >= 4
+                and not self.validation_extra_authority_rejected
+            ):
+                authority = next(
+                    (
+                        item
+                        for item in required
+                        if item["item_id"] == "extra-assessment-authority-reference"
+                    ),
+                    None,
+                )
+                if authority is not None:
+                    records_without_authority = {
+                        item["item_id"]: self.value_for(item, node)
+                        for item in required
+                        if item["type"] != "artifact" and item is not authority
+                    }
+                    if records_without_authority:
+                        self.record(current, records_without_authority)
+                    missing = self.observe()
+                    before = self.domain_state(missing)
+                    failed = self.invoke_template(
+                        missing, "session.complete", expected_exit=None
+                    )
+                    observed_code = (
+                        error_code(failed) if failed.returncode != 0 else None
+                    )
+                    after = self.observe()
+                    if (
+                        failed.returncode == 0
+                        or observed_code != "REQUIRED_ITEMS_MISSING"
+                        or self.domain_state(after) != before
+                    ):
+                        raise RuntimeQualificationError(
+                            "Validation extra assessment authority was not required "
+                            "without changing domain state: "
+                            f"exit={failed.returncode}; code={observed_code!r}"
+                        )
+                    self.validation_extra_authority_rejected = True
+                    current = after
+                    continue
             records = {
                 item["item_id"]: self.value_for(item, node)
                 for item in required
@@ -3222,7 +3290,7 @@ class ManagedRuntime:
                 if (
                     node_type != "decision"
                     or status["session"]["lifecycle"] != "running"
-                    or self.node_visits.get("decide-task-rework-authority") != 1
+                    or self.node_visits.get("decide-task-rework-authority") != 2
                 ):
                     raise RuntimeQualificationError(
                         "task one-shot authorization did not begin at a fresh active decision"
@@ -3250,7 +3318,7 @@ class ManagedRuntime:
                 if (
                     node_type != "decision"
                     or status["session"]["lifecycle"] != "running"
-                    or self.node_visits.get("decide-goal-rework-authority") != 1
+                    or self.node_visits.get("decide-goal-rework-authority") != 2
                 ):
                     raise RuntimeQualificationError(
                         "goal one-shot authorization did not begin at a fresh active decision"
@@ -3267,7 +3335,7 @@ class ManagedRuntime:
                 if (
                     node_type != "decision"
                     or status["session"]["lifecycle"] != "running"
-                    or self.node_visits.get("decide-validation-rework-authority") != 1
+                    or self.node_visits.get("decide-validation-rework-authority") != 2
                 ):
                     raise RuntimeQualificationError(
                         "validation one-shot authorization did not begin at a fresh active decision"
@@ -3302,8 +3370,9 @@ class ManagedRuntime:
                     if (
                         not self.goal_one_shot_decision_used
                         or self.node_visits.get("choose-user-direction") != 2
-                        or self.node_visits.get("decide-goal-rework-authority") != 2
-                        or self.node_visits.get("complete-work") != 2
+                        or self.node_visits.get("decide-goal-rework-authority") != 3
+                        or self.node_visits.get("complete-work") != 3
+                        or self.completed_assessments.get(procedure_id) != 5
                     ):
                         raise RuntimeQualificationError(
                             "goal hardening authority was not consumed exactly once"
@@ -3312,24 +3381,31 @@ class ManagedRuntime:
                 elif scenario == "validation-medium-wait":
                     if (
                         not self.validation_one_shot_decision_used
+                        or not self.validation_extra_authority_rejected
                         or self.node_visits.get("choose-user-direction") != 2
                         or self.node_visits.get("decide-validation-rework-authority")
-                        != 2
-                        or self.node_visits.get("remediate", 0) != 0
-                        or self.node_visits.get("re-audit", 0) != 0
-                        or self.node_visits.get("final-review") != 2
-                        or self.completed_assessments.get(procedure_id) != 4
+                        != 3
+                        or self.node_visits.get("remediate", 0) != 1
+                        or self.node_visits.get("re-audit", 0) != 1
+                        or self.node_visits.get("final-review") != 3
+                        or self.completed_assessments.get(procedure_id) != 5
                     ):
                         raise RuntimeQualificationError(
-                            "validation correction authority was not consumed exactly once"
+                            "validation correction authority was not consumed exactly once: "
+                            f"one_shot={self.validation_one_shot_decision_used!r}; "
+                            "extra_authority_rejected="
+                            f"{self.validation_extra_authority_rejected!r}; "
+                            f"node_visits={self.node_visits!r}; "
+                            "completed_assessments="
+                            f"{self.completed_assessments.get(procedure_id)!r}"
                         )
                     self.mark_case_variant("C-10", "validation-medium-wait")
                 elif scenario == "task-confirmation-only-wait":
                     if (
                         not self.task_one_shot_decision_used
                         or self.node_visits.get("choose-user-direction") != 2
-                        or self.node_visits.get("decide-task-rework-authority") != 2
-                        or self.node_visits.get("decide-implementation-owner") != 1
+                        or self.node_visits.get("decide-task-rework-authority") != 3
+                        or self.node_visits.get("decide-implementation-owner") != 2
                     ):
                         raise RuntimeQualificationError(
                             "task confirmation-only authority was not consumed exactly once"
@@ -3611,7 +3687,7 @@ class ManagedRuntime:
             if (
                 scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "confirm-review-completion"
-                and self.node_visits.get("review") in {2, 3}
+                and self.node_visits.get("review") in {1, 2, 3}
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
                 self.decide(observation, "unmet")
@@ -3621,8 +3697,16 @@ class ManagedRuntime:
                 scenario in TASK_CONFIRMATION_SCENARIOS
                 and node == "decide-task-rework-authority"
             ):
-                observation = self.reject_guarded_decision(observation, "remediation")
-                self.decide(observation, "user-direction")
+                if self.node_visits.get("review") == 1:
+                    observation = self.reject_guarded_decision(
+                        observation, "user-direction"
+                    )
+                    self.decide(observation, "remediation")
+                else:
+                    observation = self.reject_guarded_decision(
+                        observation, "remediation"
+                    )
+                    self.decide(observation, "user-direction")
                 continue
 
             if (
@@ -4093,8 +4177,16 @@ class ManagedRuntime:
                 "goal-closeout-unmet-wait",
                 "goal-stop-preserves-completion",
             }:
-                observation = self.reject_guarded_decision(observation, "remediation")
-                special_option = "user-direction"
+                if scenario == "medium-wait" and self.goal_evidence_round == 1:
+                    observation = self.reject_guarded_decision(
+                        observation, "user-direction"
+                    )
+                    special_option = "remediation"
+                else:
+                    observation = self.reject_guarded_decision(
+                        observation, "remediation"
+                    )
+                    special_option = "user-direction"
             elif (
                 procedure_id == "aquarium-goal-v2"
                 and node == "decide-goal-rework-authority"
@@ -4115,7 +4207,11 @@ class ManagedRuntime:
                 scenario == "validation-medium-wait"
                 and node == "decide-validation-rework-authority"
             ):
-                special_option = "user-direction"
+                special_option = (
+                    "remediation"
+                    if self.validation_review_round == 1
+                    else "user-direction"
+                )
             elif (
                 scenario == "validation-stop-preserves-completion"
                 and node == "decide-validation-rework-authority"
@@ -4132,13 +4228,13 @@ class ManagedRuntime:
                 }[TASK_OWNER_SCENARIOS[scenario]]
             ):
                 special_option = "required"
-            elif (scenario == "validation-medium-wait" and node == "decide-gaps") or (
-                (
-                    scenario == "goal-operational-matrix"
-                    or scenario in GOAL_KIND_SCENARIOS
+            elif scenario == "validation-medium-wait" and node == "decide-gaps":
+                special_option = (
+                    "blocking-gaps" if self.node_visits.get("audit") == 2 else "clean"
                 )
-                and node == "decide-evidence"
-            ):
+            elif (
+                scenario == "goal-operational-matrix" or scenario in GOAL_KIND_SCENARIOS
+            ) and node == "decide-evidence":
                 special_option = "clean"
             elif (
                 scenario == "goal-kind-epic-closeout" and node == "decide-review-basis"
@@ -4163,12 +4259,18 @@ class ManagedRuntime:
                 procedure_id == "aquarium-task-v2"
                 and node == "confirm-assessment-ordinal"
             ):
-                ordinal = self.node_visits.get("review", 1)
-                special_option = (
-                    "remediation-confirmation"
-                    if self.scenario in TASK_CONFIRMATION_SCENARIOS or ordinal >= 3
-                    else "work-unit"
+                ordinal = self.read_complete_evidence(
+                    observation, "review", "assessment-ordinal"
                 )
+                if (
+                    isinstance(ordinal, bool)
+                    or not isinstance(ordinal, int)
+                    or ordinal < 1
+                ):
+                    raise RuntimeQualificationError(
+                        f"Task assessment ordinal readback was invalid: {ordinal!r}"
+                    )
+                special_option = task_review_kind(ordinal)
             elif task_resume and node == "validate-review-route-entry":
                 special_option = (
                     "continued"
@@ -4435,8 +4537,10 @@ class ManagedRuntime:
                     if ordinal == 1
                     else "second"
                     if ordinal == 2
-                    else "remediation-confirmation"
+                    else "third"
                     if ordinal == 3
+                    else "remediation-confirmation"
+                    if ordinal == 4
                     else "authorized-extra"
                 )
             elif (
@@ -4445,7 +4549,7 @@ class ManagedRuntime:
             ):
                 ordinal = self.completed_assessments.get(procedure_id, 0) + 1
                 special_option = (
-                    "work-unit" if ordinal <= 2 else "remediation-confirmation"
+                    "work-unit" if ordinal <= 3 else "remediation-confirmation"
                 )
             elif node == "confirm-extra-assessment-ordinal":
                 special_option = "authorized-extra"
@@ -4455,6 +4559,7 @@ class ManagedRuntime:
                     "confirm-extra-review-evidence": "review",
                     "confirm-first-route-evidence": "record-evidence",
                     "confirm-second-route-evidence": "record-evidence",
+                    "confirm-third-route-evidence": "record-evidence",
                     "confirm-extra-route-evidence": "record-evidence",
                 }
                 evidence_node = evidence_nodes.get(node)
@@ -4507,6 +4612,11 @@ class ManagedRuntime:
                         else qualified_route
                     ),
                     "confirm-second-route-evidence": (
+                        "mulgae-pass"
+                        if qualified_route == "mulgae"
+                        else qualified_route
+                    ),
+                    "confirm-third-route-evidence": (
                         "mulgae-pass"
                         if qualified_route == "mulgae"
                         else qualified_route
@@ -4585,12 +4695,7 @@ class ManagedRuntime:
             decision = self.decide(observation, option)
             if (
                 procedure_id == "aquarium-goal-v2"
-                and node
-                in {
-                    "confirm-first-route-evidence",
-                    "confirm-second-route-evidence",
-                    "confirm-extra-route-evidence",
-                }
+                and node in GOAL_COMPLETED_ASSESSMENT_NODES
             ) or (
                 procedure_id == "aquarium-validation-v2"
                 and node

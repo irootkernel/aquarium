@@ -412,8 +412,8 @@ remains Mulgae-only.
 
 All shared routing remains unchanged:
 
-- ordinals one and two are `work-unit` assessments;
-- ordinal three is the last `remediation-confirmation` authorized by the initial
+- ordinals one through three are `work-unit` assessments;
+- ordinal four is the last `remediation-confirmation` authorized by the initial
   envelope;
 - later correction and confirmation each require a fresh explicit user
   decision;

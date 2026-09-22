@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "19"
+version: "20"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -283,11 +283,11 @@ node_definitions:
         multiline: true
       - id: extra-assessment-authority-reference
         type: text
-        prompt: Record explicit user authority for an assessment after ordinal three; otherwise leave absent.
+        prompt: Record explicit user authority for an assessment after ordinal four; otherwise leave absent.
         required: false
         required_when:
           - item: prior-assessment-ordinal
-            at_least: 3
+            at_least: 4
         min_length: 1
         max_length: 2000
         multiline: true
@@ -909,10 +909,10 @@ node_definitions:
       - id: assessment-ordinal-continuity
         type: check_result
         prompt: Record the caller-supplied result for aquarium-task-review-ordinal-continuity; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one and two and remediation-confirmation for ordinal three or later, and requires explicit user authority after ordinal three." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify that the completed Task review consumes exactly the next assessment ordinal for the current goal revision, uses work-unit for ordinals one through three and remediation-confirmation for ordinal four or later, and requires explicit user authority after ordinal four." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-task-review-ordinal-continuity
-        operation_digest: sha256:f24fd938a34ac6ae43e581a79937e0af729fb9da84165bcb4a20c37ec96f6e7d
+        operation_digest: sha256:583d4da553c2e3f7b69dc35f5c49b28333e4e38fcebc3048f5de5c49a14eb493
         accepted_outcomes:
           - pass
           - fail
@@ -1166,12 +1166,12 @@ node_definitions:
     options:
       - id: work-unit
         label: Work-unit assessment
-        criteria: Ordinal one or two evaluates the exact named Task under remediation authority; the continuity check verifies the exact next ordinal.
+        criteria: Ordinals one through three evaluate the exact named Task under remediation authority; the continuity check verifies the exact next ordinal.
         guards:
           - evidence:
               node: review
               item: assessment-ordinal
-            at_most: 2
+            at_most: 3
           - evidence:
               node: review
               item: assessment-kind
@@ -1187,12 +1187,12 @@ node_definitions:
             equals: pass
       - id: remediation-confirmation
         label: Remediation confirmation
-        criteria: Ordinal three or a user-authorized later checkpoint confirms only the frozen correction set and its direct regression surface; the continuity check verifies any required extra authority.
+        criteria: Ordinal four or a user-authorized later checkpoint confirms only the frozen correction set and its direct regression surface; the continuity check verifies any required extra authority.
         guards:
           - evidence:
               node: review
               item: assessment-ordinal
-            at_least: 3
+            at_least: 4
           - evidence:
               node: review
               item: assessment-kind

@@ -190,6 +190,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "a003e94b26e4d4702d6bb6a7f8f0cfb98a5df61a62c358cae3660cba917f18f3",
         "ecbd6b3388746eac2fb03e2971a518d210e15567975f930ce9bd7db89b165203",
         "fd08ef0db9bf78d3557dd4c89c3f600c864b57930a01491e3ea2dc39a0985655",
+        "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
         "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -207,6 +208,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "967bf58ee75d3647c8fba3317cade43050cd3a8f39372a51b26cf56692075c21",
         "fd247c06de794254d5785c84520e1feaa570ce273559208946a28bc84b057163",
         "bf0eaa45855755136f9fc439ec654c6351cbec5cb1d7b50999c104bf0dda56b2",
+        "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
         "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -222,6 +224,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "cc21bb59f494db3b2d0f2096809e6163aa0c98ead61c4cbdd6ad31a0dc403163",
         "4c355c2ec35caed6e454d32364fb8d849f1a02f3772879e314e15fc20c42469b",
         "0a70a6e7d8dc39c88a37b425256ec9b1be88d9326cd3d9a170a4aeac7e4eddef",
+        "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",

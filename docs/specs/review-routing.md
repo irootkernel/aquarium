@@ -91,7 +91,7 @@ The Procedures and handlers record these route-neutral facts:
 | --- | --- |
 | `review-route` | `mulgae`, `orca`, `native-codex`, or `waived` |
 | `assessment-ordinal` | Positive ordinal of each completed delegated review or completed waiver assessment for the current goal revision |
-| `assessment-kind` | `work-unit` for ordinals one and two; `remediation-confirmation` for ordinal three and any explicitly authorized later checkpoint |
+| `assessment-kind` | `work-unit` for ordinals one through three; `remediation-confirmation` for ordinal four and any explicitly authorized later checkpoint |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived` |
 | `review-evidence-reference` | Native run, lifecycle, delegation, or waiver evidence needed to recover the checkpoint |
 | `backend-check-result` | `pass`, `fail`, or `not-provided`; absence of a backend check never replaces workflow verification |
@@ -118,7 +118,7 @@ consume an assessment ordinal. Continuing or switching after a completed
 checkpoint uses the next ordinal and preserves every prior evidence reference
 and finding.
 
-The initial workflow envelope permits at most two `work-unit` assessments and
+The initial workflow envelope permits at most three `work-unit` assessments and
 one `remediation-confirmation`, but a clean or settled Low-only result ends the
 sequence early. Each work-unit brief identifies the named Task, Epic, or explicit
 objective, its requirements and authorities, the exact candidate, relevant work
@@ -126,11 +126,11 @@ or correction commits, changed paths and artifacts, verification evidence, and
 excluded state. This package is the review boundary; Aquarium does not leave the
 target implicit or invite a repository-wide audit.
 
-Ordinal three and any later checkpoint inspect only the frozen prior finding
+Ordinal four and any later checkpoint inspect only the frozen prior finding
 IDs, correction commits or captured delta, invalidated criteria, directly
 affected callers, contracts and tests, and regressions caused by the correction.
 If Medium-or-higher work or an affected completion gap remains after ordinal
-three, the workflow stops for user direction. Each explicit `fix-and-review`
+four, the workflow stops for user direction. Each explicit `fix-and-review`
 choice authorizes one correction and one next-ordinal remediation confirmation.
 A broader objective, requirement set, or changed surface requires an approved
 new goal revision or work-unit assessment.
