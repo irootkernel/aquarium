@@ -15,6 +15,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Raise the minimum supported Podway version to v0.2.10 and qualify the existing managed Procedures against its official Apple Silicon release.
 - Run the Podway compatibility matrix in bounded parallel runtime batches without dropping any Procedure, correction, routing, recovery, or failure scenario, and expose the gate as a configured Gaori command.
 - Raise the minimum supported Mulgae version to v0.1.23, accept later stable releases without an upper version bound when they preserve the minimum machine contracts, and support v0.1.23 Grok policy and provider protocol behavior.
+- Configure new Mulgae projects by default with ZCode, Grok, and Codex, route the six default roles to ZCode, pin the Grok and Codex review models, and verify the effective provider and role selection before repository setup completes.
 - Accept stable Humanizer, im-not-ai, and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, reject duplicate skills visible to the same Codex home, and remove Dolgorae's dedicated release-verification path from global setup.
 
 ### Fixed

@@ -156,9 +156,37 @@ For a new Codex user-scoped skill installation, use only these files from the au
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
-Mulgae configuration has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Keep `execution.workspace_access: none`. Load the installed same-release `$use-mulgae` authoring guidance before proposing configuration and ask which providers and roles to configure. At the v0.1.23 minimum, Config v4 supports ZCode, Grok, and Codex; automatic selection requires both ZCode and Grok, ZCode app 3.12.3, Grok 1.0.34 or newer, and Codex 0.154.0 or newer when selected. Bare initialization enables only the required `logic` role. New Grok configurations default to `grok-4.7` with `high` reasoning effort, and the shared model and effort policy is bound through qualification and execution. Do not add those optional fields to an existing valid Config v4 during diagnosis or unrelated repair; omission preserves that project's existing policy. Consume the selected Doctor's `cli_compatible` and `application_compatible` results instead of reproducing Mulgae's version decisions. Show discovered executable, app-bundle, launcher, data-home, and credential-home paths only in the exact private setup proposal, never in the diagnostic report.
+Mulgae configuration has two authorities. `.mulgae/config.yaml` is Git-shareable project policy; `.mulgae/local.yaml` is untracked mode-`0600` machine configuration. Keep `execution.workspace_access: none`. Load the installed same-release `$use-mulgae` authoring guidance before proposing configuration. At the v0.1.23 minimum, Config v4 supports ZCode, Grok, and Codex; ZCode requires app version 3.12.3 or newer, Grok requires CLI 1.0.34 or newer, and Codex requires CLI 0.154.0 or newer. Consume the selected Doctor's `cli_compatible` and `application_compatible` results instead of reproducing Mulgae's version decisions. Show discovered executable, app-bundle, launcher, data-home, and credential-home paths only in the exact private setup proposal, never in the diagnostic report.
 
-For a new project, run `mulgae init --output json` with every intended provider and role only after approval; it creates the selected release's Config pair and does not edit Git ignore state. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
+Before proposing initialization, resolve one effective setup selection: the provider portfolio, enabled roles, provider-specific shared policy, and intended role assignments. A new project with no explicit selection uses ZCode, Grok, and Codex with the six non-UI roles enabled and ZCode as every role's primary provider. Its shared policy pins Grok to `grok-4.7` with `medium` reasoning effort and Codex to `gpt-5.6-sol` with `medium` reasoning effort.
+
+An explicit user selection becomes the effective setup selection. Complete any omitted dimensions through the same-release `$use-mulgae` authoring contract, preserving native provider defaults where the user did not request a pin. Do not add an unselected default provider, role, model, or assignment to that selection.
+
+Resolve the exact machine-local paths for the effective selection before the proposal and carry that same selection through initialization and verification. For the default selection, run the following command with the resolved paths only after approval:
+
+```bash
+mulgae init \
+  --providers zcode,grok,codex \
+  --roles logic,security,maintainability,product,documentation,testing \
+  --zcode-app-bundle <canonical-zcode-app-bundle> \
+  --grok-executable <canonical-grok-executable> \
+  --grok-model grok-4.7 \
+  --grok-reasoning-effort medium \
+  --codex-executable <canonical-codex-executable> \
+  --codex-model gpt-5.6-sol \
+  --codex-reasoning-effort medium \
+  --output json
+```
+
+Mulgae's `auto` selection includes only ZCode and Grok, so it does not satisfy the default selection. Its build-owned role preferences assign the six roles to ZCode when all three families are selected. Verify those assignments from admitted configuration rather than rewriting the generated file. Add `artist` only for an explicitly declared UI project.
+
+ZCode imports its selected API-key personal provider and model from the user's native ZCode configuration. Setup must not read or edit that file, expose the selected values, authenticate the user, or invent a project-level ZCode model field. Consume only Mulgae's redacted provider identity and readiness results. Grok and Codex model and reasoning values remain shared project policy bound through qualification and execution.
+
+After initialization, require verified `config_v3`, `local_configuration`, and `provider_identity` checks plus ready `configured_readiness` and `role_route_readiness` with exit code `0`. Compare the structured initialization result and redacted Doctor output with the effective setup selection. The result's configured provider IDs must match the selected portfolio. Every selected provider row must be configured and eligible, every applicable compatibility result must be eligible, and the provider inventory's role references must match the intended assignments. Every explicitly pinned model or reasoning-effort value must also remain identical in the approved request and returned command envelope.
+
+Do not require an unselected provider or role. For the default selection, these rules require all three providers to be eligible and all six roles to route to ZCode. If any applicable condition fails, a Mulgae-scoped setup is `failed` and an otherwise successful full setup is `partial`; neither may report Mulgae as ready. Preserve any native initialization failure without hand-editing a partial result. Provider CLI installation and authentication remain outside both setup skills.
+
+Initialization creates the selected release's Config pair and does not edit Git ignore state. For an existing valid Config v4 file, derive the effective setup selection from Mulgae's redacted Doctor inventory and role references; do not apply the new-project defaults or read raw configuration during diagnosis, bootstrap, refresh, or unrelated repair. When a clone contains only shared `config.yaml`, plain `mulgae init --output json` bootstraps only `local.yaml` and rejects project-policy options.
 
 When provider paths move or the shared provider set changes, propose `mulgae init --refresh-local --output json`, which preserves `config.yaml` and replaces only `local.yaml`; apply the shared backup policy to the replaced local file. Keep new initialization, clone bootstrap, and refresh as distinct approvals.
 
