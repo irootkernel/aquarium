@@ -29,46 +29,14 @@ SCHEMA_VERSION = "aquarium-dev-setup-inspection.v21"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_CONFIG_REASON_CODES_V2 = (
-    "config_missing",
-    "local_config_missing",
-    "config_yaml_invalid",
-    "config_size_invalid",
-    "config_provider_timeout_invalid",
-    "config_credential_key_detected",
-    "config_credential_value_detected",
-    "config_provider_identity_invalid",
-    "config_role_mapping_invalid",
-    "config_locality_unsafe",
-    "config_not_observed_due_to_locality",
-    "config_locality_drifted",
-    "native_home_mismatch",
-    "target_private_config_forbidden",
-    "target_private_namespace_forbidden",
-)
-MULGAE_NATIVE_CONTRACTS: dict[str, dict[str, Any]] = {
-    "0.1.21": {
-        "command_schema": "mulgae-command-result.v8",
-        "doctor_schema": "mulgae-doctor-result.v2",
-        "doctor_reason_prefix": "doctor_v2",
-        "provider_families": ("kimi", "zcode", "agy", "codex"),
-        "provider_compatibility_fields": ("cli_compatible",),
-        "config_reason_codes": MULGAE_CONFIG_REASON_CODES_V2,
-    },
-    "0.1.22": {
-        "command_schema": "mulgae-command-result.v11",
-        "doctor_schema": "mulgae-doctor-result.v5",
-        "doctor_reason_prefix": "doctor_v5",
-        "provider_families": ("zcode", "grok", "codex"),
-        "provider_compatibility_fields": (
-            "cli_compatible",
-            "application_compatible",
-        ),
-        "config_reason_codes": (
-            *MULGAE_CONFIG_REASON_CODES_V2,
-            "config_provider_retired",
-        ),
-    },
+MULGAE_MINIMUM_VERSION = (0, 1, 23)
+MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
+    "minimum_command_schema": 12,
+    "minimum_doctor_schema": 5,
+    "provider_compatibility_fields": (
+        "cli_compatible",
+        "application_compatible",
+    ),
 }
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
@@ -815,15 +783,39 @@ def supported_gaori_version(version: str | None) -> bool:
     return bool(match and int(match.group(1)) >= 17)
 
 
+def canonical_numeric_components_at_least(
+    components: tuple[str, ...], minimum: tuple[int, ...]
+) -> bool:
+    if len(components) != len(minimum):
+        return False
+    observed_key = tuple((len(component), component) for component in components)
+    minimum_key = tuple(
+        (len(minimum_component), minimum_component)
+        for minimum_component in map(str, minimum)
+    )
+    return observed_key >= minimum_key
+
+
 def supported_mulgae_version(version: str | None) -> bool:
-    return mulgae_native_contract(version) is not None
+    if not version:
+        return False
+    match = re.fullmatch(
+        rf"v?({CANONICAL_NUMERIC_COMPONENT})\."
+        rf"({CANONICAL_NUMERIC_COMPONENT})\."
+        rf"({CANONICAL_NUMERIC_COMPONENT})"
+        r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?",
+        version,
+    )
+    return bool(
+        match
+        and canonical_numeric_components_at_least(
+            match.groups(), MULGAE_MINIMUM_VERSION
+        )
+    )
 
 
 def mulgae_native_contract(version: str | None) -> dict[str, Any] | None:
-    if not version:
-        return None
-    match = re.fullmatch(rf"v?(0\.1\.(?:{CANONICAL_NUMERIC_COMPONENT}))", version)
-    return MULGAE_NATIVE_CONTRACTS.get(match.group(1)) if match else None
+    return MULGAE_NATIVE_CONTRACT if supported_mulgae_version(version) else None
 
 
 def supported_sorage_version(version: str | None) -> bool:
@@ -842,7 +834,9 @@ def supported_mulgae_go_version(version: str | None) -> bool:
         rf"({CANONICAL_NUMERIC_COMPONENT})",
         version,
     )
-    return bool(match and tuple(map(int, match.groups())) >= (1, 26, 6))
+    return bool(
+        match and canonical_numeric_components_at_least(match.groups(), (1, 26, 6))
+    )
 
 
 def supported_ouroboros_version(version: str | None) -> bool:
@@ -2171,11 +2165,27 @@ def normalize_mulgae_command_envelope(
     schema = envelope.get("schema_version")
     if isinstance(schema, str):
         normalized["output_schema"] = schema
-    expected_schema = contract["command_schema"]
-    if schema != expected_schema:
+    if not numbered_schema_at_least(
+        schema,
+        "mulgae-command-result.v",
+        contract["minimum_command_schema"],
+    ):
         normalized["error_code"] = "unsupported_output_schema"
         return normalized, None
     return normalized, envelope
+
+
+def numbered_schema_at_least(value: Any, prefix: str, minimum: int) -> bool:
+    if not isinstance(value, str):
+        return False
+    match = re.fullmatch(rf"{re.escape(prefix)}({CANONICAL_NUMERIC_COMPONENT})", value)
+    return bool(
+        match
+        and canonical_numeric_components_at_least(
+            (match.group(1),),
+            (minimum,),
+        )
+    )
 
 
 def mulgae_reason_codes(envelope: Any) -> list[str]:
@@ -2271,12 +2281,12 @@ def normalize_mulgae_cli_compatibility(value: Any) -> dict[str, Any] | None:
 
 def normalize_mulgae_provider_inventory(
     value: Any,
-    expected_families: tuple[str, ...],
     compatibility_fields: tuple[str, ...],
 ) -> list[dict[str, Any]] | None:
-    if not isinstance(value, list) or len(value) != len(expected_families):
+    if not isinstance(value, list) or not value or len(value) > 64:
         return None
     inventory: list[dict[str, Any]] = []
+    families: set[str] = set()
     for row in value:
         if not isinstance(row, dict):
             return None
@@ -2293,22 +2303,18 @@ def normalize_mulgae_provider_inventory(
             for field in compatibility_fields
         }
         if (
-            family not in expected_families
+            not isinstance(family, str)
+            or re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", family) is None
+            or family in families
             or not isinstance(configured, bool)
             or not isinstance(referenced_by_roles, list)
+            or len(referenced_by_roles) > 64
             or not all(
-                role
-                in {
-                    "logic",
-                    "security",
-                    "maintainability",
-                    "product",
-                    "documentation",
-                    "testing",
-                    "artist",
-                }
+                isinstance(role, str)
+                and re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", role) is not None
                 for role in referenced_by_roles
             )
+            or len(set(referenced_by_roles)) != len(referenced_by_roles)
             or state
             not in {
                 "eligible",
@@ -2322,6 +2328,7 @@ def normalize_mulgae_provider_inventory(
             or any(value is None for value in compatibility.values())
         ):
             return None
+        families.add(family)
         inventory.append(
             {
                 "family": family,
@@ -2333,8 +2340,6 @@ def normalize_mulgae_provider_inventory(
                 **compatibility,
             }
         )
-    if [row["family"] for row in inventory] != list(expected_families):
-        return None
     return inventory
 
 
@@ -2352,8 +2357,11 @@ def normalize_mulgae_doctor(
             schema = doctor.get("schema_version")
             if isinstance(schema, str):
                 normalized["result_schema"] = schema
-            expected_schema = contract["doctor_schema"]
-            if schema != expected_schema:
+            if not numbered_schema_at_least(
+                schema,
+                "mulgae-doctor-result.v",
+                contract["minimum_doctor_schema"],
+            ):
                 normalized["doctor_capability"] = "unsupported"
                 normalized["result"] = safe
                 return normalized
@@ -2376,31 +2384,44 @@ def normalize_mulgae_doctor(
                     if value in allowed:
                         config[name] = value
                 reason_codes = raw_config.get("reason_codes")
-                allowed_config_reasons = set(contract["config_reason_codes"])
-                if isinstance(reason_codes, list) and all(
-                    code in allowed_config_reasons for code in reason_codes
-                ):
-                    config["reason_codes"] = reason_codes
+                if isinstance(reason_codes, list):
+                    safe_reason_codes = [
+                        code
+                        for code in reason_codes
+                        if isinstance(code, str)
+                        and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", code) is not None
+                    ]
+                    if not reason_codes or safe_reason_codes:
+                        config["reason_codes"] = safe_reason_codes
             if config:
                 safe_doctor["config"] = config
-            configured = doctor.get("configured_provider_ids")
-            if isinstance(configured, list) and all(
-                isinstance(provider, str) for provider in configured
-            ):
-                canonical = list(contract["provider_families"])
-                if configured == [
-                    provider for provider in canonical if provider in configured
-                ]:
-                    safe_doctor["configured_provider_ids"] = configured
             inventory = doctor.get("provider_inventory")
             if isinstance(inventory, list):
                 safe_inventory = normalize_mulgae_provider_inventory(
                     inventory,
-                    contract["provider_families"],
                     contract["provider_compatibility_fields"],
                 )
                 if safe_inventory is not None:
                     safe_doctor["provider_inventory"] = safe_inventory
+            configured = doctor.get("configured_provider_ids")
+            if (
+                isinstance(configured, list)
+                and len(configured) <= 64
+                and all(
+                    isinstance(provider, str)
+                    and re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", provider) is not None
+                    for provider in configured
+                )
+                and len(set(configured)) == len(configured)
+                and "provider_inventory" in safe_doctor
+                and configured
+                == [
+                    row["family"]
+                    for row in safe_doctor["provider_inventory"]
+                    if row["configured"]
+                ]
+            ):
+                safe_doctor["configured_provider_ids"] = configured
             for name in (
                 "config_v3",
                 "local_configuration",
@@ -2963,12 +2984,11 @@ def inspect_mulgae(
     tool["version"] = version_from_probe(version_probe)
     mulgae_contract = mulgae_native_contract(tool["version"])
     tool["version_supported"] = mulgae_contract is not None
-    doctor_reason_prefix = (
-        mulgae_contract["doctor_reason_prefix"]
-        if mulgae_contract
-        else "doctor_contract"
-    )
-    unavailable_readiness["reason_codes"] = [f"{doctor_reason_prefix}_not_observed"]
+    unavailable_readiness["reason_codes"] = [
+        "doctor_contract_not_observed"
+        if not version_probe["ok"] or mulgae_contract
+        else "unsupported_native_version"
+    ]
     tool["health"]["configured_readiness"] = unavailable_readiness.copy()
     tool["health"]["role_route_readiness"] = unavailable_readiness.copy()
     project_config, local_config = tool["configuration"][:2]
@@ -3000,6 +3020,11 @@ def inspect_mulgae(
             else "degraded"
         )
         return tool
+    if not version_probe["ok"]:
+        tool["probes"]["doctor"] = skipped_probe("version_probe_failed")
+        tool["health"]["mulgae_cli_compatibility"] = "incompatible"
+        tool["status"] = "degraded"
+        return tool
     doctor_probe = json_probe(
         [tool["executable"], "doctor", "--output", "json"],
         repository,
@@ -3025,11 +3050,13 @@ def inspect_mulgae(
     doctor_supported = normalized_doctor.get("doctor_capability") == "supported"
     doctor_command_ok = normalized_doctor["ok"]
     doctor_capability = normalized_doctor.get("doctor_capability")
-    health["doctor_contract"] = (
-        doctor_capability
-        if doctor_capability in {"supported", "unsupported", "invalid"}
-        else "unsupported"
-    )
+    command_error = normalized_doctor.get("error_code")
+    if command_error in {"unsupported_native_version", "unsupported_output_schema"}:
+        health["doctor_contract"] = "not_observed"
+    elif doctor_capability in {"supported", "unsupported", "invalid"}:
+        health["doctor_contract"] = doctor_capability
+    else:
+        health["doctor_contract"] = "not_observed"
     if doctor_supported and isinstance(doctor_payload, dict):
         for name in (
             "config_v3",
@@ -3045,11 +3072,14 @@ def inspect_mulgae(
         if isinstance(inventory, list):
             tool["provider_inventory"] = inventory
     else:
-        capability_reason = (
-            f"{doctor_reason_prefix}_invalid"
-            if health["doctor_contract"] == "invalid"
-            else f"{doctor_reason_prefix}_unsupported"
-        )
+        if command_error in {"unsupported_native_version", "unsupported_output_schema"}:
+            capability_reason = command_error
+        elif health["doctor_contract"] == "invalid":
+            capability_reason = "doctor_contract_invalid"
+        elif health["doctor_contract"] == "unsupported":
+            capability_reason = "doctor_contract_unsupported"
+        else:
+            capability_reason = "doctor_contract_not_observed"
         unsupported = {
             "status": "unverifiable",
             "reason_codes": [capability_reason],

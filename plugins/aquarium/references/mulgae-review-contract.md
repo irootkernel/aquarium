@@ -1,8 +1,8 @@
 # Mulgae Review Contract
 
-Use one of the exact supported Mulgae releases below. The same-release
-`$use-mulgae` skill owns native execution, waiting, retention, cancellation, and
-recovery.
+Use a stable Mulgae release at or above the supported minimum below. The
+same-release `$use-mulgae` skill owns native execution, waiting, retention,
+cancellation, and recovery.
 This contract owns how Aquarium consumes those results in an approved Task or
 Epic review and in the explicitly requested standalone report-only entrypoint.
 Read [finding-disposition.md](finding-disposition.md) and
@@ -30,17 +30,23 @@ while its version, scope, and relevant state remain applicable. If the skill or
 a required capability is missing, use the prerequisite and fallback contracts
 below; do not reconstruct a Mulgae lifecycle from memory or Aquarium examples.
 
-Aquarium supports these release and response combinations:
+Aquarium supports this minimum release and later stable releases that preserve
+or advance its machine contracts:
 
 | Mulgae release | Command envelope | Doctor | Review preflight | Configuration |
 | --- | --- | --- | --- | --- |
-| `v0.1.21` | `mulgae-command-result.v8` | `mulgae-doctor-result.v2` | `mulgae-review-preflight.v3` | Config v3 |
-| `v0.1.22` | `mulgae-command-result.v11` | `mulgae-doctor-result.v5` | `mulgae-review-preflight.v5` | Config v4 |
+| Stable `>=v0.1.23` | `mulgae-command-result.v12` or later | `mulgae-doctor-result.v5` or later | `mulgae-review-preflight.v5` or later | Native supported configuration, Config v4 at the minimum |
 
-Use only the combination for the observed CLI and same-release skill. Historical
-command-envelope readability does not admit another release as a current
-response, and an unlisted later schema or release is unsupported until Aquarium
-adds and verifies its exact combination. Doctor v5 still exposes the field named
+Reject prereleases and releases below the minimum. SemVer build metadata does
+not make an otherwise stable release ineligible. Do not impose an upper release
+bound: a later stable CLI remains eligible when its command, Doctor, and
+preflight schemas meet these floors. Accept additive fields, reason codes,
+and canonical provider family identifiers while preserving the required typed
+fields on every reported provider row. Provider membership and order remain
+native Doctor authority. A breaking removal of a required field or another
+incompatible shape remains an unsupported contract, not a reason to reject a
+release number by itself.
+Doctor v5 still exposes the field named
 `config_v3`; consume that native field name without treating it as the project
 configuration version.
 
@@ -59,6 +65,10 @@ and completion waiting to the paired skill. Do not advance a workflow from a
 start or cancellation acknowledgement, or infer live state from completed run
 inventory. Return terminal run identity and evidence only when the native result
 supplies them.
+
+Let one attached Mulgae process manage its native invocation window. Terminal
+identities may be discarded for later admissions; `invocation_limit_reached`
+means 64 reviews are still running, not that 64 historical invocations exist.
 
 Once the paired skill starts an operation, Aquarium does not add a competing
 observation loop. Do not issue recurring status queries, inspect files or
@@ -125,10 +135,20 @@ condition is permanent. Apply the same rule to a CLI
 `rate_limit`.
 
 A rate limit during provider execution is different. MCP completes with a
-successful tool outcome, terminal exit 4, and a `rate_limit` reason; CLI v8
+successful tool outcome, terminal exit 4, and a `rate_limit` reason; the CLI
 reports the attributed `provider_rate_limited` failure. Reconcile the returned
 run. When it committed with incomplete coverage, recover only its failed roles
 through the exact flow above. Transport success does not make the review clean.
+
+Treat CLI exit 10 with `review_preparation_failed` as an internal failure after
+accepted planning but before a durably recorded run start. Preserve its
+diagnostic run identity and closed stage, and diagnose that run instead of
+substituting Doctor or starting another review. Preserve
+`provider_protocol_event_decode_failed` as a typed malformed-event reason while
+allowing additive provider telemetry that does not violate the required
+protocol event shape. Provider stdout and stderr may use variable-sized
+publication support and must not be rejected merely for exceeding the former
+fixed-size boundary.
 
 ## Count and Verify Review Evidence
 

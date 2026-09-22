@@ -52,7 +52,7 @@ After ordinal four, a Medium-or-higher finding or affected completion gap stops 
 
 ## Review Targets
 
-The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns the exact v0.1.21 v8/Doctor v2 and v0.1.22 v11/Doctor v5 response combinations, asynchronous waiting, failed-run and composite recovery, and exact round accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next authorized assessment kind against its precisely supplied target; recovery of an older capture cannot prove corrected bytes.
+The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) owns the stable v0.1.23 minimum, forward-compatible machine-contract floors, asynchronous waiting, failed-run and composite recovery, and exact round accounting. A verified composite can complete its original root review round without adding another ordinal. Target changes require the next authorized assessment kind against its precisely supplied target; recovery of an older capture cannot prove corrected bytes.
 
 Each enabled route retains its native target vocabulary. Standalone Mulgae Review accepts `stage`, `workspace`, `dirty`, `diff`, or `patch`; Orca Review accepts `staged`, `HEAD`, one commit, or a two-dot or three-dot range. A roadmap task, epic, or explicitly scoped special investigation must resolve to a target supported by the selected route. Dirty working-tree content is never silently added to a committed target.
 

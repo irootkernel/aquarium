@@ -273,14 +273,13 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.8",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.21",
-        mulgae_output_schema: str = "mulgae-command-result.v8",
-        mulgae_doctor_schema: str = "mulgae-doctor-result.v2",
-        mulgae_config_version: int = 3,
+        mulgae_version: str = "v0.1.23",
+        mulgae_output_schema: str = "mulgae-command-result.v12",
+        mulgae_doctor_schema: str = "mulgae-doctor-result.v5",
+        mulgae_config_version: int = 4,
         mulgae_provider_families: tuple[str, ...] = (
-            "kimi",
             "zcode",
-            "agy",
+            "grok",
             "codex",
         ),
         mulgae_application_compatibility_case: str = "valid",
@@ -425,7 +424,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     not_applicable_cli = compatible("not_applicable", "not_evaluated", "not_observed", "")
                     not_applicable_application = compatible("not_applicable", "not_evaluated", "not_observed", "", minimum="", latest="")
                     application_compatible = compatible("verified", "eligible", "verified", "zcode_application_version_supported", "3.12.3", "3.12.3", "3.12.3")
-                    application_required = {mulgae_doctor_schema == "mulgae-doctor-result.v5"!r}
+                    application_required = {inspect_tools.numbered_schema_at_least(mulgae_doctor_schema, "mulgae-doctor-result.v", 5)!r}
                     application_case = {mulgae_application_compatibility_case!r}
 
                     def add_application_compatibility(row, configured):
@@ -1178,7 +1177,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self,
         local_mode: int = 0o600,
         track_local: bool = False,
-        version: int = 3,
+        version: int = 4,
     ) -> None:
         self.repository.joinpath(".mulgae").mkdir(exist_ok=True)
         self.repository.joinpath(".mulgae/config.yaml").write_text(
@@ -2835,11 +2834,11 @@ else:
         )
         self.repository.joinpath(".mulgae").mkdir()
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            'version: 3\nexecution:\n  workspace_access: "none"\ncredential: hidden\n',
+            'version: 4\nexecution:\n  workspace_access: "none"\ncredential: hidden\n',
             encoding="utf-8",
         )
         self.repository.joinpath(".mulgae/local.yaml").write_text(
-            "version: 3\nnative_home: /private/home\n", encoding="utf-8"
+            "version: 4\nnative_home: /private/home\n", encoding="utf-8"
         )
         self.repository.joinpath(".mulgae/local.yaml").chmod(0o600)
         self.repository.joinpath(".gaori").mkdir()
@@ -2883,7 +2882,7 @@ else:
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.21")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.23")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -2906,7 +2905,7 @@ else:
             tools["mulgae"]["health"]["configured_readiness"]["state"], "ready"
         )
         self.assertEqual(tools["mulgae"]["health"]["config_v3"]["status"], "verified")
-        zcode = tools["mulgae"]["provider_inventory"][1]
+        zcode = tools["mulgae"]["provider_inventory"][0]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
         self.assertEqual(tools["gaori"]["version"], "v0.1.17")
@@ -5367,7 +5366,7 @@ else:
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.21")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.23")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -5449,7 +5448,9 @@ else:
                 self.assertEqual(skill["status"], "degraded")
                 self.assertEqual(skill["duplicate"], case == "duplicate")
 
-    def test_mulgae_version_support_is_explicit(self) -> None:
+    def test_mulgae_version_support_has_a_stable_minimum_without_an_upper_bound(
+        self,
+    ) -> None:
         cases = (
             ("v0.1.14", False, "degraded"),
             ("v0.1.15", False, "degraded"),
@@ -5458,18 +5459,29 @@ else:
             ("v0.1.18", False, "degraded"),
             ("v0.1.19", False, "degraded"),
             ("v0.1.20", False, "degraded"),
-            ("v0.1.21", True, "installed"),
-            ("0.1.21", True, "installed"),
-            ("v0.1.22", True, "installed"),
-            ("0.1.22", True, "installed"),
+            ("v0.1.21", False, "degraded"),
+            ("0.1.21", False, "degraded"),
+            ("v0.1.22", False, "degraded"),
+            ("0.1.22", False, "degraded"),
             ("v0.1.021", False, "degraded"),
             ("v0.1.0021", False, "degraded"),
             ("v0.1.21-rc.1", False, "degraded"),
             ("v0.1.022", False, "degraded"),
             ("v0.1.22-rc.1", False, "degraded"),
-            ("v0.1.23", False, "degraded"),
-            ("0.1.99", False, "degraded"),
-            ("v0.2.0", False, "degraded"),
+            ("v0.1.23", True, "installed"),
+            ("0.1.23", True, "installed"),
+            ("v0.1.23+build.1", True, "installed"),
+            ("v0.1.24", True, "installed"),
+            ("v0.1.24+darwin-arm64", True, "installed"),
+            ("0.1.99", True, "installed"),
+            ("v0.2.0", True, "installed"),
+            ("v1.0.0", True, "installed"),
+            ("v0.1.23-rc.1", False, "degraded"),
+            ("v0.1.24-rc.1", False, "degraded"),
+            ("v0.2.0-rc.1", False, "degraded"),
+            ("v1.0.0-alpha.1", False, "degraded"),
+            ("v0.1.23+", False, "degraded"),
+            ("v0.1.23+build..1", False, "degraded"),
         )
         for version, supported, status in cases:
             with self.subTest(version=version):
@@ -5486,8 +5498,163 @@ else:
                     )
                 self.assertEqual(mulgae["version_supported"], supported)
                 self.assertEqual(mulgae["status"], status)
+                if not supported:
+                    self.assertEqual(
+                        mulgae["health"]["doctor_contract"], "not_observed"
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["configured_readiness"]["reason_codes"],
+                        ["unsupported_native_version"],
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["role_route_readiness"]["reason_codes"],
+                        ["unsupported_native_version"],
+                    )
 
-    def test_mulgae_config_v3_pair_and_private_policy_are_verified(self) -> None:
+    def test_mulgae_numeric_contracts_have_no_integer_conversion_limit(self) -> None:
+        huge_component = "9" * 4301
+        version = f"v{huge_component}.0.0"
+        command_schema = f"mulgae-command-result.v{huge_component}"
+        doctor_schema = f"mulgae-doctor-result.v{huge_component}"
+
+        self.assertTrue(inspect_tools.supported_mulgae_version(version))
+        self.assertTrue(
+            inspect_tools.numbered_schema_at_least(
+                command_schema, "mulgae-command-result.v", 12
+            )
+        )
+        self.assertTrue(
+            inspect_tools.numbered_schema_at_least(
+                doctor_schema, "mulgae-doctor-result.v", 5
+            )
+        )
+        self.assertTrue(
+            inspect_tools.supported_mulgae_go_version(f"go{huge_component}.0.0")
+        )
+
+        self.install_fake_tools(
+            mulgae_version=version,
+            mulgae_output_schema=command_schema,
+            mulgae_doctor_schema=doctor_schema,
+        )
+        self.install_mulgae_config()
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            mulgae = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+
+        self.assertTrue(mulgae["version_supported"])
+        self.assertEqual(mulgae["probes"]["doctor"]["doctor_capability"], "supported")
+        self.assertEqual(mulgae["status"], "configured")
+
+    def test_mulgae_version_probe_failure_is_not_an_unsupported_version(self) -> None:
+        self.install_fake_tools()
+        original_json_probe = inspect_tools.json_probe
+        version_failure: dict[str, object]
+
+        def fail_mulgae_version_probe(
+            arguments: list[str],
+            repository: Path,
+            timeout_seconds: float,
+            environment_overrides: dict[str, str] | None = None,
+        ) -> dict[str, object]:
+            command = [Path(arguments[0]).name, *arguments[1:]]
+            if command == ["mulgae", "version", "--json"]:
+                return version_failure.copy()
+            if command == ["mulgae", "doctor", "--output", "json"]:
+                self.fail("Doctor must not run after the Mulgae version probe fails")
+            return original_json_probe(
+                arguments, repository, timeout_seconds, environment_overrides
+            )
+
+        failure_cases = (
+            {
+                "attempted": True,
+                "ok": False,
+                "exit_code": 0,
+                "timed_out": False,
+                "error_code": "invalid_json",
+            },
+            {
+                "attempted": True,
+                "ok": False,
+                "exit_code": None,
+                "timed_out": False,
+                "error_code": "execution_failed",
+            },
+            {
+                "attempted": True,
+                "ok": False,
+                "exit_code": None,
+                "timed_out": True,
+            },
+        )
+        for version_failure in failure_cases:
+            for configuration_present in (False, True):
+                shutil.rmtree(self.repository / ".mulgae", ignore_errors=True)
+                if configuration_present:
+                    self.install_mulgae_config()
+                with self.subTest(
+                    error_code=version_failure.get("error_code"),
+                    timed_out=version_failure["timed_out"],
+                    configuration_present=configuration_present,
+                ):
+                    with (
+                        mock.patch.dict(os.environ, self.environment),
+                        mock.patch(
+                            "inspect_tools.platform.system", return_value="Darwin"
+                        ),
+                        mock.patch(
+                            "inspect_tools.platform.machine", return_value="arm64"
+                        ),
+                        mock.patch.object(
+                            inspect_tools,
+                            "json_probe",
+                            side_effect=fail_mulgae_version_probe,
+                        ),
+                    ):
+                        mulgae = inspect_tools.inspect_mulgae(
+                            self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+                        )
+
+                    self.assertEqual(mulgae["status"], "degraded")
+                    self.assertFalse(mulgae["version_supported"])
+                    self.assertEqual(
+                        mulgae["probes"]["version"]["timed_out"],
+                        version_failure["timed_out"],
+                    )
+                    if "error_code" in version_failure:
+                        self.assertEqual(
+                            mulgae["probes"]["version"]["error_code"],
+                            version_failure["error_code"],
+                        )
+                    else:
+                        self.assertNotIn("error_code", mulgae["probes"]["version"])
+                    self.assertEqual(
+                        mulgae["health"]["doctor_contract"], "not_observed"
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["configured_readiness"]["reason_codes"],
+                        ["doctor_contract_not_observed"],
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["role_route_readiness"]["reason_codes"],
+                        ["doctor_contract_not_observed"],
+                    )
+                    expected_doctor_reason = (
+                        "version_probe_failed"
+                        if configuration_present
+                        else "configuration_missing"
+                    )
+                    self.assertEqual(
+                        mulgae["probes"]["doctor"]["reason"], expected_doctor_reason
+                    )
+
+    def test_mulgae_config_v4_pair_and_private_policy_are_verified(self) -> None:
         self.install_fake_tools()
         self.install_mulgae_config()
         with (
@@ -5529,7 +5696,7 @@ else:
             )
         self.assertEqual(tracked["status"], "degraded")
 
-    def test_mulgae_doctor_v2_dimensions_are_independent_and_observable(
+    def test_mulgae_doctor_v5_dimensions_are_independent_and_observable(
         self,
     ) -> None:
         self.install_fake_tools()
@@ -5554,14 +5721,8 @@ else:
         self.assertNotIn("live_review", health)
         self.assertNotIn("review_qualified", health)
 
-    def test_mulgae_v0122_contract_and_provider_inventory_are_supported(self) -> None:
-        self.install_fake_tools(
-            mulgae_version="v0.1.22",
-            mulgae_output_schema="mulgae-command-result.v11",
-            mulgae_doctor_schema="mulgae-doctor-result.v5",
-            mulgae_config_version=4,
-            mulgae_provider_families=("zcode", "grok", "codex"),
-        )
+    def test_mulgae_v0123_contract_and_provider_inventory_are_supported(self) -> None:
+        self.install_fake_tools()
         self.install_mulgae_config(version=4)
         with (
             mock.patch.dict(os.environ, self.environment),
@@ -5574,7 +5735,7 @@ else:
         self.assertEqual(mulgae["status"], "configured")
         self.assertEqual(
             mulgae["probes"]["doctor"]["output_schema"],
-            "mulgae-command-result.v11",
+            "mulgae-command-result.v12",
         )
         self.assertEqual(
             mulgae["probes"]["doctor"]["result_schema"],
@@ -5619,18 +5780,13 @@ else:
             )
             self.assertEqual(provider["reason"], "not_configured")
 
-    def test_mulgae_v0122_requires_valid_application_compatibility(self) -> None:
+    def test_mulgae_v0123_requires_valid_application_compatibility(self) -> None:
         for application_case in ("missing", "invalid"):
             with self.subTest(application_case=application_case):
                 for executable in self.bin_directory.iterdir():
                     executable.unlink()
                 shutil.rmtree(self.repository / ".mulgae", ignore_errors=True)
                 self.install_fake_tools(
-                    mulgae_version="v0.1.22",
-                    mulgae_output_schema="mulgae-command-result.v11",
-                    mulgae_doctor_schema="mulgae-doctor-result.v5",
-                    mulgae_config_version=4,
-                    mulgae_provider_families=("zcode", "grok", "codex"),
                     mulgae_application_compatibility_case=application_case,
                 )
                 self.install_mulgae_config(version=4)
@@ -5639,64 +5795,24 @@ else:
                 self.assertEqual(mulgae["health"]["doctor_contract"], "invalid")
                 self.assertEqual(
                     mulgae["health"]["configured_readiness"]["reason_codes"],
-                    ["doctor_v5_invalid"],
+                    ["doctor_contract_invalid"],
                 )
                 self.assertEqual(mulgae["provider_inventory"], [])
 
-    def test_mulgae_v0121_does_not_require_application_compatibility(self) -> None:
-        self.install_fake_tools()
+    def test_mulgae_supported_doctor_preserves_drifted_config(self) -> None:
+        self.install_fake_tools(mulgae_doctor_case="config_drifted")
         self.install_mulgae_config()
         mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertEqual(mulgae["status"], "degraded")
         self.assertEqual(mulgae["health"]["doctor_contract"], "supported")
-        self.assertNotIn("application_compatible", mulgae["provider_inventory"][1])
+        config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
+        self.assertEqual(config["status"], "drifted")
+        self.assertEqual(config["locality"], "drifted")
+        self.assertEqual(config["reason_codes"], ["config_locality_drifted"])
+        self.assertNotIn("provenance_state", config)
 
-    def test_mulgae_supported_doctors_preserve_drifted_config(self) -> None:
-        cases = (
-            (
-                "v0.1.21",
-                "mulgae-command-result.v8",
-                "mulgae-doctor-result.v2",
-                3,
-                ("kimi", "zcode", "agy", "codex"),
-            ),
-            (
-                "v0.1.22",
-                "mulgae-command-result.v11",
-                "mulgae-doctor-result.v5",
-                4,
-                ("zcode", "grok", "codex"),
-            ),
-        )
-        for version, output_schema, doctor_schema, config_version, families in cases:
-            with self.subTest(version=version):
-                for executable in self.bin_directory.iterdir():
-                    executable.unlink()
-                shutil.rmtree(self.repository / ".mulgae", ignore_errors=True)
-                self.install_fake_tools(
-                    mulgae_version=version,
-                    mulgae_output_schema=output_schema,
-                    mulgae_doctor_schema=doctor_schema,
-                    mulgae_config_version=config_version,
-                    mulgae_provider_families=families,
-                    mulgae_doctor_case="config_drifted",
-                )
-                self.install_mulgae_config(version=config_version)
-                mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-                self.assertEqual(mulgae["status"], "degraded")
-                self.assertEqual(mulgae["health"]["doctor_contract"], "supported")
-                config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
-                self.assertEqual(config["status"], "drifted")
-                self.assertEqual(config["locality"], "drifted")
-                self.assertEqual(config["reason_codes"], ["config_locality_drifted"])
-                self.assertNotIn("provenance_state", config)
-
-    def test_mulgae_v0122_preserves_retired_provider_reason(self) -> None:
+    def test_mulgae_v0123_preserves_retired_provider_reason(self) -> None:
         self.install_fake_tools(
-            mulgae_version="v0.1.22",
-            mulgae_output_schema="mulgae-command-result.v11",
-            mulgae_doctor_schema="mulgae-doctor-result.v5",
-            mulgae_config_version=4,
-            mulgae_provider_families=("zcode", "grok", "codex"),
             mulgae_doctor_case="config_retired",
         )
         self.install_mulgae_config(version=4)
@@ -5715,23 +5831,82 @@ else:
             },
         )
 
-    def test_mulgae_supported_doctors_preserve_unsafe_config_reasons(self) -> None:
-        releases = (
-            (
-                "v0.1.21",
-                "mulgae-command-result.v8",
-                "mulgae-doctor-result.v2",
-                3,
-                ("kimi", "zcode", "agy", "codex"),
-            ),
-            (
-                "v0.1.22",
-                "mulgae-command-result.v11",
-                "mulgae-doctor-result.v5",
-                4,
-                ("zcode", "grok", "codex"),
-            ),
+    def test_mulgae_doctor_accepts_additive_bounded_config_reason_codes(self) -> None:
+        self.install_fake_tools()
+        self.install_mulgae_config()
+        raw = subprocess.run(
+            ["mulgae", "doctor", "--output", "json"],
+            cwd=self.repository,
+            env=self.environment,
+            check=False,
+            capture_output=True,
+            text=True,
         )
+        self.assertEqual(raw.returncode, 0)
+        envelope = json.loads(raw.stdout)
+        config = envelope["result"]["doctor"]["config"]
+        contract = inspect_tools.mulgae_native_contract("v0.1.23")
+
+        config["reason_codes"] = ["future_config_reason"]
+        normalized = inspect_tools.normalize_mulgae_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": envelope,
+            },
+            contract,
+        )
+        self.assertEqual(
+            normalized["result"]["doctor"]["config"]["reason_codes"],
+            ["future_config_reason"],
+        )
+
+        mixed_envelope = copy.deepcopy(envelope)
+        mixed_envelope["result"]["doctor"]["config"]["reason_codes"] = [
+            "config_credential_value_detected",
+            "has-hyphen",
+            "future_config_reason",
+        ]
+        normalized = inspect_tools.normalize_mulgae_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 8,
+                "timed_out": False,
+                "result": mixed_envelope,
+            },
+            contract,
+        )
+        self.assertEqual(
+            normalized["result"]["doctor"]["config"]["reason_codes"],
+            ["config_credential_value_detected", "future_config_reason"],
+        )
+
+        for invalid_reason in ("", "Uppercase", "has-hyphen", "x" * 65, 42):
+            with self.subTest(invalid_reason=invalid_reason):
+                invalid_envelope = copy.deepcopy(envelope)
+                invalid_envelope["result"]["doctor"]["config"]["reason_codes"] = [
+                    invalid_reason
+                ]
+                normalized = inspect_tools.normalize_mulgae_doctor(
+                    {
+                        "attempted": True,
+                        "ok": True,
+                        "exit_code": 0,
+                        "timed_out": False,
+                        "result": invalid_envelope,
+                    },
+                    contract,
+                )
+                self.assertEqual(normalized["doctor_capability"], "supported")
+                self.assertNotIn(
+                    "reason_codes",
+                    normalized["result"]["doctor"]["config"],
+                )
+
+    def test_mulgae_supported_doctor_preserves_unsafe_config_reasons(self) -> None:
         cases = (
             ("credential_key", "config_credential_key_detected", "verified"),
             ("credential_value", "config_credential_value_detected", "verified"),
@@ -5747,48 +5922,37 @@ else:
                 "rejected",
             ),
         )
-        for release in releases:
-            version, output_schema, doctor_schema, config_version, families = release
-            for doctor_case, reason, locality in cases:
-                with self.subTest(version=version, doctor_case=doctor_case):
-                    for executable in self.bin_directory.iterdir():
-                        executable.unlink()
-                    shutil.rmtree(self.repository / ".mulgae", ignore_errors=True)
-                    self.install_fake_tools(
-                        mulgae_version=version,
-                        mulgae_output_schema=output_schema,
-                        mulgae_doctor_schema=doctor_schema,
-                        mulgae_config_version=config_version,
-                        mulgae_provider_families=families,
-                        mulgae_doctor_case=doctor_case,
+        for doctor_case, reason, locality in cases:
+            with self.subTest(doctor_case=doctor_case):
+                for executable in self.bin_directory.iterdir():
+                    executable.unlink()
+                shutil.rmtree(self.repository / ".mulgae", ignore_errors=True)
+                self.install_fake_tools(mulgae_doctor_case=doctor_case)
+                self.install_mulgae_config()
+                if doctor_case == "native_home":
+                    raw = subprocess.run(
+                        ["mulgae", "doctor", "--output", "json"],
+                        cwd=self.repository,
+                        env=self.environment,
+                        check=False,
+                        capture_output=True,
+                        text=True,
                     )
-                    self.install_mulgae_config(version=config_version)
-                    if doctor_case == "native_home":
-                        raw = subprocess.run(
-                            ["mulgae", "doctor", "--output", "json"],
-                            cwd=self.repository,
-                            env=self.environment,
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                        )
-                        self.assertEqual(raw.returncode, 8)
-                        raw_config = json.loads(raw.stdout)["result"]["doctor"][
-                            "config"
-                        ]
-                        self.assertEqual(raw_config["native_home_identity"], "mismatch")
-                        self.assertEqual(raw_config["provenance_state"], "accepted")
-                    mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-                    self.assertEqual(mulgae["status"], "degraded")
-                    self.assertEqual(mulgae["health"]["doctor_contract"], "supported")
-                    config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
-                    self.assertEqual(config["status"], "unsafe")
-                    self.assertEqual(config["locality"], locality)
-                    self.assertEqual(config["reason_codes"], [reason])
-                    if doctor_case == "native_home":
-                        self.assertEqual(config["provenance_state"], "accepted")
-                    else:
-                        self.assertNotIn("provenance_state", config)
+                    self.assertEqual(raw.returncode, 8)
+                    raw_config = json.loads(raw.stdout)["result"]["doctor"]["config"]
+                    self.assertEqual(raw_config["native_home_identity"], "mismatch")
+                    self.assertEqual(raw_config["provenance_state"], "accepted")
+                mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+                self.assertEqual(mulgae["status"], "degraded")
+                self.assertEqual(mulgae["health"]["doctor_contract"], "supported")
+                config = mulgae["probes"]["doctor"]["result"]["doctor"]["config"]
+                self.assertEqual(config["status"], "unsafe")
+                self.assertEqual(config["locality"], locality)
+                self.assertEqual(config["reason_codes"], [reason])
+                if doctor_case == "native_home":
+                    self.assertEqual(config["provenance_state"], "accepted")
+                else:
+                    self.assertNotIn("provenance_state", config)
 
     def test_mulgae_setup_inspection_uses_only_non_runtime_probes(self) -> None:
         self.install_fake_tools()
@@ -5833,7 +5997,7 @@ else:
         self.install_fake_tools()
         self.repository.joinpath(".mulgae").mkdir()
         self.repository.joinpath(".mulgae/config.yaml").write_text(
-            'version: 3\nexecution:\n  workspace_access: "none"\n', encoding="utf-8"
+            'version: 4\nexecution:\n  workspace_access: "none"\n', encoding="utf-8"
         )
         self.repository.joinpath(".gitignore").write_text(
             "/.mulgae/*\n!/.mulgae/config.yaml\n", encoding="utf-8"
@@ -5867,6 +6031,11 @@ else:
             "mulgae-command-result.v5",
             "mulgae-command-result.v6",
             "mulgae-command-result.v7",
+            "mulgae-command-result.v8",
+            "mulgae-command-result.v11",
+            "mulgae-command-result.v012",
+            "mulgae-command-result.v12-rc",
+            "mulgae-command-result.v12.0",
         ):
             with self.subTest(schema=schema):
                 self.install_fake_tools(mulgae_output_schema=schema)
@@ -5876,61 +6045,66 @@ else:
                 probe = mulgae["probes"]["doctor"]
                 self.assertTrue(probe["ok"])
                 self.assertEqual(probe["error_code"], "unsupported_output_schema")
-                self.assertEqual(mulgae["health"]["doctor_contract"], "unsupported")
+                self.assertEqual(mulgae["health"]["doctor_contract"], "not_observed")
                 self.assertEqual(
-                    mulgae["health"]["config_v3"]["status"], "unverifiable"
+                    mulgae["health"]["config_v3"],
+                    {
+                        "status": "unverifiable",
+                        "reason_codes": ["unsupported_output_schema"],
+                    },
                 )
 
-    def test_mulgae_release_schema_pairs_are_not_interchangeable(self) -> None:
+    def test_mulgae_contract_uses_minimum_schemas_without_an_upper_bound(self) -> None:
         cases = (
             (
-                "v0.1.21",
-                "mulgae-command-result.v11",
-                "mulgae-doctor-result.v2",
-                3,
-                ("kimi", "zcode", "agy", "codex"),
-                "unsupported_output_schema",
-            ),
-            (
                 "v0.1.22",
-                "mulgae-command-result.v8",
+                "mulgae-command-result.v12",
                 "mulgae-doctor-result.v5",
-                4,
-                ("zcode", "grok", "codex"),
-                "unsupported_output_schema",
-            ),
-            (
-                "v0.1.21",
-                "mulgae-command-result.v8",
-                "mulgae-doctor-result.v5",
-                3,
-                ("kimi", "zcode", "agy", "codex"),
-                None,
-            ),
-            (
-                "v0.1.22",
-                "mulgae-command-result.v11",
-                "mulgae-doctor-result.v2",
-                4,
-                ("zcode", "grok", "codex"),
-                None,
+                "unsupported_native_version",
+                "degraded",
             ),
             (
                 "v0.1.23",
                 "mulgae-command-result.v11",
                 "mulgae-doctor-result.v5",
-                4,
-                ("zcode", "grok", "codex"),
-                "unsupported_native_version",
+                "unsupported_output_schema",
+                "degraded",
+            ),
+            (
+                "v0.1.23",
+                "mulgae-command-result.v12",
+                "mulgae-doctor-result.v4",
+                None,
+                "degraded",
+            ),
+            (
+                "v0.1.23",
+                "mulgae-command-result.v12",
+                "mulgae-doctor-result.v05",
+                None,
+                "degraded",
+            ),
+            (
+                "v0.1.23",
+                "mulgae-command-result.v12",
+                "mulgae-doctor-result.v5.0",
+                None,
+                "degraded",
+            ),
+            (
+                "v0.1.24",
+                "mulgae-command-result.v13",
+                "mulgae-doctor-result.v6",
+                None,
+                "configured",
             ),
         )
         for (
             version,
             command_schema,
             doctor_schema,
-            config_version,
-            families,
             error,
+            status,
         ) in cases:
             with self.subTest(version=version, doctor_schema=doctor_schema):
                 for executable in self.bin_directory.iterdir():
@@ -5940,18 +6114,174 @@ else:
                     mulgae_version=version,
                     mulgae_output_schema=command_schema,
                     mulgae_doctor_schema=doctor_schema,
-                    mulgae_config_version=config_version,
-                    mulgae_provider_families=families,
                 )
-                self.install_mulgae_config(version=config_version)
+                self.install_mulgae_config()
                 mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
-                self.assertEqual(mulgae["status"], "degraded")
+                self.assertEqual(mulgae["status"], status)
                 probe = mulgae["probes"]["doctor"]
                 if error:
                     self.assertEqual(probe["error_code"], error)
-                else:
+                    self.assertEqual(
+                        mulgae["health"]["doctor_contract"], "not_observed"
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["config_v3"]["reason_codes"], [error]
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["configured_readiness"]["reason_codes"],
+                        [error],
+                    )
+                    self.assertEqual(
+                        mulgae["health"]["role_route_readiness"]["reason_codes"],
+                        [error],
+                    )
+                elif status == "degraded":
                     self.assertEqual(probe["doctor_capability"], "unsupported")
-                self.assertEqual(mulgae["health"]["doctor_contract"], "unsupported")
+                    self.assertEqual(mulgae["health"]["doctor_contract"], "unsupported")
+                    self.assertEqual(
+                        mulgae["health"]["configured_readiness"]["reason_codes"],
+                        ["doctor_contract_unsupported"],
+                    )
+                else:
+                    self.assertEqual(probe["doctor_capability"], "supported")
+
+    def test_mulgae_global_and_repository_contract_boundaries_are_distinct(
+        self,
+    ) -> None:
+        self.install_fake_tools(
+            mulgae_version="v0.1.24",
+            mulgae_output_schema="mulgae-command-result.v11",
+            mulgae_doctor_schema="mulgae-doctor-result.v4",
+        )
+        global_mulgae = json.loads(self.inspect_global().stdout)["tools"]["mulgae"]
+        self.assertTrue(global_mulgae["cli"]["version_supported"])
+        self.assertNotIn("error_code", global_mulgae["cli"]["version_probe"])
+
+        self.install_mulgae_config()
+        repository_mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertEqual(repository_mulgae["status"], "degraded")
+        self.assertEqual(
+            repository_mulgae["probes"]["doctor"]["error_code"],
+            "unsupported_output_schema",
+        )
+
+    def test_mulgae_future_provider_family_is_preserved(self) -> None:
+        self.install_fake_tools(
+            mulgae_version="v0.1.24",
+            mulgae_output_schema="mulgae-command-result.v13",
+            mulgae_doctor_schema="mulgae-doctor-result.v6",
+            mulgae_provider_families=("zcode", "grok", "codex", "future_provider"),
+        )
+        self.install_mulgae_config()
+        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertEqual(mulgae["status"], "configured")
+        self.assertEqual(
+            [row["family"] for row in mulgae["provider_inventory"]],
+            ["zcode", "grok", "codex", "future_provider"],
+        )
+
+    def test_mulgae_provider_inventory_accepts_native_reorder_and_retirement(
+        self,
+    ) -> None:
+        self.install_fake_tools()
+        self.install_mulgae_config()
+        raw = subprocess.run(
+            ["mulgae", "doctor", "--output", "json"],
+            cwd=self.repository,
+            env=self.environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        envelope = json.loads(raw.stdout)
+        doctor = envelope["result"]["doctor"]
+        zcode, _grok, _codex = doctor["provider_inventory"]
+        grok = copy.deepcopy(zcode)
+        grok["family"] = "grok"
+        grok["referenced_by_roles"] = ["security"]
+        doctor["provider_inventory"] = [grok, zcode]
+        doctor["configured_provider_ids"] = ["grok", "zcode"]
+
+        normalized = inspect_tools.normalize_mulgae_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": envelope,
+            },
+            inspect_tools.mulgae_native_contract("v0.1.24"),
+        )
+        self.assertEqual(normalized["doctor_capability"], "supported")
+        safe_doctor = normalized["result"]["doctor"]
+        self.assertEqual(
+            [row["family"] for row in safe_doctor["provider_inventory"]],
+            ["grok", "zcode"],
+        )
+        self.assertEqual(safe_doctor["configured_provider_ids"], ["grok", "zcode"])
+
+        mismatched = copy.deepcopy(envelope)
+        mismatched["result"]["doctor"]["configured_provider_ids"] = [
+            "zcode",
+            "grok",
+        ]
+        normalized = inspect_tools.normalize_mulgae_doctor(
+            {
+                "attempted": True,
+                "ok": True,
+                "exit_code": 0,
+                "timed_out": False,
+                "result": mismatched,
+            },
+            inspect_tools.mulgae_native_contract("v0.1.24"),
+        )
+        self.assertEqual(normalized["doctor_capability"], "invalid")
+
+    def test_mulgae_provider_inventory_enforces_bounded_canonical_shape(self) -> None:
+        diagnostic = {"status": "not_applicable", "reason_codes": []}
+        compatibility = {
+            "status": "not_applicable",
+            "observed_version": "",
+            "eligibility": "not_evaluated",
+            "compatibility": "not_observed",
+            "minimum_version": "",
+            "verified_latest": "",
+            "reason_code": "",
+        }
+
+        def row(family: str, roles: list[str] | None = None) -> dict[str, object]:
+            return {
+                "family": family,
+                "configured": False,
+                "referenced_by_roles": roles or [],
+                "state": "not_configured",
+                "reason": "not_configured",
+                "binary_available": diagnostic,
+                "cli_compatible": compatibility,
+                "application_compatible": compatibility,
+            }
+
+        fields = ("cli_compatible", "application_compatible")
+        self.assertEqual(
+            inspect_tools.normalize_mulgae_provider_inventory(
+                [row("future-provider", ["future-role"])], fields
+            )[0]["referenced_by_roles"],
+            ["future-role"],
+        )
+        invalid_inventories = (
+            [],
+            [row("grok"), row("grok")],
+            [row("grok", ["logic", "logic"])],
+            [row("Grok")],
+            [row("has space")],
+            [row("x" * 65)],
+            [row(f"provider-{index}") for index in range(65)],
+        )
+        for inventory in invalid_inventories:
+            with self.subTest(inventory_size=len(inventory)):
+                self.assertIsNone(
+                    inspect_tools.normalize_mulgae_provider_inventory(inventory, fields)
+                )
 
     def test_mulgae_skill_is_independent_from_cli_and_mcp_health(self) -> None:
         self.install_mulgae_skill(root=self.home / ".agents/skills")
@@ -6389,7 +6719,7 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v8",
+                    "schema_version": "mulgae-command-result.v12",
                     "result": {
                         "kind": secret,
                         "readiness": secret,
@@ -6399,13 +6729,13 @@ else:
                             "provider_session_fingerprint": secret,
                         },
                         "doctor": {
-                            "schema_version": "mulgae-doctor-result.v2",
+                            "schema_version": "mulgae-doctor-result.v5",
                             "config": {"status": secret, "uri": secret},
                         },
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.21"),
+            inspect_tools.mulgae_native_contract("v0.1.23"),
         )
         podway, _ = inspect_tools.normalize_podway_envelope(
             {
@@ -7066,7 +7396,7 @@ else:
         self.assertFalse(probe["ok"])
         self.assertEqual(probe["error_code"], "invalid_json")
 
-    def test_mulgae_doctor_v2_provider_outcomes_gate_offline_readiness(self) -> None:
+    def test_mulgae_doctor_v5_provider_outcomes_gate_offline_readiness(self) -> None:
         self.install_mulgae_config()
         cases = (
             ("ready", "configured", "verified", "eligible", "verified"),
@@ -7116,14 +7446,14 @@ else:
                         self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
                     )
                 self.assertEqual(mulgae["status"], status)
-                zcode = mulgae["provider_inventory"][1]
+                zcode = mulgae["provider_inventory"][0]
                 self.assertEqual(zcode["binary_available"]["status"], binary)
                 self.assertEqual(zcode["cli_compatible"]["eligibility"], eligibility)
                 self.assertEqual(
                     zcode["cli_compatible"]["compatibility"], compatibility
                 )
 
-    def test_mulgae_doctor_v2_rejects_invalid_identity_and_role_mapping(self) -> None:
+    def test_mulgae_doctor_v5_rejects_invalid_identity_and_role_mapping(self) -> None:
         self.install_mulgae_config()
         for case, reason in (
             ("identity_invalid", "config_provider_identity_invalid"),
@@ -7157,13 +7487,13 @@ else:
             mulgae["health"]["config_v3"],
             {
                 "status": "unverifiable",
-                "reason_codes": ["doctor_v2_unsupported"],
+                "reason_codes": ["doctor_contract_unsupported"],
             },
         )
         self.assertNotIn("provider_static_admission", mulgae["health"])
         self.assertNotIn("live_review", mulgae["health"])
 
-    def test_mulgae_doctor_v2_missing_required_dimensions_is_invalid(self) -> None:
+    def test_mulgae_doctor_v5_missing_required_dimensions_is_invalid(self) -> None:
         normalized = inspect_tools.normalize_mulgae_doctor(
             {
                 "attempted": True,
@@ -7171,14 +7501,14 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v8",
+                    "schema_version": "mulgae-command-result.v12",
                     "result": {
                         "kind": "diagnosed",
-                        "doctor": {"schema_version": "mulgae-doctor-result.v2"},
+                        "doctor": {"schema_version": "mulgae-doctor-result.v5"},
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.21"),
+            inspect_tools.mulgae_native_contract("v0.1.23"),
         )
         self.assertEqual(normalized["doctor_capability"], "invalid")
         self.assertNotIn("doctor", normalized["result"])
