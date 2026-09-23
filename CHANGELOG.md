@@ -23,6 +23,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Bound Task, Epic, and cold-validation convergence to three precisely scoped work-unit assessments plus one correction-only remediation confirmation, then require one-shot user authority for each later correction and confirmation.
 - Require the executing agent to load the release-matched Gaori or Mulgae skill, preserve one native operation while waiting, and consume the applicable minimum machine-response contracts.
 - Let an approved Epic execution envelope authorize each planned member Task's normal completion commit after final Goal acceptance, without repeating the commit question or weakening exact release-note and publication approval boundaries.
+- Keep commit and amend requests within their approved scope, preserve existing check authority, and run the Podway compatibility gate only for release preparation or an explicit request.
 
 ## v0.1.16 - 2026-09-16
 

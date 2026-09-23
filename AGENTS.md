@@ -115,6 +115,8 @@ Before release QA, reconcile every material change after the previous release wi
 
 Before either mode, inspect the worktree, the local and remote `main` commits, the exact release-candidate SHA, and existing tags and GitHub Releases. Stop on unrelated worktree changes, an ambiguous release target, or a conflicting tag or release rather than including or overwriting it.
 
+The Podway compatibility gate below belongs to release preparation. A development commit or amendment does not start or restart it. An explicit compatibility check request may invoke it outside a release.
+
 When the open release requires Podway v0.2.11 compatibility, verify the official Apple Silicon archive against its published checksum and run this additional exact-artifact gate through its configured Gaori command before release QA:
 
 ```bash

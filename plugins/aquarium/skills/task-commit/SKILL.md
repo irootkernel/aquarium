@@ -65,6 +65,8 @@ Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged
 - the reviewed implementation plus any exact accepted and locally verified Low-only delta, approved lifecycle or record decision, and approved post-review promoted-evidence packages equal the staged diff;
 - unrelated pre-existing staged content is absent from the intended commit.
 
+For an explicitly authorized amend, inspect the existing HEAD's parent, author, message, complete diff, and live remote publication state. Require one unambiguous unpublished HEAD whose existing content and staged delta both belong to the approved replacement. Record the intended full staged tree, parent, author, and message before amending. Stop if publication cannot be ruled out, the existing commit includes unrelated work, or the replacement scope is unclear.
+
 An accepted Low-only composition may differ from the provider-reviewed target only
 by its enumerated verified delta. Do not require or launch another provider review
 for that difference. Reject an unknown source basis, nonzero pending disposition or
@@ -107,9 +109,13 @@ env \
       commit ...
 ```
 
-The explicit `author.*` and `committer.*` pins prevent system, global, local, worktree, or conditional configuration from overriding the repository `user.*` snapshot. Do not pass `--author` or otherwise override the pinned author or committer identity. The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push.
+The explicit `author.*` and `committer.*` pins prevent system, global, local, worktree, or conditional configuration from overriding the repository `user.*` snapshot. Do not pass `--author` or otherwise override the pinned author or committer identity. The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push without separate explicit authorization.
 
-After the commit and its hooks, compare the commit with the recorded staged snapshot byte-for-byte. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
+After the commit and its hooks, compare a new commit's diff with the recorded staged diff byte-for-byte. For an amend, compare the replacement tree with the recorded full staged tree and the staged delta with the approved change. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
+
+For an amend, also verify that the replacement commit has the recorded parent, author, and message.
+
+Finish after the checks above when the current request is limited to a commit or amend. Choosing a commit method neither approves nor cancels later checks. Compare the user's current direction with prior authorization and the owning workflow's requirements. Run a previously approved check when its authority remains current; if the user limits the request to the commit, report the check as pending. A new commit SHA alone does not start a release or compatibility gate.
 
 Report the commit ID, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
 
