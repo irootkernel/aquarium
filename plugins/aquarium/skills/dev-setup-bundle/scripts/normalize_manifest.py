@@ -19,9 +19,9 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-INPUT_SCHEMA = "aquarium.dev-setup-bundle/v1"
-OUTPUT_SCHEMA = "aquarium-dev-setup-bundle-plan.v1"
-ERROR_SCHEMA = "aquarium-dev-setup-bundle-error.v1"
+INPUT_SCHEMA = "aquarium.dev-setup-bundle/v2"
+OUTPUT_SCHEMA = "aquarium-dev-setup-bundle-plan.v2"
+ERROR_SCHEMA = "aquarium-dev-setup-bundle-error.v2"
 TOOLS = (
     "sanho",
     "dolgorae",
@@ -35,16 +35,17 @@ TOOLS = (
     "humanizer",
     "im-not-ai",
 )
-PROJECT_MCP_TOOLS = ("mulgae", "gaori")
+MCP_TOOLS = ("mulgae", "gaori")
 AGENTS_GUIDANCE = ("skip", "propose")
 TOP_LEVEL_KEYS = ("schema", "defaults", "targets")
-DEFAULT_KEYS = ("tools", "project_mcp", "agents_guidance")
+DEFAULT_KEYS = ("tools", "global_mcp", "mulgae_artist", "agents_guidance")
 TARGET_KEYS = (
     "path",
     "include",
     "exclude",
-    "project_mcp_include",
-    "project_mcp_exclude",
+    "local_mcp",
+    "sorage_project_slug",
+    "mulgae_artist",
     "agents_guidance",
 )
 COMMAND_TIMEOUT_SECONDS = 10.0
@@ -236,6 +237,27 @@ def require_agents_guidance(value: Any, location: str) -> str:
     return value
 
 
+def require_boolean(value: Any, location: str) -> bool:
+    if not isinstance(value, bool):
+        fail_manifest("invalid_type", f"{location} must be a boolean")
+    return value
+
+
+def require_sorage_slug(value: Any, location: str) -> str:
+    if not (
+        isinstance(value, str)
+        and value
+        and value == value.lower()
+        and not value.startswith("-")
+        and not value.endswith("-")
+        and all(character == "-" or character.isalnum() for character in value)
+    ):
+        fail_manifest(
+            "invalid_sorage_slug", f"{location} must be a Sorage Project slug"
+        )
+    return value
+
+
 def ordered(values: list[str], allowed: tuple[str, ...]) -> list[str]:
     return [value for value in allowed if value in values]
 
@@ -256,22 +278,9 @@ def normalize_selection(
             f"targets[{index}] includes and excludes: {', '.join(tool_conflicts)}",
         )
 
-    mcp_include = require_string_list(
-        target.get("project_mcp_include", []),
-        f"targets[{index}].project_mcp_include",
-        PROJECT_MCP_TOOLS,
+    local_mcp = require_string_list(
+        target.get("local_mcp", []), f"targets[{index}].local_mcp", MCP_TOOLS
     )
-    mcp_exclude = require_string_list(
-        target.get("project_mcp_exclude", []),
-        f"targets[{index}].project_mcp_exclude",
-        PROJECT_MCP_TOOLS,
-    )
-    mcp_conflicts = sorted(set(mcp_include) & set(mcp_exclude))
-    if mcp_conflicts:
-        fail_manifest(
-            "conflicting_override",
-            f"targets[{index}] includes and excludes project MCP: {', '.join(mcp_conflicts)}",
-        )
 
     tools = ordered(
         [
@@ -286,21 +295,47 @@ def normalize_selection(
             "empty_selection", f"targets[{index}] must select at least one tool"
         )
 
-    project_mcp = ordered(
-        list(dict.fromkeys(defaults["project_mcp"] + mcp_include)),
-        PROJECT_MCP_TOOLS,
-    )
-    project_mcp = [tool for tool in project_mcp if tool not in mcp_exclude]
-    missing_tools = sorted(set(project_mcp) - set(tools))
+    missing_tools = sorted(set(local_mcp) - set(tools))
     if missing_tools:
         fail_manifest(
             "invalid_mcp_selection",
-            f"targets[{index}] project MCP is not an effective tool: {', '.join(missing_tools)}",
+            f"targets[{index}] local MCP is not an effective tool: {', '.join(missing_tools)}",
         )
+
+    slug = None
+    if "sorage_project_slug" in target:
+        slug = require_sorage_slug(
+            target["sorage_project_slug"], f"targets[{index}].sorage_project_slug"
+        )
+        if "sorage" not in tools:
+            fail_manifest(
+                "invalid_sorage_selection", f"targets[{index}] does not select sorage"
+            )
+
+    artist = require_boolean(
+        target.get("mulgae_artist", defaults["mulgae_artist"]),
+        f"targets[{index}].mulgae_artist",
+    )
+    if "mulgae_artist" in target and "mulgae" not in tools:
+        fail_manifest(
+            "invalid_artist_selection", f"targets[{index}] does not select mulgae"
+        )
+    if "mulgae" not in tools:
+        artist = False
 
     return {
         "tools": tools,
-        "project_mcp": project_mcp,
+        "global_mcp": ordered(
+            [
+                tool
+                for tool in defaults["global_mcp"]
+                if tool in tools and tool not in local_mcp
+            ],
+            MCP_TOOLS,
+        ),
+        "local_mcp": ordered(local_mcp, MCP_TOOLS),
+        "sorage_project_slug": slug,
+        "mulgae_artist": artist,
         "agents_guidance": require_agents_guidance(
             target.get("agents_guidance", defaults["agents_guidance"]),
             f"targets[{index}].agents_guidance",
@@ -385,13 +420,21 @@ def normalize_manifest(path: str) -> dict[str, Any]:
         fail_manifest("unsupported_schema", f"schema must be {INPUT_SCHEMA}")
 
     defaults_input = require_mapping(root["defaults"], "defaults")
-    require_exact_keys(defaults_input, DEFAULT_KEYS, DEFAULT_KEYS, "defaults")
+    require_exact_keys(
+        defaults_input,
+        DEFAULT_KEYS,
+        ("tools", "global_mcp", "agents_guidance"),
+        "defaults",
+    )
     defaults = {
         "tools": require_string_list(defaults_input["tools"], "defaults.tools", TOOLS),
-        "project_mcp": require_string_list(
-            defaults_input["project_mcp"],
-            "defaults.project_mcp",
-            PROJECT_MCP_TOOLS,
+        "global_mcp": require_string_list(
+            defaults_input["global_mcp"],
+            "defaults.global_mcp",
+            MCP_TOOLS,
+        ),
+        "mulgae_artist": require_boolean(
+            defaults_input.get("mulgae_artist", False), "defaults.mulgae_artist"
         ),
         "agents_guidance": require_agents_guidance(
             defaults_input["agents_guidance"], "defaults.agents_guidance"
@@ -464,6 +507,10 @@ def normalize_manifest(path: str) -> dict[str, Any]:
                 )
             ),
             TOOLS,
+        ),
+        "required_global_mcp": ordered(
+            [tool for target in ready_targets for tool in target["global_mcp"]],
+            MCP_TOOLS,
         ),
         "targets": targets,
     }

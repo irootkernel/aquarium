@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.18 - Unreleased
 
+### Changed
+
+- Replace the bundle setup manifest with v2 target-specific MCP scope, Sorage Project slug, and Mulgae artist intent.
+
 ## v0.1.17 - 2026-09-23
 
 ### Added

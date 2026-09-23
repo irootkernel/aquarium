@@ -1,0 +1,21 @@
+schema: aquarium.dev-setup-bundle/v2
+
+defaults:
+  tools: [mulgae, gaori, sorage, podway, dolgorae]
+  global_mcp: [mulgae, gaori]
+  mulgae_artist: false
+  agents_guidance: propose
+
+targets:
+  # Add one entry for every Git repository to configure.
+  # Replace each placeholder with its absolute path.
+  - path: /REPLACE/WITH/ABSOLUTE/PATH/TO/sudal
+    include: [sanho]
+    local_mcp: [mulgae]
+    sorage_project_slug: replace-with-project-slug
+
+  - path: /REPLACE/WITH/ABSOLUTE/PATH/TO/ember-quest
+    include: [sanho]
+    mulgae_artist: true
+
+  # - path: /REPLACE/WITH/ABSOLUTE/PATH/TO/another-repository

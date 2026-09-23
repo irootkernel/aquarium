@@ -64,7 +64,7 @@ For Orca Review, `staged` means the current `HEAD`-to-index change reviewed thro
 
 `dev-setup-global`, `dev-setup`, `docs-setup`, and `test-setup` begin with conservative read-only inspection. They classify current state, present exact proposed changes, snapshot affected targets, and apply only the approved diff or action before rerunning the inspector and applicable checks. `dev-setup-global` owns user-global components, while `dev-setup` owns repository tooling and operating guidance.
 
-`dev-setup-bundle` accepts one external `aquarium.dev-setup-bundle/v1` manifest, normalizes defaults and explicit target selection, confirms the resulting plan, delegates the union of selected global components once to `dev-setup-global`, and invokes single-repository setup in manifest order. It does not discover repositories or persist bundle state.
+`dev-setup-bundle` accepts one external `aquarium.dev-setup-bundle/v2` manifest, normalizes explicit target selection, confirms the resulting plan, delegates shared components once to `dev-setup-global`, and invokes single-repository setup in manifest order. Its `required_global_mcp` union includes only registrations inherited by ready targets; target-local Mulgae or Gaori registration does not require that tool's global MCP. The repository setup path compares requested scope with effective Codex registration, intended Sorage Project slug with native resolution, and Mulgae artist intent with effective roles. It does not discover repositories, persist bundle state, or grant configuration mutation from manifest values alone.
 
 ## Release a Stable Version
 

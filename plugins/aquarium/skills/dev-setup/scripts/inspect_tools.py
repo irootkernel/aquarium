@@ -2808,6 +2808,27 @@ def effective_mcp_registration(
     return selected["status"], selected_scope, selected.get("reason")
 
 
+def assess_requested_mcp_scope(
+    registration: dict[str, Any], requested_scope: str
+) -> dict[str, Any]:
+    effective_scope = registration["effective_scope"]
+    if requested_scope == "none":
+        return {"status": "not_requested", "effective_scope": effective_scope}
+    if effective_scope == "unverifiable":
+        status = "unverifiable"
+    elif effective_scope != requested_scope:
+        status = "scope_mismatch"
+    elif registration["status"] == "configured":
+        status = "ready"
+    else:
+        status = "registration_degraded"
+    return {
+        "status": status,
+        "requested_scope": requested_scope,
+        "effective_scope": effective_scope,
+    }
+
+
 def inspect_mulgae_mcp(
     repository: Path, mulgae_executable: str | None, timeout_seconds: float
 ) -> dict[str, Any]:
@@ -2923,6 +2944,7 @@ def inspect_mulgae(
     repository: Path,
     timeout_seconds: float,
     require_mcp: bool = False,
+    expected_mcp_scope: str | None = None,
     agent_skill: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     tool = base_tool("mulgae")
@@ -3101,7 +3123,7 @@ def inspect_mulgae(
         and configured_readiness.get("exit_code") == 0
     )
     mcp_status = tool["mcp_registration"]["status"]
-    mcp_blocks = mcp_status == "degraded" or (
+    mcp_blocks = (expected_mcp_scope != "none" and mcp_status == "degraded") or (
         require_mcp and mcp_status != "configured"
     )
     if (
@@ -4520,6 +4542,8 @@ def inspect(
     include_podway: bool = False,
     include_sorage: bool = False,
     require_mulgae_mcp: bool = False,
+    expected_mulgae_mcp: str | None = None,
+    expected_gaori_mcp: str | None = None,
 ) -> dict[str, Any]:
     repository = resolve_repository(requested_path, timeout_seconds)
     trusted_global_skills = {
@@ -4553,6 +4577,7 @@ def inspect(
             repository,
             timeout_seconds,
             require_mcp=require_mulgae_mcp,
+            expected_mcp_scope=expected_mulgae_mcp,
             agent_skill=trusted_global_skills.get("use-mulgae"),
         ),
         "gaori": inspect_gaori(
@@ -4573,11 +4598,20 @@ def inspect(
             timeout_seconds,
             agent_skill=trusted_global_skills["use-podway"],
         )
+    requested_mcp = {
+        name: assess_requested_mcp_scope(tools[name]["mcp_registration"], scope)
+        for name, scope in (
+            ("mulgae", expected_mulgae_mcp),
+            ("gaori", expected_gaori_mcp),
+        )
+        if scope is not None
+    }
     return {
         "schema_version": SCHEMA_VERSION,
         "repository": repository_inventory(repository, timeout_seconds),
         "trusted_global_skills": trusted_global_skills,
         "tools": tools,
+        **({"requested_mcp": requested_mcp} if requested_mcp else {}),
     }
 
 
@@ -4607,6 +4641,8 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Require an explicitly selected Mulgae MCP registration for status",
     )
+    parser.add_argument("--expected-mulgae-mcp", choices=("global", "local", "none"))
+    parser.add_argument("--expected-gaori-mcp", choices=("global", "local", "none"))
     arguments = parser.parse_args()
     if (
         not math.isfinite(arguments.timeout_seconds)
@@ -4635,6 +4671,8 @@ def main() -> int:
                 include_podway=arguments.include_podway,
                 include_sorage=arguments.include_sorage,
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
+                expected_mulgae_mcp=arguments.expected_mulgae_mcp,
+                expected_gaori_mcp=arguments.expected_gaori_mcp,
             )
         )
         return 0

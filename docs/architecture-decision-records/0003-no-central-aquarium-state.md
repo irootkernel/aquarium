@@ -14,7 +14,7 @@ A central `.aquarium` file could appear to simplify discovery and lifecycle coor
 
 Aquarium does not create, read, or maintain `.aquarium` or any equivalent central project-state file. Repository configuration stays with existing project authorities. Roadmap state remains in canonical documentation, Git state remains in Git, Procedure state remains with Podway, and native tool state remains with each tool.
 
-Multi-repository development setup accepts an explicit external `aquarium.dev-setup-bundle/v1` manifest as request input. It normalizes that input for the current run but does not discover, persist, or adopt it as repository state.
+Multi-repository development setup accepts an explicit external `aquarium.dev-setup-bundle/v2` manifest as request input. It normalizes that input for the current run but does not discover, persist, or adopt it as repository state.
 
 ## Consequences
 

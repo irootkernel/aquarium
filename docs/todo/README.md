@@ -17,9 +17,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Web Pro Review dossier](TODO-WEB-PRO-REVIEW.md) defines the standalone review,
   primary-account boundary, selectable `web-pro` route, and acceptance contract for
   `EPIC-017` and `TASK-072` through `TASK-075`.
-- [Bundle MCP scope dossier](TODO-BUNDLE-MCP-SCOPE.md) defines the v2 manifest,
-  MCP registration routing, Sorage Project slug, Mulgae artist intent, v1
-  replacement, and acceptance contract for `TASK-076` under `EPIC-000`.
 
 ## Unadopted TODO Candidates
 

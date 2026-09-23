@@ -72,7 +72,7 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         payload = json.loads(result.stderr)
         self.assertEqual(
-            payload["schema_version"], "aquarium-dev-setup-bundle-error.v1"
+            payload["schema_version"], "aquarium-dev-setup-bundle-error.v2"
         )
         self.assertEqual(payload["error"]["code"], code)
         return payload
@@ -81,16 +81,16 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "bundle.yaml",
             f"""
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [dolgorae, mulgae, gaori, sorage, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
-              project_mcp: [mulgae, gaori]
+              global_mcp: [mulgae, gaori]
               agents_guidance: skip
             targets:
               - path: repository-a
                 include: [sanho]
                 exclude: [ouroboros]
-                project_mcp_exclude: [gaori]
+                local_mcp: [mulgae]
                 agents_guidance: propose
               - path: {self.repository_b}
               - path: missing-repository
@@ -102,7 +102,7 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, "")
         plan = json.loads(result.stdout)
-        self.assertEqual(plan["schema_version"], "aquarium-dev-setup-bundle-plan.v1")
+        self.assertEqual(plan["schema_version"], "aquarium-dev-setup-bundle-plan.v2")
         self.assertEqual(plan["manifest"]["path"], str(manifest.resolve()))
         self.assertEqual(
             plan["manifest"]["sha256"],
@@ -117,7 +117,9 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertIn("sanho", first["tools"])
         self.assertIn("dolgorae", first["tools"])
         self.assertNotIn("ouroboros", first["tools"])
-        self.assertEqual(first["project_mcp"], ["mulgae"])
+        self.assertEqual(first["local_mcp"], ["mulgae"])
+        self.assertEqual(first["global_mcp"], ["gaori"])
+        self.assertEqual(plan["required_global_mcp"], ["mulgae", "gaori"])
         self.assertEqual(first["agents_guidance"], "propose")
         self.assertEqual(plan["targets"][2]["reason_codes"], ["target_not_found"])
         self.assertEqual(
@@ -137,16 +139,128 @@ class NormalizeManifestTest(unittest.TestCase):
             ],
         )
 
+    def test_v2_scopes_and_target_intent(self) -> None:
+        manifest = self.write_manifest(
+            "scopes.yaml",
+            """
+            schema: aquarium.dev-setup-bundle/v2
+            defaults:
+              tools: [mulgae, gaori, sorage]
+              global_mcp: [mulgae, gaori]
+              mulgae_artist: false
+              agents_guidance: skip
+            targets:
+              - path: repository-a
+                local_mcp: [mulgae]
+                sorage_project_slug: project-a
+                mulgae_artist: true
+              - path: repository-b
+                local_mcp: [mulgae, gaori]
+                sorage_project_slug: 웹-앱
+            """,
+        )
+        plan = json.loads(self.run_script(manifest).stdout)
+        self.assertEqual(plan["required_global_mcp"], ["gaori"])
+        self.assertEqual(plan["targets"][0]["global_mcp"], ["gaori"])
+        self.assertEqual(plan["targets"][0]["local_mcp"], ["mulgae"])
+        self.assertTrue(plan["targets"][0]["mulgae_artist"])
+        self.assertEqual(plan["targets"][1]["global_mcp"], [])
+        self.assertEqual(plan["targets"][1]["local_mcp"], ["mulgae", "gaori"])
+        self.assertFalse(plan["targets"][1]["mulgae_artist"])
+        self.assertEqual(plan["targets"][1]["sorage_project_slug"], "웹-앱")
+
+    def test_local_only_and_unselected_defaults_need_no_global_registration(
+        self,
+    ) -> None:
+        manifest = self.write_manifest(
+            "local-only.yaml",
+            """
+            schema: aquarium.dev-setup-bundle/v2
+            defaults:
+              tools: [mulgae]
+              global_mcp: [mulgae, gaori]
+              agents_guidance: skip
+            targets:
+              - path: repository-a
+                local_mcp: [mulgae]
+              - path: missing-repository
+            """,
+        )
+        plan = json.loads(self.run_script(manifest).stdout)
+        self.assertEqual(plan["required_global_mcp"], [])
+        self.assertEqual(plan["targets"][0]["global_mcp"], [])
+        self.assertEqual(plan["targets"][0]["local_mcp"], ["mulgae"])
+        self.assertEqual(plan["targets"][1]["status"], "invalid")
+        self.assertEqual(plan["targets"][1]["global_mcp"], ["mulgae"])
+
+    def test_rejects_v1_scope_and_invalid_target_intent(self) -> None:
+        base = textwrap.dedent("""
+            schema: aquarium.dev-setup-bundle/v2
+            defaults:
+              tools: [mulgae, sorage]
+              global_mcp: []
+              agents_guidance: skip
+            targets:
+              - path: repository-a
+        """).lstrip()
+        cases = {
+            "v1": ("schema: aquarium.dev-setup-bundle/v1", "unsupported_schema"),
+            "old-default": ("  project_mcp: []", "unknown_key"),
+            "old-target": ("    project_mcp_include: [mulgae]", "unknown_key"),
+            "invalid-slug": (
+                "    sorage_project_slug: Bad Slug",
+                "invalid_sorage_slug",
+            ),
+            "null-slug": ("    sorage_project_slug: null", "invalid_sorage_slug"),
+            "non-list": ("    local_mcp: mulgae", "invalid_type"),
+            "duplicate": ("    local_mcp: [mulgae, mulgae]", "duplicate_value"),
+            "unknown-mcp": ("    local_mcp: [sorage]", "unsupported_value"),
+            "non-bool": ("    mulgae_artist: yes-ish", "invalid_type"),
+            "old-mcp-map": ("    mcp: {mulgae: local}", "unknown_key"),
+        }
+        for name, (line, code) in cases.items():
+            with self.subTest(name=name):
+                if name == "v1":
+                    body = base.replace("schema: aquarium.dev-setup-bundle/v2", line)
+                elif name == "old-default":
+                    body = base.replace("  global_mcp: []", "  global_mcp: []\n" + line)
+                else:
+                    body = base + line + "\n"
+                self.assert_error(
+                    self.run_script(self.write_manifest(f"{name}.yaml", body)), code
+                )
+
+        without_sorage = base.replace("[mulgae, sorage]", "[mulgae]")
+        self.assert_error(
+            self.run_script(
+                self.write_manifest(
+                    "slug-without-tool.yaml",
+                    without_sorage + "    sorage_project_slug: project-a\n",
+                )
+            ),
+            "invalid_sorage_selection",
+        )
+        without_mulgae = base.replace("[mulgae, sorage]", "[sorage]")
+        self.assert_error(
+            self.run_script(
+                self.write_manifest(
+                    "artist-without-tool.yaml",
+                    without_mulgae + "    mulgae_artist: true\n",
+                )
+            ),
+            "invalid_artist_selection",
+        )
+
     def test_writing_skills_keep_installation_and_guidance_selection_separate(
         self,
     ) -> None:
         manifest = self.write_manifest(
             "writing-skills.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [humanizer, im-not-ai]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: propose
             targets:
               - path: repository-a
@@ -170,10 +284,10 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "digest.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [mulgae]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: skip
             targets:
               - path: repository-a
@@ -191,10 +305,10 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "duplicate-root.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [mulgae]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: skip
             targets:
               - path: repository-a
@@ -252,10 +366,10 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "linked-worktrees.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [mulgae]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: skip
             targets:
               - path: repository-a
@@ -281,10 +395,10 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "ambient-git.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [mulgae]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: skip
             targets:
               - path: plain-directory
@@ -333,10 +447,10 @@ class NormalizeManifestTest(unittest.TestCase):
         manifest = self.write_manifest(
             "late-selection-error.yaml",
             """
-            schema: aquarium.dev-setup-bundle/v1
+            schema: aquarium.dev-setup-bundle/v2
             defaults:
               tools: [mulgae]
-              project_mcp: []
+              global_mcp: []
               agents_guidance: skip
             targets:
               - path: repository-a
@@ -358,10 +472,10 @@ class NormalizeManifestTest(unittest.TestCase):
         cases = {
             "alias": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults: &defaults
                   tools: [mulgae]
-                  project_mcp: []
+                  global_mcp: []
                   agents_guidance: skip
                 targets: *defaults
                 """,
@@ -369,11 +483,11 @@ class NormalizeManifestTest(unittest.TestCase):
             ),
             "duplicate-key": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [mulgae]
                   tools: [gaori]
-                  project_mcp: []
+                  global_mcp: []
                   agents_guidance: skip
                 targets:
                   - path: repository-a
@@ -382,10 +496,10 @@ class NormalizeManifestTest(unittest.TestCase):
             ),
             "merge-key": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   <<: {tools: [mulgae]}
-                  project_mcp: []
+                  global_mcp: []
                   agents_guidance: skip
                 targets:
                   - path: repository-a
@@ -394,10 +508,10 @@ class NormalizeManifestTest(unittest.TestCase):
             ),
             "unknown-key": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [mulgae]
-                  project_mcp: []
+                  global_mcp: []
                   agents_guidance: skip
                 targets:
                   - path: repository-a
@@ -407,10 +521,10 @@ class NormalizeManifestTest(unittest.TestCase):
             ),
             "conflicting-override": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [mulgae]
-                  project_mcp: []
+                  global_mcp: []
                   agents_guidance: skip
                 targets:
                   - path: repository-a
@@ -421,22 +535,23 @@ class NormalizeManifestTest(unittest.TestCase):
             ),
             "unsupported-mcp": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [mulgae]
-                  project_mcp: [gaori]
+                  global_mcp: []
                   agents_guidance: skip
                 targets:
                   - path: repository-a
+                    local_mcp: [gaori]
                 """,
                 "invalid_mcp_selection",
             ),
             "sorage-mcp": (
                 """
-                schema: aquarium.dev-setup-bundle/v1
+                schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [sorage]
-                  project_mcp: [sorage]
+                  global_mcp: [sorage]
                   agents_guidance: skip
                 targets:
                   - path: repository-a

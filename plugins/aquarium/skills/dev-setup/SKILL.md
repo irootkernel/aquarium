@@ -66,7 +66,8 @@ An explicit diagnosis-only request suppresses mutation proposals. A scoped conti
 ## Configure Repository Components
 
 - Preserve the existing Sanho workspace, Mulgae, Gaori, Sorage, and Podway version, validity, approval, backup, and verification rules in the shared catalog, but apply only their repository-local portions.
-- Prefer global Mulgae and Gaori MCP registrations as prerequisites. Create, change, or remove a project-local registration only when the user explicitly requested local scope or repository authority already requires it. Preserve unrelated Codex configuration.
+- For an ordinary request without explicit MCP scope, prefer global Mulgae and Gaori registrations. For a bundle target, use its effective `global_mcp` and `local_mcp` lists as exact scope intent. Pass `--expected-mulgae-mcp` and `--expected-gaori-mcp` with `global`, `local`, or `none` to the inspector for selected tools. A wrong effective scope is a mismatch even when another registration is valid; `none` is unrequested and does not hide existing tools. Create, change, or remove a registration only under its existing action-specific approval and preserve unrelated Codex configuration.
+- For a bundle target with `sorage_project_slug`, compare it to the native resolved Project slug and binding kind. An existing different binding requires a bounded proposal, not a silent rebind. An omitted slug follows native discovery and identifier approval. Compare `mulgae_artist` with the effective enabled roles: `true` requires artist alongside the six non-UI roles, while `false` requires those six without artist. Propose an exact native configuration change for a mismatch; preserve provider, model, credential, and role-assignment choices and obtain the normal configuration approval. Do not infer UI intent from a path name.
 - For Sorage, do not run doctor or Project resolution in Plan Mode because native open-and-migrate paths may write local database or journal state. Outside Plan Mode, disclose those bounded diagnostic side effects before the automatic selected-component diagnosis. Initialization remains global; Project add, bind, unarchive, and repository ignore changes remain local and separately approved.
 - For Podway, keep source provenance and handler-contract compatibility separate. Preserve every same-ID customization, but report readiness only when native validation and the required structural handler contract both pass. Show exact canonical replacement diffs for an incompatible customization; never overwrite it or reinterpret an admitted session. Keep session lifecycle and runtime-mode changes outside setup. Managed-Procedure removal and legacy reset retain their destructive-action approvals.
 - Never stage, commit, push, authenticate a provider, transmit source, start a review or test, or invoke a workflow as part of setup.
@@ -87,9 +88,9 @@ When the full review establishes that both files already satisfy the standard in
 
 ## Bundle and Continuation Intake
 
-A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, target index, canonical Git root, effective tools, explicit local MCP overrides, and repository-guidance policy. Accept the full effective tool list only as target intent: process repository components and guidance here, while the bundle owner sends the global union once to `$aquarium:dev-setup-global`.
+A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, target index, canonical Git root, effective tools, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug` (or null), `mulgae_artist` boolean, and repository-guidance policy. Accept the full effective tool list only as target intent: process repository components and guidance here, while the bundle owner sends the global union once to `$aquarium:dev-setup-global`.
 
-Reject unsupported tools, invalid local MCP overrides, or any request to read the manifest. Preserve per-target partial failure and return `ready`, `partial`, `failed`, `declined`, or `skipped` with an exact resumption request.
+Reject unsupported tools, malformed or conflicting MCP scope lists, invalid Sorage slugs or artist values, or any request to read the manifest. Preserve per-target partial failure and return `ready`, `partial`, `failed`, `declined`, or `skipped` with an exact resumption request.
 
 ## Record Terminal Setup
 

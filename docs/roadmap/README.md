@@ -57,7 +57,7 @@ Epic status is independent of child task status. Completing every child does not
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-076 | Implement target-specific bundle setup intent | Replace bundle v1 with v2 MCP scope lists, Sorage Project slug, and Mulgae artist intent; route and verify the selected setup scopes. [Detailed scope and acceptance](../todo/TODO-BUNDLE-MCP-SCOPE.md). | Planned | TASK-037 |
+| TASK-076 | Implement target-specific bundle setup intent | Replace bundle v1 with v2 MCP scope lists, Sorage Project slug, and Mulgae artist intent; route and verify the selected setup scopes. [Bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md). | Completed | TASK-037 |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -221,7 +221,7 @@ Master explicitly accepted EPIC-009 and TASK-047 closeout on 2026-09-09. The lat
 
 Separate user-global installation and update work from repository setup. `dev-setup-global` now owns exact-upstream CLI and skill maintenance, global MCP and services, writing and Lore skills, and Ouroboros updates. `dev-setup` automatically diagnoses evidenced repository configuration and remains the owner of root AGENTS.md and CLAUDE.md guidance without inspecting global skill contents.
 
-The bundle manifest remains `aquarium.dev-setup-bundle/v1`: it prepares the global union once and delegates repository configuration to `dev-setup` in target order.
+At this epic's completion, the bundle manifest used `aquarium.dev-setup-bundle/v1`: it prepared the global union once and delegated repository configuration to `dev-setup` in target order. `TASK-076` under `EPIC-000` owns its v2 replacement.
 
 **Canonical Outcomes:** [Capabilities](../specs/capabilities.md), [tool integrations](../specs/tool-integrations.md), [local interfaces](../specs/local-interfaces.md), [global development setup](../../plugins/aquarium/skills/dev-setup-global/SKILL.md), [repository development setup](../../plugins/aquarium/skills/dev-setup/SKILL.md)
 

@@ -2821,6 +2821,8 @@ else:
             include_podway=False,
             include_sorage=True,
             require_mulgae_mcp=False,
+            expected_mulgae_mcp=None,
+            expected_gaori_mcp=None,
         )
         self.assertEqual(json.loads(output.getvalue()), result)
 
@@ -6409,6 +6411,44 @@ else:
                     "confirm_or_remove_local_registration",
                 )
 
+    def test_requested_mcp_scope_uses_effective_registration(self) -> None:
+        self.write_project_mcp_config("mulgae")
+        self.install_fake_tools(
+            mulgae_mcp_mode="configured",
+            mulgae_mcp_global=True,
+            gaori_mcp_mode="configured",
+            gaori_mcp_global=True,
+        )
+        base = ["--repository", str(self.repository)]
+        global_request = json.loads(
+            self.run_script(*base, "--expected-mulgae-mcp", "global").stdout
+        )
+        self.assertEqual(
+            global_request["requested_mcp"]["mulgae"]["status"], "scope_mismatch"
+        )
+        local_request = json.loads(
+            self.run_script(*base, "--expected-mulgae-mcp", "local").stdout
+        )
+        self.assertEqual(local_request["requested_mcp"]["mulgae"]["status"], "ready")
+        unrequested = json.loads(
+            self.run_script(*base, "--expected-mulgae-mcp", "none").stdout
+        )
+        self.assertEqual(
+            unrequested["requested_mcp"]["mulgae"]["status"], "not_requested"
+        )
+        self.assertEqual(
+            unrequested["requested_mcp"]["mulgae"]["effective_scope"], "local"
+        )
+        gaori_local = json.loads(
+            self.run_script(*base, "--expected-gaori-mcp", "local").stdout
+        )
+        self.assertEqual(
+            gaori_local["requested_mcp"]["gaori"]["status"], "scope_mismatch"
+        )
+        self.assertEqual(
+            gaori_local["requested_mcp"]["gaori"]["effective_scope"], "global"
+        )
+
     def test_invalid_global_mcp_registration_is_degraded(self) -> None:
         self.install_fake_tools(
             mulgae_mcp_mode="disabled",
@@ -6907,6 +6947,51 @@ else:
         self.assertFalse(optional["mcp_required_for_status"])
         self.assertEqual(required["status"], "degraded")
         self.assertTrue(required["mcp_required_for_status"])
+
+    def test_unrequested_degraded_mulgae_mcp_does_not_block_cli_readiness(self) -> None:
+        self.install_fake_tools(mulgae_mcp_mode="disabled", mulgae_mcp_global=True)
+        self.install_mulgae_config()
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            ordinary = inspect_tools.inspect_mulgae(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+            unrequested = inspect_tools.inspect_mulgae(
+                self.repository.resolve(),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                expected_mcp_scope="none",
+            )
+            explicit = inspect_tools.inspect_mulgae(
+                self.repository.resolve(),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                expected_mcp_scope="global",
+            )
+            required = inspect_tools.inspect_mulgae(
+                self.repository.resolve(),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                require_mcp=True,
+                expected_mcp_scope="none",
+            )
+        self.assertEqual(unrequested["mcp_registration"]["status"], "degraded")
+        self.assertEqual(ordinary["status"], "degraded")
+        self.assertEqual(unrequested["status"], "configured")
+        self.assertEqual(explicit["status"], "degraded")
+        self.assertEqual(required["status"], "degraded")
+        self.assertEqual(
+            inspect_tools.assess_requested_mcp_scope(
+                unrequested["mcp_registration"], "none"
+            )["status"],
+            "not_requested",
+        )
+        self.assertEqual(
+            inspect_tools.assess_requested_mcp_scope(
+                explicit["mcp_registration"], "global"
+            )["status"],
+            "registration_degraded",
+        )
 
     def test_gaori_version_support_and_config_check_are_explicit(self) -> None:
         cases = (

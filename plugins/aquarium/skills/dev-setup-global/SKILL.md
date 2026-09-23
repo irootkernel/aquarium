@@ -28,6 +28,8 @@ Read the selected sections of [the shared tool catalog](../../references/tool-ca
 5. Diagnose local installation, supported version, canonical target, exact-upstream tree, duplicate and symlink state, paired-skill compatibility, services, global MCP, and Ouroboros integration independently.
 6. Do not ask the user to choose install, diagnose, or skip. Report current components without a question and propose actions only for missing, incompatible, unsafe, duplicated, or stale components.
 
+When `dev-setup-bundle` supplies `required_global_mcp`, keep CLI, paired-skill, and other global component diagnosis for every selected tool, but require or prepare a Mulgae or Gaori global MCP registration only for names in that union. A selected tool with no global MCP request must not make local-only targets depend on global MCP readiness. Preserve any existing global registration; no MCP request means unrequested, not disabled.
+
 If a freshness lookup, download, validation, or comparison fails, report `freshness_unverifiable`, clean ephemeral payloads, and do not propose installation or replacement from that payload.
 
 ## Owned Components
@@ -39,7 +41,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
 - The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
-- The `aquarium-status` user-global reporter runtime bundled with Aquarium. Diagnose it by default. Install, update, or repair its private hash-pinned runtime and launcher only after a separate exact approval. It is setup-recording infrastructure, not a bundle-manifest v1 tool and not part of production-binary readiness.
+- The `aquarium-status` user-global reporter runtime bundled with Aquarium. Diagnose it by default. Install, update, or repair its private hash-pinned runtime and launcher only after a separate exact approval. It is setup-recording infrastructure, not a bundle manifest tool and not part of production-binary readiness.
 - Aquarium production-binary readiness requires supported global Podway, Mulgae, and Gaori executables and fails closed when any is missing. Dolgorae and Sanho remain optional and are excluded from this baseline.
 
 Do not install provider CLIs, authenticate, read credentials, contact providers, transmit repository source, initialize repository workspaces, change project MCP, edit repository guidance, start tests or reviews, or invoke Ouroboros workflows.
