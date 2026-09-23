@@ -23,13 +23,13 @@ that current Aquarium handlers can supply and consume its required nodes,
 evidence items, and routes. An incompatible customization remains untouched and
 keeps setup degraded until its owner approves an exact update.
 
-Podway v0.2.10 permits at most eight `evidence_from` references per placement and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both limits; otherwise keep a single reference.
+Podway v0.2.11 permits at most 1,024 definitions and 1,024 graph placements, eight `evidence_from` references per placement, and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both reference limits; otherwise keep a single reference.
 
 The Task Procedure's `assess-goal` placement intentionally consumes the final normalized implementation evidence from `implement` instead of repeating the `prepare-implementation` re-entry summary. That leaves the eighth reference available for user-direction evidence while preserving the implementation result that the assessment actually needs.
 
 ## Compatibility Evidence
 
-A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.10 compatibility, the required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.10-podway> gaori run test-podway-compat` against the exact Aquarium candidate. The agent performing the check must load `$use-gaori` and follow its transport and waiting policy. Use MCP only when it demonstrably preserves the exact environment input; an agent-shell assignment does not update an already running MCP server. When CLI is required, start it once and await the same process handle. Use the authoritative `make test-podway-compat` target directly only when Gaori is unavailable. Do not start or restart an MCP server or change host configuration to make MCP eligible.
+A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.11 compatibility, the required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.11-podway> gaori run test-podway-compat` against the exact Aquarium candidate. The agent performing the check must load `$use-gaori` and follow its transport and waiting policy. Use MCP only when it demonstrably preserves the exact environment input; an agent-shell assignment does not update an already running MCP server. When CLI is required, start it once and await the same process handle. Use the authoritative `make test-podway-compat` target directly only when Gaori is unavailable. Do not start or restart an MCP server or change host configuration to make MCP eligible.
 
 ### Maintaining the compatibility matrix
 

@@ -30,7 +30,7 @@ RUN_TIMEOUT_SECONDS = 360
 MAX_GRAPH_STEPS = 128
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:bff8af8f57f1390446333cc56775ca71209e99bd3ff6fd556c39906b77a90635"
+    "sha256:92871d91cbd7aee16f81172dd6f09ae936ac4e408e54d437038edfa9189f1819"
 )
 
 SUCCESS_OPTIONS = {
@@ -1165,7 +1165,7 @@ class ManagedRuntime:
                 result.get("readiness_state") == "ready"
                 and result.get("readiness_stage") == "ready"
                 and result.get("mode") == RUNTIME_MODE
-                and result.get("daemon_version") == "v0.2.10"
+                and result.get("daemon_version") == "v0.2.11"
                 and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
                 and (
                     result.get("in_flight_client_count") is None
@@ -1207,7 +1207,7 @@ class ManagedRuntime:
                         except OSError:
                             pass
         raise RuntimeQualificationError(
-            "daemon did not reach v0.2.10 release-qa readiness: "
+            "daemon did not reach v0.2.11 release-qa readiness: "
             f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
         )
 
@@ -1219,7 +1219,7 @@ class ManagedRuntime:
                 "name": "aquarium-release-qualification",
                 "pid": os.getpid(),
                 "product": "podway",
-                "version": "v0.2.10",
+                "version": "v0.2.11",
                 "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
             },
             "operation": "control",
@@ -3203,7 +3203,9 @@ class ManagedRuntime:
         if scenario == "medium-wait":
             self.completed_assessments[procedure_id] = 2
         if scenario in VALIDATION_CONFIRMATION_SCENARIOS:
-            self.completed_assessments[procedure_id] = 2
+            self.completed_assessments[procedure_id] = (
+                3 if scenario == "validation-stop-preserves-completion" else 2
+            )
         digest = preview["procedure_digest"]
         suggestion = preview.get("start_suggestion", {}).get("argv")
         expected = [
@@ -4743,7 +4745,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.10-run-{self.run_index}",
+                f"official-v0.2.11-run-{self.run_index}",
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
@@ -4898,7 +4900,25 @@ def execute_runtime_job(
                 )
             runtime.renew_deadline()
             runtime.exercise_pagination()
+            archive = output_result(
+                runtime.raw(["archive", "list", "--json"]),
+                "session.archive_list",
+                "podway.session-archive-list-result/v2",
+            )
+            sessions = archive.get("sessions")
+            oldest = archive.get("oldest")
+            archive_list_v2 = (
+                isinstance(archive.get("count"), int)
+                and not isinstance(archive["count"], bool)
+                and isinstance(sessions, list)
+                and archive["count"] == len(sessions)
+                and archive.get("truncated") is False
+                and bool(sessions)
+                and isinstance(oldest, dict)
+                and sessions[-1] == oldest
+            )
             seam_results = {
+                "archive_list_v2": archive_list_v2,
                 "conditional_required_item": runtime.task_required_failure,
                 "list_scale_enforced": runtime.task_list_limit,
                 "guarded_decision": runtime.task_guard_failure,

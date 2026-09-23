@@ -12,7 +12,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Let Task, Epic, and cold-validation workflows select Mulgae, Orca, a fresh native Codex subagent, or an explicit delegated-review waiver while preserving provider continuity, route-specific evidence through Task closeout and commit handoff, and bounded remediation.
 - Let Task, Epic, and validation workflows use a complete composite execution SOT when no dossier is declared and the user explicitly waives it, with a separate dossier recommendation before the final waiver for larger work.
-- Raise the minimum supported Podway version to v0.2.10 and qualify the existing managed Procedures against its official Apple Silicon release.
+- Raise the minimum supported Podway version to v0.2.11, pin its matching `use-podway` skill, and qualify the managed Procedures against the official Apple Silicon release.
 - Run the Podway compatibility matrix in bounded parallel runtime batches without dropping any Procedure, correction, routing, recovery, or failure scenario, and expose the gate as a configured Gaori command.
 - Raise the minimum supported Mulgae version to v0.1.23, accept later stable releases without an upper version bound when they preserve the minimum machine contracts, and support v0.1.23 Grok policy and provider protocol behavior.
 - Configure new Mulgae projects by default with ZCode, Grok, and Codex, route the six default roles to ZCode, pin the Grok and Codex review models, and verify the effective provider and role selection before repository setup completes.

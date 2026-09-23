@@ -554,6 +554,28 @@ def test_lifecycle_job_renews_each_scenario_deadline(
         def exercise_pagination(self) -> None:
             driven.append("pagination")
 
+        def raw(self, arguments: list[str]) -> subprocess.CompletedProcess[bytes]:
+            assert arguments == ["archive", "list", "--json"]
+            summary = {"session_id": "archived-session"}
+            return subprocess.CompletedProcess(
+                arguments,
+                0,
+                stdout=json.dumps(
+                    {
+                        "schema": "podway.output/v3",
+                        "command": "session.archive_list",
+                        "result": {
+                            "schema": "podway.session-archive-list-result/v2",
+                            "count": 1,
+                            "truncated": False,
+                            "oldest": summary,
+                            "sessions": [summary],
+                        },
+                    }
+                ).encode(),
+                stderr=b"",
+            )
+
     monkeypatch.setattr(runtime, "ManagedRuntime", FakeRuntime)
     result = runtime.execute_runtime_job(
         tmp_path / "podway",
@@ -839,7 +861,7 @@ def test_workspace_removal_replay_requires_success_with_v7_receipt() -> None:
     assert (
         verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v7"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.10"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.11"
 
 
 @pytest.mark.parametrize(
@@ -930,12 +952,12 @@ def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None
     "changes",
     [
         {},
-        {"daemon_version": "0.2.10"},
+        {"daemon_version": "0.2.11"},
         {"daemon_version": "v0.2.9"},
         {"contract_manifest_digest": "sha256:" + "0" * 64},
     ],
 )
-def test_managed_runtime_requires_v0210_daemon_identity(
+def test_managed_runtime_requires_v0211_daemon_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changes: dict
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
@@ -947,9 +969,9 @@ def test_managed_runtime_requires_v0210_daemon_identity(
         "readiness_state": "ready",
         "readiness_stage": "ready",
         "mode": "release-qa",
-        "daemon_version": "v0.2.10",
+        "daemon_version": "v0.2.11",
         "contract_manifest_digest": (
-            "sha256:bff8af8f57f1390446333cc56775ca71209e99bd3ff6fd556c39906b77a90635"
+            "sha256:92871d91cbd7aee16f81172dd6f09ae936ac4e408e54d437038edfa9189f1819"
         ),
         "in_flight_client_count": 0,
         "maintenance_operation_count": 0,
