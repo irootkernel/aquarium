@@ -36,7 +36,7 @@ end
 # Keep this validator structural. Master separately verifies skill behavior.
 manifest = JSON.parse(read_file(PLUGIN.join(".codex-plugin/plugin.json")))
 assert(manifest.fetch("name") == "aquarium", "plugin name must be aquarium")
-assert(manifest.fetch("version") == "0.1.16", "plugin version must be 0.1.16")
+assert(manifest.fetch("version") == "0.1.17", "plugin version must be 0.1.17")
 release_tag = ENV.fetch("RELEASE_TAG", "")
 assert(release_tag.empty? || release_tag == "v#{manifest.fetch('version')}",
        "release tag must match plugin version v#{manifest.fetch('version')}")
