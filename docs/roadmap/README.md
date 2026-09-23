@@ -9,6 +9,7 @@ This file alone owns Aquarium's adopted epic and task identity, ordering, depend
 - Task numbering never restarts per epic, and no number is reused after deletion, deferral, completion, archival, or migration.
 - IDs do not encode execution order; the task table and explicit dependencies define order.
 - New IDs use the greatest number ever observed for the same kind in this namespace plus one.
+- `EPIC-000` is the reserved standing home for independent tasks; it is outside the numbered delivery-epic sequence.
 
 ## Lifecycle
 
@@ -23,11 +24,13 @@ This file alone owns Aquarium's adopted epic and task identity, ordering, depend
 | Blocked | Progress cannot continue until a named condition changes |
 
 Epic status is independent of child task status. Completing every child does not complete an epic without explicit epic acceptance.
+`EPIC-000` stays `In Progress` and is never closed. Each member task has its own acceptance and lifecycle.
 
 ## Epic Summary
 
 | Epic | Title | Status |
 | --- | --- | --- |
+| EPIC-000 | Independent tasks | In Progress |
 | EPIC-001 | Adopt Podway v0.2.6 | Completed |
 | EPIC-002 | Build the Aquarium development environment | Blocked |
 | EPIC-003 | Activate Dolgorae-backed Reviews | Completed |
@@ -45,6 +48,16 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
+
+## EPIC-000: Independent Tasks
+
+**Status:** `In Progress`
+
+`EPIC-000` groups tasks with independent scope and acceptance. Its status stays `In Progress` even when every current task is complete. Use task workflows for its members; do not run epic-wide execution, validation, or closeout. Link any detailed scope from the task row and settle that task's dossier at task closeout.
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-076 | Implement target-specific bundle setup intent | Replace bundle v1 with v2 MCP scope lists, Sorage Project slug, and Mulgae artist intent; route and verify the selected setup scopes. [Detailed scope and acceptance](../todo/TODO-BUNDLE-MCP-SCOPE.md). | Planned | TASK-037 |
 
 ## EPIC-001: Adopt Podway v0.2.6
 

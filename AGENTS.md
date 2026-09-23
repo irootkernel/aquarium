@@ -99,6 +99,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 
 ### Project-Specific Operating Rules
 
+- `EPIC-000` is the standing group for independent tasks. Use task-level workflows for its members; do not invoke epic-wide execution, validation, or closeout for this group. Keep its status `In Progress` when a member task completes. Settle a task-linked dossier at that task's closeout after promoting its durable content.
 - Aquarium does not vendor third-party Lora, Lore, Ouroboros, Deslop, Humanizer, or im-not-ai sources. Preserve the exact-upstream installation and provenance boundaries in `dev-setup-global`; `dev-setup` trusts canonical global skill presence and owns repository guidance.
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.
 - Preserve approval boundaries between diagnosis, network lookup, installation, native configuration, repository guidance, staging, commits, and publication.
