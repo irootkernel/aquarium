@@ -12,8 +12,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Let Task, Epic, and cold-validation workflows select Mulgae, Orca, a fresh native Codex subagent, or an explicit delegated-review waiver while preserving provider continuity, route-specific evidence through Task closeout and commit handoff, and bounded remediation.
 - Let Task, Epic, and validation workflows use a complete composite execution SOT when no dossier is declared and the user explicitly waives it, with a separate dossier recommendation before the final waiver for larger work.
-- Raise the minimum supported Podway version to v0.2.11, pin its matching `use-podway` skill, and qualify the managed Procedures against the official Apple Silicon release.
-- Run the Podway compatibility matrix in bounded parallel runtime batches without dropping any Procedure, correction, routing, recovery, or failure scenario, and expose the gate as a configured Gaori command.
+- Require Podway v0.2.11 and its pinned `use-podway` skill; run the configured compatibility gate during release preparation or on explicit request.
 - Raise the minimum supported Mulgae version to v0.1.23, accept later stable releases without an upper version bound when they preserve the minimum machine contracts, and support v0.1.23 Grok policy and provider protocol behavior.
 - Configure new Mulgae projects by default with ZCode, Grok, and Codex, route the six default roles to ZCode, pin the Grok and Codex review models, and verify the effective provider and role selection before repository setup completes.
 - Accept stable Humanizer, im-not-ai, and Ouroboros releases above their minimum supported versions, use each skill's upstream default installation location, reject duplicate skills visible to the same Codex home, and remove Dolgorae's dedicated release-verification path from global setup.
@@ -23,7 +22,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Bound Task, Epic, and cold-validation convergence to three precisely scoped work-unit assessments plus one correction-only remediation confirmation, then require one-shot user authority for each later correction and confirmation.
 - Require the executing agent to load the release-matched Gaori or Mulgae skill, preserve one native operation while waiting, and consume the applicable minimum machine-response contracts.
 - Let an approved Epic execution envelope authorize each planned member Task's normal completion commit after final Goal acceptance, without repeating the commit question or weakening exact release-note and publication approval boundaries.
-- Keep commit and amend requests within their approved scope, preserve existing check authority, and run the Podway compatibility gate only for release preparation or an explicit request.
+- Keep commit and amend requests within their approved scope and preserve existing check authority.
 
 ## v0.1.16 - 2026-09-16
 
