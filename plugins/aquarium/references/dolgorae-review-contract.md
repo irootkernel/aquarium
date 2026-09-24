@@ -1,6 +1,6 @@
 # Dolgorae Review Consumer Contract
 
-This dormant contract records the Dolgorae consumer boundary for possible future Independent Review re-enablement. `$aquarium:independent-review` is currently disabled and must stop before Dolgorae discovery, setup, capture, or source transmission. Explicit Dolgorae setup and operations remain available through their owning workflows. Re-enabling this route requires a new qualified candidate-admission contract; ordinary `dev-setup-global` readiness is not review admission.
+This dormant contract records the Dolgorae consumer boundary for a possible future, separately named `dolgorae-review` route. The current `$aquarium:independent-review` uses only host-native Codex subagents and performs no Dolgorae discovery, setup, capture, or source transmission. Explicit Dolgorae setup and operations remain available through their owning workflows. Adding a Dolgorae route requires a new qualified candidate-admission contract; ordinary `dev-setup-global` readiness is not review admission.
 
 ## Candidate identity
 

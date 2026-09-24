@@ -1,6 +1,6 @@
 # Review Intent Contract
 
-Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion, and for the disabled `$aquarium:independent-review` entrypoint's refusal and routing decision. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. Embedded Task, Epic, and validation workflows also read [review-routing-contract.md](review-routing-contract.md) for selection, route-neutral evidence, switching, and waiver semantics. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
+Use this contract whenever an enabled Aquarium route asks a reviewer to assess a change or completion. It defines the intent supplied to the reviewer and the completion fact consumed by Aquarium. Embedded Task, Epic, and validation workflows also read [review-routing-contract.md](review-routing-contract.md) for selection, route-neutral evidence, switching, and waiver semantics. It does not replace a backend's capture, transport, provider selection, execution, recovery, publication, or settlement contract.
 
 ## Select the purpose
 
@@ -11,18 +11,14 @@ Every review has one purpose:
 
 Purpose does not change the selected source scope, native review mode, remediation budget, or authorization. It grants no additional permission to run checks, edit files, stage, commit, publish, install, change providers, or launch another review.
 
-## Route a disabled Independent Review request
+## Route Independent Review
 
-The disabled `$aquarium:independent-review` entrypoint owns only its refusal and routing decision. Apply this matrix before any discovery, setup, source handling, provider contact, or review launch:
-
-| Explicitly preselected supported alternative | Result |
-| --- | --- |
-| None | Explain the refusal and available alternatives; launch nothing. |
-| Exactly one Orca route | Preserve the original target and review question, validate the requested reviewer and supported target, then invoke `$aquarium:orca-review` under its own contract. |
-| Exactly one native Codex route | Preserve the original target and review question. Use a fresh host-native review subagent only when the host exposes native delegation; otherwise report the unavailable route and stop without fallback. |
-| More than one alternative | Ask the user to choose exactly one route; launch nothing. |
-
-The selected route owns execution, source handling, lifecycle, evidence, and result. The disabled entrypoint adds no fallback, translation, or backend guarantee.
+An explicit standalone `$aquarium:independent-review` request or an approved
+embedded `independent-review` selection authorizes one static three-subagent
+review of the declared target. Its optional model and reasoning-effort values
+apply to every reviewer; omitted values use host defaults. It never invokes
+Mulgae, Orca, or Dolgorae as a fallback. Read the skill's target, dispatch,
+failure, and aggregation rules before execution.
 
 ## Build the Review Brief
 
@@ -43,28 +39,16 @@ Before an authorized dispatch through an enabled route, build one concise Review
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
 
-## Use a native Codex review subagent
+## Use Independent Review subagents
 
-Use a fresh host-native Codex subagent only after the user explicitly selects
-that review route and the current host exposes native delegation. Give it the
-same Review Brief, exact target, and approved context that another enabled
-static route would receive. Do not invent a delegation tool or silently choose
-Orca, Mulgae, or another backend when native delegation is unavailable.
-
-The subagent review is static and report-only. Require it to inspect the
-selected candidate, the applicable original requirements, and relevant callers,
-contracts, or tests without running checks, editing files, changing Git state,
-or spawning another review. For `completion`, require findings, one assessment
-for every applicable criterion, and explicit evidence gaps. For `change`,
-require findings and limitations without claiming whole-work-unit completion.
-The coordinator verifies the result while preserving subagent and coordinator
-evidence as separate provenance.
-
-Use only the lifecycle and evidence the host actually provides. Do not describe
-this route as Independent Review, Dolgorae, Orca, or Mulgae, and do not claim an
-immutable capture, publication, settlement, or recovery guarantee that was not
-observed. If the host cannot provide a fresh subagent or the selected target
-cannot be bounded, report that limitation and stop without automatic fallback.
+Give each of the three fresh host subagents the same exact target, complete
+Review Brief, and approved context. Their separate focus instructions do not
+narrow the applicable requirements. Each returns static, report-only findings;
+for `completion`, each assesses every applicable criterion and names evidence
+gaps. The coordinator checks the reports without treating a majority as proof.
+One missing reviewer or criterion assessment prevents a complete operation.
+Preserve host and coordinator provenance separately and claim only lifecycle
+facts the host actually provides.
 
 ## Recover intent and provenance
 

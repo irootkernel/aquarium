@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "22"
+version: "21"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -28,7 +28,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - independent-review
+          - native-codex
           - waived
       - id: review-target-scope
         type: text
@@ -423,7 +423,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - independent-review
+          - native-codex
           - waived
       - id: review-operation
         type: choice
@@ -471,7 +471,7 @@ node_definitions:
           - inconclusive
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record the bounded native lifecycle, delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
         required: true
         min_length: 1
         max_length: 2000
@@ -545,7 +545,7 @@ node_definitions:
           - not-applicable
           - mulgae
           - orca
-          - independent-review
+          - native-codex
           - waived
       - id: prior-review-operation
         type: choice
@@ -955,7 +955,7 @@ node_definitions:
             equals: mulgae
       - id: not-required
         label: Backend not required
-        criteria: The admitted Orca, Independent Review, or waiver assessment legitimately has no backend result.
+        criteria: The admitted Orca, native Codex, or waiver assessment legitimately has no backend result.
         guards:
           - evidence:
               node: final-review

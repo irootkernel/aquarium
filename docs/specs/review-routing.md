@@ -32,12 +32,11 @@ preferred route.
 | --- | --- |
 | `mulgae` | Default route. It retains immutable capture, selected-role execution, recovery, publication, findings, CI, and retention under the Mulgae contract. |
 | `orca` | Requires an explicitly selected reviewer and an Orca-supported target. Orca supervises one fresh static reviewer in the current registered worktree. |
-| `native-codex` | Requires explicit selection and fresh delegation supplied by the current host. The subagent performs one static, report-only review with host-owned provenance. |
+| `independent-review` | Requires explicit selection and three fresh host delegations. The subagents review one target and Brief with separate focus; Aquarium aggregates their static reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
-The Dolgorae-backed Independent Review route remains disabled. The shared model
-must leave room for a future adapter, but `independent` is not a selectable route
-in this epic.
+Independent Review uses host-native Codex subagents. A future Dolgorae review
+would have a separate route and admission contract.
 
 ## Selection and authorization
 
@@ -79,7 +78,7 @@ Task delivery may use Orca's `staged` target only when the complete task candida
 can be isolated from unrelated index entries. Epic completion and cold validation
 may use an exact `HEAD`, commit, or range target when the candidate is committed.
 An unsupported `workspace` or `dirty` target makes Orca unavailable for that
-checkpoint. Native Codex receives the exact bounded candidate that the host can
+checkpoint. Independent Review receives the exact bounded candidate that the host can
 present without inventing backend guarantees. Mulgae retains its current target
 rules.
 
@@ -89,7 +88,7 @@ The Procedures and handlers record these route-neutral facts:
 
 | Field | Meaning |
 | --- | --- |
-| `review-route` | `mulgae`, `orca`, `native-codex`, or `waived` |
+| `review-route` | `mulgae`, `orca`, `independent-review`, or `waived` |
 | `assessment-ordinal` | Positive ordinal of each completed delegated review or completed waiver assessment for the current goal revision |
 | `assessment-kind` | `work-unit` for ordinals one through three; `remediation-confirmation` for ordinal four and any explicitly authorized later checkpoint |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived` |
@@ -105,7 +104,8 @@ The following combinations are valid for a completed checkpoint:
 | Route and operation | Required evidence |
 | --- | --- |
 | `mulgae` and `complete` | An exact root or composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
-| `orca` or `native-codex` and `complete` | The native lifecycle or delegation reference, reviewer provenance, and `backend-check-result=not-provided`. These static routes do not manufacture a backend CI result. |
+| `orca` and `complete` | Native lifecycle, reviewer provenance, and `backend-check-result=not-provided`. |
+| `independent-review` and `complete` | Three completed host delegations for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
 | `waived` and `waived` | Waiver authority, `assessment-provenance=coordinator-waiver`, a waiver summary, and `backend-check-result=not-provided`. |
 
 An `incomplete` or `failed` operation preserves every available native reference
@@ -137,7 +137,7 @@ new goal revision or work-unit assessment.
 
 Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
 MCP gap blocks only the Mulgae route. Orca readiness blocks only Orca. Missing
-host delegation blocks only `native-codex`. The workflow must still report the
+host delegation blocks only `independent-review`. The workflow must still report the
 selected route's exact prerequisite failure.
 
 ## Native evidence-dependent deferral
@@ -152,7 +152,7 @@ It requires an exact Mulgae run and finding membership, committed publication,
 a successful findings query, and an authoritative native target SHA-256 that
 matches the promoted manifest. Only Mulgae supplies that contract in this epic.
 
-Orca, native Codex, and `waived` must not invent a Mulgae run, finding ID,
+Orca, Independent Review, and `waived` must not invent a Mulgae run, finding ID,
 capture, or target digest. Their Low findings use the ordinary dispositions. If
 a downstream requirement specifically needs promoted native evidence and no
 selected route can provide it, the workflow reports an evidence gap and stops.
@@ -214,7 +214,7 @@ supported terminal and successor-session path.
 
 ## Non-goals
 
-`EPIC-016` does not re-enable Independent Review, add automatic fallback, create
-a persistent route preference, make route guarantees equivalent, weaken required
-verification, or change standalone review entrypoints beyond the delegation
-needed by the owning handlers.
+Current routing does not add automatic fallback, create a persistent route
+preference, make route guarantees equivalent, or weaken required verification.
+Historical `native-codex` Procedure snapshots retain their original meaning;
+new checkpoints select `independent-review` instead.

@@ -275,15 +275,15 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
     expected_terminals = {
         ("task-route-mulgae", "aquarium-task-v2.yaml"),
         ("task-route-orca", "aquarium-task-v2.yaml"),
-        ("task-route-native-codex", "aquarium-task-v2.yaml"),
+        ("task-route-independent-review", "aquarium-task-v2.yaml"),
         ("task-route-waived", "aquarium-task-v2.yaml"),
         ("goal-route-mulgae", "aquarium-goal-v2.yaml"),
         ("goal-route-orca", "aquarium-goal-v2.yaml"),
-        ("goal-route-native-codex", "aquarium-goal-v2.yaml"),
+        ("goal-route-independent-review", "aquarium-goal-v2.yaml"),
         ("goal-route-waived", "aquarium-goal-v2.yaml"),
         ("validation-route-mulgae", "aquarium-validation-v2.yaml"),
         ("validation-route-orca", "aquarium-validation-v2.yaml"),
-        ("validation-route-native-codex", "aquarium-validation-v2.yaml"),
+        ("validation-route-independent-review", "aquarium-validation-v2.yaml"),
         ("validation-route-waived", "aquarium-validation-v2.yaml"),
         ("goal-resume-changed-orca-after-incomplete", "aquarium-goal-v2.yaml"),
         ("goal-resume-provider-mismatch-rejected", "aquarium-goal-v2.yaml"),
@@ -306,12 +306,12 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         ("goal-finding-inconsistent", "aquarium-goal-v2.yaml"),
         ("goal-hardening-defer", "aquarium-goal-v2.yaml"),
         ("task-completed-continue-mulgae", "aquarium-task-v2.yaml"),
-        ("task-completed-continue-native-codex", "aquarium-task-v2.yaml"),
+        ("task-completed-continue-independent-review", "aquarium-task-v2.yaml"),
         ("task-completed-continue-orca", "aquarium-task-v2.yaml"),
         ("task-completed-continue-waiver", "aquarium-task-v2.yaml"),
         ("task-completed-switch-orca", "aquarium-task-v2.yaml"),
         ("task-completed-waiver", "aquarium-task-v2.yaml"),
-        ("task-completed-waiver-switch-native-codex", "aquarium-task-v2.yaml"),
+        ("task-completed-waiver-switch-independent-review", "aquarium-task-v2.yaml"),
         ("task-completion-implementation-owner", "aquarium-task-v2.yaml"),
         ("task-completion-verification-owner", "aquarium-task-v2.yaml"),
         ("task-completion-documentation-owner", "aquarium-task-v2.yaml"),
@@ -670,7 +670,7 @@ def test_task_direction_mismatch_runtime_scenarios_reject_before_review(
     assert rejection_node not in {
         "enter-mulgae-review-route",
         "enter-orca-review-route",
-        "enter-native-codex-review-route",
+        "enter-independent-review-route",
         "enter-waived-review-route",
         "review",
     }
@@ -719,7 +719,11 @@ def test_completed_checkpoint_runtime_scenarios_map_to_guarded_next_ordinal(
     (
         ("task-completed-continue-mulgae", "mulgae", "complete"),
         ("task-completed-continue-orca", "orca", "complete"),
-        ("task-completed-continue-native-codex", "native-codex", "complete"),
+        (
+            "task-completed-continue-independent-review",
+            "independent-review",
+            "complete",
+        ),
         ("task-completed-continue-waiver", "waived", "waived"),
     ),
 )
@@ -740,12 +744,12 @@ def test_completed_current_runtime_scenarios_preserve_route_and_consume_next_ord
 
 def test_completed_waiver_runtime_scenario_can_switch_to_delegated_route() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    scenario = "task-completed-waiver-switch-native-codex"
+    scenario = "task-completed-waiver-switch-independent-review"
     configuration = runtime.TASK_RESUME_SCENARIOS[scenario]
 
     assert scenario in runtime.TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
     assert configuration["route"] == "waived"
-    assert configuration["effective_route"] == "native-codex"
+    assert configuration["effective_route"] == "independent-review"
     assert configuration["prior_operation"] == "waived"
     assert configuration["readiness"] == "completed-checkpoint"
     assert configuration["direction"] == "switch-route"

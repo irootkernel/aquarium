@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -82,6 +84,273 @@ def test_empty_staged_target_is_rejected(tmp_path: Path) -> None:
     assert error.value.code == "staged_target_empty"
 
 
+def test_workspace_and_dirty_bind_final_nonignored_content(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    write(root / "tracked.txt", "working tree\n")
+    write(root / "new.txt", "untracked\n")
+    write(root / ".cache" / "ignored.txt", "first\n")
+
+    workspace = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    dirty = inspect_review_target.inspect(root, arguments(dirty=True))["target"]
+    assert workspace["kind"] == "workspace"
+    assert dirty["kind"] == "dirty"
+    assert workspace["content_sha256"] == dirty["content_sha256"]
+
+    write(root / ".cache" / "ignored.txt", "second\n")
+    assert (
+        inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+        == workspace
+    )
+
+    write(root / "new.txt", "changed\n")
+    changed = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    assert changed["target_digest"] != workspace["target_digest"]
+
+
+def test_dirty_requires_a_change_and_workspace_allows_clean_tree(
+    tmp_path: Path,
+) -> None:
+    root = repository(tmp_path)
+    assert (
+        inspect_review_target.inspect(root, arguments(workspace=True))["target"][
+            "file_count"
+        ]
+        == 2
+    )
+    with pytest.raises(inspect_review_target.InspectionError) as error:
+        inspect_review_target.inspect(root, arguments(dirty=True))
+    assert error.value.code == "dirty_target_empty"
+
+
+def test_workspace_rejects_symlink_outside_worktree(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    (root / "outside.txt").symlink_to(tmp_path / "outside.txt")
+    with pytest.raises(inspect_review_target.InspectionError) as error:
+        inspect_review_target.inspect(root, arguments(workspace=True))
+    assert error.value.code == "unsafe_symlink"
+
+
+@pytest.mark.parametrize("target_kind", ["workspace", "dirty"])
+def test_workspace_targets_reject_symlinked_parent(
+    tmp_path: Path, target_kind: str
+) -> None:
+    root = repository(tmp_path)
+    nested = root / "nested"
+    write(nested / "tracked.txt", "inside\n")
+    git(root, "add", "nested/tracked.txt")
+    write(root / ".gitignore", ".cache/\nnested\n")
+    git(root, "add", ".gitignore")
+    git(root, "commit", "-qm", "add nested file")
+
+    outside = tmp_path / "outside"
+    write(outside / "tracked.txt", "outside\n")
+    (nested / "tracked.txt").unlink()
+    nested.rmdir()
+    nested.symlink_to(outside, target_is_directory=True)
+
+    with pytest.raises(inspect_review_target.InspectionError) as error:
+        inspect_review_target.inspect(root, arguments(**{target_kind: True}))
+
+    assert error.value.code == "unsafe_symlink"
+
+
+@pytest.mark.parametrize("target_kind", ["workspace", "dirty"])
+def test_workspace_targets_bind_executable_mode(
+    tmp_path: Path, target_kind: str
+) -> None:
+    root = repository(tmp_path)
+    tracked = root / "tracked.txt"
+    if target_kind == "dirty":
+        write(tracked, "changed\n")
+
+    before = inspect_review_target.inspect(root, arguments(**{target_kind: True}))[
+        "target"
+    ]
+    content = tracked.read_bytes()
+    tracked.chmod(0o755)
+    after = inspect_review_target.inspect(root, arguments(**{target_kind: True}))[
+        "target"
+    ]
+
+    assert tracked.read_bytes() == content
+    assert after["content_sha256"] != before["content_sha256"]
+    assert after["target_digest"] != before["target_digest"]
+
+
+def test_workspace_targets_keep_tracked_deletion_absent(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    nested = root / "nested"
+    write(nested / "tracked.txt", "inside\n")
+    git(root, "add", "nested/tracked.txt")
+    git(root, "commit", "-qm", "add nested file")
+    (nested / "tracked.txt").unlink()
+    nested.rmdir()
+
+    workspace = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    dirty = inspect_review_target.inspect(root, arguments(dirty=True))["target"]
+
+    assert workspace["file_count"] == 2
+    assert dirty["file_count"] == 2
+    assert workspace["content_sha256"] == dirty["content_sha256"]
+
+
+@pytest.mark.parametrize("target_kind", ["workspace", "dirty"])
+def test_file_to_directory_transition_is_a_valid_target(
+    tmp_path: Path, target_kind: str
+) -> None:
+    root = repository(tmp_path)
+    write(root / "item", "old\n")
+    git(root, "add", "item")
+    git(root, "commit", "-qm", "add item")
+    (root / "item").unlink()
+    write(root / "item" / "child.txt", "new\n")
+
+    target = inspect_review_target.inspect(root, arguments(**{target_kind: True}))[
+        "target"
+    ]
+
+    assert target["file_count"] == 3
+
+
+@pytest.mark.parametrize("target_kind", ["workspace", "dirty"])
+def test_directory_to_file_transition_is_a_valid_target(
+    tmp_path: Path, target_kind: str
+) -> None:
+    root = repository(tmp_path)
+    write(root / "item" / "child.txt", "old\n")
+    git(root, "add", "item/child.txt")
+    git(root, "commit", "-qm", "add child")
+    (root / "item" / "child.txt").unlink()
+    (root / "item").rmdir()
+    write(root / "item", "new\n")
+
+    target = inspect_review_target.inspect(root, arguments(**{target_kind: True}))[
+        "target"
+    ]
+
+    assert target["file_count"] == 3
+
+
+def test_dirty_checks_final_projection_when_status_hides_change(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    git(root, "update-index", "--assume-unchanged", "tracked.txt")
+    write(root / "tracked.txt", "hidden\n")
+    assert git(root, "status", "--porcelain") == ""
+
+    target = inspect_review_target.inspect(root, arguments(dirty=True))["target"]
+
+    assert target["kind"] == "dirty"
+
+
+def test_dirty_rejects_staged_change_canceled_in_worktree(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    write(root / "tracked.txt", "staged\n")
+    git(root, "add", "tracked.txt")
+    write(root / "tracked.txt", "base\n")
+    assert git(root, "status", "--porcelain")
+
+    with pytest.raises(inspect_review_target.InspectionError) as error:
+        inspect_review_target.inspect(root, arguments(dirty=True))
+
+    assert error.value.code == "dirty_target_empty"
+
+
+def test_dirty_detects_mode_change_when_git_ignores_filemode(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    git(root, "config", "core.filemode", "false")
+    (root / "tracked.txt").chmod(0o755)
+    assert git(root, "status", "--porcelain") == ""
+
+    target = inspect_review_target.inspect(root, arguments(dirty=True))["target"]
+
+    assert target["kind"] == "dirty"
+
+
+@pytest.mark.parametrize("target_kind", ["workspace", "dirty"])
+def test_symlink_loop_returns_structured_error(
+    tmp_path: Path, target_kind: str
+) -> None:
+    root = repository(tmp_path)
+    (root / "loop").symlink_to("loop")
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--repository", str(root), f"--{target_kind}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert result.stderr == ""
+    assert json.loads(result.stdout)["error"]["code"] == "unsafe_symlink"
+
+
+def test_workspace_and_dirty_bind_checked_out_gitlink(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    child = tmp_path / "child"
+    child.mkdir()
+    git(child, "init", "-q")
+    git(child, "config", "user.name", "Aquarium Test")
+    git(child, "config", "user.email", "aquarium@example.invalid")
+    write(child / "file.txt", "first\n")
+    git(child, "add", "file.txt")
+    git(child, "commit", "-qm", "first")
+    git(
+        root,
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        str(child),
+        "module",
+    )
+    git(root, "commit", "-qam", "add module")
+
+    before = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    assert before["file_count"] == 4
+    module = root / "module"
+    git(module, "config", "user.name", "Aquarium Test")
+    git(module, "config", "user.email", "aquarium@example.invalid")
+    write(module / "file.txt", "second\n")
+    git(module, "add", "file.txt")
+    git(module, "commit", "-qm", "second")
+
+    after = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    dirty = inspect_review_target.inspect(root, arguments(dirty=True))["target"]
+    assert after["target_digest"] != before["target_digest"]
+    assert dirty["content_sha256"] == after["content_sha256"]
+
+
+def test_uninitialized_gitlink_uses_index_identity(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    child = tmp_path / "child"
+    child.mkdir()
+    git(child, "init", "-q")
+    git(child, "config", "user.name", "Aquarium Test")
+    git(child, "config", "user.email", "aquarium@example.invalid")
+    write(child / "file.txt", "first\n")
+    git(child, "add", "file.txt")
+    git(child, "commit", "-qm", "first")
+    git(
+        root,
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        str(child),
+        "module",
+    )
+    git(root, "commit", "-qam", "add module")
+    before = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    git(root, "submodule", "deinit", "-f", "--", "module")
+
+    after = inspect_review_target.inspect(root, arguments(workspace=True))["target"]
+    assert after == before
+    with pytest.raises(inspect_review_target.InspectionError) as error:
+        inspect_review_target.inspect(root, arguments(dirty=True))
+    assert error.value.code == "dirty_target_empty"
+
+
 def test_head_and_commit_resolve_to_exact_commits(tmp_path: Path) -> None:
     root = repository(tmp_path)
     first = git(root, "rev-parse", "HEAD")
@@ -99,6 +368,30 @@ def test_head_and_commit_resolve_to_exact_commits(tmp_path: Path) -> None:
     assert commit["revision"] == first[:10]
     assert commit["commit"] == first
     assert len(commit["diff_sha256"]) == 64
+
+
+def test_merge_commit_uses_first_parent_transition(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    main_branch = git(root, "branch", "--show-current")
+    git(root, "checkout", "-qb", "feature")
+    write(root / "feature.txt", "feature\n")
+    git(root, "add", "feature.txt")
+    git(root, "commit", "-qm", "feature")
+    git(root, "checkout", main_branch)
+    write(root / "main.txt", "main\n")
+    git(root, "add", "main.txt")
+    git(root, "commit", "-qm", "main")
+    git(root, "merge", "--no-ff", "-qm", "merge", "feature")
+
+    target = inspect_review_target.inspect(root, arguments(commit="HEAD"))["target"]
+    parent = git(root, "rev-parse", "HEAD^1")
+    merge = git(root, "rev-parse", "HEAD")
+    expected = git(
+        root, "diff", "--binary", "--no-ext-diff", "--no-textconv", parent, merge
+    )
+    assert target["diff_sha256"] == inspect_review_target.sha256(
+        (expected + "\n").encode()
+    )
 
 
 def test_two_dot_range_preserves_endpoints_and_commit_order(tmp_path: Path) -> None:

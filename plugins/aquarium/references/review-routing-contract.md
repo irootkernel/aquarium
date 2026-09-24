@@ -15,18 +15,18 @@ The workflow plan selects exactly one route and, where required, its reviewer:
 | --- | --- |
 | `mulgae` | Default when no alternative is selected. Mulgae owns capture, provider execution, recovery, publication, CI, findings, and retention. |
 | `orca` | Requires an explicit reviewer and an Orca-supported target. Orca owns its Run, Task, Dispatch, worker, Delivery, acknowledgement, settlement, and recovery. |
-| `native-codex` | Requires explicit selection and fresh host delegation. The host owns the subagent lifecycle and provenance. |
+| `independent-review` | Requires explicit selection and three fresh host subagents. Aquarium coordinates their static reports; the host owns delegation lifecycle and provenance. |
 | `waived` | Requires an explicit delegated-review waiver. It launches no reviewer; the coordinator assesses the same complete Review Brief from current authorized evidence. |
 
 The selected route remains effective at later checkpoints until the user
 explicitly authorizes a bounded route change. Do not create a repository or
-user-global preference. Independent Review remains disabled and is not a
-selectable route.
+user-global preference.
 
 Check only the selected route's prerequisites. A missing Mulgae installation,
-project MCP, provider, or paired skill does not block Orca, native Codex, or a
-waiver. Orca requires its requested reviewer and supported target. Native Codex
-requires fresh host delegation. A waiver requires no backend readiness.
+project MCP, provider, or paired skill does not block Orca, Independent Review,
+or a waiver. Orca requires its requested reviewer and supported target.
+Independent Review requires fresh host delegation for three subagents and any
+explicitly requested model or effort. A waiver requires no backend readiness.
 
 ## Preserve Route-Specific Targets and Guarantees
 
@@ -39,14 +39,16 @@ vocabulary and report the exact included and excluded state.
   contract. A Task may use `staged` only when the complete candidate is isolated
   from unrelated index entries. Epic and validation checkpoints may use an
   exact committed target.
-- Native Codex receives the exact bounded candidate the current host can expose.
-  Its review is static and report-only under the review-intent contract.
+- Independent Review uses the six common target scopes through its target
+  inspector and gives the same exact target and Review Brief to three fresh
+  static, report-only subagents. A mutable target is checked again after review;
+  a matching fingerprint is not an immutable capture guarantee.
 - A waiver binds the exact target assessed by the coordinator and records the
   absence of delegated review.
 
-Never describe Orca, native Codex, or a waiver as a Mulgae capture, publication,
-CI result, findings query, or recovery guarantee. Do not describe native Codex
-as Independent Review, Dolgorae, Orca, or Mulgae.
+Never describe Orca, Independent Review, or a waiver as a Mulgae capture,
+publication, CI result, findings query, or recovery guarantee. Independent
+Review does not use Dolgorae or inherit Orca lifecycle guarantees.
 
 ## Record Route-Neutral Evidence
 
@@ -55,7 +57,7 @@ workflow-lifecycle decisions:
 
 | Field | Contract |
 | --- | --- |
-| `review-route` | `mulgae`, `orca`, `native-codex`, or `waived`. |
+| `review-route` | `mulgae`, `orca`, `independent-review`, or `waived`. |
 | `assessment-ordinal` | Positive ordinal assigned only after a delegated review completes or a waiver assessment completes for the current goal revision. |
 | `assessment-kind` | `work-unit` for the first three assessments or `remediation-confirmation` for ordinal four and later. |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived`. |
@@ -70,9 +72,11 @@ Admit only these completed combinations:
   reviewer provenance, committed publication, complete coverage, a successful
   findings query, and `backend-check-result` of `pass` or `fail`. Mulgae CI may
   not be `not-provided`.
-- `orca` or `native-codex` plus `complete` requires authoritative native
-  lifecycle or host-delegation evidence, reviewer provenance, and
-  `backend-check-result=not-provided`.
+- `orca` plus `complete` requires authoritative native lifecycle, reviewer
+  provenance, and `backend-check-result=not-provided`. `independent-review`
+  plus `complete` requires three completed host delegations for the same target
+  and Brief, all required criterion assessments, reviewer provenance, and
+  `backend-check-result=not-provided`. The three reports consume one ordinal.
 - `waived` plus `waived` requires explicit waiver authority,
   `assessment-provenance=coordinator-waiver`, a complete waiver summary, and
   `backend-check-result=not-provided`.
@@ -82,9 +86,9 @@ For operations that do not complete, admit only these combinations:
 - `mulgae` plus `incomplete` or `failed` retains Mulgae operation provenance,
   every issued native reference, and the observed backend check. Use
   `not-provided` only when no authoritative CI result exists.
-- `orca` or `native-codex` plus `incomplete` or `failed` retains the matching
-  native lifecycle or host-delegation provenance and every available reference,
-  with `backend-check-result=not-provided`.
+- `orca` or `independent-review` plus `incomplete` or `failed` retains the
+  matching native lifecycle or host-delegation provenance and every available
+  reference, with `backend-check-result=not-provided`.
 - `waived` admits only `review-operation=waived`; it never records `complete`,
   `incomplete`, or `failed`. Delegated routes never use
   `assessment-provenance=coordinator-waiver`.
@@ -183,7 +187,7 @@ checkpoint. Preserve the existing bounded correction and confirmation budget.
 All routes support the ordinary finite Low dispositions. The promoted
 `hardening-deferral` path remains Mulgae-only because it requires exact run and
 finding membership, committed publication, a successful findings query, and an
-authoritative native target SHA-256. Orca, native Codex, and waiver evidence must
+authoritative native target SHA-256. Orca, Independent Review, and waiver evidence must
 state that no promoted hardening evidence applies; never invent a Mulgae run,
 finding identity, capture, publication, query, or target digest.
 

@@ -73,7 +73,7 @@ SUCCESS_OPTIONS = {
     "authorize-planned-review-route": "planned-mulgae",
     "enter-mulgae-review-route": "start",
     "enter-orca-review-route": "start",
-    "enter-native-codex-review-route": "start",
+    "enter-independent-review-route": "start",
     "enter-waived-review-route": "start",
     "confirm-goal-assessment-core": "ready",
     "confirm-stopped-goal-assessment-core": "ready",
@@ -81,7 +81,7 @@ SUCCESS_OPTIONS = {
     "confirm-review-route-binding": "mulgae",
     "decide-mulgae-review-operation": "assessed",
     "decide-orca-review-operation": "assessed",
-    "decide-native-codex-review-operation": "assessed",
+    "decide-independent-review-operation": "assessed",
     "confirm-assessment-ordinal": "work-unit",
     "confirm-first-review-evidence": "mulgae",
     "confirm-extra-review-evidence": "mulgae",
@@ -92,11 +92,11 @@ SUCCESS_OPTIONS = {
     "confirm-incomplete-static-delegated-provenance": "delegated",
     "decide-planned-mulgae-review-operation": "completed",
     "decide-planned-orca-review-operation": "completed",
-    "decide-planned-native-codex-review-operation": "completed",
+    "decide-planned-independent-review-operation": "completed",
     "decide-planned-waiver-review-operation": "waived",
     "decide-changed-mulgae-review-operation": "completed",
     "decide-changed-orca-review-operation": "completed",
-    "decide-changed-native-codex-review-operation": "completed",
+    "decide-changed-independent-review-operation": "completed",
     "decide-changed-waiver-review-operation": "waived",
     "confirm-completed-assessment-ordinal": "first",
     "confirm-waived-assessment-ordinal": "first",
@@ -118,7 +118,7 @@ SUCCESS_OPTIONS = {
     "confirm-mulgae-pass-finding-validity": "resolved",
     "confirm-mulgae-fail-finding-validity": "resolved",
     "confirm-orca-finding-validity": "resolved",
-    "confirm-native-codex-finding-validity": "resolved",
+    "confirm-independent-review-finding-validity": "resolved",
     "confirm-waived-finding-validity": "resolved",
     "assess-goal": "achieved",
     "assess-stopped-goal": "not-achieved",
@@ -254,7 +254,7 @@ ROUTE_QUALIFICATION_SCENARIOS = {
         "aquarium-goal-v2",
         "aquarium-validation-v2",
     )
-    for route in ("mulgae", "orca", "native-codex", "waived")
+    for route in ("mulgae", "orca", "independent-review", "waived")
 }
 
 GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
@@ -440,9 +440,9 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "continued_checkpoint": True,
     },
-    "task-completed-continue-native-codex": {
-        "route": "native-codex",
-        "effective_route": "native-codex",
+    "task-completed-continue-independent-review": {
+        "route": "independent-review",
+        "effective_route": "independent-review",
         "operation": "complete",
         "prior_operation": "complete",
         "prior_state": "terminal-complete",
@@ -452,9 +452,9 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "continued_checkpoint": True,
     },
-    "task-completed-waiver-switch-native-codex": {
+    "task-completed-waiver-switch-independent-review": {
         "route": "waived",
-        "effective_route": "native-codex",
+        "effective_route": "independent-review",
         "operation": "waived",
         "prior_operation": "waived",
         "prior_state": "terminal-complete",
@@ -492,7 +492,7 @@ def route_qualification_provenance(route: str) -> str:
     return {
         "mulgae": "mulgae-reviewer:official-runtime",
         "orca": "orca-reviewer:official-runtime",
-        "native-codex": "host-delegation:official-runtime",
+        "independent-review": "host-delegation:official-runtime",
         "waived": "coordinator-waiver",
     }[route]
 
@@ -501,7 +501,7 @@ def route_qualification_evidence_reference(route: str, scenario: str) -> str:
     kind = {
         "mulgae": "mulgae-root",
         "orca": "orca-lifecycle",
-        "native-codex": "host-delegation",
+        "independent-review": "host-delegation",
         "waived": "coordinator-waiver",
     }[route]
     return f"{kind}:official-runtime:{scenario}"
@@ -2338,7 +2338,7 @@ class ManagedRuntime:
                 "review-route": (
                     "mulgae"
                     if goal_recovery and node == "complete-work"
-                    else "native-codex"
+                    else "independent-review"
                     if goal_recovery
                     and node == "record-evidence"
                     and self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
@@ -2354,7 +2354,7 @@ class ManagedRuntime:
                         self.scenario in VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
                         and self.validation_review_round > 0
                     )
-                    else "native-codex"
+                    else "independent-review"
                     if validation_recovery and node == "final-review"
                     else "waived"
                     if validation_waiver_followup and node == "final-review"
@@ -3269,7 +3269,7 @@ class ManagedRuntime:
                 expected_entry = f"enter-{route}-review-route"
                 wrong_entries = {
                     f"enter-{provider}-review-route"
-                    for provider in {"mulgae", "orca", "native-codex"} - {route}
+                    for provider in {"mulgae", "orca", "independent-review"} - {route}
                     if self.node_visits.get(f"enter-{provider}-review-route", 0)
                 }
                 if self.node_visits.get(expected_entry) != 2 or wrong_entries:
@@ -4363,13 +4363,13 @@ class ManagedRuntime:
                 and node == "confirm-review-route-binding"
                 and self.goal_evidence_round == 2
             ):
-                self.reject_guarded_decision(observation, "changed-native-codex")
+                self.reject_guarded_decision(observation, "changed-independent-review")
                 return {
                     "scenario": scenario,
                     "procedure_id": procedure_id,
                     "node": node,
                     "lifecycle": status["session"]["lifecycle"],
-                    "guard_rejected": "changed-native-codex",
+                    "guard_rejected": "changed-independent-review",
                     "state_unchanged": True,
                 }
             if (
@@ -4637,14 +4637,14 @@ class ManagedRuntime:
                 task_operation_nodes = {
                     "mulgae": "decide-mulgae-review-operation",
                     "orca": "decide-orca-review-operation",
-                    "native-codex": "decide-native-codex-review-operation",
+                    "independent-review": "decide-independent-review-operation",
                 }
                 if node == task_operation_nodes.get(qualified_route):
                     special_option = "assessed"
                 task_provenance_nodes = {
                     "mulgae": "confirm-mulgae-provenance",
                     "orca": "confirm-static-delegated-provenance",
-                    "native-codex": "confirm-static-delegated-provenance",
+                    "independent-review": "confirm-static-delegated-provenance",
                     "waived": "confirm-waived-provenance",
                 }
                 if node == task_provenance_nodes.get(qualified_route):

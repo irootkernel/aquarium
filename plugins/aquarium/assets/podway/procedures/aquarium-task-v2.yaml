@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "20"
+version: "21"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -28,7 +28,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: review-target-scope
         type: text
@@ -39,7 +39,7 @@ node_definitions:
         multiline: true
       - id: review-selection-summary
         type: text
-        prompt: Record the route selection authority, explicit Orca reviewer or native delegation requirement when applicable, and waiver authority and assurance limit when waived.
+        prompt: Record the route selection authority, explicit Orca reviewer or three-subagent Independent Review requirement when applicable, and waiver authority and assurance limit when waived.
         required: true
         min_length: 1
         max_length: 2000
@@ -194,7 +194,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: route-authorization-basis
         type: choice
@@ -244,7 +244,7 @@ node_definitions:
           - not-applicable
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: prior-route-change-readiness
         type: choice
@@ -480,18 +480,18 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: resume-current
-      - id: native-codex
-        label: Resume native Codex
-        criteria: The preceding unsettled operation belongs to native Codex and the user explicitly directed current-route resume.
+      - id: independent-review
+        label: Resume Independent Review
+        criteria: The preceding unsettled operation belongs to Independent Review and the user explicitly directed current-route resume.
         guards:
           - evidence:
               node: prepare-review
               item: prior-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -564,18 +564,18 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: not-applicable
-      - id: planned-native-codex
-        label: Use planned native Codex route
-        criteria: The approved plan and effective checkpoint route are both native Codex.
+      - id: planned-independent-review
+        label: Use planned Independent Review route
+        criteria: The approved plan and effective checkpoint route are both Independent Review.
         guards:
           - evidence:
               node: record-plan
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -653,14 +653,14 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: switch-route
-      - id: changed-native-codex
-        label: Use explicitly changed native Codex route
-        criteria: A later explicit route change with prior-checkpoint lineage authorizes native Codex.
+      - id: changed-independent-review
+        label: Use explicitly changed Independent Review route
+        criteria: A later explicit route change with prior-checkpoint lineage authorizes Independent Review.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -742,14 +742,14 @@ node_definitions:
               node: prepare-review
               item: prior-route-change-readiness
             equals: completed-checkpoint
-      - id: completed-change-native-codex
-        label: Change a completed checkpoint to native Codex
-        criteria: Explicit authority changes a previously completed checkpoint to native Codex while preserving its lineage.
+      - id: completed-change-independent-review
+        label: Change a completed checkpoint to Independent Review
+        criteria: Explicit authority changes a previously completed checkpoint to Independent Review while preserving its lineage.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -831,18 +831,18 @@ node_definitions:
               node: prepare-review
               item: prior-assessment-ordinal
             at_least: 1
-      - id: continued-native-codex
-        label: Continue native Codex
-        criteria: The completed native Codex route remains effective under fresh bounded correction authority.
+      - id: continued-independent-review
+        label: Continue Independent Review
+        criteria: The completed Independent Review route remains effective under fresh bounded correction authority.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: prior-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: prepare-review
               item: checkpoint-requested-direction
@@ -890,7 +890,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: review-operation
         type: choice
@@ -933,7 +933,7 @@ node_definitions:
           - remediation-confirmation
       - id: review-evidence-reference
         type: text
-        prompt: Record the bounded native lifecycle, host-delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
+        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: true
         min_length: 1
         max_length: 2000
@@ -1080,18 +1080,18 @@ node_definitions:
               node: review
               item: review-route
             equals: orca
-      - id: native-codex
-        label: Authorized native Codex record
-        criteria: The prepared and recorded routes are both native Codex.
+      - id: independent-review
+        label: Authorized Independent Review record
+        criteria: The prepared and recorded routes are both Independent Review.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: review
               item: review-route
-            equals: native-codex
+            equals: independent-review
       - id: waived
         label: Authorized waiver record
         criteria: The prepared and recorded routes are both waived.
@@ -1235,7 +1235,7 @@ node_definitions:
             not_equals: not-provided
       - id: static-delegated
         label: Static delegated review evidence
-        criteria: The exact Orca or native Codex route remains in evidence and completed without a backend check claim.
+        criteria: The exact Orca route or complete three-subagent Independent Review remains in evidence without a backend check claim.
         guards:
           - evidence:
               node: review
@@ -1290,7 +1290,7 @@ node_definitions:
             equals: mulgae
       - id: static-delegated
         label: Incomplete static delegated operation evidence
-        criteria: The exact Orca or native Codex route remains in evidence and retained provenance without a backend check claim.
+        criteria: The exact Orca or Independent Review route remains in evidence and retained provenance without a backend check claim.
         guards:
           - evidence:
               node: review
@@ -2298,8 +2298,8 @@ graph:
         planned-orca:
           to: enter-orca-review-route
           effect: advance
-        planned-native-codex:
-          to: enter-native-codex-review-route
+        planned-independent-review:
+          to: enter-independent-review-route
           effect: advance
         planned-waiver:
           to: enter-waived-review-route
@@ -2333,8 +2333,8 @@ graph:
         changed-orca:
           to: enter-orca-review-route
           effect: advance
-        changed-native-codex:
-          to: enter-native-codex-review-route
+        changed-independent-review:
+          to: enter-independent-review-route
           effect: advance
         changed-waiver:
           to: enter-waived-review-route
@@ -2368,8 +2368,8 @@ graph:
         completed-change-orca:
           to: enter-orca-review-route
           effect: advance
-        completed-change-native-codex:
-          to: enter-native-codex-review-route
+        completed-change-independent-review:
+          to: enter-independent-review-route
           effect: advance
         completed-change-waiver:
           to: enter-waived-review-route
@@ -2403,8 +2403,8 @@ graph:
         continued-orca:
           to: enter-orca-review-route
           effect: advance
-        continued-native-codex:
-          to: enter-native-codex-review-route
+        continued-independent-review:
+          to: enter-independent-review-route
           effect: advance
         continued-waiver:
           to: enter-waived-review-route
@@ -2441,7 +2441,7 @@ graph:
         reprepare:
           to: prepare-review
           effect: rework
-    - id: enter-native-codex-review-route
+    - id: enter-independent-review-route
       use: authorized-review-route-entry-decision
       evidence_from:
         - node: prepare-review
@@ -2532,8 +2532,8 @@ graph:
         orca:
           to: decide-orca-review-operation
           effect: advance
-        native-codex:
-          to: decide-native-codex-review-operation
+        independent-review:
+          to: decide-independent-review-operation
           effect: advance
         waived:
           to: confirm-assessment-ordinal
@@ -2572,7 +2572,7 @@ graph:
         unsettled:
           to: confirm-incomplete-review-evidence
           effect: advance
-    - id: decide-native-codex-review-operation
+    - id: decide-independent-review-operation
       use: review-operation-decision
       evidence_from:
         - node: review
@@ -2924,8 +2924,8 @@ graph:
         orca:
           to: enter-orca-review-route
           effect: advance
-        native-codex:
-          to: enter-native-codex-review-route
+        independent-review:
+          to: enter-independent-review-route
           effect: advance
     - id: record-review-route-stop
       use: review-route-stop-record

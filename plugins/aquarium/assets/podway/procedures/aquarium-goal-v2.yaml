@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "22"
+version: "23"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -35,7 +35,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: review-target-scope
         type: text
@@ -106,7 +106,7 @@ node_definitions:
         choices:
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: review-operation
         type: choice
@@ -152,7 +152,7 @@ node_definitions:
           - inconclusive
       - id: review-evidence-reference
         type: text
-        prompt: Record the bounded native lifecycle, delegation, preflight-failure, or waiver evidence that recovers this checkpoint.
+        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: false
         required_when:
           - item: review-evidence-kind
@@ -224,7 +224,7 @@ node_definitions:
           - not-applicable
           - mulgae
           - orca
-          - native-codex
+          - independent-review
           - waived
       - id: prior-review-operation
         type: choice
@@ -445,18 +445,18 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: planned-native-codex
-        label: Planned native Codex route
-        criteria: Native Codex matches the approved envelope.
+      - id: planned-independent-review
+        label: Planned Independent Review route
+        criteria: Independent Review matches the approved envelope.
         guards:
           - evidence:
               node: complete-work
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: record-evidence
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -529,14 +529,14 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: changed-native-codex
-        label: Authorized native Codex change
-        criteria: Native Codex has explicit safe route-change authority.
+      - id: changed-independent-review
+        label: Authorized Independent Review change
+        criteria: Independent Review has explicit safe route-change authority.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -893,14 +893,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             not_equals: coordinator-waiver
-      - id: native-codex
-        label: Native Codex completed
-        criteria: Fresh native Codex review completed with host provenance and no backend check.
+      - id: independent-review
+        label: Independent Review completed
+        criteria: All three Independent Review subagents completed for one exact target and Brief, with host provenance and no backend check.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: record-evidence
               item: review-operation
@@ -970,14 +970,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             equals: delegated-reviewer
-      - id: native-codex
-        label: Native Codex incomplete evidence
-        criteria: Native Codex retains delegation or preflight evidence and no backend check.
+      - id: independent-review
+        label: Independent Review incomplete evidence
+        criteria: Independent Review retains delegation or preflight evidence and no backend check.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: native-codex
+            equals: independent-review
           - evidence:
               node: record-evidence
               item: backend-check-result
@@ -2032,8 +2032,8 @@ graph:
         planned-orca:
           to: decide-planned-orca-review-operation
           effect: advance
-        planned-native-codex:
-          to: decide-planned-native-codex-review-operation
+        planned-independent-review:
+          to: decide-planned-independent-review-operation
           effect: advance
         planned-waiver:
           to: decide-planned-waiver-review-operation
@@ -2044,8 +2044,8 @@ graph:
         changed-orca:
           to: decide-changed-orca-review-operation
           effect: advance
-        changed-native-codex:
-          to: decide-changed-native-codex-review-operation
+        changed-independent-review:
+          to: decide-changed-independent-review-operation
           effect: advance
         changed-waiver:
           to: decide-changed-waiver-review-operation
@@ -2096,7 +2096,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-planned-native-codex-review-operation
+    - id: decide-planned-independent-review-operation
       use: review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -2190,7 +2190,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-changed-native-codex-review-operation
+    - id: decide-changed-independent-review-operation
       use: changed-review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -2332,8 +2332,8 @@ graph:
         orca:
           to: confirm-orca-finding-validity
           effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
+        independent-review:
+          to: confirm-independent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -2362,8 +2362,8 @@ graph:
         orca:
           to: confirm-orca-finding-validity
           effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
+        independent-review:
+          to: confirm-independent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -2392,8 +2392,8 @@ graph:
         orca:
           to: confirm-orca-finding-validity
           effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
+        independent-review:
+          to: confirm-independent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -2422,8 +2422,8 @@ graph:
         orca:
           to: confirm-orca-finding-validity
           effect: advance
-        native-codex:
-          to: confirm-native-codex-finding-validity
+        independent-review:
+          to: confirm-independent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -2448,8 +2448,8 @@ graph:
         orca:
           to: confirm-orca-review-route-settlement
           effect: advance
-        native-codex:
-          to: confirm-native-codex-review-route-settlement
+        independent-review:
+          to: confirm-independent-review-route-settlement
           effect: advance
     - id: confirm-mulgae-review-route-settlement
       use: review-route-settlement-decision
@@ -2489,7 +2489,7 @@ graph:
         terminal-safe:
           to: choose-terminal-review-route-direction
           effect: advance
-    - id: confirm-native-codex-review-route-settlement
+    - id: confirm-independent-review-route-settlement
       use: review-route-settlement-decision
       evidence_from:
         - node: record-evidence
@@ -2641,7 +2641,7 @@ graph:
         unresolved:
           to: record-evidence
           effect: rework
-    - id: confirm-native-codex-finding-validity
+    - id: confirm-independent-review-finding-validity
       use: finding-validity-decision
       evidence_from:
         - node: record-evidence

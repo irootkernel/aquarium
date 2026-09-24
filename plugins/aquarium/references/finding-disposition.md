@@ -1,6 +1,6 @@
 # Review Finding Disposition
 
-Use this contract whenever Aquarium consumes findings from Mulgae Review, Orca Review, an explicitly selected native Codex review subagent, a workflow review waiver, or the dormant Independent Review contract if that route is re-enabled. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent and [review-routing-contract.md](review-routing-contract.md) when an embedded workflow selects or changes routes. A reviewer or coordinator finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
+Use this contract whenever Aquarium consumes findings from Mulgae Review, Orca Review, Independent Review, or a workflow review waiver. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent and [review-routing-contract.md](review-routing-contract.md) when an embedded workflow selects or changes routes. A reviewer or coordinator finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
 
 ## Adjudicate before acting
 
@@ -15,7 +15,7 @@ The effective priority, not the provider label, controls remediation. A finding 
 
 ## Apply the authority envelope
 
-The disabled `$aquarium:independent-review` route itself only reports its refusal and alternative guidance; that refusal launches nothing. Exactly one explicitly preselected supported Orca or native Codex alternative may run only under its own contract, and native Codex additionally requires host fresh delegation. Multiple preselected alternatives require the user to choose one before anything launches. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, or standalone `$aquarium:orca-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
+An explicitly selected `$aquarium:independent-review` route uses three fresh host subagents for one report-only operation. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, standalone `$aquarium:orca-review`, or standalone `$aquarium:independent-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
 
 An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope authorizes finding remediation only inside its existing work-unit, repository, behavior, check, staging, and review budget. Within that envelope, remediate without another user prompt and report the correction afterward. Changing the selected route never erases a finding, resets the budget, or removes a corrected-target confirmation obligation. Stop first when a finding needs a product or authority choice, adds a requirement, expands scope or repository ownership, creates a new file not covered by the plan, requires a destructive or external action, cannot be isolated safely, or exceeds the remaining review budget.
 
@@ -23,7 +23,7 @@ Confirmation-only review authority covers adjudication, reporting, and eligible 
 
 ## Remediate by effective priority
 
-A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and assessed again on the corrected complete target. Keep the same route, reviewer, purpose, and user-facing source scope where feasible. Mulgae creates a fresh native capture, Orca reads the corrected live target, native Codex requires a fresh report-only subagent, and a waiver requires a new coordinator assessment. Independent Review would require a fresh capture if separately re-enabled. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
+A valid `Blocker`, `Critical`, `High`, or `Medium` finding must be fixed, verified with every affected authorized check, and assessed again on the corrected complete target. Keep the same route, reviewer configuration, purpose, and user-facing source scope where feasible. Mulgae creates a fresh native capture, Orca reads the corrected live target, Independent Review requires a new three-subagent operation, and a waiver requires a new coordinator assessment. Native storage and transport remain backend-owned; no digest equivalence across backends is required.
 
 Classify a valid `Low` finding into exactly one disposition:
 

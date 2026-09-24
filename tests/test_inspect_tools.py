@@ -4894,6 +4894,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
                     "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
                     "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
                     "76fbe6842b178524d8c19ce17a58d1eb1fffa13dac07e9a9ae57fe98474194a6",
@@ -4913,6 +4914,7 @@ else:
                     "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
                     "99dfe92a75accee69717154a13ea18b6e25a493e2674d78543f3780b8993a375",
                     "2921280e4a57e02896efb126abbd56829b6a2c99867d357ecc98413aadd15b7b",
@@ -4931,6 +4933,7 @@ else:
                     "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
                     "d3108415bc54a96c200a1189149c514428f53367eae3778c4440d23f8b55a800",
                     "2d1e9995216ac4fcdf3b08baba80a31662485fc4daa3f0bfd42e4f1ff2f4c788",

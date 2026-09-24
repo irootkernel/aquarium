@@ -24,7 +24,7 @@ Resolve one canonical Git root, one `staged`, `head`, `commit`, or `range` sourc
 
 For `head`, `commit`, and `range`, resolve the requested revisions with ordinary read-only Git commands and preserve the meanings in [review-contract.md](../../references/review-contract.md). Current index and worktree changes remain excluded from those committed targets. Conflicts stop the review.
 
-`workspace` and `dirty` remain outside this workflow. Report the unsupported Orca scope and ask for an explicitly selected supported target or review route; Independent Review is disabled and is not a fallback. Never stage paths or reinterpret state merely to manufacture an Orca Review target.
+`workspace` and `dirty` remain outside this workflow. Report the unsupported Orca scope and ask for an explicitly selected supported target or review route; Independent Review is available only through explicit selection and is not an automatic fallback. Never stage paths or reinterpret state merely to manufacture an Orca Review target.
 
 An explicit request naming the target and reviewer authorizes transmission of that target only. An approved handler delegation is equivalent only when its current execution envelope names the same exact target, reviewer, Review Brief, and transmission scope. "Use orca-review with Claude to review the staged changes" and "Review the staged target with Claude" both select `staged` and the native Orca `claude` reviewer.
 

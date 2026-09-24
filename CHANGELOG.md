@@ -7,6 +7,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Replace the bundle setup manifest with v2 target-specific MCP scope, Sorage Project slug, and Mulgae artist intent.
+- Run Independent Review through three fresh Codex subagents as a standalone or selected Task, Epic, and validation route; retire the single-subagent native Codex route for new checkpoints while preserving existing Procedure snapshots.
 
 ## v0.1.17 - 2026-09-23
 

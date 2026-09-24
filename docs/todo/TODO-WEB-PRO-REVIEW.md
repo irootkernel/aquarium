@@ -382,7 +382,7 @@ installation, authentication, or cleanup of unrelated native browser state.
 
 ## EPIC-016 adapter
 
-`web-pro` joins `mulgae`, `orca`, `native-codex`, and `waived` as an explicit
+`web-pro` joins `mulgae`, `orca`, `independent-review`, and `waived` as an explicit
 peer route. Mulgae remains the default when the user selects no alternative.
 Only the selected route's prerequisites are checked.
 

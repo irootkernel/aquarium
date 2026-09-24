@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
@@ -219,6 +222,264 @@ def binary_diff(repository: Path, arguments: list[str]) -> bytes:
     )
 
 
+def git_object_format(repository: Path) -> str:
+    value = require_git(
+        repository,
+        ["rev-parse", "--show-object-format"],
+        "git_object_format_failed",
+        "Git object format could not be read",
+    ).strip()
+    if value not in {b"sha1", b"sha256"}:
+        raise InspectionError(
+            "git_object_format_invalid", "Git object format is unsupported"
+        )
+    return value.decode("ascii")
+
+
+def git_blob_oid(content: bytes, object_format: str) -> bytes:
+    digest = hashlib.new(object_format)
+    digest.update(b"blob " + str(len(content)).encode("ascii") + b"\0")
+    digest.update(content)
+    return digest.hexdigest().encode("ascii")
+
+
+def index_gitlinks(repository: Path) -> dict[bytes, bytes]:
+    records = require_git(
+        repository,
+        ["ls-files", "--cached", "--stage", "-z"],
+        "git_paths_failed",
+        "Git index inspection failed",
+    ).split(b"\0")
+    links: dict[bytes, bytes] = {}
+    for record in records:
+        if not record:
+            continue
+        try:
+            header, path = record.split(b"\t", 1)
+            mode, object_id, stage = header.split()
+        except ValueError as error:
+            raise InspectionError(
+                "git_paths_invalid", "Git index entry is malformed"
+            ) from error
+        if mode == b"160000" and stage == b"0":
+            links[path] = object_id
+    return links
+
+
+def head_projection(repository: Path, head: str) -> dict[bytes, tuple[bytes, bytes]]:
+    records = require_git(
+        repository,
+        ["ls-tree", "-r", "-z", "--full-tree", head],
+        "git_tree_failed",
+        "HEAD tree could not be read",
+    ).split(b"\0")
+    projection: dict[bytes, tuple[bytes, bytes]] = {}
+    for record in records:
+        if not record:
+            continue
+        try:
+            header, path = record.split(b"\t", 1)
+            mode, _kind, object_id = header.split()
+        except ValueError as error:
+            raise InspectionError(
+                "git_tree_invalid", "HEAD tree entry is malformed"
+            ) from error
+        projection[path] = mode, object_id
+    return projection
+
+
+def checked_out_gitlink(repository: Path, relative: Path, index_oid: bytes) -> bytes:
+    path = repository / relative
+    result = git_command(path, ["rev-parse", "--show-toplevel"])
+    if result.returncode != 0:
+        return index_oid  # An uninitialized submodule retains its index identity.
+    toplevel = decode_utf8(
+        result.stdout.strip(), "gitlink_invalid", "submodule root is not valid UTF-8"
+    )
+    if Path(toplevel) != path:
+        return index_oid
+    return resolve_commit(path, "HEAD").encode("ascii")
+
+
+def workspace_entry(
+    repository: Path, root_fd: int, relative: Path, index_oid: bytes | None
+) -> tuple[bytes, bytes, bytes] | None:
+    with ExitStack() as opened:
+        directory_fd = root_fd
+        for component in relative.parts[:-1]:
+            try:
+                directory_fd = os.open(
+                    component,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=directory_fd,
+                )
+            except FileNotFoundError:
+                return None  # A tracked deletion is absent from the final projection.
+            except OSError as error:
+                if error.errno == errno.ENOTDIR:
+                    try:
+                        parent_mode = os.stat(
+                            component, dir_fd=directory_fd, follow_symlinks=False
+                        ).st_mode
+                    except OSError as inspection_error:
+                        raise InspectionError(
+                            "candidate_unreadable",
+                            "candidate parent changed during inspection",
+                        ) from inspection_error
+                    if stat.S_ISREG(parent_mode):
+                        return None  # A file replaced an indexed parent directory.
+                code = (
+                    "unsafe_symlink"
+                    if error.errno in {errno.ELOOP, errno.ENOTDIR}
+                    else "candidate_unreadable"
+                )
+                raise InspectionError(
+                    code, "candidate parent is unsafe or unreadable"
+                ) from error
+            opened.callback(os.close, directory_fd)
+
+        name = relative.name
+        try:
+            mode = os.stat(name, dir_fd=directory_fd, follow_symlinks=False).st_mode
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            raise InspectionError(
+                "candidate_unreadable", "candidate path is unreadable"
+            ) from error
+
+        if stat.S_ISLNK(mode):
+            path = repository / relative
+            try:
+                resolved = path.resolve(strict=True)
+            except FileNotFoundError:
+                try:
+                    resolved = path.resolve()
+                except (OSError, RuntimeError) as error:
+                    raise InspectionError(
+                        "unsafe_symlink", "candidate symlink cannot be resolved"
+                    ) from error
+            except (OSError, RuntimeError) as error:
+                raise InspectionError(
+                    "unsafe_symlink", "candidate symlink cannot be resolved"
+                ) from error
+            if not resolved.is_relative_to(repository):
+                raise InspectionError(
+                    "unsafe_symlink", "candidate symlink leaves the worktree"
+                )
+            try:
+                content = os.fsencode(os.readlink(name, dir_fd=directory_fd))
+            except OSError as error:
+                raise InspectionError(
+                    "candidate_unreadable", "candidate symlink is unreadable"
+                ) from error
+            return b"symlink", b"120000", content
+
+        if stat.S_ISDIR(mode):
+            if index_oid is None:
+                return None  # Directories are not entries in the final projection.
+            return (
+                b"gitlink",
+                b"160000",
+                checked_out_gitlink(repository, relative, index_oid),
+            )
+
+        if not stat.S_ISREG(mode):
+            raise InspectionError(
+                "candidate_unsafe", "candidate contains a non-file path"
+            )
+        try:
+            descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory_fd)
+            with os.fdopen(descriptor, "rb") as stream:
+                opened_mode = os.fstat(stream.fileno()).st_mode
+                if not stat.S_ISREG(opened_mode):
+                    raise InspectionError(
+                        "candidate_unsafe", "candidate changed to a non-file path"
+                    )
+                content = stream.read()
+        except OSError as error:
+            raise InspectionError(
+                "candidate_unreadable", "candidate file is unreadable"
+            ) from error
+        file_mode = b"100755" if opened_mode & 0o111 else b"100644"
+        return b"file", file_mode, content
+
+
+def final_workspace_projection(
+    repository: Path,
+) -> tuple[dict[str, Any], dict[bytes, tuple[bytes, bytes]]]:
+    paths = require_git(
+        repository,
+        ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        "git_paths_failed",
+        "Git path inspection failed",
+    ).split(b"\0")
+    object_format = git_object_format(repository)
+    gitlinks = index_gitlinks(repository)
+    digest = hashlib.sha256()
+    included = 0
+    projection: dict[bytes, tuple[bytes, bytes]] = {}
+    try:
+        root_fd = os.open(repository, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except OSError as error:
+        raise InspectionError(
+            "candidate_unreadable", "worktree root is unreadable"
+        ) from error
+    with ExitStack() as opened:
+        opened.callback(os.close, root_fd)
+        for raw_path in sorted({path for path in paths if path}):
+            name = decode_utf8(
+                raw_path, "git_path_invalid", "a Git path is not valid UTF-8"
+            )
+            relative = Path(name)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise InspectionError(
+                    "git_path_invalid", "Git path escapes the worktree"
+                )
+            entry = workspace_entry(
+                repository, root_fd, relative, gitlinks.get(raw_path)
+            )
+            if entry is None:
+                continue
+            kind, file_mode, content = entry
+            object_id = (
+                content if kind == b"gitlink" else git_blob_oid(content, object_format)
+            )
+            projection[raw_path] = file_mode, object_id
+            digest.update(len(raw_path).to_bytes(8, "big"))
+            digest.update(raw_path)
+            digest.update(kind)
+            digest.update(file_mode)
+            digest.update(len(content).to_bytes(8, "big"))
+            digest.update(content)
+            included += 1
+    return {"file_count": included, "content_sha256": digest.hexdigest()}, projection
+
+
+def inspect_workspace(repository: Path) -> dict[str, Any]:
+    fingerprint, _projection = final_workspace_projection(repository)
+    target: dict[str, Any] = {
+        "kind": "workspace",
+        **fingerprint,
+    }
+    target["target_digest"] = target_digest(target)
+    return target
+
+
+def inspect_dirty(repository: Path) -> dict[str, Any]:
+    head = resolve_commit(repository, "HEAD")
+    fingerprint, projection = final_workspace_projection(repository)
+    if projection == head_projection(repository, head):
+        raise InspectionError("dirty_target_empty", "dirty target is empty")
+    target: dict[str, Any] = {
+        "kind": "dirty",
+        "head_commit": head,
+        **fingerprint,
+    }
+    target["target_digest"] = target_digest(target)
+    return target
+
+
 def inspect_staged(repository: Path) -> dict[str, Any]:
     head = resolve_commit(repository, "HEAD")
     diff = binary_diff(
@@ -245,19 +506,37 @@ def inspect_head(repository: Path) -> dict[str, Any]:
 
 def inspect_commit(repository: Path, revision: str) -> dict[str, Any]:
     commit = resolve_commit(repository, revision)
-    diff = binary_diff(
+    parents = require_git(
         repository,
-        [
-            "diff-tree",
-            "--root",
-            "-m",
-            "--binary",
-            "--no-ext-diff",
-            "--no-textconv",
-            "-p",
-            commit,
-        ],
-    )
+        ["rev-list", "--parents", "-n", "1", commit],
+        "revision_unresolved",
+        "commit parents could not be read",
+    ).split()
+    if len(parents) > 1:
+        diff = binary_diff(
+            repository,
+            [
+                "diff",
+                "--binary",
+                "--no-ext-diff",
+                "--no-textconv",
+                parents[1].decode(),
+                commit,
+            ],
+        )
+    else:
+        diff = binary_diff(
+            repository,
+            [
+                "diff-tree",
+                "--root",
+                "--binary",
+                "--no-ext-diff",
+                "--no-textconv",
+                "-p",
+                commit,
+            ],
+        )
     target: dict[str, Any] = {
         "kind": "commit",
         "revision": revision,
@@ -329,7 +608,15 @@ def inspect_range(repository: Path, expression: str) -> dict[str, Any]:
 def inspect(repository: Path, arguments: argparse.Namespace) -> dict[str, Any]:
     root = canonical_git_root(repository)
     state = repository_state(root)
-    if arguments.staged:
+    if state["conflicts"]:
+        raise InspectionError(
+            "candidate_conflicted", "candidate contains unresolved conflicts"
+        )
+    if getattr(arguments, "workspace", False):
+        target = inspect_workspace(root)
+    elif getattr(arguments, "dirty", False):
+        target = inspect_dirty(root)
+    elif arguments.staged:
         target = inspect_staged(root)
     elif arguments.head:
         target = inspect_head(root)
@@ -350,6 +637,8 @@ def parser() -> argparse.ArgumentParser:
     result = JsonArgumentParser()
     result.add_argument("--repository", required=True)
     target = result.add_mutually_exclusive_group(required=True)
+    target.add_argument("--workspace", action="store_true")
+    target.add_argument("--dirty", action="store_true")
     target.add_argument("--staged", action="store_true")
     target.add_argument("--head", action="store_true")
     target.add_argument("--commit")

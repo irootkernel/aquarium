@@ -38,24 +38,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "20",
+            "21",
+            "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
+            "aquarium-task-v20.yaml",
             "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
-            "aquarium-task-v19.yaml",
-            "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "22",
+            "23",
+            "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
+            "aquarium-goal-v22.yaml",
             "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
-            "aquarium-goal-v21.yaml",
-            "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "21",
+            "22",
+            "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
+            "aquarium-validation-v21.yaml",
             "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
-            "aquarium-validation-v20.yaml",
-            "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -299,7 +299,9 @@ def test_task_071_qualification_inventory_keeps_observed_boundaries_explicit() -
 
 
 def test_task_review_route_fixture_covers_required_task_paths() -> None:
-    cases = load_json("review-routing-cases.json")["task_review_route_cases"]
+    cases = load_json("independent-review-routing-cases.json")[
+        "task_review_route_cases"
+    ]
 
     assert [case["id"] for case in cases] == [
         f"TR-{index:02d}" for index in range(1, 18)
@@ -307,7 +309,7 @@ def test_task_review_route_fixture_covers_required_task_paths() -> None:
     assert {case["route"] for case in cases} == {
         "mulgae",
         "orca",
-        "native-codex",
+        "independent-review",
         "waived",
     }
     assert {
@@ -386,7 +388,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     expected_entries = {
         "planned-mulgae": "enter-mulgae-review-route",
         "planned-orca": "enter-orca-review-route",
-        "planned-native-codex": "enter-native-codex-review-route",
+        "planned-independent-review": "enter-independent-review-route",
         "planned-waiver": "enter-waived-review-route",
     }
     assert {
@@ -402,14 +404,19 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     assert graph["confirm-review-route-binding"]["routes"] == {
         "mulgae": {"to": "decide-mulgae-review-operation", "effect": "advance"},
         "orca": {"to": "decide-orca-review-operation", "effect": "advance"},
-        "native-codex": {
-            "to": "decide-native-codex-review-operation",
+        "independent-review": {
+            "to": "decide-independent-review-operation",
             "effect": "advance",
         },
         "waived": {"to": "confirm-assessment-ordinal", "effect": "advance"},
     }
-    for route in ("mulgae", "orca", "native-codex"):
-        assert graph[f"decide-{route}-review-operation"]["routes"] == {
+    for route in ("mulgae", "orca", "independent-review"):
+        operation_node = (
+            "decide-independent-review-operation"
+            if route == "independent-review"
+            else f"decide-{route}-review-operation"
+        )
+        assert graph[operation_node]["routes"] == {
             "assessed": {
                 "to": "confirm-assessment-ordinal",
                 "effect": "advance",
@@ -462,8 +469,8 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     assert graph["authorize-current-review-route-resume"]["routes"] == {
         "mulgae": {"to": "enter-mulgae-review-route", "effect": "advance"},
         "orca": {"to": "enter-orca-review-route", "effect": "advance"},
-        "native-codex": {
-            "to": "enter-native-codex-review-route",
+        "independent-review": {
+            "to": "enter-independent-review-route",
             "effect": "advance",
         },
     }
@@ -489,7 +496,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "20"
+    assert task["version"] == "21"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -504,7 +511,7 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
             None,
         ),
         (
-            "native-codex",
+            "independent-review",
             "complete",
             "not-provided",
             "static-delegated",
@@ -995,7 +1002,9 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
 
 def test_task_route_fixtures_traverse_only_guarded_options() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    cases = load_json("review-routing-cases.json")["task_review_route_cases"]
+    cases = load_json("independent-review-routing-cases.json")[
+        "task_review_route_cases"
+    ]
     authorization = {
         option_id: option
         for definition in (
@@ -1124,7 +1133,7 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
             }
             option = resume_authorization[case["resume_authorization_option"]]
             assert guards_match(option, resumed), case["id"]
-            for other_provider in {"mulgae", "orca", "native-codex"} - {
+            for other_provider in {"mulgae", "orca", "independent-review"} - {
                 case["resume_authorization_option"]
             }:
                 assert not guards_match(
@@ -1157,11 +1166,11 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     assert set(graph["confirm-review-route-binding"]["routes"]) == {
         "planned-mulgae",
         "planned-orca",
-        "planned-native-codex",
+        "planned-independent-review",
         "planned-waiver",
         "changed-mulgae",
         "changed-orca",
-        "changed-native-codex",
+        "changed-independent-review",
         "changed-waiver",
     }
     assert graph["decide-planned-mulgae-review-operation"]["routes"] == {
@@ -1203,7 +1212,7 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
             "mulgae-pass",
             "mulgae-fail",
             "orca",
-            "native-codex",
+            "independent-review",
             "waived",
         }
         assert graph[node_id]["routes"]["waived"]["to"] == (
@@ -1234,7 +1243,7 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
 
 
 def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> None:
-    fixture = load_json("review-routing-cases.json")
+    fixture = load_json("independent-review-routing-cases.json")
     goal = load_procedure("aquarium-goal-v2.yaml")
     validation = load_procedure("aquarium-validation-v2.yaml")
     goal_cases = fixture["goal_review_route_cases"]
@@ -1276,7 +1285,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
     assert {case["route"] for case in goal_cases} == {
         "mulgae",
         "orca",
-        "native-codex",
+        "independent-review",
         "waived",
     }
     binding = options(goal, "review-route-binding-decision")
@@ -1368,7 +1377,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
     assert {case["route"] for case in validation_cases} == {
         "mulgae",
         "orca",
-        "native-codex",
+        "independent-review",
         "waived",
     }
     operation = options(validation, "final-review-operation-decision")
@@ -1421,7 +1430,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
 
 
 def test_managed_review_route_choices_exclude_independent() -> None:
-    expected = ["mulgae", "orca", "native-codex", "waived"]
+    expected = ["mulgae", "orca", "independent-review", "waived"]
     cases = (
         ("aquarium-task-v2.yaml", "plan-record", "review-route"),
         ("aquarium-task-v2.yaml", "review-record", "review-route"),
@@ -1535,7 +1544,7 @@ def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
 
 
 def test_completed_route_changes_keep_next_ordinal_and_finding_lineage() -> None:
-    fixture = load_json("review-routing-cases.json")
+    fixture = load_json("independent-review-routing-cases.json")
     completed_cases = (
         next(
             case for case in fixture["task_review_route_cases"] if case["id"] == "TR-08"
@@ -1605,7 +1614,7 @@ def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
     assert guards_match(defer, valid)
     assert guards_match(eligibility, valid)
     assert guards_match(record, valid)
-    for route in ("orca", "native-codex", "waived"):
+    for route in ("orca", "independent-review", "waived"):
         invalid = dict(valid)
         invalid[("record-evidence", "review-route")] = route
         assert not guards_match(eligibility, invalid), route
