@@ -15,6 +15,13 @@ the tool repositories. `EPIC-009` and `TASK-047` now own immediate adoption of
 Sorage's explicit-request workflow. TASK-046 retains the Sorage regression
 scenarios for the complete skill integration.
 
+`EPIC-018` owns the Aquarium-side corrections identified by the 2026-09-25
+skill review. Producer-specific requests have been sent through Sorage, and
+each tool repository owns its response. `TASK-043` starts after `TASK-085`
+qualifies the Aquarium corrections. `TASK-046` consumes that handoff
+and the resulting producer source evidence. An Aquarium correction or a sent
+request alone does not establish cross-skill acceptance.
+
 The [roadmap](../roadmap/README.md#epic-012-modernize-aquarium-skills-for-gpt-6-astra)
 alone owns IDs, ordering, dependencies, and lifecycle state. This dossier owns scope,
 task requirements, source inspection, acceptance, and handoff requirements. The

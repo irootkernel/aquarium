@@ -17,6 +17,9 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Web Pro Review dossier](TODO-WEB-PRO-REVIEW.md) defines the standalone review,
   primary-account boundary, selectable `web-pro` route, and acceptance contract for
   `EPIC-017` and `TASK-072` through `TASK-075`.
+- [Workflow review corrections dossier](TODO-WORKFLOW-REVIEW-CORRECTIONS.md) maps
+  the 2026-09-25 review findings, Aquarium-owned corrections, producer requests,
+  and acceptance for `EPIC-018` and `TASK-077` through `TASK-085`.
 
 ## Unadopted TODO Candidates
 

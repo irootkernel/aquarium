@@ -48,6 +48,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
+| EPIC-018 | Correct Aquarium workflow and integration contracts | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -259,10 +260,10 @@ the paired tool skill updates in their owning repositories.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-043 | Shorten Aquarium discovery descriptions | Adopt SKILL-01: simplify descriptions while preserving activation semantics and workflow behavior. | Planned | None |
+| TASK-043 | Shorten Aquarium discovery descriptions | Adopt SKILL-01: simplify descriptions while preserving activation semantics and workflow behavior. | Planned | TASK-085 |
 | TASK-044 | Restructure Aquarium entrypoints and conditional reading | Adopt SKILL-02: move conditional detail to reachable references and preserve transition contracts. | Planned | TASK-043 |
 | TASK-045 | Remove redundant Aquarium rechecks and questions | Extend SKILL-03 with confirmed Sanho non-use guidance; align setup guidance and callers while preserving task and Git boundaries. | Planned | TASK-044 |
-| TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045, TASK-047; external SKILL-04 through SKILL-08 |
+| TASK-046 | Validate skill integration and complete manual acceptance | Extend SKILL-09 to reconcile local sources, resource contracts, Sanho setup transitions, explicit Sorage discovery, and applicable manual scenarios. | Blocked | TASK-043, TASK-044, TASK-045, TASK-047, TASK-085; external SKILL-04 through SKILL-08 |
 
 Gaori (`SKILL-04`) source work is `Completed`, as confirmed by Master on
 2026-09-10. Aquarium's local source inspection and integration acceptance remain
@@ -433,3 +434,27 @@ copying account state into the caller's home.
 | TASK-073 | Implement primary-profile Web Pro execution | Add the standalone skill, deterministic runner, and global readiness inspection without copying a checkout or account state. | Planned | TASK-072 |
 | TASK-074 | Add Web Pro to selectable review routing | Extend Task, Epic, and validation handlers and new Procedure versions with route-specific Web Pro evidence and recovery. | Planned | TASK-072; TASK-073 |
 | TASK-075 | Qualify and document Web Pro Review | Complete deterministic, integration, compatibility, account-bound runtime, manual acceptance, and canonical documentation checks. | Planned | TASK-073; TASK-074 |
+
+## EPIC-018: Correct Aquarium workflow and integration contracts
+
+**Status:** `Planned`
+
+Correct the Aquarium-owned findings from the 2026-09-25 static skill review before
+modernizing the affected entrypoints under `EPIC-012`. Six requests have been
+sent through Sorage for the tool-owned findings. Each producer retains its own
+source, roadmap, verification, release, and installation decisions. This epic does not
+claim that a sent request or an Aquarium-side correction fixes a producer.
+
+**Detailed SOT:** [`TODO-WORKFLOW-REVIEW-CORRECTIONS.md`](../todo/TODO-WORKFLOW-REVIEW-CORRECTIONS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-077 | Settle findings and record producer requests | Freeze the deduplicated review inventory, verify plausible claims, and record the already-sent tool-specific Sorage request scope without resending. | Planned | None |
+| TASK-078 | Correct external effects and plugin entry | Fix unintended reviewer or clipboard effects and the Aquarium plugin MCP declaration. | Planned | TASK-077 |
+| TASK-079 | Correct review-route readiness and recovery | Align legacy Procedure readiness, Independent Review and Orca recovery, staged-candidate preparation, and Aquarium-side tool handoffs. | Planned | TASK-078 |
+| TASK-080 | Correct Task, Goal, and Validation Procedure routing | Repair blocker, plan-resume, rework, and closeout paths across managed Procedure sources, mirrors, and qualification. | Planned | TASK-079 |
+| TASK-081 | Correct Task closeout and commit handoff | Align Task decision records, dossier settlement, prose pass timing, and commit authority with the revised Procedure. | Planned | TASK-080 |
+| TASK-082 | Correct release helpers and gate sequencing | Support first releases and repository-specific commit titles; bind pre-QA gates, light confirmation, Design Gates, and publication recovery. | Planned | TASK-081 |
+| TASK-083 | Correct installed-package and setup contracts | Keep plugin resources reachable and align tool inventory, network and installer disclosures, timeout, and Sorage setup routing. | Planned | TASK-082 |
+| TASK-084 | Correct design and status workflows | Align quality-result decisions, design-document ownership, war-room notes, and status-forget recovery. | Planned | TASK-083 |
+| TASK-085 | Qualify Aquarium corrections and hand off integration | Verify the exact Aquarium-owned changes, report manual evidence separately, and pass producer-response gaps to TASK-046. | Planned | TASK-084 |
