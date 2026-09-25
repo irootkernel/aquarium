@@ -25,6 +25,7 @@ INSPECTION_SCHEMA = "aquarium-status-runtime-inspection/v1"
 ERROR_SCHEMA = "aquarium-status-runtime-error/v1"
 PAYLOAD = (
     "aquarium_status.py",
+    "language_inventory.py",
     "status_contract.py",
     "status_store.py",
     "status_report.py",

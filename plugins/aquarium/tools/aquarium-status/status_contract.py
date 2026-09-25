@@ -13,14 +13,76 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-LEDGER_SCHEMA = "aquarium-production-status/v1"
+LEDGER_SCHEMA = "aquarium-production-status/v2"
+LEGACY_LEDGER_SCHEMA = "aquarium-production-status/v1"
 RECORD_SCHEMA = "aquarium-production-status-record/v1"
-RECORD_RECEIPT_SCHEMA = "aquarium-production-status-record-receipt/v1"
-REPORT_SCHEMA = "aquarium-production-status-report/v1"
+RECORD_RECEIPT_SCHEMA = "aquarium-production-status-record-receipt/v2"
+REPORT_SCHEMA = "aquarium-production-status-report/v2"
+LANGUAGE_REFRESH_RECEIPT_SCHEMA = (
+    "aquarium-production-status-language-refresh-receipt/v1"
+)
 FORGET_RECEIPT_SCHEMA = "aquarium-production-status-forget-receipt/v1"
 ERROR_SCHEMA = "aquarium-production-status-error/v1"
 VERSION_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_VERSION_ATOM = (
+    r"[0-9]{1,4}(?:\.(?:[0-9]{1,4}|x|\*)){0,3}"
+    r"(?:-(?:alpha|beta|rc|dev|next|canary)(?:[.-]?[0-9]{1,4})?)?"
+)
+_VERSION_TERM = rf"(?:\^|~=|~|>=|<=|==|!=|>|<|=)?{_VERSION_ATOM}"
+_VERSION_SPEC_RE = re.compile(
+    rf"{_VERSION_TERM}(?:(?:\s*,\s*|\s+\|\|\s+|\s+){_VERSION_TERM})*\Z"
+)
+_VERSION_ATOM_RE = re.compile(rf"{_VERSION_ATOM}\Z")
+_PYTHON_TERM = rf"(?:~=|==|!=|>=|<=|>|<)\s*{_VERSION_ATOM}"
+_PYTHON_SPEC_RE = re.compile(rf"{_PYTHON_TERM}(?:\s*,\s*{_PYTHON_TERM})*\Z")
+_GO_NUMBER = r"(?:0|[1-9][0-9]{0,3})"
+_GO_VERSION = (
+    rf"{_GO_NUMBER}(?:\.{_GO_NUMBER}(?:\.{_GO_NUMBER}|(?:alpha|beta|rc){_GO_NUMBER})?)?"
+)
+_GO_VERSION_RE = re.compile(rf"{_GO_VERSION}\Z")
+_GO_TOOLCHAIN_RE = re.compile(rf"go{_GO_VERSION}\Z")
+_RUST_DATED_CHANNEL_RE = re.compile(r"nightly-[0-9]{4}-[0-9]{2}-[0-9]{2}\Z")
+_LANGUAGE_KINDS = {
+    "go": frozenset({"go", "toolchain"}),
+    "rust": frozenset({"channel", "rust-version"}),
+    "python": frozenset(
+        {"requires-python", "poetry-python", "python_requires", "python-version"}
+    ),
+    "typescript": frozenset(
+        {"dependencies", "devDependencies", "peerDependencies", "optionalDependencies"}
+    ),
+    "dart": frozenset({"sdk"}),
+}
+
+
+def valid_language_declaration(language: str, kind: str, value: str) -> bool:
+    if (
+        not isinstance(language, str)
+        or not isinstance(kind, str)
+        or not isinstance(value, str)
+        or kind not in _LANGUAGE_KINDS.get(language, ())
+        or not value
+        or len(value) > 256
+        or unicodedata.normalize("NFC", value) != value
+    ):
+        return False
+    if language == "go":
+        pattern = _GO_TOOLCHAIN_RE if kind == "toolchain" else _GO_VERSION_RE
+        return pattern.fullmatch(value) is not None
+    if language == "rust" and kind == "channel":
+        return (
+            value in {"stable", "beta", "nightly"}
+            or _RUST_DATED_CHANNEL_RE.fullmatch(value) is not None
+            or _VERSION_ATOM_RE.fullmatch(value) is not None
+        )
+    if language == "rust" or kind == "python-version":
+        return _VERSION_ATOM_RE.fullmatch(value) is not None
+    if language == "python" and kind in {"requires-python", "python_requires"}:
+        return _PYTHON_SPEC_RE.fullmatch(value) is not None
+    return _VERSION_SPEC_RE.fullmatch(value) is not None
+
+
 UTC_RFC3339_RE = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
     r"(?:\.[0-9]+)?Z$"

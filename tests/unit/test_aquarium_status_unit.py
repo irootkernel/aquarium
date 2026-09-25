@@ -2,7 +2,10 @@ import http.client
 import importlib.util
 import io
 import json
+import os
+import subprocess
 import sys
+import time
 import unicodedata
 import urllib.error
 import urllib.response
@@ -32,10 +35,16 @@ def status_modules(monkeypatch):
     monkeypatch.setitem(sys.modules, "status_contract", contract)
     store = _load_module("aquarium_status_store_unit", "status_store.py")
     report = _load_module("aquarium_status_report_unit", "status_report.py")
+    inventory = _load_module(
+        "aquarium_status_language_inventory_unit", "language_inventory.py"
+    )
     monkeypatch.setitem(sys.modules, "status_store", store)
     monkeypatch.setitem(sys.modules, "status_report", report)
+    monkeypatch.setitem(sys.modules, "language_inventory", inventory)
     cli = _load_module("aquarium_status_cli_unit", "aquarium_status.py")
-    return SimpleNamespace(contract=contract, store=store, report=report, cli=cli)
+    return SimpleNamespace(
+        contract=contract, store=store, report=report, inventory=inventory, cli=cli
+    )
 
 
 def _version(value="v1.2.3", source="recorded_attempt", status="observed"):
@@ -60,6 +69,126 @@ def _record(root: Path, *, attempt_id=None, revision=0, scope=None, components=N
 def _write_record(cli, monkeypatch, value):
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(value)))
     return cli.record()
+
+
+@pytest.mark.parametrize(
+    ("language", "kind", "value", "valid"),
+    (
+        ("go", "go", "1.21rc1", True),
+        ("go", "toolchain", "go1.21rc1", True),
+        ("go", "go", "1.21-rc1", False),
+        ("go", "go", "1.21.3rc1", False),
+        ("go", "go", "1.x", False),
+        ("go", "go", "1.2.3.4", False),
+        ("python", "requires-python", ">=3.11,<4", True),
+        ("python", "requires-python", ">=3.11 || <4", False),
+        ("python", "requires-python", ">=3.11 <4", False),
+        ("python", "poetry-python", "^3.11 || ^3.12", True),
+    ),
+)
+def test_language_declaration_grammar(status_modules, language, kind, value, valid):
+    assert (
+        status_modules.contract.valid_language_declaration(language, kind, value)
+        is valid
+    )
+
+
+def test_language_scan_rejects_manifest_replaced_during_open(
+    status_modules, tmp_path, monkeypatch
+):
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    manifest = root / "pyproject.toml"
+    manifest.write_text('[project]\nrequires-python = ">=3.11"\n')
+    subprocess.run(["git", "add", "pyproject.toml"], cwd=root, check=True)
+    outside = tmp_path / "outside.toml"
+    outside.write_text('[project]\nrequires-python = ">=3.99"\n')
+    original_open = os.open
+
+    def replace_before_open(path, flags, *args, **kwargs):
+        if path == "pyproject.toml" and "dir_fd" in kwargs:
+            manifest.unlink()
+            manifest.symlink_to(outside)
+        return original_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", replace_before_open)
+    with pytest.raises(status_modules.inventory.InventoryError):
+        status_modules.inventory.scan(root)
+
+
+def test_language_scan_rejects_parent_replaced_during_open(
+    status_modules, tmp_path, monkeypatch
+):
+    root = tmp_path / "repository"
+    nested = root / "nested"
+    nested.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    manifest = nested / "pyproject.toml"
+    manifest.write_text('[project]\nrequires-python = ">=3.11"\n')
+    subprocess.run(["git", "add", "nested/pyproject.toml"], cwd=root, check=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.99"\n')
+    original_open = os.open
+
+    def replace_before_open(path, flags, *args, **kwargs):
+        if path == "nested" and "dir_fd" in kwargs:
+            manifest.unlink()
+            nested.rmdir()
+            nested.symlink_to(outside, target_is_directory=True)
+        return original_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", replace_before_open)
+    with pytest.raises(status_modules.inventory.InventoryError):
+        status_modules.inventory.scan(root)
+
+
+@pytest.mark.parametrize(
+    ("limit", "value"),
+    (("MAX_TRACKED_PATHS", 1), ("MAX_GIT_OUTPUT_BYTES", 1)),
+)
+def test_language_scan_rejects_oversized_git_inventory(
+    status_modules, tmp_path, monkeypatch, limit, value
+):
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    for name in ("one.py", "two.py"):
+        (root / name).write_text("pass\n")
+    subprocess.run(["git", "add", "one.py", "two.py"], cwd=root, check=True)
+    monkeypatch.setattr(status_modules.inventory, limit, value)
+
+    with pytest.raises(status_modules.inventory.InventoryError):
+        status_modules.inventory.scan(root)
+
+
+def test_language_scan_rejects_expired_budget(status_modules, tmp_path):
+    with pytest.raises(status_modules.inventory.InventoryError):
+        status_modules.inventory.scan(tmp_path, deadline=time.monotonic() - 1)
+
+
+def test_pubspec_parser_is_interrupted_at_scan_deadline(
+    status_modules, tmp_path, monkeypatch
+):
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / "pubspec.yaml").write_text("environment:\n  sdk: ^3.9.2\n")
+
+    called = []
+
+    def slow_parse(*_args, **_kwargs):
+        called.append(True)
+        time.sleep(2)
+        return {"environment": {"sdk": "^3.9.2"}}
+
+    monkeypatch.setattr(status_modules.inventory.yaml, "load", slow_parse)
+    started = time.monotonic()
+    with pytest.raises(status_modules.inventory.InventoryError):
+        status_modules.inventory.scan(root, deadline=started + 0.5)
+    assert called
+    assert time.monotonic() - started < 1.3
 
 
 def test_canonical_json_normalizes_nested_strings_and_has_stable_bytes(status_modules):
@@ -284,7 +413,9 @@ def test_full_then_scoped_record_preserves_full_ready_and_omitted_component(
     repository = tmp_path / "repository"
     common = tmp_path / "common.git"
     monkeypatch.setattr(store, "state_root", lambda: state)
-    monkeypatch.setattr(cli, "git_identity", lambda raw: (str(repository), str(common)))
+    monkeypatch.setattr(
+        cli, "git_identity", lambda raw, deadline=None: (str(repository), str(common))
+    )
     monkeypatch.setattr(cli, "VERSION_OVERRIDE", ("v1.2.3", "bundled_plugin_manifest"))
     first_id = str(uuid.uuid4())
     second_id = str(uuid.uuid4())

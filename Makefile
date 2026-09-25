@@ -22,6 +22,7 @@ PYTHON_FILES := \
 	plugins/aquarium/tools/aquarium-dev/install.py \
 	plugins/aquarium/tools/aquarium-dev/runtime_entry.py \
 	plugins/aquarium/tools/aquarium-status/aquarium_status.py \
+	plugins/aquarium/tools/aquarium-status/language_inventory.py \
 	plugins/aquarium/tools/aquarium-status/install.py \
 	plugins/aquarium/tools/aquarium-status/runtime_entry.py \
 	plugins/aquarium/tools/aquarium-status/status_contract.py \

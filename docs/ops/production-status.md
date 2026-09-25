@@ -11,9 +11,19 @@ or installer.
 
 Run the global inspector with `--component aquarium-status` to inspect the
 bundled and installed identities, selector, dependency tree, and launcher without
-changing them. Run `aquarium-status show --format json` for a local-only report.
+changing them. Run `aquarium-status show --format json` for a local-only report,
+including stored language declarations for each registered repository.
 Add `--refresh` only after authorizing the documented GitHub latest-Release read,
 or `--source-root` for one explicitly selected Aquarium checkout.
+
+`show` never scans repositories for language versions. After installing the
+updated managed runtime, run `aquarium-status refresh-languages` to populate
+the existing rows, or add `--git-root <recorded-absolute-path>` for one row.
+The command reads only local repository declarations, reports unavailable roots
+without replacing their earlier observations, and writes one ledger update for
+successful scans. Later terminal setup records refresh their own row
+automatically. An unobserved row shows null; a language with no declaration
+shows an empty declaration list.
 
 An absent ledger is healthy empty state. A partial report preserves valid rows
 and names optional observations that failed. Unsafe owned paths or a corrupt

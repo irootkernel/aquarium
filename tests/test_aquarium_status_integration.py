@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STATUS = ROOT / "plugins/aquarium/tools/aquarium-status/aquarium_status.py"
 STATUS_MODULES = STATUS.parent
 RECORD_SCHEMA = "aquarium-production-status-record/v1"
-RECORD_RECEIPT_SCHEMA = "aquarium-production-status-record-receipt/v1"
-REPORT_SCHEMA = "aquarium-production-status-report/v1"
+RECORD_RECEIPT_SCHEMA = "aquarium-production-status-record-receipt/v2"
+REPORT_SCHEMA = "aquarium-production-status-report/v2"
 FORGET_RECEIPT_SCHEMA = "aquarium-production-status-forget-receipt/v1"
 ERROR_SCHEMA = "aquarium-production-status-error/v1"
 
@@ -108,6 +108,7 @@ def invoke(
     *arguments: str,
     stdin: dict[str, Any] | str | None = None,
     extra_environment: dict[str, str] | None = None,
+    timeout: float | None = None,
 ) -> subprocess.CompletedProcess[str]:
     if isinstance(stdin, dict):
         input_text = json.dumps(stdin, ensure_ascii=False) + "\n"
@@ -122,6 +123,7 @@ def invoke(
         text=True,
         check=False,
         env=process_environment,
+        timeout=timeout,
     )
 
 
@@ -420,12 +422,18 @@ def test_exact_latest_replay_and_stale_historical_rejection(tmp_path: Path) -> N
         "schema": RECORD_RECEIPT_SCHEMA,
         "status": "recorded",
         "changed": True,
+        "language_status": "observed",
         "attempt_id": first["attempt_id"],
         "git_root": str(root),
         "file_revision": 1,
         "row_revision": 1,
     }
-    assert replayed == {**recorded, "status": "replayed", "changed": False}
+    assert replayed == {
+        **recorded,
+        "status": "replayed",
+        "changed": False,
+        "language_status": "not_checked",
+    }
     assert path.read_bytes() == original_bytes
     assert path.stat().st_mtime_ns == original_mtime
 
@@ -435,6 +443,311 @@ def test_exact_latest_replay_and_stale_historical_rejection(tmp_path: Path) -> N
 
     changed = {**second, "project": "changed"}
     error(invoke(home, "record", stdin=changed), 3, "attempt_conflict")
+
+
+def test_language_declarations_are_recorded_and_explicitly_refreshed(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "go.mod").write_text(
+        "module example.invalid/root\ngo 1.26\ntoolchain go1.26.6\n"
+    )
+    (root / "rust-toolchain.toml").write_text('[toolchain]\nchannel = "1.97.1"\n')
+    (root / "Cargo.toml").write_text(
+        '[workspace]\nmembers = ["nested"]\n[workspace.package]\nrust-version = "1.97.1"\n'
+    )
+    (root / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
+    (root / "package.json").write_text(
+        json.dumps({"devDependencies": {"typescript": "~6.0.2"}})
+    )
+    (root / "pubspec.yaml").write_text("environment:\n  sdk: ^3.9.2\n")
+    nested = root / "nested"
+    nested.mkdir()
+    (nested / "go.mod").write_text("module example.invalid/nested\ngo 1.25\n")
+    (nested / "Cargo.toml").write_text(
+        '[package]\nname = "nested"\nversion = "0.1.0"\nrust-version.workspace = true\n'
+    )
+    git("add", ".", home=home, cwd=root)
+
+    attempt = request(root, 0)
+    receipt = output(invoke(home, "record", stdin=attempt))
+    assert receipt["language_status"] == "observed"
+    before = report(home)["repositories"][0]
+    languages = {
+        item["name"]: item["declarations"]
+        for item in before["language_inventory"]["languages"]
+    }
+    assert list(languages) == ["dart", "go", "python", "rust", "typescript"]
+    assert [
+        (item["path"], item["kind"], item["value"]) for item in languages["go"]
+    ] == [
+        ("go.mod", "go", "1.26"),
+        ("go.mod", "toolchain", "go1.26.6"),
+        ("nested/go.mod", "go", "1.25"),
+    ]
+    assert languages["rust"][0]["value"] == "1.97.1"
+    assert languages["python"][0]["value"] == ">=3.11"
+    assert languages["typescript"][0]["value"] == "~6.0.2"
+    assert languages["dart"][0]["value"] == "^3.9.2"
+
+    (root / "go.mod").write_text("module example.invalid/root\ngo 1.27\n")
+    assert (
+        report(home)["repositories"][0]["language_inventory"]
+        == before["language_inventory"]
+    )
+    refreshed = output(invoke(home, "refresh-languages", "--git-root", str(root)))
+    assert refreshed["status"] == "complete"
+    assert refreshed["file_revision"] == 2
+    after = report(home)["repositories"][0]
+    assert after["row_revision"] == before["row_revision"]
+    assert after["last_attempt"] == before["last_attempt"]
+    assert (
+        after["language_inventory"]["languages"][1]["declarations"][0]["value"]
+        == "1.27"
+    )
+    assert (
+        output(invoke(home, "record", stdin=attempt))["language_status"]
+        == "not_checked"
+    )
+
+    (nested / "go.mod").unlink()
+    output(invoke(home, "refresh-languages", "--git-root", str(root)))
+    declarations = report(home)["repositories"][0]["language_inventory"]["languages"][
+        1
+    ]["declarations"]
+    assert all(item["path"] != "nested/go.mod" for item in declarations)
+
+
+@pytest.mark.parametrize(
+    ("filename", "language"),
+    (
+        ("auth.py", "python"),
+        ("token.ts", "typescript"),
+        ("main.mts", "typescript"),
+        ("main.cts", "typescript"),
+    ),
+)
+def test_tracked_source_presence_without_declaration(
+    tmp_path: Path, filename: str, language: str
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / filename).write_text("// source file\n")
+    git("add", filename, home=home, cwd=root)
+
+    receipt = output(invoke(home, "record", stdin=request(root, 0)))
+
+    assert receipt["language_status"] == "observed"
+    inventory = report(home)["repositories"][0]["language_inventory"]
+    assert inventory["languages"] == [{"name": language, "declarations": []}]
+
+
+def test_tracked_source_under_external_symlink_is_not_detected(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    nested = root / "nested"
+    nested.mkdir()
+    (nested / "main.py").write_text("pass\n")
+    git("add", "nested/main.py", home=home, cwd=root)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "main.py").write_text("pass\n")
+    (nested / "main.py").unlink()
+    nested.rmdir()
+    nested.symlink_to(outside, target_is_directory=True)
+
+    receipt = output(invoke(home, "record", stdin=request(root, 0)))
+
+    assert receipt["language_status"] == "observed"
+    assert report(home)["repositories"][0]["language_inventory"]["languages"] == []
+
+
+def test_nonversion_declarations_do_not_block_other_languages(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "package.json").write_text(
+        json.dumps({"devDependencies": {"typescript": "file:../typescript"}})
+    )
+    (root / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
+    (root / ".python-version").write_text("ghp_" + "A" * 40 + "\n")
+    git("add", ".", home=home, cwd=root)
+
+    receipt = output(invoke(home, "record", stdin=request(root, 0)))
+
+    assert receipt["language_status"] == "observed"
+    languages = report(home)["repositories"][0]["language_inventory"]["languages"]
+    assert languages == [
+        {
+            "name": "python",
+            "declarations": [
+                {"kind": "requires-python", "path": "pyproject.toml", "value": ">=3.11"}
+            ],
+        },
+        {"name": "typescript", "declarations": []},
+    ]
+
+
+def test_poetry_inline_python_version_is_recorded(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "pyproject.toml").write_text(
+        '[tool.poetry.dependencies]\npython = {version = "^3.11"}\n'
+    )
+    git("add", "pyproject.toml", home=home, cwd=root)
+
+    receipt = output(invoke(home, "record", stdin=request(root, 0)))
+
+    assert receipt["language_status"] == "observed"
+    assert report(home)["repositories"][0]["language_inventory"]["languages"] == [
+        {
+            "name": "python",
+            "declarations": [
+                {"kind": "poetry-python", "path": "pyproject.toml", "value": "^3.11"}
+            ],
+        }
+    ]
+
+
+def test_v1_ledger_is_read_without_changes_and_migrated_on_refresh(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "go.mod").write_text("module example.invalid/root\ngo 1.26\n")
+    attempt = request(root, 0)
+    output(invoke(home, "record", stdin=attempt))
+    path = home / ".aquarium/status.yaml"
+    legacy, _ = ledger(home)
+    legacy["schema"] = "aquarium-production-status/v1"
+    legacy.pop("language_inventory")
+    raw = yaml.safe_dump(legacy, sort_keys=True).encode()
+    path.write_bytes(raw)
+    path.chmod(0o600)
+
+    observed = report(home)
+    assert observed["repositories"][0]["language_inventory"] is None
+    assert path.read_bytes() == raw
+    refreshed = output(invoke(home, "refresh-languages"))
+    assert refreshed["file_revision"] == 2
+    migrated, _ = ledger(home)
+    assert migrated["schema"] == "aquarium-production-status/v2"
+    assert migrated["repositories"] == legacy["repositories"]
+    assert migrated["language_inventory"][0]["languages"][0]["name"] == "go"
+
+
+def test_failed_language_refresh_preserves_previous_observation(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    manifest = root / "pyproject.toml"
+    manifest.write_text('[project]\nrequires-python = ">=3.11"\n')
+    output(invoke(home, "record", stdin=request(root, 0)))
+    old, raw = ledger(home)
+    outside = tmp_path / "outside.toml"
+    outside.write_text('[project]\nrequires-python = ">=3.12"\n')
+    manifest.unlink()
+    manifest.symlink_to(outside)
+
+    refreshed = output(invoke(home, "refresh-languages", "--git-root", str(root)))
+    assert refreshed["status"] == "partial"
+    assert refreshed["changed"] is False
+    assert ledger(home) == (old, raw)
+
+
+def test_deep_pubspec_does_not_abort_recording_or_replace_observation(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    manifest = root / "pubspec.yaml"
+    manifest.write_text("environment:\n  sdk: ^3.9.2\n")
+    output(invoke(home, "record", stdin=request(root, 0)))
+    previous = report(home)["repositories"][0]["language_inventory"]
+    manifest.write_text("environment:\n  sdk: " + "[" * 1500 + "0" + "]" * 1500)
+
+    refresh = output(invoke(home, "refresh-languages", "--git-root", str(root)))
+    assert refresh["status"] == "partial"
+    assert refresh["changed"] is False
+    recorded = output(invoke(home, "record", stdin=request(root, 1)))
+    assert recorded["status"] == "recorded"
+    assert recorded["language_status"] == "unavailable"
+    assert report(home)["repositories"][0]["language_inventory"] == previous
+
+
+def test_pubspec_merge_aliases_fail_without_holding_status_lock(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    manifest = root / "pubspec.yaml"
+    manifest.write_text("environment:\n  sdk: ^3.9.2\n")
+    output(invoke(home, "record", stdin=request(root, 0)))
+    previous = report(home)["repositories"][0]["language_inventory"]
+    lines = ["a0: &a0 {k: 0}"]
+    lines.extend(
+        f"a{index}: &a{index} {{<<: [*a{index - 1}, *a{index - 1}]}}"
+        for index in range(1, 26)
+    )
+    lines.append("environment: {<<: *a25, sdk: ^3.9.2}")
+    manifest.write_text("\n".join(lines) + "\n")
+
+    refreshed = output(
+        invoke(home, "refresh-languages", "--git-root", str(root), timeout=3)
+    )
+
+    assert refreshed["status"] == "partial"
+    assert refreshed["changed"] is False
+    assert report(home)["repositories"][0]["language_inventory"] == previous
+
+
+def test_language_presence_without_version_and_failed_record_scan(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "main.rs").write_text("fn main() {}\n")
+    git("add", "main.rs", home=home, cwd=root)
+    first = output(invoke(home, "record", stdin=request(root, 0)))
+    assert first["language_status"] == "observed"
+    inventory = report(home)["repositories"][0]["language_inventory"]
+    assert inventory["languages"] == [{"name": "rust", "declarations": []}]
+    assert '"rust":"unknown"' in invoke(home, "show").stdout
+
+    (root / "Cargo.toml").write_text("[package\n")
+    second = output(invoke(home, "record", stdin=request(root, 1)))
+    assert second["status"] == "recorded"
+    assert second["language_status"] == "unavailable"
+    current = report(home)["repositories"][0]
+    assert current["row_revision"] == 2
+    assert current["language_inventory"] == inventory
+
+
+@pytest.mark.parametrize(
+    "invalid", ("https://example.invalid/token", "ghp_" + "A" * 40)
+)
+def test_corrupt_language_declaration_is_rejected(tmp_path: Path, invalid: str) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    (root / "go.mod").write_text("module example.invalid/root\ngo 1.26\n")
+    output(invoke(home, "record", stdin=request(root, 0)))
+    stored, _ = ledger(home)
+    stored["language_inventory"][0]["languages"][0]["declarations"][0]["value"] = (
+        invalid
+    )
+    path = home / ".aquarium/status.yaml"
+    path.write_bytes(yaml.safe_dump(stored, sort_keys=True).encode())
+    error(invoke(home, "show", "--format", "json"), 1, "state_corrupt")
 
 
 def test_full_and_scoped_transitions_preserve_unsettled_state(

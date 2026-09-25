@@ -14,6 +14,7 @@ from typing import Any
 
 PAYLOAD = {
     "aquarium_status.py",
+    "language_inventory.py",
     "status_contract.py",
     "status_store.py",
     "status_report.py",

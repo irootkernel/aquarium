@@ -167,6 +167,17 @@ def text_report(report: dict[str, Any]) -> str:
             value, ensure_ascii=True, sort_keys=True, separators=(",", ":")
         )
 
+    def languages_text(observation: dict[str, Any] | None) -> str:
+        if observation is None:
+            return "not_observed"
+        languages = {
+            item["name"]: item["declarations"] or "unknown"
+            for item in observation["languages"]
+        }
+        return render(
+            {"observed_at": observation["observed_at"], "languages": languages}
+        )
+
     lines = [
         f"Status: {report['status']}",
         f"Ledger: {render(report['ledger'])}",
@@ -187,6 +198,7 @@ def text_report(report: dict[str, Any]) -> str:
                 f"  Root state: {row['root_state']}",
                 f"  Configuration freshness: {row['configuration_freshness']}",
                 f"  Enrollment: {render(row['enrollment'])}",
+                f"  Languages: {languages_text(row['language_inventory'])}",
                 f"  Last attempt: {render(row['last_attempt'])}",
                 f"  Last full ready: {render(row.get('last_full_ready'))}",
                 f"  Components: {render(row['components'])}",
@@ -197,7 +209,12 @@ def text_report(report: dict[str, Any]) -> str:
 
 def stored_row(report_row: dict[str, Any]) -> dict[str, Any]:
     row = dict(report_row)
-    for key in ("root_state", "configuration_freshness", "enrollment"):
+    for key in (
+        "root_state",
+        "configuration_freshness",
+        "enrollment",
+        "language_inventory",
+    ):
         row.pop(key)
     return row
 
@@ -221,7 +238,7 @@ def test_absent_show_is_exact_and_does_not_create_owned_state(tmp_path: Path) ->
     home.mkdir()
     version = f"v{json.loads(MANIFEST.read_text(encoding='utf-8'))['version']}"
     expected = {
-        "schema": "aquarium-production-status-report/v1",
+        "schema": "aquarium-production-status-report/v2",
         "status": "complete",
         "ledger": {"state": "absent", "file_revision": None},
         "reporter": {
@@ -329,9 +346,10 @@ def test_record_replay_show_and_exit_classes_have_exact_streams(
 
     recorded = exact_json_output(run_cli(home, "record", stdin=json_input(value)))
     assert recorded == {
-        "schema": "aquarium-production-status-record-receipt/v1",
+        "schema": "aquarium-production-status-record-receipt/v2",
         "status": "recorded",
         "changed": True,
+        "language_status": "observed",
         "attempt_id": value["attempt_id"],
         "git_root": str(repository),
         "file_revision": 1,
@@ -342,7 +360,12 @@ def test_record_replay_show_and_exit_classes_have_exact_streams(
     before_mtime = ledger.stat().st_mtime_ns
 
     replayed = exact_json_output(run_cli(home, "record", stdin=json_input(value)))
-    assert replayed == {**recorded, "status": "replayed", "changed": False}
+    assert replayed == {
+        **recorded,
+        "status": "replayed",
+        "changed": False,
+        "language_status": "not_checked",
+    }
     assert ledger.read_bytes() == before
     assert ledger.stat().st_mtime_ns == before_mtime
 

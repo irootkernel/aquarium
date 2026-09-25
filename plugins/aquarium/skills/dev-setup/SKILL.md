@@ -104,6 +104,12 @@ recorded Aquarium version belongs to this plugin, not a stale PATH payload. Use
 <plugin-root>/tools/aquarium-status record` with the closed document on standard
 input; do not import a cache path into the current agent process.
 
+The recorder observes Go, Rust, Python, TypeScript, and Dart declarations from
+the target repository during a new accepted record. Its v2 receipt reports
+`language_status` separately. An unavailable language scan preserves any
+previous observation and does not turn a successful setup record into a failed
+recording. An exact record replay does not repeat the scan.
+
 Return `aquarium-production-status-recording-result/v1` with exactly `schema`,
 `status`, `attempt_id`, `receipt`, `retry_request`, and `problem_code`. Preserve
 setup success if recording fails: return `failed`, the exact original record

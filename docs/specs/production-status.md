@@ -1,6 +1,6 @@
 # Production Setup Status
 
-This specification owns the shipped `aquarium-production-status/v1` contract.
+This specification owns the shipped `aquarium-production-status/v2` contract.
 `TASK-048` froze its delivery shape and `TASK-049` added the executable and skill
 wiring. Availability still depends on an installed, verified user-global
 runtime.
@@ -9,14 +9,15 @@ TASK-049 security review re-froze one installation detail before publication:
 the launcher is generated from the verified receipt and starts its exact
 interpreter with `-B -I -S`. This supersedes TASK-048's unsafe copied-entrypoint
 wording, which would have started an ambient Python before verifying the
-receipt. The ledger and public JSON schemas did not change.
+receipt. That correction did not change the original v1 ledger or JSON schemas.
 
 ## Purpose and authority
 
 Aquarium keeps one user-global ledger of terminal repository setup attempts at
 `~/.aquarium/status.yaml`. It records setup history and bounded observations for
-canonical Git worktree roots. It is not repository authority, a live-health
-probe, an enrollment database, or proof that an integrated tool currently works.
+canonical Git worktree roots. It also records declared language versions for
+registered roots. It is not repository authority, a live-health probe, an
+enrollment database, or proof that an integrated tool currently works.
 A repository-local `.aquarium` path remains forbidden.
 
 The bundled `aquarium-status` source owns ledger bytes. Setup skills submit one
@@ -28,9 +29,10 @@ closed JSON document to the recorder and never write YAML themselves.
 The canonical YAML document has exactly these top-level fields:
 
 ```yaml
-schema: aquarium-production-status/v1
 file_revision: 1
+language_inventory: []
 repositories: []
+schema: aquarium-production-status/v2
 ```
 
 `file_revision` is a positive integer. `repositories` is sorted by bytewise
@@ -43,6 +45,26 @@ canonical `git_root`. Every row has exactly:
 - optional `last_full_ready`, absent until an unscoped attempt ends `ready`;
 - `last_attempt`; and
 - `components`, a mapping with optional `sanho` and `aquarium_dev` observations.
+
+`language_inventory` is a separate list sorted by canonical `git_root`; entries
+must refer to a recorded repository. Each entry has exactly `git_root`,
+`observed_at` (UTC RFC 3339), and `languages`. The language list is sorted and
+unique, closed to `dart`, `go`, `python`, `rust`, and `typescript`. Each language
+has exactly `name` and `declarations`. A declaration has exactly `path`, `kind`,
+and `value`: a repository-relative manifest path, its declaration key, and a
+recognized version or version range. Unrecognized values, including local
+package paths, are omitted. Declarations are sorted and unique. An empty
+declaration list means the language was found without a recognized version
+declaration; an absent inventory entry means it has not been observed. These
+declarations are snapshots of repository requirements; they do not identify
+installed or active toolchains. Language-only refresh increments `file_revision`
+without changing setup `row_revision` or attempts.
+
+The current runtime reads canonical v1 ledgers without rewriting them. The
+first successful ledger mutation by `record`, `refresh-languages`, or `forget`
+writes canonical v2 bytes while preserving existing rows and attempt digests.
+Upgrade the installed managed runtime before the first v2 write; a v1 runtime
+cannot read v2.
 
 An attempt contains `attempt_id`, `input_sha256`, `expected_row_revision`,
 `aquarium_version`, `started_at`, `completed_at`, `outcome`, `scope`,
@@ -151,11 +173,46 @@ unscoped pass. If setup succeeds but record fails, setup remains successful,
 `status_recording` is `failed`, the enclosing workflow result is `partial`, and
 retry returns the identical attempt without repeating setup mutations.
 
+A newly accepted record scans its canonical repository for language declarations
+before writing the same ledger transaction. Exact replay does not rescan. A
+language scan failure preserves the previous inventory and reports
+`language_status: unavailable` without failing setup recording. The scan opens
+declaration files through file descriptors without following symlinks. It skips
+declaration paths with credential-like names. For language presence, it checks
+tracked regular source files through the same directory traversal without
+reading their contents. Unrecognized or non-version declaration values are
+discarded while the language remains present. The `pubspec.yaml` parser rejects
+YAML aliases and stops at the scan deadline. Parser failures make the
+observation unavailable without interrupting setup recording.
+TypeScript source suffixes include `.ts`, `.tsx`, `.mts`, and `.cts`. The scan
+reports unavailable if Git output exceeds 16 MiB, tracked paths exceed 100,000,
+a manifest exceeds 1 MiB, or the 20-second observation budget expires. An
+all-root refresh shares one budget. The scan never runs project code, invokes a
+toolchain, or makes a network request. Go versions
+come from `go` and `toolchain` directives in `go.mod` and `go.work`. Rust uses
+`rust-toolchain` and Cargo `rust-version`; Python uses `requires-python`,
+`python_requires`, Poetry's Python dependency (string or inline `version`
+table), and `.python-version`.
+TypeScript uses its package dependency, and Dart uses `environment.sdk`.
+Multiple declarations retain their source paths.
+
+`refresh-languages [--git-root <recorded-absolute-path>]` scans one exact
+recorded root or all recorded roots when omitted. It verifies Git identity
+before and after each scan, atomically replaces successful observations, and
+preserves earlier observations for roots that are missing, changed identity,
+unreadable, or unsafe. Its JSON receipt uses
+`aquarium-production-status-language-refresh-receipt/v1` with `schema`,
+`status` (`complete` or `partial`), `changed`, `file_revision`, and sorted
+`repositories` entries containing `git_root` and `status` (`observed` or
+`unavailable`). It does not discover new repositories. A refresh with at least
+one successful observation increments the file revision once, leaving setup
+row revisions intact.
+
 ## Show and forget contracts
 
 `show --format text|json [--refresh] [--source-root <absolute-path>]` reads the
 ledger without changing it. JSON output uses
-`aquarium-production-status-report/v1` and reports ledger state, reporter and
+`aquarium-production-status-report/v2` and reports ledger state, reporter and
 source versions, independent configuration and release freshness, recorded
 rows, live root identity, and current `aquarium-dev` enrollment observations.
 
@@ -230,21 +287,23 @@ Text output uses fixed English labels. Every project name and path is rendered
 as an ASCII-only JSON string, escaping all non-ASCII code points as well as
 control characters, newlines, backslashes, terminal escapes, and Unicode
 bidirectional or format controls; it never writes an untrusted string as raw
-terminal text.
+terminal text. Its `Languages` line uses `not_observed` before the first scan
+and `unknown` for a detected language without a version declaration.
 
 ## JSON envelopes
 
-`aquarium-production-status-record-receipt/v1` has exactly `schema`, `status`,
-`changed`, `attempt_id`, `git_root`, `file_revision`, and `row_revision`.
+`aquarium-production-status-record-receipt/v2` has exactly `schema`, `status`,
+`changed`, `language_status`, `attempt_id`, `git_root`, `file_revision`, and `row_revision`.
 `status` is `recorded` or `replayed`; the other fields have the meanings and
-types declared above.
+types declared above. `language_status` is `observed` or `unavailable` for a
+new record and `not_checked` for an exact replay.
 
 `aquarium-production-status-forget-receipt/v1` has exactly `schema`, `status`,
 `changed`, `git_root`, `file_revision`, and `previous_row_revision`. `status` is
 `forgotten` or `absent`; the two revision fields are positive integers or null
 only for an absent ledger or absent row as described above.
 
-`aquarium-production-status-report/v1` has exactly:
+`aquarium-production-status-report/v2` has exactly:
 
 - `schema` and `status`;
 - `ledger`, with exactly `state` (`absent` or `present`) and `file_revision`;
@@ -255,7 +314,8 @@ only for an absent ledger or absent row as described above.
 - `warnings`, a sorted unique list of objects containing only `code`.
 
 Each report row contains the stored row fields plus `root_state`,
-`configuration_freshness`, and `enrollment`. `root_state` is `present`,
+`configuration_freshness`, `enrollment`, and `language_inventory` (the stored
+observation or null when not yet scanned). `root_state` is `present`,
 `missing`, `identity_mismatch`, or `unreadable`. `enrollment` has exactly
 `state` and `project_id`; the ID is a non-empty string only for `enrolled` and is
 otherwise null. Warning codes are `release_refresh_failed`,
@@ -321,9 +381,10 @@ lowercase SHA-256. `files` covers the exact payload below;
 under the generation. The selector, receipt, payload, interpreter, and private
 dependency tree jointly define the installed identity.
 
-The runtime payload is exactly `aquarium_status.py`, `status_contract.py`,
-`status_store.py`, `status_report.py`, `runtime_entry.py`, and
-`requirements.txt`. Each file digest is over its raw committed bytes.
+The runtime payload is exactly `aquarium_status.py`, `language_inventory.py`,
+`status_contract.py`, `status_store.py`, `status_report.py`,
+`runtime_entry.py`, and `requirements.txt`. Each file digest is over its raw
+committed bytes.
 `requirements_sha256` is the digest of the raw `requirements.txt` bytes.
 `source_sha256` is the digest of the UTF-8 concatenation, in bytewise relative
 path order, of one `<file-sha256>  <relative-path>\n` line per payload file. The
@@ -441,8 +502,9 @@ returns `not_recordable` and never creates a row. `dev-setup-global` and
 ## Retention and privacy
 
 Rows retain canonical absolute worktree and common-directory paths, display
-labels, attempt IDs and times, outcomes and scopes, sourced versions, and latest
-settled component results. Linked worktrees have separate rows. Moving or
+labels, attempt IDs and times, outcomes and scopes, sourced versions, latest
+settled component results, and bounded language declarations with relative
+source paths. Linked worktrees have separate rows. Moving or
 deleting a checkout retains the old row visibly; recording the new location adds
 a new row. Exact `forget` is the only row-removal operation.
 

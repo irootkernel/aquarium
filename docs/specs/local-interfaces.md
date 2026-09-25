@@ -4,12 +4,13 @@ Aquarium ships declarative skill contracts, Podway Procedure definitions, local 
 
 ## Production Status Interfaces
 
-`TASK-048` froze and `TASK-049` ships the production setup-status interfaces.
-The ledger uses
-`aquarium-production-status/v1`; the record input and receipt use
+`TASK-048` froze and `TASK-049` shipped the original production setup-status interfaces.
+The ledger now uses
+`aquarium-production-status/v2`; the record input and receipt use
 `aquarium-production-status-record/v1` and
-`aquarium-production-status-record-receipt/v1`; JSON show output uses
-`aquarium-production-status-report/v1`; exact deletion uses
+`aquarium-production-status-record-receipt/v2`; JSON show output uses
+`aquarium-production-status-report/v2`; language refresh uses
+`aquarium-production-status-language-refresh-receipt/v1`; exact deletion uses
 `aquarium-production-status-forget-receipt/v1`; and failures use
 `aquarium-production-status-error/v1`. Setup handoff and recording results use
 `aquarium-production-status-attempt/v1` and
@@ -18,7 +19,8 @@ The ledger uses
 `aquarium-status-runtime-error/v1`.
 
 The CLI is `aquarium-status show --format text|json [--refresh]
-[--source-root <absolute-path>]`, closed-JSON `record` on standard input, and
+[--source-root <absolute-path>]`, closed-JSON `record` on standard input,
+`refresh-languages [--git-root <recorded-absolute-path>]`, and
 `forget --git-root <absolute-path> [--if-file-revision <revision>
 --if-row-revision <revision> --if-row-sha256 <digest>]`. Exit 0 is a
 successful result, exit 1 is owned-state failure, exit 2 is invalid caller input,

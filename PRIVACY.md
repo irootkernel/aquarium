@@ -8,9 +8,16 @@ Aquarium keeps a local production setup-status ledger at
 `~/.aquarium/status.yaml`. Terminal repository setup may record canonical
 absolute Git worktree and common-directory
 paths, a display label, attempt identifiers and times, outcome and scope, sourced
-Aquarium versions, and the latest settled Sanho and `aquarium-dev` observations.
-The ledger stores no credentials, repository source, provider output, or raw
-diagnostics. Default reporting is offline. An explicit `--refresh` contacts only
+Aquarium versions, the latest settled Sanho and `aquarium-dev` observations,
+and bounded Go, Rust, Python, TypeScript, and Dart declaration values with
+relative manifest paths and observation times. Terminal setup recording and
+an explicit `refresh-languages` command read local declaration files from
+recorded roots without running project code or making a network request.
+Declaration values must match supported version or version-range forms;
+unrecognized values are not stored. The scanner skips credential-named paths.
+The ledger is designed to exclude credentials, repository source, provider
+output, and raw diagnostics. Default reporting is offline. An explicit
+`--refresh` contacts only
 the official Aquarium GitHub latest stable Release endpoint, and an explicit
 source-root observation reads only that local Aquarium checkout's manifest and
 CHANGELOG. Default reporting may also read the six allowlisted local

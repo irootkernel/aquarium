@@ -344,7 +344,7 @@ def test_installed_launcher_is_isolated_and_survives_plugin_removal(
 
     assert process.returncode == 0, process.stderr
     report = json.loads(process.stdout)
-    assert report["schema"] == "aquarium-production-status-report/v1"
+    assert report["schema"] == "aquarium-production-status-report/v2"
     assert report["reporter"] == {
         "value": receipt["plugin_version"],
         "source": "installed_runtime_receipt",

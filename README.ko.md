@@ -63,11 +63,13 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup-global`은 user-global 도구를 관리하고, `$aquarium:dev-setup`은 repository 설정과 에이전트 운영 지침을 자동 진단해 필요한 변경만 제안합니다. `$aquarium:dev-setup-bundle`은 대상별 MCP 범위, Sorage Project slug, Mulgae artist 역할 의도를 담은 v2 manifest 하나로 여러 저장소의 설정을 요청합니다.
 
-`$aquarium:status`는 setup을 다시 실행하거나 현재 도구 상태를 보장하지
-않고 로컬 production setup 원장을 보여줍니다. release 정보 갱신은
-명시적으로 선택해야 하며, 기록 하나를 지울 때는 현재 revision과 digest에
-결박된 별도 승인이 필요합니다. `aquarium-status` runtime은 global setup이
-진단하며 plugin update만으로 자동 교체되지 않습니다.
+`$aquarium:status`는 로컬 production setup 원장과 저장소별 Go, Rust,
+Python, TypeScript, Dart의 선언 버전을 보여줍니다. 설정 결과를 기록할 때
+언어 정보를 자동으로 수집하고, 기존 기록은 `aquarium-status refresh-languages`로
+갱신합니다. 상태 조회는 setup을 다시 실행하거나 설치된 언어 도구의 버전을
+검사하지 않습니다. 릴리스 정보 갱신은 명시적으로 요청해야 하고, 기록 삭제에는
+현재 revision과 digest에 결박된 별도 승인이 필요합니다. `aquarium-status`
+runtime은 global setup이 진단하며 plugin update만으로 자동 교체되지 않습니다.
 
 ## 생태계가 연결되는 방식
 

@@ -1,6 +1,6 @@
 ---
 name: status
-description: "Report Aquarium production setup history and freshness, refresh official release metadata on request, or forget one exact recorded repository after approval. Use only when the user invokes $aquarium:status or asks for Aquarium production setup status."
+description: "Report Aquarium production setup history, declared languages, and freshness; explicitly refresh recorded language declarations or official release metadata; or forget one exact recorded repository after approval. Use when the user invokes $aquarium:status or asks for Aquarium production setup status."
 ---
 
 # Production Setup Status
@@ -29,8 +29,22 @@ directly.
 - Add `--source-root <absolute-path>` only for an explicitly named Aquarium
   source checkout.
 - Describe a recorded attempt as setup history, not current tool health.
+- Describe language declarations as repository snapshots, not installed or
+  active toolchain versions. Null means not yet observed; an empty declaration
+  list means that language has no recognized version declaration.
 - Keep configuration freshness, release freshness, live root identity, and
   `aquarium-dev` enrollment independent. Preserve partial-report warnings.
+
+## Refresh Declared Languages
+
+On an explicit request, run `aquarium-status refresh-languages` for every
+recorded root or add `--git-root <canonical-absolute-path>` for one named row.
+This is a local ledger write; state the selected scope and report each observed
+or unavailable root from its JSON receipt. It does not run setup, invoke a
+toolchain, contact a network, or discover unrecorded repositories. Do not run
+it as a side effect of `show`, release freshness refresh, or row deletion.
+If the managed runtime is not current, route its separate update through
+`$aquarium:dev-setup-global` before this write.
 
 ## Forget One Exact Row
 
@@ -41,7 +55,7 @@ row.
    `git_root`. Never scan for moved or deleted repositories.
 2. Present the full selected row and current `ledger.file_revision` and
    `row_revision`. Remove only the derived `root_state`,
-   `configuration_freshness`, and `enrollment` fields, then compute the row
+   `configuration_freshness`, `enrollment`, and `language_inventory` fields, then compute the row
    SHA-256 with the specification's canonical-JSON algorithm: NFC-normalize all
    strings, sort object keys, use compact UTF-8 JSON with no ASCII escaping, and
    append one newline. Explain that deletion removes only local history and

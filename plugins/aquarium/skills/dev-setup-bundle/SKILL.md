@@ -61,6 +61,8 @@ Once a target enters `dev-setup`, accept its recording receipt only when the
 attempt ID, canonical root, predecessor row revision, and resulting revisions
 match the handoff contract. Never record that target a second time. If a target
 settles before entry, complete and record the bundle-owned original attempt once.
+The recorder's v2 receipt reports language observation separately; an
+unavailable scan does not invalidate an otherwise successful setup record.
 On recording failure, preserve the exact record-only retry request and never
 repeat target mutations. Validate the closed recording-result fields and problem
 codes against the same specification. Continue independent targets.

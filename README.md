@@ -63,11 +63,14 @@ The user-local `aquarium-dev <tool> [args...]` launcher accepts only supported t
 
 Foundations: `$aquarium:docs-setup` governs canonical documentation structure and roadmap IDs. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup-global` maintains user-global tools; `$aquarium:dev-setup` automatically diagnoses repository configuration and agent guidance, proposing changes only when needed. `$aquarium:dev-setup-bundle` delegates those two scopes across several repositories from one v2 manifest with per-target MCP scope, Sorage Project slug, and Mulgae artist intent.
 
-`$aquarium:status` reports the local production setup ledger without rerunning
-setup or claiming live tool health. Optional release refresh is explicit, and
-forgetting one recorded checkout requires approval bound to its current revision
-and digest. The managed `aquarium-status` runtime is diagnosed by global setup
-and is never updated merely because the plugin changed.
+`$aquarium:status` reports the local production setup ledger, including stored
+Go, Rust, Python, TypeScript, and Dart version declarations for each recorded
+repository. Setup records those declarations automatically; an explicit
+`aquarium-status refresh-languages` updates existing rows. Reporting does not
+rerun setup or check installed toolchains. Optional release refresh is explicit,
+and forgetting one recorded checkout requires approval bound to its current
+revision and digest. Global setup diagnoses the managed `aquarium-status`
+runtime; a plugin update alone does not replace it.
 
 ## How the Ecosystem Connects
 

@@ -16,10 +16,12 @@ import yaml
 from status_contract import (
     COMPONENT_OUTCOMES,
     LEDGER_SCHEMA,
+    LEGACY_LEDGER_SCHEMA,
     OUTCOMES,
     SHA256_RE,
     ContractError,
     parse_time,
+    valid_language_declaration,
     validate_scope,
     validate_uuid4,
     validate_version,
@@ -138,7 +140,18 @@ def locked(exclusive: bool) -> Iterator[None]:
 
 
 def empty_ledger() -> dict[str, Any]:
-    return {"schema": LEDGER_SCHEMA, "file_revision": 0, "repositories": []}
+    return {
+        "schema": LEDGER_SCHEMA,
+        "file_revision": 0,
+        "repositories": [],
+        "language_inventory": [],
+    }
+
+
+def upgrade_ledger(ledger: dict[str, Any]) -> None:
+    if ledger["schema"] == LEGACY_LEDGER_SCHEMA:
+        ledger["schema"] = LEDGER_SCHEMA
+        ledger["language_inventory"] = []
 
 
 def _exact(
@@ -216,10 +229,17 @@ def _canonical_absolute_path(value: Any) -> bool:
 
 
 def _validate_ledger(value: Any) -> dict[str, Any]:
-    ledger = _exact(value, {"schema", "file_revision", "repositories"})
+    if not isinstance(value, dict):
+        raise TypeError("invalid ledger")
+    schema = value.get("schema")
+    keys = {"schema", "file_revision", "repositories"}
+    if schema == LEDGER_SCHEMA:
+        keys.add("language_inventory")
+    elif schema != LEGACY_LEDGER_SCHEMA:
+        raise ValueError("unsupported ledger schema")
+    ledger = _exact(value, keys)
     if (
-        ledger["schema"] != LEDGER_SCHEMA
-        or type(ledger["file_revision"]) is not int
+        type(ledger["file_revision"]) is not int
         or ledger["file_revision"] < 1
         or not isinstance(ledger["repositories"], list)
     ):
@@ -312,6 +332,61 @@ def _validate_ledger(value: Any) -> dict[str, Any]:
         roots
     ) != len(set(roots)):
         raise ValueError("invalid row order")
+    if schema == LEDGER_SCHEMA:
+        inventories = ledger["language_inventory"]
+        if not isinstance(inventories, list):
+            raise ValueError("invalid language inventory")
+        inventory_roots = []
+        for inventory_value in inventories:
+            entry = _exact(inventory_value, {"git_root", "observed_at", "languages"})
+            if entry["git_root"] not in roots or not isinstance(
+                entry["languages"], list
+            ):
+                raise ValueError("invalid language inventory root")
+            parse_time(entry["observed_at"], "observed_at")
+            names = []
+            for language_value in entry["languages"]:
+                language = _exact(language_value, {"name", "declarations"})
+                if language["name"] not in {
+                    "go",
+                    "rust",
+                    "python",
+                    "typescript",
+                    "dart",
+                } or not isinstance(language["declarations"], list):
+                    raise ValueError("invalid language")
+                declarations = []
+                for declaration_value in language["declarations"]:
+                    declaration = _exact(declaration_value, {"kind", "path", "value"})
+                    path = declaration["path"]
+                    version = declaration["value"]
+                    if (
+                        not isinstance(declaration["kind"], str)
+                        or not declaration["kind"]
+                        or not isinstance(path, str)
+                        or not path
+                        or Path(path).is_absolute()
+                        or any(part in {"", ".", ".."} for part in path.split("/"))
+                        or not valid_language_declaration(
+                            language["name"], declaration["kind"], version
+                        )
+                        or any(
+                            unicodedata.normalize("NFC", item) != item
+                            for item in (path, version, declaration["kind"])
+                        )
+                    ):
+                        raise ValueError("invalid language declaration")
+                    declarations.append((path, declaration["kind"], version))
+                if declarations != sorted(set(declarations)):
+                    raise ValueError("invalid language declaration order")
+                names.append(language["name"])
+            if names != sorted(set(names)):
+                raise ValueError("invalid language order")
+            inventory_roots.append(entry["git_root"])
+        if inventory_roots != sorted(
+            set(inventory_roots), key=lambda item: item.encode("utf-8")
+        ):
+            raise ValueError("invalid language inventory order")
     return ledger
 
 

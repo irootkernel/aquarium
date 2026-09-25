@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.18 - Unreleased
 
+### Added
+
+- Show declared Go, Rust, Python, TypeScript, and Dart versions per recorded repository; capture them during setup recording and refresh them with an explicit local command.
+
 ### Changed
 
 - Replace the bundle setup manifest with v2 target-specific MCP scope, Sorage Project slug, and Mulgae artist intent.

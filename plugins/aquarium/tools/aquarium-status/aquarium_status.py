@@ -9,13 +9,16 @@ import json
 import os
 import subprocess
 import sys
+import time
 import unicodedata
 from pathlib import Path
 from typing import Any
 
+from language_inventory import SCAN_TIMEOUT_SECONDS, InventoryError, scan
 from status_contract import (
     ERROR_SCHEMA,
     FORGET_RECEIPT_SCHEMA,
+    LANGUAGE_REFRESH_RECEIPT_SCHEMA,
     RECORD_RECEIPT_SCHEMA,
     REPORT_SCHEMA,
     SHA256_RE,
@@ -32,7 +35,7 @@ from status_report import (
     source_versions,
     version,
 )
-from status_store import locked, read_ledger, write_ledger
+from status_store import locked, read_ledger, upgrade_ledger, write_ledger
 
 VERSION_OVERRIDE: tuple[str, str] | None = None
 
@@ -55,7 +58,7 @@ def plugin_version() -> tuple[str, str]:
     return f"v{value}", "bundled_plugin_manifest"
 
 
-def git_identity(raw: str) -> tuple[str, str]:
+def git_identity(raw: str, deadline: float | None = None) -> tuple[str, str]:
     try:
         requested = Path(raw)
         if not requested.is_absolute() or requested.is_symlink():
@@ -72,6 +75,7 @@ def git_identity(raw: str) -> tuple[str, str]:
             capture_output=True,
             text=True,
             env=environment,
+            timeout=max(0.001, deadline - time.monotonic()) if deadline else None,
         ).stdout.strip()
         common = subprocess.run(
             ["git", "-C", str(resolved), "rev-parse", "--git-common-dir"],
@@ -79,6 +83,7 @@ def git_identity(raw: str) -> tuple[str, str]:
             capture_output=True,
             text=True,
             env=environment,
+            timeout=max(0.001, deadline - time.monotonic()) if deadline else None,
         ).stdout.strip()
         top_path = Path(top).resolve(strict=True)
         common_path = Path(common)
@@ -116,6 +121,33 @@ def retained_attempts(row: dict[str, Any]) -> list[dict[str, Any]]:
     return [item for item in attempts if isinstance(item, dict)]
 
 
+def observe_languages(root: str, common: str, deadline: float) -> dict[str, Any] | None:
+    try:
+        if time.monotonic() >= deadline or git_identity(root, deadline) != (
+            root,
+            common,
+        ):
+            return None
+        observation = scan(Path(root), deadline)
+        if time.monotonic() >= deadline or git_identity(root, deadline) != (
+            root,
+            common,
+        ):
+            return None
+        return observation
+    except (ContractError, InventoryError):
+        return None
+
+
+def set_language_inventory(ledger: dict[str, Any], entry: dict[str, Any]) -> None:
+    inventories = ledger["language_inventory"]
+    inventories[:] = [
+        item for item in inventories if item["git_root"] != entry["git_root"]
+    ]
+    inventories.append(entry)
+    inventories.sort(key=lambda item: item["git_root"].encode("utf-8"))
+
+
 def record() -> dict[str, Any]:
     raw = load_stdin()
     if not isinstance(raw, dict) or not isinstance(raw.get("git_root"), str):
@@ -142,6 +174,7 @@ def record() -> dict[str, Any]:
                 "schema": RECORD_RECEIPT_SCHEMA,
                 "status": "replayed",
                 "changed": False,
+                "language_status": "not_checked",
                 "attempt_id": request["attempt_id"],
                 "git_root": root,
                 "file_revision": attempt["recorded_file_revision"],
@@ -205,12 +238,19 @@ def record() -> dict[str, Any]:
         else:
             rows[rows.index(row)] = updated
         rows.sort(key=lambda item: item["git_root"].encode("utf-8"))
+        upgrade_ledger(ledger)
+        observation = observe_languages(
+            root, common, time.monotonic() + SCAN_TIMEOUT_SECONDS
+        )
+        if observation is not None:
+            set_language_inventory(ledger, observation)
         ledger["file_revision"] = new_file_revision
         write_ledger(ledger, previous)
         return {
             "schema": RECORD_RECEIPT_SCHEMA,
             "status": "recorded",
             "changed": True,
+            "language_status": "observed" if observation is not None else "unavailable",
             "attempt_id": request["attempt_id"],
             "git_root": root,
             "file_revision": new_file_revision,
@@ -235,8 +275,14 @@ def show(refresh: bool, source_root: str | None) -> dict[str, Any]:
         source_plugin, source_unreleased, source_warning = source_versions(source_root)
         warnings = {item for item in (release_warning, source_warning) if item}
         repositories = []
+        inventories = {
+            item["git_root"]: item for item in ledger.get("language_inventory", [])
+        }
         for stored in ledger["repositories"]:
             row = copy.deepcopy(stored)
+            row["language_inventory"] = copy.deepcopy(
+                inventories.get(stored["git_root"])
+            )
             row["root_state"] = root_state(stored)
             row["configuration_freshness"] = freshness(
                 stored.get("last_full_ready", {}).get(
@@ -262,6 +308,48 @@ def show(refresh: bool, source_root: str | None) -> dict[str, Any]:
             "release_freshness": freshness(report_version, latest),
             "repositories": repositories,
             "warnings": [{"code": code} for code in sorted(warnings)],
+        }
+
+
+def refresh_languages(root_value: str | None) -> dict[str, Any]:
+    with locked(True):
+        ledger, previous = read_ledger()
+        rows = ledger["repositories"]
+        if root_value is not None:
+            matching = [row for row in rows if row["git_root"] == root_value]
+            if not matching:
+                raise ContractError("invalid_git_root", "git_root is not recorded", 2)
+            rows = matching
+        results = []
+        observations = []
+        deadline = time.monotonic() + SCAN_TIMEOUT_SECONDS
+        for row in rows:
+            observation = observe_languages(
+                row["git_root"], row["git_common_dir"], deadline
+            )
+            results.append(
+                {
+                    "git_root": row["git_root"],
+                    "status": "observed" if observation is not None else "unavailable",
+                }
+            )
+            if observation is not None:
+                observations.append(observation)
+        changed = bool(observations)
+        if changed:
+            upgrade_ledger(ledger)
+            for observation in observations:
+                set_language_inventory(ledger, observation)
+            ledger["file_revision"] += 1
+            write_ledger(ledger, previous)
+        return {
+            "schema": LANGUAGE_REFRESH_RECEIPT_SCHEMA,
+            "status": "partial"
+            if any(item["status"] == "unavailable" for item in results)
+            else "complete",
+            "changed": changed,
+            "file_revision": ledger["file_revision"] or None,
+            "repositories": results,
         }
 
 
@@ -325,6 +413,10 @@ def forget(
             raise ContractError("revision_conflict", "deletion precondition changed", 3)
         old_revision = row["row_revision"]
         ledger["repositories"].remove(row)
+        upgrade_ledger(ledger)
+        ledger["language_inventory"] = [
+            entry for entry in ledger["language_inventory"] if entry["git_root"] != root
+        ]
         ledger["file_revision"] += 1
         write_ledger(ledger, previous)
         return {
@@ -341,6 +433,18 @@ def text_report(report: dict[str, Any]) -> str:
     render = lambda value: json.dumps(
         value, ensure_ascii=True, sort_keys=True, separators=(",", ":")
     )
+
+    def languages_text(observation: dict[str, Any] | None) -> str:
+        if observation is None:
+            return "not_observed"
+        languages = {
+            item["name"]: item["declarations"] or "unknown"
+            for item in observation["languages"]
+        }
+        return render(
+            {"observed_at": observation["observed_at"], "languages": languages}
+        )
+
     lines = [
         f"Status: {report['status']}",
         f"Ledger: {render(report['ledger'])}",
@@ -361,6 +465,7 @@ def text_report(report: dict[str, Any]) -> str:
                 f"  Root state: {row['root_state']}",
                 f"  Configuration freshness: {row['configuration_freshness']}",
                 f"  Enrollment: {render(row['enrollment'])}",
+                f"  Languages: {languages_text(row['language_inventory'])}",
                 f"  Last attempt: {render(row['last_attempt'])}",
                 f"  Last full ready: {render(row.get('last_full_ready'))}",
                 f"  Components: {render(row['components'])}",
@@ -379,6 +484,8 @@ def parser() -> argparse.ArgumentParser:
     show_parser.add_argument("--refresh", action="store_true")
     show_parser.add_argument("--source-root")
     commands.add_parser("record")
+    language_parser = commands.add_parser("refresh-languages")
+    language_parser.add_argument("--git-root")
     forget_parser = commands.add_parser("forget")
     forget_parser.add_argument("--git-root", required=True)
     forget_parser.add_argument("--if-file-revision", type=int)
@@ -400,6 +507,9 @@ def main(argv: list[str] | None = None) -> int:
                 arguments.if_row_revision,
                 arguments.if_row_sha256,
             )
+            text = json.dumps(output, sort_keys=True, ensure_ascii=False) + "\n"
+        elif arguments.command == "refresh-languages":
+            output = refresh_languages(arguments.git_root)
             text = json.dumps(output, sort_keys=True, ensure_ascii=False) + "\n"
         else:
             output = show(arguments.refresh, arguments.source_root)
