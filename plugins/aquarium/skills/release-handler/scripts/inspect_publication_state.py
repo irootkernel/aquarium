@@ -8,9 +8,9 @@ import re
 import sys
 from typing import Any
 
-REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v4"
-RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v4"
-ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v4"
+REQUEST_SCHEMA_VERSION = "aquarium-release-publication-observation/v5"
+RESULT_SCHEMA_VERSION = "aquarium-release-publication-state/v5"
+ERROR_SCHEMA_VERSION = "aquarium-release-publication-state-error/v5"
 MAX_REQUEST_BYTES = 64 * 1024
 SEMVER = re.compile(r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$")
 OBJECT_ID = re.compile(r"^[0-9a-f]{40,64}$")
@@ -54,13 +54,14 @@ def inspect(payload: object) -> dict[str, object]:
         raise ObservationError("observation_invalid", "observation schema is invalid")
     if schema_version != REQUEST_SCHEMA_VERSION:
         raise ObservationError(
-            "schema_unsupported", "observation schema is unsupported"
+            "schema_unsupported", f"observation must use {REQUEST_SCHEMA_VERSION}"
         )
     request = exact_mapping(
         payload,
         {
             "schema_version",
             "version",
+            "expected_release_title",
             "release_basis_candidate_sha",
             "release_commit",
             "qa_evidence_candidate_sha",
@@ -71,6 +72,7 @@ def inspect(payload: object) -> dict[str, object]:
             "local_main_sha",
             "remote_main_sha",
             "remote_main_relation_to_release_basis",
+            "remote_main_relation_to_release_commit",
             "tag",
             "hosted_release",
         },
@@ -79,6 +81,17 @@ def inspect(payload: object) -> dict[str, object]:
     version = request["version"]
     if not isinstance(version, str) or SEMVER.fullmatch(version) is None:
         raise ObservationError("observation_invalid", "version is invalid")
+    expected_title = request["expected_release_title"]
+    if (
+        not isinstance(expected_title, str)
+        or not expected_title.strip()
+        or len(expected_title) > 4096
+        or "\n" in expected_title
+        or "\r" in expected_title
+    ):
+        raise ObservationError(
+            "observation_invalid", "expected release title is invalid"
+        )
     release_basis = object_id(
         request["release_basis_candidate_sha"], "release-basis candidate"
     )
@@ -133,20 +146,50 @@ def inspect(payload: object) -> dict[str, object]:
         raise ObservationError(
             "observation_invalid", "remote main relationship contradicts its SHA"
         )
+    release_relation = request["remote_main_relation_to_release_commit"]
+    if not isinstance(release_relation, str) or release_relation not in {
+        "equal",
+        "ancestor",
+        "descendant",
+        "diverged",
+    }:
+        raise ObservationError(
+            "observation_invalid", "remote release relationship is invalid"
+        )
+    if (remote_main == release_sha) != (release_relation == "equal"):
+        raise ObservationError(
+            "observation_invalid", "remote release relationship contradicts its SHA"
+        )
+    if release_parent == release_basis and release_sha != release_basis:
+        allowed = {
+            "equal": {"ancestor"},
+            "ancestor": {"ancestor"},
+            "descendant": {"equal", "descendant", "diverged"},
+            "diverged": {"diverged"},
+        }
+        if release_relation not in allowed[remote_relation]:
+            raise ObservationError(
+                "observation_invalid", "remote ancestry relationships conflict"
+            )
     tag = exact_mapping(request["tag"], {"state", "annotated", "peeled_sha"}, "tag")
     hosted = exact_mapping(
         request["hosted_release"],
         {"state", "tag", "target_sha", "draft", "prerelease"},
         "hosted release",
     )
-    if tag["state"] not in {"absent", "present"} or not isinstance(
-        tag["annotated"], bool
+    if (
+        not isinstance(tag["state"], str)
+        or tag["state"] not in {"absent", "present"}
+        or not isinstance(tag["annotated"], bool)
     ):
         raise ObservationError("observation_invalid", "tag observation is invalid")
     tag_peeled = optional_object_id(tag["peeled_sha"], "peeled tag")
     if tag["state"] == "absent" and (tag["annotated"] or tag_peeled is not None):
         raise ObservationError("observation_invalid", "absent tag has object data")
-    if hosted["state"] not in {"absent", "present"}:
+    if not isinstance(hosted["state"], str) or hosted["state"] not in {
+        "absent",
+        "present",
+    }:
         raise ObservationError(
             "observation_invalid", "hosted release observation is invalid"
         )
@@ -188,22 +231,19 @@ def inspect(payload: object) -> dict[str, object]:
         "matching"
         if release_sha != release_basis
         and release_parent == release_basis
-        and release_title == f"[REL] Release {version}"
+        and release_title == expected_title
         and (exact_qa_binding or neutral_qa_binding)
         and gate_evidence == release_sha
         else "unproven"
     )
     local_main_status = ref_status(local_main, release_sha)
     if remote_main == release_sha:
-        if remote_relation != "descendant":
-            if evidence_status == "matching":
-                raise ObservationError(
-                    "observation_invalid", "release commit relationship is invalid"
-                )
-            remote_main_status = "conflict"
-        else:
-            remote_main_status = "matching"
-    elif remote_relation in {"equal", "ancestor"}:
+        remote_main_status = (
+            "matching" if remote_relation == "descendant" else "conflict"
+        )
+    elif remote_relation == "descendant" and release_relation == "descendant":
+        remote_main_status = "advanced"
+    elif remote_relation in {"equal", "ancestor"} and release_relation == "ancestor":
         remote_main_status = "missing"
     else:
         remote_main_status = "conflict"
@@ -259,6 +299,7 @@ def inspect(payload: object) -> dict[str, object]:
     return {
         "schema_version": RESULT_SCHEMA_VERSION,
         "version": version,
+        "expected_release_title": expected_title,
         "release_basis_candidate_sha": release_basis,
         "qa_evidence_candidate_sha": qa_evidence,
         "qa_evidence_relation_to_release_basis": qa_relation,
@@ -267,6 +308,7 @@ def inspect(payload: object) -> dict[str, object]:
         "release_commit_sha": release_sha,
         "remote_main_sha": remote_main,
         "remote_main_relation_to_release_basis": remote_relation,
+        "remote_main_relation_to_release_commit": release_relation,
         "classification": classification,
         "next_action": next_action,
         "statuses": statuses,

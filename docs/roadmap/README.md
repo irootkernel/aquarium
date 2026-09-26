@@ -454,7 +454,7 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 | TASK-079 | Correct review-route readiness and recovery | Align legacy Procedure readiness, Independent Review and Orca recovery, staged-candidate preparation, and Aquarium-side tool handoffs. | Completed | TASK-078 |
 | TASK-080 | Correct Task, Goal, and Validation Procedure routing | Repair blocker, plan-resume, rework, and closeout paths across managed Procedure sources, mirrors, and qualification. | Completed | TASK-079 |
 | TASK-081 | Correct Task closeout and commit handoff | Align Task decision records, dossier settlement, prose pass timing, and commit authority with the revised Procedure. | Completed | TASK-080 |
-| TASK-082 | Correct release helpers and gate sequencing | Support first releases and repository-specific commit titles; bind pre-QA gates, light confirmation, Design Gates, and publication recovery. | Planned | TASK-081 |
+| TASK-082 | Correct release helpers and gate sequencing | Support first releases and repository-specific commit titles; bind pre-QA gates, light confirmation, Design Gates, and publication recovery. | Completed | TASK-081 |
 | TASK-083 | Correct installed-package and setup contracts | Keep plugin resources reachable and align tool inventory, network and installer disclosures, timeout, and Sorage setup routing. | Planned | TASK-082 |
 | TASK-084 | Correct design and status workflows | Align quality-result decisions, design-document ownership, war-room notes, and status-forget recovery. | Planned | TASK-083 |
 | TASK-085 | Qualify Aquarium corrections and hand off integration | Verify the exact Aquarium-owned changes, report manual evidence separately, and pass producer-response gaps to TASK-046. | Planned | TASK-084 |

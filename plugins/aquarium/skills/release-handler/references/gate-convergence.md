@@ -2,6 +2,12 @@
 
 Read this reference after release QA has passed and before executing a repository full release gate. It governs efficient diagnosis after a gate failure without weakening the repository's aggregate command or binding prior QA evidence to a candidate it did not directly assess.
 
+## Rebind Pre-QA Evidence
+
+The clean committed candidate after changelog settlement owns pre-QA compatibility evidence and any light-mode test confirmation. Follow the repository policy to determine which gates are required and which exact distributed artifact and environment they must use. A development commit alone does not start a release gate.
+
+A settlement or remediation commit changes that candidate. Before the next QA pass or metadata step, rerun required candidate-bound gates and obtain fresh light confirmation for the new SHA, or explicitly switch to full verification. Carry evidence forward only when repository policy explicitly allows that exact equivalence; a QA-neutral direct-child decision below does not transfer SHA-bound compatibility results or light confirmation. Keep direct-QA evidence, pre-QA gate evidence, and post-metadata release-gate evidence distinct.
+
 ## Freeze Public Checkpoints
 
 Read the repository release policy, executable test authority, and `TESTING.md` when enrolled. Before the first gate command, freeze the ordered full-gate inventory and each objective pass condition, including commands whose successful check is an expected rejection rather than exit zero.
@@ -22,9 +28,9 @@ Once a suffix reaches the end, determine whether its corrections require a candi
 
 ## Settle One Correction Commit
 
-When a candidate correction commit is required, first restore only the applied release metadata to the exact release-basis state, including the open `Unreleased` heading, without changing settled entry text. Then collect the verified candidate corrections from one suffix cycle into one exact reviewed commit after the suffix reaches the end. Include required regression coverage and any release-note entry whose shipped outcome changed. Obtain the normal exact diff, release-note decision, and `$aquarium:task-commit` authority through its direct-commit flow, not a release-handler commit handoff operation; do not amend an earlier correction commit or hide functional work in the `[REL]` commit.
+When a candidate correction commit is required, first restore only the applied release metadata to the exact release-basis state, including the open `Unreleased` heading, without changing settled entry text. Then collect the verified candidate corrections from one suffix cycle into one exact reviewed commit after the suffix reaches the end. Include required regression coverage and any release-note entry whose shipped outcome changed. Obtain the normal exact diff, release-note decision, and `$aquarium:task-commit` authority through its direct-commit flow, not a release-handler commit handoff operation; do not amend an earlier correction commit or hide functional work in the release commit.
 
-Repository-authorized release metadata remains outside that correction commit: published version, pinned validation expectation, the release heading's date transition, and deterministic release links. A correction limited to that allowlist may remain in the later metadata-only `[REL]` commit when entry text is unchanged.
+Repository-authorized release metadata remains outside that correction commit: published version, pinned validation expectation, the release heading's date transition, and deterministic release links. A correction limited to that allowlist may remain in the later metadata-only release commit when entry text is unchanged.
 
 A correction to product or runtime code, skills, Procedures, public documentation, Design Gates, release-note entry text, dependencies or locks, build, packaging, installation, or release contracts changes QA scope. It requires a new full release-qa pass because a release-gate finding is not a finding from the previous release-qa pass and cannot enter its confirmation exception. Stop after the correction commit and obtain explicit authority for that new pass; the original handler invocation cannot start it automatically.
 
@@ -43,7 +49,7 @@ Diff size, commit title, file location alone, formatting claims, or a successful
 
 Record the prior release-qa result against its actual SHA and record the current SHA separately as an approved QA-neutral release-basis candidate. Never claim that release QA directly passed the direct child. Re-establish the release from live Git and hosting state on handler restart; retained evidence grants no test, commit, push, tag, or publication authority.
 
-For publication, bind the metadata-only release commit and final gate evidence to the release-basis candidate while retaining the distinct direct-QA evidence SHA. Supply both through the v4 publication observation. Publication recovery is `unproven` when either binding or the one-attempt equivalence fact is unavailable.
+For publication, bind the metadata-only release commit and final gate evidence to the release-basis candidate while retaining the distinct direct-QA evidence SHA. Supply both through the v5 publication observation. Publication recovery is `unproven` when either binding or the one-attempt equivalence fact is unavailable.
 
 After a QA-neutral reuse, any further candidate commit requires new full release QA. A metadata-only correction may still use the existing release-basis candidate, but the complete final gate must pass again from the beginning.
 

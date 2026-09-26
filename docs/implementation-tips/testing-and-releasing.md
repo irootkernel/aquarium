@@ -22,8 +22,8 @@ Gaori may summarize noisy test evidence. Its parser status and summary quality d
 
 ## Release Modes
 
-The release handler establishes `full` or `light` mode before metadata changes. Full mode runs the complete applicable gate. Light mode is restricted to release metadata and requires explicit confirmation of required results for the exact current HEAD; any later functional change invalidates that confirmation.
+The release handler establishes `full` or `light` mode before metadata changes. Full mode runs the complete applicable gate. Light mode is restricted to release metadata and requires explicit confirmation of required results for the clean exact candidate after changelog settlement. Every later candidate change requires fresh confirmation or full mode before the next QA pass or metadata step.
 
-Before either mode, reconcile all material changes since the previous release with the open changelog section. After release QA, preserve approved entry text byte-for-byte. A substantive edit creates a new candidate and requires QA again.
+Before either mode, reconcile all material changes since the previous release, or the complete reachable history for a confirmed first release, with the open changelog section. After release QA, preserve approved entry text byte-for-byte. A substantive edit creates a new candidate and requires QA again.
 
-Publication is ordered: commit, push `main`, create and push the annotated tag, create the GitHub Release, then re-observe remote `main`, the peeled tag, and the release. Local success never proves distribution readiness. Opening the next empty `Unreleased` section is a separate post-release change with separate approval.
+Publication is ordered: commit, push `main`, create and push the annotated tag, create the GitHub Release, then re-observe remote `main`, the peeled tag, and the release. Recovery may skip the push when a fresh ancestry check proves that remote main includes the release commit, subject to repository policy; tag and Release targets remain the original release SHA. Local success never proves distribution readiness. Opening the next empty `Unreleased` section is a separate post-release change with separate approval.

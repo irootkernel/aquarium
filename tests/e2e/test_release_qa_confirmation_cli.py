@@ -87,22 +87,31 @@ def cluster(root: Path, candidate: str, outcome: str) -> Path:
     )
 
 
-def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case):
+@pytest.mark.parametrize("first_release", [False, True])
+def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_release):
     repo, evidence = cli_case
     candidate = git(repo, "rev-parse", "HEAD")
-    commit = git(repo, "rev-list", "--reverse", "v1.0.0..HEAD")
+    commits = git(
+        repo, "rev-list", "--reverse", "HEAD" if first_release else "v1.0.0..HEAD"
+    ).splitlines()
     full_input = dump(
         evidence / "full-input.json",
         {
-            "schema": "aquarium-release-qa-full-pass/v1",
+            "schema": "aquarium-release-qa-full-pass/v2",
             "repository": str(repo),
             "version": "v1.0.1",
-            "previous_release": "v1.0.0",
+            "baseline_mode": "first_release" if first_release else "previous_release",
+            "previous_release": None if first_release else "v1.0.0",
             "candidate_sha": candidate,
             "evidence_root": str(evidence),
             "design_gate_state": "not_enrolled",
+            "active_design_gates": [],
+            "design_gate_matrix": [],
             "cluster_results": [str(cluster(evidence, candidate, "finding"))],
-            "commit_matrix": [{"commit": commit, "scenarios": ["scenario-contract"]}],
+            "commit_matrix": [
+                {"commit": commit, "scenarios": ["scenario-contract"]}
+                for commit in commits
+            ],
             "surface_matrix": [
                 {"path": "contract.txt", "scenarios": ["scenario-contract"]}
             ],
@@ -229,7 +238,7 @@ def test_cli_returns_structured_error_for_invalid_schema(tmp_path: Path):
         "schema": "aquarium-release-qa-error/v1",
         "error": {
             "code": "schema_invalid",
-            "message": "freeze input must use aquarium-release-qa-full-pass/v1",
+            "message": "freeze input must use aquarium-release-qa-full-pass/v2",
         },
     }
 

@@ -82,29 +82,81 @@ def cluster(evidence: Path, candidate: str, *, outcome: str = "finding") -> Path
     )
 
 
-def full_spec(repo: Path, candidate: str, evidence: Path, result: Path) -> dict:
+def full_spec(
+    repo: Path, candidate: str, evidence: Path, result: Path, *, first_release=False
+) -> dict:
     baseline = git(repo, "rev-parse", "v1.0.0")
-    commit = git(repo, "rev-list", "--reverse", f"{baseline}..{candidate}")
+    commits = git(
+        repo,
+        "rev-list",
+        "--reverse",
+        candidate if first_release else f"{baseline}..{candidate}",
+    ).splitlines()
+    paths = (
+        git(repo, "ls-tree", "-r", "--name-only", candidate).splitlines()
+        if first_release
+        else ["surface.txt"]
+    )
     return {
         "schema": qa.FULL_INPUT_SCHEMA,
         "repository": str(repo),
         "version": "v1.0.1",
-        "previous_release": "v1.0.0",
+        "baseline_mode": "first_release" if first_release else "previous_release",
+        "previous_release": None if first_release else "v1.0.0",
         "candidate_sha": candidate,
         "evidence_root": str(evidence),
         "design_gate_state": "not_enrolled",
+        "active_design_gates": [],
+        "design_gate_matrix": [],
         "cluster_results": [str(result)],
-        "commit_matrix": [{"commit": commit, "scenarios": ["S-1"]}],
-        "surface_matrix": [{"path": "surface.txt", "scenarios": ["S-1"]}],
+        "commit_matrix": [
+            {"commit": commit, "scenarios": ["S-1"]} for commit in commits
+        ],
+        "surface_matrix": [{"path": path, "scenarios": ["S-1"]} for path in paths],
     }
 
 
-def freeze(repo: Path, candidate: str, evidence: Path, outcome: str = "finding"):
-    result = cluster(evidence, candidate, outcome=outcome)
-    record_path = evidence / "full-record.json"
-    receipt = qa.freeze_full(
-        full_spec(repo, candidate, evidence, result), str(record_path)
+def add_gate_scenarios(path: Path, *, outcome="pass") -> None:
+    result = json.loads(path.read_text())
+    for kind in ("positive", "failure"):
+        scenario = dict(result["scenarios"][0])
+        scenario.update(
+            id=f"GATE-1-{kind}", sources=["design-gate:GATE-1"], outcome=outcome
+        )
+        result["scenarios"].append(scenario)
+    write_json(path, result)
+
+
+def gate_enrollment(spec: dict) -> None:
+    spec.update(
+        design_gate_state="enrolled",
+        active_design_gates=["GATE-1"],
+        design_gate_matrix=[
+            {
+                "gate": "GATE-1",
+                "positive_scenarios": ["GATE-1-positive"],
+                "failure_scenarios": ["GATE-1-failure"],
+            }
+        ],
     )
+
+
+def freeze(
+    repo: Path,
+    candidate: str,
+    evidence: Path,
+    outcome: str = "finding",
+    *,
+    first_release=False,
+    active_gate=False,
+):
+    result = cluster(evidence, candidate, outcome=outcome)
+    spec = full_spec(repo, candidate, evidence, result, first_release=first_release)
+    if active_gate:
+        add_gate_scenarios(result)
+        gate_enrollment(spec)
+    record_path = evidence / "full-record.json"
+    receipt = qa.freeze_full(spec, str(record_path))
     return record_path, receipt
 
 
@@ -130,9 +182,15 @@ def prepare(repo: Path, candidate: str, evidence: Path, record: Path) -> Path:
     return manifest
 
 
-def test_full_findings_round_trip_to_confirmation_pass(release_case):
+@pytest.mark.parametrize("first_release", [False, True])
+@pytest.mark.parametrize("active_gate", [False, True])
+def test_full_findings_round_trip_to_confirmation_pass(
+    release_case, first_release, active_gate
+):
     repo, candidate, evidence = release_case
-    record, receipt = freeze(repo, candidate, evidence)
+    record, receipt = freeze(
+        repo, candidate, evidence, first_release=first_release, active_gate=active_gate
+    )
     assert receipt["verdict"] == "FINDINGS"
     remediated = remediate(repo)
     manifest = prepare(repo, remediated, evidence, record)
@@ -148,6 +206,8 @@ def test_full_findings_round_trip_to_confirmation_pass(release_case):
             }
         )
         confirmation_cluster = cluster(confirmation, remediated, outcome="pass")
+        if active_gate:
+            add_gate_scenarios(confirmation_cluster)
         result_path = confirmation / "result.json"
         result = qa.finish_confirmation(
             {
@@ -176,6 +236,183 @@ def test_full_findings_round_trip_to_confirmation_pass(release_case):
         assert terminal["diagnostic"] is None
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
+
+
+@pytest.mark.parametrize("root_only", [False, True])
+def test_first_release_includes_root_and_complete_current_tree(release_case, root_only):
+    repo, candidate, evidence = release_case
+    if root_only:
+        git(repo, "reset", "--hard", "HEAD^")
+    else:
+        (repo / "unchanged.txt").write_text("public root surface\n")
+        git(repo, "add", "unchanged.txt")
+        git(repo, "commit", "-m", "add public surface")
+        remediate(repo)
+    candidate = git(repo, "rev-parse", "HEAD")
+    record, receipt = freeze(repo, candidate, evidence, "pass", first_release=True)
+    value, _, _ = qa.validate_record(repo, str(record))
+    assert receipt["verdict"] == "PASS"
+    assert value["baseline_mode"] == "first_release"
+    assert value["previous_release"] is None and value["baseline_sha"] is None
+    assert [row["commit"] for row in value["commit_matrix"]] == git(
+        repo, "rev-list", "--reverse", "HEAD"
+    ).splitlines()
+    assert {row["path"] for row in value["surface_matrix"]} == set(
+        git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines()
+    )
+
+
+@pytest.mark.parametrize("missing", ["root", "surface"])
+def test_first_release_rejects_incomplete_scope(release_case, missing):
+    repo, candidate, evidence = release_case
+    spec = full_spec(
+        repo, candidate, evidence, cluster(evidence, candidate), first_release=True
+    )
+    if missing == "root":
+        spec["commit_matrix"].pop(0)
+    else:
+        spec["surface_matrix"] = [{"path": "wrong.txt", "scenarios": ["S-1"]}]
+    with pytest.raises(qa.EvidenceError):
+        qa.freeze_full(spec, str(evidence / "record.json"))
+
+
+@pytest.mark.parametrize(
+    "mode,previous",
+    [(None, None), ("first_release", "v1.0.0"), ("previous_release", None)],
+)
+def test_full_pass_rejects_ambiguous_baseline(release_case, mode, previous):
+    repo, candidate, evidence = release_case
+    spec = full_spec(repo, candidate, evidence, cluster(evidence, candidate))
+    spec.update(baseline_mode=mode, previous_release=previous)
+    with pytest.raises(qa.EvidenceError):
+        qa.freeze_full(spec, str(evidence / "record.json"))
+
+
+def test_record_rejects_retargeted_previous_release(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    git(repo, "tag", "-f", "v1.0.0", candidate)
+    with pytest.raises(qa.EvidenceError, match="baseline"):
+        qa.validate_record(repo, str(record))
+
+
+def test_previous_release_must_be_an_ancestor(release_case):
+    repo, candidate, evidence = release_case
+    spec = full_spec(repo, candidate, evidence, cluster(evidence, candidate))
+    git(repo, "checkout", "-b", "other-release", "v1.0.0")
+    (repo / "surface.txt").write_text("different release line\n")
+    git(repo, "commit", "-am", "other release")
+    git(repo, "tag", "v2.0.0")
+    git(repo, "checkout", "main")
+    spec["previous_release"] = "v2.0.0"
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.freeze_full(spec, str(evidence / "record.json"))
+    assert rejected.value.code == "git_invalid"
+
+
+def test_enrolled_registry_can_have_no_active_gates(release_case):
+    repo, candidate, evidence = release_case
+    spec = full_spec(
+        repo, candidate, evidence, cluster(evidence, candidate, outcome="pass")
+    )
+    spec["design_gate_state"] = "enrolled"
+    assert qa.freeze_full(spec, str(evidence / "record.json"))["verdict"] == "PASS"
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("previous_release", "v1.0.0"),
+        ("baseline_sha", "a" * 40),
+        ("baseline_mode", None),
+    ],
+)
+def test_first_release_record_rejects_conflicting_identity(release_case, field, value):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence, first_release=True)
+    raw = json.loads(record.read_text())
+    raw[field] = value
+    write_json(record, raw)
+    with pytest.raises(qa.EvidenceError):
+        qa.load_record(str(record))
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing",
+        "unknown",
+        "shared_delta",
+        "unenrolled",
+        "duplicate",
+        "empty_positive",
+        "empty_failure",
+    ],
+)
+def test_active_gate_matrix_requires_independent_complete_evidence(
+    release_case, damage
+):
+    repo, candidate, evidence = release_case
+    result = cluster(evidence, candidate)
+    add_gate_scenarios(result)
+    spec = full_spec(repo, candidate, evidence, result)
+    gate_enrollment(spec)
+    if damage == "missing":
+        spec["design_gate_matrix"] = []
+    elif damage == "unknown":
+        spec["design_gate_matrix"][0]["failure_scenarios"] = ["unknown"]
+    elif damage == "shared_delta":
+        spec["design_gate_matrix"][0]["positive_scenarios"] = ["S-1"]
+    elif damage == "duplicate":
+        spec["design_gate_matrix"].append(dict(spec["design_gate_matrix"][0]))
+    elif damage.startswith("empty_"):
+        kind = damage.removeprefix("empty_")
+        spec["design_gate_matrix"][0][f"{kind}_scenarios"] = []
+    else:
+        spec["design_gate_state"] = "not_enrolled"
+    with pytest.raises(qa.EvidenceError):
+        qa.freeze_full(spec, str(evidence / "record.json"))
+
+
+def test_active_gate_gap_prevents_full_pass(release_case):
+    repo, candidate, evidence = release_case
+    result = cluster(evidence, candidate, outcome="pass")
+    add_gate_scenarios(result, outcome="gap")
+    spec = full_spec(repo, candidate, evidence, result)
+    gate_enrollment(spec)
+    assert (
+        qa.freeze_full(spec, str(evidence / "record.json"))["verdict"] == "INCOMPLETE"
+    )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("baseline_mode", "previous_release"),
+        ("previous_release", "v1.0.0"),
+        ("baseline_sha", "a" * 40),
+        ("active_design_gates", []),
+        ("design_gate_matrix", []),
+        ("design_gate_state", "not_enrolled"),
+    ],
+)
+def test_confirmation_preserves_first_release_and_active_gate_identity(
+    release_case, field, value
+):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence, first_release=True, active_gate=True)
+    manifest = prepare(repo, remediate(repo), evidence, record)
+    raw = json.loads(manifest.read_text())
+    raw[field] = value
+    write_json(manifest, raw)
+    with pytest.raises(qa.EvidenceError, match="release identity"):
+        qa.load_confirmation(
+            {
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+            }
+        )
 
 
 @pytest.mark.parametrize("outcome", ["pass", "gap"])
@@ -1323,9 +1560,12 @@ def test_canonical_malformed_admission_settles_rejected(
         shutil.rmtree(confirmation, ignore_errors=True)
 
 
-def test_rejected_evidence_cannot_be_corrected_with_same_request(release_case):
+@pytest.mark.parametrize("missing_gate", [False, True])
+def test_rejected_evidence_cannot_be_corrected_with_same_request(
+    release_case, missing_gate
+):
     repo, candidate, evidence = release_case
-    record, _ = freeze(repo, candidate, evidence)
+    record, _ = freeze(repo, candidate, evidence, active_gate=missing_gate)
     remediated = remediate(repo)
     manifest = prepare(repo, remediated, evidence, record)
     confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
@@ -1340,9 +1580,10 @@ def test_rejected_evidence_cannot_be_corrected_with_same_request(release_case):
             }
         )
         result_file = cluster(confirmation, remediated, outcome="pass")
-        invalid = json.loads(result_file.read_text())
-        invalid["scenarios"][0]["id"] = "S-wrong"
-        write_json(result_file, invalid)
+        if not missing_gate:
+            invalid = json.loads(result_file.read_text())
+            invalid["scenarios"][0]["id"] = "S-wrong"
+            write_json(result_file, invalid)
         request = {
             "schema": qa.FINISH_SCHEMA,
             "repository": str(repo),
@@ -1358,6 +1599,8 @@ def test_rejected_evidence_cannot_be_corrected_with_same_request(release_case):
             qa.finish_confirmation(request, output)
         assert rejected.value.code == "confirmation_inventory_mismatch"
         cluster(confirmation, remediated, outcome="pass")
+        if missing_gate:
+            add_gate_scenarios(result_file)
         with pytest.raises(qa.EvidenceError) as still_rejected:
             qa.finish_confirmation(request, output)
         assert still_rejected.value.code == "confirmation_inventory_mismatch"
@@ -1782,3 +2025,90 @@ def test_concurrent_exact_finish_converges_on_one_terminal(release_case, monkeyp
         assert len(list(confirmation.glob("settlement-admission-*.json"))) == 1
     finally:
         shutil.rmtree(confirmation, ignore_errors=True)
+
+
+@pytest.mark.parametrize("field", ["design_gate_matrix", "active_design_gates"])
+def test_frozen_record_revalidates_gate_coverage(release_case, field):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence, active_gate=True)
+    raw = json.loads(record.read_text())
+    raw[field] = []
+    write_json(record, raw)
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.validate_record(repo, str(record))
+    assert rejected.value.code == "gate_matrix_incomplete"
+
+
+@pytest.mark.parametrize("baseline_sha", ["not-a-sha", "a" * 39, "a" * 65, None])
+def test_previous_release_record_requires_exact_baseline_sha(
+    release_case, baseline_sha
+):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    raw = json.loads(record.read_text())
+    raw["baseline_sha"] = baseline_sha
+    write_json(record, raw)
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.load_record(str(record))
+    assert rejected.value.code == (
+        "field_invalid" if baseline_sha is None else "baseline_invalid"
+    )
+
+
+def test_oversized_frozen_record_does_not_consume_output(release_case, monkeypatch):
+    repo, candidate, evidence = release_case
+    result = cluster(evidence, candidate)
+    spec = full_spec(repo, candidate, evidence, result, first_release=True)
+    reference = evidence / "reference.json"
+    qa.freeze_full(spec, str(reference))
+    size = reference.stat().st_size
+    assert result.stat().st_size < size
+    monkeypatch.setattr(qa, "MAX_JSON_BYTES", size - 1)
+    output = evidence / "record.json"
+    before = set(evidence.iterdir())
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.freeze_full(spec, str(output))
+    assert rejected.value.code == "output_too_large"
+    assert set(evidence.iterdir()) == before
+    monkeypatch.setattr(qa, "MAX_JSON_BYTES", size)
+    receipt = qa.freeze_full(spec, str(output))
+    assert qa.load_record(str(output))[1] == receipt["digest"]
+
+
+def test_previous_record_schema_is_not_admitted(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    raw = json.loads(record.read_text())
+    raw["schema"] = "aquarium-release-qa-confirmation-record/v2"
+    write_json(record, raw)
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.load_record(str(record))
+    assert rejected.value.code == "schema_invalid"
+
+
+def test_previous_manifest_schema_is_not_admitted(release_case):
+    repo, candidate, evidence = release_case
+    record, _ = freeze(repo, candidate, evidence)
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    raw = json.loads(manifest.read_text())
+    raw["schema"] = "aquarium-release-qa-confirmation-manifest/v2"
+    write_json(manifest, raw)
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.load_confirmation(
+            {
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+            }
+        )
+    assert rejected.value.code == "schema_invalid"
+
+
+def test_unknown_gate_enrollment_is_rejected(release_case):
+    repo, candidate, evidence = release_case
+    spec = full_spec(repo, candidate, evidence, cluster(evidence, candidate))
+    spec["design_gate_state"] = "unknown"
+    with pytest.raises(qa.EvidenceError) as rejected:
+        qa.freeze_full(spec, str(evidence / "record.json"))
+    assert rejected.value.code == "field_invalid"

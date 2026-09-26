@@ -15,10 +15,10 @@ from typing import Any, NoReturn
 
 ERROR_SCHEMA = "aquarium-release-qa-error/v1"
 CLUSTER_SCHEMA = "aquarium-release-qa-cluster-result/v1"
-FULL_INPUT_SCHEMA = "aquarium-release-qa-full-pass/v1"
-RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v2"
+FULL_INPUT_SCHEMA = "aquarium-release-qa-full-pass/v2"
+RECORD_SCHEMA = "aquarium-release-qa-confirmation-record/v3"
 PREPARE_SCHEMA = "aquarium-release-qa-confirmation-prepare/v2"
-MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v2"
+MANIFEST_SCHEMA = "aquarium-release-qa-confirmation-manifest/v3"
 BEGIN_SCHEMA = "aquarium-release-qa-confirmation-begin/v2"
 CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v2"
 FINISH_SCHEMA = "aquarium-release-qa-confirmation-finish/v2"
@@ -82,11 +82,14 @@ def require_fields(value: dict[str, Any], field: str, expected: set[str]) -> Non
 
 def create_once_write(path_value: str | Path, value: Any) -> Path:
     path = Path(path_value)
+    payload = canonical_bytes(value)
+    if len(payload) > MAX_JSON_BYTES:
+        fail("output_too_large", f"JSON output exceeds {MAX_JSON_BYTES} bytes: {path}")
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "wb") as target:
-            target.write(canonical_bytes(value))
+            target.write(payload)
             target.flush()
             os.fsync(target.fileno())
         try:
@@ -169,16 +172,43 @@ def exact_commit(repo: Path, value: Any, field: str) -> str:
     return resolved
 
 
-def baseline_commit(repo: Path, value: Any) -> str:
-    baseline = text(value, "previous_release")
+def baseline_commit(repo: Path, mode: Any, previous: Any) -> str | None:
+    if mode == "first_release":
+        if previous is not None:
+            fail("baseline_invalid", "first release must not name a previous release")
+        return None
+    if mode != "previous_release":
+        fail("baseline_invalid", "baseline_mode must explicitly select a release mode")
+    baseline = text(previous, "previous_release")
     return run_git(repo, "rev-parse", "--verify", f"{baseline}^{{commit}}")
 
 
+def validate_baseline_identity(record: dict[str, Any]) -> None:
+    mode = record.get("baseline_mode")
+    previous = record.get("previous_release")
+    baseline = record.get("baseline_sha")
+    if mode == "first_release":
+        if previous is not None or baseline is not None:
+            fail("baseline_invalid", "first release baseline fields must be null")
+    elif mode == "previous_release":
+        text(previous, "previous_release")
+        value = text(baseline, "baseline_sha")
+        if len(value) not in {40, 64} or any(
+            c not in "0123456789abcdef" for c in value
+        ):
+            fail("baseline_invalid", "baseline_sha must be an exact commit ID")
+    else:
+        fail("baseline_invalid", "baseline_mode must explicitly select a release mode")
+
+
 def release_range(
-    repo: Path, baseline: str, candidate: str
+    repo: Path, baseline: str | None, candidate: str
 ) -> tuple[list[str], list[str]]:
-    if run_git(repo, "merge-base", "--is-ancestor", baseline, candidate) != "":
-        pass
+    if baseline is None:
+        commits = run_git(repo, "rev-list", "--reverse", candidate).splitlines()
+        paths = run_git_raw(repo, "ls-tree", "-r", "--name-only", "-z", candidate)
+        return commits, [path for path in paths.split("\0") if path]
+    run_git(repo, "merge-base", "--is-ancestor", baseline, candidate)
     commits = run_git(
         repo, "rev-list", "--reverse", f"{baseline}..{candidate}"
     ).splitlines()
@@ -407,19 +437,76 @@ def changed_surface_mappings(raw: Any) -> list[dict[str, Any]]:
     return result
 
 
+def design_gate_matrix(
+    source: dict[str, Any], known: set[str], delta_scenarios: set[str]
+) -> list[dict[str, Any]]:
+    state = source.get("design_gate_state")
+    if state not in ("enrolled", "not_enrolled"):
+        fail("field_invalid", "design_gate_state must be enrolled or not_enrolled")
+    gates = string_list(
+        source.get("active_design_gates"), "active_design_gates", nonempty=False
+    )
+    raw = source.get("design_gate_matrix")
+    if not isinstance(raw, list):
+        fail("gate_matrix_incomplete", "design_gate_matrix must be a list")
+    if state == "not_enrolled" and (gates or raw):
+        fail("gate_matrix_invalid", "unenrolled repositories cannot declare gates")
+    result = []
+    for item in raw:
+        if not isinstance(item, dict):
+            fail("gate_matrix_invalid", "gate matrix entries must be objects")
+        require_fields(
+            item,
+            "design_gate_matrix entry",
+            {"gate", "positive_scenarios", "failure_scenarios"},
+        )
+        row = {"gate": text(item["gate"], "design_gate_matrix.gate")}
+        for field in ("positive_scenarios", "failure_scenarios"):
+            scenarios = string_list(item[field], f"design_gate_matrix.{field}")
+            if not set(scenarios).issubset(known):
+                fail("matrix_unknown_scenario", "gate references an unknown scenario")
+            if set(scenarios) & delta_scenarios:
+                fail("gate_matrix_invalid", "gate runs cannot count as delta coverage")
+            row[field] = scenarios
+        result.append(row)
+    identities = [item["gate"] for item in result]
+    if len(identities) != len(set(identities)) or set(identities) != set(gates):
+        fail("gate_matrix_incomplete", "gate matrix must cover every active gate once")
+    return result
+
+
 def freeze_full(spec: dict[str, Any], output: str) -> dict[str, Any]:
     if spec.get("schema") != FULL_INPUT_SCHEMA:
         fail("schema_invalid", f"freeze input must use {FULL_INPUT_SCHEMA}")
+    require_fields(
+        spec,
+        "full pass",
+        {
+            "schema",
+            "repository",
+            "version",
+            "baseline_mode",
+            "previous_release",
+            "candidate_sha",
+            "evidence_root",
+            "design_gate_state",
+            "active_design_gates",
+            "design_gate_matrix",
+            "cluster_results",
+            "commit_matrix",
+            "surface_matrix",
+        },
+    )
     repo = repository(spec.get("repository"))
     candidate = exact_commit(repo, spec.get("candidate_sha"), "candidate_sha")
     clean_exact_main(repo, candidate)
-    baseline = baseline_commit(repo, spec.get("previous_release"))
+    baseline = baseline_commit(
+        repo, spec.get("baseline_mode"), spec.get("previous_release")
+    )
     commits, paths = release_range(repo, baseline, candidate)
     if not commits:
         fail("delta_empty", "full release-QA requires a non-empty release delta")
     root = physical_evidence_root(spec.get("evidence_root"))
-    if spec.get("design_gate_state") not in {"enrolled", "not_enrolled"}:
-        fail("field_invalid", "design_gate_state must be enrolled or not_enrolled")
     result_paths = string_list(spec.get("cluster_results"), "cluster_results")
     clusters = [
         validate_cluster(
@@ -458,6 +545,15 @@ def freeze_full(spec: dict[str, Any], output: str) -> dict[str, Any]:
     for item in [*commit_matrix, *surface_matrix]:
         if not set(item["scenarios"]).issubset(known):
             fail("matrix_unknown_scenario", "matrix references an unknown scenario")
+    gate_matrix = design_gate_matrix(
+        spec,
+        known,
+        {
+            scenario
+            for item in [*commit_matrix, *surface_matrix]
+            for scenario in item["scenarios"]
+        },
+    )
     outcomes = [
         scenario["outcome"] for cluster in clusters for scenario in cluster["scenarios"]
     ]
@@ -471,12 +567,15 @@ def freeze_full(spec: dict[str, Any], output: str) -> dict[str, Any]:
     record = {
         "schema": RECORD_SCHEMA,
         "version": text(spec.get("version"), "version"),
-        "previous_release": text(spec.get("previous_release"), "previous_release"),
+        "baseline_mode": spec["baseline_mode"],
+        "previous_release": spec["previous_release"],
         "baseline_sha": baseline,
         "candidate_sha": candidate,
         "candidate_tree": run_git(repo, "rev-parse", f"{candidate}^{{tree}}"),
         "evidence_root": str(root),
         "design_gate_state": text(spec.get("design_gate_state"), "design_gate_state"),
+        "active_design_gates": spec["active_design_gates"],
+        "design_gate_matrix": gate_matrix,
         "clusters": clusters,
         "commit_matrix": commit_matrix,
         "surface_matrix": surface_matrix,
@@ -502,12 +601,15 @@ def load_record(path: str) -> tuple[dict[str, Any], str]:
         {
             "schema",
             "version",
+            "baseline_mode",
             "previous_release",
             "baseline_sha",
             "candidate_sha",
             "candidate_tree",
             "evidence_root",
             "design_gate_state",
+            "active_design_gates",
+            "design_gate_matrix",
             "clusters",
             "commit_matrix",
             "surface_matrix",
@@ -516,6 +618,7 @@ def load_record(path: str) -> tuple[dict[str, Any], str]:
     )
     if Path(path).read_bytes() != canonical_bytes(record):
         fail("record_tampered", "record bytes are not canonical")
+    validate_baseline_identity(record)
     return record, digest(record)
 
 
@@ -523,7 +626,13 @@ def validate_record(repo: Path, path: str) -> tuple[dict[str, Any], str, Path]:
     record, record_digest = load_record(path)
     root = physical_evidence_root(record.get("evidence_root"))
     evidence_file(root, path, "full_record")
-    baseline = exact_commit(repo, record.get("baseline_sha"), "record.baseline_sha")
+    baseline = baseline_commit(
+        repo, record["baseline_mode"], record["previous_release"]
+    )
+    if baseline != record["baseline_sha"]:
+        fail(
+            "record_tampered", "record baseline no longer matches its release identity"
+        )
     candidate = exact_commit(repo, record.get("candidate_sha"), "record.candidate_sha")
     if run_git(repo, "rev-parse", f"{candidate}^{{tree}}") != record.get(
         "candidate_tree"
@@ -587,6 +696,15 @@ def validate_record(repo: Path, path: str) -> tuple[dict[str, Any], str, Path]:
         for item in [*commit_matrix, *surface_matrix]
     ):
         fail("record_tampered", "record matrix references an unknown scenario")
+    design_gate_matrix(
+        record,
+        known,
+        {
+            scenario
+            for item in [*commit_matrix, *surface_matrix]
+            for scenario in item["scenarios"]
+        },
+    )
     verdict = (
         "INCOMPLETE"
         if "gap" in outcomes
@@ -701,7 +819,12 @@ def prepare_confirmation(spec: dict[str, Any], output: str) -> dict[str, Any]:
     manifest = {
         "schema": MANIFEST_SCHEMA,
         "version": record["version"],
+        "baseline_mode": record["baseline_mode"],
         "previous_release": record["previous_release"],
+        "baseline_sha": record["baseline_sha"],
+        "design_gate_state": record["design_gate_state"],
+        "active_design_gates": record["active_design_gates"],
+        "design_gate_matrix": record["design_gate_matrix"],
         "full_candidate_sha": full_candidate,
         "candidate_sha": candidate,
         "remediation_commits": commits,
@@ -741,7 +864,12 @@ def load_confirmation(
         {
             "schema",
             "version",
+            "baseline_mode",
             "previous_release",
+            "baseline_sha",
+            "design_gate_state",
+            "active_design_gates",
+            "design_gate_matrix",
             "full_candidate_sha",
             "candidate_sha",
             "remediation_commits",
@@ -765,9 +893,18 @@ def load_confirmation(
         fail("inventory_mismatch", "manifest inventory differs from the frozen record")
     if manifest.get("confirmation_attempt") != 1:
         fail("attempt_invalid", "manifest must request confirmation attempt 1")
-    if manifest.get("version") != record.get("version") or manifest.get(
-        "previous_release"
-    ) != record.get("previous_release"):
+    if any(
+        manifest[field] != record[field]
+        for field in (
+            "version",
+            "baseline_mode",
+            "previous_release",
+            "baseline_sha",
+            "design_gate_state",
+            "active_design_gates",
+            "design_gate_matrix",
+        )
+    ):
         fail("manifest_mismatch", "manifest release identity differs from the record")
     if (
         Path(str(manifest.get("full_record"))).resolve()
