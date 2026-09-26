@@ -15,6 +15,8 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/unit/test_setup_package_contracts.py \
+	plugins/aquarium/skills/dev-setup-global/scripts/inspect_skill_inventory.py \
 	tests/unit/test_aquarium_dev_tool_unit.py \
 	tests/unit/test_aquarium_status_install_unit.py \
 	tests/unit/test_aquarium_status_unit.py \
@@ -88,6 +90,7 @@ test:
 	$(MAKE) test-e2e
 
 test-requirements:
+	@command -v ruby >/dev/null 2>&1 || { echo "error: Ruby is unavailable; install Ruby 3.3+ (macOS: brew install ruby)" >&2; exit 2; }
 	@command -v "$(PYTHON)" >/dev/null 2>&1 || { echo "error: Python is unavailable; create .venv and install requirements.txt" >&2; exit 2; }
 	@command -v "$(RUFF)" >/dev/null 2>&1 || { echo "error: Ruff is unavailable; run $(PYTHON) -m pip install -r requirements.txt" >&2; exit 2; }
 	@$(PYTHON) -c 'import importlib.util, re, subprocess, sys; from importlib.metadata import distributions; lines = [line.strip() for line in open("requirements.txt", encoding="utf-8") if line.strip() and not line.lstrip().startswith("#")]; invalid = [line for line in lines if line.count("==") != 1]; expected = {re.sub(r"[-_.]+", "-", name).lower(): wanted for name, wanted in (line.split("==", 1) for line in lines if line.count("==") == 1)}; installed = {re.sub(r"[-_.]+", "-", distribution.metadata["Name"]).lower(): distribution.version for distribution in distributions() if distribution.metadata["Name"]}; missing = sorted(name for name in expected if name not in installed); mismatches = [f"{name}=={installed[name]} (expected {wanted})" for name, wanted in expected.items() if name in installed and installed[name] != wanted]; missing_modules = [name for name, module in (("pytest", "pytest"), ("PyYAML", "yaml"), ("mcp", "mcp")) if importlib.util.find_spec(module) is None]; ruff = subprocess.run(["$(RUFF)", "--version"], capture_output=True, text=True, check=False); expected_ruff = "ruff " + expected.get("ruff", ""); observed_ruff = ruff.stdout.strip() or ruff.stderr.strip() or "exit " + str(ruff.returncode); errors = ([f"Python {sys.version.split()[0]} is unsupported; expected >=3.11"] if sys.version_info < (3, 11) else []) + (["non-exact requirements: " + ", ".join(invalid)] if invalid else []) + (["missing distributions: " + ", ".join(missing)] if missing else []) + (["missing modules: " + ", ".join(missing_modules)] if missing_modules else []) + (["version mismatch: " + ", ".join(mismatches)] if mismatches else []) + ([f"Ruff executable reports {observed_ruff} (expected {expected_ruff})"] if ruff.returncode != 0 or ruff.stdout.strip() != expected_ruff else []); sys.exit("; ".join(errors) if errors else 0)' || { echo "error: test dependencies are unavailable or incompatible; run $(PYTHON) -m pip install -r requirements.txt" >&2; exit 2; }

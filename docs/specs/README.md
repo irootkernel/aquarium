@@ -22,7 +22,7 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Local interfaces](local-interfaces.md) catalogs Procedure IDs, local CLIs, hooks, and JSON schemas.
 - [Safety and evidence](safety-and-evidence.md) defines authority, approval, review, and evidence-residency behavior.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
-- [Production setup status](production-status.md) owns the shipped user-global setup ledger, reporter, recorder, retention, and installation contracts.
+- [Production setup status](production-status.md) links to the shipped authority for the user-global setup ledger, reporter, recorder, retention, and installation contracts.
 - [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Orca, Independent Review, and coordinator-waived review in Task, Epic, and validation workflows.
 
 ## Exact Authorities

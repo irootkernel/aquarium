@@ -1,6 +1,6 @@
 # Bundle Manifest
 
-The manifest is an explicit external request, not Aquarium project state or a repository discovery root. Start from the [placeholder template](../../../../../aquarium-dev-setup-bundle.template.yaml), replace its paths and Project slug, and pass the resulting manifest path to `$aquarium:dev-setup-bundle`. The skill reads it without editing or tracking it. Normalization requires Python 3.10 or newer and PyYAML 6.x.
+The manifest is an explicit external request, not Aquarium project state or a repository discovery root. Start from the [placeholder template](../../../assets/templates/aquarium-dev-setup-bundle.template.yaml), replace its paths and Project slug, and pass the resulting manifest path to `$aquarium:dev-setup-bundle`. The skill reads it without editing or tracking it. Normalization requires Python 3.10 or newer and PyYAML 6.x.
 
 ## Format
 

@@ -19,6 +19,7 @@ This file records concise shipped outcomes and the planned next stable release.
 - Preserve current blocker authority, plan handoff evidence, and remediation order across Task, Goal, and Validation Procedures.
 - Align Task closeout records, dossier settlement, final prose review, and commit authority across delivery and validation.
 - Support first-release QA, retain active Design Gate evidence, and recover publication after a verified remote-main advance with repository-specific release titles. Existing QA records require a new authorized full pass before confirmation.
+- Keep setup resources inside the installed plugin, compare complete upstream skill trees, and align lookup, installer, timeout, and Sorage Project setup contracts.
 - Load the Aquarium development MCP server through the supported plugin declaration.
 - Carry all static-review restrictions into Orca reviewer dispatches and require explicit authority for upstream PM draft files and clipboard replacement.
 

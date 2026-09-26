@@ -92,7 +92,7 @@ runtime은 global setup이 진단하며 plugin update만으로 자동 교체되�
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
 - `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
-- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component의 official metadata와 공개 paired-skill 최신성을 제한적으로 조회합니다. Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway는 `raw.githubusercontent.com` 파일을 임시 저장소에서 비교합니다. Scoped continuation은 이름이 지정된 component만 확인하며 설치용 다운로드, 변경, provider 호출은 별도 경계를 유지합니다.
+- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component를 선택하며, scoped continuation은 지정된 component만 선택합니다. 공개한 official release·tag·commit metadata 조회가 허용됩니다. Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway는 commit으로 고정한 전체 paired-skill tree를 임시 저장소에서 비교합니다. Lora나 Deslop을 선택하면 고정할 installer의 official npm metadata도 조회합니다. 설치용 다운로드, 변경, provider 호출에는 각각 별도 권한이 필요합니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서

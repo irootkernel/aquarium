@@ -3,4 +3,4 @@ interface:
   short_description: "Configure repository tooling and agent guidance"
   default_prompt: "Use $aquarium:dev-setup to diagnose and configure this repository and its agent guidance."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

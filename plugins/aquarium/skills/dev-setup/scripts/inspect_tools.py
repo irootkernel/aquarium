@@ -39,7 +39,6 @@ MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
     ),
 }
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
-GAORI_MCP_TOOL_TIMEOUT_SEC = 3601
 MAX_COMMAND_TIMEOUT_SECONDS = 86_400.0
 PODWAY_DAEMON_WAIT_SECONDS = 120.0
 PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS = 125.0
@@ -3409,8 +3408,7 @@ def classify_gaori_mcp_scope(
         and arguments_match
         and cwd_unbound
         and binary_matches
-        and finite_number(tool_timeout)
-        and tool_timeout >= GAORI_MCP_TOOL_TIMEOUT_SEC
+        and (tool_timeout is None or (finite_number(tool_timeout) and tool_timeout > 0))
     ):
         registration["status"] = "configured"
     else:

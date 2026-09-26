@@ -43,7 +43,7 @@ list is the sorted unique effective `tools` list plus `agents-guidance` exactly
 when the effective guidance policy is `propose`. A bundle target is never a
 full attempt, because the manifest is an explicit component selection; this
 prevents it from advancing `last_full_ready`. The
-[production-status specification](../../../../docs/specs/production-status.md)
+[production-status specification](../../references/production-status.md)
 owns this closed envelope. Pass it with the requesting
 skill, manifest digest, target index, canonical Git root, complete effective tool
 list, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug`, `mulgae_artist`, and guidance policy to `$aquarium:dev-setup`.

@@ -20,7 +20,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 
 ## Installation and Freshness
 
-Explicitly invoking `dev-setup-global` without a component list selects every supported user-global component and authorizes its bounded official metadata and raw-file freshness reads. A scoped continuation selects only its named components. Dolgorae, Sanho, Mulgae, Gaori, Sorage, and Podway compare their public upstream paired-skill files. Neither path authorizes installation, replacement, initialization, Project registration, another network endpoint, or any provider request.
+Explicitly invoking `dev-setup-global` without a component list selects every supported user-global component; scoped continuations select only their named components. Automatic diagnosis includes disclosed official release, tag, and commit metadata. For Dolgorae, Sanho, Mulgae, Gaori, Sorage, and Podway, it also includes complete Git tree metadata and commit-pinned paired-skill files in ephemeral storage. Selected Lora or Deslop includes official npm metadata for the exact `skills` installer version. This lookup authority does not cover clone, archive download, upstream-code execution, installation, replacement, initialization, Project registration, unrelated endpoints, or provider requests. The shared tool catalog owns the exact sources and comparison procedure.
 
 Every installation proposal identifies the exact source ref, target, network endpoints, files, checksums or digests, backup choice, expected mutation, and post-action verification. Existing modified or duplicate skill copies are never overwritten or deleted silently.
 

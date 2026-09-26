@@ -801,6 +801,10 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     result["tool_timeout_sec"] = (
                         "3601"
                         if mode == "timeout-invalid"
+                        else 0
+                        if mode == "timeout-zero"
+                        else True
+                        if mode == "timeout-boolean"
                         else 3600
                         if mode == "tool-timeout"
                         else 3602
@@ -7285,6 +7289,17 @@ else:
         self.assertEqual(registration["status"], "configured")
         self.assertEqual(registration["local"]["tool_timeout_sec"], 3602)
 
+    def test_gaori_mcp_registration_does_not_assume_command_duration(self) -> None:
+        self.write_project_mcp_config("gaori")
+        for mode, timeout in (("tool-timeout", 3600), ("timeout-absent", None)):
+            with self.subTest(mode=mode):
+                self.install_fake_tools(gaori_mcp_mode=mode)
+                registration = json.loads(self.inspect().stdout)["tools"]["gaori"][
+                    "mcp_registration"
+                ]
+                self.assertEqual(registration["status"], "configured")
+                self.assertEqual(registration["local"]["tool_timeout_sec"], timeout)
+
     def test_gaori_mcp_registration_mismatch_is_degraded(self) -> None:
         self.repository.joinpath(".codex").mkdir()
         self.repository.joinpath(".codex/config.toml").write_text(
@@ -7296,8 +7311,8 @@ else:
             "non-stdio",
             "missing-command",
             "wrong-command",
-            "tool-timeout",
-            "timeout-absent",
+            "timeout-zero",
+            "timeout-boolean",
             "timeout-invalid",
             "extra-arg",
         ):

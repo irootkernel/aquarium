@@ -18,7 +18,7 @@ Read the selected sections of [the shared tool catalog](../../references/tool-ca
 ## Diagnose Automatically
 
 1. On a direct invocation without a component list, select every supported global component. On a scoped continuation, select only the named components and their direct prerequisites.
-2. A direct invocation authorizes bounded read-only official metadata and raw-file freshness requests for all selected components. A scoped continuation authorizes only its selected sources. Disclose the official endpoints before contact.
+2. A direct invocation authorizes disclosed read-only official release, tag, and commit metadata lookup for selected components. Only the six paired-tool sources receive the catalog's complete-tree and commit-pinned raw-file freshness comparison; selected Lora or Deslop also includes official npm installer metadata. A scoped continuation selects only its named sources. Follow the catalog's exact lookup boundary; materialization, installation and execution remain separate actions.
 3. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_global_tools.py` on a direct unscoped invocation. For a scoped continuation, add one `--component <name>` argument for each selected component in catalog order and run no unselected component probe.
 
    When Ouroboros is selected, also add `--verify-ouroboros-release`; pass any explicitly supplied extra homes with repeatable `--codex-home <path>`. Use the catalog's home discovery and per-home readiness contract.

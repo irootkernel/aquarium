@@ -4,6 +4,7 @@ require "json"
 require "open3"
 require "pathname"
 require "yaml"
+require_relative "support/local_references"
 
 ROOT = Pathname.new(__dir__).parent.expand_path
 PLUGIN = ROOT.join("plugins/aquarium")
@@ -13,15 +14,7 @@ def assert(condition, message)
 end
 
 def local_path(path)
-  path = path.cleanpath
-  assert(path.to_s.start_with?("#{ROOT}/"), "path escapes repository: #{path}")
-  current = path
-  until current == ROOT
-    assert(!current.symlink?, "symlink is not a package input: #{current}")
-    current = current.parent
-  end
-  assert(path.exist?, "missing local path: #{path}")
-  path
+  LocalReferences.local_path(path, ROOT)
 end
 
 def read_file(path)
@@ -80,6 +73,10 @@ skill_directories.each do |directory|
          "default prompt is missing: #{ui_path}")
   assert([true, false].include?(ui.fetch("policy").fetch("allow_implicit_invocation")),
          "implicit invocation policy must be boolean: #{ui_path}")
+  if directory.basename.to_s == "dev-setup"
+    assert(ui.fetch("policy").fetch("allow_implicit_invocation") == true,
+           "repository setup must support natural-language selection: #{ui_path}")
+  end
   if directory.basename.to_s == "mulgae-review"
     assert(ui.fetch("policy").fetch("allow_implicit_invocation") == false,
            "standalone Mulgae review must require explicit invocation: #{ui_path}")
@@ -149,21 +146,8 @@ assert(status.success?, "cannot list source documentation")
 output.split("\0").each do |relative|
   path = ROOT.join(relative)
   next unless path.exist? || path.symlink?
-  in_fence = false
-  read_file(path).each_line do |line|
-    in_fence = !in_fence if line.lstrip.start_with?("```", "~~~")
-    next if in_fence
-
-    line.scan(/\]\(([^)]+)\)/).each do |(target)|
-      target = target.strip.sub(/\s+"[^"]*"\z/, "").delete_prefix("<").delete_suffix(">")
-      next if target.match?(/\A(?:[a-z][a-z0-9+.-]*:|#)/i)
-
-      relative_target = target.split("#", 2).first
-      next if relative_target.nil? || relative_target.empty?
-
-      local_path(path.dirname.join(relative_target))
-    end
-  end
+  boundary = path.to_s.start_with?("#{PLUGIN}/") ? PLUGIN : ROOT
+  LocalReferences.check(path, boundary)
 end
 
 puts "validated #{skill_directories.length} skill packages, metadata, local references, and procedure structure; skill behavior is not evaluated"

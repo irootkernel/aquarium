@@ -26,7 +26,7 @@ Source: the exact installed Aquarium plugin under `tools/aquarium-status/`. Run
 `inspect_global_tools.py --component aquarium-status` for read-only diagnosis.
 The component is selected by default for unscoped global setup and once as
 infrastructure for a setup bundle, but it is not a production-binary prerequisite
-or a bundle manifest v1 tool.
+or a bundle manifest tool.
 
 Installation requires Apple Silicon macOS and Python 3.11 or newer. Before an
 approved install, update, or repair, disclose `https://pypi.org/simple` and
@@ -52,10 +52,61 @@ health. Plugin updates never update this runtime automatically.
 - Preserve an already compatible installation unless the user approves an upgrade.
 - Diagnose credentials by whether the owning CLI reports readiness. Never print, copy, or persist credential material.
 - Keep configuration in each tool's native files. Never create `.aquarium`, a selection manifest, or a shadow version registry.
-- A direct unscoped `$aquarium:dev-setup-global` invocation authorizes bounded official Release metadata lookup for every supported global component. A scoped continuation authorizes the same lookup only for its named components. Dolgorae, Sanho, Mulgae, Gaori, Sorage, and Podway also allow one disclosed bounded freshness comparison against the paired-skill files from the documented `raw.githubusercontent.com` path in ephemeral storage. Sorage has one file; Dolgorae, Mulgae, and Podway each have four; Sanho has five. Gaori has seven files for `use-gaori` and one for `use-gaori-status`. No separate approval is required for those exact lookups. Treat archive downloads, init, Project registration, ignore edits, hook edits, global installs, provider contact, and every network operation outside these exceptions as separately approved effects.
+- A direct unscoped `$aquarium:dev-setup-global` invocation authorizes disclosed read-only official release, tag, and commit metadata lookup for every selected global component; a scoped continuation selects only its named components. For Sanho, Dolgorae, Mulgae, Gaori, Sorage, and Podway, this also includes official Git tree metadata and commit-pinned public raw files for the complete paired-skill comparison below. When Lora or Deslop is selected, official npm metadata lookup for its `skills` installer is included. These exceptions authorize no archive download, clone, upstream-code execution, installation, provider contact, Project registration, or other persistent change. Obtain separate approval for those effects and any network access outside the selected lookup scope.
 - Apply the backup policy selected under `Choose a Backup Policy for Existing State` to every approved action that overwrites or removes an existing binary, skill, configuration, service, managed Procedure, or runtime state.
 
 A backup choice requires exact backup and restoration commands plus verification before mutation. A no-backup choice requires the exact loss and recovery boundary in the proposal but no retained copy of the replaced state. It never waives source, checksum, frontmatter, diff, target, or post-install verification, and incoming payload staging is not a backup.
+
+## Complete Paired-Skill Inventory
+
+For each selected paired skill, resolve the supported release tag to its full
+peeled commit and root Git tree SHA through the official repository. Keep the
+independent Podway skill commit pin below. Fetch the complete recursive tree from
+`https://api.github.com/repos/irootkernel/<tool>/git/trees/<tree-sha>?recursive=1`.
+A truncated response is not a complete inventory: report freshness unverifiable
+and do not install from it. Select the entire `skills/<skill-name>/` subtree with
+[this bundled inventory helper](../skills/dev-setup-global/scripts/inspect_skill_inventory.py):
+
+```text
+python3 <global-skill-directory>/scripts/inspect_skill_inventory.py --tree-sha <resolved-tree-sha> --skill-path skills/<skill-name> < <ephemeral-tree-json>
+```
+
+The helper emits `aquarium-skill-inventory/v1` with the selected tree, skill path,
+and file rows on success. Invalid metadata or selection returns exit 2 and a
+structured `error` with code `invalid_inventory`; CLI usage errors use argparse.
+The helper rejects a mismatched tree, duplicate or unsafe paths, missing
+`SKILL.md`, symlinks and submodules in the selected skill. It performs no network
+access or writes. Verify that the tree SHA belongs to the resolved commit before
+calling it; accepting metadata alone does not establish upstream provenance.
+Fetch every returned regular file from
+`https://raw.githubusercontent.com/irootkernel/<tool>/<full-commit-sha>/skills/<skill-name>/<path>`,
+URL-encoding path components. Verify each payload's Git blob SHA against the
+inventory (`SHA-1` of `blob <byte-length>\0` followed by its bytes), record its
+SHA-256 digest, and validate the skill name in frontmatter. Enumerate the entire
+source and target trees, reject extra or missing paths and symlinks, and compare
+every file. Newly added upstream files are required even when the inspector's
+minimum structural file list does not name them. `configured` from that local
+probe is structural evidence only, never complete-tree freshness.
+
+Keep fetched payloads ephemeral until the exact installation or replacement is
+approved. Show the resolved source, complete file inventory, digests, endpoints,
+and canonical target in that proposal. Install the verified complete tree by an approved atomic move and
+compare it again afterward. These rules apply independently to both Gaori skills.
+
+## Pin the Skill Installer
+
+For Lora and Deslop, resolve one exact `skills` package version through official
+`https://registry.npmjs.org/skills` metadata and disclose its package integrity
+and provenance separately from the upstream skill commit. Use that approved
+version in every `npx skills@<approved-installer-version>` command. Inspect the
+selected installer's documented behavior before proposing execution. Disclose
+its exact npm download and cache effects, skill targets, and every lock-file
+creation or update path, including user-global or repository-local lock files
+when that version uses them. Include existing lock-file contents in the proposed
+diff and backup decision without exposing credentials. Do not assume `--global`
+means only skill directories are written. If effects cannot be determined, stop
+before execution. Clone, package download, installer execution and target writes
+need approval even though selected metadata diagnosis is automatic.
 
 ## Choose a Backup Policy for Existing State
 
@@ -83,7 +134,7 @@ go install github.com/irootkernel/sanho/cmd/sanho@<tag>
 
 The binary does not install the agent skill. Diagnose the CLI and workspace with `command -v sanho`, `sanho version --json`, `sanho status --json`, and `sanho doctor --json`; diagnose `use-sanho` independently in the Codex skill roots. Read JSON rather than inferring state from human tables or exit status alone. Doctor exits 0 when it reports warnings, so treat a positive `warnings` count as degraded even when the process succeeds. Every malformed `--json` invocation must return the stable `invalid_arguments` error envelope; parse that envelope separately from the process exit and never reinterpret it as workspace state.
 
-For a new Codex user-scoped skill installation, use only these files from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/sanho/<tag>/skills/use-sanho/` payload: `SKILL.md`, `references/authoring.md`, `references/inspection.md`, `references/lifecycle.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-sanho` frontmatter before atomically moving it to `~/.agents/skills/use-sanho`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
+Install `use-sanho` from the complete verified `skills/use-sanho/` subtree at the selected release commit, following [Complete Paired-Skill Inventory](#complete-paired-skill-inventory). Verify `name: use-sanho` and propose the canonical target `~/.agents/skills/use-sanho`. Do not use a fixed file list as the source inventory.
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
@@ -118,7 +169,7 @@ For an approved installation or update, download the selected tag's official App
 
 The v0.1.x distributions are ad-hoc linker-signed, not Developer ID signed or notarized. Disclose that Gatekeeper may require the user to approve the checksum-verified binary locally. Verify the installed target as an executable regular non-symlink arm64 Mach-O file outside Aquarium state roots, and require the exact `{name, version}` JSON from `dolgorae version --json` and a successful closed machine envelope v2 from `dolgorae runtime capabilities`. Capabilities must preserve the v0.1.2 consumer requirements, including machine envelope v2 and advertised machine protocol v1, `home/.dolgorae/controller-carriers`, read-only shared-lane behavior, credential safety, bounded artifacts and interactions, and the required review features. Do not migrate or fall back to v0.1.0 Application Support state.
 
-Dolgorae distributes the optional `use-dolgorae` skill separately from the binary. Diagnose it independently at `~/.agents/skills/use-dolgorae`. The local inspector reports structural readiness and per-file hashes; `configured` alone is not same-release freshness evidence. Compare the complete tree under `skills/use-dolgorae/` from the installed supported tag, or the selected latest supported tag when preparing an installation. It contains four files: `SKILL.md`, `references/configuration.md`, `references/lifecycle.md`, and `references/recovery.md`. Read the files from `https://raw.githubusercontent.com/irootkernel/dolgorae/<selected-tag>/skills/use-dolgorae/` in ephemeral storage. These public raw-file reads are part of the selected Dolgorae freshness diagnosis. Require matching bytes, valid frontmatter, regular files, and no missing or extra files; report duplicate and symlink states independently. Never compare against a moving branch or vendor the skill into Aquarium.
+Dolgorae distributes the optional `use-dolgorae` skill separately from the binary. Diagnose it independently at `~/.agents/skills/use-dolgorae`. Follow [Complete Paired-Skill Inventory](#complete-paired-skill-inventory) for the entire `skills/use-dolgorae/` subtree at the installed supported release commit, or the selected release when preparing installation. Require `name: use-dolgorae`; the inspector's structural readiness and minimum-file hashes alone do not establish freshness. Never compare against a moving branch or vendor the skill into Aquarium.
 
 After skill installation or replacement approval and the shared backup decision, copy that verified complete tree to the canonical target and compare it again. Preserve local modifications and alternate installations until their exact replacement or migration is approved. Binary readiness and paired-skill readiness remain separate. Repository `dev-setup` checks only canonical skill presence. The `dolgorae` bundle component includes the CLI and paired skill without changing the bundle manifest schema.
 
@@ -152,7 +203,7 @@ The supported Doctor contract reports `config_v3`, `local_configuration`, `provi
 
 Setup does not need `mulgae providers --output json`. If that command is explicitly inspected outside the default setup flow, keep `offline_ready_provider_count` and `static_evidence_ready_provider_count` distinct; missing static evidence is not a generic unavailable provider.
 
-For a new Codex user-scoped skill installation, use only these files from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/mulgae/<tag>/skills/use-mulgae/` payload: `SKILL.md`, `references/lifecycle.md`, `references/authoring.md`, and `references/recovery.md`. Verify the complete file set, SHA-256 digests, and `name: use-mulgae` frontmatter before atomically moving it to `~/.agents/skills/use-mulgae`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
+Install `use-mulgae` from the complete verified `skills/use-mulgae/` subtree at the selected release commit, following [Complete Paired-Skill Inventory](#complete-paired-skill-inventory). Verify `name: use-mulgae` and propose the canonical target `~/.agents/skills/use-mulgae`. Do not use a fixed file list as the source inventory.
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
@@ -288,9 +339,9 @@ go install github.com/irootkernel/gaori@<tag>
 
 The binary does not install the agent skill. Diagnose the CLI and repository with `command -v gaori`, `gaori version --json`, and, when `.gaori/tester.yaml` exists, `gaori --json config check`. Diagnose `use-gaori`, `use-gaori-status`, and global, local, and effective MCP registration independently. Config check validates schema-v2 config and all stored rules without resolving executables, running commands, or creating evidence.
 
-For a new Codex user-scoped skill installation, use only these files from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori/` payload: `SKILL.md`, `references/authoring.md`, `references/existing-logs.md`, `references/fallbacks.md`, `references/lifecycle.md`, `references/recovery.md`, and `references/retention.md`. Verify the complete seven-file set, SHA-256 digests, and `name: use-gaori` frontmatter before atomically moving it to `~/.agents/skills/use-gaori`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
+Install `use-gaori` from the complete verified `skills/use-gaori/` subtree at the selected release commit, following [Complete Paired-Skill Inventory](#complete-paired-skill-inventory). Verify `name: use-gaori` and propose the canonical target `~/.agents/skills/use-gaori`. Do not use a fixed file list as the source inventory.
 
-For `use-gaori-status`, fetch the single `SKILL.md` from `https://raw.githubusercontent.com/irootkernel/gaori/<tag>/skills/use-gaori-status/SKILL.md`. Verify its SHA-256 digest, complete one-file tree, and `name: use-gaori-status` frontmatter before proposing installation at `~/.agents/skills/use-gaori-status`. Apply the same per-target comparison, duplicate, backup, approval, and restart rules to each skill. A selected Gaori component diagnoses both skills, but a missing status skill does not degrade CLI, execution-skill, or MCP health.
+For `use-gaori-status`, inventory the entire `skills/use-gaori-status/` subtree at the same commit and require `name: use-gaori-status`. Apply the same complete-tree comparison, duplicate, backup, approval, and restart rules to its target `~/.agents/skills/use-gaori-status`. A selected Gaori component diagnoses both skills, but a missing status skill does not degrade CLI, execution-skill, or MCP health.
 
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex if the skill does not appear in the active session.
 
@@ -318,7 +369,7 @@ Treat MCP as an optional, separately approved component and prefer one user-glob
 [mcp_servers.gaori]
 command = "<absolute-selected-gaori-path>"
 args = ["mcp"]
-tool_timeout_sec = 3601
+tool_timeout_sec = 3600 # Adjust to the selected command duration plus finalization.
 ```
 
 When the user explicitly chooses repository-local scope, merge this machine-specific alternative into `<absolute-git-root>/.codex/config.toml` while preserving unrelated configuration:
@@ -327,10 +378,10 @@ When the user explicitly chooses repository-local scope, merge this machine-spec
 [mcp_servers.gaori]
 command = "<absolute-selected-gaori-path>"
 args = ["--repo", "<absolute-git-root>", "mcp"]
-tool_timeout_sec = 3601
+tool_timeout_sec = 3600 # Adjust to the selected command duration plus finalization.
 ```
 
-Show the complete diff and target scope before approval; for a local target also show whether `.codex/config.toml` is tracked. Never stage it during setup. Verify global, isolated local, and effective registrations with the same three-view procedure used for Mulgae. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `--repo <canonical-root> mcp` arguments and no fixed `cwd`. Do not start the server or a test. Require a numeric, non-boolean `tool_timeout_sec` of at least 3601 seconds so the host deadline exceeds a one-hour command and evidence finalization, while preserving any larger existing value. Report missing or inadequate timeout, disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted entries as degraded.
+Show the complete diff and target scope before approval; for a local target also show whether `.codex/config.toml` is tracked. Never stage it during setup. Verify global, isolated local, and effective registrations with the same three-view procedure used for Mulgae. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `--repo <canonical-root> mcp` arguments and no fixed `cwd`. Do not start the server or a test. The native paired skill recommends a host timeout of 3600 seconds or greater; execution eligibility depends on the selected command duration plus evidence finalization. Preserve valid existing settings. A positive finite numeric timeout is structurally valid, and an absent timeout is unknown rather than a setup failure. Neither state proves a particular command can finish before the host deadline. Let `$use-gaori` select the supported waiting transport from actual command and host evidence; never impose an Aquarium timeout floor or edit host configuration to manufacture eligibility. Report invalid timeout types or values, disabled, non-STDIO, unresolvable-command, wrong-repository, and inactive or untrusted entries as degraded.
 
 Whenever an isolated local Gaori registration exists, an explicit bundle `local_mcp` selection confirms local scope; preserve it without asking again. If the bundle requests no Gaori MCP, preserve the registration without proposing cleanup. For ordinary setup or an explicit global request, ask whether local scope is intentional. If confirmed, preserve it; an explicit global request then remains a scope mismatch. If not, show and separately approve removal of only the local `gaori` table, using `CODEX_HOME=<absolute-git-root>/.codex codex mcp remove gaori` or an equivalent exact TOML edit. Apply the same backup, semantic-empty-file, empty-directory, unrelated-setting preservation, and no-staging rules as Mulgae local cleanup. Never remove the global registration as part of local cleanup.
 
@@ -348,7 +399,7 @@ Supported release line: stable `v0.1.1` through `v0.1.x`, native Apple Silicon m
 
 The official release provides `sorage-<tag>-darwin-arm64`, `sorage-<tag>-darwin-arm64.sha256`, and `sorage-<tag>-darwin-arm64.manifest.json`. Before installation, verify the checksum file, require the manifest's version, target, binary name, digest, and revision to match the selected tag, asset, and peeled tag commit, and run `codesign --verify --strict` against the binary. Disclose that the release is ad-hoc signed and not notarized. Install the separately approved regular executable to the exact user-owned target, normally `~/.local/bin/sorage`, without `sudo`; the packaged binary needs no Bun runtime. Verify the installed target with `sorage version --json`.
 
-The binary does not install the agent skill. For a new Codex user-scoped skill installation, use only the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/sorage/<tag>/skills/use-sorage/SKILL.md` payload as `SKILL.md`. Verify the complete one-file set, its SHA-256 digest, and `name: use-sorage` frontmatter before atomically moving it to `~/.agents/skills/use-sorage`. Repeat the raw GitHub endpoint and user-global target in the installation proposal even though the comparison fetch itself needs no separate approval.
+The binary does not install the agent skill. Install the complete verified `skills/use-sorage/` subtree at the selected release commit, following [Complete Paired-Skill Inventory](#complete-paired-skill-inventory). Require `name: use-sorage` and propose `~/.agents/skills/use-sorage`. Existing targets follow the shared comparison, backup, replacement-approval, and restart rules.
 
 Treat missing, extra, modified, duplicate, or symlinked content as a separate skill gap. Show the complete diff and follow the shared backup and approval rules before installing or replacing it. Tell the user to restart Codex if the current session does not expose the newly installed skill.
 
@@ -389,7 +440,7 @@ A healthy supported CLI remains `installed` when initialization, registration, P
 
 Official source: `https://github.com/tmdgusya/lora`
 
-Lora distributes agent skills rather than a runtime service. Configure it for Codex user-global scope. Resolve the latest stable tag when one exists; otherwise resolve the full current `main` commit SHA and disclose that fallback before approval. Because `npx skills add <repository>#<full-sha>` treats the SHA as a branch name, prepare a temporary detached checkout at the approved commit and install from that local source instead.
+Lora distributes agent skills rather than a runtime service. Configure it for Codex user-global scope. Resolve the latest stable tag when one exists; otherwise resolve the full current `main` commit SHA and disclose that fallback before approval. Prepare a temporary detached checkout at the approved commit and install from that local source; verify the detached HEAD before invoking the pinned installer.
 
 Install only the two compatible skills from the approved ref:
 
@@ -398,7 +449,7 @@ git clone --filter=blob:none --no-checkout https://github.com/tmdgusya/lora <tem
 git -C <temporary-source-root>/lora fetch --depth=1 origin <approved-tag-or-full-sha>
 git -C <temporary-source-root>/lora checkout --detach FETCH_HEAD
 git -C <temporary-source-root>/lora rev-parse HEAD
-npx skills add <temporary-source-root>/lora \
+npx skills@<approved-installer-version> add <temporary-source-root>/lora \
   --skill lore-commits \
   --skill lore-query \
   --global \
@@ -409,13 +460,13 @@ npx skills add <temporary-source-root>/lora \
 
 The clone and fetch contact GitHub, and `npx` contacts npm and writes `lore-commits` and `lore-query` to `~/.agents/skills/lore-commits` and `~/.agents/skills/lore-query`. Require the detached `HEAD` to equal the approved ref before installation. Do not install or invoke Lora's `lore-setup`; it copies the full Lore protocol into AGENTS.md and conflicts with the reference-and-override policy. If `lore-setup` is already installed, report it without removing or rewriting it.
 
-Before updating an existing `lore-commits` or `lore-query`, compare its complete installed file set with the approved source, show the target and diff, and apply the shared backup policy before the approved `npx skills add` action. Under the no-backup policy, disclose that local modifications will not be recoverable from the source ref. After installation, enumerate both complete source and target trees, reject missing and extra paths, and compare every regular file byte-for-byte; any symlink or digest mismatch fails verification. The bundled inspector reports only structural presence and frontmatter as `unverifiable`, never complete-source currency. Do not report configured until this post-action complete-tree comparison passes. Do not treat installation as commit authority.
+Before updating an existing `lore-commits` or `lore-query`, compare its complete installed file set with the approved source, show the target and diff, and apply the shared backup policy before the approved `npx skills@<approved-installer-version> add` action. Under the no-backup policy, disclose that local modifications will not be recoverable from the source ref. After installation, enumerate both complete source and target trees, reject missing and extra paths, and compare every regular file byte-for-byte; any symlink or digest mismatch fails verification. The bundled inspector reports only structural presence and frontmatter as `unverifiable`, never complete-source currency. Do not report configured until this post-action complete-tree comparison passes. Do not treat installation as commit authority.
 
 ## Cursor Team Kit / Deslop
 
 Official source: `https://github.com/cursor/plugins`
 
-Deslop is a separately installed upstream prerequisite, not an Aquarium skill. This integration has no supported skill-specific release line, so resolve and disclose the full current `main` commit SHA through official GitHub commit metadata, then prepare a temporary detached checkout at that exact commit. Never install from a moving `main` or use a full SHA as an `npx skills` URL fragment.
+Deslop is a separately installed upstream prerequisite, not an Aquarium skill. This integration has no supported skill-specific release line, so resolve and disclose the full current `main` commit SHA through official GitHub commit metadata, then prepare a temporary detached checkout at that exact commit. Never install from a moving `main`; use the verified detached checkout with the pinned installer.
 
 Install only the upstream Deslop skill from the approved checkout and preserve its parent plugin's MIT notice:
 
@@ -424,7 +475,7 @@ git clone --filter=blob:none --no-checkout https://github.com/cursor/plugins <te
 git -C <temporary-source-root>/cursor-plugins fetch --depth=1 origin <approved-full-sha>
 git -C <temporary-source-root>/cursor-plugins checkout --detach FETCH_HEAD
 git -C <temporary-source-root>/cursor-plugins rev-parse HEAD
-npx skills add <temporary-source-root>/cursor-plugins/cursor-team-kit \
+npx skills@<approved-installer-version> add <temporary-source-root>/cursor-plugins/cursor-team-kit \
   --skill deslop \
   --global \
   --agent codex \
@@ -463,7 +514,7 @@ Pin the optional `use-podway` skill independently to the v0.2.11 release commit 
 
 Resolve the exact release from GitHub Releases and download the Apple Silicon archive plus its published `.sha256` file. Disclose that release binaries are unsigned and not notarized. Verify with `shasum -a 256 -c` before installing both `podway` and `podwayd` at the approved user-local paths. Do not accept a prerelease, a version before v0.2.11, `v0.3+`, an unverified archive, mixed CLI and daemon versions, or unsupported platform.
 
-The binaries do not install the agent skill. Diagnose `use-podway` independently in the Codex skill roots. For a new Codex user-scoped installation, use only `SKILL.md`, `references/lifecycle.md`, `references/goal.md`, and `references/recovery.md` from the automatically fetched and verified `https://raw.githubusercontent.com/irootkernel/podway/5b88e99bfaed0643b4bfb1c035f9c4acdc476d05/skills/use-podway/` payload. Verify the commit through the official repository, the complete file set, SHA-256 digests, and `name: use-podway` frontmatter before atomically moving it to `~/.agents/skills/use-podway`. Repeat every raw GitHub endpoint and the user-global target in the installation proposal even though the comparison fetch itself needs no separate approval. Keep `create-podway-procedure` as a separately installed maintainer authoring dependency; neither setup skill installs, compares, or requires it.
+The binaries do not install the agent skill. Diagnose `use-podway` independently in the Codex skill roots. Follow [Complete Paired-Skill Inventory](#complete-paired-skill-inventory) for the entire `skills/use-podway/` subtree at pinned commit `5b88e99bfaed0643b4bfb1c035f9c4acdc476d05`. Require `name: use-podway` before proposing `~/.agents/skills/use-podway`. Keep `create-podway-procedure` as a separately installed maintainer authoring dependency; neither setup skill installs, compares, or requires it.
 
 If the target exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the pinned source commit. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
