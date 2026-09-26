@@ -82,6 +82,11 @@ checkpoint. Independent Review receives the exact bounded candidate that the hos
 present without inventing backend guarantees. Mulgae retains its current target
 rules.
 
+The owning handler prepares the complete staged Task candidate under approved
+staging authority before delegating Orca review. It includes new files and
+documentation, preserves unrelated index entries, and stops when they prevent
+safe isolation. Report-only review does not prepare the index.
+
 ## Common evidence
 
 The Procedures and handlers record these route-neutral facts:
@@ -139,6 +144,23 @@ Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
 MCP gap blocks only the Mulgae route. Orca readiness blocks only Orca. Missing
 host delegation blocks only `independent-review`. The workflow must still report the
 selected route's exact prerequisite failure.
+
+Podway readiness also depends on the selected route in the exact Procedure
+snapshot. The inspector reports `review_route_readiness` for current routes;
+general readiness alone cannot admit a route absent from a prior-canonical
+snapshot. Active sessions retain their own declarations and evidence. A retired
+`native-codex` checkpoint takes an explicit failed-prerequisite disposition,
+supported route change or waiver, or stop and successor; it never dispatches the
+retired reviewer or relabels Independent Review evidence.
+
+Host wait timeouts leave Independent Review delegations pending. Resume the
+same references until every agent has an authoritative terminal state. Explicit
+`resume-current` after a settled incomplete operation may start a fresh group
+with the same target, Brief, model and effort, preserving earlier reports and
+the pending ordinal. Orca waiting and exact retry follow its live native
+contract without an Aquarium deadline or retry cap. Both routes report reviewer
+violations separately and withhold a final verdict when target integrity,
+identity, source scope, coverage, or lifecycle evidence is compromised or unknown.
 
 ## Native evidence-dependent deferral
 
@@ -217,4 +239,4 @@ supported terminal and successor-session path.
 Current routing does not add automatic fallback, create a persistent route
 preference, make route guarantees equivalent, or weaken required verification.
 Historical `native-codex` Procedure snapshots retain their original meaning;
-new checkpoints select `independent-review` instead.
+new checkpoints select `independent-review` only in a snapshot that supports it.

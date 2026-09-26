@@ -15,6 +15,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Check the selected Procedure review route before execution and align review waiting, recovery, candidate staging, and tool handoffs with their native contracts.
 - Load the Aquarium development MCP server through the supported plugin declaration.
 - Carry all static-review restrictions into Orca reviewer dispatches and require explicit authority for upstream PM draft files and clipboard replacement.
 

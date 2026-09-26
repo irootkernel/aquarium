@@ -3424,6 +3424,63 @@ else:
                 for entry in podway["managed_procedures"]
             )
         )
+        for entry in podway["managed_procedures"]:
+            self.assertNotIn("ready", entry["review_route_readiness"].values())
+
+    def test_review_routes_require_complete_qualified_declarations(self) -> None:
+        canonical = (
+            inspect_tools.PODWAY_SOURCE_DIRECTORY / "aquarium-task-v2.yaml"
+        ).read_bytes()
+        document = yaml.safe_load(canonical)
+        declarations = [
+            item
+            for definition in document["node_definitions"].values()
+            for item in definition.get("items", [])
+            if item["id"] == "review-route"
+        ]
+        declarations[0]["choices"].remove("independent-review")
+        content = yaml.safe_dump(document).encode()
+        self.assertEqual(
+            inspect_tools.inspect_podway_review_routes(content, qualified=True)[
+                "independent-review"
+            ],
+            "unavailable",
+        )
+        status, _ = inspect_tools.inspect_podway_handler_contract(
+            "aquarium-task-v2.yaml", content, canonical
+        )
+        self.assertEqual(status, "incompatible")
+        for malformed in (None, b"[", b"null", b"node_definitions: {}"):
+            with self.subTest(content=malformed):
+                self.assertEqual(
+                    set(
+                        inspect_tools.inspect_podway_review_routes(
+                            malformed, qualified=True
+                        ).values()
+                    ),
+                    {"unverified"},
+                )
+        self.assertEqual(
+            set(inspect_tools.inspect_podway_review_routes(canonical).values()),
+            {"unverified"},
+        )
+        declarations[0]["choices"] = ["mulgae", {}]
+        self.assertEqual(
+            set(
+                inspect_tools.inspect_podway_review_routes(
+                    yaml.safe_dump(document).encode(), qualified=True
+                ).values()
+            ),
+            {"unverified"},
+        )
+
+    def test_rejected_native_procedure_never_admits_review_routes(self) -> None:
+        self.install_fake_tools(podway_procedure_ok=False)
+        self.install_managed_podway_procedures()
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        self.assertEqual(podway["readiness_status"], "degraded")
+        for entry in podway["managed_procedures"]:
+            self.assertNotIn("ready", entry["review_route_readiness"].values())
 
     def test_session_not_found_is_ready_in_an_initialized_workspace(self) -> None:
         self.install_fake_tools()
@@ -3453,9 +3510,14 @@ else:
     def test_managed_procedure_checks_report_validity_without_payload(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
-        completed = self.inspect(include_podway=True)
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        managed = json.loads(completed.stdout)["tools"]["podway"]["managed_procedures"]
+        with (
+            mock.patch.dict(os.environ, self.environment),
+            mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+            mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+        ):
+            managed = inspect_tools.inspect_podway(
+                self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+            )["managed_procedures"]
         self.assertEqual(
             [entry["path"] for entry in managed],
             [
@@ -3468,6 +3530,20 @@ else:
         )
         for entry in managed:
             with self.subTest(path=entry["path"]):
+                if Path(entry["path"]).stem in {
+                    "aquarium-task-v2",
+                    "aquarium-goal-v2",
+                    "aquarium-validation-v2",
+                }:
+                    self.assertEqual(
+                        entry["review_route_readiness"],
+                        dict.fromkeys(
+                            ("mulgae", "orca", "independent-review", "waived"),
+                            "ready",
+                        ),
+                    )
+                else:
+                    self.assertEqual(entry["review_route_readiness"], {})
                 self.assertEqual(
                     entry["check"],
                     {
@@ -3520,6 +3596,7 @@ else:
         self.assertEqual(entry["source_state"], "unsafe")
         self.assertIsNone(entry["installed_sha256"])
         self.assertNotIn("check", entry)
+        self.assertEqual(set(entry["review_route_readiness"].values()), {"unverified"})
 
     def test_partial_or_invalid_managed_procedures_are_degraded(self) -> None:
         self.install_fake_tools()
@@ -4633,6 +4710,15 @@ else:
         self.assertEqual(target.read_bytes(), legacy_bytes)
         self.assertEqual(podway["readiness_status"], "ready")
         self.assertEqual(podway["status"], "configured")
+        self.assertEqual(
+            entry["review_route_readiness"],
+            {
+                "mulgae": "ready",
+                "orca": "ready",
+                "independent-review": "unavailable",
+                "waived": "ready",
+            },
+        )
 
     def test_tampered_task_v14_is_not_admitted_as_prior_canonical(self) -> None:
         self.install_fake_tools()

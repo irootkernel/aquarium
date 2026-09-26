@@ -51,7 +51,7 @@ Place the complete Review Brief, declared target, purpose, authority paths, incl
 
 For `staged`, also require inspection of `git diff --cached` and the relevant staged files, plus only the unchanged context required by the proportional `change` rule or the applicable `completion` criteria. Apply equivalent target-specific read instructions to `head`, `commit`, and `range`. Require the reviewer to complete the injected Orca lifecycle exactly once and label execution-dependent claims `runtime unverified`. If required evidence cannot be gathered under the restrictions, require a bounded confirmation need instead of a mutation.
 
-Supervise, settle, acknowledge, and recover only through the live Orca guides. Never retry automatically, switch reviewers, release an active worker, or reinterpret backend failure, incomplete settlement, or compromised or unproven review guarantees as `APPROVE`. Assess other observed deviations under [the shared policy](../../references/review-contract.md#orca-operational-deviations).
+Supervise, settle, acknowledge, and recover only through the live Orca guides. Use supported exact retry only within the existing envelope and the native recovery contract; preserve reviewer, target, Brief, and prior lineage. Never switch reviewers, release an active worker, or reinterpret backend failure, incomplete settlement, or compromised or unproven review guarantees as `APPROVE`. Assess other observed deviations under [the shared policy](../../references/review-contract.md#orca-operational-deviations).
 
 ## Adjudicate and report
 

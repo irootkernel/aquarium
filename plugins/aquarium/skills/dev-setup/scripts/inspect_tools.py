@@ -534,6 +534,50 @@ def podway_handler_shape_reasons(
     return reasons
 
 
+def inspect_podway_review_routes(
+    content: bytes | None, *, qualified: bool = False
+) -> dict[str, str]:
+    """Qualify current routes from every review-route declaration in the snapshot."""
+    routes = ("mulgae", "orca", "independent-review", "waived")
+    unverified = dict.fromkeys(routes, "unverified")
+    if content is None or yaml is None or not qualified:
+        return unverified
+    try:
+        document = yaml.safe_load(content)
+    except (UnicodeDecodeError, yaml.YAMLError):
+        return unverified
+    if not isinstance(document, dict):
+        return unverified
+    definitions = document.get("node_definitions")
+    if not isinstance(definitions, dict):
+        return unverified
+    declarations = []
+    for definition in definitions.values():
+        if not isinstance(definition, dict):
+            return unverified
+        items = definition.get("items", [])
+        if not isinstance(items, list):
+            return unverified
+        for item in items:
+            if not isinstance(item, dict):
+                return unverified
+            if item.get("id") != "review-route":
+                continue
+            choices = item.get("choices")
+            if (
+                item.get("type") != "choice"
+                or not isinstance(choices, list)
+                or not choices
+                or not all(isinstance(choice, str) for choice in choices)
+            ):
+                return unverified
+            declarations.append(set(choices))
+    if not declarations:
+        return unverified
+    supported = set.intersection(*declarations)
+    return {route: "ready" if route in supported else "unavailable" for route in routes}
+
+
 def inspect_podway_handler_contract(
     name: str, content: bytes | None, canonical_content: bytes | None
 ) -> tuple[str, list[str]]:
@@ -4188,6 +4232,7 @@ def inspect_podway(
         and platform.machine() in {"arm64", "aarch64"},
     }
     managed: list[dict[str, Any]] = []
+    review_route_bytes: dict[str, bytes | None] = {}
     legacy_managed: list[dict[str, Any]] = []
     present_count = 0
     legacy_present_count = 0
@@ -4204,6 +4249,12 @@ def inspect_podway(
         target_digest = file_sha256(target) if present else None
         source_bytes = file_bytes(source) if source_present else None
         target_bytes = file_bytes(target) if present else None
+        if name in {
+            "aquarium-task-v2.yaml",
+            "aquarium-goal-v2.yaml",
+            "aquarium-validation-v2.yaml",
+        }:
+            review_route_bytes[relative_path] = target_bytes
         matching = (
             present
             and not symlinked
@@ -4258,6 +4309,11 @@ def inspect_podway(
                 "expected_procedure_id": Path(name).stem,
                 "handler_contract_status": handler_contract_status,
                 "handler_contract_reasons": handler_contract_reasons,
+                "review_route_readiness": (
+                    inspect_podway_review_routes(None)
+                    if relative_path in review_route_bytes
+                    else {}
+                ),
             }
         )
     for name in LEGACY_PODWAY_PROCEDURES:
@@ -4536,6 +4592,12 @@ def inspect_podway(
     else:
         tool["readiness_status"] = "degraded"
         tool["status"] = "degraded"
+    for entry in managed:
+        if entry["path"] in review_route_bytes:
+            entry["review_route_readiness"] = inspect_podway_review_routes(
+                review_route_bytes[entry["path"]],
+                qualified=tool["readiness_status"] == "ready",
+            )
     return tool
 
 

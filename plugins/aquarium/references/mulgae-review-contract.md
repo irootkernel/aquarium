@@ -22,6 +22,8 @@ mode. A standalone invocation includes those values only when the request
 provides them as context and never manufactures them. Bind preflight and
 execution to those same inputs.
 
+Before preflight, check the selected native transport's objective size, encoding, and line constraints against the complete Review Brief. Follow the same-release paired skill and tool schema; MCP and CLI limits can differ. If one transport cannot carry the Brief, select another eligible native transport within the existing execution and transmission authority, then use identical inputs for its preflight and execution. Remove only redundant wording, never criteria, scope, provenance, or recovery context. If no eligible input can carry the complete Brief, stop with the exact input gap and request a bounded decision. Do not truncate the Brief, split one assessment into undisclosed reviews, invent a file-input flag, or treat an artifact path as transmitted content without a supported native contract.
+
 The agent that will select the transport or start the review must first load the
 installed `$use-mulgae` skill in its own execution context and follow its
 same-release instructions. Naming the skill or loading it only in a coordinator

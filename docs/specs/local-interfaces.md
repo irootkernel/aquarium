@@ -91,6 +91,13 @@ current Aquarium handlers. A Podway-valid same-ID customization remains
 contract independently keeps readiness degraded and is never overwritten by
 inspection.
 
+Task, Goal, and Validation entries also report `review_route_readiness` for each
+current route as `ready`, `unavailable`, or `unverified`; Design and War Room
+entries report an empty map. The inspector qualifies the snapshot's declared
+routes only after native checks and overall readiness pass. A prior-canonical
+snapshot may remain generally compatible while a newer route is unavailable.
+Route qualification still requires PyYAML and readable declarations.
+
 When a repository component depends on a missing or degraded user-global MCP registration, the inspector reports the recommendation `continue_with_dev_setup_global`. Repository workflows use the same continuation for unavailable or unready user-global services and do not repair either class locally.
 
 The additive `tools.sorage` member reports the common tool fields plus `version_supported`, `platform`, `agent_skill`, `initialization_status`, `project_registration`, and `readiness_status`. It also reports whether the repository root `.gitignore` matches `.sorage/` with a non-negated rule, tracking and symlink state, and normalized `version`, `doctor`, and `project_resolve` probes. A local or global exclude rule alone does not satisfy the reported ignore policy. The `ignored` field reports root-rule coverage independently of index state, so a tracked `.sorage/` path may have both `ignored` and `tracked` set to `true`; tracking still blocks readiness. The version probe validates the bare v0.1 name/version object. Doctor and Project probes validate Sorage envelopes, and doctor state is accepted only for the complete ordered 20-check v0.1 catalog.

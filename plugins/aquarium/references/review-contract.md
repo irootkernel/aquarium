@@ -61,7 +61,7 @@ Mulgae remains operationally independent. Conformance is limited to common user-
 
 ## Settlement and recovery
 
-Independent Review preserves available host delegation evidence when a subagent is incomplete or fails and stops without automatic retry. Orca Review follows its live Orca guides and [orca-supervision.md](orca-supervision.md), including authoritative observation on deadline exhaustion. A process exit or silence is never terminal evidence. Active or unknown state is reported without retry or cleanup; follow the owning backend's recovery contract before a later authorized review.
+Independent Review preserves host delegation references across supported waits; a wait timeout does not settle an agent. A failed or incomplete operation requires the explicit restart decision in [review-routing-contract.md](review-routing-contract.md#bound-assessment-convergence). Orca Review follows its live guides and [orca-supervision.md](orca-supervision.md) for event-driven waiting and authorized native recovery. Aquarium adds no liveness deadline or retry quota. A process exit or silence alone is not authoritative terminal evidence. Preserve active or unknown workers and recover through their owner before starting replacements.
 
 ## Result contract
 

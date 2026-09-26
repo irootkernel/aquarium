@@ -34,6 +34,8 @@ Route selection never stages files, creates a commit, copies a checkout,
 broadens source scope, or includes unrelated state. Preserve the native target
 vocabulary and report the exact included and excluded state.
 
+Before delegating a staged Task review, the owning handler uses its approved staging authority to stage the complete Task candidate, including new files and documentation. Reconcile the index with the intended candidate and preserve unrelated entries; if those entries prevent isolation, stop for a concrete target or staging decision. The report-only reviewer never prepares or repairs the index. Repeat this preparation after authorized corrections before a later staged checkpoint.
+
 - Mulgae retains its supported target meanings and immutable-capture contract.
 - Orca uses `staged`, `head`, `commit`, or `range` through the static review
   contract. A Task may use `staged` only when the complete candidate is isolated
@@ -49,6 +51,12 @@ vocabulary and report the exact included and excluded state.
 Never describe Orca, Independent Review, or a waiver as a Mulgae capture,
 publication, CI result, findings query, or recovery guarantee. Independent
 Review does not use Dolgorae or inherit Orca lifecycle guarantees.
+
+## Procedure Route Compatibility
+
+On the Podway path, check the selected Procedure's route readiness under [podway-integration.md](podway-integration.md#check-readiness-on-the-default-path) before starting a new session or dispatching a resumed checkpoint. A recognized historical snapshot may support Mulgae or Orca while lacking Independent Review. Never equate generic handler compatibility with every route being executable, record `independent-review` as `native-codex`, or revive retired single-agent dispatch.
+
+Preserve an in-flight `native-codex` snapshot and its earlier evidence. For a new checkpoint on that route, record the failed prerequisite without inventing a delegation. Offer an explicitly authorized switch to a supported route, a waiver where that snapshot admits it, or stop and a separately authorized successor after native lifecycle settlement. If the snapshot cannot record the desired route or disposition, leave that decision unset and use its supported stop path; installing new Procedure bytes does not migrate the session. Existing completed evidence keeps its original route and provenance.
 
 ## Record Route-Neutral Evidence
 
@@ -108,7 +116,7 @@ A route failure stops for user direction. Never start another route or apply a
 waiver automatically. Offer only the actions supported by current authority:
 
 - `resume-current`: continue or recover the current native operation through
-  its owner;
+  its owner, or restart a settled incomplete Independent Review as specified below;
 - `continue-current` (Task only): run the next authorized assessment on the
   same route after an exact completed delegated review or waiver assessment;
 - `switch-route`: select one supported route after the prior operation reaches
@@ -132,6 +140,8 @@ Changing route does not reset the goal revision, remediation budget, findings,
 or corrected-target confirmation obligation.
 
 ## Bound assessment convergence
+
+For Independent Review, a host wait timeout leaves the same delegations pending. Resume those references through the host while any worker is active or its state is unknown. Once all three are authoritatively settled, explicit `resume-current` may authorize one fresh three-agent operation for the same target, Brief, model and effort; retain every earlier report and finding, and reuse the unconsumed ordinal. Recheck mutable target identity first. Changed bytes require a refreshed authorized Brief and affected verification, never an assertion that the old review covered them. An embedded restart remains subject to the owning workflow's scope and remaining authority; standalone restart needs explicit authority. Do not silently substitute a provider or reuse successful agents as a replacement for the required fresh three-agent operation.
 
 Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed Low-only settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
 
