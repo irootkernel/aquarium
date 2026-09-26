@@ -24,6 +24,20 @@ unless the placement selects it.
 | Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
 | Assessment and closeout | `task-handler` consumes the carried completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
 
+`record-task-rework-basis` records the current correction set before its
+authority decision. Owner decisions use fresh phase obligations, including
+blockers first found during Low settlement. The source review keeps its
+historical counts. Implementation rework and manual behavior
+correction enter `prepare-implementation`. Carry the exact source attempt and
+record, target, finding IDs, obligations, and admitted authority in the native
+rework reason; match its target attempt before recording fresh entry evidence.
+The plan artifact remains optional, but when present its selected metadata and
+complete file digest and byte size must match before implementation resumes.
+
+The final core gate composes reviewed phase evidence with the completed Low
+record and its exact permitted delta. It preserves the consumed ordinal and
+states that the review predates changed bytes.
+
 ## Goal Procedure
 
 `epic-handler` owns goal-centered member, remediation, and closeout work. It does
@@ -49,6 +63,11 @@ assessment consumes the carried completion summary and gap counts, their
 consistency when present, and any user direction. A stop direction must produce a
 not-achieved assessment rather than closing the goal.
 
+A blocker first established during Low settlement returns to the same rework
+authority decision. Use remaining remediation authority when available; otherwise
+record the exact current blocker basis and wait at an unset user choice. Carry
+the admitted cause in native rework history before work invalidates its source.
+
 For a member Task, final Goal approval accepts the assessed outcome and exact
 candidate, including its lifecycle, record, and release-note decisions. An approved
 candidate consumes the Epic envelope's member-Task authority through `task-commit`
@@ -72,6 +91,18 @@ session. Audit evidence separates operational result, unresolved confirmation,
 current blockers, eligible Low findings, and total confirmed findings. Total count
 is descriptive and never routes remediation by itself.
 
+`prepare-validation-pass` is the common re-entry point. Initial entry prepares
+the direct audit. An admitted audit or review blocker, including one found during
+Low settlement, re-enters with its exact source, target, findings, assessment
+count, and authority in the native rework reason, then performs `remediate`
+before another audit or review. Preparation records that cause as fresh evidence.
+The original envelope uses a complete Epic audit before assessments one through
+three; after the third completed assessment, confirmation uses only the frozen
+correction set and direct regression surface. A separately granted one-shot
+correction always retains its bounded scope. `record-current-audit-basis` records
+the fresh full or frozen audit after its gap decision; stale earlier audit
+attempts cannot provide the final review's current basis.
+
 Blocking corrections return to remediation only within the caller's existing
 envelope and keep their triggering set. A required corrected-target confirmation
 still runs. The first three completed assessments cover the precisely supplied Epic
@@ -90,10 +121,16 @@ exhausted authority at `await-user-direction`, complete that action, and stop at
 `choose-user-direction` with the actual choice unset until the user answers.
 Each `fix-and-review` answer authorizes one correction and one next remediation
 confirmation. A broadened objective or changed surface requires a new goal
-revision or work-unit assessment instead.
+revision instead.
 Validation assessment consumes the carried completion summary and gap counts,
 their consistency when present, and any user direction. A stop direction must
 produce a not-achieved assessment rather than validating or closing the epic.
+
+After assessment, `record-outcome` presents the exact result and candidate,
+including lifecycle, dossier disposition, release notes, and any required commit.
+User acceptance at `approve-closeout` precedes that commit and residue checks;
+`closeout` records their verified result. An active or in-review Epic also settles
+its execution dossier under the shared consumer rules before final approval.
 
 ## Design Procedure
 

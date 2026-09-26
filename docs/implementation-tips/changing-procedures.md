@@ -25,7 +25,7 @@ keeps setup degraded until its owner approves an exact update.
 
 Podway v0.2.11 permits at most 1,024 definitions and 1,024 graph placements, eight `evidence_from` references per placement, and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both reference limits; otherwise keep a single reference.
 
-The Task Procedure's `assess-goal` placement intentionally consumes the final normalized implementation evidence from `implement` instead of repeating the `prepare-implementation` re-entry summary. That leaves the eighth reference available for user-direction evidence while preserving the implementation result that the assessment actually needs.
+The Task Procedure's `confirm-goal-assessment-core` and `confirm-stopped-goal-assessment-core` placements consume the implementation evidence before `assess-goal` or `assess-stopped-goal`. The assessment placements consume the carried completion assessment and applicable user direction. Check each placement's current references before changing its evidence budget.
 
 ## Compatibility Evidence
 

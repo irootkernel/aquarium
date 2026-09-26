@@ -38,24 +38,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "21",
+            "22",
+            "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
+            "aquarium-task-v21.yaml",
             "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
-            "aquarium-task-v20.yaml",
-            "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "23",
+            "24",
+            "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
+            "aquarium-goal-v23.yaml",
             "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
-            "aquarium-goal-v22.yaml",
-            "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "22",
+            "23",
+            "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
+            "aquarium-validation-v22.yaml",
             "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
-            "aquarium-validation-v21.yaml",
-            "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -455,7 +455,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
             "effect": "advance",
         },
         "failed": {
-            "to": "decide-task-rework-authority",
+            "to": "record-task-rework-basis",
             "effect": "advance",
         },
     }
@@ -496,7 +496,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "21"
+    assert task["version"] == "22"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -1679,16 +1679,34 @@ def test_goal_and_validation_extra_ordinals_require_current_authority() -> None:
 def test_validation_rework_authority_enters_remediation_before_reaudit() -> None:
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
-
-    assert graph["decide-validation-rework-authority"]["routes"]["remediation"] == {
-        "to": "audit",
-        "effect": "rework",
-    }
-    assert graph["decide-gaps"]["routes"]["blocking-gaps"] == {
+    for node, option in (
+        ("decide-validation-rework-authority", "remediation"),
+        ("decide-gaps", "blocking-gaps"),
+        ("choose-user-direction", "fix-and-review"),
+        ("choose-audit-direction", "fix-and-review"),
+    ):
+        assert graph[node]["routes"][option] == {
+            "to": "prepare-validation-pass",
+            "effect": "rework",
+        }
+    assert graph["decide-validation-pass"]["routes"]["remediation"] == {
         "to": "remediate",
         "effect": "advance",
     }
-    assert graph["remediate"]["next"] == "re-audit"
+    assert graph["remediate"]["next"] == "decide-remediation-audit-authority"
+    assert graph["decide-remediation-audit-authority"]["routes"]["one-shot"] == {
+        "to": "re-audit",
+        "effect": "advance",
+    }
+    scope = options(validation, "remediation-audit-scope-decision")
+    for count in range(6):
+        evidence = {("remediate", "completed-review-assessments"): count}
+        assert guards_match(scope["full"], evidence) is (count < 3)
+        assert guards_match(scope["frozen"], evidence) is (count >= 3)
+    assert graph["decide-remediation-audit-scope"]["routes"] == {
+        "full": {"to": "audit", "effect": "advance"},
+        "frozen": {"to": "re-audit", "effect": "advance"},
+    }
 
 
 def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates() -> (
@@ -1710,7 +1728,7 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
     )
     assert graph["re-audit"]["use"] == "remediation-confirmation-audit-record"
     assert graph["decide-re-audit"]["routes"] == {
-        "clean": {"to": "final-review", "effect": "advance"},
+        "clean": {"to": "record-current-audit-basis", "effect": "advance"},
         "user-direction": {"to": "await-audit-direction", "effect": "advance"},
         "low-only": {"to": "record-audit-low-basis", "effect": "advance"},
         "incomplete": {"to": "record-incomplete", "effect": "advance"},
@@ -1720,14 +1738,24 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
         "effect": "advance",
     }
     assert graph["choose-user-direction"]["routes"]["fix-and-review"] == {
-        "to": "final-review",
+        "to": "prepare-validation-pass",
         "effect": "rework",
     }
     assert graph["choose-audit-direction"]["routes"]["fix-and-review"] == {
-        "to": "audit",
+        "to": "prepare-validation-pass",
         "effect": "rework",
     }
     assert graph["final-review"]["next"] == "confirm-final-review-route-binding"
+    audit_sources = {
+        source["node"]: source for source in graph["final-review"]["evidence_from"]
+    }
+    assert audit_sources["record-current-audit-basis"] == {
+        "node": "record-current-audit-basis",
+        "required": True,
+        "items": ["current-audit-basis-summary"],
+    }
+    assert audit_sources["audit"]["required"] is False
+    assert audit_sources["re-audit"]["required"] is False
     assert graph["decide-final-review-operation"]["routes"] == {
         "assessed": {
             "to": "confirm-final-assessment-ordinal",
@@ -1996,7 +2024,11 @@ def test_task_closeout_paths_each_have_one_dominating_goal_assessment() -> None:
 def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> None:
     cases = (
         ("aquarium-goal-v2.yaml", "complete-work", "stopped"),
-        ("aquarium-validation-v2.yaml", "audit", "stopped-or-incomplete"),
+        (
+            "aquarium-validation-v2.yaml",
+            "prepare-validation-pass",
+            "stopped-or-incomplete",
+        ),
     )
     for name, rework_target, stopped_boundary in cases:
         procedure = load_procedure(name)
@@ -2117,3 +2149,68 @@ def test_goal_kind_contract_keeps_closeout_substitute_narrow() -> None:
         and guard.get("equals") == "epic-closeout"
         for guard in options["final-closeout"]["guards"]
     )
+
+
+def test_low_blockers_keep_current_basis_and_remaining_authority() -> None:
+    for name in ("task", "goal", "validation"):
+        procedure = load_procedure(f"aquarium-{name}-v2.yaml")
+        graph = nodes(procedure)
+        destination = (
+            "record-task-rework-basis"
+            if name == "task"
+            else f"decide-{name}-rework-authority"
+        )
+        assert graph["decide-low-completion"]["routes"]["blocker-found"] == {
+            "to": destination,
+            "effect": "advance",
+        }
+        authority = graph[f"decide-{name}-rework-authority"]
+        assert any(
+            source["node"] == "record-low-disposition"
+            for source in authority["evidence_from"]
+        )
+        assert authority["routes"]["user-direction"]["to"] == "await-user-direction"
+        assert "stop" in graph["choose-user-direction"]["routes"]
+    task = load_procedure("aquarium-task-v2.yaml")
+    graph = nodes(task)
+    for phase in ("implementation", "verification", "documentation"):
+        decision = options(task, f"{phase}-owner-decision")
+        item = f"{phase}-rework-obligations"
+        for count in (0, 1):
+            evidence = {("review", item): 0, ("record-task-rework-basis", item): count}
+            assert guards_match(decision["required"], evidence) is (count == 1)
+            assert guards_match(decision["clear"], evidence) is (count == 0)
+    assert graph["decide-implementation-owner"]["routes"]["required"] == {
+        "to": "prepare-implementation",
+        "effect": "rework",
+    }
+    assert "implement" not in task["manual_rework"]["allowed_targets"]
+    assert "prepare-implementation" in task["manual_rework"]["allowed_targets"]
+
+
+def test_task_handoff_and_low_delta_remain_selectable_at_their_consumers() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    graph = nodes(task)
+    artifact = next(
+        item
+        for item in task["node_definitions"]["plan-record"]["items"]
+        if item["id"] == "plan-handoff-artifact"
+    )
+    assert artifact["type"] == "artifact" and artifact["required"] is False
+    for node in ("prepare-implementation", "implement"):
+        assert {
+            "node": "record-plan",
+            "required": False,
+            "items": ["plan-handoff-artifact"],
+        } in graph[node]["evidence_from"]
+    core_sources = graph["confirm-goal-assessment-core"]["evidence_from"]
+    low = next(
+        source for source in core_sources if source["node"] == "record-low-disposition"
+    )
+    assert {
+        "before-target",
+        "after-target",
+        "coverage-relationship",
+        "completion-assessment-summary",
+        "low-disposition-verification",
+    } <= set(low["items"])

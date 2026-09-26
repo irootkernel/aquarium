@@ -33,6 +33,13 @@ CONTRACT_MANIFEST_DIGEST = (
     "sha256:92871d91cbd7aee16f81172dd6f09ae936ac4e408e54d437038edfa9189f1819"
 )
 
+TASK_REVIEW_ENTRY_NODES = {
+    "mulgae": "enter-mulgae-review-route",
+    "orca": "enter-orca-review-route",
+    "independent-review": "enter-independent-review-route",
+    "waived": "enter-waived-review-route",
+}
+
 SUCCESS_OPTIONS = {
     "approve-closeout": "approved",
     "approve-stopped-closeout": "approved",
@@ -66,6 +73,9 @@ SUCCESS_OPTIONS = {
     "decide-current-blockers": "clear",
     "decide-validation-rework-authority": "remediation",
     "decide-gaps": "clean",
+    "decide-validation-pass": "initial-audit",
+    "decide-remediation-audit-authority": "current-envelope",
+    "decide-remediation-audit-scope": "full",
     "decide-re-audit": "clean",
     "decide-quality": "passed",
     "decide-review": "clean",
@@ -196,6 +206,16 @@ GOAL_OPERATIONAL_VARIANTS = (
     ("verification-pass-review-pass", "pass", "pass", "passed"),
 )
 
+LOW_BLOCKER_ROUTE_CASES = {
+    "task-low-blocker-implementation": ("task", "implementation", "remediation"),
+    "task-low-blocker-verification": ("task", "verification", "remediation"),
+    "task-low-blocker-documentation": ("task", "documentation", "remediation"),
+    "task-low-blocker-stop": ("task", "implementation", "stop"),
+    "task-low-blocker-one-shot": ("task", "implementation", "one-shot"),
+    "goal-low-blocker-remediation": ("goal", None, "remediation"),
+    "validation-low-blocker-remediation": ("validation", None, "remediation"),
+}
+
 VALIDATION_FINAL_REVIEW_SCENARIOS = {
     "validation-review-fail": ("fail", None, "review-operation-incomplete"),
     "validation-review-inconclusive": (
@@ -233,6 +253,33 @@ LOW_BLOCKER_SCENARIOS = {
         },
     },
 }
+for scenario_name, (
+    procedure_kind,
+    phase_owner,
+    direction,
+) in LOW_BLOCKER_ROUTE_CASES.items():
+    LOW_BLOCKER_SCENARIOS[scenario_name] = {
+        "source_kind": "review",
+        "source_id": f"fixture:review:{procedure_kind}:01",
+        "frozen_low_ids": [f"fixture:{procedure_kind}:low:01"],
+        "blocker": {
+            "id": f"fixture:blocker:{procedure_kind}:{phase_owner or 'work'}",
+            "description": "A new current blocker differs from the reviewed zero phase obligations.",
+            "affected_scope": f"fixture/{procedure_kind}/{phase_owner or 'work'}",
+        },
+    }
+    if procedure_kind == "goal":
+        LOW_BLOCKER_SCENARIOS[scenario_name]["frozen_low_ids"] = [
+            "fixture:goal:low:01",
+            "fixture:goal:low:02",
+        ]
+    elif procedure_kind == "validation":
+        LOW_BLOCKER_SCENARIOS[scenario_name].update(
+            source_kind="audit",
+            source_id="audit:A1",
+            frozen_low_ids=["audit:A1:L1", "audit:A1:L2"],
+        )
+
 
 GOAL_KIND_SCENARIOS = {
     "goal-kind-member-closeout": ("member-task", "validated-closeout"),
@@ -535,7 +582,11 @@ EXPECTED_NATIVE_CASE_VARIANTS = {
         "aquarium-task-v2",
         "aquarium-validation-v2",
     },
-    "C-08": {"goal-low-blocker-wait", "validation-low-blocker-wait"},
+    "C-08": {
+        "goal-low-blocker-wait",
+        "validation-low-blocker-wait",
+        *LOW_BLOCKER_ROUTE_CASES,
+    },
     "C-09": set(GOAL_KIND_SCENARIOS),
     "C-10": {
         "goal-closeout-unmet-wait",
@@ -567,7 +618,9 @@ CASE_ASSERTIONS = {
     "C-07": ["pending Low dispositions rejected completion"],
     "C-08": [
         "exact current settlement source and blocker content was readable at the wait action",
-        "current settlement blocker routed to an unset user choice",
+        "current settlement blocker used remaining authority or an unset user choice",
+        "fresh Task phase ownership overrode historical zero review obligations",
+        "Task stop and one-shot correction preserved current Low blocker evidence",
     ],
     "C-09": ["goal kind independently constrained the closeout substitute"],
     "C-10": [
@@ -586,6 +639,10 @@ CASE_ASSERTIONS = {
 
 def wait_scenario_specs() -> tuple[tuple[str, str], ...]:
     return (
+        *(
+            (f"aquarium-{kind}-v2.yaml", name)
+            for name, (kind, _owner, _direction) in LOW_BLOCKER_ROUTE_CASES.items()
+        ),
         ("aquarium-goal-v2.yaml", "low-blocker-wait"),
         ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
         ("aquarium-goal-v2.yaml", "medium-wait"),
@@ -948,9 +1005,20 @@ class ManagedRuntime:
         self.validation_one_shot_decision_used = False
         self.validation_extra_authority_rejected = False
         self.current_procedure_id = ""
+        self.entry_rework_reason = None
+        self.preparation_reworks = 0
+        self.low_delta_composed = False
+        self.low_review_ordinal = None
+        self.plan_artifact_verified_nodes = set()
         self.scenario = "standard"
 
     def task_assessment_ordinal(self) -> int:
+        if self.scenario in LOW_BLOCKER_ROUTE_CASES:
+            return (
+                4
+                if LOW_BLOCKER_ROUTE_CASES[self.scenario][2] in {"stop", "one-shot"}
+                else 1
+            )
         if (
             self.scenario in TASK_RESUME_SCENARIOS
             and self.scenario not in TASK_COMPLETED_CHANGE_SCENARIOS
@@ -1675,14 +1743,72 @@ class ManagedRuntime:
         argv = list(templates[0]["argv"])[1:]
         if "--json" not in argv:
             argv.insert(0, "--json")
+        reason = f"qualification selected {option}"
+        node = observation["guidance"]["node"]["graph_node_id"]
+        if (
+            node
+            in {
+                "decide-implementation-owner",
+                "decide-verification-owner",
+                "decide-documentation-owner",
+            }
+            and option == "required"
+        ):
+            basis = self.read_complete_evidence(
+                observation, "record-task-rework-basis", "rework-basis-summary"
+            )
+            reason = json.dumps(
+                {
+                    "basis": basis,
+                    "authority": "fixture-one-shot"
+                    if self.scenario.endswith("one-shot")
+                    else "fixture-current-envelope",
+                    "owner": node,
+                },
+                separators=(",", ":"),
+            )
+            self.entry_rework_reason = reason
+        elif (
+            self.scenario in LOW_BLOCKER_ROUTE_CASES
+            and node
+            in {"decide-goal-rework-authority", "decide-validation-rework-authority"}
+            and option == "remediation"
+        ):
+            basis = self.read_complete_evidence(
+                observation, "record-low-disposition", "low-disposition-summary"
+            )
+            target = self.read_complete_evidence(
+                observation, "record-low-disposition", "after-target"
+            )
+            reason = json.dumps(
+                {
+                    "basis": basis,
+                    "target": target,
+                    "authority": "fixture-current-envelope",
+                },
+                separators=(",", ":"),
+            )
+            self.entry_rework_reason = reason
         values = {
-            "<reason>": f"qualification selected {option}",
+            "<reason>": reason,
             "<idempotency-key>": self.next_key(f"decide-{option}"),
         }
         argv = [values.get(argument, argument) for argument in argv]
         return self.raw(argv, expected_exit=expected_exit)
 
     def rework_to(self, observation: dict[str, Any], target: str) -> None:
+        reason = json.dumps(
+            {
+                "manual_source_attempt": observation["status"]["current"]["attempt"][
+                    "attempt_id"
+                ],
+                "target": target,
+                "authority": "fixture-manual-rework",
+            },
+            separators=(",", ":"),
+        )
+        if target == "prepare-implementation":
+            self.entry_rework_reason = reason
         templates = [
             template
             for template in observation.get("mutation_templates", [])
@@ -1699,7 +1825,7 @@ class ManagedRuntime:
                     "--to",
                     target,
                     "--reason",
-                    f"qualification rework to {target}",
+                    reason,
                     "--if-workspace-uuid",
                     self.workspace_uuid(observation),
                     "--if-session-id",
@@ -1722,7 +1848,7 @@ class ManagedRuntime:
         if "--json" not in argv:
             argv.insert(0, "--json")
         values = {
-            "<reason>": f"qualification rework to {target}",
+            "<reason>": reason,
             "<idempotency-key>": self.next_key(f"rework-{target}"),
         }
         argv = [values.get(argument, argument) for argument in argv]
@@ -1812,6 +1938,7 @@ class ManagedRuntime:
             in {
                 *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
                 "validation-low-blocker-wait",
+                "validation-low-blocker-remediation",
             }
             else []
         )
@@ -1828,6 +1955,30 @@ class ManagedRuntime:
         validation_waiver_followup = (
             self.scenario in VALIDATION_WAIVER_FOLLOWUP_SCENARIOS
         )
+        blocker_case = LOW_BLOCKER_ROUTE_CASES.get(self.scenario)
+        if blocker_case and item_type == "integer":
+            if node == "review":
+                return {
+                    "type": "integer",
+                    "value": (
+                        self.task_assessment_ordinal()
+                        if item_id == "assessment-ordinal"
+                        else 1
+                        if item_id
+                        in {"unresolved-valid-findings", "effective-low-findings"}
+                        else 0
+                    ),
+                }
+            if node == "record-low-disposition" and item_id in {
+                "pending-low-dispositions",
+                "current-blocking-findings",
+            }:
+                return {
+                    "type": "integer",
+                    "value": int(item_id == "current-blocking-findings"),
+                }
+        if blocker_case and item_type == "choice" and item_id == "backend-check-result":
+            return {"type": "choice", "value": "pass"}
         if item_type == "text":
             maximum = constraints.get("max_length", 256)
             if route_qualification and item_id == "assessment-provenance":
@@ -1924,6 +2075,12 @@ class ManagedRuntime:
                 )
             elif item_id in {"audit-basis-target", "before-target", "after-target"}:
                 value = self.fixture_target
+                if (
+                    self.scenario == "standard"
+                    and self.current_procedure_id == "aquarium-task-v2"
+                    and item_id == "after-target"
+                ):
+                    value += "-permitted-low-delta"
             elif self.scenario == "goal-hardening-defer" and item_id in {
                 "hardening-deferral-evidence-sha256",
                 "hardening-deferral-native-target-sha256",
@@ -1956,7 +2113,9 @@ class ManagedRuntime:
                 and item_id == "prior-assessment-ordinal"
             ):
                 value = (
-                    2 + self.node_visits.get("review", 0)
+                    self.task_assessment_ordinal() - 1
+                    if self.scenario in LOW_BLOCKER_ROUTE_CASES
+                    else 2 + self.node_visits.get("review", 0)
                     if self.scenario in TASK_CONFIRMATION_SCENARIOS
                     else 1
                     if self.scenario in TASK_COMPLETED_CHANGE_SCENARIOS
@@ -2172,6 +2331,7 @@ class ManagedRuntime:
                 in {
                     *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
                     "validation-low-blocker-wait",
+                    "validation-low-blocker-remediation",
                 }
                 and node == "final-review"
                 and item_id
@@ -2186,6 +2346,7 @@ class ManagedRuntime:
                 in {
                     *VALIDATION_LOW_SETTLEMENT_SCENARIOS,
                     "validation-low-blocker-wait",
+                    "validation-low-blocker-remediation",
                 }
                 and node == "final-review"
                 and item_id == "pending-applicable-low-dispositions"
@@ -2274,6 +2435,7 @@ class ManagedRuntime:
                 if self.scenario in {
                     "low-blocker-wait",
                     "validation-low-blocker-wait",
+                    "validation-low-blocker-remediation",
                 }:
                     if item_id == "pending-low-dispositions":
                         value = 0
@@ -2310,6 +2472,8 @@ class ManagedRuntime:
                     }
                 ):
                     value = 1
+            if node == "remediate" and item_id == "completed-review-assessments":
+                value = self.completed_assessments.get(self.current_procedure_id, 0)
             return {"type": "integer", "value": value}
         if item_type == "choice":
             choices = constraints.get("choices", [])
@@ -2335,6 +2499,16 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
+                "pass-kind": (
+                    "remediation"
+                    if self.node_visits.get("prepare-validation-pass", 0) > 1
+                    else "initial-audit"
+                ),
+                "remediation-authority": (
+                    "one-shot"
+                    if self.validation_one_shot_decision_used
+                    else "current-envelope"
+                ),
                 "review-route": (
                     "mulgae"
                     if goal_recovery and node == "complete-work"
@@ -2728,12 +2902,80 @@ class ManagedRuntime:
             }
         raise RuntimeQualificationError(f"unsupported required item type: {item_type}")
 
+    def qualify_plan_artifact(self, observation: dict[str, Any], node: str) -> None:
+        if node not in {"record-plan", "prepare-implementation", "implement"}:
+            return
+        assert self.sandbox is not None
+        path = self.sandbox / "approved-plan.md"
+        contents = b"# Approved fixture plan\n\nImplement the isolated task.\n"
+        expected = {
+            "location": "approved-plan.md",
+            "location_type": "path",
+            "media_type": "text/markdown",
+            "sha256_digest": "sha256:" + hashlib.sha256(contents).hexdigest(),
+            "size_bytes": len(contents),
+        }
+        if node == "record-plan":
+            artifact = next(
+                item
+                for item in observation["active_items"]
+                if item["item_id"] == "plan-handoff-artifact"
+            )
+            templates = [
+                template
+                for template in observation["mutation_templates"]
+                if template["command"] == "item.attach"
+                and "plan-handoff-artifact" in template["argv"]
+            ]
+            if artifact["required_now"] or len(templates) != 1:
+                raise RuntimeQualificationError(
+                    "optional plan artifact was not attachable while record-plan was current"
+                )
+            path.write_bytes(contents)
+            argv = templates[0]["argv"][1:]
+            argv = [
+                {
+                    "<path>": "approved-plan.md",
+                    "<idempotency-key>": self.next_key("attach-plan"),
+                }.get(arg, arg)
+                for arg in argv
+            ]
+            self.raw(["--json", *argv, "--media-type", "text/markdown"])
+            actual = next(
+                item["value"]
+                for item in self.observe()["active_items"]
+                if item["item_id"] == "plan-handoff-artifact"
+            )
+        else:
+            actual = self.read_complete_evidence(
+                observation, "record-plan", "plan-handoff-artifact"
+            )
+        if (
+            actual != expected
+            or hashlib.sha256(path.read_bytes()).hexdigest()
+            != expected["sha256_digest"].removeprefix("sha256:")
+            or path.stat().st_size != expected["size_bytes"]
+        ):
+            raise RuntimeQualificationError(
+                "plan resume metadata did not bind exact file bytes and size"
+            )
+        self.plan_artifact_verified_nodes.add(node)
+
     def fill_action(self, observation: dict[str, Any], procedure_id: str) -> None:
         node = observation["guidance"]["node"]["graph_node_id"]
         if (
-            self.scenario in {"low-blocker-wait", "validation-low-blocker-wait"}
-            and node == "await-user-direction"
+            self.scenario == "standard"
+            and procedure_id == "aquarium-task-v2"
+            and node == "record-low-disposition"
         ):
+            self.low_review_ordinal = self.task_assessment_ordinal()
+        if self.scenario == "standard" and procedure_id == "aquarium-task-v2":
+            self.qualify_plan_artifact(observation, node)
+            observation = self.observe()
+        if self.scenario in LOW_BLOCKER_SCENARIOS and node in {
+            "await-user-direction",
+            "record-task-rework-basis",
+        }:
             self.low_blocker_readback_verified = False
             expected = low_blocker_fixture(self.scenario, self.fixture_target)
             source_basis = self.read_complete_evidence(
@@ -2927,6 +3169,110 @@ class ManagedRuntime:
                 )
             ):
                 records["waiver-summary"] = None
+            if node == "record-task-rework-basis":
+                if "rework-basis-summary" in records:
+                    source_node = (
+                        "record-low-disposition"
+                        if self.scenario in LOW_BLOCKER_ROUTE_CASES
+                        else "review"
+                    )
+                    source_item = (
+                        "low-disposition-summary"
+                        if self.scenario in LOW_BLOCKER_ROUTE_CASES
+                        else "review-summary"
+                    )
+                    selected = next(
+                        source
+                        for source in current["guidance"]["readback"]
+                        if source["source_graph_node_id"] == source_node
+                        and any(
+                            item["item_id"] == source_item for item in source["items"]
+                        )
+                    )
+                    item = next(
+                        item
+                        for item in selected["items"]
+                        if item["item_id"] == source_item
+                    )
+                    basis = {
+                        "source_attempt": selected["source_attempt_id"],
+                        "source_node": source_node,
+                        "source_item": source_item,
+                        "source_revision": item["revision"],
+                        "source_digest": item["value_digest"],
+                        "basis_attempt": current["status"]["current"]["attempt"][
+                            "attempt_id"
+                        ],
+                        "target": self.fixture_target,
+                        "trigger": "fixture-reviewed-gap",
+                    }
+                    if basis["source_attempt"] == basis["basis_attempt"]:
+                        raise RuntimeQualificationError(
+                            "rework fixture replaced its source attempt with its own record attempt"
+                        )
+                    if self.scenario in LOW_BLOCKER_ROUTE_CASES:
+                        basis["trigger"] = self.read_complete_evidence(
+                            current, "record-low-disposition", "low-disposition-summary"
+                        )
+                    records["rework-basis-summary"]["value"] = json.dumps(
+                        basis, separators=(",", ":")
+                    )
+                for item_id in (
+                    "implementation-rework-obligations",
+                    "verification-rework-obligations",
+                    "documentation-rework-obligations",
+                ):
+                    if item_id in records:
+                        reviewed = self.read_complete_evidence(
+                            current, "review", item_id
+                        )
+                        if self.scenario in LOW_BLOCKER_ROUTE_CASES:
+                            if reviewed != 0:
+                                raise RuntimeQualificationError(
+                                    "Low blocker fixture overwrote historical review obligations"
+                                )
+                            phase = LOW_BLOCKER_ROUTE_CASES[self.scenario][1]
+                            records[item_id]["value"] = int(
+                                item_id == f"{phase}-rework-obligations"
+                            )
+                        else:
+                            records[item_id]["value"] = reviewed
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "prepare-implementation"
+                and "implementation-entry-summary" in records
+                and self.entry_rework_reason is not None
+            ):
+                history = json_payload(self.raw(["--json", "status", "--verbose"]))[
+                    "result"
+                ]
+                attempt = current["status"]["current"]["attempt"]["attempt_id"]
+                matching = [
+                    entry
+                    for entry in history["rework_history"]["entries"]
+                    if entry["target_attempt_id"] == attempt
+                ]
+                if (
+                    len(matching) != 1
+                    or matching[0]["reason"] != self.entry_rework_reason
+                ):
+                    raise RuntimeQualificationError(
+                        "implementation preparation did not preserve this exact native rework cause"
+                    )
+                records["implementation-entry-summary"]["value"] = matching[0]["reason"]
+                self.preparation_reworks += 1
+            if (
+                procedure_id == "aquarium-task-v2"
+                and node == "implement"
+                and self.entry_rework_reason is not None
+            ):
+                entry = self.read_complete_evidence(
+                    current, "prepare-implementation", "implementation-entry-summary"
+                )
+                if entry != self.entry_rework_reason:
+                    raise RuntimeQualificationError(
+                        "implementation reused a different correction's entry cause"
+                    )
             if not records:
                 if (
                     self.scenario in VALIDATION_LOW_SETTLEMENT_SCENARIOS
@@ -3198,8 +3544,15 @@ class ManagedRuntime:
                 f"route scenario {scenario!r} does not target {procedure_id!r}"
             )
         self.node_visits = {}
+        if scenario in LOW_BLOCKER_ROUTE_CASES:
+            self.task_verification_reworked = True
+            self.task_review_reworked = True
+            self.task_medium_reworked = True
+            self.task_evidence_reworked = True
         if scenario == "goal-hardening-defer":
             self.completed_assessments[procedure_id] = 1
+        if scenario in {"low-blocker-wait", "validation-low-blocker-wait"}:
+            self.completed_assessments[procedure_id] = 3
         if scenario == "medium-wait":
             self.completed_assessments[procedure_id] = 2
         if scenario in VALIDATION_CONFIRMATION_SCENARIOS:
@@ -3258,6 +3611,32 @@ class ManagedRuntime:
             node = observation["guidance"]["node"]["graph_node_id"]
             node_type = observation["guidance"]["node"]["node_type"]
             self.node_visits[node] = self.node_visits.get(node, 0) + 1
+            if (
+                procedure_id == "aquarium-task-v2"
+                and scenario == "standard"
+                and node == "confirm-goal-assessment-core"
+                and self.low_review_ordinal is not None
+            ):
+                before = self.read_complete_evidence(
+                    observation, "record-low-disposition", "before-target"
+                )
+                after = self.read_complete_evidence(
+                    observation, "record-low-disposition", "after-target"
+                )
+                verification = self.read_complete_evidence(
+                    observation,
+                    "record-low-disposition",
+                    "low-disposition-verification",
+                )
+                if (
+                    before == after
+                    or verification["outcome"] != "pass"
+                    or self.task_assessment_ordinal() != self.low_review_ordinal
+                ):
+                    raise RuntimeQualificationError(
+                        "Task core gate lost the same-ordinal verified Low delta"
+                    )
+                self.low_delta_composed = True
             task_resume = TASK_RESUME_SCENARIOS.get(scenario)
             if (
                 task_resume
@@ -3266,11 +3645,11 @@ class ManagedRuntime:
                 and self.node_visits[node] == 2
             ):
                 route = task_resume["route"]
-                expected_entry = f"enter-{route}-review-route"
+                expected_entry = TASK_REVIEW_ENTRY_NODES[route]
                 wrong_entries = {
-                    f"enter-{provider}-review-route"
+                    TASK_REVIEW_ENTRY_NODES[provider]
                     for provider in {"mulgae", "orca", "independent-review"} - {route}
-                    if self.node_visits.get(f"enter-{provider}-review-route", 0)
+                    if self.node_visits.get(TASK_REVIEW_ENTRY_NODES[provider], 0)
                 }
                 if self.node_visits.get(expected_entry) != 2 or wrong_entries:
                     raise RuntimeQualificationError(
@@ -3343,9 +3722,92 @@ class ManagedRuntime:
                         "validation one-shot authorization did not begin at a fresh active decision"
                     )
                 decision = self.decide(observation, "fix-and-review")
-                self.decision_destination(decision, "final-review")
+                self.decision_destination(decision, "prepare-validation-pass")
                 self.validation_one_shot_decision_used = True
                 continue
+            if scenario in LOW_BLOCKER_ROUTE_CASES and node == "choose-user-direction":
+                kind, phase, direction = LOW_BLOCKER_ROUTE_CASES[scenario]
+                if not self.low_blocker_readback_verified:
+                    raise RuntimeQualificationError(
+                        "Task Low blocker direction lost current evidence"
+                    )
+                decision = self.decide(
+                    observation, "stop" if direction == "stop" else "fix-and-review"
+                )
+                self.decision_destination(
+                    decision,
+                    "confirm-stopped-goal-assessment-core"
+                    if direction == "stop"
+                    else "decide-implementation-owner",
+                )
+                if direction == "stop":
+                    self.mark_case_variant("C-08", scenario)
+                    return {
+                        "scenario": scenario,
+                        "procedure_id": procedure_id,
+                        "node": node,
+                        "stop_selected": True,
+                    }
+                continue
+            if scenario in LOW_BLOCKER_ROUTE_CASES:
+                kind, phase, direction = LOW_BLOCKER_ROUTE_CASES[scenario]
+                target = {
+                    "implementation": "prepare-implementation",
+                    "verification": "verify",
+                    "documentation": "document",
+                }.get(
+                    phase,
+                    "complete-work" if kind == "goal" else "prepare-validation-pass",
+                )
+                authority_node = f"decide-{kind}-rework-authority"
+                if node == target and self.node_visits.get(authority_node, 0):
+                    if kind == "task" and not self.low_blocker_readback_verified:
+                        raise RuntimeQualificationError(
+                            "Task Low blocker correction lost its basis"
+                        )
+                    history = json_payload(self.raw(["--json", "status", "--verbose"]))[
+                        "result"
+                    ]
+                    entries = history["rework_history"]["entries"]
+                    matching = [
+                        entry
+                        for entry in entries
+                        if entry["target_attempt_id"]
+                        == status["current"]["attempt"]["attempt_id"]
+                    ]
+                    if len(matching) != 1 or matching[0]["to_graph_node_id"] != target:
+                        raise RuntimeQualificationError(
+                            "correction did not enter its exact native rework target"
+                        )
+                    if matching[0]["reason"] != self.entry_rework_reason:
+                        raise RuntimeQualificationError(
+                            "current Low blocker cause did not survive native rework"
+                        )
+                    if target == "prepare-implementation":
+                        self.fill_action(observation, procedure_id)
+                        self.invoke_template(self.observe(), "session.complete")
+                        resumed = self.observe()
+                        if resumed["guidance"]["node"]["graph_node_id"] != "implement":
+                            raise RuntimeQualificationError(
+                                "prepared correction did not enter implementation"
+                            )
+                        cause = self.read_complete_evidence(
+                            resumed,
+                            "prepare-implementation",
+                            "implementation-entry-summary",
+                        )
+                        if cause != self.entry_rework_reason:
+                            raise RuntimeQualificationError(
+                                "implementation lost the newly prepared correction cause"
+                            )
+                    self.mark_case_variant("C-08", scenario)
+                    return {
+                        "scenario": scenario,
+                        "procedure_id": procedure_id,
+                        "node": node,
+                        "remaining_authority_used": True,
+                        "rework_target_verified": True,
+                    }
             if scenario != "standard" and node == "choose-user-direction":
                 if (
                     node_type != "decision"
@@ -3387,8 +3849,8 @@ class ManagedRuntime:
                         or self.node_visits.get("choose-user-direction") != 2
                         or self.node_visits.get("decide-validation-rework-authority")
                         != 3
-                        or self.node_visits.get("remediate", 0) != 1
-                        or self.node_visits.get("re-audit", 0) != 1
+                        or self.node_visits.get("remediate", 0) != 2
+                        or self.node_visits.get("re-audit", 0) != 2
                         or self.node_visits.get("final-review") != 3
                         or self.completed_assessments.get(procedure_id) != 5
                     ):
@@ -3513,7 +3975,7 @@ class ManagedRuntime:
                 if scenario == "task-resume-active-mulgae":
                     observation = self.reject_guarded_decision(observation, "orca")
                 decision = self.decide(observation, route)
-                self.decision_destination(decision, f"enter-{route}-review-route")
+                self.decision_destination(decision, TASK_REVIEW_ENTRY_NODES[route])
                 continue
 
             if (
@@ -3551,7 +4013,7 @@ class ManagedRuntime:
                         else "authorize-completed-review-route"
                     )
                     != 1
-                    or self.node_visits.get(f"enter-{target_route}-review-route") != 1
+                    or self.node_visits.get(TASK_REVIEW_ENTRY_NODES[target_route]) != 1
                     or self.node_visits.get("review") != 1
                     or prior_ordinal != 1
                     or current_ordinal != 2
@@ -3601,7 +4063,7 @@ class ManagedRuntime:
                 and node == "assess-goal"
                 and not self.task_evidence_reworked
             ):
-                self.rework_to(observation, "implement")
+                self.rework_to(observation, "prepare-implementation")
                 self.task_evidence_reworked = True
                 continue
 
@@ -4172,8 +4634,33 @@ class ManagedRuntime:
             ):
                 observation = self.reject_guarded_decision(observation, "completed")
                 special_option = "blocker-found"
+            elif node == "decide-validation-pass":
+                special_option = self.read_complete_evidence(
+                    observation, "prepare-validation-pass", "pass-kind"
+                )
+            elif node == "decide-remediation-audit-authority":
+                special_option = self.read_complete_evidence(
+                    observation, "remediate", "remediation-authority"
+                )
+            elif node == "decide-remediation-audit-scope":
+                count = self.read_complete_evidence(
+                    observation, "remediate", "completed-review-assessments"
+                )
+                special_option = "full" if count < 3 else "frozen"
+                observation = self.reject_guarded_decision(
+                    observation, "frozen" if count < 3 else "full"
+                )
             elif scenario == "medium-wait" and node == "decide-evidence":
                 special_option = "blocking"
+            elif scenario in {
+                "low-blocker-wait",
+                "validation-low-blocker-wait",
+            } and node in {
+                "decide-goal-rework-authority",
+                "decide-validation-rework-authority",
+            }:
+                observation = self.reject_guarded_decision(observation, "remediation")
+                special_option = "user-direction"
             elif node == "decide-goal-rework-authority" and scenario in {
                 "medium-wait",
                 "goal-closeout-unmet-wait",
@@ -4661,6 +5148,39 @@ class ManagedRuntime:
                         "waived" if qualified_route == "waived" else "completed"
                     )
                 special_option = route_decisions.get(node, special_option)
+            if scenario in LOW_BLOCKER_ROUTE_CASES:
+                kind, phase, direction = LOW_BLOCKER_ROUTE_CASES[scenario]
+                if node == "decide-low-completion":
+                    observation = self.reject_guarded_decision(observation, "completed")
+                    special_option = "blocker-found"
+                elif node == f"decide-{kind}-rework-authority":
+                    special_option = (
+                        "user-direction"
+                        if direction in {"stop", "one-shot"}
+                        else "remediation"
+                    )
+                    observation = self.reject_guarded_decision(
+                        observation,
+                        "remediation"
+                        if special_option == "user-direction"
+                        else "user-direction",
+                    )
+                elif node.startswith("decide-") and node.endswith("-owner"):
+                    special_option = (
+                        "required" if node == f"decide-{phase}-owner" else "clear"
+                    )
+                elif node == "confirm-assessment-ordinal":
+                    special_option = task_review_kind(self.task_assessment_ordinal())
+                elif node == "decide-gaps":
+                    special_option = "low-only"
+                elif node == "decide-validation-pass":
+                    special_option = "initial-audit"
+                elif node == "decide-review":
+                    special_option = "low-disposition"
+                elif node == "decide-evidence":
+                    special_option = "low-only"
+                elif node == "decide-final-review":
+                    special_option = "low-disposition"
             option = (
                 special_option
                 or {
@@ -4929,6 +5449,10 @@ def execute_runtime_job(
                 "manual_rework": runtime.task_evidence_reworked,
                 "stale_page_token": runtime.task_stale_token,
                 "immutable_snapshot": runtime.task_snapshot_immutable,
+                "prepared_rework_cause": runtime.preparation_reworks >= 2,
+                "same_ordinal_low_delta": runtime.low_delta_composed,
+                "plan_artifact_resume": runtime.plan_artifact_verified_nodes
+                == {"record-plan", "prepare-implementation", "implement"},
                 "task_low_settlement": "aquarium-task-v2"
                 in runtime.low_settlement_procedures,
                 "goal_low_settlement": "aquarium-goal-v2"

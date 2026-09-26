@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "22"
+version: "21"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -13,7 +13,6 @@ node_definitions:
     instructions:
       - Use task-handler after task-plan approval; record the exact task, plan, checks, and granted effects.
       - Do not implement, stage, review, commit, or publish while recording the plan.
-      - For plan-handoff, attach the optional plan-handoff-artifact while record-plan is current, verify its recorded digest and byte size, and only then complete this action.
     items:
       - id: plan-summary
         type: text
@@ -58,8 +57,6 @@ node_definitions:
     instructions:
       - Reconstruct the approved plan and exact first-entry or rework cause before delegating implementation.
       - Do not manufacture fresh authority or evidence from an older attempt.
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason. On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
-      - When a plan handoff artifact is present, read its selected metadata and verify the complete local file digest and byte size before preparing or resuming implementation. A missing or changed file stops work; an ordinary session without an artifact remains valid.
     items:
       - id: implementation-entry-summary
         type: text
@@ -1541,22 +1538,19 @@ node_definitions:
             equals: confirmation-only
     reason:
       required: true
-      prompt: Explain remaining authority and the exact current rework basis, including a blocker established during Low settlement and its current target when applicable.
+      prompt: Explain the current bounded task rework authority.
   implementation-owner-decision:
     type: decision
     title: Route implementation ownership
     objective: Give implementation and refinement the first deterministic opportunity to own rework.
     prompt: Does implementation or refinement own any current rework obligation?
-    evidence_guidance:
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason
-      - On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
     options:
       - id: required
         label: Implementation rework required
         criteria: Implementation or refinement owns at least one obligation after rework authority was admitted.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: implementation-rework-obligations
             at_least: 1
       - id: clear
@@ -1564,27 +1558,24 @@ node_definitions:
         criteria: Implementation or refinement owns no obligation after rework authority was admitted.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: implementation-rework-obligations
             equals: 0
     reason:
       required: true
-      prompt: Carry the exact current rework basis, phase obligations, and admitted authority into the native rework reason.
+      prompt: Explain the phase ownership decision.
   verification-owner-decision:
     type: decision
     title: Route verification ownership
     objective: Route verification work only after implementation ownership is clear.
     prompt: Does verification own any current rework obligation?
-    evidence_guidance:
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason
-      - On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
     options:
       - id: required
         label: Verification rework required
         criteria: Verification owns at least one obligation after rework authority was admitted.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: verification-rework-obligations
             at_least: 1
       - id: clear
@@ -1592,27 +1583,24 @@ node_definitions:
         criteria: Verification owns no obligation after rework authority was admitted.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: verification-rework-obligations
             equals: 0
     reason:
       required: true
-      prompt: Carry the exact current rework basis, phase obligations, and admitted authority into the native rework reason.
+      prompt: Explain the phase ownership decision.
   documentation-owner-decision:
     type: decision
     title: Route documentation ownership
     objective: Route documentation work only after implementation and verification ownership are clear.
     prompt: Does documentation own any current rework obligation?
-    evidence_guidance:
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason
-      - On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
     options:
       - id: required
         label: Documentation rework required
         criteria: Documentation owns at least one obligation after rework authority was admitted.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: documentation-rework-obligations
             at_least: 1
       - id: clear
@@ -1620,12 +1608,12 @@ node_definitions:
         criteria: Documentation owns no obligation, so the admitted gap evidence is inconsistent and must be reviewed again.
         guards:
           - evidence:
-              node: record-task-rework-basis
+              node: review
               item: documentation-rework-obligations
             equals: 0
     reason:
       required: true
-      prompt: Carry the exact current rework basis, phase obligations, and admitted authority into the native rework reason.
+      prompt: Explain the phase ownership decision.
   review-route-direction-record:
     type: action
     title: Await review route direction
@@ -1938,7 +1926,6 @@ node_definitions:
     evidence_guidance:
       - Read the approved plan, latest implementation revision, passing verification, refinement, and documentation evidence.
       - Preserve their current relationship in the decision reason; this gate does not itself assess the session goal.
-      - Compose the reviewed basis with the verified Low delta, after-target, and carried criteria. The review predates changed bytes; do not rerun phases or consume another ordinal solely for this delta.
     options:
       - id: ready
         label: Core task evidence ready
@@ -2134,36 +2121,6 @@ node_definitions:
         max_item_length: 1200
         max_total_length: 1000000
         unique: true
-  task-rework-basis-record:
-    type: action
-    title: Record current task rework basis
-    intent: Preserve the currently established correction set and phase ownership before evaluating remaining authority.
-    instructions:
-      - Read the admitted review failure or completion gap, or the new blocker and exact after-target from Low settlement. Record the current obligations without overwriting the source review, changing its ordinal, or inferring a new blocker from its old counts.
-      - This record grants no correction authority. Retain finding identities and exact source attempt and record references for the later authority and owner decisions.
-    items:
-      - id: rework-basis-summary
-        type: text
-        prompt: Record the current exact target, source attempt and record identities, finding or failed-check IDs, and the requirement and phase obligations for this correction set.
-        required: true
-        min_length: 1
-        max_length: 3000
-        multiline: true
-      - id: implementation-rework-obligations
-        type: integer
-        prompt: Record the number of current implementation rework obligations.
-        required: true
-        minimum: 0
-      - id: verification-rework-obligations
-        type: integer
-        prompt: Record the number of current verification rework obligations.
-        required: true
-        minimum: 0
-      - id: documentation-rework-obligations
-        type: integer
-        prompt: Record the number of current documentation rework obligations.
-        required: true
-        minimum: 0
 graph:
   entry: record-plan
   nodes:
@@ -2177,10 +2134,6 @@ graph:
           required: true
           items:
             - plan-summary
-        - node: record-plan
-          required: false
-          items:
-            - plan-handoff-artifact
       next: implement
     - id: implement
       use: implementation-record
@@ -2193,10 +2146,6 @@ graph:
           required: true
           items:
             - implementation-entry-summary
-        - node: record-plan
-          required: false
-          items:
-            - plan-handoff-artifact
       next: refine
     - id: refine
       use: refinement-record
@@ -2833,7 +2782,7 @@ graph:
           to: confirm-review-completion
           effect: advance
         failed:
-          to: record-task-rework-basis
+          to: decide-task-rework-authority
           effect: advance
     - id: confirm-review-findings
       use: review-confirmation-decision
@@ -2877,7 +2826,7 @@ graph:
           to: decide-review
           effect: advance
         unmet:
-          to: record-task-rework-basis
+          to: decide-task-rework-authority
           effect: advance
         unverified:
           to: prepare-review
@@ -2902,7 +2851,7 @@ graph:
           to: confirm-goal-assessment-core
           effect: advance
         blocking:
-          to: record-task-rework-basis
+          to: decide-task-rework-authority
           effect: advance
         low-disposition:
           to: record-low-disposition
@@ -2910,32 +2859,6 @@ graph:
         inconsistent:
           to: prepare-review
           effect: rework
-    - id: record-task-rework-basis
-      use: task-rework-basis-record
-      evidence_from:
-        - node: review
-          required: true
-          items:
-            - review-mode
-            - assessment-ordinal
-            - review-evidence-reference
-            - review-summary
-            - backend-check-result
-            - completion-assessment-summary
-            - implementation-rework-obligations
-            - verification-rework-obligations
-            - documentation-rework-obligations
-        - node: record-low-disposition
-          required: false
-          items:
-            - source-review-basis
-            - low-disposition-summary
-            - before-target
-            - after-target
-            - coverage-relationship
-            - current-blocking-findings
-            - low-disposition-verification
-      next: decide-task-rework-authority
     - id: decide-task-rework-authority
       use: task-rework-authority-decision
       evidence_from:
@@ -2943,23 +2866,6 @@ graph:
           required: true
           items:
             - review-mode
-        - node: record-low-disposition
-          required: false
-          items:
-            - source-review-basis
-            - low-disposition-summary
-            - before-target
-            - after-target
-            - coverage-relationship
-            - current-blocking-findings
-            - low-disposition-verification
-        - node: record-task-rework-basis
-          required: true
-          items:
-            - rework-basis-summary
-            - implementation-rework-obligations
-            - verification-rework-obligations
-            - documentation-rework-obligations
       routes:
         remediation:
           to: decide-implementation-owner
@@ -3068,23 +2974,6 @@ graph:
             - verification-rework-obligations
             - documentation-rework-obligations
             - assessment-provenance-kind
-        - node: record-task-rework-basis
-          required: true
-          items:
-            - rework-basis-summary
-            - implementation-rework-obligations
-            - verification-rework-obligations
-            - documentation-rework-obligations
-        - node: record-low-disposition
-          required: false
-          items:
-            - source-review-basis
-            - low-disposition-summary
-            - before-target
-            - after-target
-            - coverage-relationship
-            - current-blocking-findings
-            - low-disposition-verification
       next: choose-user-direction
     - id: choose-user-direction
       use: user-direction-decision
@@ -3104,16 +2993,13 @@ graph:
     - id: decide-implementation-owner
       use: implementation-owner-decision
       evidence_from:
-        - node: record-task-rework-basis
+        - node: review
           required: true
           items:
-            - rework-basis-summary
             - implementation-rework-obligations
-            - verification-rework-obligations
-            - documentation-rework-obligations
       routes:
         required:
-          to: prepare-implementation
+          to: implement
           effect: rework
         clear:
           to: decide-verification-owner
@@ -3121,13 +3007,10 @@ graph:
     - id: decide-verification-owner
       use: verification-owner-decision
       evidence_from:
-        - node: record-task-rework-basis
+        - node: review
           required: true
           items:
-            - rework-basis-summary
-            - implementation-rework-obligations
             - verification-rework-obligations
-            - documentation-rework-obligations
       routes:
         required:
           to: verify
@@ -3138,12 +3021,9 @@ graph:
     - id: decide-documentation-owner
       use: documentation-owner-decision
       evidence_from:
-        - node: record-task-rework-basis
+        - node: review
           required: true
           items:
-            - rework-basis-summary
-            - implementation-rework-obligations
-            - verification-rework-obligations
             - documentation-rework-obligations
       routes:
         required:
@@ -3207,8 +3087,8 @@ graph:
           to: record-low-disposition
           effect: rework
         blocker-found:
-          to: record-task-rework-basis
-          effect: advance
+          to: implement
+          effect: rework
     - id: confirm-goal-assessment-core
       use: goal-assessment-core-decision
       evidence_from:
@@ -3233,20 +3113,6 @@ graph:
           required: true
           items:
             - documentation-summary
-        - node: record-low-disposition
-          required: false
-          items:
-            - source-review-basis
-            - low-disposition-summary
-            - before-target
-            - after-target
-            - coverage-relationship
-            - current-blocking-findings
-            - low-disposition-verification
-            - completion-assessment-summary
-            - completion-unmet-criteria
-            - completion-unverified-criteria
-            - pending-low-dispositions
       routes:
         ready:
           to: assess-goal
@@ -3511,7 +3377,7 @@ graph:
 manual_rework:
   allowed_targets:
     - prepare-review
-    - prepare-implementation
+    - implement
     - verify
     - refine
     - document

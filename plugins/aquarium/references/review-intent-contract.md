@@ -86,7 +86,7 @@ Every embedded completion checkpoint uses one of these assessment kinds:
 
 The exact candidate remains available as reviewer context in both kinds. Context access does not authorize a repository-wide audit. A `work-unit` assessment reports defects in the named objective and candidate, not unrelated pre-existing issues. A `remediation-confirmation` may add a new blocker only when the correction caused it or made it directly reachable. Route an unrelated observation to the repository's future-work owner without widening the current review.
 
-Carry unaffected criterion assessments from the latest admitted `work-unit` assessment only when the correction and current evidence prove that they remain valid. Reassess every invalidated criterion. If the changed surface, requirement set, or evidence impact cannot be bounded, stop and obtain authority for a new goal revision or another `work-unit` assessment instead of treating the pass as remediation confirmation.
+Carry unaffected criterion assessments from the latest admitted `work-unit` assessment only when the correction and current evidence prove that they remain valid. Reassess every invalidated criterion. If the changed surface, requirement set, or evidence impact cannot be bounded, stop and obtain authority for a new goal revision instead of treating the pass as remediation confirmation.
 
 ## Assess change and completion
 

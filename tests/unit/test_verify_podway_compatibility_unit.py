@@ -249,6 +249,13 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
     jobs = runtime.runtime_jobs()
 
     expected_waits = {
+        ("aquarium-task-v2.yaml", "task-low-blocker-implementation"),
+        ("aquarium-task-v2.yaml", "task-low-blocker-verification"),
+        ("aquarium-task-v2.yaml", "task-low-blocker-documentation"),
+        ("aquarium-task-v2.yaml", "task-low-blocker-stop"),
+        ("aquarium-task-v2.yaml", "task-low-blocker-one-shot"),
+        ("aquarium-goal-v2.yaml", "goal-low-blocker-remediation"),
+        ("aquarium-validation-v2.yaml", "validation-low-blocker-remediation"),
         ("aquarium-goal-v2.yaml", "low-blocker-wait"),
         ("aquarium-validation-v2.yaml", "validation-low-blocker-wait"),
         ("aquarium-goal-v2.yaml", "medium-wait"),
@@ -336,7 +343,7 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
 
     assert set(waits) == expected_waits
     assert set(terminals) == expected_terminals
-    assert len(waits) == 16
+    assert len(waits) == 23
     assert len(terminals) == 50
     assert len({scenario for _procedure, scenario in waits}) == len(waits)
     assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
@@ -358,8 +365,8 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         for job in jobs
         if job["kind"] == "wait"
     ] == list(waits)
-    assert 1 + len(jobs) == 32  # one deliberate cleanup probe plus scheduled roots
-    assert 5 + len(waits) + len(terminals) == 71
+    assert 1 + len(jobs) == 39  # one deliberate cleanup probe plus scheduled roots
+    assert 5 + len(waits) + len(terminals) == 78
     assert (
         sum(
             scenario == runtime.VALIDATION_PROVIDER_LOW_SCENARIO
@@ -529,6 +536,11 @@ def test_lifecycle_job_renews_each_scenario_deadline(
         task_evidence_reworked = True
         task_stale_token = True
         task_snapshot_immutable = True
+        preparation_reworks = 2
+        low_delta_composed = True
+        plan_artifact_verified_nodes = frozenset(
+            {"record-plan", "prepare-implementation", "implement"}
+        )
 
         def __init__(self, *_args: object) -> None:
             self.low_settlement_procedures = {
@@ -855,7 +867,7 @@ def test_low_blocker_readback_requires_exact_scenario_content(
         assert managed.low_blocker_readback_verified is False
 
 
-def test_workspace_removal_replay_requires_success_with_v7_receipt() -> None:
+def test_workspace_removal_replay_requires_success_with_v8_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(
         removal_replay_process(), "/tmp/repository", None
@@ -863,7 +875,7 @@ def test_workspace_removal_replay_requires_success_with_v7_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v7"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v8"
     )
     assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.11"
 

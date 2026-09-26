@@ -147,7 +147,7 @@ Assessment budgets are maxima, not rounds to consume. Stop after a clean result 
 
 Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining Medium-or-higher finding or completion gap after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
 
-A material objective, requirement, or changed-surface expansion requires an explicitly approved new goal revision or work-unit assessment. Do not reset ordinals, silently broaden a remediation confirmation, or use unrelated observations to extend the current loop.
+A material objective, requirement, or changed-surface expansion requires an explicitly approved new goal revision. Do not reset ordinals, silently broaden a remediation confirmation, or use unrelated observations to extend the current loop.
 
 For Task checkpoints, `continue-current` requires the effective route to equal
 the immediately preceding `complete` or `waived` route. It retains that

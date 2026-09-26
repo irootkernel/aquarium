@@ -138,7 +138,7 @@ If Medium-or-higher work or an affected completion gap remains after ordinal
 four, the workflow stops for user direction. Each explicit `fix-and-review`
 choice authorizes one correction and one next-ordinal remediation confirmation.
 A broader objective, requirement set, or changed surface requires an approved
-new goal revision or work-unit assessment.
+new goal revision.
 
 Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
 MCP gap blocks only the Mulgae route. Orca readiness blocks only Orca. Missing
@@ -206,6 +206,20 @@ finding must still be corrected and verified. The corrected target then receives
 the next authorized delegated review or waiver assessment under the
 assessment-kind boundary above. The existing bounded rework policy still applies,
 including fresh user direction when its authority is exhausted.
+
+A blocker first discovered during Low settlement retains its current target and
+source finding identity and enters the applicable rework-authority gate. Task
+phase ownership comes from a fresh correction record; the original review
+counts remain historical evidence. Implementation re-entry records the native rework cause before
+work resumes. A completed Low delta composes with its reviewed basis and local
+checks without consuming another assessment.
+
+Validation corrects an admitted audit or review blocker before its next audit
+and provider assessment. The original envelope refreshes the complete Epic audit
+before work-unit assessments one through three. After the third assessment, or
+under a separate one-shot correction grant, it confirms only the frozen
+correction set and direct regression surface. Current audit evidence remains
+separate from stale attempts and provider findings.
 
 ## Recovery and compatibility
 

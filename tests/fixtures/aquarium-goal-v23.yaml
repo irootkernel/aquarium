@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "24"
+version: "23"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -13,7 +13,6 @@ node_definitions:
     instructions:
       - Use epic-handler for one goal-centered member, remediation, or closeout goal; do not invoke task phase skills.
       - Preserve the exact authorized scope and return current target and focused evidence without implicit commit, push, publication, or session replacement.
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason. On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
     items:
       - id: work-summary
         type: text
@@ -1492,9 +1491,6 @@ node_definitions:
     title: Evaluate goal rework authority
     objective: Keep the existence of rework separate from authority for another remediation and review pass.
     prompt: What authority applies to the established goal rework?
-    evidence_guidance:
-      - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason
-      - On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
     options:
       - id: remediation
         label: Use current remediation authority
@@ -1514,7 +1510,7 @@ node_definitions:
             not_equals: remediation-eligible
     reason:
       required: true
-      prompt: Explain remaining authority and the exact current rework basis, including a blocker established during Low settlement and its current target when applicable.
+      prompt: Explain the current bounded rework authority.
   low-handling-decision:
     type: decision
     title: Choose Low handling
@@ -2834,16 +2830,6 @@ graph:
           required: true
           items:
             - review-mode
-        - node: record-low-disposition
-          required: false
-          items:
-            - source-review-basis
-            - low-disposition-summary
-            - before-target
-            - after-target
-            - coverage-relationship
-            - current-blocking-findings
-            - low-disposition-verification
       routes:
         remediation:
           to: complete-work
@@ -2943,7 +2929,7 @@ graph:
           to: record-low-disposition
           effect: rework
         blocker-found:
-          to: decide-goal-rework-authority
+          to: await-user-direction
           effect: advance
     - id: record-hardening-handoff
       use: hardening-deferral-disposition
