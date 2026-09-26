@@ -14,7 +14,7 @@ The repository root `README.md` is the user-facing product entrypoint. It explai
 - `implementation-tips` contains non-normative guidance for changing, testing, or releasing the implementation.
 - `ops` owns environment setup, deployment, configuration, operation, diagnosis, recovery, and first-aid runbooks for real development or service environments.
 - `roadmap` alone owns adopted epic and task identity, ordering, dependencies, lifecycle vocabulary, and current status.
-- `todo` owns future epic-sized candidates and any temporary development dossiers that the repository or an Aquarium design workflow establishes for adopted epics.
+- `todo` owns future epic-sized candidates and any temporary development dossiers that the repository or an Aquarium design workflow establishes for adopted epics or standing-group tasks.
 - `deferred-feedback` owns small actionable findings intentionally postponed from current work.
 
 Promote an oversized deferred finding to one TODO candidate or an adopted roadmap work unit. Do not let TODO or deferred feedback become a second status authority. Keep generated documentation, runtime logs, provider reports, temporary plans, and ignored workflow evidence outside these canonical roles.

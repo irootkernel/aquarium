@@ -28,6 +28,8 @@ way. Reject any stale, failed, ambiguous, or additional change.
 
 Keep final evidence in the orchestration report and native runtime. Do not add a completion log or validation record to the roadmap, and never treat an ignored runtime path or run ID as durable documentation.
 
+Verify any repository-required task-linked dossier settlement is already part of the reviewed documentation candidate. In a standing group such as Aquarium's `EPIC-000`, close this Task's dossier after durable promotion and shared-consumer checks while preserving the parent group's active status. If the candidate omitted that work, return it for documentation and review under the current authority instead of adding an unreviewed closeout edit.
+
 ## Select the Terminal Status
 
 Before final approval, re-read the exact task entry and classify terminal states only from the roadmap vocabulary. Treat `Completed`, `Blocked`, and `Deferred` as terminal only when that roadmap defines them with completion meanings.
@@ -38,7 +40,7 @@ If the user keeps the task non-terminal or cancels, do not commit and return the
 
 ## Ask for Final Approval
 
-Present or identify the exact final task diff, selected status edit, and whether a commit is proposed. Use structured `request_user_input` when available and ask all three questions together:
+Present or identify the exact final task diff, selected status edit, record decision as an exact proposed edit or explicit `no record edit`, and whether a commit is proposed. Include any dossier disposition already settled in that diff. Use structured `request_user_input` when available and ask all three questions together:
 
 1. Tests: "Have you reviewed the current applicable test evidence, including who ran each check, and accepted it for this final implementation?" Offer `Evidence accepted`, `Not yet or failed`, and `Not applicable`.
 2. Documentation: "Have you reviewed and accepted the documentation and roadmap changes in this final diff?" Offer `Docs approved`, `Needs revision`, and `Not applicable`.
@@ -52,10 +54,10 @@ If any answer is negative, pending, ambiguous, or inconsistent with a required g
 
 Only after all three answers are affirmative, apply the exact approved status edit and run mandatory status-specific documentation synchronization or validation not covered by current evidence. The approved status-only edit does not invalidate approval; any other task-owned code, test, documentation, or roadmap change does, so show the updated final diff and ask again.
 
-For `Approve and close without commit`, do not stage or commit anything. Verify the task is terminal while the complete task-owned diff remains uncommitted. This path is unavailable when repository authority requires a commit for completion.
+For `Approve and close without commit`, do not stage or commit anything. Verify the task is terminal while the complete task-owned diff remains uncommitted, and return the approved lifecycle and record decisions, including explicit absence of a record edit. This path is unavailable when repository authority requires a commit for completion.
 
-For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, exact commit scope, the documented `entry`, `intentional no-note`, or `not-enrolled` release-note decision, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, waiver summary when applicable, exact reviewed and final target identities, the accepted Low-only composition fields or their explicit inapplicability, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization. Include Mulgae-specific evidence only for the Mulgae route. For Orca, Independent Review, or waiver, state explicitly that no hardening deferral applies.
+For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, approved record edit or explicit `no record edit`, exact commit scope, the documented `entry`, `intentional no-note`, or `not-enrolled` release-note decision, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, waiver summary when applicable, exact reviewed and final target identities, the accepted Low-only composition fields or their explicit inapplicability, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization. Include Mulgae-specific evidence only for the Mulgae route. For Orca, Independent Review, or waiver, state explicitly that no hardening deferral applies.
 
 Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
 
-Return the three answers, final roadmap state, selected terminal status, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.
+Return the three answers, final roadmap state, selected terminal status, approved lifecycle and record decisions, dossier disposition when applicable, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.

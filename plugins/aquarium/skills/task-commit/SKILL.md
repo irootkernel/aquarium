@@ -1,6 +1,6 @@
 ---
 name: task-commit
-description: "Prepare and create one authorized Git commit while reconciling roadmap task lifecycle state and preserving unrelated work. Use when the user asks to commit in a repository that may contain a roadmap, when an Aquarium handler hands off an approved commit, or when a direct roadmap-repository commit must pass the Aquarium commit gate."
+description: "Create one authorized commit for an approved Aquarium handler handoff, an explicit $aquarium:task-commit request, or a direct commit subject to the repository's Aquarium roadmap gate. Preserve unrelated work and reconcile task lifecycle only when applicable."
 ---
 
 # Task Commit
@@ -10,13 +10,15 @@ Create one authorized commit through a shared roadmap-aware boundary. Read [evid
 ## Establish the Commit Boundary
 
 1. Resolve the Git root and read all applicable instructions, commit conventions, branch and upstream state, staged, unstaged, untracked, and conflicted changes.
-2. Resolve effective `user.name` and `user.email` with their Git configuration scopes and origins. Require a non-empty winning value for each key from `local` or `worktree` scope; system, global, and command scope do not satisfy this repository-specific identity requirement even when their values match. Record the exact values, scopes, and origins as the commit identity snapshot. Do not create `.aquarium`, another identity file, or a duplicate configuration owner.
-3. Identify tracked roadmap candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
+2. Establish roadmap enrollment from tracked candidates: paths whose basename or directory contains `roadmap` and whose content defines lifecycle states such as `In Progress`, `In Review`, `Completed`, `Blocked`, or `Deferred`. Read the relevant task entries and their exact vocabulary.
+3. Resolve effective Git identity under the repository's rules. In a repository with a roadmap, require non-empty winning `user.name` and `user.email` values from `local` or `worktree` scope; matching system, global, or command values do not satisfy that requirement. Record their exact values, scopes, and origins. Without a roadmap, follow native Git and repository identity rules, including permitted global configuration, and snapshot the resolved author and committer identities. Do not create `.aquarium`, another identity file, or a duplicate configuration owner.
 4. Inspect the current Codex goal. When Podway was not explicitly opted out for the managed workflow, inspect only the bounded current-session facts needed to reconcile the commit with active Aquarium work. The commit boundary itself does not mutate Podway, but the same Aquarium caller may record the verified post-commit disposition immediately afterward.
 5. Record the requested commit scope and authority. A request to commit authorizes neither amend, push, PR changes, release work, destructive actions, nor unrelated staging.
 6. Inspect Project Configuration for the exact `Aquarium release notes: <repository-relative-path>` declaration. When enrolled, run the release-handler's read-only inspector and require exactly one structurally valid open target unless the commit is the release commit that closes it or the separately approved post-release commit that opens its successor.
 
 When a commit belongs to active Podway-managed Aquarium work, require an explicit commit handoff from the current Aquarium execution context. Accept it regardless of which Aquarium skill started or advanced the session; never require returning to a prior skill. For the normal completion of a planned Epic member Task, require both the unchanged approved `epic-handler` envelope as commit-effect authority and final Goal approval of the exact candidate. Do not ask the user to authorize the commit effect again when both remain current and complete. Do not extend that carried authority to reopened-task corrections, remediation, Epic closeout, checkpoints, or additional commits, and do not offer an independent path around the managed workflow's approvals and evidence.
+
+For a validation-remediation commit, require the validation envelope's explicit one-commit authority for the owned correction group, or separate direct authority. Require acceptance of its exact verified diff by the user or under their current delegation. Bind it to the active validation session, source audit or review findings, owner, affected checks, and pending whole-Epic confirmation. This is a correction commit before that confirmation, not a completed Task or Epic assessment. A normal member-Task envelope alone cannot authorize it.
 
 ## Reconcile Roadmap Context
 
@@ -31,7 +33,7 @@ When the commit is outside managed workflow work:
 
 A handler commit handoff must include:
 
-- repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the authorization source: either the user's direct one-commit authorization or, for a normal planned Epic member-Task completion, the current approved Epic envelope plus final Goal approval of the exact candidate;
+- repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the authorization source: the user's direct one-commit authorization; the current approved Epic envelope plus final Goal approval of the exact candidate for a normal planned member-Task completion; or the validation envelope's explicit one-commit authority plus exact candidate acceptance for an owned validation-remediation group;
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, exact reviewed and final target identities, verdict, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, and waiver summary when applicable. Include a Mulgae run only for the Mulgae route; mark every inapplicable route-specific field explicitly rather than inventing an identity.
@@ -41,6 +43,8 @@ A handler commit handoff must include:
 - for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs, committed publication, successful findings query, exact finding membership, authoritative native target digest, and promoted-manifest digest used for pre-commit verification. Every Orca, Independent Review, or waiver handoff must instead state explicitly that no hardening deferral applies because those routes cannot supply the required native digest, publication, findings-query, and membership evidence.
 
 Reject a stale, ambiguous, or incomplete handoff rather than reconstructing approval.
+
+A validation-remediation handoff identifies the source assessment separately from the pending assessment of corrected bytes. Before the first delegated review, carry the exact direct-audit evidence and explicitly mark the source review fields inapplicable. After a review, carry its actual route, operation, ordinal, and findings. In both cases, include the exact correction scope, verification, lifecycle and record decisions, release-note decision, candidate acceptance, and remediation commit authority. Do not require a per-group provider review or represent source findings as review coverage of the correction. Final validation acceptance remains pending until the owning workflow completes its whole-Epic assessment.
 
 A release-handler commit handoff must name the repository, intended and previous versions, exact operation (`settlement`, `retarget`, `release`, or `next-cycle`), changelog path and approved hunk, exact commit scope, `intentional no-note`, applicable QA and release-gate evidence or their explicit inapplicability, and the user's one-commit authorization. It grants no push, tag, hosted Release, destructive replacement, or later commit authority.
 
@@ -58,11 +62,11 @@ With an exact `$aquarium:release-handler` handoff, `intentional no-note` may inc
 
 Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged work; stop if the commit scope cannot be isolated safely. Immediately before committing, re-read the staged roadmap entry, `git diff --cached`, staged tree and blob identities, and full Git status. Confirm that:
 
-- the effective repository-specific `user.name` and `user.email`, including their scopes and origins, still match the commit identity snapshot;
+- the applicable identity snapshot still matches: repository-specific `user.name` and `user.email` with scopes and origins when a roadmap is present, otherwise the resolved native author and committer identities;
 - the selected task relationship and approved terminal or unchanged-checkpoint status still match the user's answer;
 - the handler handoff's lifecycle or record edit, including an explicit absence, still matches the staged snapshot;
 - a declared unrelated commit contains no unintended task lifecycle transition;
-- the reviewed implementation plus any exact accepted and locally verified Low-only delta, approved lifecycle or record decision, and approved post-review promoted-evidence packages equal the staged diff;
+- for a completion commit, the reviewed implementation plus any exact accepted and locally verified Low-only delta, approved lifecycle or record decision, and approved post-review promoted-evidence packages equal the staged diff; for a validation-remediation commit, the accepted verified correction and its explicitly approved decisions equal that diff while whole-Epic confirmation remains pending;
 - unrelated pre-existing staged content is absent from the intended commit.
 
 For an explicitly authorized amend, inspect the existing HEAD's parent, author, message, complete diff, and live remote publication state. Require one unambiguous unpublished HEAD whose existing content and staged delta both belong to the approved replacement. Record the intended full staged tree, parent, author, and message before amending. Stop if publication cannot be ruled out, the existing commit includes unrelated work, or the replacement scope is unclear.
@@ -91,7 +95,7 @@ Before committing in a Sanho-managed repository, reference `$use-sanho` and foll
 
 ## Commit Through the Gate
 
-Bind the exact identity snapshot values to task-scoped `aquarium_commit_name` and `aquarium_commit_email` variables. Run exactly one direct commit with all author and committer environment overrides removed, all six Git identity keys pinned to the repository identity at command scope, and the hook marker scoped to that process:
+In a repository with a roadmap, bind the exact identity snapshot values to task-scoped `aquarium_commit_name` and `aquarium_commit_email` variables. Run exactly one direct commit with all author and committer environment overrides removed, all six Git identity keys pinned to the repository identity at command scope, and the hook marker scoped to that process:
 
 ```bash
 env \
@@ -110,6 +114,8 @@ env \
 ```
 
 The explicit `author.*` and `committer.*` pins prevent system, global, local, worktree, or conditional configuration from overriding the repository `user.*` snapshot. Do not pass `--author` or otherwise override the pinned author or committer identity. The marker signals only that this skill completed the checks above. Never export it globally, use it outside this skill, or treat it as authority. Do not amend or push without separate explicit authorization.
+
+Without roadmap enrollment, create the one authorized commit using native Git and the repository's commit rules. Do not impose the roadmap gate's local-identity requirement, identity pins, or marker. Verify its actual author and committer against the previously resolved native identities.
 
 After the commit and its hooks, compare a new commit's diff with the recorded staged diff byte-for-byte. For an amend, compare the replacement tree with the recorded full staged tree and the staged delta with the approved change. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
 

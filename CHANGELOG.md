@@ -17,6 +17,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Check the selected Procedure review route before execution and align review waiting, recovery, candidate staging, and tool handoffs with their native contracts.
 - Preserve current blocker authority, plan handoff evidence, and remediation order across Task, Goal, and Validation Procedures.
+- Align Task closeout records, dossier settlement, final prose review, and commit authority across delivery and validation.
 - Load the Aquarium development MCP server through the supported plugin declaration.
 - Carry all static-review restrictions into Orca reviewer dispatches and require explicit authority for upstream PM draft files and clipboard replacement.
 

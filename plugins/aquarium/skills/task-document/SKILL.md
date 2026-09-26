@@ -11,13 +11,15 @@ Read [documentation-governance.md](../../references/documentation-governance.md)
 
 ## Update Durable Documentation
 
-Resolve the task's parent epic, handler-resolved execution SOT and any linked active dossier, `docs/README.md`, and canonical role owners from the roadmap. Determine documentation impact from final behavior and the task-owned requirements.
+Resolve the task entry, its parent epic, handler-resolved execution SOT and any task- or epic-linked active dossier, `docs/README.md`, and canonical role owners from the roadmap. Determine documentation impact from final behavior and the task-owned requirements.
 
 Promote accepted behavior to specifications, current components and boundaries to architecture, accepted rationale to architecture decision records, code-changing or verification guidance to implementation tips, environment setup or deployment and recovery guidance to operations, and user-facing value or usage to the root README.
 
 Update only affected durable owners, generated-document sources, any active dossier, and roadmap entries.
 
-When a dossier exists, keep it current for remaining member tasks and consumer epics. Remove or revise only this task's consumed handoffs and stale assumptions; retain requirements and acceptance needed by any remaining consumer until its epic closeout.
+When a dossier exists, keep it current for remaining tasks and consumer epics. Remove or revise only this task's consumed handoffs and stale assumptions; retain requirements and acceptance needed by any remaining consumer until its applicable closeout.
+
+For a repository-defined standing group such as Aquarium's `EPIC-000`, settle the task-linked dossier at this Task's closeout under the shared execution-SOT contract; the parent group stays active. Prepare its canonical promotion, task-link replacement, TODO-index change, and any approved last-consumer deletion in the documentation candidate before review. Inventory every canonical consumer first. If deletion authority or a durable owner is missing, return the exact proposed disposition to the handler before mutation or review; do not defer this Task's settlement to an Epic closeout that the standing group does not have.
 
 Do not create a dossier during this leaf phase, mark checklist state as lifecycle state, or turn the execution SOT into implementation history. Stop the document phase when a durable task outcome has no canonical owner, when operational impact is left in implementation tips, or when a later task would read stale execution guidance.
 
@@ -57,7 +59,9 @@ Follow repository-owned documentation synchronization rules. Run required status
 
 In a Sanho-managed repository, reference `$use-sanho` and follow it only when this phase reaches an explicitly requested synchronization, lifecycle, or recovery action. Do not invoke Sanho for routine documentation editing or validation. If the skill is unavailable and repository guidance requires it, return an exact `$aquarium:dev-setup-global` continuation request; otherwise apply the repository's native Sanho rules and report that specialized guidance was unavailable.
 
-Run applicable documentation validation after the update. Verify the promoted canonical content, any active dossier consistency, and operations boundary separately from structural checks. Separate task-caused failures from pre-existing failures, but do not claim a complete documentation gate passed when it did not. Do not stage, invoke Mulgae, commit, or publish unless the orchestrator recorded separate authority for that exact action.
+Before the candidate enters review, apply the repository-required final prose pass with the installed language-appropriate humanizer skill. Preserve meaning, protected identifiers, code, commands, and exact approved text. Follow the repository's scratch-file and cleanup rules, and stop on an unavailable or invalid required pass. For a missing or incompatible skill, return an exact `$aquarium:dev-setup-global` continuation naming the repository, roadmap, Task, required skill, and observed gap. For invalid output, report the failed protection or validation check and return the candidate for correction under current authority. Do not postpone it until closeout; prose changes after review require the owning workflow's applicable rework or Low-settlement path.
+
+Run applicable documentation validation after the final prose update. Verify the promoted canonical content, any active dossier consistency, and operations boundary separately from structural checks. Separate task-caused failures from pre-existing failures, but do not claim a complete documentation gate passed when it did not. Do not stage, invoke Mulgae, commit, or publish unless the orchestrator recorded separate authority for that exact action.
 
 ## Report Orchestration Evidence
 
