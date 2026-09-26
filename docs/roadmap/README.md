@@ -450,7 +450,7 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-077 | Settle findings and record producer requests | Freeze the deduplicated review inventory, verify plausible claims, and record the already-sent tool-specific Sorage request scope without resending. | Completed | None |
-| TASK-078 | Correct external effects and plugin entry | Fix unintended reviewer or clipboard effects and the Aquarium plugin MCP declaration. | Planned | TASK-077 |
+| TASK-078 | Correct external effects and plugin entry | Fix unintended reviewer or clipboard effects and the Aquarium plugin MCP declaration. | Completed | TASK-077 |
 | TASK-079 | Correct review-route readiness and recovery | Align legacy Procedure readiness, Independent Review and Orca recovery, staged-candidate preparation, and Aquarium-side tool handoffs. | Planned | TASK-078 |
 | TASK-080 | Correct Task, Goal, and Validation Procedure routing | Repair blocker, plan-resume, rework, and closeout paths across managed Procedure sources, mirrors, and qualification. | Planned | TASK-079 |
 | TASK-081 | Correct Task closeout and commit handoff | Align Task decision records, dossier settlement, prose pass timing, and commit authority with the revised Procedure. | Planned | TASK-080 |

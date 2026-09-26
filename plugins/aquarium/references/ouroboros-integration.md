@@ -10,7 +10,15 @@ Configuration checks do not verify an already-running MCP process. After a home 
 
 These four Aquarium skills are explicit-only. Their invocation authorizes only the displayed goal, repository or non-repository document scope, proposed provider operations, and proposed local writes. It does not authorize `auto`, `run`, `ralph`, or `evolve`, implementation work, external publication, authentication, installation, or transmission of a wider source set. Obtain fresh approval before widening any of those boundaries.
 
-Use the smallest installed upstream capability that fits the phase: `$interview` for ambiguity and trade-offs, `$pm` for product requirements, `$seed` for a validated work specification when needed, and `$qa` for artifact quality. Do not let Ouroboros create or edit repository files directly. Capture its output as draft evidence, verify it against repository authority, and present Aquarium's exact proposed diff before applying any durable document change.
+Use the smallest installed upstream capability that fits the phase: `$interview` for ambiguity and trade-offs, `$pm` for product requirements, `$seed` for a validated work specification when needed, and `$qa` for artifact quality. Keep upstream-generated files in the approved draft location outside the repository. Capture its output as draft evidence, verify it against repository authority, and present Aquarium's exact proposed diff before applying any durable document change.
+
+### PM files and clipboard
+
+Before invoking `$pm`, read its installed contract and disclose its native effects in the execution envelope. PM generates a document and seed handoff files, and its completion step copies the PM document to the system clipboard. Document approval alone does not authorize replacing the clipboard. Obtain authority for that distinct effect before invocation; do not read or save the previous clipboard contents.
+
+Use a supported output or working-directory input to direct generated files to an approved disposable location outside the repository. Confirm the selected upstream operation supports that destination before starting. Record the expected files, any native session residue, and the cleanup boundary in the envelope. If the installed capability cannot honor the approved file or clipboard boundaries, stop that invocation and offer a compatible upstream capability or an explicit change to the envelope. Do not patch upstream files, invent a clipboard-disable option, or silently omit a required upstream step.
+
+Treat returned paths as draft locations, verify them against the approved destination, and inspect the output before proposing canonical documents. Report unexpected writes and stop further mutation. After applying accepted text, remove only invocation-owned disposable drafts covered by the approved cleanup scope; leave native session retention to Ouroboros. Follow [evidence-residency.md](evidence-residency.md) for draft and runtime handling.
 
 ## Use Podway as the Outer Workflow
 

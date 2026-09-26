@@ -627,7 +627,7 @@ def test_installed_plugin_exposes_and_calls_tools_over_stdio(
     install(package)
     repository = create_repository(tmp_path / "repository")
     plugin = package.parent.parent
-    config = json.loads((plugin / ".mcp.json").read_text())["mcp_servers"][
+    config = json.loads((plugin / ".mcp.json").read_text())["mcpServers"][
         "aquarium-dev"
     ]
     if ambient_python:

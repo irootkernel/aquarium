@@ -20,8 +20,9 @@ purpose-specific result defined by [review-contract.md](review-contract.md).
 Tell the reviewer that this is review only. Prohibit creating, editing,
 deleting, moving, formatting, or generating source files or other tracked or
 non-ignored files in the current registered worktree; changes to the Git index,
-refs, configuration, or commits; and tests, builds, formatters, installers,
-authentication, or unrelated network operations.
+refs, configuration, or commits; and tests, builds, generators, formatters,
+linters, installers, provider reviews, authentication commands, or unrelated
+network operations. Prohibit delegating the review or starting another reviewer.
 
 Require actionable target findings with severity, scenario, violated authority,
 impact, and evidence. Use exact `path:line` evidence when implementation exists.

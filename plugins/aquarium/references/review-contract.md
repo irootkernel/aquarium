@@ -55,7 +55,7 @@ The review is static and source-read-only. Every participant runs no tests, buil
 
 `independent-review` uses three fresh host-native Codex subagents for one exact target and Review Brief. The host owns delegation lifecycle; Aquarium coordinates and adjudicates the three reports. It creates no Dolgorae or Orca object and never substitutes another route on failure.
 
-`orca-review` uses one local Orca Run, Task, Dispatch, and fresh requested native reviewer. Orca exclusively owns its worker, Delivery, acknowledgement, settlement, and recovery lifecycle. It performs no Dolgorae discovery, capture, launch, settlement, or fallback.
+`orca-review` uses one local Orca Run, Task, Dispatch, and fresh requested native reviewer. That reviewer must not delegate the review or start another reviewer. Orca exclusively owns its worker, Delivery, acknowledgement, settlement, and recovery lifecycle. It performs no Dolgorae discovery, capture, launch, settlement, or fallback.
 
 Mulgae remains operationally independent. Conformance is limited to common user-facing source-scope meanings and included and excluded state. Backend capture and lifecycle details do not need to match. Its provider, extraction, adjudication, publication, archive, and settlement remain Mulgae-owned.
 

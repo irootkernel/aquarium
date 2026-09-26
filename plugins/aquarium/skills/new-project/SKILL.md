@@ -9,7 +9,7 @@ Create a PRD and initial roadmap for one new project. Do not implement code, ini
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely without skipping the evidence-residency contract.
 
-Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, acceptance evidence, and implementation ownership. Use installed upstream `$interview` and `$pm` only after the approved execution envelope.
+Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, acceptance evidence, and implementation ownership. Use installed upstream `$interview` and `$pm` only after the approved execution envelope. Before `$pm`, apply the shared [PM file and clipboard boundary](../../references/ouroboros-integration.md#pm-files-and-clipboard): disclose draft writes and obtain authority to replace the clipboard.
 
 Select `single-scope` when one implementation owner has one roadmap. Select `multi-scope` when independently delivered surfaces need separate roadmaps; ask only when ownership remains ambiguous. Produce a user-facing root README, maintainer-facing `docs/README.md`, a PRD, one initial roadmap per delivery scope, and every role index including operations. Apply the shared execution-SOT threshold to each initial epic and create its scope-local dossier only when required.
 

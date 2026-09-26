@@ -175,13 +175,16 @@ another broker operation. Producer implementation remains outside this task.
   design entrypoints and privacy/residency owners (M-E1). Treat clipboard
   mutation as a distinct effect that requires authority before invocation.
 - Correct the plugin MCP declaration and package validator for Codex's
-  supported key, then verify a fresh installed session exposes the expected
-  `aquarium_dev_*` tools (M-F2). Keep CLI diagnosis separately available.
+  supported key and verify the declared server through isolated STDIO checks
+  (M-F2). Keep CLI diagnosis separately available. TASK-085 and final Epic
+  validation own the required fresh installed-session observation of the
+  expected `aquarium_dev_*` tools.
 
 Acceptance: the review instruction carries the same forbidden operations as
 the canonical review contract; design invocation does not silently write to
-the clipboard; installed plugin loading is observed, not inferred from JSON
-parsing alone.
+the clipboard; the declaration and its consumers pass structural and isolated
+STDIO checks. These checks do not establish Codex plugin discovery. Fresh
+installed-session loading remains an explicit final verification gate.
 
 ### TASK-079: Correct review-route readiness and recovery
 
@@ -297,6 +300,11 @@ behavior while Master retains skill-functional verification.
   restart, ordinal-four blocker authority, Task plan resume, Orca review,
   first release, installed plugin loading, and authorization effects.
   Report observed outcomes and unperformed scenarios separately.
+- Observe the corrected plugin in a fresh installed Codex session and confirm
+  the expected `aquarium_dev_*` tools before accepting final Epic validation.
+  This is the installed-session gate transferred from TASK-078; JSON parsing
+  and direct STDIO tests do not satisfy it. Installation and session changes
+  retain their separate authority.
 - Hand producer request and reply identities, exact source status, and any
   remaining cross-tool gaps to `TASK-046`. A missing producer response is
   an open external dependency, not an Aquarium correction claimed complete.

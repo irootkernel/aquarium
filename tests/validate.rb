@@ -45,7 +45,7 @@ assert(local_path(PLUGIN.join(manifest.fetch("skills"))) == PLUGIN.join("skills"
        "plugin skills path must resolve to its skill directory")
 
 mcp = JSON.parse(read_file(PLUGIN.join(manifest.fetch("mcpServers"))))
-mcp.fetch("mcp_servers").each do |name, server|
+mcp.fetch("mcpServers").each do |name, server|
   command = server.fetch("command")
   assert(command.start_with?("./"), "bundled MCP command must be plugin-relative: #{name}")
   executable = local_path(PLUGIN.join(command))

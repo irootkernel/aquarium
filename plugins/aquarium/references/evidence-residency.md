@@ -13,6 +13,8 @@ Never use a runtime path or runtime identity as authoritative evidence in tracke
 
 ## Keep Canonical Documents Current
 
+Upstream PM documents and seed handoff files remain disposable draft evidence until Aquarium applies their accepted content to approved canonical paths. Use the approved draft location outside the repository and the cleanup scope in the [PM contract](ouroboros-integration.md#pm-files-and-clipboard). Do not stage generated drafts or copy their runtime paths into canonical documents as evidence. PM clipboard replacement requires separate authority in the execution envelope; it is not evidence promotion or document approval.
+
 Do not add routine `Validation remediation`, `Validation record`, completion-history, command-log, test-report, reviewed-snapshot, or provider-run sections to a roadmap. A successful validation that changes no lifecycle state, current requirement, accepted risk, or actionable downstream instruction produces no documentation diff and no validation-record commit.
 
 Record a remediation in canonical documentation only when the correction changes current behavior that the specification must describe, changes lifecycle state, creates or resolves a current risk, or leaves an actionable handoff. Git owns implementation history; Podway and native tools own workflow evidence.
