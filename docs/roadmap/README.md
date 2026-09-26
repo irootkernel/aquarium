@@ -48,7 +48,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-015 | Add intent-aware review and disable Independent Review temporarily | Completed |
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
-| EPIC-018 | Correct Aquarium workflow and integration contracts | Planned |
+| EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -437,7 +437,7 @@ copying account state into the caller's home.
 
 ## EPIC-018: Correct Aquarium workflow and integration contracts
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Correct the Aquarium-owned findings from the 2026-09-25 static skill review before
 modernizing the affected entrypoints under `EPIC-012`. Six requests have been
@@ -449,7 +449,7 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-077 | Settle findings and record producer requests | Freeze the deduplicated review inventory, verify plausible claims, and record the already-sent tool-specific Sorage request scope without resending. | Planned | None |
+| TASK-077 | Settle findings and record producer requests | Freeze the deduplicated review inventory, verify plausible claims, and record the already-sent tool-specific Sorage request scope without resending. | Completed | None |
 | TASK-078 | Correct external effects and plugin entry | Fix unintended reviewer or clipboard effects and the Aquarium plugin MCP declaration. | Planned | TASK-077 |
 | TASK-079 | Correct review-route readiness and recovery | Align legacy Procedure readiness, Independent Review and Orca recovery, staged-candidate preparation, and Aquarium-side tool handoffs. | Planned | TASK-078 |
 | TASK-080 | Correct Task, Goal, and Validation Procedure routing | Repair blocker, plan-resume, rework, and closeout paths across managed Procedure sources, mirrors, and qualification. | Planned | TASK-079 |
