@@ -354,7 +354,7 @@ def version_tuple(value: str) -> tuple[int, int, int]:
     return tuple(int(item) for item in match.groups())
 
 
-def safe_absent_path(value: str) -> str:
+def safe_recorded_path(value: str) -> str:
     if not isinstance(value, str) or not Path(value).is_absolute():
         raise ContractError("invalid_git_root", "git_root must be absolute")
     normalized = unicodedata.normalize("NFC", value)
@@ -364,5 +364,5 @@ def safe_absent_path(value: str) -> str:
         or os.path.normpath(normalized) != normalized
         or any(part in {".", ".."} for part in raw_parts)
     ):
-        raise ContractError("invalid_git_root", "absent git_root is not canonical")
+        raise ContractError("invalid_git_root", "recorded git_root is not canonical")
     return normalized

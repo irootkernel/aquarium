@@ -5,7 +5,7 @@ description: "Shape one feature epic for an existing project with Ouroboros, wit
 
 # New Feature
 
-Create or revise exactly one feature epic in an existing project's canonical roadmap. Do not implement, stage, commit, or publish.
+Create or revise exactly one feature epic in an existing project's canonical roadmap. Do not implement or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md), and use the default `aquarium-design-v2` Podway path.
 
@@ -14,3 +14,5 @@ Resolve the target roadmap's recorded identity contract before allocating an epi
 After the approved envelope, use installed upstream `$interview`, `$pm`, or `$seed` only as needed. Before `$pm`, apply the shared [PM file and clipboard boundary](../../references/ouroboros-integration.md#pm-files-and-clipboard): disclose draft writes and obtain authority to replace the clipboard. Produce one coherent epic with ordered work units and explicit ownership. Apply the shared execution-SOT threshold; create or revise one scope-local dossier only when required, otherwise keep the complete execution contract in the roadmap and at most two requirement-bearing canonical documents.
 
 Run upstream `$qa`, adjudicate the draft, show the exact roadmap and documentation diff, and apply it only after explicit approval and snapshot recheck. End with the epic identity, applied paths, validation, and implementation blockers.
+
+Apply the shared QA outcome mapping and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input). Report whether documents are applied or committed before naming the next explicit workflow.

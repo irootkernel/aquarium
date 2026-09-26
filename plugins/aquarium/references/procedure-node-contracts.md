@@ -138,9 +138,12 @@ its execution dossier under the shared consumer rules before final approval.
 challenge, quality, exact-diff approval, document application, assessment, and
 closeout. Ouroboros results are leaf evidence. Discovery and drafting do not
 authorize implementation. Quality does not authorize applying a draft. Approval
-binds the exact document diff, and application does not authorize staging, commit,
-publication, or product implementation. Optional branch evidence remains optional
-at merges.
+binds the exact document diff. Application does not itself authorize staging or
+commit; a separately authorized task-commit boundary establishes committed
+delivery input when repository policy requires it. Publication and implementation
+remain separate. QA artifact verdicts remain distinct from operation results,
+and valid issues route to their phase owner. Optional branch evidence remains
+optional at merges.
 
 ## War-room Procedure
 
@@ -149,8 +152,11 @@ scope judgments, proposal quality, exact-diff approval, document application,
 assessment, and closeout. Baseline-quality corrections return to the baseline
 owner; classification and proposal corrections return through investigation or
 the exact supported draft target. Terminal success delivers an approved task,
-epic, or incomplete-investigation document. It never implements the fix or changes
-shared services, stages, commits, or publishes by implication.
+epic, incomplete-investigation document, or evidence-backed no-work outcome. The
+no-work branch retains quality, approval, and document/no-change verification.
+Durable notes use canonical specification, ADR, or operations owners; runtime
+evidence remains private. Document approval never implies staging, committing,
+fix implementation, shared-service changes, or publication.
 
 ## Compatibility classification
 
@@ -166,3 +172,9 @@ start a substitute workflow automatically.
 item, choice, evidence, and route inventory from the current canonical Procedure.
 Its structural classification does not prove that customized instructions have
 equivalent meaning or that Podway executed or verified any external work.
+
+War-room readiness requires the current no-work graph contract even for a known
+prior canonical file. Preserve that file and any immutable session snapshot;
+route the missing capability through the approved repository-setup replacement
+boundary before starting a new war-room workflow. A prior canonical digest
+establishes provenance, not support for the new branch.

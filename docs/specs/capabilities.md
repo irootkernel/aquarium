@@ -9,7 +9,7 @@ Public orchestration skills require an explicit matching request except `task-co
 | `$aquarium:new-project` | Explicit | Produces an approved greenfield PRD and initial roadmap through Ouroboros-assisted discovery and QA | Creates design documents only; it does not implement the project |
 | `$aquarium:new-feature` | Explicit | Creates or revises one feature epic in an existing canonical roadmap | Does not implement the feature |
 | `$aquarium:refactor` | Explicit | Creates or revises one refactor or behavior-change epic | Does not implement the refactor |
-| `$aquarium:war-room` | Explicit | Diagnoses one difficult bug, isolates root cause, and proposes the next work unit or an incomplete result | Does not implement the fix |
+| `$aquarium:war-room` | Explicit | Diagnoses one difficult bug, isolates root cause, and proposes the next work unit, confirms no corrective work is needed, or reports an incomplete investigation | Does not implement the fix |
 
 These workflows use Ouroboros only for their explicitly approved discovery or QA leaf operations. Git-backed runs select Podway by default before the first managed-session mutation and may be explicitly opted out before that boundary.
 

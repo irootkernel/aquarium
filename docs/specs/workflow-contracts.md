@@ -6,6 +6,8 @@ Aquarium organizes work into shaping, delivery, validation, setup, and release l
 
 `new-project`, `new-feature`, `refactor`, and `war-room` use the shared Ouroboros integration contract and an exact-diff approval boundary. They capture current authority before provider work, treat provider output as draft evidence, route typed quality findings through fresh phase-owned rework, and apply repository documents only after the user approves the complete diff. Podway guards operational quality results, not design truth, diagnostic cause or scope, or user approval.
 
+QA artifact `PASS`, `REVISE`, and `FAIL` remain separate from the operation result. Completed, locally adjudicable QA routes valid findings to their owner; failed or missing operation evidence requires supported recovery. Approved design documents become committed delivery input only through a separately authorized `task-commit` boundary. War-room uses canonical specification, ADR, or operations owners for durable notes and permits an evidence-backed no-work outcome through the same quality and approval path, including verified no-change when no document is owed.
+
 Git-backed shape workflows use `aquarium-design-v2`, except `war-room`, which uses `aquarium-war-room-v2`. Non-Git discovery remains Podway-free because no repository lifecycle exists to record.
 
 ## Deliver One Task

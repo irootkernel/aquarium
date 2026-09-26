@@ -2214,3 +2214,52 @@ def test_task_handoff_and_low_delta_remain_selectable_at_their_consumers() -> No
         "completion-assessment-summary",
         "low-disposition-verification",
     } <= set(low["items"])
+
+
+def test_war_room_no_work_keeps_quality_approval_and_documentation() -> None:
+    procedure = load_procedure("aquarium-war-room-v2.yaml")
+    graph = nodes(procedure)
+    assert graph["decide-cause"]["routes"]["no-work"] == {
+        "to": "draft-no-work",
+        "effect": "advance",
+    }
+    assert graph["draft-no-work"]["next"] == "quality"
+    edges = graph_edges(procedure)
+    for gate in ("quality", "decide-quality", "approve-diff", "document"):
+        assert "assess-goal" not in reachable_nodes(
+            edges, "draft-no-work", without=gate
+        )
+    for consumer in ("quality", "decide-quality", "approve-diff", "document"):
+        source = next(
+            item
+            for item in graph[consumer]["evidence_from"]
+            if item["node"] == "draft-no-work"
+        )
+        assert source["required"] is False
+        assert source["items"] == ["proposal-summary"]
+    assert "draft-no-work" in procedure["manual_rework"]["allowed_targets"]
+
+
+def test_shape_quality_routes_completed_findings_to_their_owner() -> None:
+    for name, definition, first, second in (
+        ("design", "quality-decision", "discovery", "draft"),
+        ("war-room", "quality-decision", "investigation", "proposal"),
+    ):
+        procedure = load_procedure(f"aquarium-{name}-v2.yaml")
+        choices = options(procedure, definition)
+        for outcome, first_count, second_count, expected in (
+            ("pass", 0, 0, "passed"),
+            ("pass", 1, 0, f"{first}-changes"),
+            ("pass", 0, 1, f"{second}-changes"),
+            ("pass", 1, 1, f"{first}-changes"),
+            ("fail", 0, 0, "incomplete"),
+            ("inconclusive", 0, 0, "incomplete"),
+        ):
+            values = {
+                ("quality", "quality-result"): {"outcome": outcome},
+                ("quality", f"unresolved-{first}-findings"): first_count,
+                ("quality", f"unresolved-{second}-findings"): second_count,
+            }
+            assert [
+                key for key, value in choices.items() if guards_match(value, values)
+            ] == [expected]

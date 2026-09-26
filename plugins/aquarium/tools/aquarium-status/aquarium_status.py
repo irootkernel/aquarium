@@ -24,7 +24,7 @@ from status_contract import (
     SHA256_RE,
     ContractError,
     digest,
-    safe_absent_path,
+    safe_recorded_path,
     validate_record,
 )
 from status_report import (
@@ -378,12 +378,7 @@ def forget(
             not isinstance(row_sha256, str) or SHA256_RE.fullmatch(row_sha256) is None
         ):
             raise ContractError("invalid_arguments", "row digest is invalid")
-        requested = Path(root_value)
-        if requested.exists() or requested.is_symlink():
-            root, common = git_identity(root_value)
-        else:
-            root = safe_absent_path(root_value)
-            common = None
+        root = safe_recorded_path(root_value)
         ledger, previous = read_ledger()
         row = next(
             (item for item in ledger["repositories"] if item["git_root"] == root), None
@@ -400,10 +395,6 @@ def forget(
         if file_revision is None or row_revision is None or row_sha256 is None:
             raise ContractError(
                 "invalid_arguments", "all deletion preconditions are required"
-            )
-        if common is not None and common != row["git_common_dir"]:
-            raise ContractError(
-                "git_identity_conflict", "recorded Git identity changed", 3
             )
         if (
             file_revision != ledger["file_revision"]

@@ -28,7 +28,7 @@ A non-Git `new-project` invocation must not inspect, initialize, or mutate Podwa
 
 Before the first provider call, show one execution envelope containing canonical identity, current authority, bounded source inputs, every planned Ouroboros operation, every planned Podway mutation, target document paths, and excluded actions. Obtain explicit approval, then create or resume the matching prepared session, re-observe it, begin attempt 1 with the approved goal, and coordinate with an explicitly requested host goal under its own creation and lifecycle rules.
 
-Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podway, not full provider prompts, transcripts, source payloads, or generated documents. Verify every provider result locally before recording it. Complete and disposition a session as `handed_off` only after the exact approved repository artifacts, their digests, repository status, and any authoritative commit required by repository policy are verified. Name the next explicit Aquarium skill and include the exact session ID, revision, and stable artifact reference in that handoff. Otherwise leave the terminal session undisposed.
+Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podway, not full provider prompts, transcripts, source payloads, or generated documents. Verify every provider result locally before recording it. Complete and disposition a session as `handed_off` only after the exact approved repository artifacts, their digests, repository status, and any authoritative commit required by repository policy are verified. Name the next explicit Aquarium skill when follow-up work is needed and include the exact session ID, revision, and stable artifact reference in that handoff. Otherwise leave the terminal session undisposed.
 
 When a later task, epic, or validation workflow needs a different Podway session, follow the existing-session choice in [podway-integration.md](podway-integration.md). Preserve the current session unless the user explicitly authorizes its lifecycle action, deletion, or eligible replacement; never route by prior skill ownership.
 
@@ -43,3 +43,43 @@ All four workflows must separate draft production from repository mutation:
 5. Re-read the target snapshot, invalidate approval if it changed, apply only the approved diff, and run document validation.
 
 No approval is implied by skill invocation, provider approval, prior plan approval, or approval of a different file.
+
+## Interpret QA Outcomes
+
+Keep the upstream artifact verdict and the quality operation outcome separate.
+Preserve the raw `PASS`, `REVISE`, or `FAIL` verdict with the exact draft identity
+in `quality-summary`. A completed QA operation with output that can be adjudicated
+locally records a `pass` check result, including when the artifact verdict is
+`REVISE` or `FAIL`.
+
+Record every locally valid unresolved issue in the matching discovery/draft or
+investigation/proposal count and list. Select the existing owner route and correct
+that evidence or draft before another QA pass. Do not convert artifact `FAIL`
+into an operational failure that repeats QA on unchanged input. Zero owner counts
+require a documented disposition for every issue; they cannot discard the raw
+verdict. Quality acceptance and user approval remain separate.
+
+Failed invocation, missing output, or output that cannot be adjudicated records
+`fail` or `inconclusive` with the actual evidence gap. Only supported, authorized
+operation recovery may retry unchanged input. A missing recovery path stops the
+operation with its exact blocker.
+
+## Commit Approved Delivery Input
+
+After applying the approved documentation diff, report either committed delivery
+input or applied documents awaiting commit. If repository policy requires a
+commit before delivery, prepare the exact documentation, lifecycle, record, and
+release-note candidate and obtain separate one-commit authority. Reuse an existing
+grant for that exact candidate; approval of the document diff alone does not
+authorize a commit. Hand the accepted candidate to `$aquarium:task-commit` using
+its design or diagnostic delivery-input handoff. State explicitly when no task
+or epic applies and retain the owning workflow's quality and approval evidence.
+
+Verify the accepted bytes, Git identity, returned commit, and remaining worktree
+state before reporting committed delivery input or recording `handed_off`. Without
+the required commit authority, preserve the applied documents and leave terminal
+disposition pending. The next action is the explicit commit boundary, not
+implementation. When repository policy requires no commit, report that boundary
+and verify the approved artifacts before disposition. An approved no-change
+war-room outcome needs no artificial commit; use `not_required` after verifying
+that no durable artifact is owed. Non-Git outputs remain non-Git. A design or diagnostic commit grants no authority to implement, push, or publish.

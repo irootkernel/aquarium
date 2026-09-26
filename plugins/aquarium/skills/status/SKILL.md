@@ -52,7 +52,8 @@ Deletion is destructive and requires an explicit approval for the exact current
 row.
 
 1. Run `aquarium-status show --format json` and select one exact canonical
-   `git_root`. Never scan for moved or deleted repositories.
+   `git_root`. Use its stored spelling even if the live path has been reused or
+   replaced by a symlink. Never scan for moved or deleted repositories.
 2. Present the full selected row and current `ledger.file_revision` and
    `row_revision`. Remove only the derived `root_state`,
    `configuration_freshness`, `enrollment`, and `language_inventory` fields, then compute the row
@@ -76,3 +77,7 @@ Lead with the status or exact deletion result. Include warnings, observations
 that were not checked, network access performed, and any runtime or row conflict.
 State explicitly that reporting did not run setup and that forgetting did not
 change repository files, enrollment, tools, commits, or publication.
+
+The [packaged status contract](../../references/production-status.md) owns deletion
+semantics. `forget` selects the stored path without inspecting or resolving the
+live replacement and removes only the row and its language inventory.

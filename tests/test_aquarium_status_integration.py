@@ -939,12 +939,14 @@ def test_reused_root_with_new_common_directory_conflicts_until_forget(
         "--if-row-sha256",
         canonical_digest(row),
     )
-    error(invoke(home, *forget_arguments), 3, "git_identity_conflict")
-
-    replacement.rename(tmp_path / "replacement")
+    marker = replacement / "preserve.txt"
+    marker.write_text("replacement repository must survive\n")
+    configuration = (replacement / ".git/config").read_bytes()
     receipt = output(invoke(home, *forget_arguments))
     assert receipt["status"] == "forgotten"
     assert report(home)["repositories"] == []
+    assert marker.read_text() == "replacement repository must survive\n"
+    assert (replacement / ".git/config").read_bytes() == configuration
 
 
 @pytest.mark.parametrize("failure", ["replace", "parent_fsync"])
@@ -1066,3 +1068,112 @@ def test_public_streams_envelopes_and_exit_classes_are_exact(tmp_path: Path) -> 
     state.chmod(0o755)
     unsafe = error(invoke(home, "show", "--format", "json"), 1, "state_unsafe")
     assert unsafe["error"]["message"].startswith("unsafe owned directory:")
+
+
+@pytest.mark.parametrize(
+    "replacement_kind", ["symlink-root", "symlink-parent", "non-git"]
+)
+def test_forget_uses_recorded_path_without_following_replacement(
+    tmp_path, replacement_kind
+):
+    home = tmp_path / "home"
+    home.mkdir()
+    parent = tmp_path / "container"
+    root = repository(parent / "repository", home)
+    output(invoke(home, "record", stdin=request(root, 0)))
+    retained = repository(tmp_path / "retained", home)
+    output(invoke(home, "record", stdin=request(retained, 0)))
+    for candidate in (root, retained):
+        (candidate / "go.mod").write_text("module example.invalid/fixture\ngo 1.26\n")
+        git("add", "go.mod", home=home, cwd=candidate)
+    output(invoke(home, "refresh-languages"))
+    stored, before = ledger(home)
+    row = next(item for item in stored["repositories"] if item["git_root"] == str(root))
+    retained_row = next(
+        item for item in stored["repositories"] if item["git_root"] == str(retained)
+    )
+    assert len(stored["language_inventory"]) == 2
+    assert all(item["languages"] for item in stored["language_inventory"])
+    retained_inventory = next(
+        item
+        for item in stored["language_inventory"]
+        if item["git_root"] == str(retained)
+    )
+    detached = tmp_path / "detached"
+    parent.rename(detached)
+    external = tmp_path / "external"
+    external.mkdir()
+    marker = external / "preserve.txt"
+    marker.write_text("external data\n")
+    if replacement_kind == "symlink-parent":
+        (external / "repository").mkdir()
+        parent.symlink_to(external, target_is_directory=True)
+    else:
+        parent.mkdir()
+        if replacement_kind == "symlink-root":
+            root.symlink_to(external, target_is_directory=True)
+        else:
+            root.mkdir()
+            (root / "keep.txt").write_text("unrelated directory\n")
+    arguments = (
+        "forget",
+        "--git-root",
+        str(root),
+        "--if-file-revision",
+        str(stored["file_revision"]),
+        "--if-row-revision",
+        "1",
+        "--if-row-sha256",
+        canonical_digest(row),
+    )
+    stale = list(arguments)
+    stale[stale.index("--if-row-revision") + 1] = "2"
+    error(invoke(home, *stale), 3, "revision_conflict")
+    assert ledger(home)[1] == before
+    receipt = output(invoke(home, *arguments))
+    assert receipt["status"] == "forgotten"
+    final, _ = ledger(home)
+    assert final["repositories"] == [retained_row]
+    assert final["language_inventory"] == [retained_inventory]
+    assert marker.read_text() == "external data\n"
+    assert (detached / "repository/.git").is_dir()
+    if replacement_kind == "symlink-parent":
+        assert parent.is_symlink() and parent.readlink() == external
+    elif replacement_kind == "symlink-root":
+        assert root.is_symlink() and root.readlink() == external
+    else:
+        assert (root / "keep.txt").read_text() == "unrelated directory\n"
+
+
+@pytest.mark.parametrize("form", ["relative", "trailing-slash", "dot", "parent", "nfd"])
+def test_forget_rejects_noncanonical_recorded_keys(tmp_path: Path, form: str) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "café", home)
+    output(invoke(home, "record", stdin=request(root, 0)))
+    before = ledger(home)[1]
+    canonical = unicodedata.normalize("NFC", str(root))
+    values = {
+        "relative": "café",
+        "trailing-slash": canonical + "/",
+        "dot": canonical + "/.",
+        "parent": canonical + "/../café",
+        "nfd": unicodedata.normalize("NFD", canonical),
+    }
+    error(invoke(home, "forget", "--git-root", values[form]), 2, "invalid_git_root")
+    assert ledger(home)[1] == before
+
+
+def test_forget_does_not_resolve_an_alias_to_a_recorded_root(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    root = repository(tmp_path / "repository", home)
+    output(invoke(home, "record", stdin=request(root, 0)))
+    alias = root.parent / "alias"
+    alias.symlink_to(root, target_is_directory=True)
+    before = ledger(home)[1]
+    receipt = output(invoke(home, "forget", "--git-root", str(alias)))
+    assert receipt["status"] == "absent"
+    assert receipt["changed"] is False
+    assert ledger(home)[1] == before
+    assert alias.is_symlink()

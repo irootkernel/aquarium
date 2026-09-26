@@ -708,6 +708,7 @@ def terminal_scenario_specs() -> tuple[tuple[str, str], ...]:
             for scenario, (procedure_id, _source) in STOP_EVIDENCE_SCENARIOS.items()
         ),
         (VALIDATION_PROVIDER_LOW_SCENARIO, "aquarium-validation-v2.yaml"),
+        ("war-room-no-work", "aquarium-war-room-v2.yaml"),
     )
 
 
@@ -4352,6 +4353,26 @@ class ManagedRuntime:
                 continue
 
             if node in {"assess-goal", "assess-stopped-goal"}:
+                if scenario == "war-room-no-work":
+                    required = {
+                        "draft-no-work",
+                        "quality",
+                        "decide-quality",
+                        "approve-diff",
+                        "document",
+                    }
+                    forbidden = {
+                        "draft-task",
+                        "draft-epic",
+                        "draft-incomplete",
+                        "classify-scope",
+                    }
+                    if any(self.node_visits.get(item) != 1 for item in required) or any(
+                        self.node_visits.get(item, 0) for item in forbidden
+                    ):
+                        raise RuntimeQualificationError(
+                            f"no-work branch bypassed quality or approval: {self.node_visits!r}"
+                        )
                 if (
                     scenario in VALIDATION_WAIVER_FOLLOWUP_SCENARIOS
                     and not self.validation_waiver_continuity_verified
@@ -5181,6 +5202,8 @@ class ManagedRuntime:
                     special_option = "low-only"
                 elif node == "decide-final-review":
                     special_option = "low-disposition"
+            if scenario == "war-room-no-work" and node == "decide-cause":
+                special_option = "no-work"
             option = (
                 special_option
                 or {

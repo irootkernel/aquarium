@@ -4688,6 +4688,35 @@ else:
         self.assertEqual(podway["status"], "configured")
         self.assertFalse(podway["migration_required"])
 
+    def test_shape_v3_prior_canonical_preserves_bytes_and_reports_current_support(
+        self,
+    ) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        prior = {}
+        for name in ("design", "war-room"):
+            target = self.repository / f".podway/procedures/aquarium-{name}-v2.yaml"
+            prior[name] = (
+                ROOT / f"tests/fixtures/aquarium-{name}-v3.yaml"
+            ).read_bytes()
+            target.write_bytes(prior[name])
+        podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
+        for name, expected in (("design", "compatible"), ("war-room", "incompatible")):
+            entry = next(
+                item
+                for item in podway["managed_procedures"]
+                if item["path"].endswith(f"aquarium-{name}-v2.yaml")
+            )
+            self.assertEqual(entry["update_explanation"], "prior_canonical")
+            self.assertEqual(entry["handler_contract_status"], expected)
+            self.assertEqual(
+                (
+                    self.repository / f".podway/procedures/aquarium-{name}-v2.yaml"
+                ).read_bytes(),
+                prior[name],
+            )
+        self.assertEqual(podway["readiness_status"], "degraded")
+
     def test_actual_task_v14_prior_canonical_preserves_readiness(self) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
@@ -5043,10 +5072,12 @@ else:
                     "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
                 },
                 "aquarium-design-v2.yaml": {
+                    "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",
                     "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
                     "c8ce6585a735eb3a159a6f14f40d3dd413cc33812b254e10703c76b3d49dddd9",
                 },

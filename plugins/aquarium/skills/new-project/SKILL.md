@@ -5,7 +5,7 @@ description: "Shape a greenfield project into an approved PRD and initial roadma
 
 # New Project
 
-Create a PRD and initial roadmap for one new project. Do not implement code, initialize Git, stage, commit, or publish.
+Create a PRD and initial roadmap for one new project. Do not implement code, initialize Git, or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely without skipping the evidence-residency contract.
 
@@ -20,3 +20,5 @@ Include a testing-foundation work unit that establishes `aquarium-test-contract/
 Record the tasks that establish the prerequisites and the evidence required to accept them in the roadmap. Make subsequent feature expansion depend on the testing-foundation work unit. Planning documents alone do not satisfy those dependencies. Keep tests needed to verify the preceding implementation in its own tasks. A new project is not eligible for a legacy waiver.
 
 Run upstream `$qa` on the draft, adjudicate every issue, then present the exact paths and complete proposed diff. Apply documents only after explicit approval and snapshot recheck. Report resulting paths, validation, unresolved decisions, and the exact next explicit skill; do not begin delivery.
+
+Apply the shared QA outcome mapping and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input). Report whether documents are applied or committed before naming the next explicit workflow.

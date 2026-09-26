@@ -54,7 +54,10 @@ Invoke `$aquarium:status`, inspect one exact row, and approve its displayed root
 file revision, row revision, and digest. The skill re-reads the ledger before
 calling `forget` with every precondition. Any intervening change invalidates the
 approval. Forgetting removes only local history; it does not delete a checkout,
-change enrollment, uninstall tools, or modify Git.
+change enrollment, uninstall tools, or modify Git. Use the exact stored path even
+when the checkout has moved or its old path is a symlink, another repository, or
+a non-Git directory. `forget` selects that ledger key without resolving the live
+path and preserves every replacement and symlink target.
 
 ## Escalate
 

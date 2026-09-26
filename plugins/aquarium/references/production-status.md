@@ -264,14 +264,17 @@ shows the exact row plus its file revision and row digest, obtains deletion
 approval, re-reads it, and supplies all three preconditions. The row digest is
 lowercase SHA-256 over the row serialized by the record canonical-JSON algorithm.
 All three options are required together to remove an existing row; a changed
-file revision, row revision, digest, root, or common-directory identity is a
-conflict. The CLI never scans for moved or deleted repositories and never
+file revision, row revision, or digest is a conflict. The selected root and
+recorded common-directory identity are covered by the row digest. The CLI never scans for moved or deleted repositories and never
 removes rows automatically.
 
-Forget resolves an existing path physically but accepts an absent path only when
-it is absolute, Unicode-normalized, contains no `.` or `..` segments after
-normalization, and exactly matches a stored `git_root`. It never resolves an
-absent path through its parent. Removing an existing row increments
+Forget selects the stored `git_root` lexically under the ledger lock. Its input
+must be absolute, Unicode-normalized, contain no `.` or `..` segments, and use
+the stored canonical spelling. It never inspects or resolves that live path or
+its parents, invokes Git there, or requires the old checkout identity to remain.
+Absent paths, symlink replacements, reused Git roots, and non-Git replacements
+therefore use the same row and revision checks. Deletion removes only that row
+and its language inventory; it never touches the replacement or symlink target. Removing an existing row increments
 `file_revision` once, reports the removed `previous_row_revision`, and retains an
 empty ledger when the last row is removed. It does not assign a new row revision.
 A missing row returns the current file revision, or null when no ledger exists.
