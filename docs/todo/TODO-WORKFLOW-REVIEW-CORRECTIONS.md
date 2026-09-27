@@ -299,7 +299,9 @@ behavior while Master retains skill-functional verification.
 - Prepare the affected manual scenarios for Master: route selection and
   restart, ordinal-four blocker authority, Task plan resume, Orca review,
   first release, installed plugin loading, and authorization effects.
-  Report observed outcomes and unperformed scenarios separately.
+  The [manual scenario table](../../TESTING.md#workflow-functional-verification)
+  expands these families with the affected per-task checks. Report observed
+  outcomes and unperformed scenarios separately through its workflow handoff.
 - Observe the corrected plugin in a fresh installed Codex session and confirm
   the expected `aquarium_dev_*` tools before accepting final Epic validation.
   This is the installed-session gate transferred from TASK-078; JSON parsing
@@ -315,6 +317,10 @@ confirmed before functional completion is claimed. The final handoff does
 not claim producer release, installation, activation, or cross-skill acceptance.
 
 ## Producer request map
+
+The [TASK-046 handoff](TODO-ASTRA-SKILLS.md#workflow-correction-producer-handoff)
+owns the promoted producer requirements and subsequent reply and source acceptance
+evidence. This map preserves the original EPIC-018 intake.
 
 | Owner | Already-sent request scope | Expected acceptance evidence and Aquarium follow-up |
 | --- | --- | --- |

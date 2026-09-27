@@ -25,9 +25,9 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 | Stage | Checks |
 |---|---|
 | `test-prepare` | Ruff formatting and lint for maintained Python files; plugin-manifest JSON parsing; Ruby syntax; package metadata, local references, basic Procedure structure, and release-version identity; whitespace validation. |
-| `test-unit` | Native pytest tests for isolated installed-plugin resource containment through the Ruby link checker, complete upstream skill inventories, and isolated production-status contracts, storage and reporting helpers, its offline installer, and the test-setup, docs-setup, release-notes, publication-state, and independent-review target inspectors and helpers. |
-| `test-int` | Native pytest production-status persistence and concurrency scenarios plus the docs-setup, global-tool, and test-setup inspector suites, followed by the three pre-existing Python `unittest` suites exercising tool inspection, manifest normalization, commit-gate behavior, temporary Git repositories, subprocess boundaries, and cross-component fixtures. |
-| `test-e2e` | Python pytest scenarios invoking the shipped production-status and test-setup CLIs as black boxes against isolated temporary repository fixtures. |
+| `test-unit` | Native pytest tests for isolated installed-plugin resource containment through the Ruby link checker, complete upstream skill inventories, Procedure routing and qualification harnesses, production-status contracts and storage, aquarium-dev runtime, installer, service and isolated MCP STDIO helpers, release-QA evidence and publication helpers, and the setup, documentation, release-note, and review-target inspectors. |
+| `test-int` | Native pytest production-status persistence, concurrency, stored-key removal and inventory-retention scenarios plus the documentation, global-tool and testing inspectors; the three approved legacy unittest suites exercise tool inspection, manifest normalization and commit gates across temporary Git repositories and subprocess boundaries. |
+| `test-e2e` | Python pytest scenarios invoking the shipped production-status and test-setup CLIs and release-QA freeze/confirmation CLI as black boxes against isolated temporary fixtures. |
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
 
@@ -39,9 +39,41 @@ Additional bounded sessions exercise the native correction matrix. Terminal scen
 
 Further bounded scenarios prove the serial completion contract directly. Task coverage includes `unverified` return to fresh review evidence, simultaneous-owner precedence, each sole phase owner, and inconsistent finding totals or owner evidence returning to review. The finding-total case includes a surplus unresolved finding beside a Low bucket. Goal coverage sends the same inconsistency back to evidence capture and also covers complete hardening-deferral traversal and an epic-closeout completion gap stopping for user direction. Goal and Validation coverage exercises both `unmet` and `unverified` completion routes.
 
+War-room qualification also exercises evidence-backed no-work through draft, quality, approval, documentation and assessment. It verifies that work-classification and corrective-proposal nodes are not visited on that route. These fixture decisions prove Procedure reachability and guards; Master still verifies the diagnostic judgment and actual skill handoff.
+
 A local development binary provides development-contract evidence only. For distribution readiness, first verify the official v0.2.11 Apple Silicon archive against its published checksum, then run the same target against the extracted exact binary. The target requires no network after artifact provisioning. Podway's own exact release-candidate gate remains authoritative for Podway distribution; Aquarium's independent target proves only compatibility of the exact Aquarium candidate named by the resulting Git revision.
 
 Podway skill changes also need Master's manual verification: setup must compare the complete skill tree against the catalog's fixed commit even when the runtime release changes; resuming the same authorized workspace and session must retain approval while using fresh fences; an unauthorized identity change must stop session mutations; and Codex and Podway goals must follow their own creation, completion, and blocker rules. An uncertain mutation must retain its original request and idempotency key for recovery. Plan-handoff verification must also cover a plan file changed or removed after attachment: the handler must stop before implementation, while an ordinary session without an artifact remains valid. These checks remain unverified until Master provides their outcomes. `make test` and the binary compatibility gate do not prove skill behavior.
+
+## Workflow Functional Verification
+
+Source and fixture checks do not establish host routing or multi-step skill behavior.
+Bind every observed result to the exact Aquarium candidate and applicable native
+tool source. Record performed and unperformed outcomes in the owning workflow's
+Podway evidence and final handoff; without Podway, use the final handoff. Apply the
+[evidence residency contract](plugins/aquarium/references/evidence-residency.md)
+when promoting a durable result. The scenarios below require their own applicable
+execution authority; this list
+authorizes no installation, session replacement, provider call, clipboard write,
+broker operation, deletion, commit, or publication.
+
+| Scenario | Required observation |
+| --- | --- |
+| Selected review route on a prior Procedure and after context restoration | Reject unsupported routes before dispatch; preserve the exact live operation and supported recovery without silent provider or route changes. |
+| Blocker at ordinal four and one additional authorized correction | Stop at an unset user choice; consume one granted correction and confirmation once, then ask again if a blocker remains. |
+| Task resume with an optional plan artifact | Verify the exact attached digest and size; changed or missing content blocks implementation, while absence of an optional artifact remains valid. |
+| Staged Orca review and native recovery | Dispatch the complete current staged target with every canonical reviewer restriction; resume or retry only through native support and existing authority. |
+| Task records, prose, dossier, and commit handoff | Settle the canonical record and required dossier decision before review; apply the final prose pass before capture; exact member acceptance consumes only its carried one-commit grant. |
+| First release, settled light candidate, active Design Gate, and publication recovery | Keep baseline, candidate SHA, required scenario evidence, release title, remote ancestry, and separate publication authority consistent. Fixture success is not a release outcome. |
+| Corrected plugin loaded in a fresh installed Codex session | Bind the installed package to the exact candidate and observe all tools declared by the packaged MCP server's OPERATIONS map through host discovery. JSON parsing and direct STDIO calls do not satisfy this check. |
+| PM, setup lookup, installer, and Sorage Project setup | Disclose PM files and clipboard replacement separately; preserve selected lookup and pinned installer/cache/lock-file boundaries; Project setup does not trigger broker discovery. |
+| Design QA and committed delivery input | Preserve raw PASS, REVISE, and FAIL separately from operation failure; route content corrections to their owner; document approval alone does not grant commit or implementation authority. |
+| War-room no-work and incomplete investigation | Require evidence that expected behavior holds for no-work, retain quality and approval, use canonical note owners or verified no-change, and leave unexplained symptoms incomplete. |
+| Status removal after path reuse or symlink replacement | Show and approve the exact stored row; preserve all revision and digest fences and leave replacement paths untouched. |
+
+Do not claim functional completion before Master confirms the required outcomes.
+Producer source fixes, release, installation, activation, and cross-skill
+acceptance remain separate evidence classes.
 
 ## Test Frameworks
 
@@ -73,9 +105,9 @@ The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process en
 
 ## E2E Environment
 
-The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py` and `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables. Master verifies the three-subagent skill dispatch and result handling separately; static tests cannot establish the requested model, effort, target, or Brief delivered to host agents.
+The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py`, `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py`, and `plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables. Master verifies the three-subagent skill dispatch and result handling separately; static tests cannot establish the requested model, effort, target, or Brief delivered to host agents.
 
-Each scenario creates one unique operating-system temporary directory containing only test-owned repository fixtures. It uses no credential, account, network, port, database, container, volume, provider, or production environment. `pytest` owns teardown through `tmp_path`; the test never deletes a path it did not create. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
+Scenarios use test-owned temporary repositories and input files under `tmp_path`, which pytest cleans up. Release-QA scenarios also create private `release-qa.*` evidence and confirmation roots under `/tmp`; their fixture teardown and `finally` blocks remove those additional roots. Tests never delete a path they did not create or use a production environment, credential, account, network, port, database, container, volume, or provider. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
 
 ## Language Diagnostics
 

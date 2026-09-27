@@ -288,6 +288,37 @@ Acceptance:
 - No runtime performance, token-saving, or latency improvement is claimed without
   measurement.
 
+## Workflow-correction producer handoff
+
+TASK-085 carries the six previously sent requests into TASK-046. This section
+owns the carried producer requirements and subsequent reply and source acceptance
+evidence; the EPIC-018 dossier retains the original intake.
+Their broker request/reply identities, exact producer revisions, changed paths,
+and verification results were not supplied with the adopted scope. Keep those
+fields unknown until Master provides them or authorizes the exact broker query.
+Do not resend requests or infer producer completion from Aquarium corrections.
+
+| Producer | Carried finding scope | Required source acceptance |
+| --- | --- | --- |
+| Gaori | H-5; R8-11/12 | Repository and environment binding for execution, native log boundaries, and native estimates. |
+| Mulgae | H-5, M-I5–M-I7; R9-11 | Exact review target and complete Brief within native input limits; transmission authority; supported cancellation and same-operation recovery; version-matched results. |
+| Podway | M-I1–M-I4; R8-08–R8-10 | Read-only wait-ready recovery, custom-Procedure validation, preapproval observation, and separately authorized workspace-mode configuration/history effects. |
+| Sanho | R8-06, R8-13/14 | Evidence for refresh behavior and rejected sync/publication continuation, retaining boundary-specific authority and actual outcomes. |
+| Sorage | H-6, M-I8/M-I9; R9-13–R9-15 | Explicit pinned-delete authority, guarded Review Note revision, exact-key idempotent send recovery, packaged resources, and Project setup routing. |
+| Dolgorae | M-I7/M-I10 | Provider termination versus observer waiting, unknown-result recovery without duplicate execution, and reachable packaged schema/examples. |
+
+M-I11 remains with the Claude-port installation owner. The original port's old
+or missing copies are historical observations, not a current host diagnosis.
+Compare accepted producer source and installed copies separately; no source
+correction proves installation or activation. Shared findings H-5 and M-I7
+retain their distinct producer actions without becoming duplicate findings.
+Adjacent Low request IDs do not add High/Medium inventory entries.
+
+Aquarium's caller corrections for M-I2, M-I4, and M-I5 do not close their
+producer-owned requirements. TASK-046 retains its roadmap dependencies and
+requires exact source inspection and applicable manual acceptance before
+cross-skill completion.
+
 ## External source acceptance
 
 These criteria define the producer results to inspect during integration. The roadmap
