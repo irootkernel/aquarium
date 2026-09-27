@@ -457,4 +457,4 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 | TASK-082 | Correct release helpers and gate sequencing | Support first releases and repository-specific commit titles; bind pre-QA gates, light confirmation, Design Gates, and publication recovery. | Completed | TASK-081 |
 | TASK-083 | Correct installed-package and setup contracts | Keep plugin resources reachable and align tool inventory, network and installer disclosures, timeout, and Sorage setup routing. | Completed | TASK-082 |
 | TASK-084 | Correct design and status workflows | Align quality-result decisions, design-document ownership, war-room notes, and status-forget recovery. | Completed | TASK-083 |
-| TASK-085 | Qualify Aquarium corrections and hand off integration | Verify the exact Aquarium-owned changes, report manual evidence separately, and pass producer-response gaps to TASK-046. | Completed | TASK-084 |
+| TASK-085 | Qualify Aquarium corrections and hand off integration | Verify the exact Aquarium-owned changes, report manual evidence separately, and pass producer-response gaps to TASK-046. | In Progress | TASK-084 |
