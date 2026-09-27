@@ -15,6 +15,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Continue approved Epic delivery through Task implementation, review, commits, and internal validation, then request one overall user acceptance before final closeout; existing managed Goal and Validation files require an authorized update.
+
 - Check the selected Procedure review route before execution and align review waiting, recovery, candidate staging, and tool handoffs with their native contracts.
 - Preserve current blocker authority, plan handoff evidence, and remediation order across Task, Goal, and Validation Procedures.
 - Align Task closeout records, dossier settlement, final prose review, and commit authority across delivery and validation.

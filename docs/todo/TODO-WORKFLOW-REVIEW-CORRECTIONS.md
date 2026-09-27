@@ -241,8 +241,10 @@ the repository release policy.
 
 Acceptance: roadmap and ordinary repository commits follow their distinct
 rules; a complete approval handoff reaches one authorized commit without a
-missing field or extra permission question; reopened and remediation work
-does not inherit normal member-Task authority.
+missing field or extra permission question. Epic member Tasks use delegated
+acceptance; reopened and remediation work uses the envelope's explicit correction
+grant rather than the normal member-Task grant. Final Epic acceptance remains with
+the user after internal validation and closeout preparation.
 
 ### TASK-082: Correct release helpers and gate sequencing
 

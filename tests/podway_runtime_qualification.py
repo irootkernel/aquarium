@@ -2500,6 +2500,25 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
+                "workflow-owner": (
+                    "epic-handler" if self.scenario == "standard" else "epic-validator"
+                ),
+                "acceptance-source": (
+                    "user"
+                    if node == "record-stopped-outcome"
+                    or (
+                        self.current_procedure_id == "aquarium-goal-v2"
+                        and (
+                            goal_kind == "epic-closeout"
+                            or self.scenario in GOAL_CLOSEOUT_GAP_SCENARIOS
+                        )
+                    )
+                    or (
+                        self.current_procedure_id == "aquarium-validation-v2"
+                        and self.scenario != "standard"
+                    )
+                    else "epic-delegation"
+                ),
                 "pass-kind": (
                     "remediation"
                     if self.node_visits.get("prepare-validation-pass", 0) > 1
@@ -5204,6 +5223,31 @@ class ManagedRuntime:
                     special_option = "low-disposition"
             if scenario == "war-room-no-work" and node == "decide-cause":
                 special_option = "no-work"
+            if procedure_id in {
+                "aquarium-goal-v2",
+                "aquarium-validation-v2",
+            } and node in {"approve-closeout", "approve-stopped-closeout"}:
+                source_node = (
+                    "record-outcome"
+                    if node == "approve-closeout"
+                    else "record-stopped-outcome"
+                )
+                actor = self.read_complete_evidence(
+                    observation, source_node, "acceptance-source"
+                )
+                for item_id in ("acceptance-authority", "accepted-target"):
+                    if not self.read_complete_evidence(
+                        observation, source_node, item_id
+                    ):
+                        raise RuntimeQualificationError("acceptance evidence is absent")
+                special_option = (
+                    "delegated" if actor == "epic-delegation" else "approved"
+                )
+                if node == "approve-closeout":
+                    observation = self.reject_guarded_decision(
+                        observation,
+                        "approved" if special_option == "delegated" else "delegated",
+                    )
             option = (
                 special_option
                 or {
@@ -5238,6 +5282,14 @@ class ManagedRuntime:
                     f"no successful qualification option for {procedure_id}:{node}"
                 )
             decision = self.decide(observation, option)
+            if (
+                procedure_id in {"aquarium-goal-v2", "aquarium-validation-v2"}
+                and node == "approve-closeout"
+            ):
+                self.decision_destination(
+                    decision,
+                    "delegated-closeout" if option == "delegated" else "closeout",
+                )
             if (
                 procedure_id == "aquarium-goal-v2"
                 and node in GOAL_COMPLETED_ASSESSMENT_NODES

@@ -36,7 +36,7 @@ A completed Task review records its optional backend check separately from revie
 
 ## Deliver One Epic
 
-`epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, orders member tasks by dependency and roadmap order, and completes one isolated task commit at a time. The approved Epic execution envelope authorizes the normal completion commit for each planned member Task. After verification and review, final Goal approval accepts the exact candidate, including its lifecycle, record, and release-note decisions. An approved candidate then passes to `task-commit` without another commit question, and the resulting commit SHA is recorded during Goal closeout. A `changes-requested` decision returns to work before any commit. Remediation, closeout, additional commits, push, and publication remain separate effects.
+`epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, and completes Tasks in dependency and roadmap order. One approved execution envelope delegates exact member-Task and owned-correction acceptance, with distinct grants for member completion commits, verified correction groups, and a final closeout commit conditional on actual user acceptance. Each Task proceeds through implementation, verification, review, delegated candidate acceptance, and one isolated `task-commit` handoff without a user-review pause. Acceptance covers lifecycle, record, and exact release-note decisions. Changed candidates need fresh acceptance and affected evidence; consumed grants cannot authorize another commit.
 
 Each member task uses one `aquarium-goal-v2` session, decides whether the current evidence is clean, blocking, Low-only, or inconsistent, and records any durable hardening deferral only on the supported Low-only route before goal assessment. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, and converges under the same three-work-unit plus one-remediation-confirmation boundary.
 
@@ -44,7 +44,15 @@ Goal and validation review checkpoints use the same selectable routing contract 
 
 Task-owned gaps reopen the owning task when the roadmap defines that path. Cross-task seam gaps use the epic identity. External gaps stop with the other repository owner, exact required revision, and missing evidence; Aquarium never edits another repository merely to close its own epic.
 
-Validation remediation stays in the current Validation session. Each owned correction commit requires explicit validation-envelope or direct authority and acceptance of its exact verified diff, with lifecycle, record, and release-note decisions. Its source audit or review establishes the correction set; the next whole-Epic assessment covers the committed correction. A pre-review direct audit marks provider evidence inapplicable, and a correction commit does not imply successful validation. These commits never inherit normal member-Task authority or require an invented per-group provider review.
+Validation remediation stays in the current Validation session. Each owned correction commit uses the invoking envelope's explicit correction grant and acceptance of its exact verified diff, with lifecycle, record, and release-note decisions. The normal member-Task grant alone never authorizes correction. Source audit or review findings establish the correction set; the next whole-Epic assessment covers the committed correction. A pre-review direct audit marks provider evidence inapplicable, and a correction commit does not imply successful validation. No per-group provider review is required.
+
+Internal validation records `workflow-owner=epic-handler` and delegated acceptance,
+then hands off to the final Epic closeout Goal. After preparing the closeout diff,
+the handler asks the user once to verify the whole result and accept that exact
+candidate. Acceptance enables the conditional closeout commit without another
+permission question. Requested changes return to the owning work and affected
+validation while preserving review budgets. The handler never calls the independent
+`epic-validator` implicitly. Progress reports do not pause execution for approval.
 
 ## Cold-Validate a Completed Epic
 

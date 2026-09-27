@@ -136,3 +136,16 @@ used by action instructions and handler compatibility inspection.
 - `aquarium-war-room-v2` supports `war-room`; it records baseline or reproduction, investigation, unguarded cause and scope judgments, guarded proposal quality, explicit approval, documentation, assessment, and closeout. It ends with an approved task, epic, incomplete-investigation document, or evidence-backed no-work outcome, including verified no-change. Every branch passes quality and approval; none records a fix implementation.
 
 The caller records a leaf report only after independently checking the leaf postcondition. A failed check or valid Medium-or-higher review finding must select the failure route and create fresh rework and re-review evidence while an authorized budget remains. A completed Low disposition may advance with its required local checks and an explicit record that the preceding review predates changed bytes. Epic-handler's second-review member-task deferral is limited to small independent Low future risks with a canonical deferred-feedback owner; confirmation-only Medium-or-higher findings wait for user direction. Neither exception is clean review evidence. A final Podway `achieved` outcome cannot make a non-successful roadmap task successful, replace required approval, create a commit, or establish publication.
+
+### Epic acceptance provenance
+
+Goal v25 and Validation v24 distinguish `user` acceptance from
+`epic-delegation`. The handler records the authority reference and exact candidate before committing. Member Tasks, pre-validation corrections, and the
+continuing Epic's internal validation use delegated closeout; final Epic closeout
+and independently invoked cold validation require actual user acceptance.
+Setup preserves prior Goal and Validation source bytes but reports them as incompatible
+with the current handler contract until an authorized managed-file update. Existing
+sessions keep their admitted Procedure snapshot. An older user-only gate
+cannot be recorded as delegated acceptance. Resume its original contract only with
+recoverable authority; otherwise report the precise legacy gate and required
+continuation without resetting or replacing active work.

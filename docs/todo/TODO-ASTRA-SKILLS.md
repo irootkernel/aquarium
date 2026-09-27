@@ -185,11 +185,12 @@ Address five bounded behaviors:
 3. In `task-commit`, accept an explicit current task/checkpoint relationship when the
    request and inspected state agree. Ask when the relationship is missing, ambiguous,
    or conflicting.
-4. Preserve `epic-handler`'s carried member-Task commit authority: after final Goal
-   approval accepts the exact candidate, `task-commit` must not ask for the same
-   commit-effect authorization again. Keep exact release-note acceptance, scope
-   changes, remediation, closeout, additional commits, push, and publication
-   separately authorized.
+4. Carry `epic-handler`'s delegated candidate acceptance and distinct member,
+   correction, and conditional closeout grants through `task-commit`. Complete
+   member Tasks and internal validation without user-review pauses, including
+   exact release-note decisions. Request the user's overall acceptance after
+   closeout preparation. Material scope changes, uncovered extra commits, push,
+   and publication still need their own authority.
 5. In `dev-setup`, record established Sanho non-use in the target project's AGENTS.md
    and align Aquarium callers, including `task-commit`, with that guidance. Confirm
    the repository's registration and configuration; a missing executable or failed
@@ -215,14 +216,17 @@ Acceptance:
 - Podway's required fresh observations and fences remain intact.
 - An exact task/checkpoint commit request does not trigger the same relationship
   question again.
-- Final Goal approval of an exact Epic member-Task candidate leads to one isolated
-  commit without a second commit question, then records its SHA at closeout.
-- A `changes-requested` Goal decision returns to work before any commit and leaves the
-  member-Task commit authority unused.
-- A candidate change after final Goal approval makes that exact-candidate acceptance
-  stale, and consumed authority cannot produce a second commit.
-- Reopened-task corrections, remediation, Epic closeout, and additional commits need
-  separate one-commit authority. Push and publication remain separate.
+- The approved Epic envelope delegates exact member-Task acceptance and carries a
+  distinct one-commit grant. Verification and review lead to the isolated commit
+  and its recorded SHA without a per-Task user-review pause.
+- A changed candidate invalidates its acceptance and affected evidence; the
+  coordinator renews delegated acceptance within the existing grant.
+- Reopened Tasks and owned remediation use explicit correction grants in the
+  envelope. They never reuse a consumed member-Task grant.
+- Internal Epic validation completes under delegation. The user accepts the whole
+  result and prepared closeout diff once before the conditional closeout commit.
+  Requested changes return to their owner and affected validation without resetting
+  review budgets. Push and publication remain separate.
 - Ambiguous commits still require clarification.
 - Lifecycle selection, commit scope, identity checks, and push authorization remain
   separate.
@@ -257,11 +261,13 @@ applicable execution authority and can remain pending after source preparation.
 | Changed target or materially expanded effect | Relevant evidence or authorization is refreshed |
 | Small refinement and no-op refinement | Proportionate checks without redundant gate execution |
 | Exact task/checkpoint commit request | Relationship is reused; lifecycle and publication remain separate |
-| Final Goal approval of an exact planned member-Task candidate | One commit runs without another commit question, then closeout records its SHA |
-| `changes-requested` at final Goal approval | Return to work before any commit and retain the unused member-Task authority |
-| Candidate mutation after final Goal approval | Exact-candidate acceptance is stale and must be renewed before commit |
-| Second commit after the member-Task authority is consumed | Reject the commit until new one-commit authority is provided |
-| Reopened Task, remediation, Epic closeout, push, or publication | Require the effect's separate authority; do not reuse the member-Task completion authority |
+| Delegated acceptance of an exact planned member-Task candidate | One commit runs without a user-review pause, closeout records its SHA, and execution continues |
+| Changed candidate before commit | Refresh affected evidence and delegated acceptance under the current grant |
+| Second commit after a member-Task grant is consumed | Require an applicable unconsumed correction grant or new authority |
+| Reopened Task or owned remediation | Use the explicit correction grant, preserving review budgets |
+| Internal Epic validation and final closeout | Finish internal validation under delegation, then request one overall user acceptance before closeout |
+| Final user requests changes | Correct owned work, refresh affected validation, and present the new exact candidate |
+| Push or publication | Require separate authority |
 | Async observer timeout | The same invocation continues without duplicate execution |
 | Podway context restoration | Current identity and fences govern the next action |
 | Sanho commit warning and push rejection | Correct boundary-specific continuation |

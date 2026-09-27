@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "24"
+version: "23"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -14,13 +14,6 @@ node_definitions:
       - Use the invoking validation handler to bind the exact committed epic, scope, checks, and approved remediation and review envelope.
       - Do not mutate source, install assets, replace sessions, commit, or publish while recording the baseline.
     items:
-      - id: workflow-owner
-        type: choice
-        prompt: Record whether this is the continuing Epic handler's internal audit or an independently requested cold validation.
-        required: true
-        choices:
-          - epic-handler
-          - epic-validator
       - id: baseline-summary
         type: text
         prompt: Record epic identity, committed revision, authority, worktree, dependencies, and evidence baseline.
@@ -1581,62 +1574,7 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
-      - id: acceptance-source
-        type: choice
-        prompt: Record the source of the candidate decision, either an actual user response or the coordinator acting under the approved Epic envelope; never attribute a delegated decision to the user.
-        required: true
-        choices:
-          - user
-          - epic-delegation
-      - id: acceptance-authority
-        type: text
-        prompt: Record the recoverable user decision or Epic envelope reference and the applicable unconsumed grant; verify its scope against the current candidate.
-        required: true
-        min_length: 1
-        max_length: 3000
-        multiline: true
-      - id: accepted-target
-        type: text
-        prompt: Record the exact candidate addressed by the decision, lifecycle, record and release-note decisions, evidence basis, and handoffs; acceptance applies only after an accepting decision and becomes stale if these change.
-        required: true
-        min_length: 1
-        max_length: 4000
-        multiline: true
   approval-decision:
-    type: decision
-    title: Accept the exact validation candidate
-    objective: Close only when the exact assessed validation outcome and handoffs are accepted.
-    prompt: Is this exact validation candidate accepted by the user or under the continuing Epic delegation?
-    evidence_guidance:
-      - Read the path-owned assessed outcome and exact final repository evidence.
-    options:
-      - id: approved
-        label: Final approval granted
-        criteria: The user explicitly accepted this exact assessed outcome and every applicable handoff.
-        guards:
-          - evidence:
-              node: record-outcome
-              item: acceptance-source
-            equals: user
-      - id: delegated
-        label: Accept under Epic delegation
-        criteria: The coordinator verified the exact candidate under the current Epic envelope's applicable grant; final user acceptance remains pending.
-        guards:
-          - evidence:
-              node: record-outcome
-              item: acceptance-source
-            equals: epic-delegation
-          - evidence:
-              node: capture-baseline
-              item: workflow-owner
-            equals: epic-handler
-      - id: changes-requested
-        label: Changes requested
-        criteria: The user requested changes, or the coordinator found an unmet closeout gate or invalid acceptance basis.
-    reason:
-      required: true
-      prompt: Record the actual acceptance source, authority, exact candidate, and any correction needed; delegated acceptance is a coordinator decision.
-  stopped-approval-decision:
     type: decision
     title: Record final validation approval
     objective: Close only when the exact assessed validation outcome and handoffs are accepted.
@@ -1646,12 +1584,7 @@ node_definitions:
     options:
       - id: approved
         label: Final approval granted
-        criteria: The user explicitly accepted the stopped outcome and every applicable handoff.
-        guards:
-          - evidence:
-              node: record-stopped-outcome
-              item: acceptance-source
-            equals: user
+        criteria: The assessed outcome and every applicable handoff are accepted.
       - id: changes-requested
         label: Changes requested
         criteria: The user requested a correction or identified an unmet closeout gate.
@@ -2711,19 +2644,9 @@ graph:
           required: true
           items:
             - outcome-summary
-            - acceptance-source
-            - acceptance-authority
-            - accepted-target
-        - node: capture-baseline
-          required: true
-          items:
-            - workflow-owner
       routes:
         approved:
           to: closeout
-          effect: advance
-        delegated:
-          to: delegated-closeout
           effect: advance
         changes-requested:
           to: prepare-validation-pass
@@ -2731,31 +2654,16 @@ graph:
     - id: closeout
       use: closeout-record
       terminal: true
-    - id: delegated-closeout
-      use: closeout-record
-      evidence_from:
-        - node: record-outcome
-          required: true
-          items:
-            - acceptance-source
-            - acceptance-authority
-            - accepted-target
-        - node: approve-closeout
-          required: true
-      terminal: true
     - id: record-stopped-outcome
       use: outcome-record
       next: approve-stopped-closeout
     - id: approve-stopped-closeout
-      use: stopped-approval-decision
+      use: approval-decision
       evidence_from:
         - node: record-stopped-outcome
           required: true
           items:
             - outcome-summary
-            - acceptance-source
-            - acceptance-authority
-            - accepted-target
       routes:
         approved:
           to: stopped-closeout

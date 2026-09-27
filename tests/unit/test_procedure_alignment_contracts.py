@@ -45,17 +45,17 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
         ),
         (
             "aquarium-goal-v2.yaml",
-            "24",
+            "25",
+            "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
+            "aquarium-goal-v24.yaml",
             "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
-            "aquarium-goal-v23.yaml",
-            "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "23",
+            "24",
+            "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
+            "aquarium-validation-v23.yaml",
             "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
-            "aquarium-validation-v22.yaml",
-            "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -2082,6 +2082,7 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
         assert graph["record-outcome"]["next"] == "approve-closeout"
         assert graph["approve-closeout"]["routes"] == {
             "approved": {"to": "closeout", "effect": "advance"},
+            "delegated": {"to": "delegated-closeout", "effect": "advance"},
             "changes-requested": {"to": rework_target, "effect": "rework"},
         }
         assert {
@@ -2263,3 +2264,82 @@ def test_shape_quality_routes_completed_findings_to_their_owner() -> None:
             assert [
                 key for key, value in choices.items() if guards_match(value, values)
             ] == [expected]
+
+
+def test_epic_acceptance_guards_preserve_actor_and_workflow_boundaries() -> None:
+    cases = (
+        ("goal", "record-evidence", "goal-kind", "member-task", True),
+        ("goal", "record-evidence", "goal-kind", "pre-validation-remediation", True),
+        ("goal", "record-evidence", "goal-kind", "epic-closeout", False),
+        ("validation", "capture-baseline", "workflow-owner", "epic-handler", True),
+        ("validation", "capture-baseline", "workflow-owner", "epic-validator", False),
+    )
+    for kind, owner_node, owner_item, owner, delegation_allowed in cases:
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        approval = options(procedure, "approval-decision")
+        for actor in ("user", "epic-delegation"):
+            values = {
+                ("record-outcome", "acceptance-source"): actor,
+                (owner_node, owner_item): owner,
+            }
+            assert guards_match(approval["approved"], values) == (actor == "user")
+            assert guards_match(approval["delegated"], values) == (
+                actor == "epic-delegation" and delegation_allowed
+            )
+            assert guards_match(approval["changes-requested"], values)
+        assert not guards_match(approval["delegated"], {})
+        assert not guards_match(
+            approval["delegated"],
+            {("record-outcome", "acceptance-source"): "epic-delegation"},
+        )
+        stopped = options(procedure, "stopped-approval-decision")
+        assert "delegated" not in stopped
+        for actor in ("user", "epic-delegation"):
+            assert guards_match(
+                stopped["approved"],
+                {("record-stopped-outcome", "acceptance-source"): actor},
+            ) == (actor == "user")
+
+
+def test_delegated_closeout_requires_assessment_and_current_acceptance_evidence() -> (
+    None
+):
+    for kind in ("goal", "validation"):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        edges = graph_edges(procedure)
+        entry = procedure["graph"]["entry"]
+        terminal = "delegated-closeout"
+        assert terminal in reachable_nodes(edges, entry)
+        assert graph[terminal]["terminal"] is True
+        for required in ("assess-goal", "record-outcome", "approve-closeout"):
+            assert terminal not in reachable_nodes(edges, entry, without=required)
+        assert graph_predecessors(edges)[terminal] == {"approve-closeout"}
+        assert graph["approve-closeout"]["routes"]["delegated"] == {
+            "to": terminal,
+            "effect": "advance",
+        }
+        for consumer, source in (
+            ("approve-closeout", "record-outcome"),
+            ("delegated-closeout", "record-outcome"),
+            ("approve-stopped-closeout", "record-stopped-outcome"),
+        ):
+            evidence = next(
+                reference
+                for reference in graph[consumer]["evidence_from"]
+                if reference["node"] == source
+            )
+            assert evidence["required"] is True
+            assert {
+                "acceptance-source",
+                "acceptance-authority",
+                "accepted-target",
+            } <= set(evidence["items"])
+        fields = {
+            item["id"]: item
+            for item in procedure["node_definitions"]["outcome-record"]["items"]
+        }
+        for name in ("acceptance-source", "acceptance-authority", "accepted-target"):
+            assert fields[name]["required"] is True
+        for name in ("acceptance-authority", "accepted-target"):
+            assert fields[name]["min_length"] > 0

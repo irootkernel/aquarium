@@ -33,9 +33,11 @@ TASK_V21_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-task-v21.yaml"
 GOAL_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v18.yaml"
 GOAL_V19_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v19.yaml"
 GOAL_V23_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v23.yaml"
+GOAL_V24_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-goal-v24.yaml"
 VALIDATION_V17_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v17.yaml"
 VALIDATION_V18_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v18.yaml"
 VALIDATION_V22_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v22.yaml"
+VALIDATION_V23_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v23.yaml"
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
@@ -4836,7 +4838,9 @@ else:
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
-    def test_actual_goal_v18_and_validation_v17_preserve_readiness(self) -> None:
+    def test_prior_goal_and_validation_preserve_bytes_but_require_current_contract(
+        self,
+    ) -> None:
         fixtures = {
             "aquarium-goal-v2.yaml": (
                 GOAL_V18_PROCEDURE_FIXTURE,
@@ -4872,11 +4876,11 @@ else:
 
                 self.assertEqual(entry["update_explanation"], "prior_canonical")
                 self.assertEqual(entry["source_state"], "valid_customization")
-                self.assertEqual(entry["handler_contract_status"], "compatible")
-                self.assertEqual(entry["handler_contract_reasons"], [])
+                self.assertEqual(entry["handler_contract_status"], "incompatible")
+                self.assertTrue(entry["handler_contract_reasons"])
                 self.assertFalse(entry["matches_source"])
                 self.assertEqual(target.read_bytes(), legacy_bytes)
-                self.assertEqual(podway["readiness_status"], "ready")
+                self.assertEqual(podway["readiness_status"], "degraded")
                 target.write_bytes(source.joinpath(name).read_bytes())
 
     def test_latest_prior_canonical_snapshots_are_exact_and_tamper_bounded(
@@ -4888,12 +4892,12 @@ else:
                 "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
             ),
             "aquarium-goal-v2.yaml": (
-                GOAL_V23_PROCEDURE_FIXTURE,
-                "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
+                GOAL_V24_PROCEDURE_FIXTURE,
+                "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
             ),
             "aquarium-validation-v2.yaml": (
-                VALIDATION_V22_PROCEDURE_FIXTURE,
-                "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
+                VALIDATION_V23_PROCEDURE_FIXTURE,
+                "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
             ),
         }
         self.install_fake_tools()
@@ -4918,8 +4922,15 @@ else:
                     if item["path"].endswith(name)
                 )
                 self.assertEqual(entry["update_explanation"], "prior_canonical")
-                self.assertEqual(entry["handler_contract_status"], "compatible")
-                self.assertEqual(podway["readiness_status"], "ready")
+                current_supported = name == "aquarium-task-v2.yaml"
+                self.assertEqual(
+                    entry["handler_contract_status"],
+                    "compatible" if current_supported else "incompatible",
+                )
+                self.assertEqual(
+                    podway["readiness_status"],
+                    "ready" if current_supported else "degraded",
+                )
                 self.assertEqual(target.read_bytes(), legacy_bytes)
 
             with self.subTest(procedure=name, case="tampered"):
@@ -5034,6 +5045,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
                     "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
                     "99dfe92a75accee69717154a13ea18b6e25a493e2674d78543f3780b8993a375",
@@ -5054,6 +5066,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
                     "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
                     "d3108415bc54a96c200a1189149c514428f53367eae3778c4440d23f8b55a800",

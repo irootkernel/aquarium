@@ -68,13 +68,20 @@ authority decision. Use remaining remediation authority when available; otherwis
 record the exact current blocker basis and wait at an unset user choice. Carry
 the admitted cause in native rework history before work invalidates its source.
 
-For a member Task, final Goal approval accepts the assessed outcome and exact
-candidate, including its lifecycle, record, and release-note decisions. An approved
-candidate consumes the Epic envelope's member-Task authority through `task-commit`
-before the handler records closeout with the resulting commit SHA. A
-`changes-requested` decision returns to work before any commit and leaves that
-one-commit authority unused. Final Goal approval is outcome acceptance, not a second
-authorization for the commit effect.
+For member Tasks and pre-validation corrections, `record-outcome` records
+`acceptance-source=epic-delegation`, the recoverable `acceptance-authority`, and
+`accepted-target`. The coordinator checks the exact diff, lifecycle, record,
+release-note decisions, and applicable unconsumed grant. At `approve-closeout`,
+`delegated` is guarded against `goal-kind=epic-closeout` and leads to
+`delegated-closeout`, which records the verified commit and residue. No Task-level
+user acceptance is requested. A changed candidate returns to its owner for fresh
+acceptance and affected verification within the existing grant.
+
+Final Epic closeout requires `acceptance-source=user` and actual acceptance of the
+complete Epic result and prepared closeout diff. `approved` leads to `closeout`;
+`changes-requested` returns to work before any closeout commit. Stopped outcomes
+also require a user decision and cannot use delegated acceptance. Each path retains
+its own assessment and exact acceptance evidence.
 
 Each `choose-user-direction: fix-and-review` decision authorizes its one transition
 back to work and one next-ordinal remediation confirmation. Later rework reaches a fresh unset choice;
@@ -126,11 +133,18 @@ Validation assessment consumes the carried completion summary and gap counts,
 their consistency when present, and any user direction. A stop direction must
 produce a not-achieved assessment rather than validating or closing the epic.
 
-After assessment, `record-outcome` presents the exact result and candidate,
-including lifecycle, dossier disposition, release notes, and any required commit.
-User acceptance at `approve-closeout` precedes that commit and residue checks;
-`closeout` records their verified result. An active or in-review Epic also settles
-its execution dossier under the shared consumer rules before final approval.
+At `capture-baseline`, `workflow-owner` distinguishes `epic-handler` from
+`epic-validator`. After assessment, `record-outcome` records the exact result,
+`acceptance-source`, recoverable `acceptance-authority`, and `accepted-target`.
+Only a continuing `epic-handler` with `epic-delegation` may choose `delegated` at
+`approve-closeout` and reach `delegated-closeout`. This internal handoff leaves
+final user acceptance pending for the later Epic closeout Goal.
+
+An independent `epic-validator` retains actual user acceptance: `approved` leads
+to `closeout` after the required candidate acceptance, commit, and residue checks.
+Stopped outcomes also retain user acceptance. The final presentation includes
+lifecycle, dossier disposition, release notes, and any required commit; settle the
+execution dossier under the shared consumer rules before final acceptance.
 
 ## Design Procedure
 

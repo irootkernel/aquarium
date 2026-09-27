@@ -162,6 +162,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
         "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
         "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
         "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -182,6 +183,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
         "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
         "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
         "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",
@@ -212,8 +214,8 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
 }
 
 # Current handler compatibility is derived from the canonical Procedure structure.
-# Prior canonical digests remain admitted above so immutable session snapshots keep
-# their established compatibility without weakening current structural checks.
+# Prior canonical digests identify preserved source snapshots; current handler
+# readiness separately checks the required branches and acceptance evidence.
 LEGACY_PODWAY_PROCEDURES = (
     "root-kernel-task-v2.yaml",
     "root-kernel-goal-v2.yaml",
@@ -589,11 +591,14 @@ def inspect_podway_handler_contract(
     if content is None:
         return "not_checked", ["procedure_bytes_unavailable"]
     content_digest = hashlib.sha256(content).hexdigest()
-    # War-room requires the no-work branch, which prior canonical files lack.
-    if (
-        content_digest in PODWAY_PRIOR_CANONICAL_SHA256.get(name, set())
-        and name != "aquarium-war-room-v2.yaml"
-    ):
+    # These handlers require branches or acceptance evidence absent from prior files.
+    if content_digest in PODWAY_PRIOR_CANONICAL_SHA256.get(
+        name, set()
+    ) and name not in {
+        "aquarium-war-room-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-validation-v2.yaml",
+    }:
         return "compatible", []
     if yaml is None:
         return "not_checked", ["pyyaml_unavailable"]

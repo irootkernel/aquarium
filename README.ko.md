@@ -57,7 +57,7 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 ## 주요 워크플로
 
 1. **Shape** — `$aquarium:new-project`는 목표를 승인된 PRD와 첫 roadmap으로 만듭니다. `$aquarium:new-feature`와 `$aquarium:refactor`는 epic 하나를 만들거나 수정합니다. `$aquarium:war-room`은 어려운 버그를 진단해 다음 작업 단위를 제안하거나, 수정이 필요 없음을 확인하거나, 조사가 미완료임을 보고합니다. 수정 코드는 쓰지 않습니다.
-2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 epic의 task를 순서대로 수행한 뒤 epic 전체를 hardening합니다. Commit은 별도로 `$aquarium:task-commit`을 거치며 사용자가 승인합니다.
+2. **Deliver** — `$aquarium:task-handler`는 roadmap task 하나를 위의 단계로 수행합니다. `$aquarium:epic-handler`는 승인된 실행 범위 안에서 각 Task를 구현·검증·리뷰하고 `$aquarium:task-commit`으로 커밋한 뒤 epic 전체를 감사하고 문제를 수정합니다. Task 완료 판정과 내부 검증은 사용자의 위임에 따라 진행하며 최종 종료 변경분까지 준비한 후 전체 결과의 수락을 요청합니다.
 3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:mulgae-review`는 정확한 변경 사항이나 Task·Epic 완료 대상을 단독으로 검토하며 결과만 보고합니다. `$aquarium:orca-review`는 현재 Orca worktree의 staged, HEAD, commit, range 가운데 지정한 대상을 요청한 reviewer에게 맡깁니다. Task·Epic·검증 workflow의 기본 review는 Mulgae입니다. 요청에 따라 Orca나 Independent Review를 선택할 수 있습니다. `$aquarium:independent-review`는 새 Codex subagent 세 명이 지정한 대상을 각자 검토합니다. 단독으로 호출하거나 workflow의 review 경로로 선택할 수 있으며, host가 제공하는 lifecycle 보장만 따릅니다. Aquarium은 반환된 finding을 로컬에서 확인하고 technical verdict와 completion assessment를 구분합니다.
 4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
 
