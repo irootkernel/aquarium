@@ -105,7 +105,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:task-handler` for one named roadmap task.
 - Use `$aquarium:epic-handler` to implement one roadmap epic as sequential task goals.
 - Use `$aquarium:epic-validator` to cold-validate and remediate one completed roadmap epic.
-- Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow.
+- Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow. When an ordinary feature Epic needs a dossier or semantic clarification before execution, `$aquarium:epic-handler` may continue through `$aquarium:new-feature` in the same conversation. Design approvals still apply.
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, incomplete-investigation proposal, or evidence-backed no-work outcome.
 - Use `$aquarium:dev-setup-global` to diagnose, install, or update supported user-global development tools, paired skills, services, and global MCP state. Requests to install or update only the Aquarium plugin belong to the host's plugin-management flow; do not load this skill or run global setup diagnostics for those requests.
 - Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and operating guidance, including explicitly requested Sorage Project setup.

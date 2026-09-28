@@ -1,13 +1,13 @@
 # Capability Catalog
 
-Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit.
+Public orchestration skills require an explicit matching request except `task-commit`, which may be selected when the user asks to commit in a roadmap repository or when an Aquarium workflow hands off an approved commit, and the bounded `epic-handler` to `new-feature` design route described below.
 
 ## Design and Discovery
 
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
 | `$aquarium:new-project` | Explicit | Produces an approved greenfield PRD and initial roadmap through Ouroboros-assisted discovery and QA | Creates design documents only; it does not implement the project |
-| `$aquarium:new-feature` | Explicit | Creates or revises one feature epic in an existing canonical roadmap | Does not implement the feature |
+| `$aquarium:new-feature` | Explicit or pre-execution `epic-handler` design route | Creates or revises one feature epic in an existing canonical roadmap | A routed design preserves the existing epic identity and needs its own execution and exact-diff approvals; it does not implement the feature |
 | `$aquarium:refactor` | Explicit | Creates or revises one refactor or behavior-change epic | Does not implement the refactor |
 | `$aquarium:war-room` | Explicit | Diagnoses one difficult bug, isolates root cause, and proposes the next work unit, confirms no corrective work is needed, or reports an incomplete investigation | Does not implement the fix |
 
@@ -29,6 +29,8 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 | `$aquarium:epic-handler` | Explicit | Orders one epic's tasks, completes task goals and commits, then audits and hardens the integrated epic | External prerequisites require exact committed revisions and independent evidence |
 
 Task delivery uses at most three `work-unit` assessments followed by one `remediation-confirmation` under the initial workflow envelope. Every later correction and confirmation requires a fresh explicit user decision through the task's recorded user-direction gate. Epic delivery and cold validation use the same three-work-unit plus one-remediation-confirmation boundary. These limits are maxima, not quotas: clean evidence ends immediately, and a Low-only result proceeds after its frozen finding set receives complete supported dispositions, current local verification, and zero unmet or unverified completion criteria. A Medium-or-higher correction still requires its owed confirmation review.
+
+On an `execute` entry, `epic-handler` routes an ordinary feature epic with a required missing dossier or semantic owner to `new-feature` in the same conversation before creating an Epic session. Design finishes with an exact new-conversation `epic-handler` request once its approved documents and any required commit are complete. A user-requested dossier waiver retains the composite-SOT approval flow when the semantic requirements are complete.
 
 ## Validation and Review
 

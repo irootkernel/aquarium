@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Continue an executing Epic request through feature dossier design in the same conversation when its execution SOT needs one, then hand off the updated Epic for a new delivery conversation.
 - Replace the bundle setup manifest with v2 target-specific MCP scope, Sorage Project slug, and Mulgae artist intent.
 - Run Independent Review through three fresh Codex subagents as a standalone or selected Task, Epic, and validation route; retire the single-subagent native Codex route for new checkpoints while preserving existing Procedure snapshots.
 
