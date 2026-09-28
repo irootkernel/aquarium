@@ -97,7 +97,7 @@ current route as `ready`, `unavailable`, or `unverified`; Design and War Room
 entries report an empty map. The inspector qualifies the snapshot's declared
 routes only after native checks and overall readiness pass. A prior-canonical
 snapshot may remain generally compatible while a newer route is unavailable.
-Route qualification still requires PyYAML and readable declarations.
+This setup inspector requires PyYAML and readable declarations to qualify routes. Routine managed-session admission checks the selected route against the exact installed Procedure snapshot after its native and handler-contract checks, without invoking the inspector's global daemon readiness probe.
 
 When a repository component depends on a missing or degraded user-global MCP registration, the inspector reports the recommendation `continue_with_dev_setup_global`. Repository workflows use the same continuation for unavailable or unready user-global services and do not repair either class locally.
 

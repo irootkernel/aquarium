@@ -15,6 +15,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Use worktree observation to admit managed Podway sessions without polling global daemon readiness; keep service checks in setup and diagnosis.
 - Continue approved Epic delivery through Task implementation, review, commits, and internal validation, then request one overall user acceptance before final closeout; existing managed Goal and Validation files require an authorized update.
 
 - Check the selected Procedure review route before execution and align review waiting, recovery, candidate staging, and tool handoffs with their native contracts.

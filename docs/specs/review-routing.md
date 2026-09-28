@@ -146,10 +146,12 @@ host delegation blocks only `independent-review`. The workflow must still report
 selected route's exact prerequisite failure.
 
 Podway readiness also depends on the selected route in the exact Procedure
-snapshot. The inspector reports `review_route_readiness` for current routes;
-general readiness alone cannot admit a route absent from a prior-canonical
-snapshot. Active sessions retain their own declarations and evidence. A retired
-`native-codex` checkpoint takes an explicit failed-prerequisite disposition,
+snapshot. The setup inspector reports `review_route_readiness` for current routes,
+but routine session admission checks the installed Procedure declarations directly
+after native and handler-contract checks. General readiness alone cannot admit a
+route absent from a prior-canonical snapshot. Active sessions retain their own
+declarations and evidence. A retired `native-codex` checkpoint takes an explicit
+failed-prerequisite disposition,
 supported route change or waiver, or stop and successor; it never dispatches the
 retired reviewer or relabels Independent Review evidence.
 

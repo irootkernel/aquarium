@@ -60,6 +60,7 @@ Epic status is independent of child task status. Completing every child does not
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-076 | Implement target-specific bundle setup intent | Replace bundle v1 with v2 MCP scope lists, Sorage Project slug, and Mulgae artist intent; route and verify the selected setup scopes. [Bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md). | Completed | TASK-037 |
+| TASK-103 | Use worktree observation for Podway session admission | Replace routine global readiness polling with worktree observation while keeping setup diagnostics and session safeguards. [Podway integration](../../plugins/aquarium/references/podway-integration.md). | In Progress | — |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
