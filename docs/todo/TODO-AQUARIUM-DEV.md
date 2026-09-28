@@ -2,9 +2,11 @@
 
 ## Authority
 
-**Roadmap epic:** `EPIC-002`
+**Original roadmap epic:** `EPIC-002`
 
-This dossier is the detailed scope and acceptance source of truth for `EPIC-002`, `TASK-005` through `TASK-015`, `TASK-024`, corrective `TASK-031`, and `TASK-042`, and preserves the withdrawal rationale for `TASK-041`. The [canonical roadmap](../roadmap/README.md) alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks here are review evidence only.
+The [canonical roadmap](../roadmap/README.md) withdraws the unfinished expansion of this development channel in favor of `EPIC-019`. Completed acceptance history is preserved. The [Haepari VM adoption dossier](TODO-HAEPARI-VM-ADOPTION.md) owns replacement work; this file remains a historical scope and migration reference for final retirement. It does not authorize new enrollment or producer integration. Cancellation of planned work does not remove installed hooks, services, workers, launchers, or runtime state.
+
+The historical scope covers `TASK-005` through `TASK-015`, `TASK-024`, corrective `TASK-031`, `TASK-042`, and the withdrawal rationale for `TASK-041`. The canonical roadmap alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks below remain historical review evidence only.
 
 The `aquarium-dev` MCP tools, CLI, and shared development contract own implemented behavior. ADR-0008 supersedes the isolated-Codex and Dolgorae-development portions of the original design while preserving completed historical work.
 

@@ -10,7 +10,8 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 ## Adopted Roadmap Work Dossiers
 
-- [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) provides the detailed contract for `EPIC-002`, `TASK-005` through `TASK-015`, historical `TASK-024`, corrective `TASK-031`, producer integration `TASK-042`, and the withdrawal rationale for `TASK-041`.
+- [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) retains the historical `EPIC-002` scope and acceptance record while its unfinished expansion is withdrawn. `EPIC-019` retains it as a migration reference until shared-channel retirement and final dossier settlement; it does not authorize further legacy integration.
+- [Haepari VM adoption dossier](TODO-HAEPARI-VM-ADOPTION.md) defines Aquarium-first managed VM adoption, Haepari external-lease capability acceptance, Mulgae-owned `use-mulgae` partial-failure continuation, ordered Sorage delegation for nine producers, complete skill/migration verification and final legacy retirement for `EPIC-019` and `TASK-086` through `TASK-102`.
 - [Astra skill modernization dossier](TODO-ASTRA-SKILLS.md) defines the scope and
   acceptance for `EPIC-012`, `TASK-043` through `TASK-046`, and the local producer
   source checks needed for integration.
