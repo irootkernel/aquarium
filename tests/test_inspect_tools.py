@@ -305,8 +305,8 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         mcp_list_mode: str = "valid",
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.11",
-        podway_daemon_version: str = "0.2.11",
+        podway_version: str = "v0.2.12",
+        podway_daemon_version: str = "0.2.12",
         podway_daemon_reachable: bool = True,
         podway_daemon_status_schema: str = "podway.daemon-status-result/v3",
         podway_daemon_mode: str = "prod",
@@ -1077,7 +1077,12 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             f"---\nname: {name}\ndescription: test\n---\n", encoding="utf-8"
         )
         if complete:
-            for reference in ("lifecycle.md", "goal.md", "recovery.md"):
+            for reference in (
+                "delegation.md",
+                "lifecycle.md",
+                "goal.md",
+                "recovery.md",
+            ):
                 skill_root.joinpath("references", reference).write_text(
                     f"# {reference}\n", encoding="utf-8"
                 )
@@ -5531,7 +5536,7 @@ else:
         self.assertEqual(podway["status"], "degraded")
 
     def test_unsupported_or_mixed_podway_versions_are_degraded(self) -> None:
-        self.install_fake_tools(podway_version="v0.3.0", podway_daemon_version="0.2.11")
+        self.install_fake_tools(podway_version="v0.3.0", podway_daemon_version="0.2.12")
         self.install_managed_podway_procedures()
         completed = self.inspect(include_podway=True)
         podway = json.loads(completed.stdout)["tools"]["podway"]
@@ -5539,7 +5544,7 @@ else:
         self.assertFalse(podway["versions_match"])
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_podway_v0210_is_the_minimum_supported_release(self) -> None:
+    def test_podway_v0212_is_the_minimum_supported_release(self) -> None:
         for version, supported in (
             ("v0.2.0", False),
             ("v0.2.2", False),
@@ -5555,9 +5560,12 @@ else:
             ("v0.2.9-rc.1", False),
             ("v0.2.10", False),
             ("0.2.10", False),
-            ("v0.2.11", True),
-            ("0.2.11", True),
+            ("v0.2.11", False),
+            ("0.2.11", False),
             ("v0.2.11-rc.1", False),
+            ("v0.2.12", True),
+            ("0.2.12", True),
+            ("v0.2.12-rc.1", False),
             ("0.2.99", True),
             ("v0.3.0", False),
         ):
@@ -5643,12 +5651,17 @@ else:
         self.assertTrue(all(item["present"] for item in installation["files"]))
 
     def test_partial_invalid_or_duplicate_podway_skills_are_degraded(self) -> None:
-        for case in ("partial", "invalid", "duplicate"):
+        for case in ("partial", "missing-delegation", "invalid", "duplicate"):
             with self.subTest(case=case):
                 for root in (self.codex_home / "skills", self.home / ".agents/skills"):
                     shutil.rmtree(root / "use-podway", ignore_errors=True)
                 if case == "partial":
                     self.install_podway_skill(complete=False)
+                elif case == "missing-delegation":
+                    self.install_podway_skill()
+                    (
+                        self.codex_home / "skills/use-podway/references/delegation.md"
+                    ).unlink()
                 elif case == "invalid":
                     self.install_podway_skill(name="wrong-name")
                 else:
@@ -5659,6 +5672,16 @@ else:
                 self.assertEqual(
                     podway["paired_skill"]["duplicate"], case == "duplicate"
                 )
+                if case == "missing-delegation":
+                    installation = podway["paired_skill"]["installations"][0]
+                    self.assertEqual(
+                        [
+                            item["path"]
+                            for item in installation["files"]
+                            if not item["present"]
+                        ],
+                        ["references/delegation.md"],
+                    )
 
     def test_unhealthy_daemon_doctor_or_procedure_is_degraded(self) -> None:
         cases = (

@@ -118,10 +118,10 @@ Before either mode, inspect the worktree, the local and remote `main` commits, t
 
 The Podway compatibility gate below belongs to release preparation. A development commit or amendment does not start or restart it. An explicit compatibility check request may invoke it outside a release.
 
-When the open release requires Podway v0.2.11 compatibility, verify the official Apple Silicon archive against its published checksum and run this additional exact-artifact gate through its configured Gaori command before release QA:
+When the open release requires Podway v0.2.12 compatibility, verify the official Apple Silicon archive against its published checksum and run this additional exact-artifact gate through its configured Gaori command before release QA:
 
 ```bash
-PODWAY_BIN=<absolute-path-to-extracted-v0.2.11-podway> gaori run test-podway-compat
+PODWAY_BIN=<absolute-path-to-extracted-v0.2.12-podway> gaori run test-podway-compat
 ```
 
 The invocation above expresses the required command and environment; it does not bypass the installed `$use-gaori` skill's execution and completion-waiting policy. The executing agent must load that skill and let it select the supported transport. An attached MCP path is eligible only when it demonstrably preserves the exact `PODWAY_BIN`; changing the agent shell environment does not prove that an already running MCP server received it. When the native contract requires CLI execution, start the CLI once and await that same process handle. Do not start another MCP server, restart an attached server, or alter host configuration to manufacture eligibility.

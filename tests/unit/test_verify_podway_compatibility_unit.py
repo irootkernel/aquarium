@@ -878,7 +878,35 @@ def test_workspace_removal_replay_requires_success_with_v8_receipt() -> None:
     assert (
         verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v8"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.11"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.12"
+
+
+@pytest.mark.parametrize(
+    ("name", "version", "accepted"),
+    [
+        ("podway", "v0.2.12", True),
+        ("podwayd", "v0.2.12", True),
+        ("podway", "v0.2.11", False),
+        ("podwayd", "v0.2.11", False),
+    ],
+)
+def test_compatibility_requires_exact_release_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    name: str,
+    version: str,
+    accepted: bool,
+) -> None:
+    monkeypatch.setattr(
+        verify_podway_compatibility,
+        "run",
+        lambda *_args: (0, {"name": name, "version": version}),
+    )
+    if accepted:
+        verify_podway_compatibility.require_version(tmp_path / name, tmp_path, name)
+    else:
+        with pytest.raises(verify_podway_compatibility.CompatibilityError):
+            verify_podway_compatibility.require_version(tmp_path / name, tmp_path, name)
 
 
 @pytest.mark.parametrize(
@@ -969,12 +997,13 @@ def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None
     "changes",
     [
         {},
-        {"daemon_version": "0.2.11"},
+        {"daemon_version": "v0.2.11"},
+        {"daemon_version": "0.2.12"},
         {"daemon_version": "v0.2.9"},
         {"contract_manifest_digest": "sha256:" + "0" * 64},
     ],
 )
-def test_managed_runtime_requires_v0211_daemon_identity(
+def test_managed_runtime_requires_v0212_daemon_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changes: dict
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
@@ -986,9 +1015,9 @@ def test_managed_runtime_requires_v0211_daemon_identity(
         "readiness_state": "ready",
         "readiness_stage": "ready",
         "mode": "release-qa",
-        "daemon_version": "v0.2.11",
+        "daemon_version": "v0.2.12",
         "contract_manifest_digest": (
-            "sha256:92871d91cbd7aee16f81172dd6f09ae936ac4e408e54d437038edfa9189f1819"
+            "sha256:a96aad19de8e7346629d0a4816256f697f9e6b293e44eb550527b4b3c229ddef"
         ),
         "in_flight_client_count": 0,
         "maintenance_operation_count": 0,

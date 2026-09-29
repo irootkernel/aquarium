@@ -30,7 +30,7 @@ RUN_TIMEOUT_SECONDS = 360
 MAX_GRAPH_STEPS = 128
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:92871d91cbd7aee16f81172dd6f09ae936ac4e408e54d437038edfa9189f1819"
+    "sha256:a96aad19de8e7346629d0a4816256f697f9e6b293e44eb550527b4b3c229ddef"
 )
 
 TASK_REVIEW_ENTRY_NODES = {
@@ -1234,7 +1234,7 @@ class ManagedRuntime:
                 result.get("readiness_state") == "ready"
                 and result.get("readiness_stage") == "ready"
                 and result.get("mode") == RUNTIME_MODE
-                and result.get("daemon_version") == "v0.2.11"
+                and result.get("daemon_version") == "v0.2.12"
                 and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
                 and (
                     result.get("in_flight_client_count") is None
@@ -1276,7 +1276,7 @@ class ManagedRuntime:
                         except OSError:
                             pass
         raise RuntimeQualificationError(
-            "daemon did not reach v0.2.11 release-qa readiness: "
+            "daemon did not reach v0.2.12 release-qa readiness: "
             f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
         )
 
@@ -1288,7 +1288,7 @@ class ManagedRuntime:
                 "name": "aquarium-release-qualification",
                 "pid": os.getpid(),
                 "product": "podway",
-                "version": "v0.2.11",
+                "version": "v0.2.12",
                 "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
             },
             "operation": "control",
@@ -5340,7 +5340,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.11-run-{self.run_index}",
+                f"official-v0.2.12-run-{self.run_index}",
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
