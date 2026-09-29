@@ -265,6 +265,7 @@ def inspect_global_sorage(
     root: Path,
     timeout_seconds: float,
     include_initialization: bool,
+    upgrade_preflight_complete: bool = False,
 ) -> dict[str, Any]:
     neutral_cwd = Path(root.anchor)
     tool = inspect_versioned_cli(
@@ -290,6 +291,21 @@ def inspect_global_sorage(
     if not include_initialization:
         tool["initialization_status"] = "not_inspected"
         tool["probes"]["doctor"] = inspector.skipped_probe("not_requested")
+        return tool
+    upgrade_state = inspector.sorage_upgrade_preflight_state(neutral_cwd)
+    if upgrade_state == "pre_memo":
+        upgrade_state = inspector.sorage_validated_pre_memo_state(
+            upgrade_state,
+            inspector.sorage_config_validation_probe(
+                tool["executable"], neutral_cwd, timeout_seconds
+            ),
+        )
+    reason = inspector.sorage_upgrade_skip_reason(
+        upgrade_state, upgrade_preflight_complete
+    )
+    if reason is not None:
+        tool["initialization_status"] = "not_inspected"
+        tool["probes"]["doctor"] = inspector.skipped_probe(reason)
         return tool
     doctor_probe = inspector.json_probe(
         [tool["executable"], "doctor", "--json"], neutral_cwd, timeout_seconds
@@ -331,6 +347,7 @@ def inspect_global(
     components: tuple[str, ...] | None = None,
     codex_homes: tuple[str, ...] = (),
     verify_ouroboros_release: bool = False,
+    sorage_upgrade_preflight_complete: bool = False,
 ) -> dict[str, Any]:
     inspector = load_inspector()
     root = resolve_working_directory(repository)
@@ -376,6 +393,7 @@ def inspect_global(
             root,
             timeout_seconds,
             include_sorage_initialization,
+            sorage_upgrade_preflight_complete,
         )
     if "podway" in requested_components:
         raw_tools["podway"] = inspect_global_podway(inspector, root, timeout_seconds)
@@ -543,6 +561,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Include the selected local Sorage initialization diagnostic",
     )
     parser.add_argument(
+        "--sorage-upgrade-preflight-complete",
+        action="store_true",
+        help="Confirm that the selected pre-Memo Sorage installation passed backup and restore preflight",
+    )
+    parser.add_argument(
         "--codex-home",
         action="append",
         default=[],
@@ -572,6 +595,14 @@ def parse_arguments() -> argparse.Namespace:
             "--include-sorage-initialization requires the sorage component",
         )
     if (
+        arguments.sorage_upgrade_preflight_complete
+        and not arguments.include_sorage_initialization
+    ):
+        raise InspectionError(
+            "invalid_arguments",
+            "--sorage-upgrade-preflight-complete requires --include-sorage-initialization",
+        )
+    if (
         arguments.codex_home or arguments.verify_ouroboros_release
     ) and "ouroboros" not in selected_components:
         raise InspectionError(
@@ -599,6 +630,7 @@ def main() -> int:
                 arguments.component,
                 tuple(arguments.codex_home),
                 arguments.verify_ouroboros_release,
+                arguments.sorage_upgrade_preflight_complete,
             )
         )
         return 0

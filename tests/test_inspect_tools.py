@@ -7,11 +7,13 @@ import json
 import os
 import platform
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
 import textwrap
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest import mock
 
@@ -41,6 +43,9 @@ VALIDATION_V23_PROCEDURE_FIXTURE = ROOT / "tests/fixtures/aquarium-validation-v2
 # macOS may delay first execution of freshly written fixture binaries while
 # performing local trust checks. Timeout-specific tests pass shorter values.
 NORMAL_PROBE_TIMEOUT_SECONDS = 30.0
+SORAGE_CONFIG = (ROOT / "tests/fixtures/sorage-v0.1.2-config.yaml").read_text(
+    encoding="utf-8"
+)
 
 sys.path.insert(0, str(SCRIPT.parent))
 
@@ -1089,7 +1094,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_sorage(
         self,
         *,
-        version: str = "v0.1.1",
+        version: str = "v0.1.2",
         initialized: bool = True,
         registered: bool = True,
         project_status: str = "active",
@@ -1145,6 +1150,9 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 arguments = sys.argv[1:]
                 if arguments == ["version", "--json"]:
                     print("not-json" if {malformed!r} else json.dumps({{"name": "sorage", "version": {version!r}}}))
+                    raise SystemExit(0)
+                if arguments == ["config", "validate", "--json"]:
+                    print(json.dumps({{"ok": True, "data": {{"valid": True}}}}))
                     raise SystemExit(0)
                 if arguments == ["doctor", "--json"]:
                     checks = {doctor_checks!r}
@@ -1313,11 +1321,12 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def test_sorage_supports_only_stable_v01_releases(self) -> None:
         for version, supported in (
             ("v0.1.0", False),
-            ("v0.1.1", True),
+            ("v0.1.1", False),
+            ("v0.1.2", True),
             ("v0.1.01", False),
             ("v0.1.10", True),
             ("0.1.99", True),
-            ("v0.1.1-rc.1", False),
+            ("v0.1.2-rc.1", False),
             ("v0.0.9", False),
             ("v0.2.0", False),
         ):
@@ -1366,6 +1375,355 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self.assertEqual(sorage["status"], "degraded")
         self.assertEqual(sorage["probes"]["version"]["error_code"], "invalid_json")
         self.assertEqual(sorage["probes"]["doctor"]["reason"], "unsupported_runtime")
+
+    def test_sorage_v011_never_opens_native_readiness(self) -> None:
+        self.install_fake_sorage(version="v0.1.1")
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            sorage = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+            )
+        self.assertEqual(sorage["status"], "degraded")
+        self.assertFalse(sorage["version_supported"])
+        self.assertEqual(sorage["probes"]["doctor"]["reason"], "unsupported_runtime")
+        self.assertEqual(
+            sorage["probes"]["project_resolve"]["reason"], "unsupported_runtime"
+        )
+        self.assertFalse(self.base.joinpath("sorage-project-resolve-path").exists())
+
+    def test_sorage_upgrade_preflight_gates_native_readiness(self) -> None:
+        self.install_fake_sorage()
+        database = self.home / ".sorage/state/sorage.sqlite3"
+        database.parent.mkdir(parents=True)
+        installation_id = "11111111-1111-4111-8111-111111111111"
+        (database.parent.parent / "config.yaml").write_text(
+            SORAGE_CONFIG, encoding="utf-8"
+        )
+        vault = database.parent.parent / "vault"
+        vault.mkdir()
+        (vault / ".sorage-vault.json").write_text(
+            json.dumps(
+                {
+                    "type": "sorage-vault",
+                    "schemaVersion": 1,
+                    "installationId": installation_id,
+                    "createdAt": "2026-01-01T00:00:00.000Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+        with closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
+            )
+            connection.execute(
+                "INSERT INTO schema_migrations VALUES (6, 'backup-runs-v1')"
+            )
+            connection.execute(
+                "CREATE TABLE installation (id INTEGER PRIMARY KEY, installation_id TEXT)"
+            )
+            connection.execute("CREATE TABLE project_bindings (installation_id TEXT)")
+            connection.execute(
+                "INSERT INTO installation VALUES (1, ?)", (installation_id,)
+            )
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            blocked = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS, include_readiness=True
+            )
+            self.assertEqual(
+                blocked["probes"]["doctor"]["reason"], "upgrade_preflight_required"
+            )
+            self.assertEqual(blocked["readiness_status"], "not_inspected")
+            self.assertFalse(self.base.joinpath("sorage-project-resolve-path").exists())
+            confirmed = inspect_tools.inspect_sorage(
+                self.repository,
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_readiness=True,
+                upgrade_preflight_complete=True,
+            )
+            self.assertEqual(
+                confirmed["probes"]["doctor"]["reason"],
+                "upgrade_migration_required",
+            )
+            self.assertFalse(self.base.joinpath("sorage-project-resolve-path").exists())
+            with closing(sqlite3.connect(database)) as connection, connection:
+                connection.execute(
+                    "INSERT INTO schema_migrations VALUES (7, 'project-memos-v1')"
+                )
+            migrated = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS, include_readiness=True
+            )
+            self.assertTrue(migrated["probes"]["doctor"]["attempted"])
+            Path(f"{database}-wal").write_bytes(b"pending")
+            unknown = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS, include_readiness=True
+            )
+            self.assertEqual(
+                unknown["probes"]["doctor"]["reason"],
+                "upgrade_state_unverifiable",
+            )
+            Path(f"{database}-wal").unlink()
+            with closing(sqlite3.connect(database)) as connection, connection:
+                connection.execute("PRAGMA journal_mode=WAL")
+                connection.execute("PRAGMA wal_autocheckpoint=0")
+                connection.execute("CREATE TABLE wal_marker (id INTEGER)")
+                connection.commit()
+                self.assertTrue(Path(f"{database}-wal").exists())
+                self.assertTrue(Path(f"{database}-shm").exists())
+                self.assertEqual(
+                    inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                    "migrated",
+                )
+
+    def test_sorage_old_database_requires_matching_configuration(self) -> None:
+        self.install_fake_sorage()
+        home = self.home / ".sorage"
+        database = home / "state/sorage.sqlite3"
+        database.parent.mkdir(parents=True)
+        with closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
+            )
+            connection.execute("INSERT INTO schema_migrations VALUES (6, 'old')")
+            connection.execute(
+                "CREATE TABLE installation (id INTEGER PRIMARY KEY, installation_id TEXT)"
+            )
+            connection.execute("CREATE TABLE project_bindings (installation_id TEXT)")
+            connection.execute(
+                "INSERT INTO installation VALUES (1, '11111111-1111-4111-8111-111111111111')"
+            )
+        config = home / "config.yaml"
+        vault = home / "vault"
+        vault.mkdir()
+        (vault / ".sorage-vault.json").write_text(
+            json.dumps(
+                {
+                    "type": "sorage-vault",
+                    "schemaVersion": 1,
+                    "installationId": "11111111-1111-4111-8111-111111111111",
+                    "createdAt": "2026-01-01T00:00:00.000Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            for content in (
+                None,
+                "installationId: [\n",
+                "installationId: 22222222-2222-4222-8222-222222222222\nvault:\n  path: ~/.sorage/vault\n",
+            ):
+                if content is None:
+                    config.unlink(missing_ok=True)
+                else:
+                    config.write_text(content, encoding="utf-8")
+                self.assertEqual(
+                    inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                    "installation_recovery",
+                )
+                result = inspect_tools.inspect_sorage(
+                    self.repository,
+                    NORMAL_PROBE_TIMEOUT_SECONDS,
+                    include_readiness=True,
+                    upgrade_preflight_complete=True,
+                )
+                self.assertEqual(
+                    result["probes"]["doctor"]["reason"],
+                    "installation_recovery_required",
+                )
+                self.assertFalse(
+                    self.base.joinpath("sorage-project-resolve-path").exists()
+                )
+            config.write_text(SORAGE_CONFIG, encoding="utf-8")
+            original_read_text = Path.read_text
+
+            def unreadable(path: Path, *args: object, **kwargs: object) -> str:
+                if path == config:
+                    raise PermissionError("unreadable configuration")
+                return original_read_text(path, *args, **kwargs)
+
+            with mock.patch.object(Path, "read_text", unreadable):
+                self.assertEqual(
+                    inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                    "installation_recovery",
+                )
+            with closing(sqlite3.connect(database)) as connection, connection:
+                connection.execute("DELETE FROM installation")
+                connection.execute(
+                    "INSERT INTO project_bindings VALUES ('11111111-1111-4111-8111-111111111111')"
+                )
+            other_id = "22222222-2222-4222-8222-222222222222"
+            config.write_text(
+                SORAGE_CONFIG.replace("11111111-1111-4111-8111-111111111111", other_id),
+                encoding="utf-8",
+            )
+            (vault / ".sorage-vault.json").write_text(
+                json.dumps(
+                    {
+                        "type": "sorage-vault",
+                        "schemaVersion": 1,
+                        "installationId": other_id,
+                        "createdAt": "2026-01-01T00:00:00.000Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                "installation_recovery",
+            )
+            config.write_text(SORAGE_CONFIG, encoding="utf-8")
+            (vault / ".sorage-vault.json").write_text(
+                json.dumps(
+                    {
+                        "type": "sorage-vault",
+                        "schemaVersion": 1,
+                        "installationId": "11111111-1111-4111-8111-111111111111",
+                        "createdAt": "2026-01-01T00:00:00.000Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            marker_file = vault / ".sorage-vault.json"
+            valid_marker = marker_file.read_text(encoding="utf-8")
+            marker_file.write_text(
+                json.dumps(
+                    {
+                        "type": "sorage-vault",
+                        "schemaVersion": 1,
+                        "installationId": "11111111-1111-4111-8111-111111111111",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                "installation_recovery",
+            )
+            marker_file.write_text(valid_marker, encoding="utf-8")
+            with mock.patch.object(inspect_tools, "yaml", None):
+                self.assertEqual(
+                    inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                    "unknown",
+                )
+            real_run = inspect_tools.run_command
+
+            def invalid_config_run(
+                arguments: list[str], cwd: Path, timeout: float, **kwargs: object
+            ) -> dict[str, object]:
+                if arguments[1:] == ["config", "validate", "--json"]:
+                    return {
+                        "attempted": True,
+                        "ok": False,
+                        "exit_code": 2,
+                        "timed_out": False,
+                        "stdout": "",
+                        "stderr": json.dumps(
+                            {"ok": False, "error": {"code": "CONFIG_INVALID"}}
+                        ),
+                    }
+                return real_run(arguments, cwd, timeout, **kwargs)
+
+            with mock.patch.object(
+                inspect_tools, "run_command", side_effect=invalid_config_run
+            ):
+                result = inspect_tools.inspect_sorage(
+                    self.repository,
+                    NORMAL_PROBE_TIMEOUT_SECONDS,
+                    include_readiness=True,
+                    upgrade_preflight_complete=True,
+                )
+            self.assertEqual(
+                result["probes"]["doctor"]["reason"],
+                "installation_recovery_required",
+            )
+
+    def test_sorage_missing_database_is_not_fresh(self) -> None:
+        self.install_fake_sorage()
+        home = self.home / ".sorage"
+        state = home / "state"
+        state.mkdir(parents=True)
+        (home / "config.yaml").write_text("existing: installation\n", encoding="utf-8")
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            for remaining in ("config", "wal"):
+                if remaining == "wal":
+                    (home / "config.yaml").unlink()
+                    (state / "sorage.sqlite3-wal").write_bytes(b"orphan")
+                self.assertEqual(
+                    inspect_tools.sorage_upgrade_preflight_state(self.repository),
+                    "missing_database",
+                )
+                result = inspect_tools.inspect_sorage(
+                    self.repository,
+                    NORMAL_PROBE_TIMEOUT_SECONDS,
+                    include_readiness=True,
+                    upgrade_preflight_complete=True,
+                )
+                self.assertEqual(
+                    result["probes"]["doctor"]["reason"],
+                    "installation_recovery_required",
+                )
+                self.assertFalse(
+                    self.base.joinpath("sorage-project-resolve-path").exists()
+                )
+
+    def test_sorage_relative_home_checks_native_command_directory(self) -> None:
+        self.install_fake_sorage()
+        database = self.repository / "relative-sorage/state/sorage.sqlite3"
+        database.parent.mkdir(parents=True)
+        with closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
+            )
+            connection.execute("INSERT INTO schema_migrations VALUES (6, 'old')")
+            connection.execute(
+                "CREATE TABLE installation (id INTEGER PRIMARY KEY, installation_id TEXT)"
+            )
+            connection.execute("CREATE TABLE project_bindings (installation_id TEXT)")
+        (database.parent.parent / "config.yaml").write_text(
+            SORAGE_CONFIG, encoding="utf-8"
+        )
+        vault = database.parent.parent / "vault"
+        vault.mkdir()
+        (vault / ".sorage-vault.json").write_text(
+            json.dumps(
+                {
+                    "type": "sorage-vault",
+                    "schemaVersion": 1,
+                    "installationId": "11111111-1111-4111-8111-111111111111",
+                    "createdAt": "2026-01-01T00:00:00.000Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+        environment = {**self.environment, "SORAGE_HOME": "relative-sorage"}
+        with (
+            mock.patch.dict(os.environ, environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+        ):
+            result = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS, include_readiness=True
+            )
+        self.assertEqual(
+            result["probes"]["doctor"]["reason"], "upgrade_preflight_required"
+        )
 
     def test_sorage_explicit_readiness_runs_native_probes_when_supported(
         self,
@@ -2061,12 +2419,12 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             "exit_code": 0,
             "timed_out": False,
         }
-        bare = {**base, "result": {"name": "sorage", "version": "v0.1.1"}}
+        bare = {**base, "result": {"name": "sorage", "version": "v0.1.2"}}
         enveloped = {
             **base,
             "result": {
                 "ok": True,
-                "data": {"name": "sorage", "version": "v0.1.1"},
+                "data": {"name": "sorage", "version": "v0.1.2"},
             },
         }
         self.assertTrue(inspect_tools.normalize_sorage_version(bare)["contract_valid"])
@@ -2807,7 +3165,7 @@ else:
                     "invalid_arguments",
                 )
 
-    def test_inspector_cli_routes_sorage_readiness_flag(self) -> None:
+    def test_inspector_cli_routes_sorage_preflight_confirmation(self) -> None:
         output = io.StringIO()
         result = {"schema_version": inspect_tools.SCHEMA_VERSION}
         with (
@@ -2819,6 +3177,7 @@ else:
                     "--repository",
                     str(self.repository),
                     "--include-sorage",
+                    "--sorage-upgrade-preflight-complete",
                 ],
             ),
             mock.patch.object(inspect_tools, "inspect", return_value=result) as inspect,
@@ -2832,6 +3191,7 @@ else:
             10.0,
             include_podway=False,
             include_sorage=True,
+            sorage_upgrade_preflight_complete=True,
             require_mulgae_mcp=False,
             expected_mulgae_mcp=None,
             expected_gaori_mcp=None,

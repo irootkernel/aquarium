@@ -11,12 +11,15 @@ import os
 import platform
 import re
 import shutil
+import sqlite3
 import stat
 import subprocess
 import sys
 import time
+from contextlib import closing
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 try:
     import yaml
@@ -110,6 +113,157 @@ SORAGE_DOCTOR_CATALOG = (
     "git.state",
     "platform.tcc",
 )
+
+
+def sorage_upgrade_preflight_state(command_cwd: Path) -> str:
+    """Read the native database schema without opening a writable SQLite handle."""
+    override = os.environ.get("SORAGE_HOME")
+    selected_home = (
+        Path(override) if override and override.strip() else Path.home() / ".sorage"
+    )
+    home = (command_cwd / selected_home).absolute()
+    database = home / "state" / "sorage.sqlite3"
+    try:
+        if database.is_symlink():
+            return "unknown"
+        if not database.exists():
+            if home.is_symlink() and not home.exists():
+                return "unknown"
+            if not home.exists():
+                return "fresh"
+            if not home.is_dir():
+                return "unknown"
+            return "fresh" if next(home.iterdir(), None) is None else "missing_database"
+        wal = Path(f"{database}-wal")
+        shm = Path(f"{database}-shm")
+        if not database.is_file() or wal.is_symlink() or shm.is_symlink():
+            return "unknown"
+        if wal.exists() and not shm.exists():
+            return "unknown"
+        mode = "mode=ro" if wal.exists() else "mode=ro&immutable=1"
+        uri = f"file:{quote(str(database), safe='/')}?{mode}"
+        with closing(sqlite3.connect(uri, uri=True)) as connection:
+            row = connection.execute(
+                "SELECT name FROM schema_migrations WHERE version = 7"
+            ).fetchone()
+            if row == ("project-memos-v1",):
+                return "migrated"
+            if row is not None:
+                return "unknown"
+            config_file = home / "config.yaml"
+            if yaml is None:
+                return "unknown"
+            if not config_file.is_file():
+                return "installation_recovery"
+            try:
+                config = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, yaml.YAMLError):
+                return "installation_recovery"
+            installation_id = (
+                config.get("installationId") if isinstance(config, dict) else None
+            )
+            if not isinstance(installation_id, str) or not re.fullmatch(
+                r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}",
+                installation_id,
+            ):
+                return "installation_recovery"
+            vault = config.get("vault")
+            vault_path = vault.get("path") if isinstance(vault, dict) else None
+            if not isinstance(vault_path, str) or not vault_path:
+                return "installation_recovery"
+            if vault_path == "~/.sorage":
+                vault_directory = home
+            elif vault_path.startswith("~/.sorage/"):
+                vault_directory = home / vault_path.removeprefix("~/.sorage/")
+            elif vault_path == "~":
+                vault_directory = Path.home()
+            elif vault_path.startswith("~/"):
+                vault_directory = Path.home() / vault_path[2:]
+            else:
+                vault_directory = command_cwd / vault_path
+            marker_file = vault_directory / ".sorage-vault.json"
+            try:
+                marker = json.loads(marker_file.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                return "installation_recovery"
+            if (
+                not isinstance(marker, dict)
+                or marker.get("type") != "sorage-vault"
+                or marker.get("installationId") != installation_id
+                or type(marker.get("schemaVersion")) is not int
+                or marker["schemaVersion"] < 1
+                or not isinstance(marker.get("createdAt"), str)
+                or not marker["createdAt"]
+            ):
+                return "installation_recovery"
+            if marker["schemaVersion"] > 1:
+                return "unknown"
+            installed = connection.execute(
+                "SELECT installation_id FROM installation WHERE id = 1"
+            ).fetchone()
+            if installed is not None and installed[0] != installation_id:
+                return "installation_recovery"
+            bindings = connection.execute(
+                "SELECT DISTINCT installation_id FROM project_bindings"
+            ).fetchall()
+            if any(binding[0] != installation_id for binding in bindings):
+                return "installation_recovery"
+            return "pre_memo"
+    except (OSError, RuntimeError, sqlite3.Error):
+        return "unknown"
+
+
+def sorage_upgrade_skip_reason(state: str, preflight_complete: bool) -> str | None:
+    if state in {"fresh", "migrated"}:
+        return None
+    if state == "pre_memo":
+        return (
+            "upgrade_migration_required"
+            if preflight_complete
+            else "upgrade_preflight_required"
+        )
+    if state in {"missing_database", "installation_recovery"}:
+        return "installation_recovery_required"
+    return "upgrade_state_unverifiable"
+
+
+def sorage_validated_pre_memo_state(state: str, probe: dict[str, Any]) -> str:
+    if state != "pre_memo":
+        return state
+    result = probe.get("result")
+    if (
+        probe.get("ok")
+        and isinstance(result, dict)
+        and result.get("ok") is True
+        and isinstance(result.get("data"), dict)
+        and result["data"].get("valid") is True
+    ):
+        return state
+    error = result.get("error") if isinstance(result, dict) else None
+    if isinstance(error, dict) and error.get("code") in {
+        "CONFIG_INVALID",
+        "NOT_INITIALIZED",
+    }:
+        return "installation_recovery"
+    return "unknown"
+
+
+def sorage_config_validation_probe(
+    executable: str, command_cwd: Path, timeout_seconds: float
+) -> dict[str, Any]:
+    raw = run_command(
+        [executable, "config", "validate", "--json"], command_cwd, timeout_seconds
+    )
+    channel = raw["stdout"] if raw["ok"] else raw["stderr"]
+    if raw["exit_code"] is None or raw["timed_out"]:
+        return {"ok": False}
+    try:
+        result = strict_json_loads(channel)
+    except (json.JSONDecodeError, ValueError):
+        return {"ok": False}
+    return {"ok": raw["ok"], "result": result}
+
+
 HUMANIZER_SKILL_FILES = (
     "SKILL.md",
     "LICENSE",
@@ -884,7 +1038,7 @@ def supported_sorage_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 1)
+    return bool(match and int(match.group(1)) >= 2)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -3214,6 +3368,7 @@ def inspect_sorage(
     timeout_seconds: float,
     include_readiness: bool = False,
     agent_skill: dict[str, Any] | None = None,
+    upgrade_preflight_complete: bool = False,
 ) -> dict[str, Any]:
     tool = base_tool("sorage")
     tool["version_supported"] = False
@@ -3283,6 +3438,23 @@ def inspect_sorage(
     if not include_readiness:
         tool["probes"]["doctor"] = skipped_probe("not_requested")
         tool["probes"]["project_resolve"] = skipped_probe("not_requested")
+        tool["initialization_status"] = "not_inspected"
+        tool["project_registration"]["status"] = "not_inspected"
+        tool["readiness_status"] = "not_inspected"
+        return tool
+
+    upgrade_state = sorage_upgrade_preflight_state(repository)
+    if upgrade_state == "pre_memo":
+        upgrade_state = sorage_validated_pre_memo_state(
+            upgrade_state,
+            sorage_config_validation_probe(
+                tool["executable"], repository, timeout_seconds
+            ),
+        )
+    reason = sorage_upgrade_skip_reason(upgrade_state, upgrade_preflight_complete)
+    if reason is not None:
+        tool["probes"]["doctor"] = skipped_probe(reason)
+        tool["probes"]["project_resolve"] = skipped_probe(reason)
         tool["initialization_status"] = "not_inspected"
         tool["project_registration"]["status"] = "not_inspected"
         tool["readiness_status"] = "not_inspected"
@@ -4620,6 +4792,7 @@ def inspect(
     timeout_seconds: float,
     include_podway: bool = False,
     include_sorage: bool = False,
+    sorage_upgrade_preflight_complete: bool = False,
     require_mulgae_mcp: bool = False,
     expected_mulgae_mcp: str | None = None,
     expected_gaori_mcp: str | None = None,
@@ -4669,6 +4842,7 @@ def inspect(
             timeout_seconds,
             include_readiness=include_sorage,
             agent_skill=trusted_global_skills.get("use-sorage"),
+            upgrade_preflight_complete=sorage_upgrade_preflight_complete,
         ),
     }
     if include_podway:
@@ -4711,6 +4885,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Include explicitly selected Sorage readiness diagnostics",
     )
     parser.add_argument(
+        "--sorage-upgrade-preflight-complete",
+        action="store_true",
+        help="Confirm that the selected pre-Memo Sorage installation passed backup and restore preflight",
+    )
+    parser.add_argument(
         "--include-podway",
         action="store_true",
         help="Include explicitly requested Podway readiness diagnostics",
@@ -4723,6 +4902,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--expected-mulgae-mcp", choices=("global", "local", "none"))
     parser.add_argument("--expected-gaori-mcp", choices=("global", "local", "none"))
     arguments = parser.parse_args()
+    if arguments.sorage_upgrade_preflight_complete and not arguments.include_sorage:
+        raise InspectionError(
+            "invalid_arguments",
+            "--sorage-upgrade-preflight-complete requires --include-sorage",
+        )
     if (
         not math.isfinite(arguments.timeout_seconds)
         or arguments.timeout_seconds <= 0
@@ -4749,6 +4933,7 @@ def main() -> int:
                 arguments.timeout_seconds,
                 include_podway=arguments.include_podway,
                 include_sorage=arguments.include_sorage,
+                sorage_upgrade_preflight_complete=arguments.sorage_upgrade_preflight_complete,
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
                 expected_mulgae_mcp=arguments.expected_mulgae_mcp,
                 expected_gaori_mcp=arguments.expected_gaori_mcp,

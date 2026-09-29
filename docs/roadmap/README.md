@@ -62,6 +62,7 @@ Epic status is independent of child task status. Completing every child does not
 | TASK-076 | Implement target-specific bundle setup intent | Replace bundle v1 with v2 MCP scope lists, Sorage Project slug, and Mulgae artist intent; route and verify the selected setup scopes. [Bundle manifest](../../plugins/aquarium/skills/dev-setup-bundle/references/manifest.md). | Completed | TASK-037 |
 | TASK-103 | Use worktree observation for Podway session admission | Replace routine global readiness polling with worktree observation while keeping setup diagnostics and session safeguards. [Podway integration](../../plugins/aquarium/references/podway-integration.md). | Completed | — |
 | TASK-104 | Adopt Sanho v0.2.9 | Raise the supported release floor and align setup with the release-matched CLI, skill, diagnostics, and build prerequisites. [Tool catalog](../../plugins/aquarium/references/tool-catalog.md#sanho). | Completed | External Sanho v0.2.9 release |
+| TASK-105 | Adopt Sorage v0.1.2 | Raise the release floor, route explicit Project Memo requests through the paired skill, align Project commands, and protect the format-1 upgrade before native diagnosis. [Tool catalog](../../plugins/aquarium/references/tool-catalog.md#sorage). | Completed | External Sorage v0.1.2 release |
 
 ## EPIC-001: Adopt Podway v0.2.6
 
@@ -209,7 +210,7 @@ Podway owns its release, distribution, runtime-mode implementation, and source-d
 
 Adopt Sorage as an optional local document-handoff integration. Aquarium diagnoses and installs the supported CLI and paired skill, initializes the local installation with a minimal profile, and registers each selected Git repository through an explicitly approved Project creation or binding. Sorage retains authority over Project identity, the managed Vault, Handoffs, reviews, retention, deletion, backup, and derived inbox state.
 
-The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.1. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
+The supported line is official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.2 after TASK-105. This stable adoption excludes the production-binary baseline, managed Procedures, and MCP scope. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
 
 Master explicitly accepted EPIC-009 and TASK-047 closeout on 2026-09-09. The later cross-skill regression scenarios remain with TASK-046 and are not claimed by this closeout.
 
