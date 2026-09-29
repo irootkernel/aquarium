@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Sanho v0.2.9 or newer in the v0.2.x line and align setup with its sync inspection, structured recovery details, release-matched skill, and Go 1.27 build requirement.
 - Use AGENTS.md as the sole repository-managed root agent guidance file, migrating existing CLAUDE.md rules before removing that file.
 - Continue an executing Epic request through feature dossier design in the same conversation when its execution SOT needs one, then hand off the updated Epic for a new delivery conversation.
 - Replace the bundle setup manifest with v2 target-specific MCP scope, Sorage Project slug, and Mulgae artist intent.

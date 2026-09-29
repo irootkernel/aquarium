@@ -273,7 +273,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_tools(
         self,
         malformed_sanho: bool = False,
-        sanho_version: str = "v0.2.8",
+        sanho_version: str = "v0.2.9",
         sanho_doctor_warnings: int = 0,
         mulgae_version: str = "v0.1.23",
         mulgae_output_schema: str = "mulgae-command-result.v12",
@@ -2872,7 +2872,7 @@ else:
         self.assertNotIn("secret-value", completed.stdout)
         self.assertNotIn("credential: hidden", completed.stdout)
         tools = json.loads(completed.stdout)["tools"]
-        self.assertEqual(tools["sanho"]["version"], "v0.2.8")
+        self.assertEqual(tools["sanho"]["version"], "v0.2.9")
         self.assertTrue(tools["sanho"]["version_supported"])
         self.assertEqual(tools["sanho"]["status"], "configured")
         self.assertFalse(tools["sanho"]["agent_skill"]["present"])
@@ -5524,9 +5524,12 @@ else:
             ("v0.2.6", False, "degraded"),
             ("v0.2.7", False, "degraded"),
             ("v0.2.7-rc.1", False, "degraded"),
-            ("v0.2.8", True, "configured"),
-            ("0.2.8", True, "configured"),
+            ("v0.2.8", False, "degraded"),
+            ("0.2.8", False, "degraded"),
             ("v0.2.8-rc.1", False, "degraded"),
+            ("v0.2.9", True, "configured"),
+            ("0.2.9", True, "configured"),
+            ("v0.2.9-rc.1", False, "degraded"),
             ("v0.2.99", True, "configured"),
             ("v0.3.0", False, "degraded"),
         )
@@ -5539,6 +5542,15 @@ else:
                 sanho = json.loads(self.inspect().stdout)["tools"]["sanho"]
                 self.assertEqual(sanho["version_supported"], supported)
                 self.assertEqual(sanho["status"], status)
+                if version in {"v0.2.8", "v0.2.9"}:
+                    global_sanho = json.loads(self.inspect_global().stdout)["tools"][
+                        "sanho"
+                    ]["cli"]
+                    self.assertEqual(global_sanho["version_supported"], supported)
+                    self.assertEqual(
+                        global_sanho["status"],
+                        "installed" if supported else "degraded",
+                    )
 
         for executable in self.bin_directory.iterdir():
             executable.unlink()

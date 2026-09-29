@@ -124,7 +124,9 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 Official source: `https://github.com/irootkernel/sanho`
 
-Supported release line: stable `v0.2.8` through `v0.2.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill; v0.2.7 lacks the dedicated inspection reference, revised authorization and recovery guidance, and conflicted-sync content-retention fix required by Aquarium. Do not automatically cross into `v0.3+`.
+Supported release line: stable `v0.2.9` through `v0.2.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill. v0.2.8 lacks local `sync --inspect`, typed sync and pull refusal details, and the corrected recovery guidance required by Aquarium. Do not automatically cross into `v0.3+`.
+
+Building Sanho v0.2.9 requires Go 1.27 or newer. Check the available toolchain before proposing `go install`. Sanho checks Git's `--no-lazy-fetch` and `show-ref --exists` support when an operation needs those reader controls; report an unsupported capability as an operation failure rather than treating it as empty history or documentation.
 
 Install an approved tag:
 
@@ -139,6 +141,8 @@ Install `use-sanho` from the complete verified `skills/use-sanho/` subtree at th
 If the target already exists, compare it with the verified source, show the complete diff, follow the shared backup policy, and obtain separate replacement approval. Under the no-backup policy, remove only the exact approved target after the incoming file set is fully verified; disclose that local modifications will not be recoverable from the release ref. Never overwrite, merge, delete, or repair another discovered copy silently. After installation or replacement, tell the user to restart Codex so a new session loads the skill snapshot.
 
 `sanho status` separates committed `HEAD` prediction from working-copy and local operation readiness. Consume `relation`, `publication`, `sync_preview`, `working_copy`, `local_readiness`, and `sync_in_progress` independently. Do not expose project URLs, actor email, workspace IDs, private paths, or doctor details in setup reports.
+
+For an active sync or uncertain completion, follow the matching `use-sanho` skill's conditional `sanho sync --inspect --json` guidance. The command gives a bounded local diagnosis; a blocked continuation can exit 0, while `inspection_unavailable` exits 1 without a readiness verdict. Sync and pull refusal envelopes may include stable `reason`, lossless `paths`, and a guidance `recovery_id`. Leave interpretation and recovery to the native skill, and keep commit and push authorization separate from diagnostic evidence.
 
 Use `sanho check --require-clean`, `--require-current`, and `--require-published` only when repository authority selects those policies. Exit 1 with `passed:false` is a policy mismatch; an `error` envelope means evaluation failed. `--require-current` contacts the canonical remote and requires network approval. `sanho diff`, `sanho diff --refresh`, and `sanho diff --local` are read-only inspection commands without JSON output; `--refresh` contacts the canonical remote.
 
