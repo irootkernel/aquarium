@@ -1,8 +1,8 @@
 # Repository Operating Guidance
 
-This reference is the `dev-setup` standard for root AGENTS.md and CLAUDE.md. General setup always reviews the complete instruction body against it and prepares a full reorganization where needed. Tool-limited requests and scoped continuations stay within their requested component and direct prerequisites. Honor explicit guidance exclusions, including `agents_guidance: skip`; diagnosis-only requests report findings without drafting a proposal.
+This reference is the `dev-setup` standard for root AGENTS.md guidance and migration of an existing root CLAUDE.md. General setup always reviews the complete instruction body against it and prepares a full reorganization where needed. Tool-limited requests and scoped continuations stay within their requested component and direct prerequisites. Honor explicit guidance exclusions, including `agents_guidance: skip`; diagnosis-only requests report findings without drafting a proposal.
 
-Aim for the standard's full structure and behavior while preserving project-specific meaning. Rewrite, regroup, and consolidate common guidance as needed. If the complete review establishes that the files already meet the standard, report no change; equivalent wording alone is not a reason to rewrite.
+Aim for the standard's full structure and behavior while preserving project-specific meaning. Rewrite, regroup, and consolidate common guidance as needed. If AGENTS.md already meets the standard and root CLAUDE.md is absent, report no guidance change; equivalent wording alone is not a reason to rewrite.
 
 The scope and root-cause principles incorporate guidance adapted from `multica-ai/andrej-karpathy-skills` commit `2c606141936f1eeef17fa3043a72095b4765b9c2`. Do not contact that repository or fetch its text while preparing a proposal. The seven-part core behavior below and this repository's instructions are the proposal authority.
 
@@ -145,34 +145,26 @@ Classify existing AGENTS.md and substantive CLAUDE.md text as:
 
 Use this classification to rebuild the instruction body around the required hierarchy. Rewrite common guidance to express the seven core behaviors, merge duplicates without weakening them, and place project-specific rules under `Project Configuration`. Preserve the meaning of user-authored rules and applicable stricter constraints; ask only about actual semantic conflicts. Preserve unrelated content and tool-managed blocks, including their markers. Do not add generated markers or rewrite equivalent wording solely to match the template byte-for-byte.
 
-AGENTS.md is the canonical instruction body. Handle root CLAUDE.md as follows:
+AGENTS.md is the sole repository-managed root instruction file. Handle root CLAUDE.md as follows:
 
-- If absent, propose the delegation file below.
-- If it already contains exactly equivalent delegation, leave it unchanged.
-- If it contains substantive guidance, merge every non-duplicate or stricter rule into AGENTS.md, resolve conflicts with the user, then propose replacing CLAUDE.md with the delegation file.
-- Never replace substantive CLAUDE.md until its retained guidance is visible in the same complete proposal.
+- If absent, leave it absent. Never create a delegation file, import, or symlink.
+- If it only delegates to or imports AGENTS.md, or is a symlink to AGENTS.md, propose removing it only when no other loading blocker remains. For a symlink, remove only the link, not its target.
+- If it contains substantive guidance, merge every non-duplicate or stricter rule into AGENTS.md and resolve conflicts with the user before proposing its removal, subject to the same blocker check. Keep any content whose disposition is unresolved until the user decides where it belongs.
+- Never remove substantive CLAUDE.md until its retained guidance is visible in the same complete proposal.
 
-```markdown
-# CLAUDE.md
-
-This repository uses `AGENTS.md` as the canonical agent instruction file.
-
-Claude Code agents must read and follow `AGENTS.md` first. If any guidance here conflicts with `AGENTS.md`, `AGENTS.md` wins.
-```
-
-Do not edit nested AGENTS.md, nested CLAUDE.md, or other agent instruction formats by default.
+Claude Code directly reads AGENTS.md on v2.1.277 or later, although some sessions before v2.1.281 cannot do so. Under the default project-instructions setting, a CLAUDE.md, CLAUDE.local.md, or .claude/CLAUDE.md in the working directory or an ancestor takes precedence. Starting at the requested working directory (or current working directory when omitted), check each directory through the Git root and its ancestors. Read the root CLAUDE.md for migration; check only the existence of the other blocking files. If any blocker would remain after root CLAUDE.md removal, report its path and withhold that removal proposal without changing the blocker. Do not report guidance ready while a blocker remains. User-global ~/.claude/CLAUDE.md does not block project AGENTS.md. A custom project-instructions setting remains a manual verification concern. Do not edit nested AGENTS.md, nested CLAUDE.md, or other agent instruction formats by default. See [Claude Code project memory](https://code.claude.com/docs/en/memory).
 
 ## Diagnose, Propose, and Apply
 
-Report the complete review's findings: standard structure and behavior coverage, missing commit-message authority, duplicated or conflicting guidance, CLAUDE.md delegation state, and the evidence for project indexing. An explicit diagnosis-only request stops after this report. Otherwise, when reorganization is needed:
+Report the complete review's findings: standard structure and behavior coverage, missing commit-message authority, duplicated or conflicting guidance, root CLAUDE.md migration state, any loading blocker on the checked path, and the evidence for project indexing. An explicit diagnosis-only request stops after this report. Otherwise, when reorganization or migration is needed:
 
-1. Record the exact root AGENTS.md and CLAUDE.md paths and their current bytes, object hashes, or explicit absence.
+1. Record the exact root AGENTS.md and CLAUDE.md paths and their current bytes, object hashes, link target, or explicit absence as applicable.
 2. Resolve every conflict and the mandatory commit-message rule before presenting an applicable proposal.
-3. Show one complete combined diff for both files, labeling retained repository rules through their final placement.
+3. Show one complete AGENTS.md diff and, only when no other loading blocker remains, the removal of the existing root CLAUDE.md. Label retained repository rules through their final placement.
 4. Explain ambiguous text left unchanged and every fact omitted for lack of authority.
 5. Use existing authorization when it covers the exact displayed diff; otherwise ask for approval once. The user may request revision or decline it.
-6. Immediately before writing, re-read both targets and require them to match the snapshots used for the proposal. A change to either target invalidates approval for the combined diff.
-7. Apply only the approved diff, then show the actual diff and verify the required structure, mandatory commit-message subsection, CLAUDE.md delegation, retained overrides, and unrelated content.
+6. Immediately before writing, re-read both targets and require them to match the snapshots used for the proposal. A change to either target invalidates approval for the combined diff. Recheck Claude loading-blocker existence from the preserved requested working directory through the Git root and its ancestors. If the approved diff removes root CLAUDE.md and another blocker would remain after that removal, invalidate approval for the combined diff, write neither target, preserve root CLAUDE.md, and keep guidance unready. If the approved diff changes only AGENTS.md, apply it under its existing approval even when a blocker remains; report the blocker and keep guidance unready. Continue independent setup components.
+7. Apply only the approved diff, then show the actual diff and verify the required structure, mandatory commit-message subsection, retained overrides, and unrelated content. Verify root CLAUDE.md is absent when its removal was approved; otherwise verify that the deferred file remains and report the blocker.
 
 Proposal approval covers only the exact displayed root instruction-file diff. It does not authorize nested-file edits, tool setup, staging, committing, or publication.
 
@@ -183,9 +175,15 @@ These scenarios describe expected outcomes for Master's separate verification of
 | Scenario | Expected behavior |
 | --- | --- |
 | General setup with fragmented or repetitive guidance | Review the complete body and propose one combined diff that reorganizes it around the standard, even when tool configuration is healthy. |
+| New repository without root guidance | Propose AGENTS.md only; leave CLAUDE.md absent. |
 | Guidance already meets the standard | Finish the full review and report no change; do not rewrite equivalent wording. |
 | Project-specific constraints or tool-managed blocks | Preserve their meaning and managed content; ask only about actual semantic conflicts. |
-| Substantive CLAUDE.md | Retain every non-duplicate or stricter rule in the combined proposal before replacing it with delegation. |
+| Existing delegation or import in root CLAUDE.md | Propose removing the file when no other loading blocker remains; never recreate it. |
+| Substantive root CLAUDE.md | Retain every non-duplicate or stricter rule in AGENTS.md before proposing removal; resolve conflicts first. |
+| Another loading blocker on the requested-directory-to-ancestor path | Report its path, retain root CLAUDE.md, leave the blocker untouched, and keep guidance unready. |
+| Loading blocker appears after approval of root CLAUDE.md removal | Recheck before writing, invalidate the combined approval, preserve root CLAUDE.md, and keep guidance unready. |
+| Existing blocker with an approved AGENTS.md-only diff | Apply the unchanged approved diff, retain root CLAUDE.md, report the blocker, and keep guidance unready. |
+| Bundle target names a nested directory | Check loading blockers from that directory through its ancestors, even though the canonical root remains the target identity. |
 | Tool-limited request, scoped continuation, or guidance `skip` | Keep the requested scope without adding a whole-file guidance proposal. |
 | Diagnosis-only request | Report the review findings without drafting or applying a proposal. |
 | Approved proposal or changed target snapshot | Reuse approval for the unchanged diff; if either target changes, invalidate the combined approval and prepare a current proposal. |

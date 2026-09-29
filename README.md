@@ -44,7 +44,7 @@ Restart Codex after installing or upgrading, then open `/hooks` and explicitly t
 
 Install or update the Aquarium plugin through Codex's plugin-management flow. A plugin-only request does not invoke `$aquarium:dev-setup-global` or start global tool diagnostics. Request global development tool setup separately when needed.
 
-Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup-global` checks and updates user-global tools from exact upstream sources, while `$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md and CLAUDE.md. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. The upstream `$deslop` skill is a required prerequisite for task delivery.
+Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup-global` checks and updates user-global tools from exact upstream sources, while `$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md guidance. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. The upstream `$deslop` skill is a required prerequisite for task delivery.
 
 ## Development Channel
 

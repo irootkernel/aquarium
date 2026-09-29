@@ -1,13 +1,13 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage Project setup, registration or binding, project MCP, AGENTS.md, or CLAUDE.md. Use $aquarium:dev-setup-global for supported user-global development tool installation or updates. Aquarium plugin installation and updates belong to the host plugin-management flow."
+description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage Project setup, registration or binding, project MCP, AGENTS.md, or migration of an existing root CLAUDE.md. Use $aquarium:dev-setup-global for supported user-global development tool installation or updates. Aquarium plugin installation and updates belong to the host plugin-management flow."
 ---
 
 # Repository Development Setup
 
 Diagnose the repository first, propose only changes supported by repository evidence, and leave supported user-global development tool installation and updates to `$aquarium:dev-setup-global`. Route requests to install or update only the Aquarium plugin directly to the host's plugin-management flow without repository or global setup diagnosis.
 
-This skill owns root AGENTS.md and CLAUDE.md guidance. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
+This skill owns root AGENTS.md guidance and migration of an existing root CLAUDE.md. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
 
 Read [podway-integration.md](../../references/podway-integration.md) only when Podway is selected by the request, repository guidance, or an Aquarium readiness requirement. Read the applicable sections of [the shared tool catalog](../../references/tool-catalog.md) for every repository component in scope. Read [agents-guidance.md](references/agents-guidance.md) whenever root operating guidance is in scope.
 
@@ -17,9 +17,9 @@ Requests such as "configure Sorage for this repository" or "register this Sorage
 
 ## Establish Scope From Evidence
 
-1. Resolve the requested working directory to one Git root and inspect applicable instructions, branch, upstream, staged, unstaged, untracked, and conflict state.
+1. Record the requested working directory (or current working directory when omitted), resolve it to one Git root, and inspect applicable instructions, branch, upstream, staged, unstaged, untracked, and conflict state.
 2. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_tools.py --repository <git-root>`, adding only the flags required for repository components selected by explicit request, repository files or guidance, or an Aquarium readiness contract. Add `--include-podway` for Podway readiness, `--include-sorage` for the disclosed Sorage readiness diagnostic, and `--require-mulgae-mcp` when repository authority requires Mulgae MCP readiness to affect status.
-3. Select only evidenced repository components: Sanho workspace state; the selected Mulgae release's supported configuration, local configuration, bootstrap or refresh, and project MCP; Gaori repository config, active rules, ignore policy, and project MCP; Sorage Project binding and `.sorage/` ignore or tracking safety; Podway workspace, managed Procedures, migrations, and legacy recovery; and root AGENTS.md and CLAUDE.md operating guidance.
+3. Select only evidenced repository components: Sanho workspace state; the selected Mulgae release's supported configuration, local configuration, bootstrap or refresh, and project MCP; Gaori repository config, active rules, ignore policy, and project MCP; Sorage Project binding and `.sorage/` ignore or tracking safety; Podway workspace, managed Procedures, migrations, and legacy recovery; and root AGENTS.md operating guidance with migration of an existing root CLAUDE.md.
 4. Treat an absent optional tool component with no repository evidence as out of scope, not missing. An explicit component request adds that component to scope. General setup includes root guidance even when the files are absent. A request limited to a tool or a scoped continuation stays within that component and its direct prerequisites; it does not add a full guidance review. Honor explicit guidance exclusions, including bundle `agents_guidance: skip`.
 5. Never ask the user to choose `Install and configure`, `Diagnose only`, or `Skip`, and never ask whether to `Show proposal`, `Diagnose only`, or `Skip`. Diagnosis is automatic. For tool configuration, report no change when ready and otherwise prepare the smallest exact proposal. For guidance, follow the whole-file review below.
 
@@ -76,21 +76,21 @@ An explicit diagnosis-only request suppresses mutation proposals. A scoped conti
 
 ## Reconcile Repository Guidance
 
-Review the complete AGENTS.md and CLAUDE.md during general setup or an explicit guidance request. Reuse verified repository facts while assessing structure, behavior, duplication, and project-specific constraints. An explicit diagnosis-only request reports findings without drafting a proposal.
+Review the complete AGENTS.md and any existing root CLAUDE.md during general setup or an explicit guidance request. Reuse verified repository facts while assessing structure, behavior, duplication, and project-specific constraints. Check for Claude instruction files from the requested working directory through the Git root and its ancestors that prevent default AGENTS.md loading. Read only the root CLAUDE.md for migration; check other blocking files by existence alone. If a blocker would remain after root CLAUDE.md removal, report it, withhold that removal proposal, and do not report guidance ready. Continue independent setup components. An explicit diagnosis-only request reports findings without drafting a proposal.
 
 When a change is needed:
 
 1. Preserve the meaning of repository-specific rules, applicable stricter constraints, unrelated content, and tool-managed blocks. Resolve actual semantic conflicts with the user.
 2. Reorganize the full instruction body around the standard in `agents-guidance.md`, including its seven core behaviors and mandatory commit-message authority. Rewrite and consolidate common prose, move rules to their proper sections, and remove duplication; do not limit the proposal to small additions or preserve the old arrangement for its own sake.
 3. Include tool references only for evidenced repository integrations and canonical global skills that exist. Do not inspect those global skill contents.
-4. Show one complete combined AGENTS.md and CLAUDE.md diff.
-5. Apply only that exact diff under authorization that covers it and after a fresh target snapshot check. Use existing approval when it covers the displayed changes; otherwise obtain approval once.
+4. Show one complete AGENTS.md diff together with the proposed removal of an existing root CLAUDE.md only when no other loading blocker remains.
+5. Apply only that exact diff under authorization that covers it and after a fresh target snapshot and loading-blocker check from the requested working directory. Use existing approval when it covers the displayed changes; otherwise obtain approval once.
 
-When the full review establishes that both files already satisfy the standard in structure and meaning, report no change. Equivalent wording does not require a rewrite. Guidance approval never authorizes tool setup, staging, commit, or publication.
+When the full review establishes that AGENTS.md already satisfies the standard and root CLAUDE.md is absent, report no guidance change and any loading blocker as an unresolved gap. Equivalent wording does not require a rewrite. Guidance approval never authorizes tool setup, staging, commit, or publication.
 
 ## Bundle and Continuation Intake
 
-A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, target index, canonical Git root, effective tools, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug` (or null), `mulgae_artist` boolean, and repository-guidance policy. Accept the full effective tool list only as target intent: process repository components and guidance here, while the bundle owner sends the global union once to `$aquarium:dev-setup-global`.
+A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, target index, canonical Git root, effective tools, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug` (or null), `mulgae_artist` boolean, and repository-guidance policy. When guidance is proposed, it must also supply the separately resolved requested working directory. Verify that directory still belongs to the canonical Git root and use it as the starting point for Claude loading-blocker checks. If it is missing or mismatched, stop guidance work for that target without substituting the root; continue independent components. Accept the full effective tool list only as target intent: process repository components and guidance here, while the bundle owner sends the global union once to `$aquarium:dev-setup-global`.
 
 Reject unsupported tools, malformed or conflicting MCP scope lists, invalid Sorage slugs or artist values, or any request to read the manifest. Preserve per-target partial failure and return `ready`, `partial`, `failed`, `declined`, or `skipped` with an exact resumption request.
 

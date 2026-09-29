@@ -33,6 +33,15 @@ If a shared action fails or is declined, record the dependent targets as partial
 
 ## Configure Targets in Order
 
+For a ready target with `agents_guidance: propose`, resolve its retained
+`path` to an absolute requested working directory, relative to the normalized
+manifest path's parent when needed. Before the guidance handoff, require that
+directory to still belong to the target's canonical Git root. If it is missing
+or resolves to a different root, report the mismatch and stop that target's
+guidance work; continue its independent selected components. Do not substitute
+the canonical root for the requested directory. Keep the canonical root as the
+target identity and status-recording root.
+
 For each ready target, after manifest revalidation and canonical identity freeze,
 read its current row through `aquarium-status show --format json` and create one
 `aquarium-production-status-attempt/v1` with exactly `schema`, a new UUIDv4
@@ -45,12 +54,14 @@ full attempt, because the manifest is an explicit component selection; this
 prevents it from advancing `last_full_ready`. The
 [production-status specification](../../references/production-status.md)
 owns this closed envelope. Pass it with the requesting
-skill, manifest digest, target index, canonical Git root, complete effective tool
-list, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug`, `mulgae_artist`, and guidance policy to `$aquarium:dev-setup`.
+skill, manifest digest, target index, canonical Git root, the separately resolved
+requested working directory when guidance is proposed, complete effective tool
+list, effective `global_mcp` and `local_mcp` lists, `sorage_project_slug`,
+`mulgae_artist`, and guidance policy to `$aquarium:dev-setup`.
 The repository skill interprets the list as target intent, preserves that attempt
 unchanged, and never repeats global installation or freshness work.
 
-- Process only repository portions: workspace/configuration readiness, selected project MCP, Sorage Project binding and ignore state, Mulgae artist role, Podway managed Procedures, and AGENTS.md/CLAUDE.md guidance. Compare each requested MCP scope with the effective Codex registration; a configured registration at another scope is a mismatch. Diagnose and propose a bounded correction without deleting or replacing either registration silently. An MCP omitted from both lists is unrequested, not disabled; preserve any existing registration and do not claim its tools are hidden.
+- Process only repository portions: workspace/configuration readiness, selected project MCP, Sorage Project binding and ignore state, Mulgae artist role, Podway managed Procedures, and root AGENTS.md guidance with migration of an existing root CLAUDE.md. Compare each requested MCP scope with the effective Codex registration; a configured registration at another scope is a mismatch. Diagnose and propose a bounded correction without deleting or replacing either registration silently. An MCP omitted from both lists is unrequested, not disabled; preserve any existing registration and do not claim its tools are hidden.
 - Compare an explicit Sorage slug with native Project resolution. A different binding is a mismatch requiring a separate bounded proposal; the slug grants no registration, rebind, unarchive, Handoff, or Vault authority. Compare the artist boolean with effective Mulgae roles. A mismatch requires an exact native configuration proposal under existing approval rules, without changing provider or model selection. Neither a configured registration nor a role config proves live exposure in this Codex session.
 - `agents_guidance: propose` requests the complete repository guidance proposal. `skip` suppresses that proposal. Effective Humanizer and im-not-ai selections still determine target-specific writing rules without repeating their global setup.
 - Ask only for identifiers or conflicts that repository evidence and the manifest cannot decide. Do not ask each target to select install, diagnose, or skip.

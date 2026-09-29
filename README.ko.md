@@ -44,7 +44,7 @@ codex plugin add aquarium@root-kernel
 
 Aquarium 플러그인 설치와 업데이트는 Codex의 플러그인 관리 기능으로 처리합니다. 플러그인만 설치하거나 업데이트하는 요청을 처리할 때는 `$aquarium:dev-setup-global`을 호출하거나 전역 도구 진단을 시작하지 않습니다. 전역 개발 도구 설정이 필요하면 별도로 요청합니다.
 
-Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트합니다. `$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md, CLAUDE.md를 관리합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓸 수 있습니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
+Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트합니다. `$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md를 관리합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓸 수 있습니다. Upstream `$deslop` skill은 task 수행의 필수 요구사항입니다.
 
 ## Development Channel
 

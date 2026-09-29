@@ -224,7 +224,7 @@ Master explicitly accepted EPIC-009 and TASK-047 closeout on 2026-09-09. The lat
 
 **Status:** `Completed`
 
-Separate user-global installation and update work from repository setup. `dev-setup-global` now owns exact-upstream CLI and skill maintenance, global MCP and services, writing and Lore skills, and Ouroboros updates. `dev-setup` automatically diagnoses evidenced repository configuration and remains the owner of root AGENTS.md and CLAUDE.md guidance without inspecting global skill contents.
+EPIC-010 separated user-global installation and updates from repository setup. `dev-setup-global` owned exact-upstream CLI and skill maintenance, global MCP and services, writing and Lore skills, and Ouroboros updates. `dev-setup` automatically diagnosed evidenced repository configuration and owned root AGENTS.md and CLAUDE.md guidance without inspecting global skill contents.
 
 At this epic's completion, the bundle manifest used `aquarium.dev-setup-bundle/v1`: it prepared the global union once and delegated repository configuration to `dev-setup` in target order. `TASK-076` under `EPIC-000` owns its v2 replacement.
 

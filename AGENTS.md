@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delegates to this file.
+Repository guidance for AI coding agents working on Aquarium. This is the sole repository-managed root instruction file.
 
 ## Core Behavior
 
@@ -58,7 +58,7 @@ Repository guidance for AI coding agents working on Aquarium. `CLAUDE.md` delega
 - Use `$aquarium:war-room` for difficult-bug diagnosis.
 - Use `$aquarium:release-handler` for one stable release lifecycle, `$aquarium:release-qa` for its exact release-candidate verification, and `$aquarium:dev-setup-bundle` only with an explicitly supplied multi-repository manifest.
 - Use `$aquarium:dev-setup-global` to diagnose, install, or update supported user-global development tools, paired skills, services, and global MCP state. Requests to install or update only the Aquarium plugin belong to the host's plugin-management flow; do not load this skill or run global setup diagnostics for those requests.
-- Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and repository operating guidance, including root AGENTS.md and CLAUDE.md.
+- Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and root AGENTS.md guidance, including migration of an existing root CLAUDE.md.
 - Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use each installed paired `$use-*` skill for its corresponding local tool operations and keep tool-specific lifecycle rules in that integration's canonical contract.
