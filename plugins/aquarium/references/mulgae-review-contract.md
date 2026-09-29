@@ -24,6 +24,8 @@ execution to those same inputs.
 
 Before preflight, check the selected native transport's objective size, encoding, and line constraints against the complete Review Brief. Follow the same-release paired skill and tool schema; MCP and CLI limits can differ. If one transport cannot carry the Brief, select another eligible native transport within the existing execution and transmission authority, then use identical inputs for its preflight and execution. Remove only redundant wording, never criteria, scope, provenance, or recovery context. If no eligible input can carry the complete Brief, stop with the exact input gap and request a bounded decision. Do not truncate the Brief, split one assessment into undisclosed reviews, invent a file-input flag, or treat an artifact path as transmitted content without a supported native contract.
 
+Establish the requested Git worktree independently and obtain its native `project_binding` through CLI `context`. Before using an attached MCP server, compare that value with `get_context`; registration or identical target bytes do not establish its root. Require the selected transport's `project_binding` and `execution_guard` v1 capabilities. Pass the independently obtained binding to preflight, then pass that same binding and the returned `request_receipt.request_digest` to execution with otherwise identical target, objective, roles, and selectors. A binding or request mismatch stops execution before provider work. Select a capable CLI before starting when the attached MCP root or guards cannot be established. Never drop a requested guard or silently adopt a changed digest. Let `$use-mulgae` own the exact commands, fallback, and recovery decisions.
+
 The agent that will select the transport or start the review must first load the
 installed `$use-mulgae` skill in its own execution context and follow its
 same-release instructions. Naming the skill or loading it only in a coordinator
@@ -37,7 +39,7 @@ or advance its machine contracts:
 
 | Mulgae release | Command envelope | Doctor | Review preflight | Configuration |
 | --- | --- | --- | --- | --- |
-| Stable `>=v0.1.23` | `mulgae-command-result.v12` or later | `mulgae-doctor-result.v5` or later | `mulgae-review-preflight.v5` or later | Native supported configuration, Config v4 at the minimum |
+| Stable `>=v0.1.24` | `mulgae-command-result.v18` or later | `mulgae-doctor-result.v5` or later | `mulgae-review-preflight.v7` or later | Native supported configuration, Config v4 at the minimum |
 
 Reject prereleases and releases below the minimum. SemVer build metadata does
 not make an otherwise stable release ineligible. Do not impose an upper release
@@ -191,14 +193,23 @@ source Low count is nonzero. Preserve the original target and report that the
 review predates any permitted Low-only correction bytes. Do not describe those
 bytes as provider-reviewed.
 
-Verify ordinary findings with the paired skill's supported evidence reads.
-Composite findings support status, findings, report, and export, but not CLI
-`excerpt` or MCP current-target evidence resources. Verify the supported result
-and target identity against current code and authority; do not fabricate an
-excerpt or finding-to-source binding. If that evidence cannot resolve a finding,
-report the gap and obtain any additional authority required by its disposition.
-Report and export writes retain the paired skill's explicit user-request boundary.
-Keep raw provider output and runtime artifacts private under the evidence contract.
+Inspect the exact committed publication through the paired skill's verified
+read contract. Preserve its `publication_receipt` across every finding page,
+finding detail, role report, and indexed-evidence continuation. Read every page
+and complete content chunk needed for the judgment; a summary or first chunk is
+not a complete finding or report. A changed receipt, cursor, content digest, or
+project binding stops that read. Use the capable CLI from the requested root
+when the MCP host does not expose a supported resource. Do not read private
+runtime files or write a report merely to obtain verified content.
+
+For a new composite, use its retained source findings, receipts, role reports,
+and indexed evidence when the native read marks each item available. Its copied
+evidence does not depend on continued source-run retention. A historical
+composite may lack that support; report the evidence gap and withhold any
+disposition that requires the missing material. Compare verified captured
+evidence with current code and authority before disposition. Report and export
+writes retain the paired skill's explicit user-request boundary. Keep raw
+provider output and runtime artifacts private under the evidence contract.
 
 For completion review, consume every accepted selected-role Markdown report and
 aggregate criterion states under the review-intent contract. A clean finding

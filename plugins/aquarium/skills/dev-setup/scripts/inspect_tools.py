@@ -29,9 +29,9 @@ SCHEMA_VERSION = "aquarium-dev-setup-inspection.v21"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_MINIMUM_VERSION = (0, 1, 23)
+MULGAE_MINIMUM_VERSION = (0, 1, 24)
 MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
-    "minimum_command_schema": 12,
+    "minimum_command_schema": 18,
     "minimum_doctor_schema": 5,
     "provider_compatibility_fields": (
         "cli_compatible",
@@ -78,6 +78,8 @@ MULGAE_SKILL_FILES = (
     "references/lifecycle.md",
     "references/authoring.md",
     "references/recovery.md",
+    "references/legacy.md",
+    "references/verified-reads.md",
 )
 PODWAY_SKILL_FILES = (
     "SKILL.md",
@@ -895,7 +897,7 @@ def supported_mulgae_go_version(version: str | None) -> bool:
         version,
     )
     return bool(
-        match and canonical_numeric_components_at_least(match.groups(), (1, 26, 6))
+        match and canonical_numeric_components_at_least(match.groups(), (1, 27, 1))
     )
 
 
@@ -2553,7 +2555,7 @@ def inspect_mulgae_installation_prerequisites(
             "installed": go_executable is not None,
             "version": None,
             "supported": False,
-            "minimum": "go1.26.6",
+            "minimum": "go1.27.1",
         }
     }
     if not go_executable:
