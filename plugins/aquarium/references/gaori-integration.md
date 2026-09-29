@@ -9,8 +9,9 @@ current task. Follow [evidence-residency.md](evidence-residency.md) for handoffs
 ## Select and Delegate a Check
 
 Resolve the exact command from repository authority and the current verification
-requirements. Pass its configured command ID or authorized argv, repository,
-parser and tags, and applicable timeout to `$use-gaori`. Parser mapping belongs
+requirements. Pass its configured command ID or authorized argv, canonical
+repository root, required environment values, selected config and output-directory
+overrides, parser and tags, and applicable timeout to `$use-gaori`. Parser mapping belongs
 to `test-setup`; neither a parser nor Gaori chooses a test gate. Preserve existing
 user-run evidence when the owning workflow accepts it for the exact target.
 
@@ -51,13 +52,14 @@ and unavailable, run the exact repository-owned command directly and report the
 missing evidence compression. If the command itself is unknown, return an
 evidence gap rather than inventing it.
 
-Pass every required execution input, including environment values that identify
-an exact artifact. An MCP path is eligible only when it demonstrably preserves
-those inputs. Changing an agent shell environment does not prove that an already
-running MCP server received the change. When the native contract therefore
-selects CLI execution, start the CLI once and use the paired skill's process
-completion waiting policy for the same handle. Do not launch another MCP server,
-restart an attached server, or change host configuration to make MCP eligible.
+Before an MCP start, `$use-gaori` verifies the attached connection's actual
+repository, required environment, selected config, and output-directory binding
+from host evidence tied to that connection. A registration, server label, or
+agent shell environment does not establish those launch inputs. When a binding
+is uncertain, use the paired skill's CLI fallback for the selected target.
+Start the CLI once and wait on that process handle. Do not launch another MCP
+server, restart an attached server, or change host configuration to make MCP
+eligible.
 
 ## Interpret the Result
 
@@ -68,6 +70,18 @@ Keep these decisions separate:
   and evidence availability. `no_match` alone does not fail a successful command.
 - Aquarium accepts a verification requirement only when the exact current target
   has the required result and sufficient evidence under repository authority.
+
+Before reporting a pass, match the returned command ID and artifact paths to the
+selected command, repository, and output destination. For both configured and
+ad-hoc runs, retain the selected argv and compare it with the summary's redacted
+`command_argv` where possible. An ad-hoc run's generated command ID cannot
+establish its argv. If the argv differs, or redaction prevents verifying a
+relevant argument and no other evidence binds it, leave the check unverified.
+
+For a log larger than 256 KiB, extraction scans only complete lines in the final
+256 KiB and reports `extractor_status: degraded`. Failures before that window
+may be absent from the summary. Zero extracted failures does not prove the log
+contains none, and this evidence limit does not change the child result.
 
 A Gaori `internal_error`, lost outcome, or unavailable required evidence cannot
 be reported as successful verification merely because a child may have exited
@@ -85,8 +99,13 @@ Runtime paths remain local evidence and are not copied into tracked documents.
 
 Delegate a user-requested live timing observation to `$use-gaori` for the existing
 invocation. `$use-gaori-status` owns historical statistics and detailed timing
-explanations. Its absence does not block execution or a supported one-off live
-estimate. Use only native calculations and keep the existing execution active.
+explanations for the selected repository and command ID. A selected config
+override validates that ID; it does not filter historical samples by config,
+so another config's runs with the same ID may be included. An MCP server
+launched with `--output-dir` cannot serve insights; follow the paired skill's
+CLI history and live-estimate limits. The status skill's absence does not block
+execution or a supported one-off live estimate. Use only native calculations
+and keep the existing execution active.
 
 The paired skill owns retention discovery and cleanup guidance. An advisory does
 not delay a required check or grant deletion authority. Neither timing nor

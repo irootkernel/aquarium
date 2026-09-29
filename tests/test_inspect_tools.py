@@ -289,7 +289,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         mulgae_mcp_mode: str | None = None,
         mulgae_mcp_global: bool = False,
         go_version: str = "go1.26.6",
-        gaori_version: str = "v0.1.17",
+        gaori_version: str = "v0.1.18",
         gaori_config_ok: bool = True,
         malformed_gaori_config: bool = False,
         slow_gaori_config: bool = False,
@@ -2916,7 +2916,7 @@ else:
         zcode = tools["mulgae"]["provider_inventory"][0]
         self.assertEqual(zcode["binary_available"]["status"], "verified")
         self.assertEqual(zcode["cli_compatible"]["eligibility"], "eligible")
-        self.assertEqual(tools["gaori"]["version"], "v0.1.17")
+        self.assertEqual(tools["gaori"]["version"], "v0.1.18")
         self.assertTrue(tools["gaori"]["version_supported"])
         self.assertEqual(tools["gaori"]["status"], "configured")
         self.assertFalse(tools["gaori"]["agent_skill"]["present"])
@@ -7154,11 +7154,14 @@ else:
             ("0.1.15", False, "degraded"),
             ("0.1.16", False, "degraded"),
             ("v0.1.16", False, "degraded"),
-            ("0.1.17", True, "configured"),
-            ("v0.1.17", True, "configured"),
+            ("0.1.17", False, "degraded"),
+            ("v0.1.17", False, "degraded"),
+            ("0.1.18", True, "configured"),
+            ("v0.1.18", True, "configured"),
             ("v0.1.17-rc.1", False, "degraded"),
-            ("v0.1.017", False, "degraded"),
-            ("vv0.1.17", False, "degraded"),
+            ("v0.1.18-rc.1", False, "degraded"),
+            ("v0.1.018", False, "degraded"),
+            ("vv0.1.18", False, "degraded"),
             ("v0.1.14-rc.1", False, "degraded"),
             ("v0.1.99", True, "configured"),
             ("0.2.0", False, "degraded"),

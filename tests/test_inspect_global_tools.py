@@ -241,6 +241,27 @@ class TestInspectGlobalTools:
         assert completed.returncode == 0, completed.stderr
         return json.loads(completed.stdout)
 
+    @pytest.mark.parametrize(
+        ("version", "supported"),
+        [("v0.1.17", False), ("v0.1.18", True)],
+    )
+    def test_gaori_global_version_floor(self, version: str, supported: bool) -> None:
+        executable = self.bin_directory / "gaori"
+        executable.write_text(
+            f"#!/bin/sh\nprintf '%s\\n' '{json.dumps({'name': 'gaori', 'version': version})}'\n",
+            encoding="utf-8",
+        )
+        executable.chmod(0o755)
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            tool = inspect_global_tools.inspect_global(
+                str(self.repository), 1.0, components=("gaori",)
+            )["tools"]["gaori"]
+
+        assert tool["cli"]["version"] == version
+        assert tool["cli"]["version_supported"] is supported
+        assert tool["cli"]["status"] == ("installed" if supported else "degraded")
+
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
