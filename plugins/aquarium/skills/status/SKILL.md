@@ -5,6 +5,8 @@ description: "Report Aquarium production setup history, declared languages, and 
 
 # Production Setup Status
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Use the installed `aquarium-status` runtime to report the local production setup
 ledger. This skill does not run setup, infer live tool health, repair a checkout,
 or remove records implicitly.

@@ -5,6 +5,8 @@ description: "Run one report-only standalone Mulgae review of an exact supported
 
 # Mulgae Review
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Run one standalone review through Mulgae and return an advisory report. This skill supplies review intent and consumes the result; `$use-mulgae` owns capture, provider execution, waiting, recovery, publication, retention, and every other native lifecycle action.
 
 ## Load the contracts

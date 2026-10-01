@@ -5,6 +5,8 @@ description: "Shape a greenfield project into an approved PRD and initial roadma
 
 # New Project
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Create a PRD and initial roadmap for one new project. Do not implement code, initialize Git, or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely without skipping the evidence-residency contract.

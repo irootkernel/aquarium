@@ -5,6 +5,8 @@ description: "Diagnose, install, and update supported user-global development to
 
 # Global Development Setup
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Own installation, exact-upstream freshness, upgrades, services, and global Codex integration for the supported components listed below without inspecting or changing repository configuration.
 
 ## Check Request Scope Before Loading References

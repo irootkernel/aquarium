@@ -5,6 +5,8 @@ description: "Shape one major refactor or behavior-change epic with Ouroboros, w
 
 # Refactor
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Create or revise exactly one refactor epic in the canonical roadmap. Do not implement or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md), and use the default `aquarium-design-v2` Podway path.

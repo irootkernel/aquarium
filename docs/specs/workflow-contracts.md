@@ -2,6 +2,14 @@
 
 Aquarium organizes work into shaping, delivery, validation, setup, and release lifecycles. The roadmap owns adopted work and status; every runtime workflow is a bounded projection of that authority.
 
+## Commit messages and change origins
+
+Every Aquarium skill uses the [shared commit attribution contract](../../plugins/aquarium/references/commit-attribution.md) within its existing effect boundaries. Developer-authored messages use one header chosen for the change's purpose and one final trailer block with `Aquarium-Workflow`, `Aquarium-Epic`, and `Aquarium-Task`. Lore context remains optional; required evidence and native provenance remain intact.
+
+Change-producing workflows retain a verified `change-origin` in their result and commit handoff. This includes standalone documentation, repository, and test setup whose files are committed later. Child phases retain an established parent's owner; independently approved workflows own their candidate. `task-commit` verifies and preserves this origin through the committed message. It does not substitute its own name for a known producer or infer ownership from the last invoked skill.
+
+Task commits identify their canonical parent Epic, including standing groups, while native IDs and scope qualification remain unchanged. `none` records an established absence. Attribution creates no commit or extra authority for report-only, global-only, or no-change execution. Tool-generated commits keep their native message contract.
+
 ## Shape Work
 
 `new-project`, `new-feature`, `refactor`, and `war-room` use the shared Ouroboros integration contract and an exact-diff approval boundary. They capture current authority before provider work, treat provider output as draft evidence, route typed quality findings through fresh phase-owned rework, and apply repository documents only after the user approves the complete diff. Podway guards operational quality results, not design truth, diagnostic cause or scope, or user approval.

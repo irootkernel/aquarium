@@ -5,6 +5,8 @@ description: "Run one supervised static review of a staged, HEAD, commit, or ran
 
 # Orca Review
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Run the canonical Aquarium review contract with one fresh requested reviewer owned and supervised entirely by Orca. This path does not discover, launch, capture through, settle through, or otherwise use Dolgorae.
 
 ## Load the contracts

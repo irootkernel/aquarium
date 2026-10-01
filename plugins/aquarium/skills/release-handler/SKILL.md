@@ -5,6 +5,8 @@ description: "Prepare, validate, publish, or retarget one stable release with cu
 
 # Release Handler
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Own one stable release lifecycle without weakening repository release policy. Read [evidence-residency.md](../../references/evidence-residency.md), [release-notes.md](../../references/release-notes.md), and the repository's complete release instructions. Use `$aquarium:release-qa` for scenario QA and `$aquarium:task-commit` for every actual commit; neither leaf grants this workflow publication authority. Read [gate-convergence.md](references/gate-convergence.md) before executing or recovering from a full release gate.
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases through already-configured ambient authentication. It does not authorize credential inspection or changes, authentication, staging, commits, pushes, tags, hosted Releases, destructive tag or Release changes, or post-release next-cycle publication. Obtain each required authority at its actual boundary.

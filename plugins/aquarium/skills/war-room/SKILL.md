@@ -5,6 +5,8 @@ description: "Diagnose one difficult bug and shape the next work unit with Ourob
 
 # War Room
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Diagnose one difficult bug and stop at an evidence-backed work-unit proposal or an approved no-work outcome. Do not implement a fix, mutate production or shared services, or publish. Staging and committing diagnostic documents require the shared delivery-input commit boundary.
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md), and use the default `aquarium-war-room-v2` Podway path. Keep product and source behavior read-only; applying approved canonical diagnostic documents is a separate boundary. Reproduce only in isolated fixtures or an authorized safe environment, preserve observations as orchestration evidence, and test competing hypotheses.

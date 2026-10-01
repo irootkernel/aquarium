@@ -5,6 +5,8 @@ description: "Run one report-only static review with three fresh Codex subagents
 
 # Independent Review
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Run one static review through three fresh host-native Codex subagents. This is a selectable peer of Mulgae and Orca, never an automatic fallback. It uses no Dolgorae, Mulgae, or Orca operation. Read [review-intent-contract.md](../../references/review-intent-contract.md), [review-contract.md](../../references/review-contract.md), and [finding-disposition.md](../../references/finding-disposition.md). An embedded caller also supplies the approved route and reads [review-routing-contract.md](../../references/review-routing-contract.md).
 
 ## Bind the request

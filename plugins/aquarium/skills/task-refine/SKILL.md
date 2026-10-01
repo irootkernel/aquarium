@@ -5,6 +5,8 @@ description: "Deslop and optimize the implementation-checked diff for one roadma
 
 # Task Refine
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Refine only the implementation-checked task-owned diff established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, current focused implementation-check evidence, and explicit authority for the staging steps below. Final requirement-mapped verification follows refinement.
 
 ## Deslop

@@ -5,6 +5,8 @@ description: "Audit, establish, adopt, or migrate a repository's canonical docum
 
 # Documentation Setup
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Establish documentation ownership and roadmap identity for one Git repository. This standalone setup workflow never stages, commits, pushes, publishes, creates Aquarium state, advances Podway, or replaces `$aquarium:task-document`.
 
 Read [documentation-governance.md](../../references/documentation-governance.md) and [operations.md](references/operations.md). Read [profiles.md](references/profiles.md) for `bootstrap` or `adopt`, and [migration.md](references/migration.md) for `migrate`.
@@ -43,3 +45,5 @@ Apply only the approved diff and preserve unrelated work. Do not run a formatter
 Run the inspector again, repository-owned non-writing documentation checks, and `git --no-pager diff --check`. Report structural results separately from semantic review and runtime or generated-contract proof. An Aquarium inspection does not become repository-native CI and does not prove that documentation matches implementation.
 
 Return the operation, profile, scopes, audience boundary, role owners, operations coverage, canonical roadmaps, ID policy, existing dossier references, migration mapping if any, changed paths, checks with exit codes, unresolved gaps, and separate staging, commit, and publication state.
+
+When approved repository files changed, include their verified `change-origin` in the workflow result for a later separately authorized commit. Preserve an inherited coordinator owner when applicable. Report the origin separately from native receipts and closed JSON result schemas; it grants no staging or commit authority.

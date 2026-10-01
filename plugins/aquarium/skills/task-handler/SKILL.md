@@ -5,6 +5,8 @@ description: "Strengthen or resume the procedure around exactly one named roadma
 
 # Task Handler
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Read [review-routing-contract.md](../../references/review-routing-contract.md) for route selection, route-specific readiness, evidence combinations, recovery, and assessment ordinals. Read [review-intent-contract.md](../../references/review-intent-contract.md) for the shared Review Brief and criterion-level completion assessment. Read [mulgae-review-contract.md](../../references/mulgae-review-contract.md) only when the selected review route is `mulgae`.
 
 Strengthen execution of one roadmap task goal with focused phase skills. Own task identity, authority, goal lifetime, transitions, resumption, and final evidence. Select `execute` by default, `plan-only` for a non-mutating plan, `plan-handoff` only when another agent will continue, and `resume` for continuation. Treat "plan only" as `plan-only`; for `plan-handoff` or its resume, read [plan-handoff.md](../../references/plan-handoff.md) and follow it.

@@ -75,7 +75,7 @@ Use this order for both new and existing files. Reorganize the complete body to 
 
 ### Commit Messages
 
-<mandatory repository-specific commit header and subject rules>
+<shared commit format and attribution rules, plus approved repository-specific exceptions>
 
 ### Project-Specific Operating Rules
 
@@ -96,7 +96,9 @@ Keep the index compact and point to authorities rather than copying domain desig
 - generated or sensitive paths, evidence artifacts, unavailable gates, and destructive or externally mutating boundaries;
 - repository-specific tool routing, command IDs, version pins, timeouts, or approval rules.
 
-Do not insert placeholders, guessed commands, exhaustive file inventories, copied architecture prose, or facts inferred only from directory names. Omit optional facts that cannot be established. `Commit Messages` is the exception: if no authoritative header rule exists, ask the user to choose one and do not finalize or apply the proposal until it is resolved.
+Do not insert placeholders, guessed commands, exhaustive file inventories, copied architecture prose, or facts inferred only from directory names. Omit optional facts that cannot be established. Use [commit-attribution.md](../../../references/commit-attribution.md) for the common commit format and origin rules. Propose its eight purpose headers, exact release title, and three required attribution trailers when no local rule exists. A conflicting established rule requires an explicit migration or exception decision before applying guidance; recent history cannot choose the rule. Once the user has selected the common format, carry that choice into the exact proposal without asking again. Preserve native IDs and tool-generated message exceptions.
+
+Include the common message rules in `Project Configuration > Commit Messages`: an English imperative subject with one approved header, one final trailer block, exactly one `Aquarium-Workflow`, `Aquarium-Epic`, and `Aquarium-Task`, verified `none` values, resolution of a Task's canonical parent Epic, and preservation of the original skill through later commits. Lore context remains optional; native provenance and explicit personal-attribution restrictions remain intact. The change origin belongs in the workflow report or handoff, outside native status-record schemas.
 
 ## Add Aquarium References Without Copying Manuals
 

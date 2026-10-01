@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Standardize Aquarium commit titles and record the responsible skill, Epic, and Task in Git trailers; preserve setup origins through later commits.
 - Require Sorage v0.1.2 and its matching `use-sorage` skill for Project Memos, align Project setup commands, and protect existing installations with the upstream format-1 backup and restore preflight before migration.
 - Require Mulgae v0.1.24 and Go 1.27.1 for new installs; use native project and request guards, receipt-bound reads, and retained composite evidence through the same-release skill.
 - Raise the minimum Gaori version to v0.1.18, require matching skills, verify MCP launch bindings before a run, and report degraded extraction for large logs.

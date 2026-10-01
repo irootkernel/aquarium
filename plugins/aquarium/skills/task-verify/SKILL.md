@@ -5,6 +5,8 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 # Task Verify
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Verify the implemented task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, approved requirements, and exact task-owned diff. Read [evidence-residency.md](../../references/evidence-residency.md) before consuming or returning runtime evidence.
 
 ## Build the Requirement-to-Test Matrix

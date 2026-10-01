@@ -5,6 +5,8 @@ description: "Run and resolve one selected completion-review route for a complet
 
 # Task Review
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Read [review-routing-contract.md](../../references/review-routing-contract.md) for route selection, evidence combinations, recovery, and assessment ordinals. Read [review-intent-contract.md](../../references/review-intent-contract.md) for the shared Review Brief and criterion-level completion assessment. Always read [evidence-residency.md](../../references/evidence-residency.md) and [finding-disposition.md](../../references/finding-disposition.md).
 
 Review only the Task established by `$aquarium:task-handler`. Require its exact objective, criteria and authorities; base revision; candidate identity; ordered work commits when present; included implementation, tests, refinement and review-state documentation; excluded state; verification evidence; selected route; positive assessment ordinal when the checkpoint completes; current goal revision; assessment kind; and review mode. Ordinals one through three use `work-unit`; ordinal four and later use `remediation-confirmation`. A direct invocation is one isolated report-only `work-unit` checkpoint with ordinal one and grants no remediation or later-checkpoint budget.

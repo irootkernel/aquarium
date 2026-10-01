@@ -5,6 +5,8 @@ description: "Plan one named roadmap task without mutation. Use when $aquarium:t
 
 # Task Plan
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Plan only one task. Require the repository, canonical roadmap path, and exact task ID established by `$aquarium:task-handler`; when invoked directly, reconstruct and validate those inputs before proceeding.
 
 Read [epic-execution-sot.md](../../references/epic-execution-sot.md).

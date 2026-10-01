@@ -5,6 +5,8 @@ description: "Audit, propose, and configure Aquarium's common Make or Bun testin
 
 # Test Setup
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Establish one repository's common test entrypoints and evidence without turning missing coverage into a passing facade. This standalone setup workflow may operate independently of roadmap tasks, but it never stages, commits, pushes, publishes, creates Aquarium state, or advances a Podway session.
 
 Read [contract.md](references/contract.md), then read the applicable sections of [profiles.md](references/profiles.md) after detecting the repository languages and root orchestration authority.
@@ -72,6 +74,8 @@ Approval to apply files does not authorize a test that creates containers, datab
 After authorized checks, compare the worktree with the pre-run snapshot. Classify formatter changes as test-owned only when they were disclosed and occurred before the behavioral stages. Any unexpected or unrelated mutation invalidates the run as completion evidence and must be reported without destructive rollback.
 
 ## Report
+
+When approved repository files changed, include their verified `change-origin` in the workflow result for a later separately authorized commit. Preserve an inherited coordinator owner when applicable. Report the origin separately from native receipts and closed JSON result schemas; it grants no staging or commit authority.
 
 Return the repository and selected profile, structural inspection schema and status, rule matrix, exact handlers, applied files, approved waivers and triggers, test environment isolation, commands and exit codes, formatter changes, skipped or unauthorized checks, remaining evidence gaps, and separate staging, commit, and publication state.
 

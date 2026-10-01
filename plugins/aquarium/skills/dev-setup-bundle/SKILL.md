@@ -5,6 +5,8 @@ description: "Apply Aquarium global and repository development setup across expl
 
 # Development Setup Bundle
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Normalize one explicit external manifest, prepare its user-global components once through `$aquarium:dev-setup-global`, and configure repository components in target order through `$aquarium:dev-setup`.
 
 Read [manifest.md](references/manifest.md), [the global setup skill](../dev-setup-global/SKILL.md), [the repository setup skill](../dev-setup/SKILL.md), and only the selected sections of [the shared tool catalog](../../references/tool-catalog.md).
@@ -32,6 +34,8 @@ Prepare each selected global CLI, paired skill, daemon, Sorage initialization, t
 If a shared action fails or is declined, record the dependent targets as partial, failed, or declined while continuing independent components and targets.
 
 ## Configure Targets in Order
+
+Carry `workflow-owner: aquarium:dev-setup-bundle` as orchestration context for each bundle-owned repository candidate. Preserve it in the delegated setup result and any later authorized commit, without adding fields to the manifest or native status documents.
 
 For a ready target with `agents_guidance: propose`, resolve its retained
 `path` to an absolute requested working directory, relative to the normalized

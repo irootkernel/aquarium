@@ -5,6 +5,8 @@ description: "Create one authorized commit for an approved Aquarium handler hand
 
 # Task Commit
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Create one authorized commit through a shared roadmap-aware boundary. Read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), and [release-notes.md](../../references/release-notes.md). This skill owns commit preparation and execution, including one release-note hunk accepted as exact text through direct approval or a valid handler handoff, not implementation evidence, task completion judgment, Podway mutation, publication, or release.
 
 ## Establish the Commit Boundary
@@ -35,6 +37,7 @@ When the commit is outside managed workflow work:
 
 A handler commit handoff must include:
 
+- the verified `change-origin` and its fully qualified `workflow-owner` under the shared attribution contract;
 - repository, canonical roadmap path, exact task or epic ID, exact commit scope, and the authorization source: direct user one-commit authority; the Epic envelope's applicable member, correction, or conditional closeout grant; or the independent validation envelope's owned-correction grant. An `epic-handler` handoff also names `acceptance-source` (`user` or `epic-delegation`), its recoverable `acceptance-authority`, exact `accepted-target`, and the applicable unconsumed grant;
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
@@ -48,9 +51,11 @@ Reject a stale, ambiguous, or incomplete handoff rather than reconstructing appr
 
 A validation-remediation handoff identifies the source assessment separately from the pending assessment of corrected bytes. Before the first delegated review, carry the exact direct-audit evidence and explicitly mark the source review fields inapplicable. After a review, carry its actual route, operation, ordinal, and findings. In both cases, include the exact correction scope, verification, lifecycle and record decisions, release-note decision, candidate acceptance, and remediation commit authority. Do not require a per-group provider review or represent source findings as review coverage of the correction. Final validation acceptance remains pending until the owning workflow completes its whole-Epic assessment.
 
-A design or diagnostic delivery-input handoff uses the same fields and names its owning workflow and current session when present. If no task or epic applies, record that relationship explicitly instead of inventing an ID; when no roadmap exists, mark its path inapplicable. Preserve the actual design or diagnostic quality evidence and mark Task-review-specific fields inapplicable. Require separate one-commit authority and exact candidate acceptance; this variant carries no member-Task commit grant.
+A design or diagnostic delivery-input handoff uses the same fields, retains its verified `change-origin`, and names its owning workflow and current session when present. If no task or epic applies, record that relationship explicitly instead of inventing an ID; when no roadmap exists, mark its path inapplicable. Preserve the actual design or diagnostic quality evidence and mark Task-review-specific fields inapplicable. Require separate one-commit authority and exact candidate acceptance; this variant carries no member-Task commit grant.
 
-A release-handler commit handoff must name the repository, intended and previous versions, exact operation (`settlement`, `retarget`, `release`, or `next-cycle`), changelog path and approved hunk, exact commit scope, `intentional no-note`, applicable QA and release-gate evidence or their explicit inapplicability, and the user's one-commit authorization. It grants no push, tag, hosted Release, destructive replacement, or later commit authority.
+A release-handler commit handoff must retain its verified `change-origin` and name the repository, intended and previous versions, exact operation (`settlement`, `retarget`, `release`, or `next-cycle`), changelog path and approved hunk, exact commit scope, `intentional no-note`, applicable QA and release-gate evidence or their explicit inapplicability, and the user's one-commit authorization. It grants no push, tag, hosted Release, destructive replacement, or later commit authority.
+
+For a direct commit following a separately completed Aquarium workflow, consume its verified `change-origin` without treating that result as commit authority. Recheck the origin against the intended diff and keep its original skill; do not replace setup or design origins with `task-commit`. An unavailable or stale supplied origin must be resolved before committing. Existing direct-commit relationship and release-note approvals still apply.
 
 For a direct commit without a managed-workflow handoff, inspect the complete intended diff and require the user to approve one exact concise entry or `intentional no-note` when release notes are enrolled. If an entry is needed but absent, show one proposed changelog hunk and obtain approval before applying it.
 
@@ -81,7 +86,7 @@ for that difference. Reject an unknown source basis, nonzero pending disposition
 current blocker count, failed or stale local check, mismatched final target, or any
 extra path or hunk. This commit skill never owns review dispatch.
 
-Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository-required IDs and prefixes override Lore, which never grants commit authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup-global` continuation request. Otherwise report its absence once, inspect `git log -5 --format=fuller`, and match the recurring subject, body, and trailer structure; inspect all commits when fewer than five exist and use a concise imperative subject when none exist.
+Before a non-trivial commit, reference `$lore-commits` and follow it when available. Repository-required IDs and prefixes override Lore, which never grants commit authority. If Lore is required but unavailable, stop and return an exact `$aquarium:dev-setup-global` continuation request. Otherwise report its absence once and use the shared message format with the three required attribution trailers; history does not choose a conflicting format.
 
 When a handler handoff includes one or more promoted-evidence packages:
 
@@ -96,6 +101,12 @@ When the same handoff also includes a hardening deferral, reference `$use-mulgae
 Never add new `Mulgae-Deferred-Run` or `Mulgae-Deferred-Finding` trailers. Do not copy finding descriptions, recommendations, severities, paths, reports, provider or model identities, runtime identities, or private native artifacts into the commit message. When the handoff explicitly says that no promoted evidence applies, add no `Aquarium-Evidence` trailer.
 
 Before committing in a Sanho-managed repository, reference `$use-sanho` and follow its commit-boundary workflow when available. If unavailable and required, stop and route the global skill gap to `$aquarium:dev-setup-global`; otherwise use the repository-required check or minimal `sanho status --json` fallback. Sanho status never grants commit authority.
+
+## Prepare the Commit Message
+
+Apply the shared attribution contract to the exact accepted candidate. Preserve the verified originating workflow, resolve the selected Task's parent Epic from the staged canonical roadmap, and show the complete subject, optional body, and single trailer block. Use `none` only for an established absence. A direct commit with no original Aquarium workflow records `aquarium:task-commit`.
+
+Before executing the commit, parse the prepared message with `git interpret-trailers --parse` and require exactly one of each expected `Aquarium-Workflow`, `Aquarium-Epic`, and `Aquarium-Task` value. Keep all required evidence and native provenance in the same final block. Reject an unparsed, duplicate, conflicting, or stale field before committing; never add a commit just to record attribution.
 
 ## Commit Through the Gate
 
@@ -121,12 +132,12 @@ The explicit `author.*` and `committer.*` pins prevent system, global, local, wo
 
 Without roadmap enrollment, create the one authorized commit using native Git and the repository's commit rules. Do not impose the roadmap gate's local-identity requirement, identity pins, or marker. Verify its actual author and committer against the previously resolved native identities.
 
-After the commit and its hooks, compare a new commit's diff with the recorded staged diff byte-for-byte. For an amend, compare the replacement tree with the recorded full staged tree and the staged delta with the approved change. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
+After the commit and its hooks, parse the actual committed message again and verify the expected subject and all three attribution values, permitting supported native provenance additions. A mismatch is an incomplete result with an existing commit; report it without automatically amending or creating another commit. Compare a new commit's diff with the recorded staged diff byte-for-byte. For an amend, compare the replacement tree with the recorded full staged tree and the staged delta with the approved change. Read `%an%x00%ae%x00%cn%x00%ce` from the new commit and require both author and committer to match the identity snapshot exactly. Do not amend an identity mismatch automatically. Also verify the release-note decision and every expected promoted-evidence trailer and committed manifest/payload digest, inspect staged, unstaged, and untracked state for residue or hook changes, and refresh the applicable Sanho status.
 
 For an amend, also verify that the replacement commit has the recorded parent, author, and message.
 
 Finish after the checks above when the current request is limited to a commit or amend. Choosing a commit method neither approves nor cancels later checks. Compare the user's current direction with prior authorization and the owning workflow's requirements. Run a previously approved check when its authority remains current; if the user limits the request to the commit, report the check as pending. A new commit SHA alone does not start a release or compatibility gate.
 
-Report the commit ID, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
+Report the commit ID, verified workflow, Epic and Task attribution, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
 
 The bundled hook is a local guardrail, not complete enforcement: it detects direct shell `git commit` invocations in roadmap repositories, while indirect commits performed by other tools may not pass through that boundary.

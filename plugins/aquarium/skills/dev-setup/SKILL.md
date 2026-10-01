@@ -5,6 +5,8 @@ description: "Diagnose and configure Aquarium repository-local tooling and root 
 
 # Repository Development Setup
 
+Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
+
 Diagnose the repository first, propose only changes supported by repository evidence, and leave supported user-global development tool installation and updates to `$aquarium:dev-setup-global`. Route requests to install or update only the Aquarium plugin directly to the host's plugin-management flow without repository or global setup diagnosis.
 
 This skill owns root AGENTS.md guidance and migration of an existing root CLAUDE.md. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
@@ -123,5 +125,7 @@ fields, nullability rules, and closed problem codes in the
 [production-status specification](../../references/production-status.md).
 
 ## Report
+
+When approved repository files changed, include their verified `change-origin` in the workflow result for a later separately authorized commit. Preserve an inherited coordinator owner when applicable. Report the origin separately from native receipts and closed JSON result schemas; it grants no staging or commit authority.
 
 Report selected and out-of-scope repository components, diagnostic evidence, proposed or completed repository changes, deferred side-effectful diagnostics, global continuation gaps, status-recording result or exact record-only retry, verification, preserved worktree state, and whether staging, commit, or publication occurred. Do not report a global component as current or exact-upstream-verified; that claim belongs to `$aquarium:dev-setup-global`.
