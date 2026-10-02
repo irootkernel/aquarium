@@ -85,7 +85,8 @@ def diagnose(source: Path) -> dict:
 
 
 def install_dependencies(generation: Path) -> None:
-    venv.EnvBuilder(with_pip=True).create(generation / "venv")
+    # Match the macOS venv CLI default to support linked Python entry points.
+    venv.EnvBuilder(with_pip=True, symlinks=True).create(generation / "venv")
     subprocess.run(
         [
             str(generation / "venv/bin/python"),

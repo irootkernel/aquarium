@@ -49,7 +49,7 @@ def dependencies(monkeypatch):
 
     def prepare(generation):
         prepared.append(generation)
-        venv.EnvBuilder(with_pip=False).create(generation / "venv")
+        venv.EnvBuilder(with_pip=False, symlinks=True).create(generation / "venv")
         site_packages = next((generation / "venv/lib").glob("python*/site-packages"))
         (site_packages / "test-sdk.pth").write_text(
             sysconfig.get_path("purelib") + "\n"
@@ -105,6 +105,46 @@ def test_install_is_idempotent_and_cli_uses_installed_runtime(package, dependenc
     assert runtime_install.diagnose(package)["launcher_current"]
     assert not (Path.home() / ".codex").exists()
     assert not (Path.home() / ".aquarium").exists()
+
+
+def test_install_bootstraps_usable_python_before_dependency_download(
+    package, monkeypatch
+):
+    original_run = subprocess.run
+    prepared = []
+
+    def download(command, **kwargs):
+        if "-m" in command and command[command.index("-m") + 1] == "pip":
+            python = Path(command[0])
+            environment = python.parent.parent
+            probe = original_run(
+                [
+                    str(python),
+                    "-E",
+                    "-s",
+                    "-c",
+                    "import encodings, ssl, pip, sys; print(sys.prefix)",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert Path(probe.stdout.strip()) == environment
+            site_packages = next((environment / "lib").glob("python*/site-packages"))
+            (site_packages / "test-sdk.pth").write_text(
+                sysconfig.get_path("purelib") + "\n"
+            )
+            prepared.append(environment.parent)
+            return subprocess.CompletedProcess(command, 0)
+        return original_run(command, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", download)
+    assert install(package)["status"] == "success"
+    generation, receipt = runtime_entry.selected_runtime()
+    assert prepared == [generation]
+    process = cli("version")
+    assert process.returncode == 0, process.stderr
+    assert json.loads(process.stdout) == receipt
 
 
 def test_runtime_diagnosis_ignores_caller_modules(
