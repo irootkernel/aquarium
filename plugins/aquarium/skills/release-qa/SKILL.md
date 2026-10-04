@@ -62,9 +62,7 @@ For each cluster, rerun every retained scenario and every verified finding repro
 
 Existing tests and validators remain prohibited as release-delta scenario evidence; the active Design Gate exception below still applies during confirmation, including unchanged gates. Capture the same command, controlled environment, outcome, resulting files, worker identity, and source-repository status required for a full pass, but write all new evidence beneath a fresh confirmation evidence root.
 
-Keep the record and manifest unchanged. For fresh execution, rebind each normalized absolute path beneath the full evidence root to the same relative path beneath the confirmation root. Apply this binding to string values in the submitted `controlled_environment`, including values inside lists and objects. Replace a `source_sha` value equal to the full-pass candidate with the confirmation candidate. The helper requires these exact replacements and rejects other environment changes. Paths outside the full evidence root, baseline identities, and all other conditions remain unchanged.
-
-Preserve the frozen procedure text as the retained replay instructions. Execute them with the confirmation candidate and fresh fixture paths; references to previous observations and construction scripts still identify the retained evidence. Capture actual commands, environment, and fresh worker identity in the new evidence.
+Follow [confirmation-bindings.md](references/confirmation-bindings.md) for fresh fixture paths, candidate identity and declared native helper roots. Preserve the frozen record, manifest and scenario conditions. Capture actual commands, environments and fresh worker identity in the new evidence.
 
 Confirmation is a fixed verification pass, not a new edge-case search. Do not invent additional inputs, variants, paths, or scenarios beyond the frozen matrix and verified finding reproductions. Do not turn a limitation that the candidate publicly documents and the previous full pass accepted into a release blocker. A directly observed failure of a retained scenario remains a finding; this restriction only forbids expanding the scenario inventory.
 

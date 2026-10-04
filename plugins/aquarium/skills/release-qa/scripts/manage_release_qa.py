@@ -986,7 +986,7 @@ def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
         "begin input",
         {"schema", "repository", "full_record", "manifest", "confirmation_root"},
     )
-    repo, _, record_digest, manifest, root = load_confirmation(spec)
+    repo, record, record_digest, manifest, root = load_confirmation(spec)
     candidate = manifest["candidate_sha"]
     clean_exact_main(repo, candidate)
     confirmation_root = physical_evidence_root(spec.get("confirmation_root"))
@@ -1009,7 +1009,20 @@ def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
     claim_path = (
         root / f"confirmation-attempt-{record_digest.removeprefix('sha256:')}.json"
     )
+
+    def check_native_roots() -> None:
+        for cluster in record["clusters"]:
+            for scenario in cluster["scenarios"]:
+                for native_root in confirmation_native_roots(
+                    scenario["controlled_environment"],
+                    str(root),
+                    str(confirmation_root),
+                ).values():
+                    physical_evidence_root(native_root)
+
     try:
+        if not claim_path.exists() and not claim_path.is_symlink():
+            check_native_roots()
         create_once_write(claim_path, claim)
     except EvidenceError as error:
         if error.code == "output_exists":
@@ -1034,6 +1047,7 @@ def begin_confirmation(spec: dict[str, Any]) -> dict[str, Any]:
                     "confirmation_already_started",
                     "the confirmation claim already has a settlement admission",
                 )
+            check_native_roots()
             return {
                 "schema": CLAIM_SCHEMA,
                 "path": str(claim_path),
@@ -1393,39 +1407,67 @@ def validate_settlement(
     return settlement_outcome(record, manifest, confirmation_root, cluster_values)
 
 
+def confirmation_native_roots(
+    environment: dict[str, Any], full_root: str, confirmation_root: str
+) -> dict[str, str]:
+    roots = string_list(
+        environment.get("native_helper_roots", []),
+        "native_helper_roots",
+        nonempty=False,
+    )
+    bindings = {}
+    for root in roots:
+        path = Path(root)
+        if (
+            path.as_posix() != root
+            or path.parent != Path(confirmation_root).parent
+            or not path.name.startswith("release-qa.")
+        ):
+            fail(
+                "evidence_root_invalid",
+                "native helper roots must name physical /tmp/release-qa.* directories",
+            )
+        if root != full_root:
+            name = "release-qa.native-" + digest([confirmation_root, root])[7:]
+            fresh = str(Path(confirmation_root).with_name(name))
+            if fresh in roots or fresh == full_root:
+                fail("evidence_root_invalid", "native helper roots must be fresh")
+            bindings[root] = fresh
+    return bindings
+
+
 def confirmation_environment(
-    value: Any,
+    value: dict[str, Any],
     full_root: str,
     confirmation_root: str,
     previous_candidate: str,
     candidate: str,
 ) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: candidate
-            if key == "source_sha" and item == previous_candidate
-            else confirmation_environment(
-                item, full_root, confirmation_root, previous_candidate, candidate
-            )
-            for key, item in value.items()
-        }
-    if isinstance(value, list):
-        return [
-            confirmation_environment(
-                item, full_root, confirmation_root, previous_candidate, candidate
-            )
-            for item in value
-        ]
-    if isinstance(value, str) and (
-        value == full_root or value.startswith(full_root + "/")
-    ):
-        if ".." in Path(value).parts or Path(value).as_posix() != value:
-            fail(
-                "confirmation_inventory_mismatch",
-                "frozen fixture path must be normalized beneath the full evidence root",
-            )
-        return confirmation_root + value[len(full_root) :]
-    return value
+    bindings = {full_root: confirmation_root}
+    bindings.update(confirmation_native_roots(value, full_root, confirmation_root))
+
+    def rebind(item: Any) -> Any:
+        if isinstance(item, dict):
+            return {
+                key: candidate
+                if key == "source_sha" and child == previous_candidate
+                else rebind(child)
+                for key, child in item.items()
+            }
+        if isinstance(item, list):
+            return [rebind(child) for child in item]
+        if isinstance(item, str):
+            for old_root, fresh_root in bindings.items():
+                if item == old_root or item.startswith(old_root + "/"):
+                    if ".." in Path(item).parts or Path(item).as_posix() != item:
+                        fail(
+                            "confirmation_inventory_mismatch",
+                            "frozen fixture path must be normalized beneath its evidence root",
+                        )
+                    return fresh_root + item[len(old_root) :]
+        return item
+
+    return rebind(value)
 
 
 def settlement_outcome(
@@ -1461,6 +1503,12 @@ def settlement_outcome(
             )
         for frozen in expected["scenarios"]:
             fresh = actual_by_id[frozen["id"]]
+            for native_root in confirmation_native_roots(
+                frozen["controlled_environment"],
+                record["evidence_root"],
+                str(confirmation_root),
+            ).values():
+                physical_evidence_root(native_root)
             for field in (
                 "sources",
                 "procedure",

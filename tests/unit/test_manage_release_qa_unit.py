@@ -363,6 +363,212 @@ def test_confirmation_rebinds_only_fixture_paths_and_source_sha(release_case, da
         shutil.rmtree(confirmation, ignore_errors=True)
 
 
+@pytest.mark.parametrize(
+    "damage",
+    [
+        None,
+        "stale",
+        "swapped",
+        "arbitrary_root",
+        "unlisted_path",
+        "escaped_child",
+        "different_child",
+        "network",
+        "removed_declaration",
+        "missing_root",
+        "public_root",
+        "symlink_root",
+    ],
+)
+def test_confirmation_rebinds_declared_native_roots(release_case, damage):
+    repo, candidate, evidence = release_case
+    native_roots = [
+        Path(tempfile.mkdtemp(prefix="release-qa.native-full.", dir="/tmp")).resolve(),
+        Path(
+            tempfile.mkdtemp(prefix="release-qa.native-confirm.", dir="/tmp")
+        ).resolve(),
+    ]
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    fresh_roots = [
+        confirmation.parent
+        / ("release-qa.native-" + qa.digest([str(confirmation), str(root)])[7:])
+        for root in native_roots
+    ]
+    for root in fresh_roots:
+        root.mkdir(mode=0o700)
+    try:
+        original = cluster(evidence, candidate)
+        full_cluster = json.loads(original.read_text())
+        full_cluster["scenarios"][0]["controlled_environment"] = {
+            "HOME": str(evidence / "home"),
+            "source_sha": candidate,
+            "native_helper_roots": [str(root) for root in native_roots],
+            "input": str(native_roots[0] / "case/input.json"),
+            "nested": {"outputs": [str(native_roots[1] / "case/result.json")]},
+            "unlisted_path": str(native_roots[0]) + "-other/input.json",
+            "network": "offline",
+        }
+        write_json(original, full_cluster)
+        record = evidence / "record.json"
+        qa.freeze_full(full_spec(repo, candidate, evidence, original), str(record))
+        record_bytes = record.read_bytes()
+        native_before = {root: list(root.iterdir()) for root in native_roots}
+        remediated = remediate(repo)
+        manifest = prepare(repo, remediated, evidence, record)
+        manifest_bytes = manifest.read_bytes()
+        begin_request = {
+            "schema": qa.BEGIN_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "confirmation_root": str(confirmation),
+        }
+        begin = qa.begin_confirmation(begin_request)
+        assert qa.begin_confirmation(begin_request) == begin
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        result = json.loads(result_file.read_text())
+        environment = dict(full_cluster["scenarios"][0]["controlled_environment"])
+        environment.update(
+            HOME=str(confirmation / "home"),
+            source_sha=remediated,
+            native_helper_roots=[str(root) for root in fresh_roots],
+            input=str(fresh_roots[0] / "case/input.json"),
+            nested={"outputs": [str(fresh_roots[1] / "case/result.json")]},
+        )
+        result["scenarios"][0]["controlled_environment"] = environment
+        if damage == "stale":
+            environment["native_helper_roots"] = [str(root) for root in native_roots]
+        elif damage == "swapped":
+            environment["native_helper_roots"].reverse()
+        elif damage == "arbitrary_root":
+            environment["native_helper_roots"][0] = str(confirmation)
+        elif damage == "unlisted_path":
+            environment["unlisted_path"] = str(confirmation / "other/input.json")
+        elif damage == "escaped_child":
+            environment["input"] = str(fresh_roots[0]) + "/../input.json"
+        elif damage == "different_child":
+            environment["input"] = str(fresh_roots[0] / "other/input.json")
+        elif damage == "network":
+            environment["network"] = "online"
+        elif damage == "removed_declaration":
+            environment.pop("native_helper_roots")
+        elif damage == "missing_root":
+            fresh_roots[0].rmdir()
+        elif damage == "public_root":
+            fresh_roots[0].chmod(0o755)
+        elif damage == "symlink_root":
+            fresh_roots[0].rmdir()
+            fresh_roots[0].symlink_to(native_roots[0], target_is_directory=True)
+        write_json(result_file, result)
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        output = str(confirmation / "result.json")
+        if damage is None:
+            assert qa.finish_confirmation(request, output)["verdict"] == "PASS"
+            assert qa.finish_confirmation(request, output)["verdict"] == "PASS"
+            settled = json.loads(Path(output).read_text())
+            assert settled["clusters"][0]["scenarios"][0]["controlled_environment"] == (
+                environment
+            )
+        else:
+            with pytest.raises(qa.EvidenceError) as rejected:
+                qa.finish_confirmation(request, output)
+            assert rejected.value.code == (
+                "evidence_root_invalid"
+                if damage in {"missing_root", "public_root", "symlink_root"}
+                else "confirmation_inventory_mismatch"
+            )
+            assert json.loads(Path(output).read_text())["verdict"] == "REJECTED"
+        assert record.read_bytes() == record_bytes
+        assert manifest.read_bytes() == manifest_bytes
+        assert {root: list(root.iterdir()) for root in native_roots} == native_before
+        assert git(repo, "status", "--porcelain") == ""
+    finally:
+        for root in fresh_roots:
+            if root.is_symlink():
+                root.unlink()
+            else:
+                shutil.rmtree(root, ignore_errors=True)
+        for root in [confirmation, *native_roots]:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing",
+        "public",
+        "symlink",
+        "escape",
+        "outside_tmp",
+        "duplicate",
+        "reuse_retained",
+    ],
+)
+def test_native_root_prerequisites_fail_before_confirmation_claim(release_case, damage):
+    repo, candidate, evidence = release_case
+    native = Path(tempfile.mkdtemp(prefix="release-qa.native.", dir="/tmp")).resolve()
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    fresh = confirmation.parent / (
+        "release-qa.native-" + qa.digest([str(confirmation), str(native)])[7:]
+    )
+    fresh.mkdir(mode=0o700)
+    try:
+        original = cluster(evidence, candidate)
+        value = json.loads(original.read_text())
+        roots = [str(native)]
+        if damage == "escape":
+            roots[0] += "/../release-qa.elsewhere"
+        elif damage == "outside_tmp":
+            roots[0] = str(repo / "release-qa.native")
+        elif damage == "duplicate":
+            roots.append(roots[0])
+        elif damage == "reuse_retained":
+            roots.append(str(fresh))
+        value["scenarios"][0]["controlled_environment"]["native_helper_roots"] = roots
+        write_json(original, value)
+        record = evidence / "record.json"
+        qa.freeze_full(full_spec(repo, candidate, evidence, original), str(record))
+        remediated = remediate(repo)
+        manifest = prepare(repo, remediated, evidence, record)
+        if damage == "missing":
+            fresh.rmdir()
+        elif damage == "public":
+            fresh.chmod(0o755)
+        elif damage == "symlink":
+            fresh.rmdir()
+            fresh.symlink_to(native, target_is_directory=True)
+        with pytest.raises(qa.EvidenceError) as rejected:
+            qa.begin_confirmation(
+                {
+                    "schema": qa.BEGIN_SCHEMA,
+                    "repository": str(repo),
+                    "full_record": str(record),
+                    "manifest": str(manifest),
+                    "confirmation_root": str(confirmation),
+                }
+            )
+        assert rejected.value.code == (
+            "duplicate_identity" if damage == "duplicate" else "evidence_root_invalid"
+        )
+        assert not list(evidence.glob("confirmation-attempt-*.json"))
+    finally:
+        if fresh.is_symlink():
+            fresh.unlink()
+        else:
+            shutil.rmtree(fresh, ignore_errors=True)
+        for root in [native, confirmation]:
+            shutil.rmtree(root, ignore_errors=True)
+
+
 @pytest.mark.parametrize("root_only", [False, True])
 def test_first_release_includes_root_and_complete_current_tree(release_case, root_only):
     repo, candidate, evidence = release_case

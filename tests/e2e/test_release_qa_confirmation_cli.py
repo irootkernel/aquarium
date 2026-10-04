@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -50,9 +51,30 @@ def cli_case(tmp_path: Path):
     shutil.rmtree(evidence, ignore_errors=True)
 
 
-def cluster(root: Path, candidate: str, outcome: str) -> Path:
+@pytest.fixture
+def native_roots():
+    roots = [
+        Path(tempfile.mkdtemp(prefix="release-qa.native.", dir="/tmp")).resolve()
+        for _ in range(2)
+    ]
+    yield roots
+    for root in roots:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def cluster(
+    root: Path, candidate: str, outcome: str, *, native_roots: list[Path] | None = None
+) -> Path:
     proof = root / "proof.txt"
     proof.write_text("observation\n", encoding="utf-8")
+    environment = {
+        "HOME": str(root / "home"),
+        "TMPDIR": str(root / "tmp"),
+        "source_sha": candidate,
+        "network": "offline",
+    }
+    if native_roots:
+        environment["native_helper_roots"] = [str(path) for path in native_roots]
     return dump(
         root / "cluster.json",
         {
@@ -65,12 +87,7 @@ def cluster(root: Path, candidate: str, outcome: str) -> Path:
                     "id": "scenario-contract",
                     "sources": ["release-delta:contract.txt"],
                     "procedure": "inspect isolated contract fixture",
-                    "controlled_environment": {
-                        "HOME": str(root / "home"),
-                        "TMPDIR": str(root / "tmp"),
-                        "source_sha": candidate,
-                        "network": "offline",
-                    },
+                    "controlled_environment": environment,
                     "expected": "contract is usable",
                     "observed": "observation",
                     "outcome": outcome,
@@ -93,7 +110,10 @@ def cluster(root: Path, candidate: str, outcome: str) -> Path:
 
 
 @pytest.mark.parametrize("first_release", [False, True])
-def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_release):
+@pytest.mark.parametrize("native_fixtures", [False, True])
+def test_cli_freeze_prepare_begin_finish_and_single_attempt(
+    cli_case, native_roots, first_release, native_fixtures
+):
     repo, evidence = cli_case
     candidate = git(repo, "rev-parse", "HEAD")
     commits = git(
@@ -112,7 +132,16 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_rele
             "design_gate_state": "not_enrolled",
             "active_design_gates": [],
             "design_gate_matrix": [],
-            "cluster_results": [str(cluster(evidence, candidate, "finding"))],
+            "cluster_results": [
+                str(
+                    cluster(
+                        evidence,
+                        candidate,
+                        "finding",
+                        native_roots=native_roots if native_fixtures else None,
+                    )
+                )
+            ],
             "commit_matrix": [
                 {"commit": commit, "scenarios": ["scenario-contract"]}
                 for commit in commits
@@ -161,7 +190,21 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_rele
     )
     confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
     second = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    fresh_native = []
     try:
+        if native_fixtures:
+            for retained in native_roots:
+                payload = (
+                    json.dumps(
+                        [str(confirmation), str(retained)], separators=(",", ":")
+                    )
+                    + "\n"
+                ).encode()
+                path = confirmation.parent / (
+                    "release-qa.native-" + hashlib.sha256(payload).hexdigest()
+                )
+                path.mkdir(mode=0o700)
+                fresh_native.append(path)
         begin_value = {
             "schema": "aquarium-release-qa-confirmation-begin/v2",
             "repository": str(repo),
@@ -183,7 +226,9 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_rele
         assert error["error"]["code"] == "claim_invalid"
         dump(begin_input, begin_value)
 
-        result_file = cluster(confirmation, remediated, "pass")
+        result_file = cluster(
+            confirmation, remediated, "pass", native_roots=fresh_native
+        )
         finish_input = dump(
             confirmation / "finish-input.json",
             {
@@ -225,6 +270,8 @@ def test_cli_freeze_prepare_begin_finish_and_single_attempt(cli_case, first_rele
         )
         assert settled_begin["error"]["code"] == "confirmation_already_started"
     finally:
+        for path in fresh_native:
+            shutil.rmtree(path, ignore_errors=True)
         shutil.rmtree(confirmation, ignore_errors=True)
         shutil.rmtree(second, ignore_errors=True)
 
