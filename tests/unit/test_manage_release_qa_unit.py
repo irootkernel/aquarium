@@ -238,6 +238,131 @@ def test_full_findings_round_trip_to_confirmation_pass(
         shutil.rmtree(confirmation, ignore_errors=True)
 
 
+@pytest.mark.parametrize(
+    "damage",
+    [
+        None,
+        "old_root",
+        "old_sha",
+        "escape",
+        "sibling",
+        "different_suffix",
+        "language",
+        "network",
+        "baseline_sha",
+        "nested",
+        "missing",
+        "extra",
+        "sources",
+        "procedure",
+        "expected",
+        "frozen_escape",
+        "frozen_unnormalized",
+    ],
+)
+def test_confirmation_rebinds_only_fixture_paths_and_source_sha(release_case, damage):
+    repo, candidate, evidence = release_case
+    original = cluster(evidence, candidate)
+    full_cluster = json.loads(original.read_text())
+    full_cluster["scenarios"][0]["controlled_environment"] = {
+        "HOME": str(evidence / "S-1/home"),
+        "fixture": str(evidence),
+        "source_sha": candidate,
+        "baseline_sha": candidate,
+        "nested": {"outputs": [str(evidence / "S-1/output"), "/dev/null"]},
+        "external": str(evidence) + "-sibling/home",
+        "LC_ALL": "C",
+        "network": "offline",
+    }
+    if damage == "frozen_escape":
+        full_cluster["scenarios"][0]["controlled_environment"]["HOME"] = (
+            str(evidence) + "/../outside/home"
+        )
+    elif damage == "frozen_unnormalized":
+        full_cluster["scenarios"][0]["controlled_environment"]["HOME"] = (
+            str(evidence) + "/S-1/./home"
+        )
+    write_json(original, full_cluster)
+    record = evidence / "full-record.json"
+    qa.freeze_full(full_spec(repo, candidate, evidence, original), str(record))
+    record_bytes = record.read_bytes()
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, record)
+    manifest_bytes = manifest.read_bytes()
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(record),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        result_file = cluster(confirmation, remediated, outcome="pass")
+        result = json.loads(result_file.read_text())
+        scenario = result["scenarios"][0]
+        environment = dict(full_cluster["scenarios"][0]["controlled_environment"])
+        environment.update(
+            HOME=str(confirmation / "S-1/home"),
+            fixture=str(confirmation),
+            source_sha=remediated,
+            nested={"outputs": [str(confirmation / "S-1/output"), "/dev/null"]},
+        )
+        scenario["controlled_environment"] = environment
+        if damage == "old_root":
+            environment["HOME"] = str(evidence / "S-1/home")
+        elif damage == "old_sha":
+            environment["source_sha"] = candidate
+        elif damage == "escape":
+            environment["HOME"] = str(confirmation) + "/../outside/home"
+        elif damage == "sibling":
+            environment["HOME"] = str(confirmation) + "-sibling/S-1/home"
+        elif damage == "different_suffix":
+            environment["HOME"] = str(confirmation / "S-2/home")
+        elif damage == "language":
+            environment["LC_ALL"] = "en_US.UTF-8"
+        elif damage == "network":
+            environment["network"] = "online"
+        elif damage == "baseline_sha":
+            environment["baseline_sha"] = remediated
+        elif damage == "nested":
+            environment["nested"]["outputs"][0] = str(confirmation / "other/output")
+        elif damage == "missing":
+            environment.pop("network")
+        elif damage == "extra":
+            environment["new_condition"] = "allowed"
+        elif damage in {"sources", "procedure", "expected"}:
+            scenario[damage] = (
+                ["different source"] if damage == "sources" else "changed"
+            )
+        write_json(result_file, result)
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(record),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(result_file)],
+        }
+        output = str(confirmation / "result.json")
+        if damage is None:
+            assert qa.finish_confirmation(request, output)["verdict"] == "PASS"
+            assert qa.finish_confirmation(request, output)["verdict"] == "PASS"
+        else:
+            with pytest.raises(qa.EvidenceError) as rejected:
+                qa.finish_confirmation(request, output)
+            assert rejected.value.code == "confirmation_inventory_mismatch"
+            assert json.loads(Path(output).read_text())["verdict"] == "REJECTED"
+        assert record.read_bytes() == record_bytes
+        assert manifest.read_bytes() == manifest_bytes
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
+
+
 @pytest.mark.parametrize("root_only", [False, True])
 def test_first_release_includes_root_and_complete_current_tree(release_case, root_only):
     repo, candidate, evidence = release_case

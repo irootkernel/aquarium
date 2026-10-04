@@ -23,6 +23,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Allow release QA confirmation to use fresh isolated fixture paths and the corrected candidate SHA while preserving the retained scenario inventory.
 - Prevent repository-configured Git filters from running during Independent Review target and worktree inspection.
 - Fix aquarium-dev installation with uv-managed standalone Python.
 - Use worktree observation to admit managed Podway sessions without polling global daemon readiness; keep service checks in setup and diagnosis.

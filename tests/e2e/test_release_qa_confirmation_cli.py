@@ -65,7 +65,12 @@ def cluster(root: Path, candidate: str, outcome: str) -> Path:
                     "id": "scenario-contract",
                     "sources": ["release-delta:contract.txt"],
                     "procedure": "inspect isolated contract fixture",
-                    "controlled_environment": {"HOME": "/tmp/isolated"},
+                    "controlled_environment": {
+                        "HOME": str(root / "home"),
+                        "TMPDIR": str(root / "tmp"),
+                        "source_sha": candidate,
+                        "network": "offline",
+                    },
                     "expected": "contract is usable",
                     "observed": "observation",
                     "outcome": outcome,

@@ -1393,6 +1393,41 @@ def validate_settlement(
     return settlement_outcome(record, manifest, confirmation_root, cluster_values)
 
 
+def confirmation_environment(
+    value: Any,
+    full_root: str,
+    confirmation_root: str,
+    previous_candidate: str,
+    candidate: str,
+) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: candidate
+            if key == "source_sha" and item == previous_candidate
+            else confirmation_environment(
+                item, full_root, confirmation_root, previous_candidate, candidate
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [
+            confirmation_environment(
+                item, full_root, confirmation_root, previous_candidate, candidate
+            )
+            for item in value
+        ]
+    if isinstance(value, str) and (
+        value == full_root or value.startswith(full_root + "/")
+    ):
+        if ".." in Path(value).parts or Path(value).as_posix() != value:
+            fail(
+                "confirmation_inventory_mismatch",
+                "frozen fixture path must be normalized beneath the full evidence root",
+            )
+        return confirmation_root + value[len(full_root) :]
+    return value
+
+
 def settlement_outcome(
     record: dict[str, Any],
     manifest: dict[str, Any],
@@ -1432,7 +1467,16 @@ def settlement_outcome(
                 "controlled_environment",
                 "expected",
             ):
-                if fresh[field] != frozen[field]:
+                expected_value = frozen[field]
+                if field == "controlled_environment":
+                    expected_value = confirmation_environment(
+                        expected_value,
+                        record["evidence_root"],
+                        str(confirmation_root),
+                        record["candidate_sha"],
+                        manifest["candidate_sha"],
+                    )
+                if fresh[field] != expected_value:
                     fail(
                         "confirmation_inventory_mismatch",
                         f"confirmation changed frozen scenario field: {field}",
