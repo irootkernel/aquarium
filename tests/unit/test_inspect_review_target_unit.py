@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -559,3 +560,58 @@ def test_diff_inspection_never_runs_textconv(tmp_path: Path, target_kind: str) -
     inspect_review_target.inspect(root, target_arguments)
 
     assert not sentinel.exists()
+
+
+@pytest.mark.parametrize(
+    "target_kind", ["workspace", "dirty", "staged", "head", "commit", "range"]
+)
+@pytest.mark.parametrize("filter_kind", ["clean", "process"])
+@pytest.mark.parametrize("driver", ["sentinel", "sentinel=with.dot"])
+def test_target_inspection_never_runs_filters(
+    tmp_path: Path, target_kind: str, filter_kind: str, driver: str
+) -> None:
+    root = repository(tmp_path)
+    base = git(root, "rev-parse", "HEAD")
+    write(root / ".gitattributes", f"filtered.txt filter={driver}\n")
+    write(root / "filtered.txt", "base\n")
+    git(root, "add", ".gitattributes", "filtered.txt")
+    git(root, "commit", "-qm", "filter baseline")
+    write(root / "staged.txt", "staged\n")
+    git(root, "add", "staged.txt")
+    write(root / "filtered.txt", "next\n")
+    sentinel = tmp_path / "filter-ran"
+    callback = tmp_path / "filter.py"
+    write(
+        callback,
+        "import pathlib, sys\n"
+        "pathlib.Path(sys.argv[1]).write_text('ran', encoding='utf-8')\n"
+        "if sys.argv[2] == 'clean':\n"
+        "    sys.stdout.buffer.write(sys.stdin.buffer.read())\n",
+    )
+    git(
+        root,
+        "config",
+        f"filter.{driver}.{filter_kind}",
+        " ".join(
+            shlex.quote(str(value))
+            for value in [sys.executable, callback, sentinel, filter_kind]
+        ),
+    )
+    git(root, "config", f"filter.{driver}.required", "true")
+    before = {
+        path: path.read_bytes()
+        for path in [root / ".git/index", root / ".git/config", root / "filtered.txt"]
+    }
+    values = {target_kind: True}
+    if target_kind == "commit":
+        values = {"commit": "HEAD"}
+    elif target_kind == "range":
+        values = {"range": f"{base}..HEAD"}
+
+    result = inspect_review_target.inspect(root, arguments(**values))
+
+    assert result["target"]["kind"] == target_kind
+    assert result["state"]["unstaged"] == ["filtered.txt"]
+    assert result["state"]["staged"] == ["staged.txt"]
+    assert not sentinel.exists()
+    assert {path: path.read_bytes() for path in before} == before

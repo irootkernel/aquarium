@@ -45,8 +45,44 @@ def git_command(
         "GIT_OPTIONAL_LOCKS": "0",
         "GIT_PAGER": "cat",
     }
+    command = ["git", "-c", "core.fsmonitor=false", "-C", str(repository)]
+    config = subprocess.run(
+        [
+            *command,
+            "config",
+            "--null",
+            "--name-only",
+            "--get-regexp",
+            r"^filter\..*\.(clean|smudge|process|required)$",
+        ],
+        check=False,
+        capture_output=True,
+        env=environment,
+        timeout=30,
+    )
+    if config.returncode not in {0, 1}:
+        raise InspectionError(
+            "git_filter_config_failed", "Git filter configuration could not be read"
+        )
+    keys = sorted(
+        {
+            key
+            for key in decode_utf8(
+                config.stdout,
+                "git_filter_config_invalid",
+                "Git filter configuration is not valid UTF-8",
+            ).split("\0")
+            if key
+        }
+    )
+    environment["GIT_CONFIG_COUNT"] = str(len(keys))
+    for index, key in enumerate(keys):
+        environment[f"GIT_CONFIG_KEY_{index}"] = key
+        environment[f"GIT_CONFIG_VALUE_{index}"] = (
+            "false" if key.endswith(".required") else ""
+        )
     return subprocess.run(
-        ["git", "-c", "core.fsmonitor=false", "-C", str(repository), *arguments],
+        [*command, *arguments],
         check=False,
         capture_output=True,
         env=environment,

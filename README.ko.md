@@ -61,6 +61,8 @@ Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니
 3. **Validate** — `$aquarium:epic-validator`는 완료된 epic을 처음부터 다시 검증하고 확인된 gap을 해소합니다. `$aquarium:mulgae-review`는 정확한 변경 사항이나 Task·Epic 완료 대상을 단독으로 검토하며 결과만 보고합니다. `$aquarium:orca-review`는 현재 Orca worktree의 staged, HEAD, commit, range 가운데 지정한 대상을 요청한 reviewer에게 맡깁니다. Task·Epic·검증 workflow의 기본 review는 Mulgae입니다. 요청에 따라 Orca나 Independent Review를 선택할 수 있습니다. `$aquarium:independent-review`는 새 Codex subagent 세 명이 지정한 대상을 각자 검토합니다. 단독으로 호출하거나 workflow의 review 경로로 선택할 수 있으며, host가 제공하는 lifecycle 보장만 따릅니다. Aquarium은 반환된 finding을 로컬에서 확인하고 technical verdict와 completion assessment를 구분합니다.
 4. **Release** — `$aquarium:release-handler`는 누적 note를 확정하고 `$aquarium:release-qa`에 exact-candidate scenario를 위임한 뒤, 별도 승인으로 repository gate와 publication을 수행하고 다음 목표 버전을 엽니다.
 
+Epic 실행 전에 dossier가 필요하면 실행 중인 `epic-handler`는 같은 대화에서 해당 Epic의 `new-feature` 설계를 이어갑니다. 설계에는 별도의 승인과 Podway 세션이 필요합니다. 문서와 필요한 커밋을 완료한 뒤에는 갱신된 roadmap을 사용해 새 대화에서 `epic-handler`를 시작합니다.
+
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup-global`은 user-global 도구를 관리하고, `$aquarium:dev-setup`은 repository 설정과 에이전트 운영 지침을 자동 진단해 필요한 변경만 제안합니다. `$aquarium:dev-setup-bundle`은 대상별 MCP 범위, Sorage Project slug, Mulgae artist 역할 의도를 담은 v2 manifest 하나로 여러 저장소의 설정을 요청합니다.
 
 `$aquarium:status`는 로컬 production setup 원장과 저장소별 Go, Rust,
