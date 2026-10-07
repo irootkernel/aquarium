@@ -25,6 +25,10 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
   native Herdr review and recovery, workflow routing, existing-state migration,
   and acceptance for `EPIC-020` and `TASK-106` through `TASK-109`, targeting the
   open `v0.1.19` release.
+- [Agent orchestration dossier](TODO-AGENT-ORCHESTRATION.md) defines Orchestrator,
+  Judge, and Worker roles, native Codex and Claude delegation, all five Procedure
+  migrations, recovery, and acceptance for `EPIC-021` and `TASK-110` through
+  `TASK-117`, following `EPIC-020` without selecting a release version.
 
 ## Unadopted TODO Candidates
 

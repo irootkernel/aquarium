@@ -51,6 +51,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
 | EPIC-020 | Migrate Orca review to Herdr | Planned |
+| EPIC-021 | Adopt supervised agent orchestration | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -528,3 +529,41 @@ prerequisite, and no producer engine change or broker handoff is required.
 | TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Planned | TASK-106 |
 | TASK-108 | Support migration from Orca workflow state | Implement Herdr prerequisites and legacy-source readiness; preserve evidence, customizations, and snapshots while providing safe refusal, transition, and separately authorized rollout guidance. | Planned | TASK-107 |
 | TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | Planned | TASK-106; TASK-107; TASK-108 |
+
+## EPIC-021: Adopt supervised agent orchestration
+
+**Status:** `Planned`
+
+Adopt an Orchestrator, Judge, and Workers model across the Task, Goal,
+Validation, Design, and War-room Procedures after `EPIC-020`. The main agent
+allocates work, manages agent lifecycles and authority, and records Podway
+progression. Workers perform bounded research, analysis, implementation, and
+checks. A persistent Judge assesses node, Task, and Epic goals from canonical
+criteria and original evidence; Worker delivery alone cannot establish success.
+
+Use Codex and Claude host-native subagents first. Preserve technical review
+routes and their native reviewer topology, budgets, finding dispositions, and
+correction authority. The Primary records formal acceptance from an applicable
+Judge verdict without repeating the full assessment. Reconnect existing agents
+when possible; otherwise reconcile uncertain work and restore goals, evidence,
+and assessment state before replacement. Allow parallel research and sequential
+implementation on a shared checkout.
+
+This registration changes documentation only. No release version is selected,
+and no Podway core change is planned. Preserve the Herdr migration, existing
+approval boundaries, admitted session snapshots, and repository customizations.
+Implementation, live qualification, installation, activation, staging, commits,
+and publication require their applicable execution authority.
+
+**Detailed SOT:** [`TODO-AGENT-ORCHESTRATION.md`](../todo/TODO-AGENT-ORCHESTRATION.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-110 | Define orchestration contracts | Define roles, Judge lifetime and authority, canonical criterion coverage, technical review boundaries, handoffs, and recovery. | Planned | EPIC-020 |
+| TASK-111 | Integrate native delegation | Add report-only Judge and Worker guidance; qualify actual Codex and Claude dispatch, configuration, result acceptance, settlement, and recovery against Podway delegation. | Planned | TASK-110 |
+| TASK-112 | Rebuild Task execution | Rebuild the Task Procedure, handler, and phase contracts around Worker candidates, Judge assessments, and verdict-driven rework while preserving authority and commit handoffs. | Planned | TASK-111 |
+| TASK-113 | Rebuild Epic execution | Rebuild the Goal Procedure and epic-handler with Judge continuity across member Tasks, integration criteria, internal validation, and final overall acceptance. | Planned | TASK-112 |
+| TASK-114 | Rebuild Epic validation | Rebuild the Validation Procedure and independent validator with a fresh Judge, direct evidence, technical review aggregation, and scoped corrections. | Planned | TASK-113 |
+| TASK-115 | Rebuild design and diagnosis | Rebuild Design and War-room role handoffs while preserving the Ouroboros leaf contract, exact document approval, and product implementation boundaries. | Planned | TASK-111 |
+| TASK-116 | Align compatibility and recovery | Align all five sources and mirrors, versioning, inspectors, observation contracts, reconnect and restoration, immutable snapshots, and customized Procedure compatibility. | Planned | TASK-112; TASK-113; TASK-114; TASK-115 |
+| TASK-117 | Qualify and promote outcomes | Verify local, native, and actual agent behavior on both hosts, obtain Master's functional outcomes and overall acceptance, and promote canonical documentation before dossier settlement. | Planned | TASK-111; TASK-116 |
