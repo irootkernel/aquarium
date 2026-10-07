@@ -11,7 +11,8 @@ Aquarium coordinates capable tools without collapsing their authority. It treats
 | Active goal projection | Codex goal | Roadmap status, commit existence, or Podway truth |
 | Managed workflow transitions and handoffs | Podway session and immutable Procedure snapshot | Semantic truth of tests, reviews, approvals, or completion |
 | Command pass or fail | Child process exit code | Coverage outside the mapped requirement set |
-| Review capture and findings | Mulgae or Orca native artifacts | Local validity of a reported finding |
+| Review capture | Mulgae native artifacts | Equivalent capture guarantees for other routes |
+| Reviewer output and findings | Selected-route native evidence, host reports, or coordinator waiver assessment | Local validity of a reported finding |
 | Compressed test evidence | Gaori native run | A new test gate or altered child result |
 | Current product contracts | Specifications, source-owned references, public policies, and executable authorities | Delivery history or transient workflow detail |
 | Release state | Version authority, CHANGELOG, exact commit, tag, remote main, and hosted Release | Runtime installation or activation |
@@ -27,14 +28,16 @@ An approved implementation envelope covers routine bounded decisions inside its 
 ## Evidence Classes
 
 - **Canonical evidence** is current code, tests, specifications, roadmap state, Git history, release metadata, and other repository-owned durable authority.
-- **Runtime evidence** is native Mulgae, Gaori, Sorage, Podway, Orca, provider, or disposable-fixture output used during an active workflow.
+- **Runtime evidence** is native Mulgae, Gaori, Sorage, Podway, Herdr, provider, or disposable-fixture output used during an active workflow.
 - **Promoted evidence** is an exceptional reviewed, bounded, non-sensitive structured projection created only for a named downstream consumer when canonical evidence cannot express the required fact clearly enough.
+
+Historical Orca artifacts retain their original provenance and do not authorize new Orca dispatch.
 
 Ignored runtime logs, excerpts, transcripts, reports, provider stdout or stderr, session identities, timestamps, usernames, home paths, credential paths, and Podway databases never become tracked documentation. A standard promoted package uses schema `aquarium.promoted-evidence/v1` below `evidence/aquarium/` unless repository guidance declares another relative root.
 
 ## Review Evidence
 
-A task-owned Mulgae review is operationally complete only when its target digest and kind are exact, coverage is complete, publication is committed, the findings query succeeds, and native status is terminal. The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) counts each original root once, including completion through a verified composite. CI failure still consumes that round. Approval separately requires passing CI, the owning workflow's completed finding dispositions, and a criterion-level completion assessment with no unmet or unverified requirement. Standalone Mulgae Review uses the same native lifecycle without handler mutation. Orca Review uses its separate native result and lifecycle contract. Independent Review is complete only after three fresh host subagents report on the same target and Brief. It retains their actual host provenance and supplies no backend CI or immutable capture guarantee. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
+A task-owned Mulgae review is operationally complete only when its target digest and kind are exact, coverage is complete, publication is committed, the findings query succeeds, and native status is terminal. The [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) counts each original root once, including completion through a verified composite. CI failure still consumes that round. Approval separately requires passing CI, the owning workflow's completed finding dispositions, and a criterion-level completion assessment with no unmet or unverified requirement. Standalone Mulgae Review uses the same native lifecycle without handler mutation. Herdr Review requires native reviewer identity, submission/activity correlation and the complete report under its separate supervision contract; idle or done alone is insufficient. Independent Review is complete only after three fresh host subagents report on the same target and Brief. It retains their actual host provenance and supplies no backend CI or immutable capture guarantee. Structured extraction status is an independent quality axis and does not replace accepted reports or completion conditions.
 
 Provider findings are hypotheses. Aquarium checks them against current requirements, code, callers, tests, and ownership before remediation or deferral. A changed target makes prior review evidence stale unless the owning contract explicitly permits the narrow change.
 

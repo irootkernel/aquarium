@@ -35,7 +35,7 @@ CONTRACT_MANIFEST_DIGEST = (
 
 TASK_REVIEW_ENTRY_NODES = {
     "mulgae": "enter-mulgae-review-route",
-    "orca": "enter-orca-review-route",
+    "herdr": "enter-herdr-review-route",
     "independent-review": "enter-independent-review-route",
     "waived": "enter-waived-review-route",
 }
@@ -82,7 +82,7 @@ SUCCESS_OPTIONS = {
     "validate-review-route-entry": "planned",
     "authorize-planned-review-route": "planned-mulgae",
     "enter-mulgae-review-route": "start",
-    "enter-orca-review-route": "start",
+    "enter-herdr-review-route": "start",
     "enter-independent-review-route": "start",
     "enter-waived-review-route": "start",
     "confirm-goal-assessment-core": "ready",
@@ -90,7 +90,7 @@ SUCCESS_OPTIONS = {
     "confirm-stopped-goal-boundary": "confirmed",
     "confirm-review-route-binding": "mulgae",
     "decide-mulgae-review-operation": "assessed",
-    "decide-orca-review-operation": "assessed",
+    "decide-herdr-review-operation": "assessed",
     "decide-independent-review-operation": "assessed",
     "confirm-assessment-ordinal": "work-unit",
     "confirm-first-review-evidence": "mulgae",
@@ -101,11 +101,11 @@ SUCCESS_OPTIONS = {
     "confirm-incomplete-mulgae-provenance": "delegated",
     "confirm-incomplete-static-delegated-provenance": "delegated",
     "decide-planned-mulgae-review-operation": "completed",
-    "decide-planned-orca-review-operation": "completed",
+    "decide-planned-herdr-review-operation": "completed",
     "decide-planned-independent-review-operation": "completed",
     "decide-planned-waiver-review-operation": "waived",
     "decide-changed-mulgae-review-operation": "completed",
-    "decide-changed-orca-review-operation": "completed",
+    "decide-changed-herdr-review-operation": "completed",
     "decide-changed-independent-review-operation": "completed",
     "decide-changed-waiver-review-operation": "waived",
     "confirm-completed-assessment-ordinal": "first",
@@ -127,7 +127,7 @@ SUCCESS_OPTIONS = {
     "confirm-waived-review-findings": "resolved",
     "confirm-mulgae-pass-finding-validity": "resolved",
     "confirm-mulgae-fail-finding-validity": "resolved",
-    "confirm-orca-finding-validity": "resolved",
+    "confirm-herdr-finding-validity": "resolved",
     "confirm-independent-review-finding-validity": "resolved",
     "confirm-waived-finding-validity": "resolved",
     "assess-goal": "achieved",
@@ -301,7 +301,7 @@ ROUTE_QUALIFICATION_SCENARIOS = {
         "aquarium-goal-v2",
         "aquarium-validation-v2",
     )
-    for route in ("mulgae", "orca", "independent-review", "waived")
+    for route in ("mulgae", "herdr", "independent-review", "waived")
 }
 
 GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
@@ -309,7 +309,7 @@ GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
 }
 
 GOAL_RECOVERY_SCENARIOS = {
-    "goal-resume-changed-orca-after-incomplete",
+    "goal-resume-changed-herdr-after-incomplete",
     *GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS,
 }
 
@@ -318,7 +318,7 @@ VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
 }
 
 VALIDATION_RECOVERY_SCENARIOS = {
-    "validation-resume-changed-orca-after-incomplete",
+    "validation-resume-changed-herdr-after-incomplete",
     *VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS,
 }
 
@@ -354,8 +354,8 @@ TASK_RESUME_SCENARIOS = {
         "readiness": "current-route-only",
         "direction": "waive",
     },
-    "task-resume-terminal-orca": {
-        "route": "orca",
+    "task-resume-terminal-herdr": {
+        "route": "herdr",
         "operation": "incomplete",
         "prior_state": "terminal-incomplete-or-failed",
         "readiness": "safe-to-change",
@@ -374,7 +374,7 @@ TASK_RESUME_SCENARIOS = {
     },
     "task-waive-with-route-change-basis-rejected": {
         "route": "mulgae",
-        "effective_route": "orca",
+        "effective_route": "herdr",
         "operation": "failed",
         "prior_state": "terminal-incomplete-or-failed",
         "readiness": "safe-to-change",
@@ -394,18 +394,18 @@ TASK_RESUME_SCENARIOS = {
         "rejection_option": "resumed",
     },
     "task-planned-with-direction-rejected": {
-        "route": "orca",
+        "route": "herdr",
         "operation": "failed",
         "prior_state": "not-applicable",
         "readiness": "not-applicable",
         "direction": "switch-route",
         "planned_only": True,
         "rejection_node": "authorize-planned-review-route",
-        "rejection_option": "planned-orca",
+        "rejection_option": "planned-herdr",
     },
-    "task-completed-switch-orca": {
+    "task-completed-switch-herdr": {
         "route": "mulgae",
-        "effective_route": "orca",
+        "effective_route": "herdr",
         "operation": "complete",
         "prior_operation": "complete",
         "prior_state": "terminal-complete",
@@ -440,7 +440,7 @@ TASK_RESUME_SCENARIOS = {
     },
     "task-completed-waive-with-route-change-basis-rejected": {
         "route": "mulgae",
-        "effective_route": "orca",
+        "effective_route": "herdr",
         "operation": "complete",
         "prior_operation": "complete",
         "prior_state": "terminal-complete",
@@ -475,9 +475,9 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "continued_checkpoint": True,
     },
-    "task-completed-continue-orca": {
-        "route": "orca",
-        "effective_route": "orca",
+    "task-completed-continue-herdr": {
+        "route": "herdr",
+        "effective_route": "herdr",
         "operation": "complete",
         "prior_operation": "complete",
         "prior_state": "terminal-complete",
@@ -538,7 +538,7 @@ ISOLATED_BOUNDED_SCENARIOS = (
 def route_qualification_provenance(route: str) -> str:
     return {
         "mulgae": "mulgae-reviewer:official-runtime",
-        "orca": "orca-reviewer:official-runtime",
+        "herdr": "herdr-reviewer:official-runtime",
         "independent-review": "host-delegation:official-runtime",
         "waived": "coordinator-waiver",
     }[route]
@@ -547,7 +547,7 @@ def route_qualification_provenance(route: str) -> str:
 def route_qualification_evidence_reference(route: str, scenario: str) -> str:
     kind = {
         "mulgae": "mulgae-root",
-        "orca": "orca-lifecycle",
+        "herdr": "herdr-lifecycle",
         "independent-review": "host-delegation",
         "waived": "coordinator-waiver",
     }[route]
@@ -2537,11 +2537,11 @@ class ManagedRuntime:
                     and node == "record-evidence"
                     and self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
                     and self.goal_evidence_round > 0
-                    else "orca"
+                    else "herdr"
                     if goal_recovery and node == "record-evidence"
                     else "mulgae"
                     if validation_recovery and node == "capture-baseline"
-                    else "orca"
+                    else "herdr"
                     if validation_recovery
                     and node == "final-review"
                     and not (
@@ -2657,7 +2657,7 @@ class ManagedRuntime:
                 "prior-review-route": (
                     "mulgae"
                     if validation_recovery and self.validation_review_round == 0
-                    else "orca"
+                    else "herdr"
                     if validation_recovery
                     else "not-applicable"
                     if validation_waiver_followup and self.validation_review_round == 0
@@ -2665,7 +2665,7 @@ class ManagedRuntime:
                     if validation_waiver_followup
                     else "mulgae"
                     if goal_recovery and self.goal_evidence_round == 0
-                    else "orca"
+                    else "herdr"
                     if goal_recovery
                     else task_resume["route"]
                     if task_resume
@@ -3668,7 +3668,7 @@ class ManagedRuntime:
                 expected_entry = TASK_REVIEW_ENTRY_NODES[route]
                 wrong_entries = {
                     TASK_REVIEW_ENTRY_NODES[provider]
-                    for provider in {"mulgae", "orca", "independent-review"} - {route}
+                    for provider in {"mulgae", "herdr", "independent-review"} - {route}
                     if self.node_visits.get(TASK_REVIEW_ENTRY_NODES[provider], 0)
                 }
                 if self.node_visits.get(expected_entry) != 2 or wrong_entries:
@@ -3993,7 +3993,7 @@ class ManagedRuntime:
             if task_resume and node == "authorize-current-review-route-resume":
                 route = task_resume["route"]
                 if scenario == "task-resume-active-mulgae":
-                    observation = self.reject_guarded_decision(observation, "orca")
+                    observation = self.reject_guarded_decision(observation, "herdr")
                 decision = self.decide(observation, route)
                 self.decision_destination(decision, TASK_REVIEW_ENTRY_NODES[route])
                 continue
@@ -4923,13 +4923,13 @@ class ManagedRuntime:
                     current_route = self.read_complete_evidence(
                         observation, "record-evidence", "review-route"
                     )
-                    if planned_route != "mulgae" or current_route != "orca":
+                    if planned_route != "mulgae" or current_route != "herdr":
                         raise RuntimeQualificationError(
                             "Goal recovery changed its planned or current provider: "
                             f"planned={planned_route!r}; current={current_route!r}"
                         )
                     if self.goal_evidence_round == 2 and (
-                        self.node_visits.get("decide-changed-orca-review-operation")
+                        self.node_visits.get("decide-changed-herdr-review-operation")
                         != 1
                         or self.node_visits.get("confirm-incomplete-route-evidence")
                         != 1
@@ -4939,23 +4939,23 @@ class ManagedRuntime:
                         != 1
                     ):
                         raise RuntimeQualificationError(
-                            "Goal resume did not preserve the immediately preceding Orca operation"
+                            "Goal resume did not preserve the immediately preceding Herdr operation"
                         )
-                    special_option = "changed-orca"
-                elif node == "decide-changed-orca-review-operation":
+                    special_option = "changed-herdr"
+                elif node == "decide-changed-herdr-review-operation":
                     special_option = (
                         "unsuccessful" if self.goal_evidence_round == 1 else "completed"
                     )
                 elif node == "confirm-incomplete-route-evidence":
-                    special_option = "orca"
-                elif node == "confirm-orca-review-route-settlement":
+                    special_option = "herdr"
+                elif node == "confirm-herdr-review-route-settlement":
                     special_option = "terminal-safe"
                 elif node == "choose-terminal-review-route-direction":
                     special_option = "resume-current"
                 elif node == "confirm-completed-assessment-ordinal":
                     special_option = "first"
                 elif node == "confirm-first-route-evidence":
-                    special_option = "orca"
+                    special_option = "herdr"
             if scenario in VALIDATION_RECOVERY_SCENARIOS:
                 if node == "confirm-final-review-route-binding":
                     planned_route = self.read_complete_evidence(
@@ -4973,11 +4973,11 @@ class ManagedRuntime:
                     expected_prior = (
                         ("mulgae", "not-applicable")
                         if self.validation_review_round == 1
-                        else ("orca", "incomplete")
+                        else ("herdr", "incomplete")
                     )
                     if (
                         planned_route != "mulgae"
-                        or current_route != "orca"
+                        or current_route != "herdr"
                         or (prior_route, prior_operation) != expected_prior
                     ):
                         raise RuntimeQualificationError(
@@ -4993,7 +4993,7 @@ class ManagedRuntime:
                         or self.node_visits.get("choose-settled-route-direction") != 1
                     ):
                         raise RuntimeQualificationError(
-                            "Validation resume skipped the prior Orca settlement"
+                            "Validation resume skipped the prior Herdr settlement"
                         )
                     special_option = "bound"
                 elif node == "decide-final-review-operation":
@@ -5163,14 +5163,14 @@ class ManagedRuntime:
                 }
                 task_operation_nodes = {
                     "mulgae": "decide-mulgae-review-operation",
-                    "orca": "decide-orca-review-operation",
+                    "herdr": "decide-herdr-review-operation",
                     "independent-review": "decide-independent-review-operation",
                 }
                 if node == task_operation_nodes.get(qualified_route):
                     special_option = "assessed"
                 task_provenance_nodes = {
                     "mulgae": "confirm-mulgae-provenance",
-                    "orca": "confirm-static-delegated-provenance",
+                    "herdr": "confirm-static-delegated-provenance",
                     "independent-review": "confirm-static-delegated-provenance",
                     "waived": "confirm-waived-provenance",
                 }

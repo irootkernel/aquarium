@@ -17,7 +17,7 @@ An explicit standalone `$aquarium:independent-review` request or an approved
 embedded `independent-review` selection authorizes one static three-subagent
 review of the declared target. Its optional model and reasoning-effort values
 apply to every reviewer; omitted values use host defaults. It never invokes
-Mulgae, Orca, or Dolgorae as a fallback. Read the skill's target, dispatch,
+Mulgae, Herdr, or Dolgorae as a fallback. Read the skill's target, dispatch,
 failure, and aggregation rules before execution.
 
 ## Build the Review Brief

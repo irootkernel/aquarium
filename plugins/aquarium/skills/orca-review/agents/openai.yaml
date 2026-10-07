@@ -1,6 +1,0 @@
-interface:
-  display_name: "Orca Review"
-  short_description: "Review staged or committed targets with Orca"
-  default_prompt: "Use $aquarium:orca-review to review a staged or committed target with a fresh requested reviewer in Orca."
-policy:
-  allow_implicit_invocation: true

@@ -3851,6 +3851,34 @@ else:
             {"unverified"},
         )
 
+    def test_retired_orca_snapshots_do_not_admit_herdr(self) -> None:
+        for kind, version in (("task", 22), ("goal", 25), ("validation", 24)):
+            with self.subTest(kind=kind):
+                content = (
+                    ROOT / "tests/fixtures" / f"aquarium-{kind}-v{version}.yaml"
+                ).read_bytes()
+                historical = yaml.safe_load(content)
+                declarations = [
+                    item
+                    for definition in historical["node_definitions"].values()
+                    for item in definition.get("items", [])
+                    if item["id"] == "review-route"
+                ]
+                self.assertTrue(declarations)
+                self.assertTrue(all("orca" in item["choices"] for item in declarations))
+                self.assertTrue(
+                    all("herdr" not in item["choices"] for item in declarations)
+                )
+                self.assertEqual(
+                    inspect_tools.inspect_podway_review_routes(content, qualified=True),
+                    {
+                        "mulgae": "ready",
+                        "herdr": "unavailable",
+                        "independent-review": "ready",
+                        "waived": "ready",
+                    },
+                )
+
     def test_rejected_native_procedure_never_admits_review_routes(self) -> None:
         self.install_fake_tools(podway_procedure_ok=False)
         self.install_managed_podway_procedures()
@@ -3915,7 +3943,7 @@ else:
                     self.assertEqual(
                         entry["review_route_readiness"],
                         dict.fromkeys(
-                            ("mulgae", "orca", "independent-review", "waived"),
+                            ("mulgae", "herdr", "independent-review", "waived"),
                             "ready",
                         ),
                     )
@@ -4559,7 +4587,7 @@ else:
             (
                 "cross-provider-rewire",
                 "authorize-current-review-route-resume",
-                ("mulgae", "enter-orca-review-route"),
+                ("mulgae", "enter-herdr-review-route"),
             ),
             (
                 "direct-review-bypass",
@@ -5120,7 +5148,7 @@ else:
             entry["review_route_readiness"],
             {
                 "mulgae": "ready",
-                "orca": "ready",
+                "herdr": "unavailable",
                 "independent-review": "unavailable",
                 "waived": "ready",
             },
@@ -5271,13 +5299,38 @@ else:
                 "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
             ),
         }
+        cases = [(name, *case) for name, case in fixtures.items()]
+        cases.extend(
+            (
+                f"aquarium-{kind}-v2.yaml",
+                ROOT / "tests/fixtures" / f"aquarium-{kind}-v{version}.yaml",
+                digest,
+            )
+            for kind, version, digest in (
+                (
+                    "task",
+                    22,
+                    "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
+                ),
+                (
+                    "goal",
+                    25,
+                    "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
+                ),
+                (
+                    "validation",
+                    24,
+                    "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
+                ),
+            )
+        )
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         managed = self.repository / ".podway/procedures"
         source = ROOT / "plugins/aquarium/assets/podway/procedures"
 
-        for name, (fixture, expected_digest) in fixtures.items():
-            with self.subTest(procedure=name, case="exact"):
+        for name, fixture, expected_digest in cases:
+            with self.subTest(procedure=name, snapshot=fixture.name, case="exact"):
                 legacy_bytes = fixture.read_bytes()
                 self.assertEqual(
                     hashlib.sha256(legacy_bytes).hexdigest(), expected_digest
@@ -5302,9 +5355,23 @@ else:
                     podway["readiness_status"],
                     "ready" if current_supported else "degraded",
                 )
+                self.assertEqual(
+                    entry["review_route_readiness"],
+                    {
+                        "mulgae": "ready",
+                        "herdr": "unavailable",
+                        "independent-review": "ready",
+                        "waived": "ready",
+                    }
+                    if current_supported
+                    else dict.fromkeys(
+                        ("mulgae", "herdr", "independent-review", "waived"),
+                        "unverified",
+                    ),
+                )
                 self.assertEqual(target.read_bytes(), legacy_bytes)
 
-            with self.subTest(procedure=name, case="tampered"):
+            with self.subTest(procedure=name, snapshot=fixture.name, case="tampered"):
                 target.write_text(
                     fixture.read_text(encoding="utf-8").replace(
                         "purpose: ", "purpose: Tampered ", 1
@@ -5395,6 +5462,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
                     "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
                     "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
                     "aa916a0e0dfa49384da1bb1affede4af58dd4dbc43e17f248d69537db6aeda52",
@@ -5416,6 +5484,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
                     "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
                     "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
                     "b215c60ad2555d9d7f4f970fb80541278b340e93536ff32ce3ea656fadf21c4d",
@@ -5437,6 +5506,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
                     "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
                     "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
                     "a9d59ad628e77a0f3131b4dcb9bb40fc3d83bb4c35ec077666caf4379c49a7a0",

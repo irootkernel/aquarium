@@ -1,7 +1,7 @@
 # Workflow review routing
 
 This specification describes the selectable routing contract delivered by
-`EPIC-016`. The shared
+`EPIC-016` and updated by `TASK-107` of `EPIC-020`. The shared
 [workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
 defines route selection, evidence, switching, waiver, and Low-settlement
 semantics for Task delivery, Epic member delivery, whole-Epic review, and cold
@@ -31,7 +31,7 @@ preferred route.
 | Route | Availability and behavior |
 | --- | --- |
 | `mulgae` | Default route. It retains immutable capture, selected-role execution, recovery, publication, findings, CI, and retention under the Mulgae contract. |
-| `orca` | Requires an explicitly selected reviewer and an Orca-supported target. Orca supervises one fresh static reviewer in the current registered worktree. |
+| `herdr` | Requires an explicitly selected reviewer and a Herdr-supported target. Herdr supervises one fresh static reviewer in the current local session; admission requires submission/activity correlation and the complete purpose-specific report. |
 | `independent-review` | Requires explicit selection and three fresh host delegations. The subagents review one target and Brief with separate focus; Aquarium aggregates their static reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
@@ -42,9 +42,10 @@ would have a separate route and admission contract.
 
 One route is selected for the workflow during plan or validation-envelope
 approval. That choice remains the default for every later assessment checkpoint.
-Selecting Orca also records its reviewer. Each delegated route records its source
-scope and transmission boundary. Selecting `waived` records the target, the
-explicit waiver, its reason, and the resulting assurance limitation.
+Herdr selection records the reviewer kind in the selection summary and carries
+any requested native model and effort in the Review Brief. Each delegated route
+records its source scope and transmission boundary. Selecting `waived` records
+the target, the explicit waiver, its reason, and the resulting assurance limitation.
 
 A Task follow-up checkpoint on the same route uses `continue-current` after an
 exact `complete` or `waived` operation. It preserves the completed ordinal,
@@ -74,16 +75,16 @@ Each route keeps its native target vocabulary. Route selection cannot silently
 stage files, commit work, copy a checkout, broaden the source scope, or include
 unrelated changes.
 
-Task delivery may use Orca's `staged` target only when the complete task candidate
+Task delivery may use Herdr's `staged` target only when the complete task candidate
 can be isolated from unrelated index entries. Epic completion and cold validation
 may use an exact `HEAD`, commit, or range target when the candidate is committed.
-An unsupported `workspace` or `dirty` target makes Orca unavailable for that
+An unsupported `workspace` or `dirty` target makes Herdr unavailable for that
 checkpoint. Independent Review receives the exact bounded candidate that the host can
 present without inventing backend guarantees. Mulgae retains its current target
 rules.
 
 The owning handler prepares the complete staged Task candidate under approved
-staging authority before delegating Orca review. It includes new files and
+staging authority before delegating Herdr review. It includes new files and
 documentation, preserves unrelated index entries, and stops when they prevent
 safe isolation. Report-only review does not prepare the index.
 
@@ -93,7 +94,7 @@ The Procedures and handlers record these route-neutral facts:
 
 | Field | Meaning |
 | --- | --- |
-| `review-route` | `mulgae`, `orca`, `independent-review`, or `waived` |
+| `review-route` | `mulgae`, `herdr`, `independent-review`, or `waived` |
 | `assessment-ordinal` | Positive ordinal of each completed delegated review or completed waiver assessment for the current goal revision |
 | `assessment-kind` | `work-unit` for ordinals one through three; `remediation-confirmation` for ordinal four and any explicitly authorized later checkpoint |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived` |
@@ -109,7 +110,7 @@ The following combinations are valid for a completed checkpoint:
 | Route and operation | Required evidence |
 | --- | --- |
 | `mulgae` and `complete` | An exact root or composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
-| `orca` and `complete` | Native lifecycle, reviewer provenance, and `backend-check-result=not-provided`. |
+| `herdr` and `complete` | Fresh requested identity, submission/activity correlation, applicable target and Brief, complete report and native operation references under Herdr supervision, reviewer provenance, and `backend-check-result=not-provided`. Idle or done alone is insufficient. |
 | `independent-review` and `complete` | Three completed host delegations for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
 | `waived` and `waived` | Waiver authority, `assessment-provenance=coordinator-waiver`, a waiver summary, and `backend-check-result=not-provided`. |
 
@@ -141,7 +142,7 @@ A broader objective, requirement set, or changed surface requires an approved
 new goal revision.
 
 Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
-MCP gap blocks only the Mulgae route. Orca readiness blocks only Orca. Missing
+MCP gap blocks only the Mulgae route. Herdr readiness blocks only Herdr. Missing
 host delegation blocks only `independent-review`. The workflow must still report the
 selected route's exact prerequisite failure.
 
@@ -159,7 +160,7 @@ Host wait timeouts leave Independent Review delegations pending. Resume the
 same references until every agent has an authoritative terminal state. Explicit
 `resume-current` after a settled incomplete operation may start a fresh group
 with the same target, Brief, model and effort, preserving earlier reports and
-the pending ordinal. Orca waiting and exact retry follow its live native
+the pending ordinal. Herdr waiting and exact retry follow its live native
 contract without an Aquarium deadline or retry cap. Both routes report reviewer
 violations separately and withhold a final verdict when target integrity,
 identity, source scope, coverage, or lifecycle evidence is compromised or unknown.
@@ -176,7 +177,7 @@ It requires an exact Mulgae run and finding membership, committed publication,
 a successful findings query, and an authoritative native target SHA-256 that
 matches the promoted manifest. Only Mulgae supplies that contract in this epic.
 
-Orca, Independent Review, and `waived` must not invent a Mulgae run, finding ID,
+Herdr, Independent Review, and `waived` must not invent a Mulgae run, finding ID,
 capture, or target digest. Their Low findings use the ordinary dispositions. If
 a downstream requirement specifically needs promoted native evidence and no
 selected route can provide it, the workflow reports an evidence gap and stops.
@@ -238,8 +239,8 @@ is safe to leave.
 | Terminal complete | Preserve the consumed ordinal, findings, dispositions, and authority. Apply the new route at the next authorized checkpoint. |
 
 An observer timeout does not make an operation terminal. An active or uncertain
-Mulgae invocation remains with `$use-mulgae`; an active or unproven Orca worker
-remains with Orca supervision. When no exact identity or native evidence can
+Mulgae invocation remains with `$use-mulgae`; an active or unproven Herdr reviewer
+remains with the same native Herdr operation. When no exact identity or native evidence can
 resolve an uncertain mutation, the workflow stops with an operational gap rather
 than launching another reviewer or closing through a waiver.
 

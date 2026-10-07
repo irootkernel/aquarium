@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "25"
+version: "26"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -35,7 +35,7 @@ node_definitions:
         required: false
         choices:
           - mulgae
-          - orca
+          - herdr
           - independent-review
           - waived
       - id: review-target-scope
@@ -106,7 +106,7 @@ node_definitions:
             equals: native-review
         choices:
           - mulgae
-          - orca
+          - herdr
           - independent-review
           - waived
       - id: review-operation
@@ -224,7 +224,7 @@ node_definitions:
         choices:
           - not-applicable
           - mulgae
-          - orca
+          - herdr
           - independent-review
           - waived
       - id: prior-review-operation
@@ -425,18 +425,18 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: planned-orca
-        label: Planned Orca route
-        criteria: Orca matches the approved envelope.
+      - id: planned-herdr
+        label: Planned Herdr route
+        criteria: Herdr matches the approved envelope.
         guards:
           - evidence:
               node: complete-work
               item: review-route
-            equals: orca
+            equals: herdr
           - evidence:
               node: record-evidence
               item: review-route
-            equals: orca
+            equals: herdr
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -509,14 +509,14 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: changed-orca
-        label: Authorized Orca change
-        criteria: Orca has explicit safe route-change authority.
+      - id: changed-herdr
+        label: Authorized Herdr change
+        criteria: Herdr has explicit safe route-change authority.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: orca
+            equals: herdr
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -874,14 +874,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             not_equals: coordinator-waiver
-      - id: orca
-        label: Orca completed
-        criteria: Orca completed with reviewer provenance and no backend check.
+      - id: herdr
+        label: Herdr completed
+        criteria: Herdr admits the complete purpose-specific report with the fresh requested identity, submission/activity correlation and applicable target and Brief; no backend check is provided.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: orca
+            equals: herdr
           - evidence:
               node: record-evidence
               item: review-operation
@@ -955,14 +955,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             equals: delegated-reviewer
-      - id: orca
-        label: Orca incomplete evidence
-        criteria: Orca retains lifecycle or preflight evidence and no backend check.
+      - id: herdr
+        label: Herdr incomplete evidence
+        criteria: Herdr retains lifecycle or preflight evidence and no backend check.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: orca
+            equals: herdr
           - evidence:
               node: record-evidence
               item: backend-check-result
@@ -2093,8 +2093,8 @@ graph:
         planned-mulgae:
           to: decide-planned-mulgae-review-operation
           effect: advance
-        planned-orca:
-          to: decide-planned-orca-review-operation
+        planned-herdr:
+          to: decide-planned-herdr-review-operation
           effect: advance
         planned-independent-review:
           to: decide-planned-independent-review-operation
@@ -2105,8 +2105,8 @@ graph:
         changed-mulgae:
           to: decide-changed-mulgae-review-operation
           effect: advance
-        changed-orca:
-          to: decide-changed-orca-review-operation
+        changed-herdr:
+          to: decide-changed-herdr-review-operation
           effect: advance
         changed-independent-review:
           to: decide-changed-independent-review-operation
@@ -2137,7 +2137,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-planned-orca-review-operation
+    - id: decide-planned-herdr-review-operation
       use: review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -2230,7 +2230,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-changed-orca-review-operation
+    - id: decide-changed-herdr-review-operation
       use: changed-review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -2393,8 +2393,8 @@ graph:
         mulgae-fail:
           to: confirm-mulgae-fail-finding-validity
           effect: advance
-        orca:
-          to: confirm-orca-finding-validity
+        herdr:
+          to: confirm-herdr-finding-validity
           effect: advance
         independent-review:
           to: confirm-independent-review-finding-validity
@@ -2423,8 +2423,8 @@ graph:
         mulgae-fail:
           to: confirm-mulgae-fail-finding-validity
           effect: advance
-        orca:
-          to: confirm-orca-finding-validity
+        herdr:
+          to: confirm-herdr-finding-validity
           effect: advance
         independent-review:
           to: confirm-independent-review-finding-validity
@@ -2453,8 +2453,8 @@ graph:
         mulgae-fail:
           to: confirm-mulgae-fail-finding-validity
           effect: advance
-        orca:
-          to: confirm-orca-finding-validity
+        herdr:
+          to: confirm-herdr-finding-validity
           effect: advance
         independent-review:
           to: confirm-independent-review-finding-validity
@@ -2483,8 +2483,8 @@ graph:
         mulgae-fail:
           to: confirm-mulgae-fail-finding-validity
           effect: advance
-        orca:
-          to: confirm-orca-finding-validity
+        herdr:
+          to: confirm-herdr-finding-validity
           effect: advance
         independent-review:
           to: confirm-independent-review-finding-validity
@@ -2509,8 +2509,8 @@ graph:
         mulgae:
           to: confirm-mulgae-review-route-settlement
           effect: advance
-        orca:
-          to: confirm-orca-review-route-settlement
+        herdr:
+          to: confirm-herdr-review-route-settlement
           effect: advance
         independent-review:
           to: confirm-independent-review-route-settlement
@@ -2534,7 +2534,7 @@ graph:
         terminal-safe:
           to: choose-terminal-review-route-direction
           effect: advance
-    - id: confirm-orca-review-route-settlement
+    - id: confirm-herdr-review-route-settlement
       use: review-route-settlement-decision
       evidence_from:
         - node: record-evidence
@@ -2691,7 +2691,7 @@ graph:
         unresolved:
           to: record-evidence
           effect: rework
-    - id: confirm-orca-finding-validity
+    - id: confirm-herdr-finding-validity
       use: finding-validity-decision
       evidence_from:
         - node: record-evidence

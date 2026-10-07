@@ -14,7 +14,7 @@ The workflow plan selects exactly one route and, where required, its reviewer:
 | Route | Selection and native ownership |
 | --- | --- |
 | `mulgae` | Default when no alternative is selected. Mulgae owns capture, provider execution, recovery, publication, CI, findings, and retention. |
-| `orca` | Requires an explicit reviewer and an Orca-supported target. Orca owns its Run, Task, Dispatch, worker, Delivery, acknowledgement, settlement, and recovery. |
+| `herdr` | Requires an explicit reviewer kind and a supported target; honors any requested native model and effort. Herdr owns the local pane, agent, submission, observation, output and recovery. |
 | `independent-review` | Requires explicit selection and three fresh host subagents. Aquarium coordinates their static reports; the host owns delegation lifecycle and provenance. |
 | `waived` | Requires an explicit delegated-review waiver. It launches no reviewer; the coordinator assesses the same complete Review Brief from current authorized evidence. |
 
@@ -23,8 +23,9 @@ explicitly authorizes a bounded route change. Do not create a repository or
 user-global preference.
 
 Check only the selected route's prerequisites. A missing Mulgae installation,
-project MCP, provider, or paired skill does not block Orca, Independent Review,
-or a waiver. Orca requires its requested reviewer and supported target.
+project MCP, provider, or paired skill does not block Herdr, Independent Review,
+or a waiver. Herdr requires its upstream skill, requested reviewer, supported
+target and caller context under [herdr-supervision.md](herdr-supervision.md).
 Independent Review requires fresh host delegation for three subagents and any
 explicitly requested model or effort. A waiver requires no backend readiness.
 
@@ -37,7 +38,7 @@ vocabulary and report the exact included and excluded state.
 Before delegating a staged Task review, the owning handler uses its approved staging authority to stage the complete Task candidate, including new files and documentation. Reconcile the index with the intended candidate and preserve unrelated entries; if those entries prevent isolation, stop for a concrete target or staging decision. The report-only reviewer never prepares or repairs the index. Repeat this preparation after authorized corrections before a later staged checkpoint.
 
 - Mulgae retains its supported target meanings and immutable-capture contract.
-- Orca uses `staged`, `head`, `commit`, or `range` through the static review
+- Herdr uses `staged`, `head`, `commit`, or `range` through the static review
   contract. A Task may use `staged` only when the complete candidate is isolated
   from unrelated index entries. Epic and validation checkpoints may use an
   exact committed target.
@@ -48,13 +49,13 @@ Before delegating a staged Task review, the owning handler uses its approved sta
 - A waiver binds the exact target assessed by the coordinator and records the
   absence of delegated review.
 
-Never describe Orca, Independent Review, or a waiver as a Mulgae capture,
+Never describe Herdr, Independent Review, or a waiver as a Mulgae capture,
 publication, CI result, findings query, or recovery guarantee. Independent
-Review does not use Dolgorae or inherit Orca lifecycle guarantees.
+Review does not use Dolgorae or inherit Herdr lifecycle guarantees.
 
 ## Procedure Route Compatibility
 
-On the Podway path, check the selected Procedure's route readiness under [podway-integration.md](podway-integration.md#check-readiness-on-the-default-path) before starting a new session or dispatching a resumed checkpoint. A recognized historical snapshot may support Mulgae or Orca while lacking Independent Review. Never equate generic handler compatibility with every route being executable, record `independent-review` as `native-codex`, or revive retired single-agent dispatch.
+On the Podway path, check the selected Procedure's route readiness under [podway-integration.md](podway-integration.md#check-readiness-on-the-default-path) before starting a new session or dispatching a resumed checkpoint. A recognized historical snapshot may support peer routes while retaining retired Orca labels or lacking Independent Review. Historical `orca` evidence remains Orca evidence; it does not authorize dispatch through the retired route. Never relabel it as Herdr or invoke Orca to settle it. Never equate generic handler compatibility with every route being executable, record `independent-review` as `native-codex`, or revive retired single-agent dispatch.
 
 Preserve an in-flight `native-codex` snapshot and its earlier evidence. For a new checkpoint on that route, record the failed prerequisite without inventing a delegation. Offer an explicitly authorized switch to a supported route, a waiver where that snapshot admits it, or stop and a separately authorized successor after native lifecycle settlement. If the snapshot cannot record the desired route or disposition, leave that decision unset and use its supported stop path; installing new Procedure bytes does not migrate the session. Existing completed evidence keeps its original route and provenance.
 
@@ -65,7 +66,7 @@ workflow-lifecycle decisions:
 
 | Field | Contract |
 | --- | --- |
-| `review-route` | `mulgae`, `orca`, `independent-review`, or `waived`. |
+| `review-route` | `mulgae`, `herdr`, `independent-review`, or `waived`. |
 | `assessment-ordinal` | Positive ordinal assigned only after a delegated review completes or a waiver assessment completes for the current goal revision. |
 | `assessment-kind` | `work-unit` for the first three assessments or `remediation-confirmation` for ordinal four and later. |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived`. |
@@ -80,9 +81,12 @@ Admit only these completed combinations:
   reviewer provenance, committed publication, complete coverage, a successful
   findings query, and `backend-check-result` of `pass` or `fail`. Mulgae CI may
   not be `not-provided`.
-- `orca` plus `complete` requires authoritative native lifecycle, reviewer
-  provenance, and `backend-check-result=not-provided`. `independent-review`
-  plus `complete` requires three completed host delegations for the same target
+- `herdr` plus `complete` requires the fresh requested reviewer identity,
+  correlated submission and observed activity, the applicable exact target and
+  Brief, the complete purpose-specific report and native operation references
+  under [herdr-supervision.md](herdr-supervision.md), with reviewer provenance
+  and `backend-check-result=not-provided`. Idle or done status alone is insufficient.
+- `independent-review` plus `complete` requires three completed host delegations for the same target
   and Brief, all required criterion assessments, reviewer provenance, and
   `backend-check-result=not-provided`. The three reports consume one ordinal.
 - `waived` plus `waived` requires explicit waiver authority,
@@ -94,7 +98,7 @@ For operations that do not complete, admit only these combinations:
 - `mulgae` plus `incomplete` or `failed` retains Mulgae operation provenance,
   every issued native reference, and the observed backend check. Use
   `not-provided` only when no authoritative CI result exists.
-- `orca` or `independent-review` plus `incomplete` or `failed` retains the
+- `herdr` or `independent-review` plus `incomplete` or `failed` retains the
   matching native lifecycle or host-delegation provenance and every available
   reference, with `backend-check-result=not-provided`.
 - `waived` admits only `review-operation=waived`; it never records `complete`,
@@ -197,7 +201,7 @@ checkpoint. Preserve the existing bounded correction and confirmation budget.
 All routes support the ordinary finite Low dispositions. The promoted
 `hardening-deferral` path remains Mulgae-only because it requires exact run and
 finding membership, committed publication, a successful findings query, and an
-authoritative native target SHA-256. Orca, Independent Review, and waiver evidence must
+authoritative native target SHA-256. Herdr, Independent Review, and waiver evidence must
 state that no promoted hardening evidence applies; never invent a Mulgae run,
 finding identity, capture, publication, query, or target digest.
 

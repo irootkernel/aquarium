@@ -34,6 +34,6 @@ Where approval is tied to a displayed diff, exact target, candidate SHA, tool ve
 - [Development setup skill](../../plugins/aquarium/skills/dev-setup/SKILL.md)
 - [Global development setup skill](../../plugins/aquarium/skills/dev-setup-global/SKILL.md)
 - [Task commit skill](../../plugins/aquarium/skills/task-commit/SKILL.md)
-- [Orca supervision](../../plugins/aquarium/references/orca-supervision.md)
+- [Orca supervision](https://github.com/irootkernel/aquarium/blob/v0.1.18/plugins/aquarium/references/orca-supervision.md)
 - [Release handler](../../plugins/aquarium/skills/release-handler/SKILL.md)
 - [Privacy policy](../../PRIVACY.md)

@@ -298,6 +298,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
         "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
         "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
         "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
@@ -319,6 +320,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
         "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
         "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
         "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
@@ -340,6 +342,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
         "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
         "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
         "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",
@@ -701,7 +704,7 @@ def inspect_podway_review_routes(
     content: bytes | None, *, qualified: bool = False
 ) -> dict[str, str]:
     """Qualify current routes from every review-route declaration in the snapshot."""
-    routes = ("mulgae", "orca", "independent-review", "waived")
+    routes = ("mulgae", "herdr", "independent-review", "waived")
     unverified = dict.fromkeys(routes, "unverified")
     if content is None or yaml is None or not qualified:
         return unverified

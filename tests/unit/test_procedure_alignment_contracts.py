@@ -38,24 +38,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "22",
+            "23",
+            "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
+            "aquarium-task-v22.yaml",
             "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
-            "aquarium-task-v21.yaml",
-            "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "25",
+            "26",
+            "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
+            "aquarium-goal-v25.yaml",
             "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
-            "aquarium-goal-v24.yaml",
-            "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "24",
+            "25",
+            "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
+            "aquarium-validation-v24.yaml",
             "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
-            "aquarium-validation-v23.yaml",
-            "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -308,7 +308,7 @@ def test_task_review_route_fixture_covers_required_task_paths() -> None:
     ]
     assert {case["route"] for case in cases} == {
         "mulgae",
-        "orca",
+        "herdr",
         "independent-review",
         "waived",
     }
@@ -387,7 +387,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     }
     expected_entries = {
         "planned-mulgae": "enter-mulgae-review-route",
-        "planned-orca": "enter-orca-review-route",
+        "planned-herdr": "enter-herdr-review-route",
         "planned-independent-review": "enter-independent-review-route",
         "planned-waiver": "enter-waived-review-route",
     }
@@ -403,14 +403,14 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
     assert graph["confirm-review-route-binding"]["routes"] == {
         "mulgae": {"to": "decide-mulgae-review-operation", "effect": "advance"},
-        "orca": {"to": "decide-orca-review-operation", "effect": "advance"},
+        "herdr": {"to": "decide-herdr-review-operation", "effect": "advance"},
         "independent-review": {
             "to": "decide-independent-review-operation",
             "effect": "advance",
         },
         "waived": {"to": "confirm-assessment-ordinal", "effect": "advance"},
     }
-    for route in ("mulgae", "orca", "independent-review"):
+    for route in ("mulgae", "herdr", "independent-review"):
         operation_node = (
             "decide-independent-review-operation"
             if route == "independent-review"
@@ -468,7 +468,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     }
     assert graph["authorize-current-review-route-resume"]["routes"] == {
         "mulgae": {"to": "enter-mulgae-review-route", "effect": "advance"},
-        "orca": {"to": "enter-orca-review-route", "effect": "advance"},
+        "herdr": {"to": "enter-herdr-review-route", "effect": "advance"},
         "independent-review": {
             "to": "enter-independent-review-route",
             "effect": "advance",
@@ -496,14 +496,14 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "22"
+    assert task["version"] == "23"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
     cases = (
         ("mulgae", "complete", "pass", "mulgae", "delegated-reviewer", None),
         (
-            "orca",
+            "herdr",
             "complete",
             "not-provided",
             "static-delegated",
@@ -559,7 +559,7 @@ def test_task_review_route_evidence_combinations_are_guarded() -> None:
         ("review", "assessment-ordinal", None, "equals", 0),
     }
     invalid_completed_zero = {
-        ("review", "review-route"): "orca",
+        ("review", "review-route"): "herdr",
         ("review", "review-operation"): "complete",
         ("review", "assessment-ordinal"): 0,
     }
@@ -778,8 +778,8 @@ def test_task_route_authorization_paths_cannot_cross_select() -> None:
     }
     planned = options(task, "planned-review-route-authorization-decision")
     values = {
-        ("record-plan", "review-route"): "orca",
-        ("prepare-review", "effective-review-route"): "orca",
+        ("record-plan", "review-route"): "herdr",
+        ("prepare-review", "effective-review-route"): "herdr",
         ("prepare-review", "route-authorization-basis"): "approved-plan",
         ("prepare-review", "checkpoint-requested-direction"): "not-applicable",
         ("prepare-review", "prior-review-route"): "not-applicable",
@@ -790,7 +790,7 @@ def test_task_route_authorization_paths_cannot_cross_select() -> None:
         ("prepare-review", "corrected-target-summary"): None,
         ("prepare-review", "extra-assessment-authority-reference"): None,
     }
-    assert guards_match(planned["planned-orca"], values)
+    assert guards_match(planned["planned-herdr"], values)
     assert not guards_match(planned["planned-mulgae"], values)
 
 
@@ -954,25 +954,25 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
 
     incomplete = options(task, "incomplete-review-route-authorization-decision")
     incomplete_switch = {
-        ("prepare-review", "effective-review-route"): "orca",
+        ("prepare-review", "effective-review-route"): "herdr",
         ("prepare-review", "route-authorization-basis"): "explicit-route-change",
         ("prepare-review", "checkpoint-requested-direction"): "switch-route",
         ("prepare-review", "prior-route-change-readiness"): "safe-to-change",
     }
-    assert guards_match(incomplete["changed-orca"], incomplete_switch)
+    assert guards_match(incomplete["changed-herdr"], incomplete_switch)
     incomplete_switch[("prepare-review", "prior-route-change-readiness")] = (
         "completed-checkpoint"
     )
-    assert not guards_match(incomplete["changed-orca"], incomplete_switch)
+    assert not guards_match(incomplete["changed-herdr"], incomplete_switch)
 
     completed = options(task, "completed-review-route-authorization-decision")
     completed_switch = {
         **completed_state,
-        ("prepare-review", "effective-review-route"): "orca",
+        ("prepare-review", "effective-review-route"): "herdr",
         ("prepare-review", "route-authorization-basis"): "explicit-route-change",
         ("prepare-review", "checkpoint-requested-direction"): "switch-route",
     }
-    assert guards_match(completed["completed-change-orca"], completed_switch)
+    assert guards_match(completed["completed-change-herdr"], completed_switch)
     assert not guards_match(completed["completed-change-waiver"], completed_switch)
     completed_waiver = {
         **completed_waiver_state,
@@ -981,19 +981,19 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
         ("prepare-review", "checkpoint-requested-direction"): "waive",
     }
     assert guards_match(completed["completed-change-waiver"], completed_waiver)
-    assert not guards_match(completed["completed-change-orca"], completed_waiver)
+    assert not guards_match(completed["completed-change-herdr"], completed_waiver)
 
     continued = options(task, "completed-current-review-route-authorization-decision")
-    continued_orca = {
-        ("prepare-review", "effective-review-route"): "orca",
-        ("prepare-review", "prior-review-route"): "orca",
+    continued_herdr = {
+        ("prepare-review", "effective-review-route"): "herdr",
+        ("prepare-review", "prior-review-route"): "herdr",
         ("prepare-review", "route-authorization-basis"): "continued-checkpoint",
         ("prepare-review", "checkpoint-requested-direction"): "continue-current",
         ("prepare-review", "route-change-authority-reference"): "fix-and-review",
         ("prepare-review", "prior-assessment-ordinal"): 1,
     }
-    assert guards_match(continued["continued-orca"], continued_orca)
-    assert not guards_match(continued["continued-mulgae"], continued_orca)
+    assert guards_match(continued["continued-herdr"], continued_herdr)
+    assert not guards_match(continued["continued-mulgae"], continued_herdr)
 
     review_sources = {source["node"] for source in graph["review"]["evidence_from"]}
     assert "authorize-completed-review-route" in review_sources
@@ -1133,7 +1133,7 @@ def test_task_route_fixtures_traverse_only_guarded_options() -> None:
             }
             option = resume_authorization[case["resume_authorization_option"]]
             assert guards_match(option, resumed), case["id"]
-            for other_provider in {"mulgae", "orca", "independent-review"} - {
+            for other_provider in {"mulgae", "herdr", "independent-review"} - {
                 case["resume_authorization_option"]
             }:
                 assert not guards_match(
@@ -1165,11 +1165,11 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
     }
     assert set(graph["confirm-review-route-binding"]["routes"]) == {
         "planned-mulgae",
-        "planned-orca",
+        "planned-herdr",
         "planned-independent-review",
         "planned-waiver",
         "changed-mulgae",
-        "changed-orca",
+        "changed-herdr",
         "changed-independent-review",
         "changed-waiver",
     }
@@ -1211,7 +1211,7 @@ def test_goal_routes_completion_findings_authority_and_low_handling_serially() -
         assert set(graph[node_id]["routes"]) == {
             "mulgae-pass",
             "mulgae-fail",
-            "orca",
+            "herdr",
             "independent-review",
             "waived",
         }
@@ -1284,7 +1284,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
 
     assert {case["route"] for case in goal_cases} == {
         "mulgae",
-        "orca",
+        "herdr",
         "independent-review",
         "waived",
     }
@@ -1376,7 +1376,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
 
     assert {case["route"] for case in validation_cases} == {
         "mulgae",
-        "orca",
+        "herdr",
         "independent-review",
         "waived",
     }
@@ -1430,7 +1430,7 @@ def test_goal_and_validation_route_fixtures_cover_each_route_and_recovery() -> N
 
 
 def test_managed_review_route_choices_exclude_independent() -> None:
-    expected = ["mulgae", "orca", "independent-review", "waived"]
+    expected = ["mulgae", "herdr", "independent-review", "waived"]
     cases = (
         ("aquarium-task-v2.yaml", "plan-record", "review-route"),
         ("aquarium-task-v2.yaml", "review-record", "review-route"),
@@ -1476,7 +1476,7 @@ def test_completed_route_evidence_rejects_cross_product_mismatches() -> None:
     validation = load_procedure("aquarium-validation-v2.yaml")
     applicability = options(validation, "final-backend-applicability-decision")
     values = {
-        ("final-review", "review-route"): "orca",
+        ("final-review", "review-route"): "herdr",
         ("final-review", "backend-check-result"): "not-provided",
     }
     assert guards_match(applicability["not-required"], values)
@@ -1490,7 +1490,7 @@ def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
     assert guards_match(
         task_operation,
         {
-            ("review", "review-route"): "orca",
+            ("review", "review-route"): "herdr",
             ("review", "review-operation"): "incomplete",
             ("review", "assessment-ordinal"): 0,
         },
@@ -1498,7 +1498,7 @@ def test_incomplete_route_changes_preserve_the_pending_ordinal() -> None:
     assert not guards_match(
         task_operation,
         {
-            ("review", "review-route"): "orca",
+            ("review", "review-route"): "herdr",
             ("review", "review-operation"): "incomplete",
             ("review", "assessment-ordinal"): 1,
         },
@@ -1614,7 +1614,7 @@ def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
     assert guards_match(defer, valid)
     assert guards_match(eligibility, valid)
     assert guards_match(record, valid)
-    for route in ("orca", "independent-review", "waived"):
+    for route in ("herdr", "independent-review", "waived"):
         invalid = dict(valid)
         invalid[("record-evidence", "review-route")] = route
         assert not guards_match(eligibility, invalid), route
@@ -2343,3 +2343,54 @@ def test_delegated_closeout_requires_assessment_and_current_acceptance_evidence(
             assert fields[name]["required"] is True
         for name in ("acceptance-authority", "accepted-target"):
             assert fields[name]["min_length"] > 0
+
+
+def test_herdr_migration_preserves_control_contracts_and_prior_snapshots() -> None:
+    prose_fields = {
+        "title",
+        "objective",
+        "prompt",
+        "help",
+        "label",
+        "criteria",
+        "evidence_guidance",
+        "instructions",
+        "intent",
+    }
+
+    def control(value: object) -> object:
+        if isinstance(value, dict):
+            return {
+                control(key): control(item)
+                for key, item in value.items()
+                if key not in prose_fields
+            }
+        if isinstance(value, list):
+            return [control(item) for item in value]
+        if isinstance(value, str):
+            return value.replace("herdr", "orca").replace("Herdr", "Orca")
+        return value
+
+    for kind, previous_version in (("task", 22), ("goal", 25), ("validation", 24)):
+        current = load_procedure(f"aquarium-{kind}-v2.yaml")
+        previous = yaml.safe_load(
+            (FIXTURES / f"aquarium-{kind}-v{previous_version}.yaml").read_bytes()
+        )
+        assert current["id"] == previous["id"]
+        assert int(current["version"]) == int(previous["version"]) + 1
+        current.pop("version")
+        previous.pop("version")
+        # Compare executable item schemas, guards, routes, operations and ordering.
+        # Wording is excluded; peer routes and native operation digests remain exact.
+        assert control(current) == control(previous)
+
+
+def test_published_plugin_keeps_only_the_herdr_native_review_entrypoint() -> None:
+    plugin = json.loads(
+        (ROOT / "plugins/aquarium/.codex-plugin/plugin.json").read_text()
+    )
+    skills = ROOT / "plugins/aquarium" / plugin["skills"]
+    assert (skills / "herdr-review/SKILL.md").is_file()
+    assert (skills / "herdr-review/agents/openai.yaml").is_file()
+    assert not (skills / "orca-review").exists()
+    assert not (ROOT / "plugins/aquarium/references/orca-supervision.md").exists()

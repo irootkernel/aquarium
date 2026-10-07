@@ -21,14 +21,14 @@ The skill entrypoints form four kinds of component:
 
 - Orchestrators own a complete lifecycle, such as `task-handler`, `epic-handler`, `release-handler`, and the three design entrypoints.
 - Leaf skills own bounded task phases such as planning, implementation, verification, review, closeout, and commit preparation.
-- Auditors produce read-only findings or readiness decisions, including `epic-validator`, `mulgae-review`, `orca-review`, `herdr-review`, and `release-qa`. `independent-review` uses three fresh host-native Codex subagents for a selected exact target and owns no Dolgorae, Mulgae, or Orca runtime.
+- Auditors produce read-only findings or readiness decisions, including `epic-validator`, `mulgae-review`, `herdr-review`, and `release-qa`. `independent-review` uses three fresh host-native Codex subagents for a selected exact target and owns no Dolgorae, Mulgae, or Herdr runtime.
 - Setup skills inspect and optionally configure tools, documentation, and tests while preserving separate proposal and apply approvals.
 
-`task-commit` permits implicit workflow invocation. `orca-review` and `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. All other entrypoints require their skill name or an authorized parent-workflow handoff.
+`task-commit` permits implicit workflow invocation. `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. All other entrypoints require their skill name or an authorized parent-workflow handoff.
 
 ## External Tool Boundary
 
-Aquarium defines how an agent may inspect or invoke external tools; it does not absorb their implementation or state. Codex is the primary runtime. Podway owns Procedure execution state, Sanho owns protected Git mutation policy, Mulgae and Gaori own their review and test-run records, Sorage owns Project identity, document Handoffs, and Project Memos, Orca owns delegated terminal execution, Herdr owns its native pane and agent control, and upstream projects own their installed binaries and skill sources.
+Aquarium defines how an agent may inspect or invoke external tools; it does not absorb their implementation or state. Codex is the primary runtime. Podway owns Procedure execution state, Sanho owns protected Git mutation policy, Mulgae and Gaori own their review and test-run records, Sorage owns Project identity, document Handoffs, and Project Memos, Herdr owns its native pane and agent control, and upstream projects own their installed binaries and skill sources.
 
 This boundary keeps plugin upgrades independent from tool releases and prevents local runtime files from becoming package state.
 

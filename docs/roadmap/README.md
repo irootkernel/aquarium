@@ -119,11 +119,11 @@ The historical objective was to build the `aquarium-dev` development channel for
 
 **Status:** `Completed`
 
-Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The historical implementation also coupled `orca-review` target capture and settlement to Dolgorae while preserving Orca lifecycle ownership. `TASK-031` superseded that Orca-side coupling by restoring native Orca execution while Independent Review retained the complete Dolgorae guarantees. The current Orca Review contract uses Orca's native requested-reviewer lifecycle in the current registered worktree.
+Adopt and activate the Aquarium-side contract for immutable Dolgorae-backed independent review. The historical implementation also coupled `orca-review` target capture and settlement to Dolgorae while preserving Orca lifecycle ownership. `TASK-031` superseded that Orca-side coupling by restoring native Orca execution while Independent Review retained the complete Dolgorae guarantees. The released v0.1.18 [Orca review workflow](https://github.com/irootkernel/aquarium/blob/v0.1.18/plugins/aquarium/skills/orca-review/SKILL.md) records that native requested-reviewer contract in the registered worktree.
 
 EPIC-003 completed against the then-current exact Dolgorae development generation and did not depend on EPIC-002's unfinished original producer tasks. Current production execution is governed by EPIC-005 and the global-release correction in `TASK-031`.
 
-**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md), [Orca review workflow](../../plugins/aquarium/skills/orca-review/SKILL.md)
+**Canonical Outcomes:** [Dolgorae review contract](../../plugins/aquarium/references/dolgorae-review-contract.md), [common review contract](../../plugins/aquarium/references/review-contract.md), [development-channel contract](../../plugins/aquarium/references/development-contract.md), [independent-review workflow](../../plugins/aquarium/skills/independent-review/SKILL.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -526,7 +526,7 @@ is not a prerequisite, and no producer engine change or broker handoff is requir
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-106 | Implement Herdr static review | Add the standalone skill and native supervision contract with exact targets, explicit reviewer identity, complete report evidence, and safe recovery. | Completed | EPIC-016; TASK-085 |
-| TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Planned | TASK-106 |
+| TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Completed | TASK-106 |
 | TASK-108 | Support migration from Orca workflow state | Implement Herdr prerequisites and legacy-source readiness; preserve evidence, customizations, and snapshots while providing safe refusal, transition, and separately authorized rollout guidance. | Planned | TASK-107 |
 | TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | Planned | TASK-106; TASK-107; TASK-108 |
 

@@ -8,6 +8,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add standalone Herdr Review for staged and committed targets with an explicitly selected fresh reviewer and native recovery.
 
+### Changed
+
+- Replace Orca workflow review with native Herdr review, remove the `orca-review` entrypoint and `orca` route for new checkpoints, and preserve peer-route evidence, prior Procedure snapshots and commit handoffs.
+
 ## v0.1.18 - 2026-10-04
 
 ### Added
