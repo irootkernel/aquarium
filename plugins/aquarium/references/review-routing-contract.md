@@ -59,6 +59,15 @@ On the Podway path, check the selected Procedure's route readiness under [podway
 
 Preserve an in-flight `native-codex` snapshot and its earlier evidence. For a new checkpoint on that route, record the failed prerequisite without inventing a delegation. Offer an explicitly authorized switch to a supported route, a waiver where that snapshot admits it, or stop and a separately authorized successor after native lifecycle settlement. If the snapshot cannot record the desired route or disposition, leave that decision unset and use its supported stop path; installing new Procedure bytes does not migrate the session. Existing completed evidence keeps its original route and provenance.
 
+For a retired Orca checkpoint, an active or uncertain legacy worker prevents a
+replacement review until its owner establishes a safe state. The new package
+never invokes Orca for settlement. Preserve terminal references, completed
+findings and dispositions, consumed ordinals and remaining correction authority;
+an incomplete operation keeps the pending ordinal. If the snapshot cannot
+record a required route, evidence or acceptance decision, stop through its
+supported contract before a separately authorized successor. Follow
+[herdr-migration.md](herdr-migration.md) for diagnosis and exact update handling.
+
 ## Record Route-Neutral Evidence
 
 Keep the following facts separate from finding, completion, verification, and

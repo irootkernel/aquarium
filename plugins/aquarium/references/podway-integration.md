@@ -43,6 +43,12 @@ Neither a setup repair nor an Aquarium workflow may move an initialized workspac
 
 `readiness_status=not_configured` means the five managed Procedures are absent. It is unrelated to `LEGACY_PROCEDURE_STATE_UNSUPPORTED`, which means Podway found Procedure v1 runtime state. On that error, stop, preserve the exact worktree and error code, let the user make any desired backup, and route a separately approved `podway reset --all` recovery to `$aquarium:dev-setup`; never convert, edit, or delete runtime state directly.
 
+For Orca-era sources and snapshots, distinguish recognized provenance, native
+validity, complete handler compatibility and selected-route membership. Preserve
+custom source bytes and session snapshots; prior-source identity alone cannot
+admit a new checkpoint. Use [herdr-migration.md](herdr-migration.md) for legacy
+worker handling and an exact, separately approved repository update.
+
 ## Keep Authorities Separate
 
 - The canonical roadmap owns requirements, task and epic identity, lifecycle vocabulary, and official completion state.

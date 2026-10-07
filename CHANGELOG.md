@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Replace Orca workflow review with native Herdr review, remove the `orca-review` entrypoint and `orca` route for new checkpoints, and preserve peer-route evidence, prior Procedure snapshots and commit handoffs.
+- Preserve custom Procedures and legacy Orca evidence during Herdr migration, with selected-route readiness and safe transitions for existing sessions.
 
 ## v0.1.18 - 2026-10-04
 

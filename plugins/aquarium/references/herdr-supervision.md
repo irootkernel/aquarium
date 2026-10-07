@@ -14,9 +14,15 @@ Require the installed upstream skill. Inspect client, server, skill and requeste
 reviewer readiness independently; a version string cannot prove all four.
 The baseline does not establish what is installed or running on the host.
 
+Use the [catalog](tool-catalog.md#herdr) for selected-route setup diagnosis and
+the [migration contract](herdr-migration.md) for legacy state. Peer routes do not
+acquire Herdr prerequisites.
+
 Before any session inspection or control, require `HERDR_ENV=1`. If absent,
-return the selected route's prerequisite gap without inspecting the focused
-session or creating a replacement backend. Within Herdr, learn current syntax
+return the selected route's prerequisite gap. A tool shell may lack inherited
+context; resume from the intended managed pane or obtain the user's actual
+caller context without inspecting another client's focused session or creating
+a replacement backend. Within Herdr, learn current syntax
 through `herdr --help` and the agent and pane groups; use `herdr status` before
 depending on server features. A client/server mismatch requires separate host
 action, never an automatic upgrade or lowered baseline.

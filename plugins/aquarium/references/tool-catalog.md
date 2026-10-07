@@ -181,6 +181,28 @@ Use `$use-dolgorae` for explicitly requested workspace, global Profile, review, 
 
 For an explicit reusable Specialist request, follow `$use-dolgorae` and the [Dolgorae consumer contract](dolgorae-review-contract.md#reusable-specialist-requests). General Run and Brokered Hierarchy operations still require their own advertised availability; the supported External Specialist facade retains its separate milestone contract.
 
+## Herdr
+
+Herdr is an externally installed native review runtime. The qualification
+baseline is [v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) with its
+[release-matched upstream skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md).
+Read the [supervision contract](herdr-supervision.md) for native review and the
+[migration contract](herdr-migration.md) for preserved legacy state and rollout.
+
+Select this diagnosis only for an explicit Herdr route or readiness request.
+Check `command -v herdr`, `herdr --version` and canonical upstream skill presence
+independently. Repository setup trusts canonical skill presence; release matching
+and observed host qualification remain separate checks. Before any session
+inspection or control, require `HERDR_ENV=1` and the actual caller context, then
+load `$herdr` and use its current help and status surfaces. Inspect client, server
+and requested reviewer separately. A tool shell's absent context may be an
+inheritance gap; do not discover another client's focused session.
+
+A readiness gap blocks only the selected Herdr operation. Aquarium setup does
+not install Herdr, replace its upstream skill, restart its server, remove Orca,
+or make Herdr a common prerequisite for peer routes. Native host setup needs
+separate authorization through its upstream owner.
+
 ## Mulgae
 
 Official source: `https://github.com/irootkernel/mulgae`

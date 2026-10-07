@@ -1,6 +1,6 @@
 ---
 name: dev-setup
-description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage Project setup, registration or binding, project MCP, AGENTS.md, or migration of an existing root CLAUDE.md. Use $aquarium:dev-setup-global for supported user-global development tool installation or updates. Aquarium plugin installation and updates belong to the host plugin-management flow."
+description: "Diagnose and configure Aquarium repository-local tooling and root agent guidance. Use when the user invokes $aquarium:dev-setup or asks to initialize, repair, or audit project configuration such as .podway, .mulgae, .gaori, Sorage Project setup, registration or binding, project MCP, Herdr review readiness or Orca workflow-state migration, AGENTS.md, or migration of an existing root CLAUDE.md. Use $aquarium:dev-setup-global for supported user-global development tool installation or updates. Aquarium plugin installation and updates belong to the host plugin-management flow."
 ---
 
 # Repository Development Setup
@@ -14,6 +14,13 @@ This skill owns root AGENTS.md guidance and migration of an existing root CLAUDE
 Read [podway-integration.md](../../references/podway-integration.md) only when Podway is selected by the request, repository guidance, or an Aquarium readiness requirement. Read the applicable sections of [the shared tool catalog](../../references/tool-catalog.md) for every repository component in scope. Read [agents-guidance.md](references/agents-guidance.md) whenever root operating guidance is in scope.
 
 Do not use this skill for routine supported Procedure v2 observation, cancellation, discard, reset, or workspace runtime-mode moves. Route those operations to `$use-podway`. Keep repository initialization, managed Procedure readiness, product-rename migration, and `LEGACY_PROCEDURE_STATE_UNSUPPORTED` recovery here.
+
+For an explicit Herdr review-readiness or migration request, use the
+[Herdr catalog entry](../../references/tool-catalog.md#herdr) and
+[migration contract](../../references/herdr-migration.md). Diagnose only that
+selected route; general repository setup does not require or probe Herdr for
+peer routes. Keep native host setup separate from an exact managed-source or
+guidance update, and preserve custom Procedures and active snapshots.
 
 Requests such as "configure Sorage for this repository" or "register this Sorage Project" select this skill and only the Sorage setup scope plus its direct prerequisites. Confirm the native Project identity and approve its exact mutation through the catalog. They do not authorize broker discovery, inbox or outbox reads, Handoff processing, or Memo reads and writes; those require an explicit operation through `$use-sorage`.
 

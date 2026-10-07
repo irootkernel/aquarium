@@ -90,4 +90,11 @@ Gaori is optional evidence compression around a repository-owned command. The ag
 
 Herdr Review uses one fresh explicitly requested native reviewer in the current local Herdr session. It accepts staged, HEAD, commit and range targets through the shared static contract; workspace and dirty remain unsupported. The upstream skill owns pane and agent operations, prompt submission, waiting, output and recovery. Admission requires actual reviewer identity, submission/activity correlation, applicable target and Brief, and a complete purpose-specific report. Timeout, stalled submission or unknown state preserves that operation; never blindly resend or replace it. Close only the pane this review created after successful admission and evidence recording. Reports keep findings, criterion assessment, verification gaps, operational deviations and native operation status separate, with `backend-check-result=not-provided`. Source and Git state remain read-only; permitted external or Git-ignored review output is a review aid. Setup migration is `TASK-108` work and observed native/manual qualification is `TASK-109` work; neither is established by structural validation.
 
+The [Herdr migration runbook](../ops/herdr-migration.md) connects selected-route
+readiness with preserved legacy sources, customizations and immutable snapshots.
+Repository updates require an exact approved diff; active or uncertain legacy
+workers require authoritative settlement before another review. Current source
+identity, native validity, handler compatibility and route readiness remain
+separate checks. Observed native/manual qualification belongs to `TASK-109`.
+
 Ouroboros installs its CLI once per user and its rules, skills, and MCP registration separately in each Codex home. Global setup proposes all discovered homes, compares official release metadata, and reports current-home and all-home readiness separately. Shared Ouroboros skills are legacy migration candidates. Each configured home must bind its MCP launcher to itself and use the approved package version; live execution remains separate evidence.
