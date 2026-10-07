@@ -60,6 +60,13 @@ working directory, and focus. The initial migration covers the current local
 Herdr session and checkout. Remote review and different workspace topology are
 outside this delivery scope.
 
+Close only a pane that the current review operation created, and only after
+its complete result is admitted and the evidence is recorded. While the
+operation is active, and after a failed, blocked, or unknown outcome, leave the
+pane for same-operation recovery or the user's decision. Never close a pane the
+operation did not create. Each checkpoint starts its fresh reviewer in a new
+sibling pane.
+
 ### Native execution and readiness
 
 Herdr owns pane and agent control, submission, lifecycle observation, output
@@ -75,6 +82,11 @@ current grammar. The initial qualification baseline is official
 This baseline is not evidence that the host has that version installed or that
 its running server supports the same features. Check client, server, skill,
 and requested reviewer readiness separately before relying on them.
+
+`TASK-109` live qualification needs a host whose Herdr client and server run
+the qualified baseline with its release-matched skill. Master upgrades Herdr
+as a separate host action outside this epic. Until the host matches, the Herdr
+route stays not ready; a mismatch does not lower the baseline.
 
 Require `HERDR_ENV=1` before inspecting or controlling a Herdr session. Outside
 Herdr, report the selected route's prerequisite gap without controlling a
@@ -176,6 +188,28 @@ dependency in the inspected source. Their Aquarium Procedure copies do carry
 the old route. No producer engine change or Sorage handoff is required for this
 epic. Haepari adoption remains owned by `EPIC-019` and is not a prerequisite.
 
+### Self-hosting execution
+
+The released `v0.1.18` handler drives this epic's own managed sessions. Its
+handler-contract check derives the required Procedure structure from the files
+bundled with that release. Once `TASK-107` removes the Orca branches from this
+repository's installed Procedures, that check correctly reports later Goal and
+Validation sessions as incompatible.
+
+Stop after the `TASK-107` commit and before creating the next session. Decline
+any setup proposal to restore the release Procedures, because it would revert
+`TASK-107`. Continue after Master authorizes a local allowance in the installed
+plugin for the exact new Procedure digests. Grant it only when every structural
+difference from the release lies in the route-specific branches, and use it
+only for the `mulgae`, `independent-review`, and `waived` routes. The allowance
+changes neither the shipped package nor any other repository. Refresh the
+pinned digests whenever a later correction changes one of those Procedures, and
+retire the allowance when `v0.1.19` is installed.
+
+Use Mulgae for this epic's own review checkpoints. Keep the `TASK-107`
+structural changes inside the route-specific branches where possible; a change
+outside them needs a new execution decision before the next session starts.
+
 ## Task delivery and acceptance
 
 The roadmap owns Task order, dependencies, and lifecycle status. These
@@ -188,8 +222,9 @@ checklists define the required results.
 - [ ] Cover the four targets, both purposes, explicit reviewer identity, and
   report-only effects without Orca or Dolgorae execution.
 - [ ] Define completion evidence, output recovery, blocked and unknown state,
-  uncertain submission, and safe same-operation recovery without synthetic
-  Orca lifecycle objects or new capture guarantees.
+  uncertain submission, safe same-operation recovery, and created-pane
+  disposition without synthetic Orca lifecycle objects or new capture
+  guarantees.
 - [ ] Add focused executable checks only where helpers implement behavior;
   identify the observed-agent scenarios required by `TASK-109` separately.
 
