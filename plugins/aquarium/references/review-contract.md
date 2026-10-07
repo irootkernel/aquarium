@@ -1,20 +1,20 @@
 # Static Review Contract
 
-Use this contract for static, read-only reviews through `$aquarium:independent-review` or `$aquarium:orca-review`, including an explicitly approved delegation from a Task, Epic, or validation handler. Read [review-intent-contract.md](review-intent-contract.md) for the Review Brief and change-versus-completion semantics, [review-routing-contract.md](review-routing-contract.md) for embedded selection and evidence, then [finding-disposition.md](finding-disposition.md) for adjudication and remediation. Each route retains its own execution and lifecycle guarantees.
+Use this contract for static, read-only reviews through `$aquarium:independent-review`, `$aquarium:orca-review`, or `$aquarium:herdr-review`, including an explicitly approved delegation from a Task, Epic, or validation handler. Read [review-intent-contract.md](review-intent-contract.md) for the Review Brief and change-versus-completion semantics, [review-routing-contract.md](review-routing-contract.md) for embedded selection and evidence, then [finding-disposition.md](finding-disposition.md) for adjudication and remediation. Each route retains its own execution and lifecycle guarantees.
 
 ## Exact target
 
 Every review has one source scope and one `change` or `completion` purpose under
 the Review Brief. The source scope is exactly one of:
 
-| Scope | Meaning | Independent Review | Orca Review |
-| --- | --- | --- | --- |
-| `workspace` | Final eligible non-ignored workspace projection; worktree bytes win over index bytes and eligible untracked files participate. | Live workspace reads | Unsupported |
-| `staged` | Current `HEAD`-to-index transition, reviewed through `git diff --cached`. | Live index reads | Current registered worktree |
-| `dirty` | Exact `HEAD`-to-final-workspace transition including staged, unstaged, deleted, recreated, renamed, and eligible non-ignored untracked state. | Live workspace reads | Unsupported |
-| `head` | Immutable tree of the commit resolved from `HEAD`. | Resolved Git object reads | Current registered worktree Git reads |
-| `commit` | First-parent transition into one resolved commit, or the empty tree into a root commit. | Resolved Git object reads | Current registered worktree Git reads |
-| `range` | Requested `A..B` transition or merge-base-to-`B` transition for `A...B`, preserving the operator. | Resolved Git object reads | Current registered worktree Git reads |
+| Scope | Meaning | Independent Review | Orca Review | Herdr Review |
+| --- | --- | --- | --- | --- |
+| `workspace` | Final eligible non-ignored workspace projection; worktree bytes win over index bytes and eligible untracked files participate. | Live workspace reads | Unsupported | Unsupported |
+| `staged` | Current `HEAD`-to-index transition, reviewed through `git diff --cached`. | Live index reads | Current registered worktree | Live index reads |
+| `dirty` | Exact `HEAD`-to-final-workspace transition including staged, unstaged, deleted, recreated, renamed, and eligible non-ignored untracked state. | Live workspace reads | Unsupported | Unsupported |
+| `head` | Immutable tree of the commit resolved from `HEAD`. | Resolved Git object reads | Current registered worktree Git reads | Resolved Git object reads |
+| `commit` | First-parent transition into one resolved commit, or the empty tree into a root commit. | Resolved Git object reads | Current registered worktree Git reads | Resolved Git object reads |
+| `range` | Requested `A..B` transition or merge-base-to-`B` transition for `A...B`, preserving the operator. | Resolved Git object reads | Current registered worktree Git reads | Resolved Git object reads |
 
 `task`, `epic`, and special request supply authority and work-unit intent applied
 to one source scope. They are never additional scopes. Resolve mutable revisions
@@ -45,7 +45,7 @@ limits do not narrow a `completion` review's criterion assessment.
 
 ## Selection and consent
 
-For a task or epic, read the canonical roadmap and linked authority, resolve one unambiguous source scope and revision, and otherwise ask the user to choose among concrete eligible targets. For a special request, establish the exact question and require confirmation of one scope and applicable revision. An explicit request naming the target and selected route authorizes review of that scope only; Orca also requires a named reviewer. An approved handler envelope may supply the same authority when it records the exact target, route, Review Brief, and source-transmission scope. The delegated review remains report-only and returns its result to the handler; it does not acquire handler remediation, staging, commit, or lifecycle authority.
+For a task or epic, read the canonical roadmap and linked authority, resolve one unambiguous source scope and revision, and otherwise ask the user to choose among concrete eligible targets. For a special request, establish the exact question and require confirmation of one scope and applicable revision. An explicit request naming the target and selected route authorizes review of that scope only; Orca and Herdr also require a named reviewer. An approved handler envelope may supply the same authority when it records the exact target, route, Review Brief, and source-transmission scope. The delegated review remains report-only and returns its result to the handler; it does not acquire handler remediation, staging, commit, or lifecycle authority.
 
 Inspect and report staged, unstaged, non-ignored untracked, and conflicted state before transmission. Independent Review also reports ignored state outside its final projection. Orca Review does not inventory ignored runtime files or compare them before and after review. Do not stage, edit, clean, stash, checkout, or otherwise normalize it. A conflict or unsafe candidate stops the review. State outside the selected scope is excluded but remains technically readable by same-user processes; disclose that boundary.
 
@@ -110,3 +110,24 @@ Only the coordinator issues the final technical verdict after processing the com
 - If a deviation's effect or any required guarantee cannot be established, withhold the final technical verdict and identify the missing evidence. Do not infer that an action was harmless from silence, a command's exit status, or the reviewer's unsupported assurance.
 
 This assessment does not authorize tests, new snapshots, fingerprints, or a pre/post state comparison. Do not use results from a prohibited test or command as evidence for the static technical verdict. Backend failure, incomplete settlement, or compromised or unproven review guarantees must never produce final technical `APPROVE` under this policy. Existing action restrictions and Orca's native recovery rules still apply; reporting a deviation does not authorize repeating it, continuing prohibited work, retrying the review, or cleaning up its effects. This policy does not change Dolgorae or Mulgae contracts.
+
+## Herdr operational deviations
+
+Herdr Review follows the common exact-target, consent, static-effects and result
+semantics above. Its native lifecycle and output permissions are defined by
+[herdr-supervision.md](herdr-supervision.md), not the Orca-specific execution,
+settlement or acknowledgement sections. Require the complete purpose-specific
+report and correlated native operation before the coordinator's final verdict.
+
+Distinguish target findings from observed instruction violations. Report each
+violation's action, authority, evidence, effect on review trustworthiness and
+necessary follow-up separately; do not assign it target-finding severity or
+route it through target remediation. Permitted external or ignored review
+output is not a deviation. Decide the final verdict from adjudicated findings
+when target integrity, requested reviewer identity, result completeness and
+native operation remain established. A deviation alone does not withhold that
+verdict. If an affected guarantee is compromised or its effect is unknown,
+withhold the final verdict and identify the missing evidence. Use only existing
+authorized observations and Git reads; prohibited check results cannot support
+the static verdict. Reporting a violation grants no repair, cleanup, retry or
+additional-check authority.

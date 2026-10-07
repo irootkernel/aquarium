@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.19 - Unreleased
 
+### Added
+
+- Add standalone Herdr Review for staged and committed targets with an explicitly selected fresh reviewer and native recovery.
+
 ## v0.1.18 - 2026-10-04
 
 ### Added

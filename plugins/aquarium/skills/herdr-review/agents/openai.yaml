@@ -1,0 +1,6 @@
+interface:
+  display_name: "Herdr Review"
+  short_description: "Review staged or committed targets with Herdr"
+  default_prompt: "Use $aquarium:herdr-review for a report-only static review with an explicitly selected fresh reviewer in the current local Herdr session."
+policy:
+  allow_implicit_invocation: true

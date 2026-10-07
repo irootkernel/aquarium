@@ -50,7 +50,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-017 | Add Web Pro Review | Planned |
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
-| EPIC-020 | Migrate Orca review to Herdr | Planned |
+| EPIC-020 | Migrate Orca review to Herdr | In Progress |
 | EPIC-021 | Adopt supervised agent orchestration | Planned |
 
 ## EPIC-000: Independent Tasks
@@ -501,7 +501,7 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 
 ## EPIC-020: Migrate Orca review to Herdr
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Replace Aquarium's Orca-backed static review with Herdr for the open `v0.1.19`
 release. Add `herdr-review`, migrate the Task, Epic, and validation review paths,
@@ -516,16 +516,16 @@ Orca evidence, custom Procedures, and active snapshots without relabeling them
 or invoking Orca through the new package. An unsupported legacy checkpoint
 needs a safe, explicitly authorized transition or successor.
 
-This plan changes documentation only. Implementation, live reviewer execution,
-installation, activation in other repositories, host-tool removal, staging,
-commit, and release publication require their own authority. `EPIC-019` is not a
-prerequisite, and no producer engine change or broker handoff is required.
+Implementation follows the approved Epic execution envelope. Live Herdr
+qualification, installation, activation in other repositories, host-tool
+removal and release publication retain their separate authority. `EPIC-019`
+is not a prerequisite, and no producer engine change or broker handoff is required.
 
 **Detailed SOT:** [`TODO-HERDR-MIGRATION.md`](../todo/TODO-HERDR-MIGRATION.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-106 | Implement Herdr static review | Add the standalone skill and native supervision contract with exact targets, explicit reviewer identity, complete report evidence, and safe recovery. | Planned | EPIC-016; TASK-085 |
+| TASK-106 | Implement Herdr static review | Add the standalone skill and native supervision contract with exact targets, explicit reviewer identity, complete report evidence, and safe recovery. | Completed | EPIC-016; TASK-085 |
 | TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Planned | TASK-106 |
 | TASK-108 | Support migration from Orca workflow state | Implement Herdr prerequisites and legacy-source readiness; preserve evidence, customizations, and snapshots while providing safe refusal, transition, and separately authorized rollout guidance. | Planned | TASK-107 |
 | TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | Planned | TASK-106; TASK-107; TASK-108 |
