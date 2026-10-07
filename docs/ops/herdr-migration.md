@@ -6,6 +6,12 @@ target is one canonical local Git checkout. The installed Aquarium plugin owns
 repository guidance; upstream Herdr owns its host runtime and reviewer control,
 and Podway owns session lifecycle.
 
+Qualification uses a local Herdr session on a host supported by the native
+runtimes. The baseline is Apple Silicon macOS with Herdr v0.9.3; admit v0.9.3 or
+newer, its installed upstream skill and a supported Podway runtime. Native
+contracts own client/server and reviewer compatibility; this runbook adds no
+upper version bound or host installation authority.
+
 The [Herdr migration contract](../../plugins/aquarium/references/herdr-migration.md)
 defines the read-only diagnosis, source and snapshot readiness, legacy-worker
 handling, separately approved update, verification and recovery procedure.
@@ -21,9 +27,12 @@ unchanged. A disposed terminal predecessor can be archived by an authorized
 native successor start; an active or uncertain legacy worker needs settlement
 through its owner before any replacement review.
 
-Restore saved source bytes only within an approved rollback scope and recheck
-readiness. A source rollback does not settle a live operation. Escalate host gaps
-to upstream Herdr, session gaps to `$use-podway`, and unsupported workflow
-decisions to the workflow owner and user. Actual native review and host skill
+Apply the selected shared backup policy before an approved source replacement.
+Rollback can restore a verified backup or exact bytes already in Git history;
+without either, report the recovery gap for lost local changes. Restore only
+within an approved rollback scope and recheck readiness. A source rollback does
+not settle a live operation. Escalate host gaps to upstream Herdr, session gaps
+to `$use-podway`, and unsupported workflow decisions to the workflow owner and
+user. Actual native review and host skill
 discovery require separate observed qualification; static package checks do not
 establish them.

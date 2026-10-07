@@ -183,18 +183,20 @@ For an explicit reusable Specialist request, follow `$use-dolgorae` and the [Dol
 
 ## Herdr
 
-Herdr is an externally installed native review runtime. The qualification
-baseline is [v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) with its
-[release-matched upstream skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md).
+Herdr is an externally installed native review runtime. Require
+[v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or newer, without
+an upper version bound, and the installed upstream skill. The
+[v0.9.3 skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md)
+is qualification provenance, not a fixed-version admission requirement.
 Read the [supervision contract](herdr-supervision.md) for native review and the
 [migration contract](herdr-migration.md) for preserved legacy state and rollout.
 
 Select this diagnosis only for an explicit Herdr route or readiness request.
 Check `command -v herdr`, `herdr --version` and canonical upstream skill presence
-independently. Repository setup trusts canonical skill presence; release matching
-and observed host qualification remain separate checks. Before any session
-inspection or control, require `HERDR_ENV=1` and the actual caller context, then
-load `$herdr` and use its current help and status surfaces. Inspect client, server
+independently. Repository setup trusts canonical skill presence; native
+compatibility and observed host qualification remain separate checks. Before any
+session inspection or control, require `HERDR_ENV=1` and the actual caller
+context, then load `$herdr` and use its current help and status surfaces. Inspect client, server
 and requested reviewer separately. A tool shell's absent context may be an
 inheritance gap; do not discover another client's focused session.
 

@@ -8,10 +8,13 @@ control remains upstream-owned. Do not emulate Orca Run, Task, Dispatch, Deliver
 
 ## Readiness and caller context
 
-The qualification baseline is [Herdr v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3)
-with its [release-matched upstream skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md).
-Require the installed upstream skill. Inspect client, server, skill and requested
-reviewer readiness independently; a version string cannot prove all four.
+Require Herdr [v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or
+newer and the installed upstream skill. The
+[v0.9.3 skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md)
+documents the qualification baseline; it is not a required fixed skill version.
+Accept later versions without an upper bound and use the installed native
+contract. Inspect client, server, skill and requested reviewer readiness
+independently; a version string cannot prove all four.
 The baseline does not establish what is installed or running on the host.
 
 Use the [catalog](tool-catalog.md#herdr) for selected-route setup diagnosis and

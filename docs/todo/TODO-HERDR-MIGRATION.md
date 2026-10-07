@@ -76,17 +76,18 @@ Do not emulate Orca Run, Task, Dispatch, Delivery, acknowledgement, or settlemen
 objects inside Herdr.
 
 Use the separately installed upstream `herdr` skill and the installed CLI's
-current grammar. The initial qualification baseline is official
-[Herdr v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) and its
-[release-matched skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md).
-This baseline is not evidence that the host has that version installed or that
-its running server supports the same features. Check client, server, skill,
-and requested reviewer readiness separately before relying on them.
+current grammar. Require official
+[Herdr v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or newer,
+without an upper version bound. The
+[v0.9.3 skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md)
+documents the initial qualification baseline. Use the installed upstream skill
+and native compatibility contract; check client, server, skill and requested
+reviewer readiness independently.
 
-`TASK-109` live qualification needs a host whose Herdr client and server run
-the qualified baseline with its release-matched skill. Master upgrades Herdr
-as a separate host action outside this epic. Until the host matches, the Herdr
-route stays not ready; a mismatch does not lower the baseline.
+`TASK-109` live qualification needs compatible Herdr client and server runtimes
+at or above the minimum, plus the installed upstream skill. Master upgrades
+Herdr as a separate host action outside this epic. A missing native prerequisite
+keeps the selected Herdr route unavailable; a later version alone does not.
 
 Require `HERDR_ENV=1` before inspecting or controlling a Herdr session. Outside
 Herdr, report the selected route's prerequisite gap without controlling a

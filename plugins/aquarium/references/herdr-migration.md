@@ -36,17 +36,18 @@ target, existing index and unrelated work before proposing repository changes.
 | Observed state | Supported handling |
 | --- | --- |
 | Current canonical source | Verify native validity, the complete handler contract and the selected route. |
-| Recognized prior canonical source | Retain its exact identity and update explanation. Prior provenance alone does not qualify the current handler or Herdr route. |
+| Recognized prior canonical source | Retain its exact identity and update explanation. Consume the inspector's separate handler-compatibility and selected-route results; recognized provenance does not establish Herdr eligibility. |
 | Valid same-ID customization | Preserve the local bytes. Compare its complete handler contract and selected route; propose any necessary change as an exact diff. |
 | Native-invalid, handler-incompatible or unqualified source | Report the distinct gap. Do not overwrite it or dispatch a review merely because its ID matches. |
 | Existing session snapshot | Inspect its immutable declarations through native observation. New source bytes do not change that snapshot. |
 
-The inspector recognizes a bounded set of prior-source identities. Each identity
-establishes provenance only. A historical snapshot may retain a working peer
-route while lacking Herdr or the current handler contract. Admit only the
-route actually supported by that snapshot and the current caller. Preserve
-old route names in historical evidence; never relabel Orca as Herdr or revive
-retired `native-codex` dispatch.
+The inspector recognizes a bounded set of prior-source identities. Known Task
+and Design sources may also have verified generic handler compatibility; consume
+that result separately from route eligibility and the current caller's complete
+contract. A historical snapshot may retain a working peer route while lacking
+Herdr or a newer handler branch. Admit only the route actually supported by that
+snapshot and the current caller. Preserve old route names in historical evidence;
+never relabel Orca as Herdr or revive retired `native-codex` dispatch.
 
 ## Handle legacy checkpoints and workers
 
@@ -75,10 +76,13 @@ another checkout and no host installation, upstream skill replacement, server
 restart or Orca removal. Those effects retain their native owners and separate
 authority.
 
-Apply only approved managed-source or guidance changes. Keep a recoverable copy
-of any replaced local source under the repository's temporary-file policy;
-preserve custom files and runtime history. Compare the installed assets with
-the intended source bytes and stable IDs, then check each changed Procedure:
+Apply only approved managed-source or guidance changes. Follow the selected
+[backup policy](tool-catalog.md#choose-a-backup-policy-for-existing-state):
+verify the disclosed backup and restoration path when backups are selected, or
+disclose the exact loss and recovery boundary when proceeding without backups.
+Preserve custom files outside the approved replacement and all runtime history.
+Compare the installed assets with the intended source bytes and stable IDs,
+then check each changed Procedure:
 
 ```text
 podway procedure check <procedure-file> --warnings-as-errors --json
@@ -90,10 +94,12 @@ hash. Verify the complete handler and selected-route contract through the
 inspector. Native validation alone does not qualify Herdr, and source replacement
 applies only to later sessions.
 
-When the approved successor follows a disposed terminal session, execute its
-fresh plain `start` template. Podway atomically archives the predecessor and
-creates the prepared successor; re-observe its source snapshot and perform the
-separate fenced `begin`. Do not reset first or invent a replacement flag. Preserve
+After setup hands the verified source update back, the owning workflow handler
+uses `$use-podway` for its separately authorized successor. When that successor
+follows a disposed terminal session, the handler executes its fresh plain `start`
+template. Podway atomically archives the predecessor and creates the prepared
+successor; re-observe its source snapshot and perform the separate fenced `begin`.
+Do not reset first or invent a replacement flag. Preserve
 a prepared or running session unless its exact lifecycle change is authorized.
 
 ## Verify and recover
@@ -105,9 +111,11 @@ reviewer identity, observed activity and complete result under the supervision
 contract. Structural checks cannot prove these or host skill discovery.
 
 On a rejected or partial update, inspect the actual remaining bytes and session
-state and stop at the affected gap. Restore saved sources only under the approved
-rollback scope, then repeat the affected checks. Restoring a file does not roll
-back a live worker or session. Escalate host readiness to the upstream Herdr
-owner, session settlement to `$use-podway`, and an unsupported checkpoint to the
+state and stop at the affected gap. Under an approved rollback scope, restore
+sources from a verified backup or the exact prior bytes already in Git history,
+then repeat the affected checks. Without either source, report the recovery gap;
+do not claim that uncommitted customizations can be restored. Restoring a file
+does not roll back a live worker or session. Escalate host readiness to the
+upstream Herdr owner, session settlement to `$use-podway`, and an unsupported checkpoint to the
 workflow owner and user. Never delete history or choose another route as recovery
 without its required authority.

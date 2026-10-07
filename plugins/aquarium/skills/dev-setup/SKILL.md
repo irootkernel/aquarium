@@ -72,6 +72,13 @@ before settlement. Read the current row revision through `aquarium-status show
 local creation and must be preserved byte-for-byte. Diagnosis, Plan Mode, and
 work stopped before execution approval do not create an attempt.
 
+Herdr readiness diagnosis creates no terminal attempt. For an approved migration
+write, record managed Procedure changes under `podway` and root guidance changes
+under `agents-guidance`, combining those components when both are selected.
+Do not invent a `herdr` component in the recorder's closed vocabulary. Native
+Herdr host setup and successor session lifecycle remain with their upstream tool
+and owning workflow handler.
+
 An explicit diagnosis-only request suppresses mutation proposals. A scoped continuation inspects only the named repository component and its direct prerequisites.
 
 ## Configure Repository Components
