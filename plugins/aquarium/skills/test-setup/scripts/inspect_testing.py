@@ -800,7 +800,7 @@ def invalid_python_config_authorities(repository: Path) -> set[str]:
         if any(
             re.fullmatch(
                 r"pytest(?:\[[0-9A-Za-z_.-]+(?:,[0-9A-Za-z_.-]+)*\])?"
-                r"==[0-9A-Za-z][0-9A-Za-z.+-]*",
+                r"(?:==|>=)[0-9A-Za-z][0-9A-Za-z.+-]*",
                 line,
                 re.IGNORECASE,
             )

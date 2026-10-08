@@ -5,6 +5,7 @@ This index links non-normative guidance for changing, verifying, and releasing A
 ## Guides
 
 - [Changing skills](changing-skills.md) covers entrypoint ownership, shared references, approvals, and cross-skill handoffs.
+- [Qualifying Herdr review](qualifying-herdr-review.md) maps target, reviewer, recovery, migration and peer-route requirements to actual observed evidence.
 - [Changing Procedures](changing-procedures.md) covers graph ownership, versioning, installation bytes, and Podway compatibility.
 - [Changing inspectors](changing-inspectors.md) covers conservative local inspection, schemas, safety, and fixtures.
 - [Testing and releasing](testing-and-releasing.md) maps change classes to focused checks and exact-candidate release proof.

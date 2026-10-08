@@ -23,6 +23,12 @@ that current Aquarium handlers can supply and consume its required nodes,
 evidence items, and routes. An incompatible customization remains untouched and
 keeps setup degraded until its owner approves an exact update.
 
+Use the [Herdr migration runbook](../ops/herdr-migration.md) for Orca-era sources
+and snapshots. Updating source files affects successors only; preserve old
+evidence and custom bytes, reject retired dispatch, and establish a legacy
+worker's safe state before an authorized transition. Current source identity,
+native validity, handler compatibility and route membership remain separate.
+
 Podway v0.2.12 permits at most 1,024 definitions and 1,024 graph placements, eight `evidence_from` references per placement, and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both reference limits; otherwise keep a single reference.
 
 The Task Procedure's `confirm-goal-assessment-core` and `confirm-stopped-goal-assessment-core` placements consume the implementation evidence before `assess-goal` or `assess-stopped-goal`. The assessment placements consume the carried completion assessment and applicable user direction. Check each placement's current references before changing its evidence budget.

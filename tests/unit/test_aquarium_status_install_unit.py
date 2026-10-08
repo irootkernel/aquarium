@@ -1,4 +1,3 @@
-import importlib.metadata
 import importlib.util
 import json
 import os
@@ -50,23 +49,20 @@ def package(tmp_path, monkeypatch):
 def offline_dependencies(runtime_install, monkeypatch):
     calls = []
     real_run = subprocess.run
-    yaml_root = Path(yaml.__file__).resolve().parent
-    distribution_root = Path(importlib.metadata.distribution("PyYAML")._path)
 
     def run(command, **kwargs):
         if len(command) >= 4 and command[1:4] == ["-I", "-m", "pip"]:
             calls.append((list(command), dict(kwargs)))
             target = Path(command[command.index("--target") + 1])
+            yaml_root = Path(yaml.__file__).resolve().parent
             shutil.copytree(
                 yaml_root,
                 target / "yaml",
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
             )
-            shutil.copytree(
-                distribution_root,
-                target / distribution_root.name,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-            )
+            # Simulate the pinned artifact rather than the development version.
+            with (target / "yaml/__init__.py").open("a") as stream:
+                stream.write("\n__version__ = '6.0.3'\n")
             return subprocess.CompletedProcess(command, 0)
         return real_run(command, **kwargs)
 
@@ -160,6 +156,22 @@ def test_install_uses_hash_pinned_isolated_pip_and_private_dependencies(
     assert requirements.count("--hash=sha256:") == 5
     assert receipt["dependency_files"]
     assert all(name.startswith("dependencies/") for name in receipt["dependency_files"])
+
+
+def test_offline_install_is_independent_of_newer_development_yaml(
+    runtime_install, package, offline_dependencies, tmp_path, monkeypatch
+):
+    ambient = tmp_path / "newer-development-yaml"
+    shutil.copytree(Path(yaml.__file__).resolve().parent, ambient)
+    with (ambient / "__init__.py").open("a") as stream:
+        stream.write("\n__version__ = '99.0.0'\n")
+    original = (ambient / "__init__.py").read_bytes()
+    monkeypatch.setattr(yaml, "__file__", str(ambient / "__init__.py"))
+
+    assert install(runtime_install, package)["status"] == "current"
+    generation, receipt = selected(runtime_install)
+    runtime_install.verify_generation(generation, receipt, execute=True)
+    assert (ambient / "__init__.py").read_bytes() == original
 
 
 def test_install_rejects_unknown_launcher_without_changing_it(

@@ -8,6 +8,11 @@ alone owns their identities, order, dependencies, and lifecycle. This dossier
 owns the findings map, task boundaries, producer handoffs, and acceptance until
 the epic promotes durable corrections to their canonical owners.
 
+Orca findings and Task outcomes below retain their original review provenance.
+EPIC-020 replaces that executable review route with Herdr; these historical
+requirements do not authorize new Orca dispatch. Current qualification follows
+the selected route and [`TESTING.md`](../../TESTING.md).
+
 The input is the 2026-09-25 static review of Aquarium commit `cbba56b` and the
 paired tool skills. It reports six unique High and 44 unique Medium findings.
 The static review does not prove skill behavior. The scratchpad and reviewer

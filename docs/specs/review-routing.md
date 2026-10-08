@@ -1,13 +1,23 @@
 # Workflow review routing
 
 This specification describes the selectable routing contract delivered by
-`EPIC-016` and updated by `TASK-107` of `EPIC-020`. The shared
+`EPIC-016` and updated by `EPIC-020`. The shared
 [workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
 defines route selection, evidence, switching, waiver, and Low-settlement
 semantics for Task delivery, Epic member delivery, whole-Epic review, and cold
 validation. The managed Procedures record route-specific recovery
 evidence; provider dispatch and report wording still require observed-agent
 acceptance.
+
+The [migration contract](../../plugins/aquarium/references/herdr-migration.md)
+defines selected-route setup and preserved Orca-era state. Prior source identity,
+native validity, handler compatibility and route membership are distinct.
+An active or uncertain legacy worker blocks a replacement review until its owner
+establishes safe state; the current package never invokes Orca to settle it.
+Completed evidence keeps its provenance, findings and consumed ordinals, while
+an incomplete checkpoint keeps its pending ordinal. Source updates affect only
+successors, and a snapshot that cannot record a required decision takes its
+supported stop and separately authorized lifecycle path.
 
 ## Purpose and authority
 
@@ -102,7 +112,7 @@ The Procedures and handlers record these route-neutral facts:
 | `backend-check-result` | `pass`, `fail`, or `not-provided`; absence of a backend check never replaces workflow verification |
 | `assessment-provenance` | Reviewer evidence or `coordinator-waiver` evidence |
 | `waiver-summary` | Required only for `waived`; records authority, target, reason, and limitations |
-| `prior-review-route` and `prior-review-operation` | The immediately preceding review route and operation used for recovery or follow-up; a completed waiver is preserved as `waived`/`waived`, while both fields use their declared not-applicable state before any review operation starts |
+| `prior-review-route` and `prior-review-operation` | The immediately preceding route and operation used for recovery or follow-up. Retain historical `orca` in `prior-review-route` without authorizing current dispatch, preserve a completed waiver as `waived`/`waived`, and use the declared not-applicable state only when no predecessor exists. |
 | `route-binding-result` | Caller-recorded check that binds the effective route to the immediately preceding operation, current direction and authority, lifecycle settlement, findings, ordinal, goal revision, and remaining authority; Podway does not execute or attest it |
 
 The following combinations are valid for a completed checkpoint:

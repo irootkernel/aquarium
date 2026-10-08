@@ -59,7 +59,7 @@ Use Rust's built-in test harness through repository-pinned `cargo test` scopes. 
 
 ## Python
 
-New unit, integration, and Python E2E layers use pytest and native pytest assertions. Separate unit and integration selection through directories, registered markers, or configuration without duplicating test collection. Use the established formatter, linter, and type checker in prepare. Enable strict configuration, marker, warning, async-leak, timeout, or parallel-order diagnostics when the repository risk warrants them. A pre-existing unittest, nose, or other runner requires an approved `AQTEST-009` waiver.
+New unit, integration, and Python E2E layers use pytest and native pytest assertions. Declare minimum Python framework and tool versions and admit installed versions at or above those minimums without an upper bound. Separate unit and integration selection through directories, registered markers, or configuration without duplicating test collection. Use the established formatter, linter, and type checker in prepare. Enable strict configuration, marker, warning, async-leak, timeout, or parallel-order diagnostics when the repository risk warrants them. A pre-existing unittest, nose, or other runner requires an approved `AQTEST-009` waiver.
 
 ## Dart and Flutter
 

@@ -31,7 +31,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
 - **Work can pause, resume, and hand off.** `task-handler` and `epic-handler` support plan-only runs, explicit plan handoff to another agent, and resuming a matching session. A plan by itself creates no runtime state.
 
-Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Herdr, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
+Codex is Aquarium's primary agent runtime. Aquarium deliberately integrates a defined toolchain and makes no promise of provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
 
 ## Install
 
@@ -82,7 +82,7 @@ runtime; a plugin update alone does not replace it.
 - [Mulgae](https://github.com/irootkernel/mulgae) gives completed tasks and epics, plus explicitly requested standalone targets, an advisory multi-provider review from an immutable capture exposed through an isolated read-only provider workspace. Temporary provider workspaces are removed after use. Durable captures and reports remain under `.mulgae/`, and results are returned through native published artifacts. Aquarium supplies the shared purpose and Review Brief, then verifies and reprioritizes each finding locally without rewriting Mulgae lifecycle state.
 - [Sorage](https://github.com/irootkernel/sorage) brokers local document handoffs and Project Memos. Aquarium supports stable v0.1.x releases starting at v0.1.2 on Apple Silicon, with a matching `use-sorage` skill. It can diagnose and install the CLI, initialize the local installation, and register a Git repository after separate approval. The paired skill owns explicit Handoff and Memo operations, including uncertain-write recovery; Memo text does not authorize its own execution.
 - [Dolgorae](https://github.com/irootkernel/dolgorae) remains an optional global tool for explicitly requested native operations such as Profiles and reusable External Specialist Engagements. Aquarium can diagnose compatible local v0.1.x Apple Silicon installations starting at v0.1.2 and install checksum-verified official stable releases in that range, while Aquarium Independent Review uses host-native Codex subagents and does not discover, set up, or invoke Dolgorae.
-- [Herdr Review](plugins/aquarium/skills/herdr-review/SKILL.md) uses the separately installed upstream Herdr skill to supervise a fresh requested reviewer in the current local session. It supports staged, HEAD, commit and range targets; workspace and dirty are unsupported. The reviewer reads the live index or resolved Git objects, preserves source and Git state, and returns a complete purpose-specific report. Admission requires reviewer identity and submission/activity correlation; idle or done alone is insufficient. Native output recovery keeps the same reviewer, and only the pane created for a successfully admitted review may be closed. Permitted external or Git-ignored review output remains a review aid. Herdr Review uses no Orca or Dolgorae operation and claims no immutable capture or backend CI. Native and manual migration qualification remains `TASK-109` work.
+- [Herdr Review](plugins/aquarium/skills/herdr-review/SKILL.md) uses the separately installed upstream Herdr skill to supervise a fresh requested reviewer in the current local session. It supports staged, HEAD, commit and range targets; workspace and dirty are unsupported. The reviewer reads the live index or resolved Git objects, preserves source and Git state, and returns a complete purpose-specific report. Admission requires reviewer identity and submission/activity correlation; idle or done alone is insufficient. Native output recovery keeps the same reviewer, and only the pane created for a successfully admitted review may be closed. Permitted external or Git-ignored review output remains a review aid. Herdr Review uses no Orca or Dolgorae operation and claims no immutable capture or backend CI. Native and manual migration qualification requires observed evidence separate from structural checks.
 - [Sanho](https://github.com/irootkernel/sanho) syncs project documentation to its canonical documentation repository once Aquarium has settled what is ready to hand off.
 - [Lora](https://github.com/tmdgusya/lora) keeps decision context in Git trailers, and [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit) supplies the upstream `deslop` cleanup skill used during task refinement.
 - [Humanizer](https://github.com/blader/humanizer) provides the final prose pass for English documentation, while [im-not-ai](https://github.com/epoko77-ai/im-not-ai) provides the corresponding Korean pass. Projects opt into either rule independently through `dev-setup` guidance.
@@ -101,6 +101,7 @@ Runtime evidence under `.mulgae/**`, `.gaori/runs/**`, `.podway/runtime/**`, der
 
 ## References
 
+- [Herdr migration](docs/ops/herdr-migration.md) explains selected-route readiness, preserved legacy review state and separately approved repository updates. Updating Procedure sources affects successors and preserves active snapshots; Herdr is not required for peer routes.
 - [Canonical documentation](docs/README.md) maps the repository's specifications, architecture, decisions, implementation guidance, operations runbooks, roadmap, TODO candidates, and deferred feedback.
 - [TESTING.md](TESTING.md) defines this repository's test authority and the `aquarium-test-contract/v1` evidence mapping.
 - [CHANGELOG.md](CHANGELOG.md) records concise release outcomes and the planned next stable version.
@@ -116,7 +117,7 @@ python3 -m venv .venv
 make test
 ```
 
-The gate needs Python 3.11 or newer, Ruby 3.3 or newer, and the pinned `requirements.txt` versions. This repository is licensed under the [MIT License](LICENSE).
+The gate needs Python 3.11 or newer, Ruby 3.3 or newer, and dependency versions at or above the minimums in `requirements.txt`. Ruff may be installed separately. This repository is licensed under the [MIT License](LICENSE).
 
 ## Upgrading
 

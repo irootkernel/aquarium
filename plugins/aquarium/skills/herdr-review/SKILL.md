@@ -113,6 +113,6 @@ Apply the shared [Herdr operational deviation policy](../../references/review-co
 when an instruction violation is observed. Use existing authorized evidence;
 never launch checks to certify an unknown side effect.
 
-`TASK-109` requires actual Codex/Claude target, output, failure/recovery and
-embedded-workflow observations. Structural validation cannot establish those
-runtime outcomes.
+Qualification requires actual Codex/Claude target, output, failure/recovery and
+embedded-workflow observations, plus manual skill verification. Structural
+validation cannot establish those runtime outcomes.

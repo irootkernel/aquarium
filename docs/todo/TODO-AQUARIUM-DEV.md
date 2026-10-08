@@ -14,7 +14,7 @@ The `aquarium-dev` MCP tools, CLI, and shared development contract own implement
 
 Provide an explicit development channel that exposes exact local-`main` artifacts from Aquarium, Podway, Mulgae, Gaori, Sanho, Dolgorae, and Seongge through `~/.aquarium-dev/bin` without changing production state, production tools, or the caller's selected Codex environment.
 
-Master confirmed Dolgorae development-channel setup completion on 2026-09-08. Its repository owns producer enrollment. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. TASK-031 originally kept Independent Review on the globally installed official release, but EPIC-015 later disabled that entrypoint before all Dolgorae work. Orca Review launches the requested native reviewer directly through Orca without Dolgorae.
+Master confirmed Dolgorae development-channel setup completion on 2026-09-08. Its repository owns producer enrollment. It has no missing-binary exception: before enrollment the required global binary must exist, or the command fails closed and requests `$aquarium:dev-setup-global`. TASK-031 originally kept Independent Review on the globally installed official release, but EPIC-015 later disabled that entrypoint before all Dolgorae work. TASK-031 historically launched Orca Review without Dolgorae; EPIC-020 replaces that route with native Herdr Review, also without Dolgorae.
 
 ## Success Criteria
 
@@ -96,7 +96,7 @@ The manager validates project identity, canonical Git root, local `main`, clean 
 - [x] Remove isolated Codex configuration, authentication, plugin installation, and MCP ownership from the manager and public workflow.
 - [x] Admit Dolgorae as an executable producer, require global fallback before registration, and request `$aquarium:dev-setup-global` when neither generation exists.
 - [x] Route Independent Review to the globally installed official Dolgorae v0.1.0 executable with immediate identity and capability checks.
-- [x] Route Orca Review directly to one fresh Orca-managed Codex worker without Dolgorae discovery, capture, launch, or settlement.
+- [x] Historical TASK-031 outcome: route Orca Review directly to one fresh Orca-managed Codex worker without Dolgorae discovery, capture, launch, or settlement. EPIC-020 supersedes this route with Herdr.
 - [x] Preserve historical decisions by superseding ADR-0007 with ADR-0008 instead of rewriting the old record.
 - [x] Pass focused unit, structural, and complete repository gates.
 - [x] Install and verify the user-local launcher on the approved host; Dolgorae enrollment occurs only from its approved repository commit.
@@ -161,7 +161,7 @@ the planned producer set:
 - [ ] Prove same-checkout idempotency and approved re-enrollment.
 - [ ] Prove missing producer, rejected manifest, build failure, missing checkout, corrupt artifact, and selector-drift diagnostics.
 - [ ] Prove the launcher preserves caller environment, prefers enrolled development executables, falls back missing tools independently, and rejects corrupt selected generations.
-- [ ] Prove Dolgorae remains absent from Orca Review, its development generation is never used for production review, and its separate production review setup is validated only when that setup is in scope.
+- [ ] Prove Dolgorae remains absent from Herdr Review, its development generation is never used for production review, and its separate production review setup is validated only when that setup is in scope.
 - [ ] Run focused suites and the complete applicable Aquarium gate against the final exact candidates.
 
 ## Epic Acceptance

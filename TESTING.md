@@ -18,7 +18,7 @@ Ruby and Python validation is limited to objective package structure and executa
 - End-to-end tests: `make test-e2e`
 - Exact Podway v0.2.12 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
 
-The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository fixes its runners to `.venv/bin/python` and `.venv/bin/ruff` when the enrolled environment exists, otherwise to `python3` and `ruff`; command-line overrides cannot replace those identities.
+The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository selects `.venv/bin/python` when present, otherwise `python3`. It selects `.venv/bin/ruff` independently when present, otherwise `ruff`; command-line overrides cannot replace those identities.
 
 ## Stage Mapping
 
@@ -89,6 +89,15 @@ Do not claim functional completion before Master confirms the required outcomes.
 Producer source fixes, release, installation, activation, and cross-skill
 acceptance remain separate evidence classes.
 
+Herdr review and migration qualification follow the
+[observed-scenario guide](docs/implementation-tips/qualifying-herdr-review.md).
+Both Codex and Claude reviewers must cover the four supported scopes and both
+review purposes, with actual readiness, output, recovery, embedded workflows,
+legacy state and peer routes. Keep reviewer identity and activity,
+complete report, native operation outcome, criterion assessment and Master's
+manual result separate. Missing observations remain unverified; a fixture
+receipt or passing Make gate cannot substitute for them.
+
 ## Test Frameworks
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |
@@ -98,7 +107,7 @@ acceptance remain separate evidence classes.
 | Python E2E | pytest with native assertions | `requirements.txt`, `pyproject.toml` | `$(PYTHON) -m pytest tests/e2e` | None |
 | Ruby package validation | Standalone structural assertion script | User-provided Ruby 3.3 or newer | `ruby tests/validate.rb` inside `test-prepare` | Also invoked by pytest package fixtures through the shared local-reference checker |
 
-The test environment requires the exact Python development dependencies in `requirements.txt`, including the MCP SDK and its runtime dependencies. Runtime installation tests reuse these dependencies in temporary environments without downloading packages; stdio tests exercise the packaged server launcher. The shipped runtime has its own hash-pinned `plugins/aquarium/tools/aquarium-dev/requirements.txt`. Every handler checks the selected environment before executing and fails with an installation command when Ruby, Python, pytest, PyYAML, Ruff, or an exact dependency version is unavailable. Handlers never install dependencies implicitly.
+The test environment requires the minimum Python development dependency versions in `requirements.txt`, including the MCP SDK and its runtime dependencies. Runtime installation tests reuse these dependencies in temporary environments without downloading packages; stdio tests exercise the packaged server launcher. The shipped runtime has its own hash-pinned `plugins/aquarium/tools/aquarium-dev/requirements.txt`. Every handler checks the selected environment before executing and fails with an installation command when Ruby, Python, pytest, PyYAML, Ruff, or a dependency is missing or below its minimum version. Newer compatible versions are admitted without an upper bound. Ruff may be installed as a standalone executable; its reported version is checked independently of Python package metadata. Handlers never install dependencies implicitly.
 
 The production-status tests use temporary homes, temporary Git worktrees, bounded child processes, local fault injection, and test-owned runtime generations. They verify merge and conflict behavior, replay and exact deletion fences, durable rollback, offline and refreshed reporting, language declaration capture and explicit refresh, v1 ledger migration, enrollment joins, isolated hash-pinned installation, launcher recovery, and cache-independent execution without contacting PyPI or mutating production state. The global inspector tests use temporary Codex homes, synthetic package assets, and local executable fixtures to check home discovery, CLI probe reuse, independent artifact health, MCP home binding, package pins, and partial readiness. PyPI responses are mocked, so the standard gate remains offline. The asset-probe test checks the native rendered-rules contract separately from raw skill bytes; a successful aggregate doctor cannot substitute for either comparison.
 
@@ -122,6 +131,11 @@ The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process en
 The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py`, `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py`, and `plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables. Master verifies the three-subagent skill dispatch and result handling separately; static tests cannot establish the requested model, effort, target, or Brief delivered to host agents.
 
 Scenarios use test-owned temporary repositories and input files under `tmp_path`, which pytest cleans up. Release-QA scenarios also create private `release-qa.*` evidence and confirmation roots under `/tmp`; their fixture teardown and `finally` blocks remove those additional roots. Tests never delete a path they did not create or use a production environment, credential, account, network, port, database, container, volume, or provider. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
+
+Offline installation fixtures use development SDK code with simulated pinned
+artifact metadata and version identity. Newer development dependencies therefore
+do not conflict with production artifact checks. The fixtures verify installer
+behavior; they do not qualify downloaded distribution artifacts.
 
 ## Language Diagnostics
 

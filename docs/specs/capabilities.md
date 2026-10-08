@@ -41,10 +41,12 @@ On an `execute` entry, `epic-handler` routes an ordinary feature epic with a req
 | `$aquarium:mulgae-review` | Explicit | Runs one report-only standalone Mulgae review for an exact change or Task or Epic completion target | `$use-mulgae` owns capture, execution, recovery, publication, and retention; Aquarium owns intent delivery and local adjudication |
 | `$aquarium:herdr-review` | Explicit target and reviewer request | Uses one fresh reviewer in the current local Herdr session with the shared Review Brief and criterion assessment | Supports staged, HEAD, commit and range targets; requires native readiness and complete output, with no backend CI or immutable capture claim |
 
-The checkout now includes standalone [Herdr Review](../../plugins/aquarium/skills/herdr-review/SKILL.md).
-Its [supervision contract](../../plugins/aquarium/references/herdr-supervision.md)
-uses the upstream Herdr skill for control and recovery. Workflow routing is integrated by `TASK-107`; actual native and manual qualification remains
-required under `TASK-109` before the migration can be accepted.
+Standalone [Herdr Review](../../plugins/aquarium/skills/herdr-review/SKILL.md) and
+embedded workflow routing use the same review contract.
+The [supervision contract](../../plugins/aquarium/references/herdr-supervision.md)
+uses the upstream Herdr skill for control and recovery. Actual native and manual
+qualification follows the [qualification guide](../implementation-tips/qualifying-herdr-review.md);
+structural checks alone do not prove skill behavior.
 
 Enabled static review workflows bind the reviewer to one declared source scope and purpose. Mulgae captures an immutable target and exposes an isolated read-only provider workspace. It removes temporary provider workspaces after use, while durable captures, reports, and artifacts remain under `.mulgae/`. Herdr reads the selected target in its current local checkout. All Herdr reviewers may retain review-related temporary files, native state, tool output, and reports outside the worktree or in Git-ignored runtime paths within it. External locations include `/tmp` or `/private/tmp`. Permitted external files and ignored runtime writes do not require warnings, extra checks, approval, or another review. Independent Review gives one exact target and Review Brief to three fresh host subagents, checks mutable target state after their reports, and retains separate host provenance without claiming immutable capture.
 

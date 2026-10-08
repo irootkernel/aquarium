@@ -116,4 +116,5 @@ pane, tab, workspace or session, and never stop or restart the server.
 
 Keep reports and transient identities under the [evidence residency contract](evidence-residency.md).
 Do not promote them as Mulgae hardening-deferral evidence. Static checks do not
-prove native agent behavior; `TASK-109` owns actual observed-agent qualification.
+prove native agent behavior; qualification requires actual agent observations
+and manual skill verification.

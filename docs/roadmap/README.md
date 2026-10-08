@@ -429,7 +429,7 @@ the exact `chatgpt-web/pro` model. Extend the selectable routing contract from
 workflows can select it initially or switch to it after the preceding route
 reaches an authoritative safe state.
 
-Web Pro Review does not depend on or join Orca, Mulgae, Dolgorae, or Independent
+Web Pro Review does not depend on or join Herdr, Mulgae, Dolgorae, or Independent
 Review. It never runs as an automatic fallback. Calls from another Codex home,
 including `~/.codex-hsy`, use the primary Codex Web bridge profile without
 copying account state into the caller's home.
@@ -528,7 +528,7 @@ is not a prerequisite, and no producer engine change or broker handoff is requir
 | TASK-106 | Implement Herdr static review | Add the standalone skill and native supervision contract with exact targets, explicit reviewer identity, complete report evidence, and safe recovery. | Completed | EPIC-016; TASK-085 |
 | TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Completed | TASK-106 |
 | TASK-108 | Support migration from Orca workflow state | Implement Herdr prerequisites and legacy-source readiness; preserve evidence, customizations, and snapshots while providing safe refusal, transition, and separately authorized rollout guidance. | Completed | TASK-107 |
-| TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | Planned | TASK-106; TASK-107; TASK-108 |
+| TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | In Progress | TASK-106; TASK-107; TASK-108 |
 
 ## EPIC-021: Adopt supervised agent orchestration
 

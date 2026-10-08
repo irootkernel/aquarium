@@ -6,7 +6,7 @@
 
 **Supersedes:** [ADR-0007](0007-host-local-immutable-development-artifacts.md)
 
-**Current review-route status:** EPIC-015 later disabled Aquarium Independent Review before all Dolgorae work. The production and development environment separation decided here remains in force; the statements below about Independent Review record the route that existed when this ADR was accepted.
+**Current review-route status:** EPIC-015 disabled Dolgorae-backed Independent Review, EPIC-016 defines Independent Review through fresh native Codex subagents, and EPIC-020 replaces Orca Review with Herdr. The production and development environment separation decided here remains in force; the statements below about Independent Review and Orca record the routes that existed when this ADR was accepted.
 
 ## Context
 

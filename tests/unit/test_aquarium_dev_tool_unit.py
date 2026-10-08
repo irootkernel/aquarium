@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -42,18 +43,31 @@ def package(tmp_path, monkeypatch):
     return source
 
 
+def prepare_offline_sdk(generation):
+    """Simulate pinned downloads while using the development SDK's code offline."""
+    site_packages = next((generation / "venv/lib").glob("python*/site-packages"))
+    (site_packages / "test-sdk.pth").write_text(sysconfig.get_path("purelib") + "\n")
+    for line in (generation / "requirements.txt").read_text().splitlines():
+        match = re.match(r"^([\w.-]+)==(\S+)", line)
+        if match is None:
+            continue
+        name, version = match.groups()
+        metadata = site_packages / f"{name.replace('-', '_')}-{version}.dist-info"
+        metadata.mkdir()
+        (metadata / "METADATA").write_text(
+            f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
+        )
+
+
 @pytest.fixture
 def dependencies(monkeypatch):
-    """Use the test environment's pinned SDK without downloading in the test suite."""
+    """Prepare test-only dependency artifacts without network access."""
     prepared = []
 
     def prepare(generation):
         prepared.append(generation)
         venv.EnvBuilder(with_pip=False, symlinks=True).create(generation / "venv")
-        site_packages = next((generation / "venv/lib").glob("python*/site-packages"))
-        (site_packages / "test-sdk.pth").write_text(
-            sysconfig.get_path("purelib") + "\n"
-        )
+        prepare_offline_sdk(generation)
 
     monkeypatch.setattr(runtime_install, "install_dependencies", prepare)
     return prepared
@@ -130,10 +144,7 @@ def test_install_bootstraps_usable_python_before_dependency_download(
                 check=True,
             )
             assert Path(probe.stdout.strip()) == environment
-            site_packages = next((environment / "lib").glob("python*/site-packages"))
-            (site_packages / "test-sdk.pth").write_text(
-                sysconfig.get_path("purelib") + "\n"
-            )
+            prepare_offline_sdk(environment.parent)
             prepared.append(environment.parent)
             return subprocess.CompletedProcess(command, 0)
         return original_run(command, **kwargs)
@@ -145,6 +156,38 @@ def test_install_bootstraps_usable_python_before_dependency_download(
     process = cli("version")
     assert process.returncode == 0, process.stderr
     assert json.loads(process.stdout) == receipt
+
+
+def test_offline_install_accepts_newer_development_metadata(
+    package, dependencies, tmp_path
+):
+    install(package)
+    generation, _ = runtime_entry.selected_runtime()
+    ambient = tmp_path / "newer-development-sdk"
+    metadata = ambient / "anyio-99.0.0.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "METADATA").write_text("Name: anyio\nVersion: 99.0.0\n")
+    site_packages = next((generation / "venv/lib").glob("python*/site-packages"))
+    (site_packages / "test-sdk.pth").write_text(
+        str(ambient) + "\n" + sysconfig.get_path("purelib") + "\n"
+    )
+
+    runtime_install.verify_environment(generation)
+    assert runtime_install.diagnose(package)["status"] == "current"
+    assert cli("version").returncode == 0
+
+
+def test_runtime_verification_still_rejects_a_newer_production_distribution(
+    package, dependencies
+):
+    install(package)
+    generation, _ = runtime_entry.selected_runtime()
+    site_packages = next((generation / "venv/lib").glob("python*/site-packages"))
+    metadata = next(site_packages.glob("anyio-*.dist-info/METADATA"))
+    metadata.write_text("Name: anyio\nVersion: 99.0.0\n")
+
+    with pytest.raises(runtime_entry.RuntimeUnavailable, match="anyio"):
+        runtime_install.verify_environment(generation)
 
 
 def test_runtime_diagnosis_ignores_caller_modules(

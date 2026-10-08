@@ -31,7 +31,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Herdr, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
+Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 정해진 toolchain을 의도적으로 통합하며 provider나 framework 중립성을 약속하지 않습니다. Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
 
 ## 설치
 
@@ -80,7 +80,7 @@ runtime은 global setup이 진단하며 plugin update만으로 자동 교체되�
 - [Mulgae](https://github.com/irootkernel/mulgae)는 완료된 task와 epic뿐 아니라 명시적으로 요청한 standalone target도 여러 provider로 review합니다. Provider에는 immutable capture로 만든 격리된 read-only workspace만 보입니다. 임시 provider workspace는 사용 후 삭제되지만 capture와 report는 `.mulgae/` 아래에 남고, 결과는 native published artifact로 전달됩니다. Aquarium은 공통 purpose와 Review Brief를 제공합니다. Mulgae의 lifecycle state는 바꾸지 않고 finding의 타당성과 우선순위를 로컬에서 다시 판단합니다.
 - [Sorage](https://github.com/irootkernel/sorage)는 등록된 프로젝트 사이에서 로컬 문서 handoff를 중개합니다. Aquarium은 지원되는 Apple Silicon CLI와 paired `use-sorage` skill을 설치·진단하고, 별도 승인 후 로컬 초기화와 현재 Git 저장소 등록까지 수행할 수 있습니다. Inbox, outbox, review, revision, retention, deletion, Vault 작업은 paired skill이 맡습니다.
 - [Dolgorae](https://github.com/irootkernel/dolgorae)는 Profile이나 재사용 가능한 External Specialist Engagement처럼 명시적으로 요청한 native 작업에 쓰는 선택형 global 도구입니다. Aquarium은 v0.1.2 이상인 로컬 v0.1.x Apple Silicon 설치의 호환성을 진단하고, 해당 범위의 공식 stable release를 checksum으로 검증해 설치할 수 있습니다. Aquarium Independent Review는 Codex subagent를 사용하며 Dolgorae를 탐색·설정·실행하지 않습니다.
-- [Herdr Review](plugins/aquarium/skills/herdr-review/SKILL.md)는 별도로 설치된 upstream Herdr skill을 통해 현재 로컬 session에서 요청한 reviewer를 새로 실행합니다. Staged, HEAD, commit, range 대상을 지원하며 workspace와 dirty는 지원하지 않습니다. Reviewer는 live index 또는 확정된 Git object를 읽고 소스와 Git 상태를 보존하며, 목적에 맞는 전체 보고서를 반환합니다. 완료로 인정하려면 reviewer identity와 제출·활동의 연결을 확인해야 합니다. Idle이나 done 상태만으로 완료를 판단하지 않습니다. 출력 복구에는 같은 reviewer를 사용하며, 결과를 인정하고 evidence를 기록한 뒤 이 리뷰가 만든 pane만 닫을 수 있습니다. 외부 임시 경로나 Git이 무시하는 경로에 저장한 리뷰 출력은 검토를 돕는 자료입니다. Orca나 Dolgorae operation은 사용하지 않으며 immutable capture나 backend CI를 보장하지 않습니다. 실제 native 동작과 manual migration 검증은 `TASK-109`에 남아 있습니다.
+- [Herdr Review](plugins/aquarium/skills/herdr-review/SKILL.md)는 별도로 설치된 upstream Herdr skill을 통해 현재 로컬 session에서 요청한 reviewer를 새로 실행합니다. Staged, HEAD, commit, range 대상을 지원하며 workspace와 dirty는 지원하지 않습니다. Reviewer는 live index 또는 확정된 Git object를 읽고 소스와 Git 상태를 보존하며, 목적에 맞는 전체 보고서를 반환합니다. 완료로 인정하려면 reviewer identity와 제출·활동의 연결을 확인해야 합니다. Idle이나 done 상태만으로 완료를 판단하지 않습니다. 출력 복구에는 같은 reviewer를 사용하며, 결과를 인정하고 evidence를 기록한 뒤 이 리뷰가 만든 pane만 닫을 수 있습니다. 외부 임시 경로나 Git이 무시하는 경로에 저장한 리뷰 출력은 검토를 돕는 자료입니다. Orca나 Dolgorae operation은 사용하지 않으며 immutable capture나 backend CI를 보장하지 않습니다. 실제 native 동작과 manual migration 검증은 정적 검사와 별도로 확인합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
 - [Humanizer](https://github.com/blader/humanizer)는 영문 문서의 마지막 윤문을 맡고, [im-not-ai](https://github.com/epoko77-ai/im-not-ai)는 한글 문서에서 같은 역할을 합니다. 프로젝트마다 `dev-setup` 지침에서 두 규칙을 따로 선택할 수 있습니다.
@@ -99,6 +99,7 @@ runtime은 global setup이 진단하며 plugin update만으로 자동 교체되�
 
 ## 참고 문서
 
+- [Herdr migration](docs/ops/herdr-migration.md)은 선택한 route의 readiness, 기존 리뷰 상태 보존, 별도 승인이 필요한 저장소 업데이트를 설명합니다. Procedure 소스를 업데이트해도 실행 중인 snapshot은 유지되며 새 session부터 적용됩니다. Peer route에는 Herdr가 필요하지 않습니다.
 - [Canonical documentation](docs/README.md)은 이 저장소의 specification, architecture, decision, implementation guidance, operations runbook, roadmap, TODO candidate, deferred feedback 권위를 연결합니다.
 - [TESTING.md](TESTING.md)는 이 저장소의 test authority와 `aquarium-test-contract/v1` evidence mapping을 정의합니다.
 - [CHANGELOG.md](CHANGELOG.md)는 간결한 release outcome과 계획된 다음 stable version을 기록합니다.
@@ -114,7 +115,7 @@ python3 -m venv .venv
 make test
 ```
 
-이 gate는 Python 3.11 이상, Ruby 3.3 이상, 그리고 `requirements.txt`에 고정된 버전이 필요합니다. 이 저장소는 [MIT License](LICENSE)를 따릅니다.
+이 검증에는 Python 3.11 이상, Ruby 3.3 이상과 `requirements.txt`에 선언된 최소 버전 이상의 의존성이 필요합니다. Ruff는 별도로 설치해도 됩니다. 이 저장소는 [MIT License](LICENSE)를 따릅니다.
 
 ## 업그레이드
 

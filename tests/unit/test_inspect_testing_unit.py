@@ -45,3 +45,11 @@ def test_package_dependencies_uses_only_mapping_sections() -> None:
     )
 
     assert dependencies == {"runtime", "pytest"}
+
+
+def test_minimum_pytest_requirement_is_a_valid_authority(tmp_path: Path) -> None:
+    (tmp_path / "requirements.txt").write_text("pytest>=9.1.1\n")
+    assert inspect_testing.invalid_python_config_authorities(tmp_path) == set()
+    assert inspect_testing.python_authority_declares_pytest(
+        tmp_path / "requirements.txt", tmp_path
+    )

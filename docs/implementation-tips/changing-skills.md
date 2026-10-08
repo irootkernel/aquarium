@@ -28,3 +28,8 @@ For cross-repository work, carry the exact repository and commit identity. A dow
 Run `ruby tests/validate.rb` for package structure and local references. Run focused Python tests when executable helpers change. Keep these checks minimal: do not encode skill sentences, ordering, whitespace, or private source fragments as assertions.
 
 Master performs skill functional verification separately after updates. Report which multi-step workflows, decision points, recommendations, approval boundaries, recovery paths, and handoffs need manual verification. Do not add an automated LLM gate or treat a passing structural check as a functional result.
+
+For Herdr changes, use the [qualification guide](qualifying-herdr-review.md).
+Cover both reviewer kinds, all supported targets and purposes, context gaps,
+recovery of the same operation, legacy state and isolation between peer routes.
+Record each actual outcome separately from static checks and Master's manual acceptance.

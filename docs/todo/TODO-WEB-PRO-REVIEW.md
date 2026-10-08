@@ -24,7 +24,7 @@ The outcome has two entry paths:
   rules.
 
 Both paths use the same target, execution, result, privacy, and adjudication
-contract. Web Pro Review is not Orca, Mulgae, Dolgorae, Independent Review, or a
+contract. Web Pro Review is not Herdr, Mulgae, Dolgorae, Independent Review, or a
 native Codex subagent. It creates none of their native objects and inherits none
 of their guarantees.
 
@@ -51,7 +51,7 @@ or publication.
 
 ### Target contract
 
-Web Pro Review adopts the static target meanings already used by Orca Review:
+Web Pro Review adopts the static target meanings used by Herdr Review:
 
 | Scope | Meaning |
 | --- | --- |
@@ -67,7 +67,7 @@ the repository. It reports staged, unstaged, non-ignored untracked, and
 conflicted state before dispatch and stops on conflicts or an empty staged
 target.
 
-Like Orca's staged review, `staged` uses the live index as its authority and
+Like Herdr's staged review, `staged` uses the live index as its authority and
 does not add a pre/post fingerprint. The reviewer must read staged file content
 from index objects rather than substitute excluded unstaged worktree bytes.
 
@@ -382,7 +382,7 @@ installation, authentication, or cleanup of unrelated native browser state.
 
 ## EPIC-016 adapter
 
-`web-pro` joins `mulgae`, `orca`, `independent-review`, and `waived` as an explicit
+`web-pro` joins `mulgae`, `herdr`, `independent-review`, and `waived` as an explicit
 peer route. Mulgae remains the default when the user selects no alternative.
 Only the selected route's prerequisites are checked.
 
@@ -511,7 +511,7 @@ Acceptance scenarios:
 This epic does not:
 
 - re-enable or modify Independent Review;
-- change Mulgae, Orca, native Codex, waiver, or Dolgorae ownership;
+- change Mulgae, Herdr, native Codex, waiver, or Dolgorae ownership;
 - add automatic fallback, retry, persistent route preference, or route priority;
 - copy browser credentials or install Web models into another Codex home;
 - add `workspace` or `dirty` targets;

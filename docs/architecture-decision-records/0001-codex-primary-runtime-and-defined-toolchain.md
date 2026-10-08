@@ -6,6 +6,10 @@
 
 This is a retrospective record of current repository authority, not a claim about the original adoption date.
 
+**Current review-route status:** EPIC-020 replaces the Orca integration recorded
+below with native Herdr Review. The Codex primary-runtime and upstream-ownership
+decisions remain in force; the Orca statements describe the earlier toolchain.
+
 ## Context
 
 Aquarium coordinates several specialized developer tools and upstream agent skills. Copying those implementations into the plugin would blur ownership, release cadence, licensing, security updates, and runtime responsibility. Supporting multiple primary agent runtimes would also multiply workflow and approval semantics.
