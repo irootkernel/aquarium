@@ -6,7 +6,7 @@
 
 English · [한국어](README.ko.md)
 
-By [Root Kernel](https://home.rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
+By [Root Kernel](https://rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
 Aquarium is a Codex plugin for engineering reliable software with AI Fleets. It connects specialized agents, models, and development tools into workflows with three rules: every task has a tracked state, completion needs verified evidence, and consequential actions wait for your approval.
 

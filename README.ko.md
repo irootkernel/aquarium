@@ -6,7 +6,7 @@
 
 [English](README.md) · 한국어
 
-[Root Kernel](https://home.rootkernel.xyz) 제작 · 지원: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
+[Root Kernel](https://rootkernel.xyz) 제작 · 지원: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
 Aquarium은 AI Fleet으로 신뢰할 수 있는 소프트웨어를 만들기 위한 Codex 플러그인입니다. 전문화된 에이전트, 모델, 개발 도구를 하나의 워크플로로 연결하되 세 가지 규칙을 지킵니다. 모든 task는 추적되는 상태를 가지고, 완료는 검증된 증거를 요구하며, 영향이 큰 행동은 사용자의 승인을 기다립니다.
 
