@@ -8,15 +8,24 @@ English · [한국어](README.ko.md)
 
 By [Root Kernel](https://rootkernel.xyz) · Support: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
-Aquarium is a Codex plugin for engineering reliable software with AI Fleets. It connects specialized agents, models, and development tools into workflows with three rules: every task has a tracked state, completion needs verified evidence, and consequential actions wait for your approval.
+Architected by Claude · Built by an AI Fleet
+
+Aquarium is a plugin for engineering reliable software with AI Fleets, available for Codex, Claude Code, Grok, and ZCode (GLM). This repository holds Aquarium's single source and ships the Codex edition. Aquarium connects specialized agents, models, and development tools into workflows with three rules: every task has a tracked state, completion needs verified evidence, and consequential actions wait for your approval.
 
 Aquarium is growing beyond vibe coding toward Agentic Engineering, Loop Engineering, Graph Engineering, and the practices that come next. These are not separate products or a rigid maturity model. They name a direction: AI work that is more specialized, more iterative, more connected, and more accountable.
 
 ## Aquarium Editions
 
-- [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)
-- [Aquarium for Grok](https://github.com/irootkernel/aquarium-for-grok)
-- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm)
+The Claude Code, Grok, and ZCode editions are generated from this source and adapt packaging, skill invocation, setup, and review to their hosts.
+
+- Aquarium (this repository) — Codex
+- [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude) — Claude Code
+- [Aquarium for Grok](https://github.com/irootkernel/aquarium-for-grok) — Grok
+- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm) — ZCode
+
+## How Aquarium Is Built
+
+Aquarium itself is built by an AI Fleet, with Claude as its architect. Claude sets the design that this source and every edition follow, and it develops Aquarium for Claude directly. Codex, Grok, and GLM implement that design.
 
 ## Why Aquarium
 
@@ -31,7 +40,7 @@ Even capable AI tools, used one at a time, leave the engineer to track context, 
 - **You keep authority.** Installing tools, sending source to a provider, staging, committing, pushing, and publishing each need their own approval. Design documents and setup files change only through an exact diff you approve. A local hook catches direct shell commits in roadmap repositories and points them to `task-commit`.
 - **Work can pause, resume, and hand off.** `task-handler` and `epic-handler` support plan-only runs, explicit plan handoff to another agent, and resuming a matching session. A plan by itself creates no runtime state.
 
-Codex is Aquarium's primary agent runtime, and Aquarium deliberately integrates a defined toolchain rather than promising provider or framework neutrality. It owns the contracts among Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
+This source is written for Codex, and each edition adapts it to its host. Aquarium deliberately integrates a defined toolchain instead of abstracting over interchangeable tools. It owns the contracts among Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai. Each contract says when a tool runs, what it may decide, and how its output becomes evidence for the next step.
 
 ## Install
 

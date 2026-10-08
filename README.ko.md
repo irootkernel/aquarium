@@ -8,15 +8,24 @@
 
 [Root Kernel](https://rootkernel.xyz) 제작 · 지원: [cs@rootkernel.xyz](mailto:cs@rootkernel.xyz)
 
-Aquarium은 AI Fleet으로 신뢰할 수 있는 소프트웨어를 만들기 위한 Codex 플러그인입니다. 전문화된 에이전트, 모델, 개발 도구를 하나의 워크플로로 연결하되 세 가지 규칙을 지킵니다. 모든 task는 추적되는 상태를 가지고, 완료는 검증된 증거를 요구하며, 영향이 큰 행동은 사용자의 승인을 기다립니다.
+Claude 설계 · AI Fleet 구현
+
+Aquarium은 AI Fleet으로 신뢰할 수 있는 소프트웨어를 만들기 위한 플러그인이며 Codex, Claude Code, Grok, ZCode(GLM)에서 쓸 수 있습니다. 이 저장소는 Aquarium의 단일 원본이자 Codex 판입니다. Aquarium은 전문화된 에이전트, 모델, 개발 도구를 하나의 워크플로로 연결하되 세 가지 규칙을 지킵니다. 모든 task는 추적되는 상태를 가지고, 완료는 검증된 증거를 요구하며, 영향이 큰 행동은 사용자의 승인을 기다립니다.
 
 Aquarium은 vibe coding을 넘어 Agentic Engineering, Loop Engineering, Graph Engineering, 그리고 그다음의 practice를 향해 나아갑니다. 이들은 별개의 제품이나 고정된 성숙도 모델이 아닙니다. AI 작업이 더 전문화되고, 더 반복적이며, 더 긴밀히 연결되고, 더 책임 있는 형태로 발전하는 방향을 가리킵니다.
 
 ## Aquarium Editions
 
-- [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude)
-- [Aquarium for Grok](https://github.com/irootkernel/aquarium-for-grok)
-- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm)
+Claude Code, Grok, ZCode 판은 이 원본에서 생성되며 패키징, skill 호출, setup, review를 각 host에 맞게 조정합니다.
+
+- Aquarium (이 저장소) — Codex
+- [Aquarium for Claude](https://github.com/irootkernel/aquarium-for-claude) — Claude Code
+- [Aquarium for Grok](https://github.com/irootkernel/aquarium-for-grok) — Grok
+- [Aquarium for GLM](https://github.com/irootkernel/aquarium-for-glm) — ZCode
+
+## Aquarium을 만드는 방식
+
+Aquarium 자체도 AI Fleet이 만들고 architect는 Claude가 맡습니다. Claude는 이 원본과 모든 판이 따르는 설계를 정하고 Aquarium for Claude는 직접 개발합니다. Codex, Grok, GLM은 그 설계를 구현합니다.
 
 ## 왜 Aquarium인가
 
@@ -31,7 +40,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-Codex는 Aquarium의 primary agent runtime입니다. Aquarium은 provider나 framework 중립성을 약속하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
+이 원본은 Codex를 기준으로 작성됩니다. 각 판은 이를 자기 host에 맞게 조정합니다. Aquarium은 서로 바꿔 쓸 수 있는 도구를 추상화하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Orca, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
 
 ## 설치
 
