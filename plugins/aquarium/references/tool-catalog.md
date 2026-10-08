@@ -183,8 +183,8 @@ For an explicit reusable Specialist request, follow `$use-dolgorae` and the [Dol
 
 ## Herdr
 
-Herdr is an externally installed native review runtime. Require
-[v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or newer, without
+Herdr is an externally installed native review runtime. Require both its client
+and server at [v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or newer, without
 an upper version bound, and the installed upstream skill. The
 [v0.9.3 skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md)
 is qualification provenance, not a fixed-version admission requirement.
@@ -197,7 +197,9 @@ independently. Repository setup trusts canonical skill presence; native
 compatibility and observed host qualification remain separate checks. Before any
 session inspection or control, require `HERDR_ENV=1` and the actual caller
 context, then load `$herdr` and use its current help and status surfaces. Inspect client, server
-and requested reviewer separately. A tool shell's absent context may be an
+and requested reviewer separately. Use Herdr's status and native contract to
+establish compatibility; unequal client/server versions are eligible when that
+contract permits. A tool shell's absent context may be an
 inheritance gap; do not discover another client's focused session.
 
 A readiness gap blocks only the selected Herdr operation. Aquarium setup does

@@ -8,8 +8,9 @@ control remains upstream-owned. Do not emulate Orca Run, Task, Dispatch, Deliver
 
 ## Readiness and caller context
 
-Require Herdr [v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or
-newer and the installed upstream skill. The
+Require both the Herdr client and server at
+[v0.9.3](https://github.com/herdrdev/herdr/releases/tag/v0.9.3) or newer, and the
+installed upstream skill. The
 [v0.9.3 skill](https://github.com/herdrdev/herdr/blob/v0.9.3/skills/herdr/SKILL.md)
 documents the qualification baseline; it is not a required fixed skill version.
 Accept later versions without an upper bound and use the installed native
@@ -27,8 +28,10 @@ context; resume from the intended managed pane or obtain the user's actual
 caller context without inspecting another client's focused session or creating
 a replacement backend. Within Herdr, learn current syntax
 through `herdr --help` and the agent and pane groups; use `herdr status` before
-depending on server features. A client/server mismatch requires separate host
-action, never an automatic upgrade or lowered baseline.
+depending on server features. Unequal client/server versions are eligible when
+Herdr's native contract reports compatible capabilities. Native-reported
+incompatibility requires separate host action, never an automatic upgrade or
+lowered baseline.
 
 Use explicit caller context or native returned IDs. Preserve the current local
 session, canonical checkout and caller working directory. Remote review and
