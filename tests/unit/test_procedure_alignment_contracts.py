@@ -38,24 +38,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "23",
+            "24",
+            "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
+            "aquarium-task-v23.yaml",
             "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
-            "aquarium-task-v22.yaml",
-            "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "26",
+            "27",
+            "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
+            "aquarium-goal-v26.yaml",
             "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
-            "aquarium-goal-v25.yaml",
-            "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "25",
+            "26",
+            "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
+            "aquarium-validation-v25.yaml",
             "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
-            "aquarium-validation-v24.yaml",
-            "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -496,7 +496,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "23"
+    assert task["version"] == "24"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -2371,13 +2371,35 @@ def test_herdr_migration_preserves_control_contracts_and_prior_snapshots() -> No
             return value.replace("herdr", "orca").replace("Herdr", "Orca")
         return value
 
-    for kind, previous_version in (("task", 22), ("goal", 25), ("validation", 24)):
+    for kind, previous_version, version_step in (
+        ("task", 22, 2),
+        ("task", 23, 1),
+        ("goal", 25, 2),
+        ("goal", 26, 1),
+        ("validation", 24, 2),
+        ("validation", 25, 1),
+    ):
         current = load_procedure(f"aquarium-{kind}-v2.yaml")
         previous = yaml.safe_load(
             (FIXTURES / f"aquarium-{kind}-v{previous_version}.yaml").read_bytes()
         )
         assert current["id"] == previous["id"]
-        assert int(current["version"]) == int(previous["version"]) + 1
+        assert int(current["version"]) == int(previous["version"]) + version_step
+        for definition in current["node_definitions"].values():
+            for item in definition.get("items", []):
+                if item["id"] == "prior-review-route":
+                    assert item["choices"] == [
+                        "not-applicable",
+                        "mulgae",
+                        "orca",
+                        "herdr",
+                        "independent-review",
+                        "waived",
+                    ]
+                    # Historical admission is the only additional control change.
+                    item["choices"].remove("orca")
+                elif item["type"] == "choice":
+                    assert "orca" not in item["choices"]
         current.pop("version")
         previous.pop("version")
         # Compare executable item schemas, guards, routes, operations and ordering.

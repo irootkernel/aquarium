@@ -70,6 +70,14 @@ supported contract before a separately authorized successor. Follow
 
 ## Record Route-Neutral Evidence
 
+The current Task, Goal and Validation Procedures admit `orca` only in
+`prior-review-route`, to preserve an exact historical predecessor. It is absent
+from current route selectors and dispatch branches. An eligible successor carries
+the predecessor session and goal revision, native evidence, consumed ordinal,
+finding lineage and remaining authority; it never uses `not-applicable` for an
+existing predecessor or resets the count. Switching from Orca requires explicit
+route-change authority and verified safe settlement under this contract.
+
 Keep the following facts separate from finding, completion, verification, and
 workflow-lifecycle decisions:
 

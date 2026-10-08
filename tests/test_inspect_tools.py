@@ -5322,6 +5322,21 @@ else:
                     24,
                     "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
                 ),
+                (
+                    "task",
+                    23,
+                    "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
+                ),
+                (
+                    "goal",
+                    26,
+                    "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
+                ),
+                (
+                    "validation",
+                    25,
+                    "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
+                ),
             )
         )
         self.install_fake_tools()
@@ -5359,7 +5374,11 @@ else:
                     entry["review_route_readiness"],
                     {
                         "mulgae": "ready",
-                        "herdr": "unavailable",
+                        "herdr": (
+                            "ready"
+                            if fixture.name == "aquarium-task-v23.yaml"
+                            else "unavailable"
+                        ),
                         "independent-review": "ready",
                         "waived": "ready",
                     }
@@ -5378,6 +5397,7 @@ else:
                     ),
                     encoding="utf-8",
                 )
+                tampered_bytes = target.read_bytes()
                 podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
                     "podway"
                 ]
@@ -5389,6 +5409,14 @@ else:
                 self.assertEqual(entry["update_explanation"], "local_customization")
                 self.assertEqual(entry["handler_contract_status"], "incompatible")
                 self.assertEqual(podway["readiness_status"], "degraded")
+                self.assertEqual(
+                    entry["review_route_readiness"],
+                    dict.fromkeys(
+                        ("mulgae", "herdr", "independent-review", "waived"),
+                        "unverified",
+                    ),
+                )
+                self.assertEqual(target.read_bytes(), tampered_bytes)
                 target.write_bytes(source.joinpath(name).read_bytes())
 
     def test_tampered_goal_v18_and_validation_v17_are_not_prior_canonical(
@@ -5462,6 +5490,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
                     "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
                     "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
                     "27758a88c1c2c0e696bb5e14d68f37c6588215a5ea6f1ee85fef7dcd3de991aa",
@@ -5484,6 +5513,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
                     "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
                     "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",
                     "a022cef14eb4f9112336c6dc20d35ebeb0abf7f08d586fc148353cb75a0d5986",
@@ -5506,6 +5536,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
                     "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
                     "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",
                     "78e14eff9899b2507b4a5a6f91c5353e84da792f284eb127bfe30cb8c37235e9",

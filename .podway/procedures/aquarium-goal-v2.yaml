@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "26"
+version: "27"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -224,6 +224,7 @@ node_definitions:
         choices:
           - not-applicable
           - mulgae
+          - orca
           - herdr
           - independent-review
           - waived

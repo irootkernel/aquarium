@@ -318,6 +318,7 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         ("task-completed-continue-herdr", "aquarium-task-v2.yaml"),
         ("task-completed-continue-waiver", "aquarium-task-v2.yaml"),
         ("task-completed-switch-herdr", "aquarium-task-v2.yaml"),
+        ("task-legacy-orca-switch-herdr", "aquarium-task-v2.yaml"),
         ("task-completed-waiver", "aquarium-task-v2.yaml"),
         ("task-completed-waiver-switch-independent-review", "aquarium-task-v2.yaml"),
         ("task-completion-implementation-owner", "aquarium-task-v2.yaml"),
@@ -345,12 +346,12 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
     assert set(waits) == expected_waits
     assert set(terminals) == expected_terminals
     assert len(waits) == 23
-    assert len(terminals) == 51
+    assert len(terminals) == 52
     assert len({scenario for _procedure, scenario in waits}) == len(waits)
     assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
     assert sum(job["kind"] == "wait" for job in jobs) == len(waits)
     assert sum(job["kind"] == "terminal" for job in jobs) == 4
-    assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 9
+    assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 10
     assert len(reusable) == 42
     assert sorted(
         spec for job in jobs if job["kind"] == "terminal" for spec in job["scenarios"]
@@ -366,8 +367,8 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         for job in jobs
         if job["kind"] == "wait"
     ] == list(waits)
-    assert 1 + len(jobs) == 39  # one deliberate cleanup probe plus scheduled roots
-    assert 5 + len(waits) + len(terminals) == 79
+    assert 1 + len(jobs) == 40  # one deliberate cleanup probe plus scheduled roots
+    assert 5 + len(waits) + len(terminals) == 80
     assert (
         sum(
             scenario == runtime.VALIDATION_PROVIDER_LOW_SCENARIO

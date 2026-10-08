@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "23"
+version: "24"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -246,6 +246,7 @@ node_definitions:
         choices:
           - not-applicable
           - mulgae
+          - orca
           - herdr
           - independent-review
           - waived

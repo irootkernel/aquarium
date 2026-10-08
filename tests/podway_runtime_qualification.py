@@ -414,6 +414,18 @@ TASK_RESUME_SCENARIOS = {
         "checkpoint_basis": "explicit-route-change",
         "completed_transition": True,
     },
+    "task-legacy-orca-switch-herdr": {
+        "route": "mulgae",
+        "prior_route": "orca",
+        "effective_route": "herdr",
+        "operation": "complete",
+        "prior_operation": "complete",
+        "prior_state": "terminal-complete",
+        "readiness": "completed-checkpoint",
+        "direction": "switch-route",
+        "checkpoint_basis": "explicit-route-change",
+        "completed_transition": True,
+    },
     "task-completed-waiver": {
         "route": "mulgae",
         "effective_route": "waived",
@@ -2667,7 +2679,7 @@ class ManagedRuntime:
                     if goal_recovery and self.goal_evidence_round == 0
                     else "herdr"
                     if goal_recovery
-                    else task_resume["route"]
+                    else task_resume.get("prior_route", task_resume["route"])
                     if task_resume
                     and node == "prepare-review"
                     and (
@@ -4818,6 +4830,13 @@ class ManagedRuntime:
             elif task_resume and node == "authorize-planned-review-route":
                 special_option = f"planned-{task_resume['route']}"
             elif task_resume and node == "classify-review-route-change":
+                prior_route = self.read_complete_evidence(
+                    observation, "prepare-review", "prior-review-route"
+                )
+                if prior_route != task_resume.get("prior_route", task_resume["route"]):
+                    raise RuntimeQualificationError(
+                        "route-change classification lost the historical provider"
+                    )
                 special_option = (
                     "completed"
                     if task_resume.get("completed_transition")
