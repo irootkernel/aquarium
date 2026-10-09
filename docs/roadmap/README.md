@@ -523,12 +523,22 @@ is not a prerequisite, and no producer engine change or broker handoff is requir
 
 **Detailed SOT:** [`TODO-HERDR-MIGRATION.md`](../todo/TODO-HERDR-MIGRATION.md)
 
+Master accepted completion of this Epic with the disclosed verification limits.
+Whole-skill Task, Epic, and validation scenarios, complete peer-route recovery
+and acceptance, and Master's separate functional checks remain unverified.
+Native incompatibility, active or unknown legacy-worker settlement, a genuine
+waiver predecessor, spontaneous stalls, agent replacement, and completed-output
+loss were not observed. This acceptance applies only to `EPIC-020`; future
+workflows retain their functional-verification requirements. Installation,
+cross-repository activation, host cleanup, and release publication remain
+separately authorized actions.
+
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-106 | Implement Herdr static review | Add the standalone skill and native supervision contract with exact targets, explicit reviewer identity, complete report evidence, and safe recovery. | Completed | EPIC-016; TASK-085 |
 | TASK-107 | Integrate Herdr workflow routing | Replace active Orca dispatch and handoffs; update handlers, three Procedure sources and mirrors, readiness inspection, and routing qualification as one compatible unit. | Completed | TASK-106 |
 | TASK-108 | Support migration from Orca workflow state | Implement Herdr prerequisites and legacy-source readiness; preserve evidence, customizations, and snapshots while providing safe refusal, transition, and separately authorized rollout guidance. | Completed | TASK-107 |
-| TASK-109 | Qualify Herdr migration and promote documentation | Verify the exact candidate through local, native, and actual manual scenarios; remove current Orca dependencies, promote canonical outcomes, and obtain overall Epic acceptance. | In Progress | TASK-106; TASK-107; TASK-108 |
+| TASK-109 | Qualify Herdr migration and promote documentation | Qualify the candidate through local and native checks under the accepted verification limits; remove current Orca dependencies and promote canonical outcomes. | Completed | TASK-106; TASK-107; TASK-108 |
 
 ## EPIC-021: Adopt supervised agent orchestration
 

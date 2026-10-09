@@ -30,6 +30,22 @@ establish its own execution envelope and authority.
 
 ## Fixed design decisions
 
+### Approved completion basis
+
+Master authorized recording completion and closing `EPIC-020` after the
+remaining verification gaps were disclosed. For this Epic, the accepted local,
+native, and static-review results support completion with the limits recorded
+in the roadmap. The original unobserved scenarios and Master's separate
+functional checks remain unverified. Their actual execution is no longer a
+completion prerequisite for this Epic. This decision does not change the
+functional-verification requirements of future workflows or authorize rollout,
+installation, host cleanup, or publication. Internal whole-Epic validation and
+last-consumer dossier closeout are still required.
+
+The scenario table and original exit criteria below retain the original
+qualification scope. This approved completion basis supersedes their remaining
+manual-observation prerequisites for `EPIC-020` only.
+
 ### Entry points, targets, and reviewer
 
 The successor skill is `$aquarium:herdr-review`; its embedded route is `herdr`.
