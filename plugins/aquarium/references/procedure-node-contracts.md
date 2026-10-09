@@ -42,6 +42,8 @@ states that the review predates changed bytes.
 
 ## Goal Procedure
 
+The bundled version-28 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary Decisions require current applicable semantic passage, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements remain inactive pending TASK-116/117; released managed copies retain their direct contract.
+
 `epic-handler` owns goal-centered member, remediation, and closeout work. It does
 not invoke the task phase skills. `complete-work` returns the work summary, source
 revision, and conditional plan-handoff artifact. `record-evidence` returns the goal
@@ -58,9 +60,9 @@ is a guard axis of the finding-class decision. Unverified completion
 returns to evidence; unmet completion and Medium-or-higher findings share the
 explicit authority gate. Inconsistent finding totals return to evidence before
 classification. A first adequate Low-only review alone records either
-finite settlement or the supported bounded hardening handoff. The derived
+finite settlement or the supported bounded hardening handoff. Final evidence assembly and its retained Judge follow the core gate before goal assessment. The derived
 `current-rework-obligations` total is not part of the contract. The final-closeout substitute is valid only
-for `goal-kind=epic-closeout` with exact successful validation evidence. Goal
+for `goal-kind=epic-closeout` with exact successful validation evidence, unchanged implementation and current focused checks under a separate applicability gate. Goal
 assessment consumes the carried completion summary and gap counts, their
 consistency when present, and any user direction. A stop direction must produce a
 not-achieved assessment rather than closing the goal.
@@ -85,8 +87,14 @@ complete Epic result and prepared closeout diff. `approved` leads to `closeout`;
 also require a user decision and cannot use delegated acceptance. Each path retains
 its own assessment and exact acceptance evidence.
 
+Stopped core evidence repair passes through the Primary's
+`record-stopped-core-gaps` before the stopped final Worker and Judge. Carry its
+gap record in the full assignment beyond the bounded selectors. This path
+reconciles available evidence and preserves unresolved gaps; it cannot enter
+ordinary work or provider review before actual renewed user direction.
+
 Each `choose-user-direction: fix-and-review` decision authorizes its one transition
-back to work and one next-ordinal remediation confirmation. Later rework reaches a fresh unset choice;
+through the exact effect-authority gate back to work and one next-ordinal remediation confirmation. Later rework reaches a fresh unset choice;
 no recorded authorization survives the pass or context restoration. The narrow
 ordinal-two hardening handoff remains available when independently reached, but
 no caller starts that assessment merely to qualify for it.

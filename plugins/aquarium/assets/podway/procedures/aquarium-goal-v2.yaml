@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "27"
+version: "28"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -14,6 +14,7 @@ node_definitions:
       - Use epic-handler for one goal-centered member, remediation, or closeout goal; do not invoke task phase skills.
       - Preserve the exact authorized scope and return current target and focused evidence without implicit commit, push, publication, or session replacement.
       - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason. On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
+      - Deliver the complete aquarium.worker-handoff/v1 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
     items:
       - id: work-summary
         type: text
@@ -58,6 +59,12 @@ node_definitions:
         required: false
         allowed_media_types:
           - text/markdown
+      - id: worker-handoff
+        type: artifact
+        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        required: true
+        allowed_media_types:
+          - application/json
   evidence-record:
     type: action
     title: Record verification and review
@@ -65,6 +72,7 @@ node_definitions:
     instructions:
       - Reconstruct the exact work target, review lineage, pending invocation, checks, and remaining review authority before any new provider call.
       - Do not start another review or broad audit solely for eligible Low findings or their permitted locally checked delta.
+      - Deliver the complete aquarium.worker-handoff/v1 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
     items:
       - id: goal-kind
         type: choice
@@ -399,6 +407,12 @@ node_definitions:
         min_length: 1
         max_length: 7000
         multiline: true
+      - id: worker-handoff
+        type: artifact
+        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        required: true
+        allowed_media_types:
+          - application/json
   review-route-binding-decision:
     type: decision
     title: Bind the Goal review route
@@ -1211,6 +1225,16 @@ node_definitions:
         min_length: 1
         max_length: 3000
         multiline: true
+      - id: closeout-substitute-applicability
+        type: check_result
+        prompt: Verify the exact successful terminal internal Epic validation and unchanged validated implementation, original Epic criteria and retained Judge history, together with current focused closeout checks; reject a member or remediation goal and any changed implementation.
+        required: true
+        operation_id: aquarium-goal-closeout-substitute-applicability
+        operation_digest: sha256:171b9ba3cc43cdb5ecb2834d888a45b5ee797a14a57d6fb7c89bdd7637b90b98
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
   finding-validity-decision:
     type: decision
     title: Confirm finding validity
@@ -1821,6 +1845,21 @@ node_definitions:
     reason:
       required: true
       prompt: Explain how the selected core evidence is ready or what must be corrected before goal assessment.
+  stopped-core-gap-record:
+    type: action
+    title: Record stopped core evidence gaps
+    intent: Preserve the core evidence repair request within the confirmed stopped boundary.
+    instructions:
+      - Record the missing, stale or incoherent evidence identified by the core Decision and include this record in the stopped final Worker assignment.
+      - Reconcile only available evidence; preserve unresolved gaps and the stopped boundary without implementation, provider review or renewed acceptance.
+    items:
+      - id: stopped-core-gaps
+        type: text
+        prompt: Record the evidence gaps and bounded reconciliation needed for stopped final assembly.
+        required: true
+        min_length: 1
+        max_length: 3000
+        multiline: true
   stopped-goal-boundary-record:
     type: action
     title: Bind the stopped Goal outcome
@@ -1835,24 +1874,52 @@ node_definitions:
         required: true
         choices:
           - stopped
+          - invalid-not-stopped
   goal-assessment:
     type: decision
-    title: Assess the goal
-    objective: Determine whether the current goal revision is achieved.
-    prompt: What is the outcome of the current goal?
+    title: Assess the Goal
+    objective: Determine the current Goal outcome from the applicable final Judge report and fresh original evidence.
+    prompt: What is the outcome of the current Goal?
     evidence_guidance:
-      - Read the latest work and evidence records and assess every goal criterion.
-      - A path reached from choose-user-direction after the user selected stop cannot select achieved; use the carried direction and completion evidence when assessing every criterion.
+      - Read the complete original Goal and applicable Epic criteria, final candidate, work, technical-review and Judge reports, and all relevant checks and authority.
+      - Use the final applicable Judge outcome without repeating its assessment. Member Task success cannot erase an Epic integration gap.
     options:
       - id: achieved
         label: Goal achieved
         criteria: Fresh criterion assessments support the current goal revision.
+        guards:
+          - evidence:
+              node: judge-goal
+              item: judge-goal-outcome
+            equals: achieved
+          - evidence:
+              node: judge-goal
+              item: judge-verdict
+            equals: pass
+          - evidence:
+              node: judge-goal
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: judge-goal
+              item: judge-unverified-criteria
+            equals: 0
       - id: not-achieved
         label: Goal not achieved
         criteria: Fresh evidence does not support the current goal revision.
+        guards:
+          - evidence:
+              node: judge-goal
+              item: judge-goal-outcome
+            equals: not-achieved
       - id: superseded
         label: Goal superseded
-        criteria: The current goal revision is no longer desired.
+        criteria: The current goal revision is no longer the desired outcome.
+        guards:
+          - evidence:
+              node: judge-goal
+              item: judge-goal-outcome
+            equals: superseded
     reason:
       required: true
       prompt: Explain the outcome using criterion assessments and evidence.
@@ -1865,33 +1932,52 @@ node_definitions:
   stopped-goal-assessment:
     type: decision
     title: Assess the stopped Goal
-    objective: Determine the current Goal outcome after an explicit stop without allowing an achieved outcome.
+    objective: Determine the current Goal outcome without permitting achievement after an explicit stop.
     prompt: What non-achieved outcome applies to the stopped Goal?
     evidence_guidance:
-      - Read the carried direction or route-stop record, completion evidence, and core Goal evidence.
-      - A stopped path cannot select achieved.
+      - Read the confirmed stopped boundary, final applicable Judge report, original Goal criteria, carried direction or route-stop evidence and current completion evidence.
+      - This path cannot select achieved; preserve the stop and assess its exact non-achieved outcome.
     options:
-      - id: achieved
-        label: Goal achieved unavailable after stop
-        criteria: This option is mechanically unavailable because the path-bound stop record permits only a non-achieved or superseded outcome.
+      - id: invalid-not-stopped
+        label: Invalid non-stopped boundary
+        criteria: This option is structurally required by goal tracking but is unavailable after the stopped-boundary confirmation.
         guards:
           - evidence:
               node: record-stopped-goal-boundary
               item: goal-outcome-boundary
-            not_equals: stopped
+            equals: invalid-not-stopped
+      - id: stopped
+        label: Goal stopped without achievement
+        criteria: The explicit stop leaves the current goal revision unachieved.
+        guards:
+          - evidence:
+              node: judge-stopped-goal
+              item: judge-goal-outcome
+            equals: stopped
       - id: not-achieved
         label: Goal not achieved
-        criteria: The explicit stop leaves the current Goal revision unsupported.
+        criteria: Fresh evidence does not support the current goal revision.
+        guards:
+          - evidence:
+              node: judge-stopped-goal
+              item: judge-goal-outcome
+            equals: not-achieved
       - id: superseded
         label: Goal superseded
-        criteria: The explicit stop records that the current Goal revision is no longer desired.
+        criteria: The current goal revision is no longer the desired outcome.
+        guards:
+          - evidence:
+              node: judge-stopped-goal
+              item: judge-goal-outcome
+            equals: superseded
     reason:
       required: true
-      prompt: Explain the stopped outcome using the carried direction, completion assessment, and Goal evidence.
+      prompt: Explain the non-achieved outcome using the stopped boundary, criterion assessments, and carried stop evidence.
     assessment:
       target: session_goal
       outcomes:
-        achieved: achieved
+        invalid-not-stopped: achieved
+        stopped: not_achieved
         not-achieved: not_achieved
         superseded: superseded
   hardening-deferral-disposition:
@@ -2015,12 +2101,652 @@ node_definitions:
         min_length: 1
         max_length: 3000
         multiline: true
+  judge-assessment-record:
+    type: action
+    title: Assess the current candidate
+    intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
+    instructions:
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the same logical Judge.
+      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
+      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+    items:
+      - id: judge-assessment
+        type: artifact
+        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: judge-verdict
+        type: choice
+        prompt: Record the Judge verdict.
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: judge-unmet-criteria
+        type: integer
+        prompt: Count mandatory unmet criteria, including omitted original criteria.
+        required: true
+        minimum: 0
+      - id: judge-unverified-criteria
+        type: integer
+        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
+        required: true
+        minimum: 0
+      - id: judge-applicability
+        type: check_result
+        prompt: Verify complete original Goal and applicable Epic criterion coverage, exact current target and requirement basis, goal revision, placement and attempt, Worker result, retained Epic Judge identity and history, and acknowledged native role/configuration/task/result bindings.
+        required: true
+        operation_id: aquarium-goal-judge-applicability
+        operation_digest: sha256:445cbfb2c44471dfd8be9b77c1639815d4994ece0ec4a883e5ea6e23bc722fb9
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: judge-summary
+        type: text
+        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  final-judge-assessment-record:
+    type: action
+    title: Assess the current candidate
+    intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
+    instructions:
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the same logical Judge.
+      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
+      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+    items:
+      - id: judge-assessment
+        type: artifact
+        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: judge-verdict
+        type: choice
+        prompt: Record the Judge verdict.
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: judge-unmet-criteria
+        type: integer
+        prompt: Count mandatory unmet criteria, including omitted original criteria.
+        required: true
+        minimum: 0
+      - id: judge-unverified-criteria
+        type: integer
+        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
+        required: true
+        minimum: 0
+      - id: judge-applicability
+        type: check_result
+        prompt: Verify complete original Goal and applicable Epic criterion coverage, exact current target and requirement basis, goal revision, placement and attempt, Worker result, retained Epic Judge identity and history, and acknowledged native role/configuration/task/result bindings.
+        required: true
+        operation_id: aquarium-goal-judge-applicability
+        operation_digest: sha256:445cbfb2c44471dfd8be9b77c1639815d4994ece0ec4a883e5ea6e23bc722fb9
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: judge-summary
+        type: text
+        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: judge-goal-outcome
+        type: choice
+        prompt: Record the exact final goal outcome; explicit stopped paths cannot be achieved.
+        required: true
+        choices:
+          - achieved
+          - not-achieved
+          - superseded
+          - stopped
+  semantic-work-decision:
+    type: decision
+    title: Use the work assessment
+    objective: Progress only from the applicable retained Judge verdict; preserve all execution authority.
+    prompt: What does the current Judge report permit?
+    options:
+      - id: passed
+        label: Assessment passed
+        criteria: The applicable Judge pass covers all mandatory criteria with no gaps.
+        guards:
+          - evidence:
+              node: judge-work
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-work
+              item: judge-verdict
+            equals: pass
+          - evidence:
+              node: judge-work
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: judge-work
+              item: judge-unverified-criteria
+            equals: 0
+      - id: inapplicable
+        label: Assessment inapplicable
+        criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
+        guards:
+          - evidence:
+              node: judge-work
+              item: judge-applicability
+            field: outcome
+            not_equals: pass
+      - id: rework
+        label: Established correction required
+        criteria: An applicable report contains unmet mandatory criteria; preserve its verdict and admit corrections only under existing authority.
+        guards:
+          - evidence:
+              node: judge-work
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-work
+              item: judge-verdict
+            equals: rework
+          - evidence:
+              node: judge-work
+              item: judge-unmet-criteria
+            at_least: 1
+      - id: evidence-needed
+        label: Evidence required
+        criteria: An applicable report has no unmet criterion and at least one unverified criterion; obtain original evidence under existing authority.
+        guards:
+          - evidence:
+              node: judge-work
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-work
+              item: judge-verdict
+            equals: evidence-needed
+          - evidence:
+              node: judge-work
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: judge-work
+              item: judge-unverified-criteria
+            at_least: 1
+    reason:
+      required: true
+      prompt: Explain the selected verdict, exact target, remaining authority and actual next owner.
+  record-work-followup:
+    type: action
+    title: Record work correction basis
+    intent: Bind the actual correction or evidence owner to remaining authority without creating another review or effect.
+    instructions:
+      - Read the triggering Judge report and exact target. Separate corrections from missing evidence and record the original criterion and native result references.
+      - A negative verdict supplies no authority. Require actual applicable unconsumed correction/check/provider authority before admitting the specific effect. Otherwise stop here or at the blocked decision until actual authority arrives.
+      - Review evidence collection must reconcile the selected operation before a new dispatch; never start another provider or reset an ordinal to answer a semantic gap.
+      - Return only to complete-work under the exact current effect grant. Use an authorized earlier manual rework owner for any different effect.
+    items:
+      - id: semantic-followup-summary
+        type: text
+        prompt: Record source node/attempt/report, exact target, required work or evidence, original criterion IDs, finding lineage, consumed ordinals, remaining authority and exclusions.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: semantic-owner
+        type: choice
+        prompt: Record the earliest actual owner.
+        required: true
+        choices:
+          - complete-work
+      - id: semantic-authority
+        type: check_result
+        prompt: Verify actual applicable unconsumed authority for the exact Goal correction or evidence operation, current target, effect and owner; preserve provider lifecycle, consumed review ordinals and distinct Epic grants.
+        required: true
+        operation_id: aquarium-goal-semantic-followup-authority
+        operation_digest: sha256:623a2bd4f768ad91ff9808385b30c86a78f7a4b999b3109ba88ec5589b5518dc
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  record-work-followup-authority:
+    type: decision
+    title: Confirm semantic followup authority
+    objective: Block uncovered corrections and evidence operations.
+    prompt: Is the exact followup operation already authorized?
+    options:
+      - id: authorized
+        label: Followup authorized
+        criteria: The exact current operation is covered by existing authority.
+        guards:
+          - evidence:
+              node: record-work-followup
+              item: semantic-authority
+            field: outcome
+            equals: pass
+      - id: blocked
+        label: Authority missing
+        criteria: The effect is uncovered or uncertain; await actual bounded authority.
+        guards:
+          - evidence:
+              node: record-work-followup
+              item: semantic-authority
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Record the exact authority and consumption basis or blocker.
+  record-work-evidence:
+    type: action
+    title: Record work evidence basis
+    intent: Bind the actual correction or evidence owner to remaining authority without creating another review or effect.
+    instructions:
+      - Read the triggering Judge report and exact target. Separate corrections from missing evidence and record the original criterion and native result references.
+      - A negative verdict supplies no authority. Require actual applicable unconsumed correction/check/provider authority before admitting the specific effect. Otherwise stop here or at the blocked decision until actual authority arrives.
+      - Review evidence collection must reconcile the selected operation before a new dispatch; never start another provider or reset an ordinal to answer a semantic gap.
+      - Return only to complete-work under the exact current effect grant. Use an authorized earlier manual rework owner for any different effect.
+    items:
+      - id: semantic-followup-summary
+        type: text
+        prompt: Record source node/attempt/report, exact target, required work or evidence, original criterion IDs, finding lineage, consumed ordinals, remaining authority and exclusions.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: semantic-owner
+        type: choice
+        prompt: Record the earliest actual owner.
+        required: true
+        choices:
+          - complete-work
+      - id: semantic-authority
+        type: check_result
+        prompt: Verify actual applicable unconsumed authority for the exact Goal correction or evidence operation, current target, effect and owner; preserve provider lifecycle, consumed review ordinals and distinct Epic grants.
+        required: true
+        operation_id: aquarium-goal-semantic-followup-authority
+        operation_digest: sha256:623a2bd4f768ad91ff9808385b30c86a78f7a4b999b3109ba88ec5589b5518dc
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  record-work-evidence-authority:
+    type: decision
+    title: Confirm semantic followup authority
+    objective: Block uncovered corrections and evidence operations.
+    prompt: Is the exact followup operation already authorized?
+    options:
+      - id: authorized
+        label: Followup authorized
+        criteria: The exact current operation is covered by existing authority.
+        guards:
+          - evidence:
+              node: record-work-evidence
+              item: semantic-authority
+            field: outcome
+            equals: pass
+      - id: blocked
+        label: Authority missing
+        criteria: The effect is uncovered or uncertain; await actual bounded authority.
+        guards:
+          - evidence:
+              node: record-work-evidence
+              item: semantic-authority
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Record the exact authority and consumption basis or blocker.
+  semantic-goal-evidence-decision:
+    type: decision
+    title: Use the goal-evidence assessment
+    objective: Progress only from the applicable retained Judge verdict; preserve all execution authority.
+    prompt: What does the current Judge report permit?
+    options:
+      - id: passed
+        label: Assessment passed
+        criteria: The applicable Judge pass covers all mandatory criteria with no gaps.
+        guards:
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-verdict
+            equals: pass
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-unverified-criteria
+            equals: 0
+      - id: inapplicable
+        label: Assessment inapplicable
+        criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
+        guards:
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-applicability
+            field: outcome
+            not_equals: pass
+      - id: rework
+        label: Established correction required
+        criteria: An applicable report contains unmet mandatory criteria; preserve its verdict and admit corrections only under existing authority.
+        guards:
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-verdict
+            equals: rework
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-unmet-criteria
+            at_least: 1
+      - id: evidence-needed
+        label: Evidence required
+        criteria: An applicable report has no unmet criterion and at least one unverified criterion; obtain original evidence under existing authority.
+        guards:
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-applicability
+            field: outcome
+            equals: pass
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-verdict
+            equals: evidence-needed
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: judge-goal-evidence
+              item: judge-unverified-criteria
+            at_least: 1
+    reason:
+      required: true
+      prompt: Explain the selected verdict, exact target, remaining authority and actual next owner.
+  record-goal-evidence-evidence:
+    type: action
+    title: Record goal-evidence evidence basis
+    intent: Bind the actual correction or evidence owner to remaining authority without creating another review or effect.
+    instructions:
+      - Read the triggering Judge report and exact target. Separate corrections from missing evidence and record the original criterion and native result references.
+      - A negative verdict supplies no authority. Require actual applicable unconsumed correction/check/provider authority before admitting the specific effect. Otherwise stop here or at the blocked decision until actual authority arrives.
+      - Review evidence collection must reconcile the selected operation before a new dispatch; never start another provider or reset an ordinal to answer a semantic gap.
+      - Return only to record-evidence under the exact current effect grant. Use an authorized earlier manual rework owner for any different effect.
+    items:
+      - id: semantic-followup-summary
+        type: text
+        prompt: Record source node/attempt/report, exact target, required work or evidence, original criterion IDs, finding lineage, consumed ordinals, remaining authority and exclusions.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: semantic-owner
+        type: choice
+        prompt: Record the earliest actual owner.
+        required: true
+        choices:
+          - record-evidence
+      - id: semantic-authority
+        type: check_result
+        prompt: Verify actual applicable unconsumed authority for the exact Goal correction or evidence operation, current target, effect and owner; preserve provider lifecycle, consumed review ordinals and distinct Epic grants.
+        required: true
+        operation_id: aquarium-goal-semantic-followup-authority
+        operation_digest: sha256:623a2bd4f768ad91ff9808385b30c86a78f7a4b999b3109ba88ec5589b5518dc
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  record-goal-evidence-evidence-authority:
+    type: decision
+    title: Confirm semantic followup authority
+    objective: Block uncovered corrections and evidence operations.
+    prompt: Is the exact followup operation already authorized?
+    options:
+      - id: authorized
+        label: Followup authorized
+        criteria: The exact current operation is covered by existing authority.
+        guards:
+          - evidence:
+              node: record-goal-evidence-evidence
+              item: semantic-authority
+            field: outcome
+            equals: pass
+      - id: blocked
+        label: Authority missing
+        criteria: The effect is uncovered or uncertain; await actual bounded authority.
+        guards:
+          - evidence:
+              node: record-goal-evidence-evidence
+              item: semantic-authority
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Record the exact authority and consumption basis or blocker.
+  record-goal-rework-basis:
+    type: action
+    title: Record current Goal correction authority
+    intent: Bind the actual correction or evidence owner to remaining authority without creating another review or effect.
+    instructions:
+      - Read the triggering Judge report and exact target. Separate corrections from missing evidence and record the original criterion and native result references.
+      - A negative verdict supplies no authority. Require actual applicable unconsumed correction/check/provider authority before admitting the specific effect. Otherwise stop here or at the blocked decision until actual authority arrives.
+      - Review evidence collection must reconcile the selected operation before a new dispatch; never start another provider or reset an ordinal to answer a semantic gap.
+      - Return only to complete-work under the exact current effect grant. Use an authorized earlier manual rework owner for any different effect.
+      - Preserve the review-mode classification and any actual fix-and-review answer. Never reuse a consumed normal member grant for a correction or create another assessment ordinal.
+    items:
+      - id: semantic-followup-summary
+        type: text
+        prompt: Record source node/attempt/report, exact target, required work or evidence, original criterion IDs, finding lineage, consumed ordinals, remaining authority and exclusions.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: semantic-owner
+        type: choice
+        prompt: Record the earliest actual owner.
+        required: true
+        choices:
+          - complete-work
+      - id: semantic-authority
+        type: check_result
+        prompt: Verify actual applicable unconsumed authority for the exact Goal correction or evidence operation, current target, effect and owner; preserve provider lifecycle, consumed review ordinals and distinct Epic grants.
+        required: true
+        operation_id: aquarium-goal-semantic-followup-authority
+        operation_digest: sha256:623a2bd4f768ad91ff9808385b30c86a78f7a4b999b3109ba88ec5589b5518dc
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  confirm-goal-rework-effect-authority:
+    type: decision
+    title: Confirm semantic followup authority
+    objective: Block uncovered corrections and evidence operations.
+    prompt: Is the exact followup operation already authorized?
+    options:
+      - id: authorized
+        label: Followup authorized
+        criteria: The exact current operation is covered by existing authority.
+        guards:
+          - evidence:
+              node: record-goal-rework-basis
+              item: semantic-authority
+            field: outcome
+            equals: pass
+      - id: blocked
+        label: Authority missing
+        criteria: The effect is uncovered or uncertain; await actual bounded authority.
+        guards:
+          - evidence:
+              node: record-goal-rework-basis
+              item: semantic-authority
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Record the exact authority and consumption basis or blocker.
+  closeout-substitute-applicability-decision:
+    type: decision
+    title: Confirm final assessment applicability
+    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    prompt: Is the complete final report applicable?
+    options:
+      - id: current
+        label: Report current
+        criteria: The complete report binds the current original requirements and exact target.
+        guards:
+          - evidence:
+              node: record-closeout-substitute
+              item: closeout-substitute-applicability
+            field: outcome
+            equals: pass
+      - id: invalid
+        label: Report inapplicable
+        criteria: The report must be reassessed on current original evidence.
+        guards:
+          - evidence:
+              node: record-closeout-substitute
+              item: closeout-substitute-applicability
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Explain current coverage, target and native binding applicability.
+  goal-assessment-candidate:
+    type: action
+    title: Assemble the final Goal candidate
+    intent: Deliver complete original Goal and applicable Epic evidence without new implementation or provider work.
+    instructions:
+      - Assemble canonical original Goal and applicable Epic criteria, omitted assignment criteria, exact final target, original work/review/Judge reports, full evidence bytes, checks and authority. At Epic assessment include integration and overall purpose even when all member Tasks passed.
+      - Compose the reviewed basis with any permitted Low-only delta and carried criterion applicability. Preserve its review coverage limit and all consumed authority.
+      - For a stopped path, preserve the stop, gaps and non-achievement. Never reopen work from this evidence assembly.
+    items:
+      - id: worker-handoff
+        type: artifact
+        prompt: Reference the complete aquarium.worker-handoff/v1 final evidence candidate and exact target.
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: goal-assessment-summary
+        type: text
+        prompt: Record original Goal and applicable Epic requirement owners, exact candidate, complete evidence inventory, integration criteria, Low composition, authority and stopped boundary when applicable.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  final-assessment-applicability-decision:
+    type: decision
+    title: Confirm final assessment applicability
+    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    prompt: Is the complete final report applicable?
+    options:
+      - id: current
+        label: Report current
+        criteria: The complete report binds the current original requirements and exact target.
+        guards:
+          - evidence:
+              node: judge-goal
+              item: judge-applicability
+            field: outcome
+            equals: pass
+      - id: invalid
+        label: Report inapplicable
+        criteria: The report must be reassessed on current original evidence.
+        guards:
+          - evidence:
+              node: judge-goal
+              item: judge-applicability
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Explain current coverage, target and native binding applicability.
+  stopped-final-assessment-applicability-decision:
+    type: decision
+    title: Confirm final assessment applicability
+    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    prompt: Is the complete final report applicable?
+    options:
+      - id: current
+        label: Report current
+        criteria: The complete report binds the current original requirements and exact target.
+        guards:
+          - evidence:
+              node: judge-stopped-goal
+              item: judge-applicability
+            field: outcome
+            equals: pass
+      - id: invalid
+        label: Report inapplicable
+        criteria: The report must be reassessed on current original evidence.
+        guards:
+          - evidence:
+              node: judge-stopped-goal
+              item: judge-applicability
+            field: outcome
+            not_equals: pass
+    reason:
+      required: true
+      prompt: Explain current coverage, target and native binding applicability.
+  stopped-goal-boundary-decision:
+    type: decision
+    title: Confirm the stopped goal boundary
+    objective: Admit goal assessment only through the path-owned stopped boundary.
+    prompt: Does the recorded boundary preserve the explicit stop?
+    options:
+      - id: confirmed
+        label: Stopped boundary confirmed
+        criteria: The path record permits only not-achieved or superseded goal outcomes.
+        guards:
+          - evidence:
+              node: record-stopped-goal-boundary
+              item: goal-outcome-boundary
+            equals: stopped
+      - id: invalid
+        label: Restore the stopped boundary
+        criteria: The boundary does not preserve the explicit stop and must be recorded again before assessment.
+        guards:
+          - evidence:
+              node: record-stopped-goal-boundary
+              item: goal-outcome-boundary
+            equals: invalid-not-stopped
+    reason:
+      required: true
+      prompt: Explain how the explicit stop remains binding for goal assessment.
 graph:
   entry: complete-work
   nodes:
     - id: complete-work
       use: work-record
-      next: record-evidence
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-worker/v1
+        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        max_rounds: 32
+        after_accept: retain
+      next: judge-work
     - id: record-evidence
       use: evidence-record
       evidence_from:
@@ -2029,6 +2755,12 @@ graph:
           items:
             - work-summary
             - source-revision
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-worker/v1
+        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        max_rounds: 32
+        after_accept: retain
       next: decide-review-basis
     - id: decide-review-basis
       use: review-basis-decision
@@ -2064,7 +2796,7 @@ graph:
             - evidence-summary
             - goal-verification-result
             - goal-review-readiness-result
-      next: decide-operational-evidence
+      next: confirm-closeout-substitute-applicability
     - id: confirm-review-route-binding
       use: review-route-binding-decision
       evidence_from:
@@ -2656,7 +3388,7 @@ graph:
             - goal-review-readiness-result
       routes:
         passed:
-          to: confirm-completion-assessment
+          to: judge-goal-evidence
           effect: advance
         verification-incomplete:
           to: complete-work
@@ -2907,8 +3639,8 @@ graph:
             - low-disposition-verification
       routes:
         remediation:
-          to: complete-work
-          effect: rework
+          to: record-goal-rework-basis
+          effect: advance
         user-direction:
           to: await-user-direction
           effect: advance
@@ -2942,8 +3674,8 @@ graph:
             - direction-summary
       routes:
         fix-and-review:
-          to: complete-work
-          effect: rework
+          to: record-goal-rework-basis
+          effect: advance
         stop:
           to: record-stopped-goal-boundary
           effect: advance
@@ -3024,7 +3756,7 @@ graph:
       next: confirm-goal-assessment-core
     - id: record-stopped-goal-boundary
       use: stopped-goal-boundary-record
-      next: confirm-stopped-goal-assessment-core
+      next: confirm-stopped-goal-boundary
     - id: confirm-goal-assessment-core
       use: goal-assessment-core-decision
       evidence_from:
@@ -3054,7 +3786,7 @@ graph:
             - effective-medium-or-higher-findings
       routes:
         ready:
-          to: assess-goal
+          to: prepare-goal-assessment
           effect: advance
         needs-rework:
           to: record-evidence
@@ -3088,11 +3820,21 @@ graph:
             - effective-medium-or-higher-findings
       routes:
         ready:
-          to: assess-stopped-goal
+          to: prepare-stopped-goal-assessment
           effect: advance
         needs-rework:
-          to: record-evidence
-          effect: rework
+          to: record-stopped-core-gaps
+          effect: advance
+    - id: record-stopped-core-gaps
+      use: stopped-core-gap-record
+      evidence_from:
+        - node: confirm-stopped-goal-assessment-core
+          required: true
+        - node: record-stopped-goal-boundary
+          required: true
+          items:
+            - goal-outcome-boundary
+      next: prepare-stopped-goal-assessment
     - id: assess-goal
       use: goal-assessment
       evidence_from:
@@ -3122,10 +3864,6 @@ graph:
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
             - hardening-deferral-native-target-sha256
-        - node: record-hardening-handoff
-          required: false
-          items:
-            - hardening-handoff-summary
         - node: record-low-disposition
           required: false
           items:
@@ -3137,6 +3875,20 @@ graph:
             - after-target
             - coverage-relationship
             - low-disposition-verification
+        - node: judge-goal
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-goal-outcome
+        - node: record-hardening-handoff
+          required: false
+          items:
+            - hardening-handoff-summary
         - node: record-review-route-stop
           required: false
           items:
@@ -3176,23 +3928,6 @@ graph:
           items:
             - direction-classification
             - direction-summary
-        - node: record-hardening-deferral
-          required: false
-          items:
-            - hardening-deferral-state
-            - hardening-deferral-run-id
-            - hardening-deferral-finding-ids
-            - hardening-deferral-summary
-            - hardening-deferral-owner
-            - hardening-deferral-evidence-path
-            - hardening-deferral-evidence-sha256
-            - hardening-deferral-publication-state
-            - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
-        - node: record-hardening-handoff
-          required: false
-          items:
-            - hardening-handoff-summary
         - node: record-low-disposition
           required: false
           items:
@@ -3204,13 +3939,30 @@ graph:
             - after-target
             - coverage-relationship
             - low-disposition-verification
+        - node: judge-stopped-goal
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-goal-outcome
+        - node: record-hardening-handoff
+          required: false
+          items:
+            - hardening-handoff-summary
         - node: record-review-route-stop
           required: false
           items:
             - route-stop-classification
             - route-stop-summary
       routes:
-        achieved:
+        invalid-not-stopped:
+          to: record-stopped-outcome
+          effect: advance
+        stopped:
           to: record-stopped-outcome
           effect: advance
         not-achieved:
@@ -3284,7 +4036,544 @@ graph:
     - id: stopped-closeout
       use: closeout-record
       terminal: true
+    - id: judge-work
+      use: judge-assessment-record
+      evidence_from:
+        - node: complete-work
+          required: true
+          items:
+            - work-summary
+            - source-revision
+            - review-route
+            - review-target-scope
+            - review-selection-summary
+            - plan-handoff-artifact
+            - worker-handoff
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-goal-judge/v1
+        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        max_rounds: 32
+        after_accept: retain
+      next: decide-work-assessment
+    - id: decide-work-assessment
+      use: semantic-work-decision
+      evidence_from:
+        - node: judge-work
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+      routes:
+        passed:
+          to: record-evidence
+          effect: advance
+        inapplicable:
+          to: judge-work
+          effect: rework
+        rework:
+          to: record-work-followup
+          effect: advance
+        evidence-needed:
+          to: record-work-evidence
+          effect: advance
+    - id: record-work-followup
+      use: record-work-followup
+      evidence_from:
+        - node: judge-work
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+      next: confirm-work-followup-authority
+    - id: confirm-work-followup-authority
+      use: record-work-followup-authority
+      evidence_from:
+        - node: record-work-followup
+          required: true
+          items:
+            - semantic-authority
+            - semantic-followup-summary
+      routes:
+        authorized:
+          to: complete-work
+          effect: rework
+        blocked:
+          to: record-work-followup
+          effect: rework
+    - id: record-work-evidence
+      use: record-work-evidence
+      evidence_from:
+        - node: judge-work
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+      next: confirm-work-evidence-authority
+    - id: confirm-work-evidence-authority
+      use: record-work-evidence-authority
+      evidence_from:
+        - node: record-work-evidence
+          required: true
+          items:
+            - semantic-authority
+            - semantic-followup-summary
+      routes:
+        authorized:
+          to: complete-work
+          effect: rework
+        blocked:
+          to: record-work-evidence
+          effect: rework
+    - id: judge-goal-evidence
+      use: judge-assessment-record
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - goal-kind
+            - review-evidence-kind
+            - review-mode
+            - assessment-kind
+            - review-route
+            - review-operation
+            - assessment-ordinal
+            - prior-assessment-ordinal
+            - assessment-ordinal-continuity
+            - review-evidence-reference
+            - backend-check-result
+            - assessment-provenance
+            - assessment-provenance-kind
+            - waiver-summary
+            - route-authorization-basis
+            - route-change-authority-reference
+        - node: record-evidence
+          required: true
+          items:
+            - prior-review-route
+            - prior-review-operation
+            - prior-route-lifecycle-state
+            - route-change-readiness
+            - route-direction
+            - route-binding-result
+            - finding-lineage-summary
+            - remaining-review-authority-summary
+            - corrected-target-summary
+            - extra-assessment-authority-reference
+            - evidence-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - goal-verification-result
+            - goal-review-readiness-result
+        - node: record-evidence
+          required: true
+          items:
+            - unresolved-valid-findings
+            - effective-medium-or-higher-findings
+            - effective-low-findings
+            - finding-count-consistency
+            - confirmation-needed-findings
+            - finding-disposition-summary
+            - worker-handoff
+        - node: complete-work
+          required: true
+          items:
+            - work-summary
+            - source-revision
+            - worker-handoff
+        - node: judge-work
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+        - node: record-closeout-substitute
+          required: false
+          items:
+            - closeout-substitute-summary
+            - closeout-substitute-applicability
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-goal-judge/v1
+        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        max_rounds: 32
+        after_accept: retain
+      next: decide-goal-evidence-assessment
+    - id: decide-goal-evidence-assessment
+      use: semantic-goal-evidence-decision
+      evidence_from:
+        - node: judge-goal-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+      routes:
+        passed:
+          to: confirm-completion-assessment
+          effect: advance
+        inapplicable:
+          to: judge-goal-evidence
+          effect: rework
+        rework:
+          to: decide-goal-rework-authority
+          effect: advance
+        evidence-needed:
+          to: record-goal-evidence-evidence
+          effect: advance
+    - id: record-goal-evidence-evidence
+      use: record-goal-evidence-evidence
+      evidence_from:
+        - node: judge-goal-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+      next: confirm-goal-evidence-evidence-authority
+    - id: confirm-goal-evidence-evidence-authority
+      use: record-goal-evidence-evidence-authority
+      evidence_from:
+        - node: record-goal-evidence-evidence
+          required: true
+          items:
+            - semantic-authority
+            - semantic-followup-summary
+      routes:
+        authorized:
+          to: record-evidence
+          effect: rework
+        blocked:
+          to: record-goal-evidence-evidence
+          effect: rework
+    - id: record-goal-rework-basis
+      use: record-goal-rework-basis
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - review-mode
+            - assessment-ordinal
+            - finding-lineage-summary
+        - node: judge-goal-evidence
+          required: false
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - after-target
+            - current-blocking-findings
+        - node: await-user-direction
+          required: false
+          items:
+            - direction-classification
+            - direction-summary
+      next: confirm-goal-rework-effect-authority
+    - id: confirm-goal-rework-effect-authority
+      use: confirm-goal-rework-effect-authority
+      evidence_from:
+        - node: record-goal-rework-basis
+          required: true
+          items:
+            - semantic-authority
+            - semantic-followup-summary
+      routes:
+        authorized:
+          to: complete-work
+          effect: rework
+        blocked:
+          to: record-goal-rework-basis
+          effect: rework
+    - id: confirm-closeout-substitute-applicability
+      use: closeout-substitute-applicability-decision
+      evidence_from:
+        - node: record-closeout-substitute
+          required: true
+          items:
+            - closeout-substitute-summary
+            - closeout-substitute-applicability
+      routes:
+        current:
+          to: decide-operational-evidence
+          effect: advance
+        invalid:
+          to: record-closeout-substitute
+          effect: rework
+    - id: prepare-goal-assessment
+      use: goal-assessment-candidate
+      evidence_from:
+        - node: confirm-goal-assessment-core
+          required: true
+        - node: complete-work
+          required: true
+          items:
+            - work-summary
+            - source-revision
+            - worker-handoff
+            - plan-handoff-artifact
+        - node: record-evidence
+          required: true
+          items:
+            - goal-kind
+            - review-evidence-kind
+            - review-mode
+            - worker-handoff
+            - goal-verification-result
+            - goal-review-readiness-result
+            - evidence-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - review-evidence-reference
+            - assessment-ordinal
+            - finding-lineage-summary
+            - finding-disposition-summary
+            - finding-count-consistency
+        - node: judge-goal-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - pending-low-dispositions
+            - current-blocking-findings
+            - before-target
+            - after-target
+            - coverage-relationship
+            - low-disposition-verification
+        - node: record-hardening-deferral
+          required: false
+          items:
+            - hardening-deferral-state
+            - hardening-deferral-run-id
+            - hardening-deferral-finding-ids
+            - hardening-deferral-summary
+            - hardening-deferral-owner
+            - hardening-deferral-evidence-path
+            - hardening-deferral-evidence-sha256
+            - hardening-deferral-publication-state
+            - hardening-deferral-findings-query-state
+            - hardening-deferral-native-target-sha256
+        - node: record-closeout-substitute
+          required: false
+          items:
+            - closeout-substitute-summary
+            - closeout-substitute-applicability
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-worker/v1
+        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        max_rounds: 32
+        after_accept: retain
+      next: judge-goal
+    - id: judge-goal
+      use: final-judge-assessment-record
+      evidence_from:
+        - node: prepare-goal-assessment
+          required: true
+          items:
+            - worker-handoff
+            - goal-assessment-summary
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-goal-judge/v1
+        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        max_rounds: 32
+        after_accept: retain
+      next: confirm-goal-assessment-applicability
+    - id: confirm-goal-assessment-applicability
+      use: final-assessment-applicability-decision
+      evidence_from:
+        - node: judge-goal
+          required: true
+          items:
+            - judge-applicability
+            - judge-assessment
+            - judge-summary
+      routes:
+        current:
+          to: assess-goal
+          effect: advance
+        invalid:
+          to: judge-goal
+          effect: rework
+    - id: prepare-stopped-goal-assessment
+      use: goal-assessment-candidate
+      evidence_from:
+        - node: confirm-stopped-goal-assessment-core
+          required: true
+        - node: complete-work
+          required: true
+          items:
+            - work-summary
+            - source-revision
+            - worker-handoff
+            - plan-handoff-artifact
+        - node: record-evidence
+          required: true
+          items:
+            - goal-kind
+            - review-evidence-kind
+            - review-mode
+            - worker-handoff
+            - goal-verification-result
+            - goal-review-readiness-result
+            - evidence-summary
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - review-evidence-reference
+            - assessment-ordinal
+            - finding-lineage-summary
+            - finding-disposition-summary
+            - finding-count-consistency
+        - node: judge-goal-evidence
+          required: false
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - pending-low-dispositions
+            - current-blocking-findings
+            - before-target
+            - after-target
+            - coverage-relationship
+            - low-disposition-verification
+        - node: record-hardening-deferral
+          required: false
+          items:
+            - hardening-deferral-state
+            - hardening-deferral-run-id
+            - hardening-deferral-finding-ids
+            - hardening-deferral-summary
+            - hardening-deferral-owner
+            - hardening-deferral-evidence-path
+            - hardening-deferral-evidence-sha256
+            - hardening-deferral-publication-state
+            - hardening-deferral-findings-query-state
+            - hardening-deferral-native-target-sha256
+        - node: record-closeout-substitute
+          required: false
+          items:
+            - closeout-substitute-summary
+            - closeout-substitute-applicability
+        - node: record-stopped-goal-boundary
+          required: true
+          items:
+            - goal-outcome-boundary
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-worker/v1
+        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        max_rounds: 32
+        after_accept: retain
+      next: judge-stopped-goal
+    - id: judge-stopped-goal
+      use: final-judge-assessment-record
+      evidence_from:
+        - node: prepare-stopped-goal-assessment
+          required: true
+          items:
+            - worker-handoff
+            - goal-assessment-summary
+        - node: record-stopped-core-gaps
+          required: false
+          items:
+            - stopped-core-gaps
+      delegation:
+        binding_ref: aquarium-native
+        role_ref: aquarium-goal-judge/v1
+        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        max_rounds: 32
+        after_accept: retain
+      next: confirm-stopped-goal-assessment-applicability
+    - id: confirm-stopped-goal-assessment-applicability
+      use: stopped-final-assessment-applicability-decision
+      evidence_from:
+        - node: judge-stopped-goal
+          required: true
+          items:
+            - judge-applicability
+            - judge-assessment
+            - judge-summary
+      routes:
+        current:
+          to: assess-stopped-goal
+          effect: advance
+        invalid:
+          to: judge-stopped-goal
+          effect: rework
+    - id: confirm-stopped-goal-boundary
+      use: stopped-goal-boundary-decision
+      evidence_from:
+        - node: record-stopped-goal-boundary
+          required: true
+          items:
+            - goal-outcome-boundary
+      routes:
+        confirmed:
+          to: confirm-stopped-goal-assessment-core
+          effect: advance
+        invalid:
+          to: record-stopped-goal-boundary
+          effect: rework
 manual_rework:
   allowed_targets:
     - complete-work
     - record-evidence
+    - record-work-followup
+    - record-work-evidence
+    - record-goal-evidence-evidence
+    - record-goal-rework-basis
+    - prepare-goal-assessment
+    - judge-goal
+    - prepare-stopped-goal-assessment
+    - judge-stopped-goal
+    - judge-work
+    - judge-goal-evidence
+    - record-closeout-substitute

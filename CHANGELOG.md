@@ -11,6 +11,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Rebuild Epic goal execution with retained Judge assessments across member work and final integration, preserving delegated Task acceptance and actual overall acceptance; managed Goal Procedures require an authorized update after candidate qualification.
+
 - Rebuild Task execution around required Worker candidates, a retained report-only Judge, and authority-bound semantic decisions; existing users require updated managed Task Procedures and compatible successor sessions after candidate qualification.
 - Replace Orca workflow review with native Herdr review, remove the `orca-review` entrypoint and `orca` route for new checkpoints, and preserve exact historical route identities, peer evidence, prior Procedure snapshots and commit handoffs.
 - Preserve custom Procedures and legacy Orca evidence during Herdr migration, with Herdr v0.9.3 or newer, selected-route readiness, safe transitions for existing sessions, and the chosen backup policy; existing managed Goal and Validation files require an authorized update, and Task files need one before selecting Herdr.

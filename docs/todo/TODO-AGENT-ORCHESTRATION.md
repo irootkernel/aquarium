@@ -348,11 +348,13 @@ replaced by source validation or result-read recovery.
 
 ### TASK-113: Rebuild Epic execution
 
-- [ ] Rebuild the Goal Procedure and epic-handler around one logical Judge
+The Goal version-28 source candidate declares eight required Worker/Judge placements, retains serial technical admission and delegated acceptance, and adds current final Goal/Epic assessment and exact followup-effect authority. Required placements remain inactive pending TASK-116/117. Focused and full local checks, native authoring, isolated structural fixtures and Independent Review support the exact source checkpoint. The coordinator accepted this Task under the approved Epic delegation; actual integrated qualification and final Master acceptance remain pending.
+
+- [x] Rebuild the Goal Procedure and epic-handler around one logical Judge
   across member Tasks, integration, and internal Epic validation.
-- [ ] Preserve delegated member acceptance and distinct commit grants without
+- [x] Preserve delegated member acceptance and distinct commit grants without
   attributing them to Master or repeating per-Task approval pauses.
-- [ ] Verify overall goal failure when member Tasks pass but integration criteria
+- [x] Verify overall goal failure when member Tasks pass but integration criteria
   fail; retain Master's actual overall acceptance before final closeout.
 
 ### TASK-114: Rebuild Epic validation

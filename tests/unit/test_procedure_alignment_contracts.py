@@ -31,10 +31,10 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
         ),
         (
             "aquarium-goal-v2.yaml",
-            "27",
+            "28",
+            "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
+            "aquarium-goal-v27.yaml",
             "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
-            "aquarium-goal-v26.yaml",
-            "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
         ),
         (
             "aquarium-validation-v2.yaml",
@@ -724,7 +724,11 @@ def test_task_070_serial_gates_preserve_every_prior_selected_evidence_item() -> 
             yaml.safe_load((FIXTURES / prior_name).read_text(encoding="utf-8"))
         )
         preserved = set().union(
-            *(selected_items(current[node_id]) for node_id in current_node_ids)
+            *(selected_items(current[node_id]) for node_id in current_node_ids),
+            selected_items(current["prepare-stopped-goal-assessment"])
+            if current_name == "aquarium-goal-v2.yaml"
+            and "assess-stopped-goal" in current_node_ids
+            else set(),
         )
         prior_selected = selected_items(prior[prior_node_id])
         if current_node_ids == ("confirm-goal-assessment-core", "assess-goal"):
@@ -1922,7 +1926,7 @@ def test_stop_paths_preserve_completion_and_direction_for_goal_assessment() -> N
         )
         assert {"direction-classification", "direction-summary"} <= (selected_direction)
 
-        if name == "aquarium-task-v2.yaml":
+        if name in {"aquarium-task-v2.yaml", "aquarium-goal-v2.yaml"}:
             stopped_options = options(procedure, "stopped-goal-assessment")
             stopped_values = {
                 (
@@ -1932,10 +1936,15 @@ def test_stop_paths_preserve_completion_and_direction_for_goal_assessment() -> N
             }
             assert graph["confirm-goal-assessment-core"]["routes"]["ready"]["to"] == (
                 "prepare-task-assessment"
+                if name == "aquarium-task-v2.yaml"
+                else "prepare-goal-assessment"
             )
-            assert (
-                graph["confirm-stopped-goal-boundary"]["routes"]["confirmed"]["to"]
-                == "prepare-stopped-task-assessment"
+            assert graph["confirm-stopped-goal-boundary"]["routes"]["confirmed"][
+                "to"
+            ] == (
+                "prepare-stopped-task-assessment"
+                if name == "aquarium-task-v2.yaml"
+                else "confirm-stopped-goal-assessment-core"
             )
             assert not guards_match(
                 stopped_options["invalid-not-stopped"], stopped_values
@@ -2043,6 +2052,32 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
             ),
         )
 
+        if name == "aquarium-goal-v2.yaml":
+            chains = (
+                (
+                    "confirm-goal-assessment-core",
+                    "prepare-goal-assessment",
+                    "judge-goal",
+                    "confirm-goal-assessment-applicability",
+                    "assess-goal",
+                    "record-outcome",
+                    "approve-closeout",
+                    "closeout",
+                ),
+                (
+                    "record-stopped-goal-boundary",
+                    "confirm-stopped-goal-boundary",
+                    "confirm-stopped-goal-assessment-core",
+                    "prepare-stopped-goal-assessment",
+                    "judge-stopped-goal",
+                    "confirm-stopped-goal-assessment-applicability",
+                    "assess-stopped-goal",
+                    "record-stopped-outcome",
+                    "approve-stopped-closeout",
+                    "stopped-closeout",
+                ),
+            )
+
         for chain in chains:
             terminal = chain[-1]
             assert terminal in reachable_nodes(edges, entry)
@@ -2051,7 +2086,31 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                     edges, entry, without=dominator
                 ), f"{name}: {dominator} does not dominate {terminal}"
             for predecessor, node_id in pairwise(chain):
-                assert predecessors[node_id] == {predecessor}
+                if name == "aquarium-goal-v2.yaml" and node_id in {
+                    "judge-goal",
+                    "judge-stopped-goal",
+                }:
+                    assert predecessors[node_id] == {
+                        predecessor,
+                        "confirm-"
+                        + ("stopped-" if node_id == "judge-stopped-goal" else "")
+                        + "goal-assessment-applicability",
+                    }
+                elif (
+                    name == "aquarium-goal-v2.yaml"
+                    and node_id == "prepare-stopped-goal-assessment"
+                ):
+                    assert predecessors[node_id] == {
+                        predecessor,
+                        "record-stopped-core-gaps",
+                    }
+                elif (
+                    name == "aquarium-goal-v2.yaml"
+                    and node_id == "confirm-stopped-goal-boundary"
+                ):
+                    assert predecessor in predecessors[node_id]
+                else:
+                    assert predecessors[node_id] == {predecessor}
 
         normal_chain, stopped_chain = map(set, chains)
         assert not {
@@ -2082,7 +2141,9 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
             "approved": {"to": "stopped-closeout", "effect": "advance"},
             "changes-requested": {"to": rework_target, "effect": "rework"},
         }
-        stopped = options(procedure, "stopped-goal-assessment")["achieved"]
+        stopped = options(procedure, "stopped-goal-assessment")[
+            "invalid-not-stopped" if name == "aquarium-goal-v2.yaml" else "achieved"
+        ]
         assert not guards_match(
             stopped,
             {
@@ -2371,6 +2432,8 @@ def test_herdr_migration_preserves_control_contracts_and_prior_snapshots() -> No
         current = (
             yaml.safe_load((FIXTURES / "aquarium-task-v24.yaml").read_bytes())
             if kind == "task"
+            else yaml.safe_load((FIXTURES / "aquarium-goal-v27.yaml").read_bytes())
+            if kind == "goal"
             else load_procedure(f"aquarium-{kind}-v2.yaml")
         )
         previous = yaml.safe_load(
@@ -2564,7 +2627,7 @@ def test_final_task_pass_is_exact_and_stopped_goal_cannot_achieve() -> None:
         )
 
 
-def test_task_role_declarations_bind_complete_frozen_operative_bytes() -> None:
+def test_task_and_goal_roles_bind_complete_frozen_operative_bytes() -> None:
     import base64
 
     task = load_procedure("aquarium-task-v2.yaml")
@@ -2607,10 +2670,244 @@ def test_task_role_declarations_bind_complete_frozen_operative_bytes() -> None:
             snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=True
         ).encode("ascii")
         digests[role] = "sha256:" + hashlib.sha256(content).hexdigest()
-    for placement in nodes(task).values():
-        if declaration := placement.get("delegation"):
-            assert (
-                declaration["role_snapshot_digest"] == digests[declaration["role_ref"]]
-            )
-            assert declaration["max_rounds"] == 32
+    for procedure in (task, load_procedure("aquarium-goal-v2.yaml")):
+        for placement in nodes(procedure).values():
+            if declaration := placement.get("delegation"):
+                assert (
+                    declaration["role_snapshot_digest"]
+                    == digests[declaration["role_ref"]]
+                )
+                assert declaration["max_rounds"] == 32
     assert digests["aquarium-worker/v1"] != digests["aquarium-goal-judge/v1"]
+
+
+def test_goal_native_candidates_and_judges_dominate_semantic_progress() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    graph = nodes(goal)
+    edges = graph_edges(goal)
+    checkpoints = (
+        ("complete-work", "judge-work", "decide-work-assessment"),
+        ("record-evidence", "judge-goal-evidence", "decide-goal-evidence-assessment"),
+        ("prepare-goal-assessment", "judge-goal", "assess-goal"),
+        (
+            "prepare-stopped-goal-assessment",
+            "judge-stopped-goal",
+            "assess-stopped-goal",
+        ),
+    )
+    expected = set()
+    for candidate, judge, decision in checkpoints:
+        expected.update((candidate, judge))
+        for node_id, role in (
+            (candidate, "aquarium-worker/v1"),
+            (judge, "aquarium-goal-judge/v1"),
+        ):
+            assert goal["node_definitions"][graph[node_id]["use"]]["type"] == "action"
+            declaration = graph[node_id]["delegation"]
+            assert declaration["binding_ref"] == "aquarium-native"
+            assert declaration["role_ref"] == role
+            assert declaration["after_accept"] == "retain"
+            assert declaration["max_rounds"] == 32
+        selected = {
+            item
+            for source in graph[judge]["evidence_from"]
+            if source["node"] == candidate and source["required"]
+            for item in source.get("items", [])
+        }
+        assert "worker-handoff" in selected
+        assert judge not in reachable_nodes(
+            edges, goal["graph"]["entry"], without=candidate
+        )
+        assert decision not in reachable_nodes(
+            edges, goal["graph"]["entry"], without=judge
+        )
+    assert {
+        node_id for node_id, node in graph.items() if "delegation" in node
+    } == expected
+    assert (
+        graph["decide-operational-evidence"]["routes"]["passed"]["to"]
+        == "judge-goal-evidence"
+    )
+    assert (
+        graph["decide-goal-evidence-assessment"]["routes"]["passed"]["to"]
+        == "confirm-completion-assessment"
+    )
+    for dominator in (
+        "confirm-review-route-binding",
+        "confirm-completed-assessment-ordinal",
+        "confirm-independent-review-finding-validity",
+    ):
+        # Other admitted providers and the narrow closeout substitute have their own paths.
+        assert "judge-goal-evidence" in reachable_nodes(edges, dominator)
+    assert "assess-stopped-goal" in reachable_nodes(
+        edges, goal["graph"]["entry"], without="judge-goal-evidence"
+    )
+
+
+def test_goal_stopped_evidence_repair_cannot_reopen_ordinary_work() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    graph = nodes(goal)
+    edges = graph_edges(goal)
+    reached = reachable_nodes(
+        edges,
+        "confirm-stopped-goal-boundary",
+        without="approve-stopped-closeout",
+    )
+    assert not reached & {
+        "complete-work",
+        "judge-work",
+        "record-evidence",
+        "confirm-review-route-binding",
+        "judge-goal-evidence",
+        "prepare-goal-assessment",
+        "judge-goal",
+        "assess-goal",
+        "closeout",
+        "delegated-closeout",
+    }
+    repair = graph["confirm-stopped-goal-assessment-core"]["routes"]["needs-rework"]
+    assert "assess-stopped-goal" in reachable_nodes(edges, repair["to"])
+    for required in ("prepare-stopped-goal-assessment", "judge-stopped-goal"):
+        assert "assess-stopped-goal" not in reachable_nodes(
+            edges,
+            repair["to"],
+            without=required,
+        )
+
+
+def test_goal_semantic_pass_rejects_incomplete_or_inapplicable_reports() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    graph = nodes(goal)
+    for judge, decision in (
+        ("judge-work", "decide-work-assessment"),
+        ("judge-goal-evidence", "decide-goal-evidence-assessment"),
+    ):
+        actual = options(goal, graph[decision]["use"])
+        values = {
+            (judge, "judge-applicability"): {"outcome": "pass"},
+            (judge, "judge-verdict"): "pass",
+            (judge, "judge-unmet-criteria"): 0,
+            (judge, "judge-unverified-criteria"): 0,
+        }
+        assert guards_match(actual["passed"], values)
+        for key in values:
+            missing = dict(values)
+            del missing[key]
+            assert not guards_match(actual["passed"], missing)
+        for item, value in (
+            ("judge-applicability", {"outcome": "fail"}),
+            ("judge-applicability", {"outcome": "inconclusive"}),
+            ("judge-verdict", "rework"),
+            ("judge-verdict", "evidence-needed"),
+            ("judge-unmet-criteria", 1),
+            ("judge-unverified-criteria", 1),
+        ):
+            rejected = dict(values)
+            rejected[judge, item] = value
+            assert not guards_match(actual["passed"], rejected)
+        correction = dict(values)
+        correction[judge, "judge-verdict"] = "rework"
+        correction[judge, "judge-unmet-criteria"] = 1
+        assert guards_match(actual["rework"], correction)
+        evidence = dict(values)
+        evidence[judge, "judge-verdict"] = "evidence-needed"
+        evidence[judge, "judge-unverified-criteria"] = 1
+        assert guards_match(actual["evidence-needed"], evidence)
+        assert (
+            graph[decision]["routes"]["rework"]["to"]
+            != graph[decision]["routes"]["evidence-needed"]["to"]
+        )
+
+
+def test_goal_followup_needs_exact_effect_authority_after_mode_classification() -> None:
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    graph = nodes(goal)
+    for node_id in (
+        "confirm-work-followup-authority",
+        "confirm-work-evidence-authority",
+        "confirm-goal-evidence-evidence-authority",
+        "confirm-goal-rework-effect-authority",
+    ):
+        placement = graph[node_id]
+        actual = options(goal, placement["use"])
+        source = placement["evidence_from"][0]["node"]
+        assert not guards_match(actual["authorized"], {})
+        for outcome in ("fail", "inconclusive"):
+            values = {(source, "semantic-authority"): {"outcome": outcome}}
+            assert not guards_match(actual["authorized"], values)
+            assert guards_match(actual["blocked"], values)
+        assert guards_match(
+            actual["authorized"], {(source, "semantic-authority"): {"outcome": "pass"}}
+        )
+        assert placement["routes"]["blocked"] == {"to": source, "effect": "rework"}
+    assert (
+        graph["decide-goal-evidence-assessment"]["routes"]["rework"]["to"]
+        == "decide-goal-rework-authority"
+    )
+    assert (
+        graph["decide-goal-rework-authority"]["routes"]["remediation"]["to"]
+        == "record-goal-rework-basis"
+    )
+    assert (
+        graph["choose-user-direction"]["routes"]["fix-and-review"]["to"]
+        == "record-goal-rework-basis"
+    )
+    assert graph["confirm-goal-rework-effect-authority"]["routes"]["authorized"] == {
+        "to": "complete-work",
+        "effect": "rework",
+    }
+    assert all(
+        source["node"] != "record-evidence"
+        for source in graph["record-work-followup"]["evidence_from"]
+    )
+
+
+def test_final_epic_gap_blocks_achievement_and_closeout_substitute_stays_current() -> (
+    None
+):
+    goal = load_procedure("aquarium-goal-v2.yaml")
+    achieved = options(goal, "goal-assessment")["achieved"]
+    values = {
+        ("judge-goal", "judge-goal-outcome"): "achieved",
+        ("judge-goal", "judge-verdict"): "pass",
+        ("judge-goal", "judge-unmet-criteria"): 0,
+        ("judge-goal", "judge-unverified-criteria"): 0,
+    }
+    assert guards_match(achieved, values)
+    for item in ("judge-unmet-criteria", "judge-unverified-criteria"):
+        seam_gap = dict(values)
+        seam_gap["judge-goal", item] = 1
+        assert not guards_match(achieved, seam_gap)
+    for key in values:
+        missing = dict(values)
+        del missing[key]
+        assert not guards_match(achieved, missing)
+    stopped = options(goal, "stopped-goal-assessment")
+    assert "achieved" not in stopped
+    assert not guards_match(
+        stopped["invalid-not-stopped"],
+        {("record-stopped-goal-boundary", "goal-outcome-boundary"): "stopped"},
+    )
+    graph = nodes(goal)
+    for suffix in ("", "stopped-"):
+        placement = graph["confirm-" + suffix + "goal-assessment-applicability"]
+        current = options(goal, placement["use"])["current"]
+        judge = "judge-" + suffix + "goal"
+        assert not guards_match(current, {})
+        for outcome in ("fail", "inconclusive"):
+            assert not guards_match(
+                current, {(judge, "judge-applicability"): {"outcome": outcome}}
+            )
+    substitute = options(goal, "closeout-substitute-applicability-decision")
+    for outcome in ("fail", "inconclusive"):
+        binding = {
+            ("record-closeout-substitute", "closeout-substitute-applicability"): {
+                "outcome": outcome
+            }
+        }
+        assert not guards_match(substitute["current"], binding)
+        assert guards_match(substitute["invalid"], binding)
+    assert (
+        graph["record-closeout-substitute"]["next"]
+        == "confirm-closeout-substitute-applicability"
+    )

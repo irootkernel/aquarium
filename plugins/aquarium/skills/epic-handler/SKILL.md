@@ -19,6 +19,16 @@ Otherwise read the Podway contract, then use one `aquarium-goal-v2` session per 
 
 Goals below describe workflow objectives. Create a Codex goal only on explicit user request under its tool contract, whether Podway is active or opted out. Plan approval and a Podway goal do not authorize a Codex goal. Continue an existing authorized Codex goal within its own scope and lifecycle; otherwise proceed without one.
 
+## Supervise goal-centered execution
+
+Read [epic-orchestration.md](../../references/epic-orchestration.md) for required Worker/Judge placement execution, full original evidence, retained Epic Judge identity, local effect-authority checks and final assessment. The bundled version-28 candidate remains inactive until compatible native execution and combined candidate qualification; admitted released direct snapshots keep their original contracts.
+
+After approval, retain one logical Judge across member and correction Goals, successors, internal Validation and closeout. Supply complete current assignments and original criteria at every work-bearing checkpoint. Preserve actual identity, acknowledged history and lifetime rounds; never reuse an old receipt for a fresh placement. Cold independent validation alone starts a fresh Judge. Accept complete Worker delivery, then obtain and accept an applicable report-only Judge assessment before the Primary semantic Decision. Keep Decisions, simple operational records, actual approval and grant consumption with the Primary.
+
+In the delegated Goal source, complete-work delivery reaches judge-work before evidence acquisition. Admitted technical evidence reaches judge-goal-evidence only after its existing serial route, ordinal, provenance, finding and operational gates. Use scoped applicable Judge verdicts while preserving provider completion rows and finite Low routing. Final normal and stopped candidate assembly supplies all original reports and applicable parent criteria to a final Judge. Every member passing cannot erase an Epic integration gap. Missing or stale reports, unmet or unverified mandatory criteria and uncovered followup effects block semantic passage. Negative verdicts grant no additional effect or review. Preserve existing review budgets, user direction and exact member/correction grants.
+
+Use the final-closeout validation substitute only for unchanged successfully validated implementation plus current focused checks; its applicability check and final Judge assessment remain required. Actual Master overall acceptance still precedes the conditional closeout commit. Follow the same role and authority contracts when Podway was explicitly opted out, without discovering or mutating Podway.
+
 ## Establish and Approve the Epic
 
 Require one mutable Git repository, one canonical roadmap path inside that repository, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, requests without one canonical roadmap epic identity, and external roadmap authorities. Inspect another repository read-only only when the roadmap explicitly names it; never mutate or create a goal for it.

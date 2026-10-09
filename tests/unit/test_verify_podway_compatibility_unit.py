@@ -1214,6 +1214,9 @@ def test_exact_sibling_daemon_rejects_a_symlink(tmp_path: Path) -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "procedure_name", ["aquarium-task-v2.yaml", "aquarium-goal-v2.yaml"]
+)
 @pytest.mark.parametrize("delegated", [False, True])
 @pytest.mark.parametrize("wrong_schema", [False, True])
 def test_procedure_authoring_binds_preview_schema_to_delegation(
@@ -1221,9 +1224,10 @@ def test_procedure_authoring_binds_preview_schema_to_delegation(
     monkeypatch: pytest.MonkeyPatch,
     delegated: bool,
     wrong_schema: bool,
+    procedure_name: str,
 ) -> None:
     module = verify_podway_compatibility
-    procedure = tmp_path / "aquarium-task-v2.yaml"
+    procedure = tmp_path / procedure_name
     placement = {"id": "candidate", "use": "work"}
     if delegated:
         placement["delegation"] = {"role_ref": "worker"}

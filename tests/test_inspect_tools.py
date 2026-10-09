@@ -4772,7 +4772,7 @@ else:
             (
                 "aquarium-goal-v2.yaml",
                 "assess-stopped-goal",
-                "achieved",
+                "stopped",
                 "closeout",
             ),
             (
@@ -5532,6 +5532,60 @@ else:
         self.assertEqual(status, "compatible")
         self.assertEqual(reasons, [])
 
+    def test_goal_required_delegation_bindings_and_prior_direct_snapshot(self) -> None:
+        name = "aquarium-goal-v2.yaml"
+        canonical = (
+            ROOT / "plugins/aquarium/assets/podway/procedures" / name
+        ).read_bytes()
+        document = yaml.safe_load(canonical)
+        placements = [
+            node["id"] for node in document["graph"]["nodes"] if "delegation" in node
+        ]
+        self.assertEqual(len(placements), 8)
+        for node_id in placements:
+            for field in (
+                None,
+                "binding_ref",
+                "role_ref",
+                "role_snapshot_digest",
+                "max_rounds",
+                "after_accept",
+            ):
+                with self.subTest(node=node_id, field=field):
+                    changed = yaml.safe_load(canonical)
+                    placement = next(
+                        node
+                        for node in changed["graph"]["nodes"]
+                        if node["id"] == node_id
+                    )
+                    if field is None:
+                        del placement["delegation"]
+                    elif field == "max_rounds":
+                        placement["delegation"][field] = 1
+                    else:
+                        placement["delegation"][field] = "changed"
+                    status, reasons = inspect_tools.inspect_podway_handler_contract(
+                        name,
+                        yaml.safe_dump(changed, sort_keys=False).encode(),
+                        canonical,
+                    )
+                    self.assertEqual(status, "incompatible")
+                    self.assertIn("incompatible_delegation:" + node_id, reasons)
+        prior = (ROOT / "tests/fixtures/aquarium-goal-v27.yaml").read_bytes()
+        self.assertEqual(
+            hashlib.sha256(prior).hexdigest(),
+            "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
+        )
+        status, reasons = inspect_tools.inspect_podway_handler_contract(
+            name, prior, canonical
+        )
+        self.assertEqual(status, "incompatible")
+        self.assertIn("incompatible_delegation:complete-work", reasons)
+        self.assertIn(
+            hashlib.sha256(prior).hexdigest(),
+            inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
+        )
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
@@ -5561,6 +5615,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
                     "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
                     "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
                     "0bdb966f8ee054a0312c536edbf42e6d81f0a6da35d8cd6bac4d3e13f1e0c2d7",

@@ -87,6 +87,23 @@ The bundled Task Procedure version `25` and [Task orchestration](../../plugins/a
 
 The candidate declares complete role snapshot bindings and rejects Worker-only, missing or stale assessment evidence and uncovered followup authority structurally. Installed managed copies retain the released contract. Source and authoring checks do not prove distributed execution or Master functional results. TASK-116/117 must qualify complete Claude Judge lifetime, feedback source access, physical dispatch-response loss and the installed combined candidate before activation.
 
+## Epic execution candidate
+
+Goal version `28` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
+declare required Worker and Judge Actions for current work, admitted technical
+evidence and final normal/stopped assessment. The handler retains one logical
+Judge across members, corrections, successors, internal Validation and closeout;
+cold independent validation starts a fresh Judge. Final Epic assessment covers
+integration and overall purpose even when every member Task passed. Semantic
+passage requires current applicability and zero mandatory gaps. Local effect
+authority, provider lineage, delegated exact member/correction acceptance,
+separate grants and actual final Master acceptance retain their boundaries.
+
+The final-closeout technical-review substitute binds unchanged successful
+Validation and current focused checks. It never applies to member/remediation
+Goals or removes the final Judge. Source and authoring checks do not activate
+these placements; TASK-116/117 retain native and installed qualification.
+
 ## Related authority
 
 - [Workflow runtime](../architecture/workflow-runtime.md) distinguishes current execution from the reserved role model.
