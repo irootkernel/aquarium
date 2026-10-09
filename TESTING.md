@@ -31,6 +31,13 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
 
+Goal Judge helper tests in `test-unit` cover assignment preparation and filesystem
+safety, operative dispatch rendering, supplied native-record correlation, Codex
+and Claude delivery binding, and the public Codex read client's protocol behavior.
+They use synthetic records and disposable transports. Actual native dispatch,
+accepted configuration, feedback, settlement and recovery require separate host
+qualification; these tests do not establish skill functionality.
+
 `test-podway-compat` is an external-artifact gate and is intentionally not part of the ordinary `make test` aggregate. It binds its receipt to `git rev-parse HEAD`, refuses any dirty worktree, and therefore runs only against a clean committed candidate. It requires one absolute, executable, nonsymlink Podway binary path, derives an exact sibling `podwayd`, verifies both v0.2.12 identities, and records both artifact SHA-256 values. It runs format check, validate, vet, lint and check with warnings as errors, and preview against all five canonical Aquarium Procedures, requires each exact digest-fenced start suggestion, and rejects unknown fields and declaration values above `max_item_length: 8192` and `max_total_length: 1000000`.
 
 The gate uses isolated `release-qa` runtime roots under macOS's canonical `/private/tmp` backing for `/tmp`. Each root receives private account, Podway, socket, cache, temporary, sandbox-worktree, and binary-snapshot paths; it never installs or connects to the production daemon. Observable daemon-status v3 readiness precedes execution. At most four roots run concurrently. One canonical lifecycle pass drives all five managed Procedures through digest-fenced start, goal-bearing begin, observation v3, completion, and terminal disposition. Task, goal, and validation paths each exercise a nonzero historical Low result through completed local settlement without another review node. The task path first routes a Medium implementation finding through correction and the required next review; validation preserves its independently required final review. A separate Validation scenario covers the provider-Low variant without repeating the other four Procedures or the pagination fixture.

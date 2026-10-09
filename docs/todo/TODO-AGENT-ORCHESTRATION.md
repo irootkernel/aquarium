@@ -240,14 +240,84 @@ capability.
 
 ### TASK-111: Integrate native delegation
 
-- [ ] Add a report-only Judge capability and Worker guidance, with node-specific
+- [x] Add a report-only Judge capability and Worker guidance, with node-specific
   goals, permitted scope, complete evidence access, and structured handoffs.
-- [ ] Implement the versioned Codex and Claude native mappings for dispatch,
+- [x] Implement the versioned Codex and Claude native mappings for dispatch,
   immutable role configuration, accepted task identity, complete results,
   acknowledgement, settlement, and recovery.
-- [ ] Demonstrate actual delegated Action acceptance on both hosts. Reject
+- [x] Demonstrate actual delegated Action acceptance on both hosts. Reject
   unsupported required metadata and response-loss ambiguity without fabricated
   evidence or automatic direct fallback.
+
+#### Native mapping implementation and qualification
+
+The candidate provides report-only [Goal Judge instructions](../../plugins/aquarium/skills/goal-judge/SKILL.md)
+and [Worker guidance](../../plugins/aquarium/references/worker-guidance.md).
+The [native mapping profiles](../../plugins/aquarium/references/native-agent-mappings.md)
+own the exact public field sources, digest domains and reconciliation conditions.
+They use Codex CLI 0.162.0, Claude Code 2.1.295 and Claude Agent SDK 0.3.295
+for the qualified initial-assignment and serialized-feedback paths.
+
+The executable components perform distinct operations:
+
+- [Assignment preparation](../../plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py)
+  freezes complete role/dependency bytes and selected file evidence with safe
+  filesystem reads. [Dispatch rendering](../../plugins/aquarium/skills/goal-judge/scripts/render_dispatch.py)
+  supplies the exact UTF-8 role text as operative instructions and evidence as
+  task data. Their local digests do not establish native acceptance.
+- [Native delivery mapping](../../plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py)
+  correlates complete public records and distinct task/result domains.
+  [Codex binding](../../plugins/aquarium/skills/goal-judge/scripts/bind_prepared_delivery.py)
+  and [Claude binding](../../plugins/aquarium/skills/goal-judge/scripts/bind_claude_delivery.py)
+  recompute preparation and correlation, then bind the full role snapshot and
+  acknowledged applicable controls to each accepted assignment and result.
+- [Codex record capture](../../plugins/aquarium/skills/goal-judge/scripts/read_codex_thread.py)
+  reads complete thread history from an explicitly selected existing public
+  app-server endpoint. Claude records come from native CLI events and the
+  official SDK's public session and subagent readers. Neither route reads
+  private executor configuration or creates a Primary through a read operation.
+
+Both native paths have exercised isolated Podway Action acceptance and completion.
+Codex exercised a journaled initial assignment and serialized feedback to the
+same retained agent. Claude exercised a synchronous Agent assignment followed by
+SendMessage feedback to the same agent. Each path bound the full package,
+operative role/dependencies, exact accepted input, applicable configuration and
+complete result. Explicit Primary acceptance, two acknowledged rounds and
+post-acceptance quiescence supported native receipts and Action completion.
+These scenarios qualify those mappings and their retain disposition; they do
+not establish whole-skill functionality or activate required placements.
+
+Claude's initial tool-use message had a null stop reason. The mapping preserves
+that value and requires the correlated successful structured AgentOutput before
+recognizing completion. Exact prompt comparison includes the final newline.
+Feedback records preserve native run identity, full task-started input, completion
+events and the complete public child slice through its matched terminal UUID.
+Opaque coordinator wrappers and legacy preview fields remain opaque. Creation
+controls and actual per-run model/background state retain separate provenance.
+An early Primary success result while feedback is pending cannot establish
+completion; the final child result and subsequent quiescence are required.
+
+Actual result-read response withholding on both paths recovered identical full
+public history through the supported readers without redispatch. The Claude
+history projection does not reconstruct the original outer AgentOutput, which
+must remain retained. Missing acknowledgement and incomplete or mismatched
+records require reconciliation; consumer-record fault injection does not prove
+physical dispatch-transport loss. Physical dispatch-response loss remains
+unverified and must be exercised before affected placement activation.
+
+The helpers authenticate no supplied records and grant no acceptance, settlement
+or redispatch authority. The collector and Primary retain those obligations,
+including complete lifetime accounting, descendant quiescence and current
+Podway package/context checks. Custom or forked Claude definitions, background
+initial assignment and isolation routes require their own native mappings; the
+qualified inline general-purpose route does not disable those capabilities.
+
+TASK-111 is complete under delegated Epic acceptance after source checks and
+Independent Review. Dependent workflow integration,
+combined compatibility and Master's actual functional outcomes belong to
+TASK-112 through TASK-117. The installed release and admitted snapshots retain
+their existing contracts. No candidate installation or required-placement
+activation is authorized by this checkpoint.
 
 ### TASK-112: Rebuild Task execution
 

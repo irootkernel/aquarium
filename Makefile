@@ -48,6 +48,12 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
+	plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py \
+	plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py \
+	plugins/aquarium/skills/goal-judge/scripts/render_dispatch.py \
+	plugins/aquarium/skills/goal-judge/scripts/bind_prepared_delivery.py \
+	plugins/aquarium/skills/goal-judge/scripts/bind_claude_delivery.py \
+	plugins/aquarium/skills/goal-judge/scripts/read_codex_thread.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
 	plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py \
@@ -71,6 +77,12 @@ PYTHON_FILES := \
 	tests/unit/test_aquarium_dev_feasibility_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
+	tests/unit/test_prepare_assignment_unit.py \
+	tests/unit/test_map_native_delivery_unit.py \
+	tests/unit/test_render_dispatch_unit.py \
+	tests/unit/test_bind_prepared_delivery_unit.py \
+	tests/unit/test_bind_claude_delivery_unit.py \
+	tests/unit/test_read_codex_thread_unit.py \
 	tests/unit/test_inspect_release_notes_unit.py \
 	tests/unit/test_manage_release_qa_unit.py \
 	tests/unit/test_procedure_alignment_contracts.py \

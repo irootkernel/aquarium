@@ -573,10 +573,16 @@ and publication require their applicable execution authority.
 
 **Detailed SOT:** [`TODO-AGENT-ORCHESTRATION.md`](../todo/TODO-AGENT-ORCHESTRATION.md)
 
+TASK-111 completed native integration qualification. Isolated Codex and Claude
+initial assignments and same-agent feedback exercised Podway acceptance,
+Action completion and result-read recovery. Source checks and Independent
+Review passed. Physical dispatch-response loss and affected workflow behavior
+remain required before activation; dependent workflow integration is next.
+
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-110 | Define orchestration contracts | Define roles, Judge lifetime and authority, canonical criterion coverage, technical review boundaries, handoffs, and recovery. | Completed | EPIC-020 |
-| TASK-111 | Integrate native delegation | Add report-only Judge and Worker guidance; qualify actual Codex and Claude dispatch, configuration, result acceptance, settlement, and recovery against Podway delegation. | Planned | TASK-110 |
+| TASK-111 | Integrate native delegation | Add report-only Judge and Worker guidance; qualify actual Codex and Claude dispatch, configuration, result acceptance, settlement, and recovery against Podway delegation. | Completed | TASK-110 |
 | TASK-112 | Rebuild Task execution | Rebuild the Task Procedure, handler, and phase contracts around Worker candidates, Judge assessments, and verdict-driven rework while preserving authority and commit handoffs. | Planned | TASK-111 |
 | TASK-113 | Rebuild Epic execution | Rebuild the Goal Procedure and epic-handler with Judge continuity across member Tasks, integration criteria, internal validation, and final overall acceptance. | Planned | TASK-112 |
 | TASK-114 | Rebuild Epic validation | Rebuild the Validation Procedure and independent validator with a fresh Judge, direct evidence, technical review aggregation, and scoped corrections. | Planned | TASK-113 |

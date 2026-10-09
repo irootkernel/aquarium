@@ -7,6 +7,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Added
 
 - Add standalone Herdr Review for staged and committed targets with an explicitly selected fresh reviewer and native recovery.
+- Add report-only Goal Judge and bounded Worker guidance, with exact role and evidence preparation and native Codex and Claude delivery bindings.
 
 ### Changed
 

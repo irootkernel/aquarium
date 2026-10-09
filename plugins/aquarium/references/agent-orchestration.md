@@ -11,6 +11,13 @@ qualifies the combined outcome. Until those owners deliver, existing skills,
 keep their current execution rules. Reading this reference does not activate
 reserved delegation or reinterpret an existing session.
 
+TASK-111's candidate role instructions are in
+[Goal Judge](../skills/goal-judge/SKILL.md) and
+[Worker guidance](worker-guidance.md). Its
+[native mapping profiles](native-agent-mappings.md) describe local preparation
+and delivery-mapping components and the remaining qualification domains.
+Required placements remain inactive.
+
 The repository's active execution dossier,
 `docs/todo/TODO-AGENT-ORCHESTRATION.md`, owns EPIC-021's detailed requirements
 until closeout. Its canonical `docs/roadmap/README.md` owns identities,
