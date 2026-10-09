@@ -24,3 +24,16 @@ Record the tasks that establish the prerequisites and the evidence required to a
 Run upstream `$qa` on the draft, adjudicate every issue, then present the exact paths and complete proposed diff. Apply documents only after explicit approval and snapshot recheck. Report resulting paths, validation, unresolved decisions, and the exact next explicit skill; do not begin delivery.
 
 Apply the shared QA outcome mapping and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input). Report whether documents are applied or committed before naming the next explicit workflow.
+
+## Required orchestration candidate
+
+When the admitted Procedure declares required Worker/Judge placements, follow
+[Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md)
+for complete original evidence, retained Judge checkpoints, current local effect
+authority and final assessment. Keep this skill's original Ouroboros leaf scope,
+actual approval and effect boundaries. Installed direct snapshots retain their
+admitted contract; TASK-116/117 qualification precedes activation.
+
+For a qualified non-Git invocation, use the same Worker/Judge evidence and
+exact document approval with Podway explicitly inapplicable. Preserve the
+existing prohibition on implicit Git or Podway initialization.

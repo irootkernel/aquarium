@@ -128,3 +128,9 @@ TASK-116/117.
 - [Workflow runtime](../architecture/workflow-runtime.md) distinguishes current execution from the reserved role model.
 - [ADR-0009](../architecture-decision-records/0009-supervised-agent-orchestration.md) records the accepted design and its consequences.
 - [Review routing](review-routing.md) remains the shipped owner map for selected technical-review operations.
+
+## Design and diagnosis candidate
+
+Design and War-room version `5` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
+
+The Primary keeps cause/scope Decisions, actual effects, exact user proposal approval and final acceptance. Changed application proposals or target snapshots require original quality and actual exact-diff approval again. Approved incomplete diagnosis never claims a fixed defect. The Ouroboros leaf and non-Git new-project boundaries remain applicable. Source checks do not activate placements; TASK-116/117 retain authentic native, installed and Master functional qualification.

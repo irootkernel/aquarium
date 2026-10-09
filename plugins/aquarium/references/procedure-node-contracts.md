@@ -170,6 +170,8 @@ execution dossier under the shared consumer rules before final acceptance.
 
 ## Design Procedure
 
+The bundled version-5 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements remain inactive pending TASK-116/117.
+
 `new-project`, `new-feature`, and `refactor` own context, discovery, drafting,
 challenge, quality, exact-diff approval, document application, assessment, and
 closeout. Ouroboros results are leaf evidence. Discovery and drafting do not
@@ -182,6 +184,8 @@ and valid issues route to their phase owner. Optional branch evidence remains
 optional at merges.
 
 ## War-room Procedure
+
+The bundled version-5 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements remain inactive pending TASK-116/117.
 
 `war-room` owns safe baseline or reproduction, competing hypotheses, cause and
 scope judgments, proposal quality, exact-diff approval, document application,

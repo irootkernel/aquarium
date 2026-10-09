@@ -1216,7 +1216,13 @@ def test_exact_sibling_daemon_rejects_a_symlink(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "procedure_name",
-    ["aquarium-task-v2.yaml", "aquarium-goal-v2.yaml", "aquarium-validation-v2.yaml"],
+    [
+        "aquarium-task-v2.yaml",
+        "aquarium-goal-v2.yaml",
+        "aquarium-validation-v2.yaml",
+        "aquarium-design-v2.yaml",
+        "aquarium-war-room-v2.yaml",
+    ],
 )
 @pytest.mark.parametrize("delegated", [False, True])
 @pytest.mark.parametrize("wrong_schema", [False, True])

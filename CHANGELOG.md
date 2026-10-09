@@ -11,6 +11,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Declare supervised Worker/Judge checkpoints for Design and War-room, preserving negative quality routing and exact document approval; activation awaits combined native qualification.
+
 - Rebuild Epic validation with direct original-evidence Judge assessments, faithful negative-audit routing and Primary correction-group commit settlement; managed Validation Procedures require an authorized update after candidate qualification.
 
 - Rebuild Epic goal execution with retained Judge assessments across member work and final integration, preserving delegated Task acceptance and actual overall acceptance; managed Goal Procedures require an authorized update after candidate qualification.

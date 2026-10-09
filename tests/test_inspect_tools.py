@@ -5106,14 +5106,14 @@ else:
             ).read_bytes()
             target.write_bytes(prior[name])
         podway = json.loads(self.inspect(include_podway=True).stdout)["tools"]["podway"]
-        for name, expected in (("design", "compatible"), ("war-room", "incompatible")):
+        for name in ("design", "war-room"):
             entry = next(
                 item
                 for item in podway["managed_procedures"]
                 if item["path"].endswith(f"aquarium-{name}-v2.yaml")
             )
             self.assertEqual(entry["update_explanation"], "prior_canonical")
-            self.assertEqual(entry["handler_contract_status"], expected)
+            self.assertEqual(entry["handler_contract_status"], "incompatible")
             self.assertEqual(
                 (
                     self.repository / f".podway/procedures/aquarium-{name}-v2.yaml"
@@ -5341,6 +5341,16 @@ else:
                     25,
                     "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
                 ),
+                (
+                    "design",
+                    4,
+                    "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
+                ),
+                (
+                    "war-room",
+                    4,
+                    "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
+                ),
             )
         )
         self.install_fake_tools()
@@ -5387,6 +5397,8 @@ else:
                         "waived": "ready",
                     }
                     if current_supported
+                    else {}
+                    if name in {"aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"}
                     else dict.fromkeys(
                         ("mulgae", "herdr", "independent-review", "waived"),
                         "unverified",
@@ -5415,7 +5427,9 @@ else:
                 self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(
                     entry["review_route_readiness"],
-                    dict.fromkeys(
+                    {}
+                    if name in {"aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"}
+                    else dict.fromkeys(
                         ("mulgae", "herdr", "independent-review", "waived"),
                         "unverified",
                     ),
@@ -5646,6 +5660,71 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
         )
 
+    def test_design_diagnosis_required_bindings_preserve_prior_direct_snapshots(
+        self,
+    ) -> None:
+        for kind, count, digest in (
+            (
+                "design",
+                14,
+                "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
+            ),
+            (
+                "war-room",
+                15,
+                "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
+            ),
+        ):
+            name = f"aquarium-{kind}-v2.yaml"
+            canonical = (
+                ROOT / "plugins/aquarium/assets/podway/procedures" / name
+            ).read_bytes()
+            document = yaml.safe_load(canonical)
+            placements = [
+                node["id"]
+                for node in document["graph"]["nodes"]
+                if "delegation" in node
+            ]
+            self.assertEqual(len(placements), count)
+            for node_id in placements:
+                for field in (
+                    None,
+                    "binding_ref",
+                    "role_ref",
+                    "role_snapshot_digest",
+                    "max_rounds",
+                    "after_accept",
+                ):
+                    with self.subTest(procedure=kind, node=node_id, field=field):
+                        changed = yaml.safe_load(canonical)
+                        node = next(
+                            value
+                            for value in changed["graph"]["nodes"]
+                            if value["id"] == node_id
+                        )
+                        if field is None:
+                            del node["delegation"]
+                        else:
+                            node["delegation"][field] = (
+                                1 if field == "max_rounds" else "changed"
+                            )
+                        status, reasons = inspect_tools.inspect_podway_handler_contract(
+                            name,
+                            yaml.safe_dump(changed, sort_keys=False).encode(),
+                            canonical,
+                        )
+                        self.assertEqual(status, "incompatible")
+                        self.assertIn("incompatible_delegation:" + node_id, reasons)
+            prior = (ROOT / f"tests/fixtures/aquarium-{kind}-v4.yaml").read_bytes()
+            self.assertEqual(hashlib.sha256(prior).hexdigest(), digest)
+            self.assertIn(digest, inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name])
+            status, reasons = inspect_tools.inspect_podway_handler_contract(
+                name, prior, canonical
+            )
+            self.assertEqual(status, "incompatible")
+            entry = "capture-context" if kind == "design" else "capture-baseline"
+            self.assertIn("incompatible_delegation:" + entry, reasons)
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
@@ -5721,11 +5800,13 @@ else:
                     "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
                 },
                 "aquarium-design-v2.yaml": {
+                    "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
                     "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
                     "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",
                     "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
                     "c8ce6585a735eb3a159a6f14f40d3dd413cc33812b254e10703c76b3d49dddd9",

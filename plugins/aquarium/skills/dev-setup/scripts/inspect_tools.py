@@ -368,11 +368,13 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
+        "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
         "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
         "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
     },
     "aquarium-war-room-v2.yaml": {
+        "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
         "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",
         "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
         "c8ce6585a735eb3a159a6f14f40d3dd413cc33812b254e10703c76b3d49dddd9",
@@ -762,6 +764,7 @@ def inspect_podway_handler_contract(
         name, set()
     ) and name not in {
         "aquarium-war-room-v2.yaml",
+        "aquarium-design-v2.yaml",
         "aquarium-goal-v2.yaml",
         "aquarium-validation-v2.yaml",
     }:

@@ -23,7 +23,6 @@ A `changes-requested` approval returns to `investigate`; every terminal route re
 
 End with the classification, local evidence references, applied documents, unresolved gaps, and the next action, including no follow-up when warranted. Never copy runtime paths or identities into the proposed canonical documents, and never continue into the fix.
 
-
 ## Own Diagnostic Records and No-work Outcomes
 
 Before drafting, choose an existing canonical owner from the repository role map:
@@ -44,3 +43,12 @@ invent a Task or dossier. Otherwise apply only the approved canonical document.
 Use the shared [QA outcome mapping](../../references/ouroboros-integration.md#interpret-qa-outcomes)
 and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input).
 Never treat diagnostic document approval as authority to implement the fix.
+
+## Required orchestration candidate
+
+When the admitted Procedure declares required Worker/Judge placements, follow
+[Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md)
+for complete original evidence, retained Judge checkpoints, current local effect
+authority and final assessment. Keep this skill's original Ouroboros leaf scope,
+actual approval and effect boundaries. Installed direct snapshots retain their
+admitted contract; TASK-116/117 qualification precedes activation.

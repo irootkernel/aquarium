@@ -377,12 +377,21 @@ functional results and final overall acceptance.
 
 ### TASK-115: Rebuild design and diagnosis
 
-- [ ] Rebuild the Design and War-room Procedures and new-project, new-feature,
+Design and War-room version-5 source candidates declare fourteen and fifteen
+required Worker/Judge placements. Both preserve complete frozen role snapshots,
+original Ouroboros leaf scope, faithful negative routing and actual exact
+document approval. Focused and full local checks, native source authoring,
+isolated structural fixtures and Independent Review support this exact source
+checkpoint. The coordinator accepted this Task under the approved Epic delegation.
+Required placements remain inactive pending TASK-116/117 qualification, actual
+Master functional results and final overall acceptance.
+
+- [x] Rebuild the Design and War-room Procedures and new-project, new-feature,
   refactor, and war-room role handoffs.
-- [ ] Preserve the [Ouroboros leaf contract](../../plugins/aquarium/references/ouroboros-integration.md),
+- [x] Preserve the [Ouroboros leaf contract](../../plugins/aquarium/references/ouroboros-integration.md),
   [design gates](../../plugins/aquarium/references/design-gates.md), exact
   document approval, and diagnosis-specific scope.
-- [ ] Verify that Judge acceptance does not grant document application,
+- [x] Verify that Judge acceptance does not grant document application,
   installation, commits, or product implementation outside the approved design
   or diagnosis envelope.
 

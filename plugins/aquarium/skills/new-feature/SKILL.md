@@ -20,3 +20,12 @@ After the approved envelope, use installed upstream `$interview`, `$pm`, or `$se
 Run upstream `$qa`, adjudicate the draft, show the exact roadmap and documentation diff, and apply it only after explicit approval and snapshot recheck. End with the epic identity, applied paths, validation, and implementation blockers.
 
 Apply the shared QA outcome mapping and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input). Report whether documents are applied or committed before naming the next explicit workflow.
+
+## Required orchestration candidate
+
+When the admitted Procedure declares required Worker/Judge placements, follow
+[Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md)
+for complete original evidence, retained Judge checkpoints, current local effect
+authority and final assessment. Keep this skill's original Ouroboros leaf scope,
+actual approval and effect boundaries. Installed direct snapshots retain their
+admitted contract; TASK-116/117 qualification precedes activation.

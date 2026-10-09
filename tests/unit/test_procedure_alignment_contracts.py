@@ -43,6 +43,20 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
             "aquarium-validation-v26.yaml",
             "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
         ),
+        (
+            "aquarium-design-v2.yaml",
+            "5",
+            "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
+            "aquarium-design-v4.yaml",
+            "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
+        ),
+        (
+            "aquarium-war-room-v2.yaml",
+            "5",
+            "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
+            "aquarium-war-room-v4.yaml",
+            "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
+        ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
         current = PROCEDURES / current_name
@@ -2317,7 +2331,9 @@ def test_war_room_no_work_keeps_quality_approval_and_documentation() -> None:
         "to": "draft-no-work",
         "effect": "advance",
     }
-    assert graph["draft-no-work"]["next"] == "quality"
+    assert graph["draft-no-work"]["next"] == "judge-proposal"
+    assert graph["judge-proposal"]["next"] == "decide-proposal-assessment"
+    assert graph["decide-proposal-assessment"]["routes"]["passed"]["to"] == "quality"
     edges = graph_edges(procedure)
     for gate in ("quality", "decide-quality", "approve-diff", "document"):
         assert "assess-goal" not in reachable_nodes(
@@ -2672,7 +2688,7 @@ def test_final_task_pass_is_exact_and_stopped_goal_cannot_achieve() -> None:
         )
 
 
-def test_task_and_goal_roles_bind_complete_frozen_operative_bytes() -> None:
+def test_required_procedures_bind_complete_frozen_operative_bytes() -> None:
     import base64
 
     task = load_procedure("aquarium-task-v2.yaml")
@@ -2719,6 +2735,8 @@ def test_task_and_goal_roles_bind_complete_frozen_operative_bytes() -> None:
         task,
         load_procedure("aquarium-goal-v2.yaml"),
         load_procedure("aquarium-validation-v2.yaml"),
+        load_procedure("aquarium-design-v2.yaml"),
+        load_procedure("aquarium-war-room-v2.yaml"),
     ):
         for placement in nodes(procedure).values():
             if declaration := placement.get("delegation"):
@@ -3292,3 +3310,259 @@ def test_validation_group_repair_keeps_full_original_epic_gaps_negative() -> Non
     assert graph["decide-remediation-assessment"]["routes"]["evidence-needed"][
         "to"
     ] == ("record-remediation-evidence")
+
+
+def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
+    for kind, checkpoints in (
+        (
+            "design",
+            (
+                ("capture-context", "judge-context", "decide-context-assessment"),
+                ("discover", "judge-discovery", "decide-discovery-assessment"),
+                ("draft", "judge-draft", "decide-draft-assessment"),
+                ("challenge", "judge-challenge", "decide-challenge-assessment"),
+                ("quality", "judge-quality", "decide-quality-assessment"),
+                (
+                    "apply-documents",
+                    "judge-application",
+                    "decide-application-assessment",
+                ),
+                ("prepare-design-assessment", "judge-design", "assess-goal"),
+            ),
+        ),
+        (
+            "war-room",
+            (
+                ("capture-baseline", "judge-baseline", "decide-baseline-assessment"),
+                (
+                    "investigate",
+                    "judge-investigation",
+                    "decide-investigation-assessment",
+                ),
+                ("quality", "judge-quality", "decide-quality-assessment"),
+                ("document", "judge-documentation", "decide-documentation-assessment"),
+                ("prepare-diagnostic-assessment", "judge-diagnosis", "assess-goal"),
+            ),
+        ),
+    ):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        edges = graph_edges(procedure)
+        for worker, judge, successor in checkpoints:
+            for placement, role in (
+                (worker, "aquarium-worker/v1"),
+                (judge, "aquarium-goal-judge/v1"),
+            ):
+                declaration = graph[placement]["delegation"]
+                assert declaration["role_ref"] == role
+                assert declaration["binding_ref"] == "aquarium-native"
+                assert declaration["after_accept"] == "retain"
+                assert declaration["max_rounds"] == 32
+            items = {
+                i["id"]: i
+                for i in procedure["node_definitions"][graph[worker]["use"]]["items"]
+            }
+            assert items["worker-handoff"]["required"]
+            assert items["worker-handoff"]["allowed_media_types"] == [
+                "application/json"
+            ]
+            assert judge not in reachable_nodes(
+                edges, procedure["graph"]["entry"], without=worker
+            )
+            assert successor not in reachable_nodes(
+                edges, procedure["graph"]["entry"], without=judge
+            )
+        for node in graph.values():
+            if procedure["node_definitions"][node["use"]]["type"] == "decision":
+                assert "delegation" not in node
+    war = load_procedure("aquarium-war-room-v2.yaml")
+    graph = nodes(war)
+    for branch in ("draft-task", "draft-epic", "draft-incomplete", "draft-no-work"):
+        assert graph[branch]["delegation"]["role_ref"] == "aquarium-worker/v1"
+        assert graph[branch]["next"] == "judge-proposal"
+        selected = next(
+            e for e in graph["judge-proposal"]["evidence_from"] if e["node"] == branch
+        )
+        assert selected["required"] is False
+        assert "worker-handoff" in selected["items"]
+
+
+def test_phase_checkpoints_preserve_global_negative_rows_without_false_success() -> (
+    None
+):
+    for kind in ("design", "war-room"):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        for node_id, node in graph.items():
+            if not node_id.startswith("decide-") or not node_id.endswith("-assessment"):
+                continue
+            choices = options(procedure, node["use"])
+            judge = node["evidence_from"][0]["node"]
+            values = {
+                (judge, "judge-applicability"): {"outcome": "pass"},
+                (judge, "judge-checkpoint-result"): {"outcome": "pass"},
+                (judge, "judge-verdict"): "rework",
+                (judge, "judge-unmet-criteria"): 1,
+                (judge, "judge-unverified-criteria"): 1,
+            }
+            assert guards_match(choices["passed"], values)
+            assert not guards_match(choices["passed"], {})
+            for item in ("judge-applicability", "judge-checkpoint-result"):
+                missing = dict(values)
+                del missing[judge, item]
+                assert not guards_match(choices["passed"], missing)
+                for result in ("fail", "inconclusive"):
+                    rejected = dict(values)
+                    rejected[judge, item] = {"outcome": result}
+                    assert not guards_match(choices["passed"], rejected)
+            for result, option in (
+                ("fail", "rework"),
+                ("inconclusive", "evidence-needed"),
+            ):
+                negative = dict(values)
+                negative[judge, "judge-checkpoint-result"] = {"outcome": result}
+                assert guards_match(choices[option], negative)
+            assert (
+                node["routes"]["rework"]["to"]
+                != node["routes"]["evidence-needed"]["to"]
+            )
+            assert node["routes"]["inapplicable"] == {"to": judge, "effect": "rework"}
+        assert (
+            graph["decide-quality-assessment"]["routes"]["passed"]["to"]
+            == "decide-quality"
+        )
+
+
+def test_diagnostic_cause_and_scope_keep_supported_negative_outcomes() -> None:
+    procedure = load_procedure("aquarium-war-room-v2.yaml")
+    graph = nodes(procedure)
+    for definition, item, router in (
+        ("cause-decision", "judge-cause-outcome", "decide-cause"),
+        ("scope-decision", "judge-scope-outcome", "classify-scope"),
+    ):
+        choices = options(procedure, definition)
+        for selected in choices:
+            values = {("judge-investigation", item): selected}
+            assert [
+                key for key, option in choices.items() if guards_match(option, values)
+            ] == [selected]
+            assert not guards_match(choices[selected], {})
+        assert len(choices) <= 4
+        assert "delegation" not in graph[router]
+    assert graph["decide-cause"]["routes"]["blocked"]["to"] == "draft-incomplete"
+    assert graph["decide-cause"]["routes"]["investigate-more"] == {
+        "to": "investigate",
+        "effect": "rework",
+    }
+    assert graph["classify-scope"]["routes"]["incomplete"]["to"] == "draft-incomplete"
+    for draft in ("draft-task", "draft-epic", "draft-incomplete", "draft-no-work"):
+        for dominator in (
+            "judge-proposal",
+            "quality",
+            "judge-quality",
+            "approve-diff",
+            "document",
+            "judge-diagnosis",
+        ):
+            assert "assess-goal" not in reachable_nodes(
+                graph_edges(procedure), draft, without=dominator
+            )
+
+
+def test_design_diagnosis_followup_requires_actual_local_effect_authority() -> None:
+    for kind in ("design", "war-room"):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        for node_id, node in graph.items():
+            if not node_id.startswith("confirm-") or not node_id.endswith("-authority"):
+                continue
+            choices = options(procedure, node["use"])
+            source = node["evidence_from"][0]["node"]
+            assert not guards_match(choices["authorized"], {})
+            for result in ("fail", "inconclusive"):
+                values = {(source, "semantic-authority"): {"outcome": result}}
+                assert not guards_match(choices["authorized"], values)
+                assert guards_match(choices["blocked"], values)
+            assert guards_match(
+                choices["authorized"],
+                {(source, "semantic-authority"): {"outcome": "pass"}},
+            )
+            assert node["routes"]["blocked"] == {"to": source, "effect": "rework"}
+            assert node["routes"]["authorized"]["effect"] == "rework"
+
+
+def test_changed_application_approval_requires_original_quality_and_reapproval() -> (
+    None
+):
+    for kind, app, suffix, draft in (
+        ("design", "apply-documents", "application", "draft"),
+        ("war-room", "document", "documentation", "investigate"),
+    ):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        gate = graph["confirm-" + suffix + "-approval"]
+        choices = options(procedure, gate["use"])
+        assert graph[app]["next"] == gate["id"]
+        for result in ("fail", "inconclusive"):
+            values = {(app, "application-approval-result"): {"outcome": result}}
+            assert not guards_match(choices["current"], values)
+            assert guards_match(choices["invalid"], values)
+        assert not guards_match(choices["current"], {})
+        assert guards_match(
+            choices["current"],
+            {(app, "application-approval-result"): {"outcome": "pass"}},
+        )
+        assert gate["routes"]["invalid"]["to"] == "record-" + suffix + "-approval-gap"
+        for mode in ("rework", "approval-gap"):
+            authority = graph["confirm-" + suffix + "-" + mode + "-authority"]
+            assert authority["routes"]["authorized"] == {
+                "to": draft,
+                "effect": "rework",
+            }
+        for dominator in ("quality", "decide-quality", "approve-diff"):
+            assert app not in reachable_nodes(
+                graph_edges(procedure), draft, without=dominator
+            )
+        assert graph["approve-diff"]["routes"]["changes-requested"] == {
+            "to": draft,
+            "effect": "rework",
+        }
+
+
+def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
+    for kind, judge, applicability in (
+        ("design", "judge-design", "confirm-design-assessment-applicability"),
+        ("war-room", "judge-diagnosis", "confirm-diagnosis-assessment-applicability"),
+    ):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        choices = options(procedure, "goal-assessment")
+        current = options(procedure, nodes(procedure)[applicability]["use"])["current"]
+        assert not guards_match(current, {})
+        for outcome in ("fail", "inconclusive"):
+            assert not guards_match(
+                current, {(judge, "judge-applicability"): {"outcome": outcome}}
+            )
+        values = {
+            (judge, "judge-goal-outcome"): "achieved",
+            (judge, "judge-verdict"): "pass",
+            (judge, "judge-unmet-criteria"): 0,
+            (judge, "judge-unverified-criteria"): 0,
+        }
+        assert guards_match(choices["achieved"], values)
+        for item, value in (
+            ("judge-goal-outcome", "not-achieved"),
+            ("judge-verdict", "rework"),
+            ("judge-unmet-criteria", 1),
+            ("judge-unverified-criteria", 1),
+        ):
+            negative = dict(values)
+            negative[judge, item] = value
+            assert not guards_match(choices["achieved"], negative)
+        for item in values:
+            missing = dict(values)
+            del missing[item]
+            assert not guards_match(choices["achieved"], missing)
+        for outcome in ("not-achieved", "superseded"):
+            assert guards_match(
+                choices[outcome], {(judge, "judge-goal-outcome"): outcome}
+            )
