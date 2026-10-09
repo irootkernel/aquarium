@@ -359,11 +359,20 @@ The Goal version-28 source candidate declares eight required Worker/Judge placem
 
 ### TASK-114: Rebuild Epic validation
 
-- [ ] Rebuild the Validation Procedure and epic-validator with a fresh Judge
+The Validation version-27 source candidate declares twelve required Worker/Judge
+placements, faithful negative-audit routing and Primary correction-group commit
+settlement. Cold validation uses a fresh Judge reading original evidence directly;
+internal Validation retains the Epic Judge. Focused and full local checks, native
+authoring, isolated structural fixtures and Independent Review support the exact source
+checkpoint. The coordinator accepted this Task under the approved Epic delegation.
+Required placements remain inactive pending TASK-116/117 qualification, actual Master
+functional results and final overall acceptance.
+
+- [x] Rebuild the Validation Procedure and epic-validator with a fresh Judge
   for independently invoked cold validation.
-- [ ] Assess canonical exit criteria from direct evidence and applicable
+- [x] Assess canonical exit criteria from direct evidence and applicable
   technical reviews; preserve correction ownership and authority.
-- [ ] Verify that earlier completion labels, inherited verdicts, stale targets,
+- [x] Verify that earlier completion labels, inherited verdicts, stale targets,
   and unsupported manual claims cannot establish cold-validation success.
 
 ### TASK-115: Rebuild design and diagnosis

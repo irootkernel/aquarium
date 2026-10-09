@@ -11,6 +11,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Rebuild Epic validation with direct original-evidence Judge assessments, faithful negative-audit routing and Primary correction-group commit settlement; managed Validation Procedures require an authorized update after candidate qualification.
+
 - Rebuild Epic goal execution with retained Judge assessments across member work and final integration, preserving delegated Task acceptance and actual overall acceptance; managed Goal Procedures require an authorized update after candidate qualification.
 
 - Rebuild Task execution around required Worker candidates, a retained report-only Judge, and authority-bound semantic decisions; existing users require updated managed Task Procedures and compatible successor sessions after candidate qualification.

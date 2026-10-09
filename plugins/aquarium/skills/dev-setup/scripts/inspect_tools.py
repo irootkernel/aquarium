@@ -346,6 +346,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
         "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
         "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
         "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",

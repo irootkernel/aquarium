@@ -4819,15 +4819,19 @@ else:
             for item in document["graph"]["nodes"]
             if item["id"] == "confirm-stopped-goal-assessment-core"
         )
-        self.assertEqual(node["next"], "assess-stopped-goal")
-        node["next"] = "closeout"
+        self.assertEqual(
+            node["routes"]["ready"]["to"], "prepare-stopped-validation-assessment"
+        )
+        node["routes"]["ready"]["to"] = "closeout"
         status, reasons = inspect_tools.inspect_podway_handler_contract(
             "aquarium-validation-v2.yaml",
             yaml.safe_dump(document, sort_keys=False).encode(),
             canonical,
         )
-        self.assertEqual(status, "unqualified")
-        self.assertEqual(reasons, ["unrecognized_semantic_customization"])
+        self.assertEqual(status, "incompatible")
+        self.assertIn(
+            "incompatible_route:confirm-stopped-goal-assessment-core:ready", reasons
+        )
 
     def test_every_managed_procedure_requires_instructions_on_used_actions(
         self,
@@ -5586,6 +5590,62 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
         )
 
+    def test_validation_required_delegation_bindings_and_prior_direct_snapshot(
+        self,
+    ) -> None:
+        name = "aquarium-validation-v2.yaml"
+        canonical = (
+            ROOT / "plugins/aquarium/assets/podway/procedures" / name
+        ).read_bytes()
+        document = yaml.safe_load(canonical)
+        placements = [
+            node["id"] for node in document["graph"]["nodes"] if "delegation" in node
+        ]
+        self.assertEqual(len(placements), 12)
+        for node_id in placements:
+            for field in (
+                None,
+                "binding_ref",
+                "role_ref",
+                "role_snapshot_digest",
+                "max_rounds",
+                "after_accept",
+            ):
+                with self.subTest(node=node_id, field=field):
+                    changed = yaml.safe_load(canonical)
+                    placement = next(
+                        node
+                        for node in changed["graph"]["nodes"]
+                        if node["id"] == node_id
+                    )
+                    if field is None:
+                        del placement["delegation"]
+                    elif field == "max_rounds":
+                        placement["delegation"][field] = 1
+                    else:
+                        placement["delegation"][field] = "changed"
+                    status, reasons = inspect_tools.inspect_podway_handler_contract(
+                        name,
+                        yaml.safe_dump(changed, sort_keys=False).encode(),
+                        canonical,
+                    )
+                    self.assertEqual(status, "incompatible")
+                    self.assertIn("incompatible_delegation:" + node_id, reasons)
+        prior = (ROOT / "tests/fixtures/aquarium-validation-v26.yaml").read_bytes()
+        self.assertEqual(
+            hashlib.sha256(prior).hexdigest(),
+            "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
+        )
+        status, reasons = inspect_tools.inspect_podway_handler_contract(
+            name, prior, canonical
+        )
+        self.assertEqual(status, "incompatible")
+        self.assertIn("incompatible_delegation:audit", reasons)
+        self.assertIn(
+            hashlib.sha256(prior).hexdigest(),
+            inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
+        )
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
@@ -5639,6 +5699,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
                     "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
                     "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
                     "0c040e6f0bd70c169b22a58a3930ec9287879a84d44a907c8ce6e5297c9966b1",

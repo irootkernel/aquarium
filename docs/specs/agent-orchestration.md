@@ -104,6 +104,25 @@ Validation and current focused checks. It never applies to member/remediation
 Goals or removes the final Judge. Source and authoring checks do not activate
 these placements; TASK-116/117 retain native and installed qualification.
 
+## Validation candidate
+
+Validation version `27` and [Validation
+orchestration](../../plugins/aquarium/references/validation-orchestration.md) declare
+twelve required Worker/Judge placements for audit, correction, re-audit, admitted
+technical evidence and final normal/stopped outcomes. Cold validation starts a fresh
+Judge that reads original criteria and artifacts directly; internal validation retains
+the Epic Judge. Faithful negative audits preserve original gaps and route to their
+actual owners. The Primary verifies each exact accepted correction-group commit before
+re-audit; Workers cannot commit. Final applicability and original criterion assessments
+prevent clean member labels or provider counts from hiding an integration or
+manual-verification gap.
+
+Stopped evidence reconciliation requires a fresh final Worker and Judge and preserves
+the stopped boundary. Cold user acceptance, internal delegation, distinct effect grants
+and final overall Master acceptance retain their existing limits. Source and native
+structural checks leave actual combined workflow and installed qualification to
+TASK-116/117.
+
 ## Related authority
 
 - [Workflow runtime](../architecture/workflow-runtime.md) distinguishes current execution from the reserved role model.

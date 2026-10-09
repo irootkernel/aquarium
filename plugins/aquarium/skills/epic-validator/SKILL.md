@@ -19,6 +19,14 @@ Otherwise read the Podway contract and use one `aquarium-validation-v2` session 
 
 Create a Codex goal only on explicit user request under its tool contract, whether Podway is active or opted out. Continue an existing authorized Codex goal through audit, remediation, and confirmation within its own scope. Remediation groups organize the work; they do not create separate Codex goals or Podway sessions.
 
+Read [validation-orchestration.md](../../references/validation-orchestration.md) when
+the admitted Procedure declares required Worker/Judge placements. Cold validation uses a
+fresh Judge reading original criteria and artifacts directly; internal Epic validation
+retains its logical Epic Judge. Audit checkpoint completeness preserves actual negative
+Epic rows and their gap routing. Workers deliver one correction-group candidate; the
+Primary accepts and verifies its separate group commit before re-audit. Required
+candidate placements remain inactive pending combined qualification.
+
 ## Establish the Validation Contract
 
 Require one mutable Git repository, one canonical roadmap path inside it, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, and requests without one canonical roadmap epic identity.

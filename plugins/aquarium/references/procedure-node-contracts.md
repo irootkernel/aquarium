@@ -101,6 +101,18 @@ no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
+The bundled version-27 candidate follows [Validation
+orchestration](validation-orchestration.md) with twelve required Worker/Judge
+placements. Direct audit and re-audit checkpoint Decisions preserve real negative
+original Epic rows while admitting faithful gap routing. The Primary settles each exact
+accepted correction-group commit before serializing another group or re-audit. Technical
+evidence receives its separate Judge only after native serial provider admission. Final
+normal/stopped candidates require current applicable Judge reports; stopped evidence
+repair stays within stopped assembly. Cold validation creates a fresh Judge with direct
+original source access; internal Epic validation retains its logical Judge and full
+history. Required placements remain inactive pending TASK-116/117; released snapshots
+retain their direct contract.
+
 `epic-handler` uses validation for final epic audit and `epic-validator` uses it
 for cold validation. Baseline, audit, remediation, re-audit, final review, user
 direction, Low settlement, assessment, and closeout stay inside one validation
