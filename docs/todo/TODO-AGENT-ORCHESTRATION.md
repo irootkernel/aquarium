@@ -137,7 +137,7 @@ assessment; they do not delegate themselves.
 
 ## Implementation owners
 
-| Workflow | Procedure source and repository-local mirror | Orchestrator skills |
+| Workflow | Procedure source | Orchestrator skills |
 | --- | --- | --- |
 | Task | `aquarium-task-v2.yaml` | `task-handler` and the linked Task phase skills |
 | Epic execution | `aquarium-goal-v2.yaml` | `epic-handler` |
@@ -145,12 +145,13 @@ assessment; they do not delegate themselves.
 | Design | `aquarium-design-v2.yaml` | `new-project`, `new-feature`, `refactor` |
 | Diagnosis | `aquarium-war-room-v2.yaml` | `war-room` |
 
-Bundled sources live in `plugins/aquarium/assets/podway/procedures/`; this
-repository's mirrors live in `.podway/procedures/`. Skill entrypoints and linked
-references own role behavior and handoffs. Update the shared Podway integration,
-readiness inspection, and executable qualification alongside the affected
-workflows. Keep conditional detail in references and preserve the native
-contracts of integrated tools.
+Bundled sources live in `plugins/aquarium/assets/podway/procedures/`. This
+repository's installed copies in `.podway/procedures/` follow the
+host-installed release and change only after the new release is installed.
+Skill entrypoints and linked references own role behavior and handoffs. Update
+the shared Podway integration, readiness inspection, and executable
+qualification alongside the affected workflows. Keep conditional detail in
+references and preserve the native contracts of integrated tools.
 
 ## Recovery and compatibility
 
@@ -190,9 +191,9 @@ switching must use a supported, explicitly authorized native successor path;
 otherwise stop safely and retain the recovery evidence.
 
 Retain all five stable Procedure IDs and increment their versions when the
-contract changes. Update bundled sources and repository-local mirrors as one
-compatible candidate, together with readiness inspectors and observation
-contracts. Distinguish delegation-aware v4 observation from existing direct v3
+contract changes. Update the bundled sources as one compatible candidate,
+together with readiness inspectors and observation contracts, and leave this
+repository's installed copies on the host-installed release. Distinguish delegation-aware v4 observation from existing direct v3
 behavior; verify the actual version contract during implementation.
 
 Previously admitted session snapshots remain immutable. Source updates apply
@@ -268,8 +269,8 @@ Every Task must preserve unrelated work and existing approval boundaries.
 
 ### TASK-116: Align compatibility and recovery
 
-- [ ] Align all five bundled Procedures, repository-local mirrors, version
-  declarations, readiness inspectors, and observation contracts.
+- [ ] Align all five bundled Procedures, version declarations, readiness
+  inspectors, and observation contracts.
 - [ ] Exercise reconnect and restoration, uncertain dispatch/results, pending
   acceptance, quiescence, stale receipts, changed goals, and superseded agents.
 - [ ] Preserve old snapshots and customizations and document supported

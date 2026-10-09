@@ -8,6 +8,8 @@ The canonical files are under [`plugins/aquarium/assets/podway/procedures/`](../
 
 Do not edit an installed copy in a target repository as the source change. Update the plugin asset and then prove installation or compatibility separately where the workflow requires it.
 
+This repository is also a target. Its `.podway/procedures/` copies follow the Aquarium release installed on the host, so do not copy changed assets into them. After the new release is installed, update the copies through an authorized `$aquarium:dev-setup` managed update. `tests/validate.rb` accepts only copies that match a released package source.
+
 ## Change Checklist
 
 1. Map the changed node, transition, result, or guard to the owning skill behavior.

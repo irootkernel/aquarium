@@ -223,8 +223,9 @@ provider authority; restart and staged-review scenarios have a defined exit.
   audit/remediation order, and final closeout approval and dossier duties
   with the actual graph (M-B1 through M-B5). Remove route claims that no
   Procedure can record. Settle related R1-07 and R3-08 Low paths.
-- Revise the managed source and repository-local mirror together; advance
-  the three Procedure versions once for this bundle. Update prior-canonical
+- Revise the managed sources and advance the three Procedure versions once
+  for this bundle; leave this repository's installed copies on the
+  host-installed release. Update prior-canonical
   digests, fixtures, inspector expectations, and C-08/native qualification.
 
 Acceptance: format, validation, structural and native routing cases prove

@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "24"
+version: "22"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -28,7 +28,7 @@ node_definitions:
         required: true
         choices:
           - mulgae
-          - herdr
+          - orca
           - independent-review
           - waived
       - id: review-target-scope
@@ -40,7 +40,7 @@ node_definitions:
         multiline: true
       - id: review-selection-summary
         type: text
-        prompt: Record the route selection authority, explicit Herdr reviewer or three-subagent Independent Review requirement when applicable, and waiver authority and assurance limit when waived.
+        prompt: Record the route selection authority, explicit Orca reviewer or three-subagent Independent Review requirement when applicable, and waiver authority and assurance limit when waived.
         required: true
         min_length: 1
         max_length: 2000
@@ -196,7 +196,7 @@ node_definitions:
         required: true
         choices:
           - mulgae
-          - herdr
+          - orca
           - independent-review
           - waived
       - id: route-authorization-basis
@@ -247,7 +247,6 @@ node_definitions:
           - not-applicable
           - mulgae
           - orca
-          - herdr
           - independent-review
           - waived
       - id: prior-route-change-readiness
@@ -464,18 +463,18 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: resume-current
-      - id: herdr
-        label: Resume Herdr
-        criteria: The preceding unsettled operation belongs to Herdr and the user explicitly directed current-route resume.
+      - id: orca
+        label: Resume Orca
+        criteria: The preceding unsettled operation belongs to Orca and the user explicitly directed current-route resume.
         guards:
           - evidence:
               node: prepare-review
               item: prior-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -548,18 +547,18 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: not-applicable
-      - id: planned-herdr
-        label: Use planned Herdr route
-        criteria: The approved plan and effective checkpoint route are both Herdr.
+      - id: planned-orca
+        label: Use planned Orca route
+        criteria: The approved plan and effective checkpoint route are both Orca.
         guards:
           - evidence:
               node: record-plan
               item: review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -637,14 +636,14 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: switch-route
-      - id: changed-herdr
-        label: Use explicitly changed Herdr route
-        criteria: A later explicit route change with prior-checkpoint lineage authorizes Herdr.
+      - id: changed-orca
+        label: Use explicitly changed Orca route
+        criteria: A later explicit route change with prior-checkpoint lineage authorizes Orca.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -726,14 +725,14 @@ node_definitions:
               node: prepare-review
               item: prior-route-change-readiness
             equals: completed-checkpoint
-      - id: completed-change-herdr
-        label: Change a completed checkpoint to Herdr
-        criteria: Explicit authority changes a previously completed checkpoint to Herdr while preserving its lineage.
+      - id: completed-change-orca
+        label: Change a completed checkpoint to Orca
+        criteria: Explicit authority changes a previously completed checkpoint to Orca while preserving its lineage.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: route-authorization-basis
@@ -815,18 +814,18 @@ node_definitions:
               node: prepare-review
               item: prior-assessment-ordinal
             at_least: 1
-      - id: continued-herdr
-        label: Continue Herdr
-        criteria: The completed Herdr route remains effective under fresh bounded correction authority.
+      - id: continued-orca
+        label: Continue Orca
+        criteria: The completed Orca route remains effective under fresh bounded correction authority.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: prior-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: prepare-review
               item: checkpoint-requested-direction
@@ -893,7 +892,7 @@ node_definitions:
         required: true
         choices:
           - mulgae
-          - herdr
+          - orca
           - independent-review
           - waived
       - id: review-operation
@@ -1072,18 +1071,18 @@ node_definitions:
               node: review
               item: review-route
             equals: mulgae
-      - id: herdr
-        label: Authorized Herdr record
-        criteria: The prepared and recorded routes are both Herdr.
+      - id: orca
+        label: Authorized Orca record
+        criteria: The prepared and recorded routes are both Orca.
         guards:
           - evidence:
               node: prepare-review
               item: effective-review-route
-            equals: herdr
+            equals: orca
           - evidence:
               node: review
               item: review-route
-            equals: herdr
+            equals: orca
       - id: independent-review
         label: Authorized Independent Review record
         criteria: The prepared and recorded routes are both Independent Review.
@@ -1239,7 +1238,7 @@ node_definitions:
             not_equals: not-provided
       - id: static-delegated
         label: Static delegated review evidence
-        criteria: The exact Herdr route or complete three-subagent Independent Review remains in evidence without a backend check claim.
+        criteria: The exact Orca route or complete three-subagent Independent Review remains in evidence without a backend check claim.
         guards:
           - evidence:
               node: review
@@ -1294,7 +1293,7 @@ node_definitions:
             equals: mulgae
       - id: static-delegated
         label: Incomplete static delegated operation evidence
-        criteria: The exact Herdr or Independent Review route remains in evidence and retained provenance without a backend check claim.
+        criteria: The exact Orca or Independent Review route remains in evidence and retained provenance without a backend check claim.
         guards:
           - evidence:
               node: review
@@ -2347,8 +2346,8 @@ graph:
         planned-mulgae:
           to: enter-mulgae-review-route
           effect: advance
-        planned-herdr:
-          to: enter-herdr-review-route
+        planned-orca:
+          to: enter-orca-review-route
           effect: advance
         planned-independent-review:
           to: enter-independent-review-route
@@ -2382,8 +2381,8 @@ graph:
         changed-mulgae:
           to: enter-mulgae-review-route
           effect: advance
-        changed-herdr:
-          to: enter-herdr-review-route
+        changed-orca:
+          to: enter-orca-review-route
           effect: advance
         changed-independent-review:
           to: enter-independent-review-route
@@ -2417,8 +2416,8 @@ graph:
         completed-change-mulgae:
           to: enter-mulgae-review-route
           effect: advance
-        completed-change-herdr:
-          to: enter-herdr-review-route
+        completed-change-orca:
+          to: enter-orca-review-route
           effect: advance
         completed-change-independent-review:
           to: enter-independent-review-route
@@ -2452,8 +2451,8 @@ graph:
         continued-mulgae:
           to: enter-mulgae-review-route
           effect: advance
-        continued-herdr:
-          to: enter-herdr-review-route
+        continued-orca:
+          to: enter-orca-review-route
           effect: advance
         continued-independent-review:
           to: enter-independent-review-route
@@ -2477,7 +2476,7 @@ graph:
         reprepare:
           to: prepare-review
           effect: rework
-    - id: enter-herdr-review-route
+    - id: enter-orca-review-route
       use: authorized-review-route-entry-decision
       evidence_from:
         - node: prepare-review
@@ -2581,8 +2580,8 @@ graph:
         mulgae:
           to: decide-mulgae-review-operation
           effect: advance
-        herdr:
-          to: decide-herdr-review-operation
+        orca:
+          to: decide-orca-review-operation
           effect: advance
         independent-review:
           to: decide-independent-review-operation
@@ -2607,7 +2606,7 @@ graph:
         unsettled:
           to: confirm-incomplete-review-evidence
           effect: advance
-    - id: decide-herdr-review-operation
+    - id: decide-orca-review-operation
       use: review-operation-decision
       evidence_from:
         - node: review
@@ -3016,8 +3015,8 @@ graph:
         mulgae:
           to: enter-mulgae-review-route
           effect: advance
-        herdr:
-          to: enter-herdr-review-route
+        orca:
+          to: enter-orca-review-route
           effect: advance
         independent-review:
           to: enter-independent-review-route

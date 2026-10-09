@@ -10,7 +10,6 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests/fixtures"
 PROCEDURES = ROOT / "plugins/aquarium/assets/podway/procedures"
-CANONICAL_PROCEDURES = ROOT / ".podway/procedures"
 
 
 def load_json(name: str) -> dict:
@@ -19,19 +18,6 @@ def load_json(name: str) -> dict:
 
 def load_procedure(name: str) -> dict:
     return yaml.safe_load((PROCEDURES / name).read_text(encoding="utf-8"))
-
-
-def test_installed_procedure_sources_match_canonical_copies() -> None:
-    asset_names = {path.name for path in PROCEDURES.glob("aquarium-*-v2.yaml")}
-    canonical_names = {
-        path.name for path in CANONICAL_PROCEDURES.glob("aquarium-*-v2.yaml")
-    }
-
-    assert asset_names == canonical_names
-    for name in sorted(asset_names):
-        assert (PROCEDURES / name).read_bytes() == (
-            CANONICAL_PROCEDURES / name
-        ).read_bytes()
 
 
 def test_current_and_prior_procedure_identities_are_exact() -> None:

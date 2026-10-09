@@ -129,8 +129,27 @@ procedures.each do |filename|
     targets.concat(node.fetch("evidence_from", []).map { |evidence| evidence.fetch("node") })
   end
   assert((targets - ids).empty?, "unresolved procedure node reference: #{path}")
-  local = ROOT.join(".podway/procedures", path.basename)
-  assert(read_file(local) == read_file(path), "installed procedure differs from package source: #{local}")
+end
+
+# This repository's installed Procedures follow the Aquarium release installed
+# on the host, so each copy must be the package source of a released version.
+tags, status = Open3.capture2("git", "-C", ROOT.to_s, "tag", "--list", "v*")
+assert(status.success?, "could not list release tags")
+released_procedures = Hash.new { |hash, name| hash[name] = [] }
+tags.split.each do |tag|
+  listing, status = Open3.capture2("git", "-C", ROOT.to_s, "ls-tree", tag, "--",
+                                   "plugins/aquarium/assets/podway/procedures/")
+  assert(status.success?, "could not list released procedures: #{tag}")
+  listing.each_line do |line|
+    entry, source = line.chomp.split("\t", 2)
+    released_procedures[File.basename(source)] << entry.split.last
+  end
+end
+Dir[ROOT.join(".podway/procedures/aquarium-*.yaml")].sort.each do |filename|
+  installed, status = Open3.capture2("git", "-C", ROOT.to_s, "hash-object", "--no-filters", "--", filename)
+  assert(status.success?, "could not hash installed procedure: #{filename}")
+  assert(released_procedures[File.basename(filename)].include?(installed.strip),
+         "installed procedure is not a released package source: #{filename}")
 end
 
 hero = local_path(PLUGIN.join("assets/hero.png"))
