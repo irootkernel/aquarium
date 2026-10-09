@@ -28,14 +28,17 @@ outside this registration change.
 
 | Role | Responsibility | Boundary |
 | --- | --- | --- |
-| Orchestrator | Select work, prepare authoritative inputs, allocate Workers, maintain Judge continuity, reconcile native results, and record permitted Podway transitions. | Check assessment applicability and execution authority before formal acceptance. Do not repeat the Judge's full assessment or silently override its verdict. |
+| Orchestrator | Select work, prepare authoritative inputs, allocate Workers, maintain Judge continuity, reconcile native results, and record permitted Podway transitions. | Accept complete native deliveries and reports under their placement checks and execution authority. Require an applicable Judge verdict for semantic progression without repeating the assessment or silently overriding it. |
 | Judge | Assess all applicable canonical criteria against the exact candidate and complete evidence; explain unmet goals, missing evidence, and the scope of a valid verdict. | Report-only. No source or Git mutation, commits, implementation, or grant of user authority. |
 | Workers | Perform the assigned research, analysis, implementation, checks, or corrections and return a complete candidate handoff. | Stay within the assigned mutation and execution envelope. Delivery alone does not establish goal achievement. |
 
-The Primary records formal acceptance where Podway's native contract requires
-it, using an applicable Judge verdict and the Primary's authority check. Return
-a disputed or inconsistent assessment to the Judge with the conflicting
-evidence. The Orchestrator cannot substitute its own verdict to establish a pass.
+The Primary accepts a complete native Worker delivery under its delivery checks
+and authority, then completes the Worker Action to reach the Judge assessment.
+It accepts the complete Judge report under its coverage, provenance, applicability,
+and authority checks without repeating the assessment or requiring another Judge.
+The following semantic Decision uses the applicable Judge verdict. Return a
+disputed or inconsistent assessment to the Judge with the conflicting evidence.
+The Orchestrator cannot substitute its own verdict to establish a pass.
 
 One logical Judge serves a standalone Task lifecycle. Another serves an
 Epic-handler lifecycle, including its member Tasks and internal validation.
@@ -153,6 +156,16 @@ the shared Podway integration, readiness inspection, and executable
 qualification alongside the affected workflows. Keep conditional detail in
 references and preserve the native contracts of integrated tools.
 
+## Upgrade classification
+
+This is a breaking change: existing users must update managed Procedures and
+start compatible successor sessions. Verify exact candidate installation and
+upgrade in the dedicated UTM macOS VM over the host-installed release
+combination before release, including Master's separate functional verification.
+Candidate development leaves host installations and this repository's installed
+managed copies on the released combination. VM candidate installation, host
+installation, and downstream rollout require their applicable separate authority.
+
 ## Recovery and compatibility
 
 Retain existing Judge and Worker identities and try native reconnect first.
@@ -210,12 +223,20 @@ Every Task must preserve unrelated work and existing approval boundaries.
 
 ### TASK-110: Define orchestration contracts
 
-- [ ] Define role ownership, logical Judge lifetime, exact target applicability,
+- [x] Define role ownership, logical Judge lifetime, exact target applicability,
   canonical criterion coverage, and formal Primary acceptance.
-- [ ] Define Worker handoff, Judge assessment, and recovery checkpoint contracts,
+- [x] Define Worker handoff, Judge assessment, and recovery checkpoint contracts,
   with supported native provenance and failure behavior.
-- [ ] Resolve all five Procedure evaluation boundaries and the relationship to
+- [x] Resolve all five Procedure evaluation boundaries and the relationship to
   existing technical review, finding dispositions, and correction authority.
+
+The reserved [shared contract](../../plugins/aquarium/references/agent-orchestration.md)
+owns these definitions; the [specification](../specs/agent-orchestration.md)
+and [ADR-0009](../architecture-decision-records/0009-supervised-agent-orchestration.md)
+record their status and rationale. Native mappings, acknowledgement, and actual
+host execution remain unqualified TASK-111 obligations. TASK-110 intentionally
+has no release-note entry because a reserved design ships no independent
+capability.
 
 ### TASK-111: Integrate native delegation
 
@@ -345,4 +366,6 @@ guidance, and operations to their current canonical owners as each Task
 finishes. Before Epic closeout, replace its Detailed SOT with valid Canonical
 Outcomes links. Remove this index entry and dossier only after its last consumer
 is successfully terminal and the approved deletion envelope covers settlement.
-Keep all registration checklists unchecked until actual evidence is accepted.
+Complete a definition checklist only when its owning contract is delivered;
+keep executable and functional checklists unchecked until their actual evidence
+is accepted.

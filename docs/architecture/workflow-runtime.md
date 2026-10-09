@@ -26,3 +26,29 @@ The epic lifecycle coordinates multiple task lifecycles and a cold validation pa
 ## Failure and Recovery
 
 Workflows prefer re-observation over replay. Unknown or interrupted external execution is quarantined until its actual state can be resolved. A retry never widens authority, and successful earlier effects are not rolled back automatically unless the owning contract explicitly provides a safe recovery action.
+
+## Reserved supervised orchestration
+
+The [EPIC-021 orchestration contract](../../plugins/aquarium/references/agent-orchestration.md)
+defines the accepted reserved role model and versioned handoffs. It is
+unimplemented and unqualified. Current skills and admitted snapshots continue
+with the invocation and node contracts above; source updates do not activate
+reserved placements in an existing session.
+
+The reserved flow separates Worker candidate delivery, report-only Judge
+assessment, and Orchestrator Decisions. The Primary accepts a complete native
+delivery under its placement's delivery checks and authority before completing
+the Action. It accepts a complete Judge report without recursively judging it;
+semantic progression then requires the Judge verdict's exact applicability.
+The Judge reads original criteria and evidence, including omitted assignment
+criteria and Epic integration goals. One logical Judge follows an Epic-handler
+across member Tasks and internal validation; independent cold validation starts
+fresh. Operational records and approval transitions retain native checks without
+an extra semantic cycle.
+
+Host-native integrations own dispatch, feedback, actual identities, accepted
+task/configuration bytes, complete results, settlement, and reconnect. Podway
+owns receipts, structural progression, and fences. Native result acceptance
+precedes separate Action completion. The shared contract owns the full mapping
+requirements and recovery boundaries; TASK-111 must qualify both actual host
+paths before required delegation activates.

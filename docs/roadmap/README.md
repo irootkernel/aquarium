@@ -51,7 +51,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
-| EPIC-021 | Adopt supervised agent orchestration | Planned |
+| EPIC-021 | Adopt supervised agent orchestration | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -546,7 +546,7 @@ separately authorized actions.
 
 ## EPIC-021: Adopt supervised agent orchestration
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Adopt an Orchestrator, Judge, and Workers model across the Task, Goal,
 Validation, Design, and War-room Procedures after `EPIC-020`. The main agent
@@ -557,8 +557,10 @@ criteria and original evidence; Worker delivery alone cannot establish success.
 
 Use Codex and Claude host-native subagents first. Preserve technical review
 routes and their native reviewer topology, budgets, finding dispositions, and
-correction authority. The Primary records formal acceptance from an applicable
-Judge verdict without repeating the full assessment. Reconnect existing agents
+correction authority. The Primary accepts complete native Worker deliveries and
+Judge reports under their placement checks and authority, then completes their
+Actions. Semantic progression uses the applicable Judge verdict without
+repeating the assessment or recursively judging the report. Reconnect existing agents
 when possible; otherwise reconcile uncertain work and restore goals, evidence,
 and assessment state before replacement. Allow parallel research and sequential
 implementation on a shared checkout.
@@ -573,7 +575,7 @@ and publication require their applicable execution authority.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-110 | Define orchestration contracts | Define roles, Judge lifetime and authority, canonical criterion coverage, technical review boundaries, handoffs, and recovery. | Planned | EPIC-020 |
+| TASK-110 | Define orchestration contracts | Define roles, Judge lifetime and authority, canonical criterion coverage, technical review boundaries, handoffs, and recovery. | Completed | EPIC-020 |
 | TASK-111 | Integrate native delegation | Add report-only Judge and Worker guidance; qualify actual Codex and Claude dispatch, configuration, result acceptance, settlement, and recovery against Podway delegation. | Planned | TASK-110 |
 | TASK-112 | Rebuild Task execution | Rebuild the Task Procedure, handler, and phase contracts around Worker candidates, Judge assessments, and verdict-driven rework while preserving authority and commit handoffs. | Planned | TASK-111 |
 | TASK-113 | Rebuild Epic execution | Rebuild the Goal Procedure and epic-handler with Judge continuity across member Tasks, integration criteria, internal validation, and final overall acceptance. | Planned | TASK-112 |
