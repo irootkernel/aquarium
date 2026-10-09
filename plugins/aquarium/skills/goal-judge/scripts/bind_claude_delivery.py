@@ -5,7 +5,12 @@ with aquarium.claude-prepared-delivery-request/v1 and preparation/mapping_reques
 Both preparation rendering and native delivery mapping are recomputed locally.
 The exact echoed operative prompt acknowledges the immutable role snapshot.
 For the serialized-rounds profile, preparation is an ordered list containing
-the initial and feedback preparations. Both complete role snapshots must match.
+one preparation per assignment. Complete role snapshots must match. The v1
+rounds route remains exactly two rounds; the v2 route retains every serialized
+round independently and leaves actual lifetime/tool-host qualification unresolved.
+The hook-native profile independently binds each preparation to acknowledged
+effective input while preserving the original model request and native hook
+outputs. It keeps creation and per-assignment configuration domains separate.
 The initial AgentOutput remains intact; feedback uses the complete public child
 message slice and correlated native completion evidence. Runtime model and
 background state are retained per run, separately from creation controls.
@@ -173,6 +178,167 @@ def _controls(arguments: dict, result: dict) -> tuple[dict, dict]:
     )
 
 
+def _bind_hook_delivery(preparations, request, output):
+    expected = request.get("expected")
+    _require(
+        isinstance(expected, dict)
+        and isinstance(expected.get("rounds"), list)
+        and isinstance(preparations, list)
+        and bool(preparations)
+        and len(preparations) == len(expected["rounds"]),
+        "INVALID_PREPARATION",
+        "hook binding requires one independent preparation per actual assignment",
+    )
+    try:
+        dispatches = [renderer.render_dispatch(value) for value in preparations]
+    except (ValueError, TypeError) as error:
+        raise BindingError(
+            "INVALID_PREPARATION", "prepared role and assignment cannot be verified"
+        ) from error
+    snapshot = preparations[0]["prepared_role_snapshot"]
+    _require(
+        all(value["prepared_role_snapshot"] == snapshot for value in preparations),
+        "ROLE_SNAPSHOT_MISMATCH",
+        "hook rounds must preserve every operative role and dependency byte",
+    )
+    mapping = native.map_delivery(request)
+    if "expected_recovery_refs" in mapping:
+        output["recovery_refs"] = mapping["expected_recovery_refs"]
+    if mapping["state"] != "delivery_mapped":
+        output.update({key: mapping[key] for key in ("state", "error", "next_action")})
+        return json.loads(native.canonical_bytes(output))
+    mapped = mapping["mapped"]
+    records = request["records"]["rounds"]
+    initial = records[0]["post_hook"]["input"]
+    arguments, response = initial["tool_input"], initial["tool_response"]
+    controls, ignored = _controls(arguments, response)
+    creation = {
+        "schema": "aquarium.claude-hook-agent-creation-configuration/v1",
+        "role_snapshot": snapshot,
+        "accepted_agent_controls": controls,
+        "ignored_agent_input": ignored,
+        "acknowledged_agent_input": arguments,
+        "native_resolution": {
+            "agentId": response["agentId"],
+            "resolvedModel": response["resolvedModel"],
+            "tool_use_id": initial["tool_use_id"],
+        },
+        "original_creation_hooks": {
+            "pre_hook": records[0]["pre_hook"],
+            "post_hook": records[0]["post_hook"],
+        },
+    }
+    bindings = []
+    for index, (round_record, record, rendered) in enumerate(
+        zip(mapped["rounds"], records, dispatches)
+    ):
+        effective = record["post_hook"]["input"]["tool_input"]
+        key = "message" if index else "prompt"
+        _require(
+            effective[key] == rendered["dispatch_text"],
+            "DISPATCH_INPUT_MISMATCH",
+            "each effective native assignment must equal its own verified preparation",
+        )
+        _require(
+            native.digest(round_record["result_domain"])
+            == round_record["result_digest"],
+            "RESULT_DOMAIN_MISMATCH",
+            "each hook round must retain its own complete original result",
+        )
+        configuration = {
+            "schema": "aquarium.claude-hook-assignment-configuration/v1",
+            "creation_configuration": creation,
+            "accepted_task_digest": "sha256:" + round_record["accepted_task_digest"],
+            "actual_assignment_runtime": round_record["runtime"],
+            "original_assignment_hooks": {
+                "pre_hook": record["pre_hook"],
+                "post_hook": record["post_hook"],
+            },
+        }
+        if index:
+            configuration["native_terminal_model"] = record["public_history"][
+                "children"
+            ][mapped["worker_ref"]][-1]["message"]["model"]
+        bindings.append(
+            {
+                "dispatch_ref": round_record["dispatch_ref"],
+                "task_ref": round_record["task_ref"],
+                "local_prepared_assignment_sha256": rendered[
+                    "local_prepared_assignment_sha256"
+                ],
+                "local_dispatch_input_sha256": rendered["local_dispatch_input_sha256"],
+                "accepted_task_domain": round_record["accepted_task_domain"],
+                "result_domain": round_record["result_domain"],
+                "agent_configuration_domain": configuration,
+                "accepted_task_digest": "sha256:"
+                + round_record["accepted_task_digest"],
+                "result_digest": "sha256:" + round_record["result_digest"],
+                "agent_configuration_digest": "sha256:" + native.digest(configuration),
+            }
+        )
+    final = bindings[-1]
+    output.update(
+        {
+            "state": "delivery_bound",
+            "profile": native.CLAUDE_HOOKS_PROFILE,
+            "local_prepared_role_snapshot_sha256": dispatches[-1][
+                "local_prepared_role_snapshot_sha256"
+            ],
+            "local_prepared_assignment_sha256": dispatches[-1][
+                "local_prepared_assignment_sha256"
+            ],
+            "local_dispatch_input_sha256": dispatches[-1][
+                "local_dispatch_input_sha256"
+            ],
+            "native_mapping_digest": native.digest(mapping),
+            "domains": {
+                "accepted_role_snapshot": snapshot,
+                "agent_creation_configuration": creation,
+                "agent_configuration": final["agent_configuration_domain"],
+                "accepted_task": final["accepted_task_domain"],
+                "result": final["result_domain"],
+            },
+            "bindings": {
+                "role_snapshot_digest": "sha256:"
+                + dispatches[-1]["local_prepared_role_snapshot_sha256"],
+                "agent_creation_configuration_digest": "sha256:"
+                + native.digest(creation),
+                **{
+                    key: final[key]
+                    for key in (
+                        "agent_configuration_digest",
+                        "accepted_task_digest",
+                        "result_digest",
+                    )
+                },
+            },
+            "round_bindings": bindings,
+            "native": {
+                **{
+                    key: mapped[key]
+                    for key in ("scope_ref", "supervisor_ref", "worker_ref")
+                },
+                "dispatch_ref": final["dispatch_ref"],
+                "task_ref": final["task_ref"],
+                "result_refs": mapped["rounds"][-1]["result_refs"],
+                "delivery_ref": records[-1]["post_hook"]["input"]["tool_use_id"],
+                "feedback_runs": mapped["feedback_runs"],
+                "feedback_acknowledgements": mapped["feedback_acknowledgements"],
+            },
+            "unresolved_domains": [
+                "explicit_primary_acceptance",
+                "complete_lifetime_round_accounting",
+                "settlement_and_descendant_quiescence",
+                "podway_package_and_context_binding",
+                "durable_host_qualification",
+                "complete_projection_and_native_hidden_controls",
+            ],
+            "next_action": "qualify_remaining_acceptance_domains",
+        }
+    )
+    return json.loads(native.canonical_bytes(output))
+
+
 def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict:
     """Return complete independent domains or a bounded recovery checkpoint."""
     output = {
@@ -192,18 +358,36 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
         _require(
             isinstance(mapping_request, dict)
             and mapping_request.get("profile")
-            in (native.CLAUDE_PROFILE, native.CLAUDE_ROUNDS_PROFILE),
+            in (
+                native.CLAUDE_PROFILE,
+                native.CLAUDE_ROUNDS_PROFILE,
+                native.CLAUDE_LIFETIME_PROFILE,
+                native.CLAUDE_HOOKS_PROFILE,
+            ),
             "UNSUPPORTED_PROFILE",
             "Claude binding requires a supported correlated Agent delivery profile",
         )
         profile = mapping_request["profile"]
-        rounds_profile = profile == native.CLAUDE_ROUNDS_PROFILE
+        if profile == native.CLAUDE_HOOKS_PROFILE:
+            return _bind_hook_delivery(preparation, mapping_request, output)
+        rounds_profile = profile in (
+            native.CLAUDE_ROUNDS_PROFILE,
+            native.CLAUDE_LIFETIME_PROFILE,
+        )
+        expected = mapping_request.get("expected")
+        _require(
+            isinstance(expected, dict) and isinstance(expected.get("rounds"), list),
+            "INVALID_PREPARATION",
+            "binding requires complete expected assignment records",
+        )
         _require(
             not rounds_profile
             or isinstance(preparation, list)
-            and len(preparation) == 2,
+            and len(preparation) >= 2
+            and len(preparation) == len(expected["rounds"])
+            and (profile != native.CLAUDE_ROUNDS_PROFILE or len(preparation) == 2),
             "INVALID_PREPARATION",
-            "serialized Claude binding requires initial and feedback preparations",
+            "serialized Claude binding requires exactly one preparation per expected assignment",
         )
         preparations = preparation if rounds_profile else [preparation]
         try:
@@ -256,11 +440,17 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
         accepted_controls, ignored_inputs = _controls(arguments, result)
         if rounds_profile:
             _require(
-                round_record["accepted_task_domain"]["input"]["message"]
-                == dispatch["dispatch_text"],
-                "DISPATCH_INPUT_MISMATCH",
-                "native acknowledged feedback differs from its independently rendered preparation",
+                len(mapped["rounds"]) == len(dispatches),
+                "INVALID_PREPARATION",
+                "mapped rounds and independently rendered preparations must have equal cardinality",
             )
+            for native_round, rendered in zip(mapped["rounds"][1:], dispatches[1:]):
+                _require(
+                    native_round["accepted_task_domain"]["input"]["message"]
+                    == rendered["dispatch_text"],
+                    "DISPATCH_INPUT_MISMATCH",
+                    "every acknowledged feedback must match its independently rendered preparation",
+                )
         _require(
             isinstance(result.get("resolvedModel"), str)
             and bool(result["resolvedModel"].strip()),
@@ -345,7 +535,7 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
                     "dispatch_ref": round_record["dispatch_ref"],
                     "task_ref": round_record["task_ref"],
                     "result_refs": round_record["result_refs"],
-                    "delivery_ref": mapping_request["records"]["feedback"][0][
+                    "delivery_ref": mapping_request["records"]["feedback"][-1][
                         "forwarded_result"
                     ]["uuid"]
                     if rounds_profile
@@ -375,7 +565,7 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
                     "accepted_task_domain": native_round["accepted_task_domain"],
                     "result_domain": initial_result_domain
                     if index == 0
-                    else result_domain,
+                    else native_round["result_domain"],
                     "accepted_task_digest": f"sha256:{native_round['accepted_task_digest']}",
                     "result_digest": f"sha256:{native_round['result_digest']}",
                 }
@@ -384,6 +574,52 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
                 )
             ]
             output["native"]["feedback_run"] = mapped["feedback_run"]
+        if profile == native.CLAUDE_LIFETIME_PROFILE:
+            creation = {
+                key: value
+                for key, value in configuration.items()
+                if key != "accepted_task_digest"
+            }
+            output["domains"]["agent_creation_configuration"] = creation
+            output["bindings"]["agent_creation_configuration_digest"] = (
+                f"sha256:{native.digest(creation)}"
+            )
+            output["native"]["feedback_runs"] = mapped["feedback_runs"]
+            output["native"]["feedback_acknowledgements"] = mapped[
+                "feedback_acknowledgements"
+            ]
+            output["unresolved_domains"].append(
+                "serialized_lifetime_and_tool_history_host_qualification"
+            )
+            for index, entry in enumerate(output["round_bindings"]):
+                envelope = {
+                    **creation,
+                    "accepted_task_digest": entry["accepted_task_digest"],
+                }
+                if index:
+                    envelope["assignment_runtime"] = mapped["feedback_runs"][index - 1]
+                    envelope["assignment_acknowledgement"] = mapped[
+                        "feedback_acknowledgements"
+                    ][index - 1]
+                    envelope["acknowledgement_source_ref"] = mapping_request["records"][
+                        "feedback"
+                    ][index - 1]["delivery"]["uuid"]
+                entry["agent_configuration_domain"] = envelope
+                entry["agent_configuration_digest"] = (
+                    f"sha256:{native.digest(envelope)}"
+                )
+                _require(
+                    native.digest(entry["result_domain"])
+                    == entry["result_digest"].removeprefix("sha256:"),
+                    "RESULT_DOMAIN_MISMATCH",
+                    "each round must preserve its own complete native result domain",
+                )
+            output["domains"]["agent_configuration"] = output["round_bindings"][-1][
+                "agent_configuration_domain"
+            ]
+            output["bindings"]["agent_configuration_digest"] = output["round_bindings"][
+                -1
+            ]["agent_configuration_digest"]
     except BindingError as error:
         output.update(
             {

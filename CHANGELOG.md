@@ -11,6 +11,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Align all five supervised Procedures, preserve admitted snapshots, and bind each serialized native assignment to its own configuration and result; reconcile lost Claude feedback acknowledgements before retrying; activation still requires combined workflow and upgrade qualification.
+
 - Declare supervised Worker/Judge checkpoints for Design and War-room, preserving negative quality routing and exact document approval; activation awaits combined native qualification.
 
 - Rebuild Epic validation with direct original-evidence Judge assessments, faithful negative-audit routing and Primary correction-group commit settlement; managed Validation Procedures require an authorized update after candidate qualification.

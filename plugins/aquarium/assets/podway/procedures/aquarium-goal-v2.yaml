@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "28"
+version: "29"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -2107,6 +2107,8 @@ node_definitions:
     intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
     instructions:
       - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the same logical Judge.
+      - Preserve every original criterion row, actual global verdict and unmet/unverified count. Separately assess all obligations due at this current phase and applicable parent constraints from direct evidence; unfinished later work remains a global gap, not a fabricated pass or non-applicability claim.
+      - A passing checkpoint verifies actual current work, required checks and authority. For review evidence, preserve faithful negative provider rows and their original routing; report completeness alone cannot establish correction, implementation or verification success.
       - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
       - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
       - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
@@ -2152,6 +2154,17 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
+      - id: judge-checkpoint-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-goal-phase-checkpoint; Podway does not execute or attest this check.
+        help: Verify actual satisfaction of all current phase obligations and applicable parent constraints from direct original evidence and exact candidate bytes, authorized checks and current authority. Preserve the complete original workflow rows, global verdict and remaining unmet/unverified counts; report completeness alone is insufficient.
+        required: true
+        operation_id: aquarium-goal-phase-checkpoint
+        operation_digest: sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
   final-judge-assessment-record:
     type: action
     title: Assess the current candidate
@@ -2220,7 +2233,7 @@ node_definitions:
     options:
       - id: passed
         label: Assessment passed
-        criteria: The applicable Judge pass covers all mandatory criteria with no gaps.
+        criteria: All actual current phase obligations and applicable parent constraints are satisfied. Preserve global gaps and original negative-result routing without claiming whole-goal achievement.
         guards:
           - evidence:
               node: judge-work
@@ -2229,16 +2242,9 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-work
-              item: judge-verdict
+              item: judge-checkpoint-result
+            field: outcome
             equals: pass
-          - evidence:
-              node: judge-work
-              item: judge-unmet-criteria
-            equals: 0
-          - evidence:
-              node: judge-work
-              item: judge-unverified-criteria
-            equals: 0
       - id: inapplicable
         label: Assessment inapplicable
         criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
@@ -2250,7 +2256,7 @@ node_definitions:
             not_equals: pass
       - id: rework
         label: Established correction required
-        criteria: An applicable report contains unmet mandatory criteria; preserve its verdict and admit corrections only under existing authority.
+        criteria: An actual current phase obligation or applicable parent constraint failed. Preserve original gaps and require the existing exact correction authority before rework.
         guards:
           - evidence:
               node: judge-work
@@ -2259,15 +2265,12 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-work
-              item: judge-verdict
-            equals: rework
-          - evidence:
-              node: judge-work
-              item: judge-unmet-criteria
-            at_least: 1
+              item: judge-checkpoint-result
+            field: outcome
+            equals: fail
       - id: evidence-needed
         label: Evidence required
-        criteria: An applicable report has no unmet criterion and at least one unverified criterion; obtain original evidence under existing authority.
+        criteria: Actual current phase work or its required evidence remains unverified. Preserve original gaps and use the existing evidence owner and authority without redispatching uncertain work.
         guards:
           - evidence:
               node: judge-work
@@ -2276,16 +2279,9 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-work
-              item: judge-verdict
-            equals: evidence-needed
-          - evidence:
-              node: judge-work
-              item: judge-unmet-criteria
-            equals: 0
-          - evidence:
-              node: judge-work
-              item: judge-unverified-criteria
-            at_least: 1
+              item: judge-checkpoint-result
+            field: outcome
+            equals: inconclusive
     reason:
       required: true
       prompt: Explain the selected verdict, exact target, remaining authority and actual next owner.
@@ -2417,7 +2413,7 @@ node_definitions:
     options:
       - id: passed
         label: Assessment passed
-        criteria: The applicable Judge pass covers all mandatory criteria with no gaps.
+        criteria: All actual current phase obligations and applicable parent constraints are satisfied. Preserve global gaps and original negative-result routing without claiming whole-goal achievement.
         guards:
           - evidence:
               node: judge-goal-evidence
@@ -2426,16 +2422,9 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-goal-evidence
-              item: judge-verdict
+              item: judge-checkpoint-result
+            field: outcome
             equals: pass
-          - evidence:
-              node: judge-goal-evidence
-              item: judge-unmet-criteria
-            equals: 0
-          - evidence:
-              node: judge-goal-evidence
-              item: judge-unverified-criteria
-            equals: 0
       - id: inapplicable
         label: Assessment inapplicable
         criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
@@ -2447,7 +2436,7 @@ node_definitions:
             not_equals: pass
       - id: rework
         label: Established correction required
-        criteria: An applicable report contains unmet mandatory criteria; preserve its verdict and admit corrections only under existing authority.
+        criteria: An actual current phase obligation or applicable parent constraint failed. Preserve original gaps and require the existing exact correction authority before rework.
         guards:
           - evidence:
               node: judge-goal-evidence
@@ -2456,15 +2445,12 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-goal-evidence
-              item: judge-verdict
-            equals: rework
-          - evidence:
-              node: judge-goal-evidence
-              item: judge-unmet-criteria
-            at_least: 1
+              item: judge-checkpoint-result
+            field: outcome
+            equals: fail
       - id: evidence-needed
         label: Evidence required
-        criteria: An applicable report has no unmet criterion and at least one unverified criterion; obtain original evidence under existing authority.
+        criteria: Actual current phase work or its required evidence remains unverified. Preserve original gaps and use the existing evidence owner and authority without redispatching uncertain work.
         guards:
           - evidence:
               node: judge-goal-evidence
@@ -2473,16 +2459,9 @@ node_definitions:
             equals: pass
           - evidence:
               node: judge-goal-evidence
-              item: judge-verdict
-            equals: evidence-needed
-          - evidence:
-              node: judge-goal-evidence
-              item: judge-unmet-criteria
-            equals: 0
-          - evidence:
-              node: judge-goal-evidence
-              item: judge-unverified-criteria
-            at_least: 1
+              item: judge-checkpoint-result
+            field: outcome
+            equals: inconclusive
     reason:
       required: true
       prompt: Explain the selected verdict, exact target, remaining authority and actual next owner.
@@ -2743,7 +2722,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-work
@@ -2758,7 +2737,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: decide-review-basis
@@ -4052,7 +4031,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-work-assessment
@@ -4068,6 +4047,7 @@ graph:
             - judge-unverified-criteria
             - judge-applicability
             - judge-summary
+            - judge-checkpoint-result
       routes:
         passed:
           to: record-evidence
@@ -4211,7 +4191,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-goal-evidence-assessment
@@ -4227,6 +4207,7 @@ graph:
             - judge-unverified-criteria
             - judge-applicability
             - judge-summary
+            - judge-checkpoint-result
       routes:
         passed:
           to: confirm-completion-assessment
@@ -4399,7 +4380,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-goal
@@ -4414,7 +4395,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: confirm-goal-assessment-applicability
@@ -4509,7 +4490,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-goal
@@ -4528,7 +4509,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: confirm-stopped-goal-assessment-applicability

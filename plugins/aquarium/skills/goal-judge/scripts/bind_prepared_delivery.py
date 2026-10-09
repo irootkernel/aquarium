@@ -77,7 +77,12 @@ def bind_delivery(preparation: dict, mapping_request: dict) -> dict:
         )
         if not isinstance(mapping_request, dict) or mapping_request.get(
             "profile"
-        ) not in (native.CODEX_SPAWN_PROFILE, native.CODEX_ROUNDS_PROFILE):
+        ) not in (
+            native.CODEX_SPAWN_PROFILE,
+            native.CODEX_ROUNDS_PROFILE,
+            native.CODEX_SPAWN_V2_PROFILE,
+            native.CODEX_ROUNDS_V2_PROFILE,
+        ):
             raise BindingError(
                 "UNSUPPORTED_PROFILE",
                 "binding requires a journal-backed collaboration profile",
@@ -113,7 +118,7 @@ def bind_delivery(preparation: dict, mapping_request: dict) -> dict:
         mapped = mapping["mapped"]
         profile = mapping_request["profile"]
         round_bindings = []
-        if profile == native.CODEX_ROUNDS_PROFILE:
+        if profile in (native.CODEX_ROUNDS_PROFILE, native.CODEX_ROUNDS_V2_PROFILE):
             records = mapping_request["records"]
             round_records = [records["initial"], *records["feedback"]]
             for index, (record, native_round) in enumerate(
@@ -213,7 +218,7 @@ def bind_delivery(preparation: dict, mapping_request: dict) -> dict:
         }
         child_read = (
             mapping_request["records"]["feedback"][-1]["after_child_read"]
-            if profile == native.CODEX_ROUNDS_PROFILE
+            if profile in (native.CODEX_ROUNDS_PROFILE, native.CODEX_ROUNDS_V2_PROFILE)
             else mapping_request["records"]["child_read"]
         )
         items = child_read["thread"]["turns"][-1]["items"]

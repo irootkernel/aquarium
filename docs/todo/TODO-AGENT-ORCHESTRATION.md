@@ -397,11 +397,35 @@ Master functional results and final overall acceptance.
 
 ### TASK-116: Align compatibility and recovery
 
-- [ ] Align all five bundled Procedures, version declarations, readiness
+The source candidate aligns Task version 26, Goal version 29, Validation
+version 28, Design version 6 and War-room version 6. Every required placement
+binds the complete nine-file Worker or Judge role snapshot. Earlier admitted
+and customized snapshots remain valid for their original continuation;
+current readiness requires the current declarations and separate update authority.
+Phase passage preserves unfinished original Goal rows, while final achievement
+still requires all applicable original criteria.
+
+Native qualification covers four serialized Codex assignments and five Claude
+assignments, including tools, an original nested Agent result, and feedback ACK
+loss before the public SDK consumer. The accepted Claude assignment completed
+without redispatch after its original response and public history were reconciled.
+The mappings retain each assignment's configuration, task, result and complete
+history. Existing two-round mappings remain unchanged. The fixture roles contain
+two files and do not acknowledge the current nine-file roles. Codex direct child
+input was rejected by the native host; it supplies no dispatch-loss evidence.
+Current arbitrary descendant settlement, all-five actual workflows, candidate
+upgrade and Master's functional results remain TASK-117 activation requirements.
+
+The coordinator accepted this source checkpoint under the approved Epic
+delegation after the required checks and Independent Review. Required
+placements remain inactive until TASK-117 qualification and actual overall
+acceptance.
+
+- [x] Align all five bundled Procedures, version declarations, readiness
   inspectors, and observation contracts.
-- [ ] Exercise reconnect and restoration, uncertain dispatch/results, pending
+- [x] Exercise reconnect and restoration, uncertain dispatch/results, pending
   acceptance, quiescence, stale receipts, changed goals, and superseded agents.
-- [ ] Preserve old snapshots and customizations and document supported
+- [x] Preserve old snapshots and customizations and document supported
   continuation, unsupported Primary replacement, and separately authorized
   successor or rollout paths.
 

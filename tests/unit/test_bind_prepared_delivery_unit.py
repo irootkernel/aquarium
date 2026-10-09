@@ -847,3 +847,20 @@ def test_feedback_binding_rejects_malformed_status_with_recovery_refs(
     assert result.returncode == 2
     assert not result.stderr
     assert json.loads(result.stdout) == output
+
+
+def test_codex_v2_binding_retains_every_preparation_and_actual_alias(feedback_inputs):
+    prepared, request = feedback_inputs
+    request["profile"] = binder.native.CODEX_ROUNDS_V2_PROFILE
+    request["records"]["initial"]["child_read"]["thread"]["cliVersion"] = "0.162.1"
+    path = request["records"]["initial"]["journal"]["response"]["task_name"]
+    for record in request["records"]["feedback"]:
+        for key in ("before_child_read", "after_child_read"):
+            record[key]["thread"]["cliVersion"] = "0.162.1"
+        record["request"]["target"] = path.rsplit("/", 1)[-1]
+    original = copy.deepcopy((prepared, request))
+    output = binder.bind_delivery(prepared, request)
+    assert output["state"] == "delivery_bound"
+    assert (prepared, request) == original
+    assert len(output["round_bindings"]) == len(request["expected"]["rounds"])
+    assert output["acceptance_ready"] is False and output["redispatch_allowed"] is False

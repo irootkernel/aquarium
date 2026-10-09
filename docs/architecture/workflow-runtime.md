@@ -30,8 +30,8 @@ Workflows prefer re-observation over replay. Unknown or interrupted external exe
 ## Reserved supervised orchestration
 
 The [EPIC-021 orchestration contract](../../plugins/aquarium/references/agent-orchestration.md)
-defines the accepted reserved role model and versioned handoffs. It is
-unimplemented and unqualified. Current skills and admitted snapshots continue
+defines the accepted reserved role model and versioned handoffs. Required
+native execution remains unqualified. Current skills and admitted snapshots continue
 with the invocation and node contracts above; source updates do not activate
 reserved placements in an existing session.
 
@@ -39,7 +39,9 @@ The reserved flow separates Worker candidate delivery, report-only Judge
 assessment, and Orchestrator Decisions. The Primary accepts a complete native
 delivery under its placement's delivery checks and authority before completing
 the Action. It accepts a complete Judge report without recursively judging it;
-semantic progression then requires the Judge verdict's exact applicability.
+phase progression then requires current applicability and a result proving
+actual due obligations. Complete original global rows and gaps stay intact, and
+final achievement still requires the full original Goal to pass.
 The Judge reads original criteria and evidence, including omitted assignment
 criteria and Epic integration goals. One logical Judge follows an Epic-handler
 across member Tasks and internal validation; independent cold validation starts

@@ -2,7 +2,8 @@
 
 ## Status and scope
 
-These TASK-111 profiles describe the public surfaces to wire and qualify for
+These TASK-111 and TASK-116 profiles describe the public surfaces to wire and
+qualify for
 `aquarium.codex-native/v1` and `aquarium.claude-native/v1`. Local preparation and
 delivery-mapping components are implemented. Isolated native assignments and
 same-agent feedback on both hosts have exercised Podway acceptance, Action
@@ -113,9 +114,10 @@ request/response objects. Pass `thread_read.response.result` into the mapper's
 `parent_read` or `child_read`. Every returned turn must have full item content;
 paginated history is accepted when the hydrated result is complete. Protocol,
 identity, native RPC and incomplete-history failures produce bounded errors.
-The client uses one overall deadline and rejects oversized messages without
-truncation. Capture from an explicit endpoint does not authenticate historical
-journals or establish acceptance and settlement.
+The client uses one overall deadline and validates WebSocket framing, UTF-8 and
+complete JSON without an Aquarium history-size ceiling or truncation. Capture
+from an explicit endpoint does not authenticate historical journals or establish
+acceptance and settlement.
 
 ### Map a native delivery
 
@@ -163,6 +165,67 @@ separate from per-run model/background evidence. Pending or ambiguous events,
 unmatched history, incomplete results and extra rounds remain unmapped;
 reported completion and empty background snapshots do not prove settlement.
 
+The separately versioned `aquarium.claude-agent-sdk-rounds-delivery/v2` profile
+retains initial delivery and every serialized feedback assignment. Each feedback
+has its own exact accepted prompt, acknowledgement, run, result domain and full
+immediately preceding history prefix. Creation controls remain immutable while
+task-bearing configuration envelopes change with their acknowledged assignments.
+Tool-use/result pairs must correlate completely; original nested AgentOutput is
+retained separately and never reconstructed from wrapper prose.
+
+This helper profile is implemented but needs actual host qualification before
+required placement activation. Preserve qualified original single/two-round v1
+records and their digest domains. Complete logical-lifetime accounting may span
+more than thirty-two assignments across different placements; Podway's native
+`max_rounds=32` applies to its current placement/package, not the whole Judge
+lifetime. Unknown dispatch, incomplete history, pending results or unverified
+current target/descendant settlement require reconciliation without redispatch.
+
+The `aquarium.claude-agent-sdk-hooks-delivery/v1` profile retains supported
+SDK PreToolUse and PostToolUse records as their own native domain. Its
+`records.rounds` list has one entry per assignment. Each entry contains the
+original model `invocation`, complete `pre_hook` and `post_hook` captures,
+original target/run `events`, cumulative `forwarded_history`, and
+`nested_deliveries`. Feedback entries also retain their original `public_history`
+capture with `session_id`, `target`, `agents`, `children` and `primary`.
+An initial public-read snapshot is not fabricated when none was captured.
+
+A hook capture preserves its original collector envelope, callback tool-use ID
+and complete input. PreToolUse retains its complete response. The timestamped
+collector uses `at`, `toolUseID`, `input` and, for PreToolUse, `output`. The other
+qualified collector uses `event`, `toolUseId`, `input` and `callbackOutput`, with
+its original additional metadata. Never manufacture a capture timestamp. When
+PreToolUse has none, `invocation_projection` retains the original public parent
+message with the matching UUID, session, caller, message ID, model, unchanged
+tool content and native timestamp. Its public stop reason and usage projection
+remain separate from the original SDK message. Serial dispatch must follow the
+actual prior task completion time. A missing PostToolUse timestamp does not
+establish completion or elapsed time. Correlate the original model
+request with the PreToolUse requested input. A returned `updatedInput`, when
+present, must equal the PostToolUse effective input. Require the exact effective
+assignment in the native task start and original AgentOutput or SendMessage
+acknowledgement. The task reference is the actual `run_id` for every round;
+`task_id` remains the actual Worker identity. Do not rewrite an assistant message
+to make a hook-applied assignment resemble a legacy invocation.
+
+The SDK stream and public reader are different projections. Preserve both
+without changing message bodies or stop reasons. A public reader may omit a
+streamed tool reply or expose a completed terminal that the initial stream did
+not forward. Correlate original UUIDs, content, model and timestamps across
+those sources, preserving each immediately preceding prefix. Every tool use
+needs its original reply. Nested Agent calls need their original invocation,
+PreToolUse and PostToolUse captures with the complete structured AgentOutput;
+a public handback cannot reconstruct it. Initial completion uses the original
+AgentOutput and native completed events. Feedback completion requires its own
+public terminal, matching original forwarded UUID and completed task events.
+Parent completion alone does not establish child completion.
+
+Each `aquarium.claude-hooks-result/v1` result preserves the complete original
+operation and predecessor result digest. The helper can correlate supplied
+records; the integration must establish their authenticity and any completeness
+limits. Current settlement, writer and descendant quiescence, physical response
+loss recovery and Podway acceptance remain separate qualification domains.
+
 The `aquarium.codex-collaboration-spawn-delivery/v1` profile consumes `journal`,
 `parent_read`, and `child_read`. Retain the complete `spawn_agent` request before
 dispatch and capture the actual successful response from that invocation. The
@@ -192,6 +255,22 @@ child record. It does not derive IDs from completion labels or count inference
 turns as supervision rounds. Missing acknowledgement, active-turn feedback,
 changed history or ambiguous linkage requires reconciliation without redispatch.
 
+The separately versioned `aquarium.codex-collaboration-spawn-delivery/v2`
+and `aquarium.codex-collaboration-rounds-delivery/v2` profiles pin the observed
+retained Primary `cliVersion=0.162.0` and child `cliVersion=0.162.1` combination.
+They keep the same original journal, complete read, ancestry and serialized
+completion requirements, with separate digest domains. A different version
+combination needs its own qualification. Existing `v1` domains remain pinned to
+`0.162.0` and unchanged.
+
+A `v2` feedback target may be the acknowledged canonical agent path or its exact
+final path segment under the correlated parent and child. Preserve that actual
+request string in the task domain. Do not silently rewrite a supported relative
+alias into a canonical path or accept another path, ambiguous alias or changed
+child ancestry. Native child turns can lack a user-message echo; the original
+pre-dispatch request, successful completion and exact native operation linkage
+remain necessary. Never reconstruct a missing journal from history.
+
 In the initial-spawn profile, the accepted task input domain contains the
 complete acknowledged spawn request. Each serialized feedback task domain
 contains the exact acknowledged target/message request. In both cases, the
@@ -205,9 +284,10 @@ digests, exact accepted task domains, task/result digests, native result
 references, observed round count and reported status. Digests use compact,
 sorted-key ASCII JSON without a trailing newline. A task domain binds the native
 input to profile, scope, worker, dispatch and task identities. A result domain
-binds complete delivered messages or Agent output to that task digest. Claude's
-task input domain contains the echoed prompt; submitted controls are not treated
-as acknowledged configuration.
+binds complete delivered messages or Agent output to that task digest. Legacy
+Claude task input contains its acknowledged prompt. The hook profile
+contains the complete effective tool input and keeps the original request and
+hook response separately; submitted controls require native acknowledgement.
 
 Every result keeps `acceptance_ready: false` and `redispatch_allowed: false`.
 Successful correlation leaves role/configuration acknowledgement, complete
@@ -266,6 +346,23 @@ acknowledgement. It retains both result domains and binds the final task/result.
 Initial creation controls stay separate from feedback runtime evidence; Primary
 acceptance, lifetime accounting, descendant settlement and Podway context remain
 integration obligations.
+
+The general `rounds-delivery/v2` and `hooks-delivery/v1` profiles use one
+independently rendered preparation per serialized assignment. Every preparation
+must retain the same complete operative role snapshot. The hook binder compares
+each rendered assignment with its acknowledged effective input, preserving the
+requested model input separately. Its
+`aquarium.claude-hook-agent-creation-configuration/v1` domain retains the complete
+role snapshot, acknowledged creation controls, native resolution and original
+creation hooks. Each `aquarium.claude-hook-assignment-configuration/v1` domain
+binds that creation configuration to its own accepted task, actual runtime and
+original assignment hooks. The current top-level binding selects only the last
+round; all earlier configuration, task and result domains remain intact.
+
+Native hook context is caller context, not proof of hidden child controls.
+Source checks and replaying retained native records establish correlation only;
+combined native recovery qualification and installed workflow activation retain
+their own gates.
 
 The `aquarium.claude-accepted-agent-configuration/v1` domain binds that snapshot,
 the acknowledged applicable Agent input controls, native source identities and
@@ -357,9 +454,28 @@ Primary and requires the applicable execution authority.
 Both hosts have exercised actual result-read response withholding at an owned
 client transport. Supported reads recovered identical complete public history
 without redispatch. Claude recovery retains the original structured AgentOutput
-separately because public history omits that outer result. Physical dispatch-
-response loss remains unverified; missing-acknowledgement consumer injections
-establish rejection and reconciliation behavior only.
+separately because public history omits that outer result. Synthetic missing
+acknowledgements establish rejection and reconciliation behavior only.
+
+TASK-116 report-only native fixtures exercised four serialized assignments on
+the same Codex child under the explicit `0.162.0` Primary / `0.162.1` child
+profiles, and five on the same Claude Worker under the hook profile. The Claude
+fifth assignment physically withheld one original successful SendMessage ACK
+at the SDK-facing transport boundary after preserving it in an observer journal.
+The original PostToolUse record, exact task start, completed native run and full
+public terminal recovered the assignment without replay or redispatch. This
+qualifies that SDK-facing feedback ACK boundary; initial Agent ACK loss,
+inner-model ACK loss and Codex dispatch-response loss remain unqualified.
+
+The Claude fixture's settlement evidence covers its known report-only tasks and
+nested Agent, with original completion records, AgentOutput and SubagentStop,
+and the owned CLI's observed exit and reaping after the fifth run. ListAgents
+inside the original executor reported the direct Worker completed. An empty
+ListAgents result from a later process describes that process's registry and
+cannot establish historical Worker or descendant settlement. These bounded
+fixtures do not qualify arbitrary active or outliving descendants, all required
+Procedure placements, Podway acceptance, or installed candidate activation.
+Retain those integration obligations and the original single/two-round evidence.
 
 Before activation, demonstrate actual delegated Podway Action acceptance on both
 host paths with complete package/input/configuration/result bindings, durable

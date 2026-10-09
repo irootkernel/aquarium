@@ -2,7 +2,7 @@
 
 Apply this reference when the admitted Validation Procedure declares required
 Worker/Judge placements. Released direct snapshots keep their admitted contract.
-The bundled version `27` declares twelve placements; TASK-116/117 must qualify
+The bundled version `28` declares twelve placements; TASK-116/117 must qualify
 the combined candidate before activation or managed-file updates.
 
 ## Judge identity and original evidence
@@ -70,7 +70,11 @@ whole-Epic review of corrected committed bytes remains pending.
 Its existing serial route, operation, ordinal, provenance, backend, finding and
 operational-readiness Decisions remain separate. Only their admitted passed
 route reaches `judge-validation-evidence`, then its Primary semantic Decision
-and the existing completion, required-evidence, blocker and Low routing.
+and the existing completion, required-evidence, blocker and Low routing. Its
+current `judge-checkpoint-result` assesses actual evidence-phase obligations and
+already-due parent constraints while preserving every original global row, verdict
+and unmet/unverified count. Faithful negative provider evidence reaches those
+original routers; report completeness alone cannot prove required corrections.
 
 A Judge correction returns through the existing review-mode classification and
 an additional exact effect-authority check. Evidence collection uses its local

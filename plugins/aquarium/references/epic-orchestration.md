@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-goal-v2` version `28` requires native Worker delivery and
+The bundled `aquarium-goal-v2` version `29` requires native Worker delivery and
 retained Judge assessments for goal-centered Epic execution. Required placements
 remain inactive until TASK-116/117 qualify the native integrations, recovery and
 installed combined candidate. Released managed files and admitted direct sessions
@@ -75,8 +75,14 @@ A faithfully recorded eligible Low set can reach its finite disposition owner;
 it does not establish final achievement. Canonical Goal criteria and applicable
 parent constraints remain intact for final assessment.
 
-Applicable semantic passage requires Judge `pass`, current applicability and
-zero mandatory unmet and unverified rows. Missing original criteria, incomplete
+Phase passage requires current applicability and passing `judge-checkpoint-result`
+for actual current work and already-due parent constraints. Retain the complete
+original global verdict and unmet/unverified rows; later review or Low settlement
+can remain negative without blocking its own predecessor. A faithful technical
+evidence checkpoint reaches the original completion and finding routers with
+provider rows unchanged. Report fidelity alone cannot establish correction.
+Final whole-goal passage still requires global Judge `pass` and zero mandatory
+unmet and unverified rows. Missing original criteria, incomplete
 compound criteria, absent reports, stale targets, changed requirements and
 unsupported native bindings prevent passage. Return a disputed or inconsistent
 assessment to the same Judge with original conflicting evidence. An unchanged

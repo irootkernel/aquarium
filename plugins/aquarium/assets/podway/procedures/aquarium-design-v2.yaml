@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-design-v2
-version: "5"
+version: "6"
 name: Aquarium Design
 purpose: Shape one approved project, feature epic, or refactor document set without implementing it.
 description: A Podway record of Aquarium context capture, Ouroboros discovery, drafting, challenge, guarded quality review, exact-diff approval, document application, and closeout.
@@ -2066,7 +2066,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-context
@@ -2080,7 +2080,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-discovery
@@ -2094,7 +2094,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-draft
@@ -2108,7 +2108,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-challenge
@@ -2127,7 +2127,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-quality
@@ -2199,7 +2199,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: confirm-application-approval
@@ -2248,7 +2248,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-context-assessment
@@ -2353,7 +2353,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-discovery-assessment
@@ -2458,7 +2458,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-draft-assessment
@@ -2564,7 +2564,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-challenge-assessment
@@ -2680,7 +2680,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-quality-assessment
@@ -2788,7 +2788,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: decide-application-assessment
@@ -2924,7 +2924,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:2ef6b6a306cac08580b6e29eb93c45ac721608ec1c86f73a85ff7cdfc680842c
+        role_snapshot_digest: sha256:4081c1c42c9f1c5c5d6fe1c8474d7eec7cff070717ce61be3c8f194dfb8b1339
         max_rounds: 32
         after_accept: retain
       next: judge-design
@@ -2939,7 +2939,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:3294a470cbe0b0d29656490e5f0bc74325a97bdac93765d17223a3d04e573641
+        role_snapshot_digest: sha256:fefb4e77ce85884fe15804985b73a32f5bdc2603dd6ec3f737aaf66a64dc018a
         max_rounds: 32
         after_accept: retain
       next: confirm-design-assessment-applicability

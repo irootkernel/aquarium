@@ -5,7 +5,7 @@ description: "Confirm and close one reviewed roadmap task, including an explicit
 
 # Task Close
 
-For a qualified version-25 handler, require the applicable final `aquarium.judge-assessment/v1` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
+For a qualified version-26 handler, require the applicable final `aquarium.judge-assessment/v1` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 

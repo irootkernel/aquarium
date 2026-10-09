@@ -4,8 +4,8 @@
 
 `TASK-110` freezes the shared Orchestrator, Judge, and Workers design for
 `EPIC-021`. Required placements and workflow behavior await implementation and
-qualification. TASK-111 provides the bounded native mapping components below. Current skills and admitted Procedure snapshots
-continue under their existing contracts. This specification records reserved
+qualification. TASK-111 provides the bounded native mapping components below.
+Current skills and admitted Procedure snapshots continue under their existing contracts. This specification records reserved
 interfaces without claiming a shipped capability.
 
 The exact owner is the
@@ -49,7 +49,8 @@ combined host/workflow and skill qualification.
 The [native delivery mapper](../../plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py)
 correlates supplied public Codex thread records, journaled Codex initial spawns
 and serialized feedback, or synchronous Claude Agent records and same-agent
-SendMessage feedback with exact inputs and complete results. It produces separate task and result digests and
+SendMessage feedback with exact inputs and complete results. It produces
+separate task and result digests and
 reconciliation references. The binders establish acknowledged applicable
 configuration; the collector and Primary establish authenticity, acceptance,
 lifetime accounting, settlement and current Podway context. Supplied records and
@@ -78,24 +79,28 @@ WebSocket endpoint. It initializes a read client and hydrates history without
 creating a Primary or changing configuration. The collector retains its
 request/response provenance separately from mapping and acceptance. Both hosts
 have recovered identical public histories after actual result-read response
-withholding without redispatch. Physical dispatch-response loss remains
-unverified and is required before affected placement activation.
+withholding without redispatch. TASK-116 also exercised physical withholding
+of a successful Claude SendMessage ACK at the SDK-facing transport boundary,
+recovering the same assignment without redispatch. Initial Agent ACK loss,
+inner-model ACK loss and Codex dispatch-response loss remain unqualified.
+Affected placement activation retains its native recovery requirements.
 
 ## TASK-112 Task candidate
 
-The bundled Task Procedure version `25` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
+The bundled Task Procedure version `26` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
 
 The candidate declares complete role snapshot bindings and rejects Worker-only, missing or stale assessment evidence and uncovered followup authority structurally. Installed managed copies retain the released contract. Source and authoring checks do not prove distributed execution or Master functional results. TASK-116/117 must qualify complete Claude Judge lifetime, feedback source access, physical dispatch-response loss and the installed combined candidate before activation.
 
 ## Epic execution candidate
 
-Goal version `28` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
+Goal version `29` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
 declare required Worker and Judge Actions for current work, admitted technical
 evidence and final normal/stopped assessment. The handler retains one logical
 Judge across members, corrections, successors, internal Validation and closeout;
 cold independent validation starts a fresh Judge. Final Epic assessment covers
-integration and overall purpose even when every member Task passed. Semantic
-passage requires current applicability and zero mandatory gaps. Local effect
+integration and overall purpose even when every member Task passed. Phase passage requires current applicability and satisfaction of actual due
+obligations and parent constraints. Complete original global rows and gaps remain
+unchanged for final assessment; final achievement requires zero mandatory gaps. Local effect
 authority, provider lineage, delegated exact member/correction acceptance,
 separate grants and actual final Master acceptance retain their boundaries.
 
@@ -106,7 +111,7 @@ these placements; TASK-116/117 retain native and installed qualification.
 
 ## Validation candidate
 
-Validation version `27` and [Validation
+Validation version `28` and [Validation
 orchestration](../../plugins/aquarium/references/validation-orchestration.md) declare
 twelve required Worker/Judge placements for audit, correction, re-audit, admitted
 technical evidence and final normal/stopped outcomes. Cold validation starts a fresh
@@ -123,6 +128,37 @@ and final overall Master acceptance retain their existing limits. Source and nat
 structural checks leave actual combined workflow and installed qualification to
 TASK-116/117.
 
+## Compatibility alignment candidate
+
+TASK-116 aligns all five source versions and complete operative role snapshots.
+Nonfinal phase results verify the actual assigned work without requiring later
+workflow work to have happened. Original global verdicts and unmet/unverified
+rows remain intact; final Goal achievement still requires a current applicable
+Judge pass and every mandatory original criterion satisfied. Faithful negative
+audit, quality and technical evidence keeps its original correction and evidence
+routers and separate effect authority.
+
+Readiness distinguishes the current required graph from retained prior and
+customized bytes. A recognized prior source establishes provenance, not current
+handler readiness. Old admitted sessions continue only with their supported
+released contract. A new compatible successor or managed-file rollout needs its
+separate authority; reconcile pending effects and establish writer/descendant
+quiescence before replacement. Primary replacement remains unsupported unless
+an explicitly authorized native successor path establishes it.
+
+Native observations keep outer `podway.output/v3`, with direct observation
+result `v3` or delegation-aware result `v4` according to the admitted Procedure.
+Standard and compact delegated status identify their respective `v4` result
+schemas and preserve native delegation state; direct status keeps its own result contract.
+The delivery helpers preserve legacy profiles and full serialized lifetime
+records; source and synthetic checks cannot qualify a new native history or
+settlement surface. Bounded TASK-116 native fixtures exercised four serialized
+Codex assignments and five Claude assignments, including the SDK-facing feedback
+ACK recovery described in the native mapping contract. Their known report-only
+subtree evidence does not qualify arbitrary active or outliving descendants.
+Actual combined workflow, candidate upgrade and Master
+functional results remain TASK-117. Required placements remain inactive.
+
 ## Related authority
 
 - [Workflow runtime](../architecture/workflow-runtime.md) distinguishes current execution from the reserved role model.
@@ -131,6 +167,6 @@ TASK-116/117.
 
 ## Design and diagnosis candidate
 
-Design and War-room version `5` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
+Design and War-room version `6` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
 
 The Primary keeps cause/scope Decisions, actual effects, exact user proposal approval and final acceptance. Changed application proposals or target snapshots require original quality and actual exact-diff approval again. Approved incomplete diagnosis never claims a fixed defect. The Ouroboros leaf and non-Git new-project boundaries remain applicable. Source checks do not activate placements; TASK-116/117 retain authentic native, installed and Master functional qualification.

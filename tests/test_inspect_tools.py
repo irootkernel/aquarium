@@ -851,6 +851,8 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                             current=None if {podway_prepared_session!r} else dict(node=dict(graph_node_id="verify")),
                             item_values=[] if {podway_prepared_session!r} else [dict(value="sensitive evidence")],
                         )
+                        if {podway_status_result_schema!r} in ("podway.status-result/v4", "podway.compact-status-result/v4"):
+                            status["delegation"] = {{"state": "awaiting_acceptance", "reason": "receipt_required", "safe_next_action": "accept"}}
                         if not {podway_prepared_session!r}:
                             status.update(goal_revision=2, goal=dict(statement="sensitive goal text"))
                         print(json.dumps(dict(schema={podway_output_schema!r}, command="session.status", result=status)))
@@ -861,12 +863,20 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     print(json.dumps({{"schema": {podway_output_schema!r}, "command": "procedure.check", "result": {{"schema": "podway.procedure-diagnostics-result/v1", "valid": {podway_procedure_ok!r}, "digest": "sha256:procedure"}}}}))
                     raise SystemExit(0 if {podway_procedure_ok!r} else 1)
                 if len(arguments) == 4 and arguments[:3] == ["--json", "procedure", "preview"]:
+                    import yaml
+                    document = yaml.safe_load(pathlib.Path(arguments[3]).read_bytes())
                     procedure_id = next(
                         (line.split(":", 1)[1].strip() for line in pathlib.Path(arguments[3]).read_text(encoding="utf-8").splitlines() if line.startswith("id:")),
                         "",
                     )
-                    print(json.dumps({{"schema": {podway_output_schema!r}, "command": "procedure.preview", "result": {{"schema": "podway.procedure-preview-result/v1", "admissible": {podway_procedure_ok!r}, "procedure_id": procedure_id}}}}))
-                    raise SystemExit(0 if {podway_procedure_ok!r} else 1)
+                    nodes = document.get("graph", {{}}).get("nodes", [])
+                    valid = {podway_procedure_ok!r} and bool(nodes)
+                    placements = [node["id"] for node in nodes if "delegation" in node]
+                    result = {{"schema": "podway.procedure-preview-result/v2" if placements else "podway.procedure-preview-result/v1", "admissible": valid, "procedure_id": procedure_id}}
+                    if placements:
+                        result.update(delegated_placements=placements, delegated_placement_count=len(placements))
+                    print(json.dumps({{"schema": {podway_output_schema!r}, "command": "procedure.preview", "result": result}}))
+                    raise SystemExit(0 if valid else 1)
                 raise SystemExit(2)
             raise SystemExit(2)
             """
@@ -3969,7 +3979,7 @@ else:
                         "exit_code": 0,
                         "timed_out": False,
                         "output_schema": "podway.output/v3",
-                        "result_schema": "podway.procedure-preview-result/v1",
+                        "result_schema": "podway.procedure-preview-result/v2",
                         "admissible": True,
                         "procedure_id": Path(entry["path"]).stem,
                     },
@@ -5122,7 +5132,130 @@ else:
             )
         self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_actual_task_v14_prior_canonical_preserves_readiness(self) -> None:
+    def test_direct_and_delegated_status_contracts_keep_the_same_outer_envelope(
+        self,
+    ) -> None:
+        for schema in (
+            "podway.status-result/v3",
+            "podway.compact-status-result/v3",
+            "podway.status-result/v4",
+            "podway.compact-status-result/v4",
+        ):
+            with self.subTest(schema=schema):
+                self.install_fake_tools(
+                    podway_active_session=True, podway_status_result_schema=schema
+                )
+                self.install_managed_podway_procedures()
+                podway = json.loads(self.inspect(include_podway=True).stdout)["tools"][
+                    "podway"
+                ]
+                status = podway["probes"]["session_status"]
+                self.assertTrue(status["ok"])
+                self.assertEqual(status["output_schema"], "podway.output/v3")
+                self.assertEqual(status["result_schema"], schema)
+                self.assertEqual(podway["readiness_status"], "ready")
+
+    def test_delegated_status_cannot_omit_native_delegation_state(self) -> None:
+        self.install_fake_tools(
+            podway_active_session=True,
+            podway_status_result_schema="podway.status-result/v4",
+        )
+        self.install_managed_podway_procedures()
+        original_probe = inspect_tools.json_probe
+        for state in (None, {}, {"state": ""}, {"state": 1}):
+            with self.subTest(state=state):
+
+                def session_probe(command, repository, timeout, state=state):
+                    probe = original_probe(command, repository, timeout)
+                    if command[1:] == ["--json", "status"]:
+                        probe["result"]["result"]["delegation"] = state
+                    return probe
+
+                with (
+                    mock.patch.dict(os.environ, self.environment),
+                    mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+                    mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+                    mock.patch("inspect_tools.json_probe", side_effect=session_probe),
+                ):
+                    podway = inspect_tools.inspect_podway(
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+                    )
+                self.assertEqual(podway["readiness_status"], "degraded")
+
+    def test_delegated_preview_requires_its_exact_declared_placements(self) -> None:
+        self.install_fake_tools()
+        self.install_managed_podway_procedures()
+        original_probe = inspect_tools.json_probe
+        for case in ("direct-schema", "missing", "count", "placement"):
+            with self.subTest(case=case):
+
+                def preview_probe(command, repository, timeout, case=case):
+                    probe = original_probe(command, repository, timeout)
+                    if command[1:4] == ["--json", "procedure", "preview"]:
+                        payload = probe["result"]["result"]
+                        if case == "direct-schema":
+                            payload["schema"] = "podway.procedure-preview-result/v1"
+                        elif case == "missing":
+                            payload.pop("delegated_placements")
+                        elif case == "count":
+                            payload["delegated_placement_count"] += 1
+                        else:
+                            payload["delegated_placements"][-1] = "unknown-placement"
+                    return probe
+
+                with (
+                    mock.patch.dict(os.environ, self.environment),
+                    mock.patch("inspect_tools.platform.system", return_value="Darwin"),
+                    mock.patch("inspect_tools.platform.machine", return_value="arm64"),
+                    mock.patch("inspect_tools.json_probe", side_effect=preview_probe),
+                ):
+                    podway = inspect_tools.inspect_podway(
+                        self.repository.resolve(), NORMAL_PROBE_TIMEOUT_SECONDS
+                    )
+                self.assertEqual(podway["readiness_status"], "degraded")
+                self.assertTrue(
+                    all(
+                        entry["source_state"] == "unverifiable"
+                        for entry in podway["managed_procedures"]
+                    )
+                )
+
+    def test_all_prior_required_snapshots_keep_bytes_without_current_readiness(
+        self,
+    ) -> None:
+        predecessors = {
+            "task": 25,
+            "goal": 28,
+            "validation": 27,
+            "design": 5,
+            "war-room": 5,
+        }
+        for family, version in predecessors.items():
+            with self.subTest(family=family):
+                name = f"aquarium-{family}-v2.yaml"
+                old_path = ROOT / f"tests/fixtures/aquarium-{family}-v{version}.yaml"
+                before = old_path.read_bytes()
+                status, reasons = inspect_tools.inspect_podway_handler_contract(
+                    name,
+                    before,
+                    (inspect_tools.PODWAY_SOURCE_DIRECTORY / name).read_bytes(),
+                )
+                self.assertEqual(status, "incompatible")
+                self.assertTrue(
+                    any(
+                        reason.startswith("incompatible_delegation:")
+                        for reason in reasons
+                    )
+                )
+                self.assertIn(
+                    hashlib.sha256(before).hexdigest(),
+                    inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
+                )
+                self.assertEqual(old_path.read_bytes(), before)
+
+    def test_actual_task_v14_is_preserved_without_current_handler_readiness(
+        self,
+    ) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
@@ -5142,19 +5275,19 @@ else:
 
         self.assertEqual(entry["update_explanation"], "prior_canonical")
         self.assertEqual(entry["source_state"], "valid_customization")
-        self.assertEqual(entry["handler_contract_status"], "compatible")
-        self.assertEqual(entry["handler_contract_reasons"], [])
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertTrue(entry["handler_contract_reasons"])
         self.assertFalse(entry["matches_source"])
         self.assertEqual(target.read_bytes(), legacy_bytes)
-        self.assertEqual(podway["readiness_status"], "ready")
-        self.assertEqual(podway["status"], "configured")
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
         self.assertEqual(
             entry["review_route_readiness"],
             {
-                "mulgae": "ready",
-                "herdr": "unavailable",
-                "independent-review": "unavailable",
-                "waived": "ready",
+                "mulgae": "unverified",
+                "herdr": "unverified",
+                "independent-review": "unverified",
+                "waived": "unverified",
             },
         )
 
@@ -5186,7 +5319,9 @@ else:
         self.assertEqual(podway["readiness_status"], "degraded")
         self.assertEqual(podway["status"], "degraded")
 
-    def test_actual_task_v15_prior_canonical_preserves_readiness(self) -> None:
+    def test_actual_task_v15_prior_canonical_preserves_bytes_without_current_readiness(
+        self,
+    ) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
         target = self.repository / ".podway/procedures/aquarium-task-v2.yaml"
@@ -5206,12 +5341,12 @@ else:
 
         self.assertEqual(entry["update_explanation"], "prior_canonical")
         self.assertEqual(entry["source_state"], "valid_customization")
-        self.assertEqual(entry["handler_contract_status"], "compatible")
-        self.assertEqual(entry["handler_contract_reasons"], [])
+        self.assertEqual(entry["handler_contract_status"], "incompatible")
+        self.assertTrue(entry["handler_contract_reasons"])
         self.assertFalse(entry["matches_source"])
         self.assertEqual(target.read_bytes(), legacy_bytes)
-        self.assertEqual(podway["readiness_status"], "ready")
-        self.assertEqual(podway["status"], "configured")
+        self.assertEqual(podway["readiness_status"], "degraded")
+        self.assertEqual(podway["status"], "degraded")
 
     def test_tampered_task_v15_is_not_admitted_as_prior_canonical(self) -> None:
         self.install_fake_tools()
@@ -5375,29 +5510,11 @@ else:
                     if item["path"].endswith(name)
                 )
                 self.assertEqual(entry["update_explanation"], "prior_canonical")
-                current_supported = name == "aquarium-task-v2.yaml"
-                self.assertEqual(
-                    entry["handler_contract_status"],
-                    "compatible" if current_supported else "incompatible",
-                )
-                self.assertEqual(
-                    podway["readiness_status"],
-                    "ready" if current_supported else "degraded",
-                )
+                self.assertEqual(entry["handler_contract_status"], "incompatible")
+                self.assertEqual(podway["readiness_status"], "degraded")
                 self.assertEqual(
                     entry["review_route_readiness"],
-                    {
-                        "mulgae": "ready",
-                        "herdr": (
-                            "ready"
-                            if fixture.name == "aquarium-task-v23.yaml"
-                            else "unavailable"
-                        ),
-                        "independent-review": "ready",
-                        "waived": "ready",
-                    }
-                    if current_supported
-                    else {}
+                    {}
                     if name in {"aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"}
                     else dict.fromkeys(
                         ("mulgae", "herdr", "independent-review", "waived"),
@@ -5547,8 +5664,8 @@ else:
         status, reasons = inspect_tools.inspect_podway_handler_contract(
             name, prior, canonical
         )
-        self.assertEqual(status, "compatible")
-        self.assertEqual(reasons, [])
+        self.assertEqual(status, "incompatible")
+        self.assertTrue(reasons)
 
     def test_goal_required_delegation_bindings_and_prior_direct_snapshot(self) -> None:
         name = "aquarium-goal-v2.yaml"
@@ -5730,6 +5847,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "9034dc4a36ce991cc75ee5b4f8f1a15f21649e435651621acc5463ad8a9b0efc",
                     "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
                     "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
                     "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
@@ -5754,6 +5872,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
                     "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
                     "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
                     "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
@@ -5778,6 +5897,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "75d083e2812ea3cdee6774970bf5a2335607903468cb7c7554834c05d2a30e6c",
                     "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
                     "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
                     "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
@@ -5800,12 +5920,14 @@ else:
                     "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
                 },
                 "aquarium-design-v2.yaml": {
+                    "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
                     "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
                     "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
                     "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
                     "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
                     "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",
                     "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
@@ -5935,7 +6057,7 @@ else:
                     podway["status"], "installed" if supported else "degraded"
                 )
 
-    def test_podway_requires_v3_envelopes_and_v3_session_results(self) -> None:
+    def test_podway_rejects_older_outer_and_status_contracts(self) -> None:
         cases = (
             {"podway_output_schema": "podway.output/v2"},
             {

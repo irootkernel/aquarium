@@ -836,3 +836,282 @@ def test_serialized_claude_cli_preserves_preparation_list_api(feedback_inputs):
     )
     assert response.returncode == 0, response.stderr.decode()
     assert json.loads(response.stdout) == binder.bind_delivery(preparations, request)
+
+
+def extend_lifetime_binding(preparations, request, count):
+    request["profile"] = binder.native.CLAUDE_LIFETIME_PROFILE
+    template = copy.deepcopy(request["records"]["feedback"][0])
+    first_text = request["expected"]["rounds"][1]["input"]
+    for index in range(2, count):
+        prepared = copy.deepcopy(preparations[1])
+        prepared["prepared_assignment"]["node"]["context"]["target"] = (
+            f"candidate-{index + 1}"
+        )
+        rehash(prepared)
+        text = binder.renderer.render_dispatch(prepared)["dispatch_text"]
+
+        def replace(value, index=index, text=text):
+            if isinstance(value, dict):
+                return {key: replace(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [replace(item) for item in value]
+            if isinstance(value, str):
+                return {
+                    "send-1": f"send-{index}",
+                    "run-1": f"run-{index}",
+                    first_text: text,
+                }.get(value, value)
+            return value
+
+        record = replace(template)
+        for item in [record["invocation"], record["delivery"], *record["events"]]:
+            item["uuid"] += f"-{index}"
+        pair = record["public_history"]["child"][-2:]
+        for item in pair:
+            item["uuid"] += f"-{index}"
+        pair[-1]["message"]["id"] += f"-{index}"
+        pair[-1]["message"]["model"] = f"model-{index}"
+        pair[-1]["message"]["content"][0]["text"] = f"Complete result-{index}\r\n"
+        record["public_history"]["child"] = (
+            copy.deepcopy(request["records"]["feedback"][-1]["public_history"]["child"])
+            + pair
+        )
+        record["forwarded_result"] = copy.deepcopy(pair[-1])
+        record["forwarded_result"]["agent_id"] = "agent-1"
+        record["forwarded_result"]["message"]["stop_reason"] = None
+        record["events"][1]["is_backgrounded"] = index % 2 == 1
+        request["records"]["feedback"].append(record)
+        request["expected"]["rounds"].append(
+            {"dispatch_ref": f"send-{index}", "task_ref": f"run-{index}", "input": text}
+        )
+        preparations.append(prepared)
+    return preparations, request
+
+
+@pytest.mark.parametrize("count", [3, 4])
+def test_lifetime_binder_independently_binds_every_round(feedback_inputs, count):
+    preparations, request = extend_lifetime_binding(*feedback_inputs, count)
+    output = binder.bind_delivery(preparations, request)
+    assert output["state"] == "delivery_bound", output
+    assert (
+        output["native"]["delivery_ref"]
+        == request["records"]["feedback"][-1]["forwarded_result"]["uuid"]
+    )
+    assert len(output["round_bindings"]) == count
+    for entry in output["round_bindings"]:
+        assert entry["result_digest"] == "sha256:" + binder.native.digest(
+            entry["result_domain"]
+        )
+        assert entry["agent_configuration_digest"] == "sha256:" + binder.native.digest(
+            entry["agent_configuration_domain"]
+        )
+    assert output["round_bindings"][-1]["result_domain"] == output["domains"]["result"]
+    assert len({entry["result_digest"] for entry in output["round_bindings"]}) == count
+    shorter = binder.bind_delivery(
+        preparations[:-1],
+        {
+            **request,
+            "expected": {
+                **request["expected"],
+                "rounds": request["expected"]["rounds"][:-1],
+            },
+            "records": {
+                **request["records"],
+                "feedback": request["records"]["feedback"][:-1],
+            },
+        },
+    )
+    assert shorter["state"] == "delivery_bound", shorter
+    assert shorter["round_bindings"] == output["round_bindings"][:-1]
+    assert (
+        shorter["domains"]["agent_creation_configuration"]
+        == output["domains"]["agent_creation_configuration"]
+    )
+    assert (
+        shorter["bindings"]["agent_creation_configuration_digest"]
+        == output["bindings"]["agent_creation_configuration_digest"]
+    )
+    assert (
+        shorter["bindings"]["agent_configuration_digest"]
+        != output["bindings"]["agent_configuration_digest"]
+    )
+    assert output["acceptance_ready"] is False and output["redispatch_allowed"] is False
+    assert (
+        "serialized_lifetime_and_tool_history_host_qualification"
+        in output["unresolved_domains"]
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing_middle_preparation",
+        "extra_preparation",
+        "reordered_preparation",
+        "changed_middle_assignment",
+        "changed_middle_role",
+        "changed_middle_dependency",
+        "changed_middle_prompt",
+    ],
+)
+def test_lifetime_binder_rejects_unbound_intermediate_preparations(
+    feedback_inputs, change
+):
+    preparations, request = extend_lifetime_binding(*feedback_inputs, 4)
+    if change == "missing_middle_preparation":
+        preparations.pop(1)
+    elif change == "extra_preparation":
+        preparations.append(copy.deepcopy(preparations[-1]))
+    elif change == "reordered_preparation":
+        preparations[1], preparations[2] = preparations[2], preparations[1]
+    elif change == "changed_middle_assignment":
+        preparations[1]["prepared_assignment"]["node"]["context"]["target"] = (
+            "unacknowledged"
+        )
+        rehash(preparations[1])
+    elif change in ("changed_middle_role", "changed_middle_dependency"):
+        entry = preparations[1]["prepared_role_snapshot"]["files"][
+            0 if change == "changed_middle_role" else 1
+        ]
+        content = base64.b64decode(entry["content_base64"]) + b"changed"
+        entry.update(
+            content_base64=base64.b64encode(content).decode(),
+            size_bytes=len(content),
+            sha256=hashlib.sha256(content).hexdigest(),
+        )
+        rehash(preparations[1])
+    elif change == "changed_middle_prompt":
+        request["records"]["feedback"][1]["invocation"]["message"]["content"][0][
+            "input"
+        ]["message"] += "\n"
+    output = binder.bind_delivery(preparations, request)
+    assert_rejected(output)
+    assert "round_bindings" not in output
+
+
+@pytest.mark.parametrize(
+    "expected", [None, [], {"rounds": None}, {"rounds": "not-complete"}]
+)
+def test_lifetime_binder_rejects_malformed_expected_cardinality(
+    feedback_inputs, expected
+):
+    preparations, request = feedback_inputs
+    request["profile"] = binder.native.CLAUDE_LIFETIME_PROFILE
+    request["expected"] = expected
+    assert_rejected(binder.bind_delivery(preparations, request))
+
+
+def test_lifetime_current_configuration_retains_its_own_acknowledged_runtime(
+    feedback_inputs,
+):
+    preparations, request = extend_lifetime_binding(*feedback_inputs, 4)
+    output = binder.bind_delivery(preparations, request)
+    assert output["state"] == "delivery_bound", output
+    configuration = output["domains"]["agent_configuration"]
+    assert configuration == output["round_bindings"][-1]["agent_configuration_domain"]
+    assert configuration["assignment_runtime"]["run_id"] == "run-3"
+    assert configuration["assignment_runtime"]["model"] == "model-3"
+    assert (
+        configuration["assignment_acknowledgement"]
+        == request["records"]["feedback"][-1]["delivery"]["tool_use_result"]
+    )
+    assert (
+        configuration["acknowledgement_source_ref"]
+        == request["records"]["feedback"][-1]["delivery"]["uuid"]
+    )
+    assert (
+        output["round_bindings"][1]["agent_configuration_domain"]["assignment_runtime"][
+            "run_id"
+        ]
+        == "run-1"
+    )
+    assert (
+        output["bindings"]["agent_configuration_digest"]
+        == output["round_bindings"][-1]["agent_configuration_digest"]
+    )
+
+
+@pytest.fixture
+def hooks_inputs(inputs):
+    from test_map_native_delivery_unit import make_hook_request
+
+    prepared, legacy = inputs
+    preparations = []
+    for index in range(4):
+        value = copy.deepcopy(prepared)
+        value["prepared_assignment"]["node"]["context"]["target"] = "candidate-" + str(
+            index
+        )
+        rehash(value)
+        preparations.append(value)
+    dispatches = [
+        binder.renderer.render_dispatch(value)["dispatch_text"]
+        for value in preparations
+    ]
+    return preparations, make_hook_request(
+        legacy["records"]["delivery"]["tool_use_result"], dispatches, nested=True
+    )
+
+
+def test_hook_binding_keeps_each_acknowledged_configuration_task_and_result(
+    hooks_inputs,
+):
+    preparations, request = hooks_inputs
+    original = copy.deepcopy(hooks_inputs)
+    output = binder.bind_delivery(preparations, request)
+    assert output["state"] == "delivery_bound"
+    assert hooks_inputs == original
+    assert output["acceptance_ready"] is False and output["redispatch_allowed"] is False
+    for index, bound in enumerate(output["round_bindings"]):
+        assert (
+            bound["local_prepared_assignment_sha256"]
+            == preparations[index]["local_prepared_assignment_sha256"]
+        )
+        for name in ("agent_configuration", "accepted_task", "result"):
+            assert bound[name + "_digest"] == "sha256:" + binder.native.digest(
+                bound[name + "_domain"]
+            )
+    assert (
+        len({entry["agent_configuration_digest"] for entry in output["round_bindings"]})
+        == 4
+    )
+    assert (
+        output["bindings"]["result_digest"]
+        == output["round_bindings"][-1]["result_digest"]
+    )
+    assert (
+        output["domains"]["agent_creation_configuration"]["original_creation_hooks"][
+            "post_hook"
+        ]
+        == request["records"]["rounds"][0]["post_hook"]
+    )
+
+
+@pytest.mark.parametrize(
+    "change", ["missing", "extra", "reordered", "repeated", "role", "assignment"]
+)
+def test_hook_binding_rejects_changed_or_omitted_preparations(hooks_inputs, change):
+    preparations, request = hooks_inputs
+    if change == "missing":
+        preparations.pop(1)
+    elif change == "extra":
+        preparations.append(copy.deepcopy(preparations[-1]))
+    elif change == "reordered":
+        preparations[1], preparations[2] = preparations[2], preparations[1]
+    elif change == "repeated":
+        preparations[1] = copy.deepcopy(preparations[0])
+    elif change == "role":
+        file = preparations[1]["prepared_role_snapshot"]["files"][0]
+        content = base64.b64decode(file["content_base64"]) + b" changed"
+        file.update(
+            content_base64=base64.b64encode(content).decode(),
+            sha256=hashlib.sha256(content).hexdigest(),
+            size_bytes=len(content),
+        )
+        rehash(preparations[1])
+    else:
+        preparations[1]["prepared_assignment"]["node"]["instructions"] = (
+            "changed current assignment"
+        )
+        rehash(preparations[1])
+    assert_rejected(binder.bind_delivery(preparations, request))

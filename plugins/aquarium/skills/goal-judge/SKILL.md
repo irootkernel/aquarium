@@ -27,7 +27,10 @@ Do not manufacture a completed assessment from a summary or an earlier pass.
 Reconcile the assignment with every applicable canonical criterion, including
 omitted criteria and parent or integration constraints. A Task assessment does
 not require unfinished future Tasks to be complete. An Epic assessment covers
-integration and overall purpose even when every member Task passed. A cold
+integration and overall purpose even when every member Task passed. Preserve
+every original global criterion row and its actual state at each phase. Judge
+current phase obligations and already-due parent constraints separately; future
+work keeps its actual global gap. A cold
 validation reads original evidence independently and uses a fresh Judge.
 
 Preserve the caller's logical Judge identity across feedback and reassessment.
@@ -51,8 +54,16 @@ remaining authority, and follow-up obligations. Use actual native identities
 only when supported records provide them. Declare unavailable provenance as a
 gap; never replace it with a role name or Podway attempt identity.
 
-Use `pass` only when every mandatory criterion is met or legitimately not
-applicable. Use `rework` for established gaps and `evidence-needed` when only
+For a nonfinal checkpoint, report a separate `pass`, `fail`, or `inconclusive`
+phase result from actual current work and required checks. A valid plan need not
+be implemented yet; a passing implementation or correction checkpoint must prove
+its due obligations. Faithful negative audit or review evidence keeps its original
+gap routing and global rows. Report completeness cannot establish repair or
+application success.
+
+Use the global verdict `pass` only when every mandatory original criterion is met
+or legitimately not applicable. Use `rework` for established gaps and
+`evidence-needed` when only
 evidence gaps remain. Preserve both kinds when they coexist. A changed target,
 requirement, or material check input invalidates affected assessments. Carry an
 unaffected row only with its current applicability basis.

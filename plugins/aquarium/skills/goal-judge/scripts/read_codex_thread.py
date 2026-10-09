@@ -6,7 +6,7 @@ thread/read(includeTurns=true); it never discovers/starts a server or creates,
 resumes, or dispatches a thread. Successful captures retain exact JSON objects,
 not raw wire encodings. Notifications are tolerated but are not capture evidence.
 
-The overall I/O deadline and 64 MiB received-byte limit fail without truncation.
+The overall I/O deadline bounds reads without imposing an evidence-size quota.
 HTTP headers are limited to 16 KiB. Full itemsView is required even for paginated
 history. Captures prove the supplied server's returned projection, not journal
 authenticity, configuration acceptance, semantic success, or worker settlement.
@@ -28,7 +28,6 @@ import time
 from pathlib import Path
 
 OUTPUT_SCHEMA = "aquarium.codex-thread-capture/v1"
-MAX_RECEIVED_BYTES = 64 * 1024 * 1024
 MAX_HEADER_BYTES = 16 * 1024
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -63,7 +62,6 @@ class _WebSocket:
         self.connection = connection
         self.deadline = deadline
         self.buffer = bytearray()
-        self.received_bytes = 0
         self.upgraded = False
 
     def remaining(self) -> float:
@@ -75,12 +73,9 @@ class _WebSocket:
         self.connection.settimeout(self.remaining())
         chunk = self.connection.recv(65536)
         _require(bool(chunk), "UNEXPECTED_EOF")
-        self.received_bytes += len(chunk)
-        _require(self.received_bytes <= MAX_RECEIVED_BYTES, "BYTE_LIMIT_EXCEEDED")
         self.buffer.extend(chunk)
 
     def _take(self, length: int) -> bytes:
-        _require(length <= MAX_RECEIVED_BYTES, "BYTE_LIMIT_EXCEEDED")
         while len(self.buffer) < length:
             self._receive()
         result = bytes(self.buffer[:length])
@@ -161,7 +156,6 @@ class _WebSocket:
     def receive_json(self) -> dict:
         fragments = []
         fragmented = False
-        total = 0
         while True:
             first, second = self._take(2)
             final, opcode = bool(first & 0x80), first & 0x0F
@@ -176,7 +170,6 @@ class _WebSocket:
             _require(opcode in (0, 1, 8, 9, 10), "INVALID_FRAME")
             if opcode >= 8:
                 _require(final and length <= 125, "INVALID_FRAME")
-            _require(length <= MAX_RECEIVED_BYTES - total, "BYTE_LIMIT_EXCEEDED")
             body = self._take(length)
             if opcode == 8:
                 _require(length != 1, "INVALID_FRAME")
@@ -217,7 +210,6 @@ class _WebSocket:
             )
             fragmented = not final
             fragments.append(body)
-            total += length
             if final:
                 try:
                     message = json.loads(

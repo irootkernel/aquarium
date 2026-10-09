@@ -75,9 +75,12 @@ even when the candidate has unresolved goals. For the Judge Action, the Primary
 checks report completeness, criterion coverage, provenance, applicability, and
 execution authority, then accepts the report and completes the Action. It does
 not repeat the Judge's semantic assessment or require another Judge verdict to
-accept that report. The following Decision uses the reported verdict to select
-progress, rework, or evidence collection; semantic progress requires every
-mandatory criterion to be met or legitimately not applicable.
+accept that report. The following Decision uses the current checkpoint assessment
+to select progress, rework, or evidence collection. A phase checkpoint verifies
+every obligation due at that phase and applicable parent constraints. It does
+not require unfinished later work to be complete. Keep those later obligations
+and other original gaps in the full global assessment; do not erase rows, report
+false zero counts, or mark them globally not applicable to advance.
 
 | Procedure | Semantic checkpoints | Native checks and retained boundaries |
 | --- | --- | --- |
@@ -101,12 +104,14 @@ state, readable evidence, provenance, and remaining gap or reason:
 - `met`: sufficient evidence supports the entire criterion.
 - `unmet`: readable evidence establishes a violated obligation.
 - `unverified`: required evidence, coverage, or resolved authority is missing.
-- `not-applicable`: canonical scope or the checkpoint excludes the obligation;
+- `not-applicable`: canonical scope excludes the obligation;
   record that basis explicitly.
 
 A partially assessed compound criterion keeps its unassessed portion
-`unverified`. Mandatory `unmet` or `unverified` criteria prevent semantic
-acceptance. Conflicting evidence establishes `unmet` if it proves a real gap;
+`unverified`. Mandatory global `unmet` or `unverified` criteria prevent whole-goal
+acceptance. A separate phase result cannot establish achievement or waive an
+already-due obligation. Conflicting evidence establishes `unmet` if it proves a
+real gap;
 otherwise the conflict remains `unverified`. A negative assessment identifies
 needed work or evidence and its owner without authorizing the effect.
 
@@ -164,6 +169,16 @@ criterion to be `met` or legitimately `not-applicable`; an established gap yield
 when they coexist. Link the selected technical-review basis and its limitations;
 a Judge report is never technical-provider evidence. Preserve any legitimately
 carried criterion assessments with their exact applicability basis.
+
+For a nonfinal phase, also record the current obligations, their direct original
+evidence and applicable parent constraints, and a distinct checkpoint result of
+`pass`, `fail`, or `inconclusive`. A phase pass requires actual satisfaction of
+all due obligations and required checks. Report fidelity alone cannot prove
+implementation, correction or application success. A faithful negative audit,
+quality or technical-evidence result may reach its original gap router while
+the global verdict and original criterion counts remain negative. Missing phase
+evidence is inconclusive; an established phase failure requires owned rework.
+Neither result grants an effect, new provider operation or review ordinal.
 
 The document also states verification freshness, consumed review ordinal/kind,
 finding lineage and dispositions, remaining authority, and follow-up obligations,
@@ -302,8 +317,13 @@ its own observation meaning. Native-valid, handler-compatible, and qualified
 execution remain separate claims.
 
 Admitted snapshots are immutable. Source updates apply to successors only and
-preserve repository customizations. Report an incompatible active snapshot's
-exact safe continuation or separately authorized successor path. This
+preserve repository customizations. An admitted old snapshot continues through
+its supported released handler and native contract; current required-placement readiness is a separate
+claim. An incompatible snapshot cannot be reinterpreted with the new graph.
+Retain its exact state and explain either that supported continuation or a
+separately authorized compatible successor after pending effects are reconciled
+and writers and descendants are quiescent. Preserve customized bytes; unknown
+semantic changes remain unqualified for automatic managed execution. This
 repository's installed managed copies follow the host's released combination;
 candidate development does not update them or installed tools.
 

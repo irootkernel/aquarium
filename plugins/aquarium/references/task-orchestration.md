@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-task-v2` version `25` declares required native Worker and
+The bundled `aquarium-task-v2` version `26` declares required native Worker and
 Judge Actions. It remains undistributed and inactive until TASK-116 and TASK-117
 qualify compatible native execution, recovery and the installed candidate.
 Released managed copies and admitted direct snapshots retain their original
@@ -89,8 +89,15 @@ report acceptance checks the report and its applicability without repeating its
 semantic assessment. The following Primary Decision consumes that assessment.
 Any actual later item edit can stale the receipt.
 
-A phase pass requires a current applicable Judge pass with zero mandatory unmet
-and unverified criteria. Worker-only delivery, omitted original criteria, absent
+A phase pass requires current applicability and a passing `judge-checkpoint-result`
+for all actual due phase obligations and applicable parent constraints. Retain
+every original global criterion row, verdict and unmet/unverified count; later
+work can remain a global gap. A plan checkpoint proves the exact approved plan,
+implementation proves its due implementation obligations, and verification proves
+required checks. Review evidence preserves faithful negative provider rows and
+their original completion, severity and Low routing. Report completeness alone
+cannot establish implementation, correction or verification success. Worker-only
+delivery, omitted original criteria, absent
 reports, changed targets, stale requirements, unsupported native bindings and
 inconsistent reports block passage. Return disputed or inapplicable assessments
 to the retained Judge with original conflicting evidence. An unchanged artifact

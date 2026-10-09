@@ -298,6 +298,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "9034dc4a36ce991cc75ee5b4f8f1a15f21649e435651621acc5463ad8a9b0efc",
         "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
         "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
         "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
@@ -322,6 +323,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
         "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
         "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
         "c17020907a437817b8a3c139a510e1cecf73b7f23e82240a58adb9a8c32aff39",
@@ -346,6 +348,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "75d083e2812ea3cdee6774970bf5a2335607903468cb7c7554834c05d2a30e6c",
         "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
         "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
         "e8048c5146a1d4ec17ca4811f6b76fa82d316bbe682b4198155b42d83586774f",
@@ -368,12 +371,14 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
+        "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
         "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
         "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
         "4ec653b2b4d740d77bcd4826f40288d9fadd7d696a3939c197b9789dbba824b6",
         "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
     },
     "aquarium-war-room-v2.yaml": {
+        "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
         "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
         "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",
         "ca9f2363107b315e829ba9f0357d35cbc242d07fbbf5a4702868bbb781dee1cb",
@@ -758,17 +763,6 @@ def inspect_podway_handler_contract(
     """Check only the structural Procedure surface consumed by Aquarium handlers."""
     if content is None:
         return "not_checked", ["procedure_bytes_unavailable"]
-    content_digest = hashlib.sha256(content).hexdigest()
-    # These handlers require branches or acceptance evidence absent from prior files.
-    if content_digest in PODWAY_PRIOR_CANONICAL_SHA256.get(
-        name, set()
-    ) and name not in {
-        "aquarium-war-room-v2.yaml",
-        "aquarium-design-v2.yaml",
-        "aquarium-goal-v2.yaml",
-        "aquarium-validation-v2.yaml",
-    }:
-        return "compatible", []
     if yaml is None:
         return "not_checked", ["pyyaml_unavailable"]
     try:
@@ -996,6 +990,26 @@ def inspect_podway_handler_contract(
     if podway_handler_structure(document) != podway_handler_structure(canonical):
         return "unqualified", ["unrecognized_semantic_customization"]
     return "compatible", []
+
+
+def podway_delegated_placements(content: bytes | None) -> list[str] | None:
+    if content is None or yaml is None:
+        return None
+    try:
+        document = yaml.safe_load(content)
+    except (UnicodeDecodeError, yaml.YAMLError):
+        return None
+    graph = document.get("graph") if isinstance(document, dict) else None
+    nodes = graph.get("nodes") if isinstance(graph, dict) else None
+    if not isinstance(nodes, list):
+        return None
+    return [
+        node["id"]
+        for node in nodes
+        if isinstance(node, dict)
+        and isinstance(node.get("id"), str)
+        and "delegation" in node
+    ]
 
 
 def supported_sanho_version(version: str | None) -> bool:
@@ -4515,6 +4529,7 @@ def inspect_podway(
                 "expected_procedure_id": Path(name).stem,
                 "handler_contract_status": handler_contract_status,
                 "handler_contract_reasons": handler_contract_reasons,
+                "delegated_placements": podway_delegated_placements(target_bytes),
                 "review_route_readiness": (
                     inspect_podway_review_routes(None)
                     if relative_path in review_route_bytes
@@ -4614,7 +4629,12 @@ def inspect_podway(
         normalized_session, session_result = normalize_podway_envelope(
             session_probe,
             "session.status",
-            ("podway.status-result/v3", "podway.compact-status-result/v3"),
+            (
+                "podway.status-result/v3",
+                "podway.compact-status-result/v3",
+                "podway.status-result/v4",
+                "podway.compact-status-result/v4",
+            ),
         )
         if isinstance(doctor_payload, dict) and isinstance(
             doctor_payload.get("healthy"), bool
@@ -4626,6 +4646,15 @@ def inspect_podway(
             session = session_result.get("session")
             current = session_result.get("current")
             node = current.get("node") if isinstance(current, dict) else None
+            delegation = session_result.get("delegation")
+            delegation_valid = session_result.get("schema") not in (
+                "podway.status-result/v4",
+                "podway.compact-status-result/v4",
+            ) or (
+                isinstance(delegation, dict)
+                and isinstance(delegation.get("state"), str)
+                and bool(delegation["state"])
+            )
             normalized_session["result"] = {
                 "procedure_present": isinstance(procedure, dict),
                 "procedure_schema_valid": isinstance(procedure, dict)
@@ -4650,7 +4679,8 @@ def inspect_podway(
             }
             allowed_procedure_ids = {Path(name).stem for name in PODWAY_PROCEDURES}
             session_payload_valid = bool(
-                isinstance(procedure, dict)
+                delegation_valid
+                and isinstance(procedure, dict)
                 and procedure.get("schema") == "podway.procedure/v2"
                 and procedure.get("id") in allowed_procedure_ids
                 and isinstance(procedure.get("version"), str)
@@ -4728,7 +4758,11 @@ def inspect_podway(
             normalized_preview, preview_payload = normalize_podway_envelope(
                 preview,
                 "procedure.preview",
-                ("podway.procedure-preview-result/v1",),
+                (
+                    "podway.procedure-preview-result/v2"
+                    if entry["delegated_placements"]
+                    else "podway.procedure-preview-result/v1",
+                ),
             )
             entry["preview"] = normalized_preview
             if isinstance(preview_payload, dict):
@@ -4739,12 +4773,21 @@ def inspect_podway(
                 entry["preview"]["procedure_id"] = (
                     procedure_id if isinstance(procedure_id, str) else None
                 )
+                if entry["delegated_placements"] and (
+                    preview_payload.get("delegated_placements")
+                    != entry["delegated_placements"]
+                    or preview_payload.get("delegated_placement_count")
+                    != len(entry["delegated_placements"])
+                ):
+                    normalized_preview["ok"] = False
+                    normalized_preview["error_code"] = "incompatible_delegated_preview"
             preview_valid = (
                 normalized_preview["ok"]
                 and isinstance(preview_payload, dict)
                 and preview_payload.get("admissible") is True
                 and preview_payload.get("procedure_id")
                 == entry["expected_procedure_id"]
+                and entry["delegated_placements"] is not None
             )
         check_rejected = isinstance(payload, dict) and payload.get("valid") is False
         preview_rejected = isinstance(preview_payload, dict) and (

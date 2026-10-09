@@ -1,7 +1,7 @@
 # Design and diagnosis orchestration candidate
 
 Apply this reference only when an admitted Design or War-room source declares
-required Worker/Judge placements. Both bundled version `5` candidates keep
+required Worker/Judge placements. Both bundled version `6` candidates keep
 the released workflow identities. Required placements remain inactive until
 TASK-116/117 qualify the combined candidate; installed and admitted direct
 snapshots retain their existing contract.

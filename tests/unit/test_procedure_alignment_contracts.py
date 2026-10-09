@@ -24,38 +24,38 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "25",
+            "26",
+            "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
+            "aquarium-task-v25.yaml",
             "9034dc4a36ce991cc75ee5b4f8f1a15f21649e435651621acc5463ad8a9b0efc",
-            "aquarium-task-v24.yaml",
-            "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "28",
+            "29",
+            "430c5423c1ddea224561970e7e5ba5c6d1b7c62c03887e9eee888e6c648a4635",
+            "aquarium-goal-v28.yaml",
             "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
-            "aquarium-goal-v27.yaml",
-            "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "27",
+            "28",
+            "cb5cad2c4d29f72f365b7a4f95274f9cfe9d1cf112154daf529b0c4efdae5867",
+            "aquarium-validation-v27.yaml",
             "75d083e2812ea3cdee6774970bf5a2335607903468cb7c7554834c05d2a30e6c",
-            "aquarium-validation-v26.yaml",
-            "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
         ),
         (
             "aquarium-design-v2.yaml",
-            "5",
+            "6",
+            "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
+            "aquarium-design-v5.yaml",
             "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
-            "aquarium-design-v4.yaml",
-            "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "5",
+            "6",
+            "2a665a79048c7a4bb239ba348d77fc8d578e0edf82d50d301bae7843f48a18a8",
+            "aquarium-war-room-v5.yaml",
             "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
-            "aquarium-war-room-v4.yaml",
-            "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -499,7 +499,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "25"
+    assert task["version"] == "26"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -2597,33 +2597,32 @@ def test_task_semantic_pass_rejects_missing_stale_and_incomplete_reports() -> No
         passing = actual["complete" if suffix == "review" else "passed"]
         values = {
             (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "pass",
-            (judge, "judge-unmet-criteria"): 0,
-            (judge, "judge-unverified-criteria"): 0,
+            (judge, "judge-verdict"): "rework",
+            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
+            (judge, "judge-unmet-criteria"): 1,
+            (judge, "judge-unverified-criteria"): 1,
         }
         assert guards_match(passing, values)
         assert not guards_match(passing, {})
-        for key in values:
+        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
             missing = dict(values)
             del missing[key]
             assert not guards_match(passing, missing)
         for item, value in (
             ("judge-applicability", {"outcome": "fail"}),
             ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-verdict", "rework"),
-            ("judge-verdict", "evidence-needed"),
-            ("judge-unmet-criteria", 1),
-            ("judge-unverified-criteria", 1),
+            ("judge-checkpoint-result", {"outcome": "fail"}),
+            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
             rejected[judge, item] = value
             assert not guards_match(passing, rejected)
         correction = dict(values)
-        correction[judge, "judge-verdict"] = "rework"
+        correction[judge, "judge-checkpoint-result"] = {"outcome": "fail"}
         correction[judge, "judge-unmet-criteria"] = 1
         assert guards_match(actual["rework"], correction)
         evidence = dict(values)
-        evidence[judge, "judge-verdict"] = "evidence-needed"
+        evidence[judge, "judge-checkpoint-result"] = {"outcome": "inconclusive"}
         evidence[judge, "judge-unverified-criteria"] = 1
         assert guards_match(actual["evidence-needed"], evidence)
         assert (
@@ -2852,32 +2851,31 @@ def test_goal_semantic_pass_rejects_incomplete_or_inapplicable_reports() -> None
         actual = options(goal, graph[decision]["use"])
         values = {
             (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "pass",
-            (judge, "judge-unmet-criteria"): 0,
-            (judge, "judge-unverified-criteria"): 0,
+            (judge, "judge-verdict"): "rework",
+            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
+            (judge, "judge-unmet-criteria"): 1,
+            (judge, "judge-unverified-criteria"): 1,
         }
         assert guards_match(actual["passed"], values)
-        for key in values:
+        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
             missing = dict(values)
             del missing[key]
             assert not guards_match(actual["passed"], missing)
         for item, value in (
             ("judge-applicability", {"outcome": "fail"}),
             ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-verdict", "rework"),
-            ("judge-verdict", "evidence-needed"),
-            ("judge-unmet-criteria", 1),
-            ("judge-unverified-criteria", 1),
+            ("judge-checkpoint-result", {"outcome": "fail"}),
+            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
             rejected[judge, item] = value
             assert not guards_match(actual["passed"], rejected)
         correction = dict(values)
-        correction[judge, "judge-verdict"] = "rework"
+        correction[judge, "judge-checkpoint-result"] = {"outcome": "fail"}
         correction[judge, "judge-unmet-criteria"] = 1
         assert guards_match(actual["rework"], correction)
         evidence = dict(values)
-        evidence[judge, "judge-verdict"] = "evidence-needed"
+        evidence[judge, "judge-checkpoint-result"] = {"outcome": "inconclusive"}
         evidence[judge, "judge-unverified-criteria"] = 1
         assert guards_match(actual["evidence-needed"], evidence)
         assert (
@@ -3151,23 +3149,22 @@ def test_validation_current_judge_report_and_integration_veto_are_required() -> 
         passed = options(validation, graph[decision]["use"])["passed"]
         values = {
             (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "pass",
-            (judge, "judge-unmet-criteria"): 0,
-            (judge, "judge-unverified-criteria"): 0,
+            (judge, "judge-verdict"): "rework",
+            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
+            (judge, "judge-unmet-criteria"): 1,
+            (judge, "judge-unverified-criteria"): 1,
         }
         assert guards_match(passed, values)
         for item, value in (
             ("judge-applicability", {"outcome": "fail"}),
             ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-verdict", "rework"),
-            ("judge-verdict", "evidence-needed"),
-            ("judge-unmet-criteria", 1),
-            ("judge-unverified-criteria", 1),
+            ("judge-checkpoint-result", {"outcome": "fail"}),
+            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
             rejected[judge, item] = value
             assert not guards_match(passed, rejected)
-        for key in values:
+        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
             missing = dict(values)
             del missing[key]
             assert not guards_match(passed, missing)
@@ -3566,3 +3563,48 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
             assert guards_match(
                 choices[outcome], {(judge, "judge-goal-outcome"): outcome}
             )
+
+
+def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
+    predecessors = {
+        "task": 25,
+        "goal": 28,
+        "validation": 27,
+        "design": 5,
+        "war-room": 5,
+    }
+    for family, version in predecessors.items():
+        current = load_procedure(f"aquarium-{family}-v2.yaml")
+        previous = yaml.safe_load(
+            (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
+        )
+        assert current["id"] == previous["id"]
+        assert int(current["version"]) == version + 1
+        current_nodes, previous_nodes = nodes(current), nodes(previous)
+        assert set(current_nodes) == set(previous_nodes)
+        for name, placement in current_nodes.items():
+            prior = previous_nodes[name]
+            assert placement.get("next") == prior.get("next")
+            assert placement.get("routes") == prior.get("routes")
+            assert placement.get("use") == prior.get("use")
+            assert ("delegation" in placement) == ("delegation" in prior)
+        assert current["manual_rework"] == previous["manual_rework"]
+        assert (
+            current["node_definitions"]["goal-assessment"]
+            == previous["node_definitions"]["goal-assessment"]
+        )
+        if "stopped-goal-assessment" in previous["node_definitions"]:
+            assert (
+                current["node_definitions"]["stopped-goal-assessment"]
+                == previous["node_definitions"]["stopped-goal-assessment"]
+            )
+        for name, definition in previous["node_definitions"].items():
+            if definition.get("type") == "action":
+                for item in definition.get("items", []):
+                    if item["id"] in {
+                        "judge-verdict",
+                        "judge-unmet-criteria",
+                        "judge-unverified-criteria",
+                        "judge-assessment",
+                    }:
+                        assert item in current["node_definitions"][name]["items"]

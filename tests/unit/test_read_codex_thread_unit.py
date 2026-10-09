@@ -241,8 +241,7 @@ def server(mode="normal", *, response=None):
                         )
                     elif mode == "huge_length":
                         connection.sendall(
-                            bytes([0x81, 127])
-                            + struct.pack("!Q", reader.MAX_RECEIVED_BYTES + 1)
+                            bytes([0x81, 127]) + struct.pack("!Q", 2**63)
                         )
                     elif mode == "server_close":
                         connection.sendall(frame(struct.pack("!H", 1000), 8))
@@ -326,7 +325,7 @@ def test_captures_full_paginated_history_and_emits_only_fixed_read_operations(
         ("masked_server", "INVALID_FRAME"),
         ("reserved_bits", "INVALID_FRAME"),
         ("noncanonical_length", "INVALID_FRAME"),
-        ("huge_length", "BYTE_LIMIT_EXCEEDED"),
+        ("huge_length", "INVALID_FRAME"),
         ("server_close", "SERVER_CLOSED"),
         ("invalid_close", "INVALID_FRAME"),
         ("eof", "UNEXPECTED_EOF"),
@@ -415,13 +414,29 @@ def test_overall_deadline_closes_even_when_close_frame_cannot_be_sent() -> None:
     assert state["closed"] is True
 
 
-def test_received_byte_limit_fails_without_truncation(monkeypatch) -> None:
-    monkeypatch.setattr(reader, "MAX_RECEIVED_BYTES", 128)
-    with server() as (path, state):
-        result = reader.capture_thread(path, "thread-1")
-    assert result["error"]["code"] == "BYTE_LIMIT_EXCEEDED"
-    assert "thread_read" not in result
-    assert state["closed"] is True
+def test_complete_history_above_former_evidence_ceiling_is_not_truncated() -> None:
+    body = wire({"id": 2, "result": {"original": "x" * (64 * 1024 * 1024 + 1)}})
+    left, right = socket.socketpair()
+    errors = []
+
+    def send():
+        try:
+            left.sendall(frame(body))
+        except OSError as error:
+            errors.append(error)
+        finally:
+            left.close()
+
+    thread = threading.Thread(target=send)
+    thread.start()
+    try:
+        transport = reader._WebSocket(right, time.monotonic() + 10)
+        result = transport.receive_json()
+        assert len(result["result"]["original"]) == 64 * 1024 * 1024 + 1
+    finally:
+        right.close()
+        thread.join(timeout=10)
+    assert not thread.is_alive() and not errors
 
 
 @pytest.mark.parametrize("timeout", [0, -1, True, float("nan"), float("inf")])

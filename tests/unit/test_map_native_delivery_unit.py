@@ -1876,3 +1876,825 @@ def test_claude_feedback_cli_uses_complete_projection_domain(claude_feedback_req
         ]
         == "aquarium.claude-feedback-result/v1"
     )
+
+
+def extend_claude_lifetime(request, count):
+    request["profile"] = mapping.CLAUDE_LIFETIME_PROFILE
+    template = request["records"]["feedback"][0]
+    for index in range(2, count):
+        substitutions = {
+            "send-1": f"send-{index}",
+            "run-1": f"run-{index}",
+            request["expected"]["rounds"][1][
+                "input"
+            ]: f"Assignment {index}\r\nFinal newline\n",
+        }
+
+        def replace(value, substitutions=substitutions):
+            if isinstance(value, dict):
+                return {key: replace(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [replace(item) for item in value]
+            if isinstance(value, str):
+                return substitutions.get(value, value)
+            return value
+
+        record = replace(copy.deepcopy(template))
+        for item in [record["invocation"], record["delivery"], *record["events"]]:
+            item["uuid"] += f"-{index}"
+        pair = record["public_history"]["child"][-2:]
+        for item in pair:
+            item["uuid"] += f"-{index}"
+        pair[-1]["message"]["id"] += f"-{index}"
+        pair[-1]["message"]["model"] = f"native-model-{index}"
+        pair[-1]["message"]["content"][0]["text"] = f"Round {index} result\r\n"
+        record["public_history"]["child"] = (
+            copy.deepcopy(request["records"]["feedback"][-1]["public_history"]["child"])
+            + pair
+        )
+        record["forwarded_result"] = copy.deepcopy(pair[-1])
+        record["forwarded_result"]["message"]["stop_reason"] = None
+        record["forwarded_result"]["agent_id"] = request["expected"]["worker_ref"]
+        record["events"][1]["is_backgrounded"] = index % 2 == 1
+        request["records"]["feedback"].append(record)
+        request["expected"]["rounds"].append(
+            {
+                "dispatch_ref": f"send-{index}",
+                "task_ref": f"run-{index}",
+                "input": substitutions[request["expected"]["rounds"][1]["input"]],
+            }
+        )
+    return request
+
+
+@pytest.mark.parametrize("count", [3, 4, 34])
+def test_claude_lifetime_retains_each_round_without_total_lifetime_quota(
+    claude_feedback_request, count
+):
+    request = extend_claude_lifetime(claude_feedback_request, count)
+    original = copy.deepcopy(request)
+    output = mapping.map_delivery(request)
+    assert output["state"] == "delivery_mapped", output
+    assert request == original
+    mapped = output["mapped"]
+    assert len(mapped["rounds"]) == count
+    assert (
+        len(mapped["feedback_runs"])
+        == len(mapped["feedback_acknowledgements"])
+        == count - 1
+    )
+    assert mapped["feedback_run"] == mapped["feedback_runs"][-1]
+    assert mapped["rounds_used"] is None
+    for index, entry in enumerate(mapped["rounds"][1:], 1):
+        assert mapping.digest(entry["result_domain"]) == entry["result_digest"]
+        assert entry["task_ref"] == request["expected"]["rounds"][index]["task_ref"]
+        if index > 1:
+            previous = request["records"]["feedback"][index - 2]["public_history"][
+                "child"
+            ]
+            assert (
+                entry["result_domain"]["result"]["predecessor_terminal_uuid"]
+                == previous[-1]["uuid"]
+            )
+    shorter = copy.deepcopy(request)
+    shorter["expected"]["rounds"].pop()
+    shorter["records"]["feedback"].pop()
+    assert mapping.map_delivery(shorter)["mapped"]["rounds"] == mapped["rounds"][:-1]
+    assert output["acceptance_ready"] is False and output["redispatch_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing_middle",
+        "extra_record",
+        "reorder",
+        "duplicate_run",
+        "duplicate_dispatch",
+        "duplicate_event",
+        "missing_ack",
+        "changed_prefix",
+        "truncated_prefix",
+        "changed_middle_model",
+        "pending_middle",
+        "superseded_middle",
+        "orphan_assignment",
+    ],
+)
+def test_claude_lifetime_rejects_incomplete_or_stale_middle_rounds(
+    claude_feedback_request, change
+):
+    request = extend_claude_lifetime(claude_feedback_request, 4)
+    feedback = request["records"]["feedback"]
+    middle = feedback[1]
+    if change == "missing_middle":
+        feedback.pop(1)
+    elif change == "extra_record":
+        feedback.append(copy.deepcopy(middle))
+    elif change == "reorder":
+        feedback[0], feedback[1] = feedback[1], feedback[0]
+    elif change in ("duplicate_run", "duplicate_dispatch"):
+        key = "task_ref" if change == "duplicate_run" else "dispatch_ref"
+        request["expected"]["rounds"][2][key] = request["expected"]["rounds"][1][key]
+    elif change == "duplicate_event":
+        middle["events"][0]["uuid"] = feedback[0]["events"][0]["uuid"]
+    elif change == "missing_ack":
+        del middle["delivery"]["tool_use_result"]
+    elif change == "changed_prefix":
+        middle["public_history"]["child"][1]["message"]["content"][0]["thinking"] += (
+            " edited"
+        )
+    elif change == "truncated_prefix":
+        middle["public_history"]["child"].pop(1)
+    elif change == "changed_middle_model":
+        middle["forwarded_result"]["message"]["model"] = "wrong-model"
+    elif change == "pending_middle":
+        middle["events"][2]["patch"]["status"] = "running"
+    elif change == "superseded_middle":
+        middle["public_history"]["child"][-1]["supersedes"] = "old-result"
+    elif change == "orphan_assignment":
+        child = middle["public_history"]["child"]
+        child.insert(-1, {**copy.deepcopy(child[-2]), "uuid": "orphan-user"})
+    output = mapping.map_delivery(request)
+    assert output["state"] in ("rejected", "reconciliation_required")
+    assert "mapped" not in output and output["redispatch_allowed"] is False
+
+
+def add_claude_tool_pair(request, name="Read"):
+    record = request["records"]["feedback"][0]
+    child = record["public_history"]["child"]
+    invocation = copy.deepcopy(child[-1])
+    invocation["uuid"] = "child-tool-use"
+    invocation["message"].update(
+        id="child-tool-message",
+        stop_reason="tool_use",
+        content=[
+            {
+                "type": "tool_use",
+                "id": "inner-tool",
+                "name": name,
+                "input": {"prompt": "Original nested assignment\r\n"}
+                if name == "Agent"
+                else {"file_path": "/exact/source"},
+            }
+        ],
+    )
+    reply = copy.deepcopy(child[-2])
+    reply["uuid"] = "child-tool-reply"
+    reply["message"]["content"] = [
+        {
+            "type": "tool_result",
+            "tool_use_id": "inner-tool",
+            "content": [{"type": "text", "text": "Complete original tool result\r\n"}],
+            "opaque_extension": {"native": True},
+        }
+    ]
+    child[-1:-1] = [invocation, reply]
+    return invocation, reply
+
+
+def test_claude_lifetime_tool_results_do_not_become_assignments(
+    claude_feedback_request,
+):
+    request = extend_claude_lifetime(claude_feedback_request, 2)
+    add_claude_tool_pair(request)
+    output = mapping.map_delivery(request)
+    assert output["state"] == "delivery_mapped", output
+    assert output["mapped"]["observed_round_count"] == 2
+    assert (
+        output["mapped"]["rounds"][-1]["result_domain"]["result"][
+            "public_child_messages"
+        ]
+        == request["records"]["feedback"][0]["public_history"]["child"][3:]
+    )
+    assert output["acceptance_ready"] is False
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing_reply",
+        "wrong_id",
+        "duplicate_use",
+        "orphan_reply",
+        "pending",
+        "incomplete",
+        "nested_without_output",
+    ],
+)
+def test_claude_lifetime_requires_complete_correlated_tool_delivery(
+    claude_feedback_request, change
+):
+    request = extend_claude_lifetime(claude_feedback_request, 2)
+    invocation, reply = add_claude_tool_pair(
+        request, "Agent" if change == "nested_without_output" else "Read"
+    )
+    child = request["records"]["feedback"][0]["public_history"]["child"]
+    if change == "missing_reply":
+        child.remove(reply)
+    elif change == "wrong_id":
+        reply["message"]["content"][0]["tool_use_id"] = "wrong-tool"
+    elif change == "duplicate_use":
+        invocation["message"]["content"].append(
+            copy.deepcopy(invocation["message"]["content"][0])
+        )
+    elif change == "orphan_reply":
+        child.remove(invocation)
+    elif change == "pending":
+        child[-1]["message"]["stop_reason"] = "pause_turn"
+    elif change == "incomplete":
+        del reply["message"]["content"][0]["content"]
+    output = mapping.map_delivery(request)
+    assert output["state"] in ("rejected", "reconciliation_required")
+    assert "mapped" not in output
+
+
+def test_claude_lifetime_keeps_original_nested_agent_output(claude_feedback_request):
+    request = extend_claude_lifetime(claude_feedback_request, 2)
+    invocation, reply = add_claude_tool_pair(request, "Agent")
+    native_reply = copy.deepcopy(reply)
+    output = copy.deepcopy(request["records"]["initial"]["delivery"]["tool_use_result"])
+    output.update(
+        agentId="nested-agent",
+        prompt="Original nested assignment\r\n",
+        extension={"unmodified": [1, 2]},
+    )
+    native_reply["tool_use_result"] = output
+    request["records"]["feedback"][0]["nested_deliveries"] = [
+        {"invocation": copy.deepcopy(invocation), "delivery": native_reply}
+    ]
+    mapped = mapping.map_delivery(request)
+    assert mapped["state"] == "delivery_mapped", mapped
+    assert (
+        mapped["mapped"]["rounds"][-1]["result_domain"]["result"]["nested_deliveries"][
+            0
+        ]["delivery"]["tool_use_result"]
+        == output
+    )
+    assert mapped["acceptance_ready"] is False
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing_output",
+        "missing_model",
+        "changed_uuid",
+        "changed_result",
+        "duplicate_record",
+        "malformed_invocation",
+        "malformed_delivery",
+        "wrong_ancestry",
+    ],
+)
+def test_claude_lifetime_nested_original_output_cannot_be_reconstructed_or_misattributed(
+    claude_feedback_request, change
+):
+    request = extend_claude_lifetime(claude_feedback_request, 2)
+    invocation, reply = add_claude_tool_pair(request, "Agent")
+    output = copy.deepcopy(request["records"]["initial"]["delivery"]["tool_use_result"])
+    output.update(agentId="nested-agent", prompt="Original nested assignment\r\n")
+    native_reply = {**copy.deepcopy(reply), "tool_use_result": output}
+    nested = {"invocation": copy.deepcopy(invocation), "delivery": native_reply}
+    request["records"]["feedback"][0]["nested_deliveries"] = [nested]
+    if change == "missing_output":
+        del native_reply["tool_use_result"]
+    elif change == "missing_model":
+        del output["resolvedModel"]
+    elif change == "changed_uuid":
+        native_reply["uuid"] = "wrong-original-source"
+    elif change == "changed_result":
+        native_reply["message"]["content"][0]["content"] = (
+            "Projected wrapper instead of original result"
+        )
+    elif change == "duplicate_record":
+        request["records"]["feedback"][0]["nested_deliveries"].append(
+            copy.deepcopy(nested)
+        )
+    elif change == "malformed_invocation":
+        nested["invocation"] = None
+    elif change == "malformed_delivery":
+        nested["delivery"] = []
+    elif change == "wrong_ancestry":
+        native_reply["parent_tool_use_id"] = "another-parent-invocation"
+    result = mapping.map_delivery(request)
+    assert result["state"] in ("rejected", "reconciliation_required")
+    assert "mapped" not in result
+
+
+def make_hook_request(initial_output, inputs, *, nested=False):
+    """Synthetic native hook/stream/read projections; never runtime qualification."""
+    scope, worker = "session-1", "agent-1"
+    forwarded, public, rounds, expected = [], [], [], []
+    initial_output = copy.deepcopy(initial_output)
+    initial_output.update(
+        agentId=worker,
+        prompt=inputs[0],
+        resolvedModel="native-model",
+        totalToolUseCount=1,
+    )
+
+    def message(uuid, kind, content, stamp, *, stop=None):
+        body = {"role": kind, "content": content}
+        if kind == "assistant":
+            body.update(id="message-" + uuid, model="native-model", stop_reason=stop)
+        return {
+            "type": kind,
+            "uuid": uuid,
+            "session_id": scope,
+            "agent_id": worker,
+            "parent_tool_use_id": "hook-0",
+            "timestamp": stamp,
+            "message": body,
+        }
+
+    def operation(
+        index, name, arguments, response, *, agent=None, invocation=None, tool_id=None
+    ):
+        tool = tool_id or "hook-" + str(index)
+        requested = {
+            **arguments,
+            "prompt" if name == "Agent" else "message": "model placeholder",
+        }
+        invocation = invocation or message(
+            "invocation-" + str(index),
+            "assistant",
+            [{"type": "tool_use", "id": tool, "name": name, "input": requested}],
+            f"2026-01-01T00:0{index}:00.000Z",
+        )
+        if agent is None:
+            invocation["parent_tool_use_id"] = None
+            invocation.pop("agent_id")
+        context = {
+            "session_id": scope,
+            "hook_event_name": "PreToolUse",
+            "tool_name": name,
+            "tool_input": copy.deepcopy(requested),
+            "tool_use_id": tool,
+            "prompt_id": "prompt-" + str(index),
+            "cwd": "/fixture",
+            "transcript_path": "/fixture/transcript",
+            "permission_mode": "default",
+            "effort": {"level": "medium"},
+        }
+        if agent is not None:
+            context["agent_id"] = agent
+        pre = {
+            "at": f"2026-01-01T00:0{index}:00.001Z",
+            "toolUseID": tool,
+            "input": context,
+            "output": {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "allow",
+                    "updatedInput": arguments,
+                }
+            },
+        }
+        post = {
+            "at": f"2026-01-01T00:0{index}:00.010Z",
+            "toolUseID": tool,
+            "input": {
+                **context,
+                "hook_event_name": "PostToolUse",
+                "tool_input": arguments,
+                "tool_response": response,
+                "duration_ms": 9,
+            },
+        }
+        if index == 0:
+            post["at"] = "2026-01-01T00:00:10.000Z"
+        return {"invocation": invocation, "pre_hook": pre, "post_hook": post}
+
+    for index, text in enumerate(inputs):
+        tool, run = "hook-" + str(index), "run-" + str(index)
+        arguments = (
+            {
+                "description": "fixture",
+                "prompt": text,
+                "subagent_type": "general-purpose",
+                "run_in_background": False,
+            }
+            if index == 0
+            else {"to": worker, "message": text, "summary": "fixture"}
+        )
+        response = (
+            initial_output
+            if index == 0
+            else {"success": True, "resumedAgentId": worker}
+        )
+        record = operation(
+            index, "Agent" if index == 0 else "SendMessage", arguments, response
+        )
+        expected.append({"dispatch_ref": tool, "task_ref": run, "input": text})
+        assignment = message(
+            "assignment-" + str(index), "user", text, f"2026-01-01T00:0{index}:01.000Z"
+        )
+        public.append(assignment)
+        if index == 0:
+            raw_assignment = copy.deepcopy(assignment)
+            raw_assignment["message"]["content"] = [{"type": "text", "text": text}]
+            forwarded.append(raw_assignment)
+            use = message(
+                "read-use",
+                "assistant",
+                [
+                    {
+                        "type": "tool_use",
+                        "id": "read-1",
+                        "name": "Read",
+                        "input": {"file_path": "/fixture/evidence"},
+                    }
+                ],
+                "2026-01-01T00:00:02.000Z",
+            )
+            reply = message(
+                "read-reply",
+                "user",
+                [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "read-1",
+                        "content": "complete original",
+                    }
+                ],
+                "2026-01-01T00:00:03.000Z",
+            )
+            forwarded.extend([use, reply])
+            public.append(copy.deepcopy(use))
+        nested_deliveries = []
+        if nested and index == 2:
+            nested_args = {
+                "description": "nested",
+                "prompt": "original nested task",
+                "subagent_type": "general-purpose",
+                "run_in_background": False,
+            }
+            nested_response = copy.deepcopy(initial_output)
+            nested_response.update(
+                agentId="nested-agent",
+                prompt=nested_args["prompt"],
+                content=[{"type": "text", "text": '{"sum":42}'}],
+                totalToolUseCount=0,
+            )
+            nested_requested = {**nested_args, "prompt": "model placeholder"}
+            nested_invocation = message(
+                "nested-invocation",
+                "assistant",
+                [
+                    {
+                        "type": "tool_use",
+                        "id": "nested-hook",
+                        "name": "Agent",
+                        "input": nested_requested,
+                    }
+                ],
+                "2026-01-01T00:02:02.000Z",
+            )
+            nested_operation = operation(
+                2,
+                "Agent",
+                nested_args,
+                nested_response,
+                agent=worker,
+                invocation=nested_invocation,
+                tool_id="nested-hook",
+            )
+            nested_operation["pre_hook"]["at"] = "2026-01-01T00:02:02.001Z"
+            nested_operation["post_hook"]["at"] = "2026-01-01T00:02:03.000Z"
+            reply = message(
+                "nested-reply",
+                "user",
+                [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "nested-hook",
+                        "content": '[native handback] {"sum":42}',
+                    }
+                ],
+                "2026-01-01T00:02:03.001Z",
+            )
+            forwarded.extend([nested_invocation, reply])
+            public.extend(copy.deepcopy([nested_invocation, reply]))
+            nested_deliveries = [nested_operation]
+        result_content = (
+            initial_output["content"]
+            if index == 0
+            else [{"type": "text", "text": "result-" + str(index)}]
+        )
+        terminal = message(
+            "terminal-" + str(index),
+            "assistant",
+            result_content,
+            f"2026-01-01T00:0{index}:09.000Z",
+            stop="end_turn",
+        )
+        public.append(terminal)
+        if index:
+            raw_terminal = copy.deepcopy(terminal)
+            raw_terminal["message"]["stop_reason"] = None
+            forwarded.append(raw_terminal)
+        record.update(
+            events=[
+                {
+                    "type": "system",
+                    "subtype": "task_started",
+                    "uuid": "started-" + str(index),
+                    "session_id": scope,
+                    "task_id": worker,
+                    "run_id": run,
+                    "tool_use_id": tool,
+                    "prompt": text,
+                    "is_backgrounded": bool(index),
+                    "spawn_depth": 1,
+                    "task_type": "local_agent",
+                    "subagent_type": "general-purpose",
+                },
+                {
+                    "type": "system",
+                    "subtype": "task_updated",
+                    "uuid": "updated-" + str(index),
+                    "session_id": scope,
+                    "task_id": worker,
+                    "run_id": run,
+                    "patch": {
+                        "status": "completed",
+                        "end_time": 1767225609000 + index * 60000,
+                    },
+                },
+                {
+                    "type": "system",
+                    "subtype": "task_notification",
+                    "uuid": "notified-" + str(index),
+                    "session_id": scope,
+                    "task_id": worker,
+                    "run_id": run,
+                    "tool_use_id": tool,
+                    "status": "completed",
+                    "output_file": "/fixture/output",
+                    "summary": "".join(block["text"] for block in result_content),
+                    "usage": {"tool_uses": 0},
+                },
+            ],
+            forwarded_history=copy.deepcopy(forwarded),
+            nested_deliveries=nested_deliveries,
+        )
+        if index:
+            record["public_history"] = {
+                "session_id": scope,
+                "target": worker,
+                "agents": [worker],
+                "children": {worker: copy.deepcopy(public)},
+                "primary": [],
+            }
+        rounds.append(record)
+    return {
+        "schema": mapping.REQUEST_SCHEMA,
+        "profile": mapping.CLAUDE_HOOKS_PROFILE,
+        "expected": {
+            "scope_ref": scope,
+            "supervisor_ref": scope,
+            "worker_ref": worker,
+            "rounds": expected,
+        },
+        "records": {"rounds": rounds},
+    }
+
+
+@pytest.fixture
+def hooks_request(claude_request):
+    return make_hook_request(
+        claude_request["records"]["delivery"]["tool_use_result"],
+        ["initial exact\r\n", "second exact\n", "third exact\n", "fourth exact\n"],
+    )
+
+
+def test_hook_profile_preserves_requested_effective_inputs_and_original_projections(
+    hooks_request,
+):
+    original = copy.deepcopy(hooks_request)
+    result = mapping.map_delivery(hooks_request)
+    assert result["state"] == "delivery_mapped"
+    assert hooks_request == original
+    assert result["acceptance_ready"] is False and result["redispatch_allowed"] is False
+    for expected, record, bound in zip(
+        hooks_request["expected"]["rounds"],
+        hooks_request["records"]["rounds"],
+        result["mapped"]["rounds"],
+    ):
+        assert bound["task_ref"] == expected["task_ref"]
+        assert (
+            bound["accepted_task_domain"]["input"]
+            == record["post_hook"]["input"]["tool_input"]
+        )
+        assert bound["result_domain"]["result"]["operation"] == record
+        assert bound["result_digest"] == mapping.digest(bound["result_domain"])
+    assert (
+        hooks_request["records"]["rounds"][1]["public_history"]["children"]["agent-1"][
+            0
+        ]["message"]["content"]
+        == "initial exact\r\n"
+    )
+    assert (
+        hooks_request["records"]["rounds"][0]["forwarded_history"][-1]["uuid"]
+        == "read-reply"
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing-post",
+        "requested-input",
+        "effective-input",
+        "callback-input",
+        "wrong-worker",
+        "run",
+        "pending",
+        "forwarded-prefix",
+        "public-prefix",
+        "tool-reply",
+        "reused-terminal",
+        "round-omitted",
+        "round-reordered",
+        "nested-omitted",
+        "early-dispatch",
+        "missing-completion-time",
+    ],
+)
+def test_hook_profile_reconciles_missing_or_mismatched_native_operations(
+    hooks_request, change
+):
+    records = hooks_request["records"]["rounds"]
+    if change == "missing-post":
+        del records[1]["post_hook"]
+    elif change == "requested-input":
+        records[1]["pre_hook"]["input"]["tool_input"]["message"] = "different"
+    elif change == "effective-input":
+        records[1]["post_hook"]["input"]["tool_input"]["message"] = "different"
+    elif change == "callback-input":
+        records[1]["pre_hook"]["output"]["hookSpecificOutput"]["updatedInput"][
+            "message"
+        ] = "different"
+    elif change == "wrong-worker":
+        records[1]["post_hook"]["input"]["tool_response"]["resumedAgentId"] = "other"
+    elif change == "run":
+        records[1]["events"][1]["run_id"] = "other"
+    elif change == "pending":
+        records[1]["events"][1]["patch"]["status"] = "running"
+    elif change == "forwarded-prefix":
+        records[1]["forwarded_history"][0]["message"]["content"][0]["text"] = "changed"
+    elif change == "public-prefix":
+        records[2]["public_history"]["children"]["agent-1"][0]["message"]["content"] = (
+            "changed"
+        )
+    elif change == "tool-reply":
+        records[0]["forwarded_history"].pop()
+    elif change == "reused-terminal":
+        records[2]["public_history"]["children"]["agent-1"][-1] = copy.deepcopy(
+            records[1]["public_history"]["children"]["agent-1"][-1]
+        )
+    elif change == "round-omitted":
+        records.pop(1)
+    elif change == "round-reordered":
+        records[1], records[2] = records[2], records[1]
+    elif change == "early-dispatch":
+        records[1]["pre_hook"]["at"] = records[0]["pre_hook"]["at"]
+    elif change == "missing-completion-time":
+        del records[1]["events"][1]["patch"]["end_time"]
+    else:
+        records[1]["nested_deliveries"].append({})
+    result = mapping.map_delivery(hooks_request)
+    assert result["state"] in ("rejected", "reconciliation_required")
+    assert result["redispatch_allowed"] is False and result["acceptance_ready"] is False
+
+
+def codex_v2_records(request):
+    request["profile"] = mapping.CODEX_ROUNDS_V2_PROFILE
+    request["records"]["initial"]["child_read"]["thread"]["cliVersion"] = "0.162.1"
+    for record in request["records"]["feedback"]:
+        for key in ("before_child_read", "after_child_read"):
+            record[key]["thread"]["cliVersion"] = "0.162.1"
+    return request
+
+
+def test_codex_v2_keeps_original_supported_alias_and_new_digest_domains(
+    serialized_request,
+):
+    request = codex_v2_records(serialized_request)
+    path = request["records"]["initial"]["journal"]["response"]["task_name"]
+    request["records"]["feedback"][0]["request"]["target"] = path.rsplit("/", 1)[-1]
+    original = copy.deepcopy(request)
+    output = mapping.map_delivery(request)
+    assert output["state"] == "delivery_mapped"
+    assert request == original
+    assert (
+        output["mapped"]["rounds"][0]["accepted_task_domain"]["profile"]
+        == mapping.CODEX_SPAWN_V2_PROFILE
+    )
+    assert (
+        output["mapped"]["rounds"][1]["accepted_task_domain"]["profile"]
+        == mapping.CODEX_ROUNDS_V2_PROFILE
+    )
+    assert (
+        output["mapped"]["rounds"][1]["accepted_task_domain"]["input"]["target"]
+        == path.rsplit("/", 1)[-1]
+    )
+    assert output["redispatch_allowed"] is False and output["acceptance_ready"] is False
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "legacy-profile",
+        "child-version",
+        "parent-version",
+        "other-alias",
+        "noncanonical-alias",
+        "changed-native-path",
+    ],
+)
+def test_codex_v2_cannot_admit_unqualified_versions_or_aliases(
+    serialized_request, change
+):
+    request = codex_v2_records(serialized_request)
+    record = request["records"]["feedback"][0]
+    if change == "legacy-profile":
+        request["profile"] = mapping.CODEX_ROUNDS_PROFILE
+    elif change == "child-version":
+        record["after_child_read"]["thread"]["cliVersion"] = "0.162.0"
+    elif change == "parent-version":
+        record["after_parent_read"]["thread"]["cliVersion"] = "0.162.1"
+    elif change == "other-alias":
+        record["request"]["target"] = "other_agent"
+    elif change == "noncanonical-alias":
+        record["request"]["target"] = "../native_worker"
+    else:
+        record["after_child_read"]["thread"]["source"]["subAgent"]["thread_spawn"][
+            "agent_path"
+        ] = "/root/other"
+    output = mapping.map_delivery(request)
+    assert output["state"] in ("rejected", "reconciliation_required")
+    assert output["redispatch_allowed"] is False
+
+
+def test_hook_nested_agent_retains_original_complete_output(claude_request):
+    request = make_hook_request(
+        claude_request["records"]["delivery"]["tool_use_result"],
+        ["initial", "second", "third", "fourth"],
+        nested=True,
+    )
+    output = mapping.map_delivery(request)
+    assert output["state"] == "delivery_mapped"
+    original = request["records"]["rounds"][2]["nested_deliveries"][0]
+    assert output["mapped"]["rounds"][2]["result_domain"]["result"]["operation"][
+        "nested_deliveries"
+    ] == [original]
+    original["post_hook"]["input"]["tool_response"]["content"][0]["text"] = (
+        "reconstructed summary"
+    )
+    assert mapping.map_delivery(request)["state"] in (
+        "rejected",
+        "reconciliation_required",
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [None, "missing-projection", "changed-request", "wrong-time", "wrong-event"],
+)
+def test_hook_collector_envelope_preserves_originals_and_native_dispatch_clock(
+    hooks_request, change
+):
+    record = hooks_request["records"]["rounds"][-1]
+    projection = copy.deepcopy(record["invocation"])
+    projection["timestamp"] = record["invocation"]["timestamp"]
+    projection["message"]["stop_reason"] = "tool_use"
+    record["invocation_projection"] = projection
+    for key, event in (("pre_hook", "PreToolUse"), ("post_hook", "PostToolUse")):
+        old = record[key]
+        record[key] = {
+            "event": event,
+            "toolUseId": old["toolUseID"],
+            "input": old["input"],
+            "callbackOutput": old.get("output", {}),
+        }
+    record["pre_hook"]["allowed"] = True
+    if change == "missing-projection":
+        del record["invocation_projection"]
+    elif change == "changed-request":
+        projection["message"]["content"][0]["input"]["message"] = "changed"
+    elif change == "wrong-time":
+        projection["timestamp"] = hooks_request["records"]["rounds"][0]["pre_hook"][
+            "at"
+        ]
+    elif change == "wrong-event":
+        record["pre_hook"]["event"] = "PostToolUse"
+    original = copy.deepcopy(hooks_request)
+    result = mapping.map_delivery(hooks_request)
+    assert hooks_request == original
+    if change is None:
+        assert result["state"] == "delivery_mapped"
+    else:
+        assert result["state"] in ("rejected", "reconciliation_required")
+    assert result["acceptance_ready"] is False
