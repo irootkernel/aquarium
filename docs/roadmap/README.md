@@ -50,7 +50,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-017 | Add Web Pro Review | Planned |
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
-| EPIC-020 | Migrate Orca review to Herdr | In Progress |
+| EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Planned |
 
 ## EPIC-000: Independent Tasks
@@ -501,7 +501,7 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 
 ## EPIC-020: Migrate Orca review to Herdr
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Replace Aquarium's Orca-backed static review with Herdr for the open `v0.1.19`
 release. Add `herdr-review`, migrate the Task, Epic, and validation review paths,
@@ -521,7 +521,11 @@ qualification, installation, activation in other repositories, host-tool
 removal and release publication retain their separate authority. `EPIC-019`
 is not a prerequisite, and no producer engine change or broker handoff is required.
 
-**Detailed SOT:** [`TODO-HERDR-MIGRATION.md`](../todo/TODO-HERDR-MIGRATION.md)
+**Canonical Outcomes:** [Review routing](../specs/review-routing.md),
+[tool integrations](../specs/tool-integrations.md),
+[Herdr migration runbook](../ops/herdr-migration.md),
+[qualification guidance](../implementation-tips/qualifying-herdr-review.md),
+and [testing contract](../../TESTING.md).
 
 Master accepted completion of this Epic with the disclosed verification limits.
 Whole-skill Task, Epic, and validation scenarios, complete peer-route recovery

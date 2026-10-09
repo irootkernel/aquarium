@@ -21,10 +21,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Workflow review corrections dossier](TODO-WORKFLOW-REVIEW-CORRECTIONS.md) maps
   the 2026-09-25 review findings, Aquarium-owned corrections, producer requests,
   and acceptance for `EPIC-018` and `TASK-077` through `TASK-085`.
-- [Herdr migration dossier](TODO-HERDR-MIGRATION.md) defines the Orca replacement,
-  native Herdr review and recovery, workflow routing, existing-state migration,
-  and acceptance for `EPIC-020` and `TASK-106` through `TASK-109`, targeting the
-  open `v0.1.19` release.
 - [Agent orchestration dossier](TODO-AGENT-ORCHESTRATION.md) defines Orchestrator,
   Judge, and Worker roles, native Codex and Claude delegation, all five Procedure
   migrations, recovery, and acceptance for `EPIC-021` and `TASK-110` through
