@@ -5,6 +5,8 @@ description: "Confirm and close one reviewed roadmap task, including an explicit
 
 # Task Close
 
+For a qualified version-25 handler, require the applicable final `aquarium.judge-assessment/v1` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
+
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
 Close only the reviewed task established by `$aquarium:task-handler`. When invoked directly, require the repository, roadmap path, task ID, final task diff, verification summary, documentation state, already authorized review route or waiver, and the selected route's complete evidence. Direct invocation grants no route-selection or waiver authority. Read [review-routing-contract.md](../../references/review-routing-contract.md), [evidence-residency.md](../../references/evidence-residency.md), and [finding-disposition.md](../../references/finding-disposition.md). This phase owns completion evidence and lifecycle selection; `$aquarium:task-commit` owns any actual commit.

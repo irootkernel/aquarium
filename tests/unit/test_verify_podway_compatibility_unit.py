@@ -1212,3 +1212,69 @@ def test_exact_sibling_daemon_rejects_a_symlink(tmp_path: Path) -> None:
         verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
             binary
         )
+
+
+@pytest.mark.parametrize("delegated", [False, True])
+@pytest.mark.parametrize("wrong_schema", [False, True])
+def test_procedure_authoring_binds_preview_schema_to_delegation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    delegated: bool,
+    wrong_schema: bool,
+) -> None:
+    module = verify_podway_compatibility
+    procedure = tmp_path / "aquarium-task-v2.yaml"
+    placement = {"id": "candidate", "use": "work"}
+    if delegated:
+        placement["delegation"] = {"role_ref": "worker"}
+    procedure.write_text(
+        yaml.safe_dump(
+            {"schema": "podway.procedure/v2", "graph": {"nodes": [placement]}}
+        )
+    )
+    digest = "sha256:" + "a" * 64
+
+    def run(binary: Path, arguments: list[str], repository: Path) -> tuple[int, dict]:
+        stage = arguments[2]
+        schema = (
+            module.SOURCE_SCHEMA if stage == "format" else module.DIAGNOSTICS_SCHEMA
+        )
+        result = {"schema": schema, "valid": True}
+        if stage == "preview":
+            is_delegated_schema = delegated != wrong_schema
+            result = {
+                "schema": module.DELEGATED_PREVIEW_SCHEMA
+                if is_delegated_schema
+                else module.PREVIEW_SCHEMA,
+                "admissible": True,
+                "procedure_id": procedure.stem,
+                "procedure_digest": digest,
+                "start_suggestion": {
+                    "argv": [
+                        "podway",
+                        "start",
+                        "--procedure",
+                        procedure.name,
+                        "--expect-procedure-digest",
+                        digest,
+                        "--task",
+                        "<title>",
+                    ]
+                },
+            }
+            if delegated:
+                result.update(
+                    delegated_placement_count=1, delegated_placements=["candidate"]
+                )
+        return 0, {
+            "schema": module.OUTPUT_SCHEMA,
+            "command": "procedure." + stage,
+            "result": result,
+        }
+
+    monkeypatch.setattr(module, "run", run)
+    if wrong_schema:
+        with pytest.raises(module.CompatibilityError, match="incompatible preview"):
+            module.require_valid_procedure(tmp_path / "podway", tmp_path, procedure)
+    else:
+        module.require_valid_procedure(tmp_path / "podway", tmp_path, procedure)

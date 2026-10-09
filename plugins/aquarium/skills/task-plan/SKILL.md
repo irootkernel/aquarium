@@ -5,6 +5,8 @@ description: "Plan one named roadmap task without mutation. Use when $aquarium:t
 
 # Task Plan
 
+When delegated by a qualified version-25 `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the complete node-specific `aquarium.worker-handoff/v1` with exact target, original requirements, native result bindings, performed and omitted checks, authority and gaps. The Primary owns native acceptance, Podway completion and Decisions; the retained Judge owns semantic assessment. Direct invocation keeps this phase's existing authority.
+
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
 Plan only one task. Require the repository, canonical roadmap path, and exact task ID established by `$aquarium:task-handler`; when invoked directly, reconstruct and validate those inputs before proceeding.
@@ -33,6 +35,6 @@ Produce a decision-complete plan containing:
 - review finding remediation, affected checks, exact restaging of already staged affected paths, and any provider re-review budget;
 - known permission, tool, provider, and environment gaps.
 
-Ask once for explicit approval of the plan. When no dossier is declared, require the user to approve the plan and waive the dossier explicitly; generic plan approval, discussion, partial agreement, or approval of a different action is insufficient. When the work meets a creation threshold, this is the second confirmation after the user chose to consider a waiver. If approval or the required waiver is refused or withheld, stop, report the exact missing decision, and do not enter implementation. A material change to the approved source set or requirements requires an updated plan, renewed approval, and a renewed waiver when the revised source set still has no dossier.
+When delegated, return the proposed plan to the Primary for its one explicit approval conversation; do not ask separately. On direct invocation, ask once for explicit approval of the plan. When no dossier is declared, require the user to approve the plan and waive the dossier explicitly; generic plan approval, discussion, partial agreement, or approval of a different action is insufficient. When the work meets a creation threshold, this is the second confirmation after the user chose to consider a waiver. If approval or the required waiver is refused or withheld, stop, report the exact missing decision, and do not enter implementation. A material change to the approved source set or requirements requires an updated plan, renewed approval, and a renewed waiver when the revised source set still has no dossier.
 
 If the host is in Plan mode, remain there and end with a continuation prompt that explicitly invokes `$aquarium:task-handler` with the same repository, roadmap path, task ID, and handler-selected mode. `plan-only` ends without mutation, while `plan-handoff` prepares the approved handoff rather than implementing it. Return the plan, approval state, inspected authority paths, and unresolved gaps to the orchestrator.

@@ -12,6 +12,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 RUNTIME_SCRIPT = Path(__file__).with_name("podway_runtime_qualification.py")
 RUNTIME_SPEC = importlib.util.spec_from_file_location(
     "podway_runtime_qualification", RUNTIME_SCRIPT
@@ -26,6 +28,7 @@ OUTPUT_SCHEMA = "podway.output/v3"
 DIAGNOSTICS_SCHEMA = "podway.procedure-diagnostics-result/v1"
 SOURCE_SCHEMA = "podway.procedure-source-result/v1"
 PREVIEW_SCHEMA = "podway.procedure-preview-result/v1"
+DELEGATED_PREVIEW_SCHEMA = "podway.procedure-preview-result/v2"
 RESULT_SCHEMA = "aquarium-podway-compatibility.v8"
 COMMAND_TIMEOUT_SECONDS = 30
 PROCEDURE_NAMES = (
@@ -101,13 +104,20 @@ def procedure_result(payload: Any) -> dict[str, Any]:
 
 def require_valid_procedure(binary: Path, repository: Path, procedure: Path) -> None:
     relative = procedure.relative_to(repository).as_posix()
+    document = yaml.safe_load(procedure.read_bytes())
+    delegated = [
+        node["id"]
+        for node in document.get("graph", {}).get("nodes", [])
+        if "delegation" in node
+    ]
+    preview_schema = DELEGATED_PREVIEW_SCHEMA if delegated else PREVIEW_SCHEMA
     stages = (
         ("format", ["--check"], SOURCE_SCHEMA),
         ("validate", [], DIAGNOSTICS_SCHEMA),
         ("vet", [], DIAGNOSTICS_SCHEMA),
         ("lint", ["--warnings-as-errors"], DIAGNOSTICS_SCHEMA),
         ("check", ["--warnings-as-errors"], DIAGNOSTICS_SCHEMA),
-        ("preview", [], PREVIEW_SCHEMA),
+        ("preview", [], preview_schema),
     )
     results: dict[str, dict[str, Any]] = {}
     for stage, flags, schema in stages:
@@ -140,6 +150,11 @@ def require_valid_procedure(binary: Path, repository: Path, procedure: Path) -> 
             )
         results[stage] = result
     preview = results["preview"]
+    if delegated and (
+        preview.get("delegated_placement_count") != len(delegated)
+        or preview.get("delegated_placements") != delegated
+    ):
+        raise CompatibilityError("delegated preview omitted or changed placements")
     digest = preview.get("procedure_digest")
     suggestion = preview.get("start_suggestion", {}).get("argv")
     if (

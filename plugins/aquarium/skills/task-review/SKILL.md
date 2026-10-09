@@ -5,6 +5,8 @@ description: "Run and resolve one selected completion-review route for a complet
 
 # Task Review
 
+When delegated by a qualified version-25 `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the complete node-specific `aquarium.worker-handoff/v1` with exact target, original requirements, native result bindings, performed and omitted checks, authority and gaps. The Primary owns native acceptance, Podway completion and Decisions; the retained Judge owns semantic assessment. Direct invocation keeps this phase's existing authority.
+
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
 Read [review-routing-contract.md](../../references/review-routing-contract.md) for route selection, evidence combinations, recovery, and assessment ordinals. Read [review-intent-contract.md](../../references/review-intent-contract.md) for the shared Review Brief and criterion-level completion assessment. Always read [evidence-residency.md](../../references/evidence-residency.md) and [finding-disposition.md](../../references/finding-disposition.md).
@@ -13,7 +15,7 @@ Review only the Task established by `$aquarium:task-handler`. Require its exact 
 
 A completed delegated review or completed waiver assessment consumes one ordinal even when it reports findings or a failing Mulgae backend check. An incomplete or failed operation consumes no ordinal. Native recovery inside one operation does not consume another ordinal. A route switch after a completed checkpoint uses the next ordinal and preserves the earlier result; a switch after an incomplete operation retains the current ordinal.
 
-Corrections returned to an owning phase change the target and invalidate affected prior evidence, including implementation and verification evidence when behavior or tests change. Record native finding counts as descriptive source facts and derive separate phase-owned obligation totals from backend-check remediation, valid findings, and unmet completion criteria. Admit operation, finding confirmation, backend check, completion, finding class, rework authority, and implementation, verification, or documentation ownership through separate serial decisions. Only an admitted completed or waived operation, a passing or legitimately absent backend check, a `complete` completion state, a clean finding class, and no file change support Task approval.
+Corrections returned to an owning phase change the target and invalidate affected prior evidence, including implementation and verification evidence when behavior or tests change. Record native finding counts as descriptive source facts and derive separate phase-owned obligation totals from backend-check remediation, valid findings, and unmet completion criteria. For a qualified delegated Task, return original provider completion rows unchanged; the retained Judge assesses their evidence separately before the Primary completion Decision. Admit operation, finding confirmation, backend check, completion, finding class, rework authority, and implementation, verification, or documentation ownership through separate serial decisions. Only an admitted completed or waived operation, a passing or legitimately absent backend check, a `complete` completion state, a clean finding class, and no file change support Task approval.
 
 ## Dispatch the Selected Route
 

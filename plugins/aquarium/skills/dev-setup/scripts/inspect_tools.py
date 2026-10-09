@@ -298,6 +298,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
         "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
         "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
         "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
@@ -817,6 +818,7 @@ def inspect_podway_handler_contract(
         "check_results": {},
         "routes": {},
         "evidence": {},
+        "delegation": {},
     }
     for definition_id, definition in canonical_definitions.items():
         if not isinstance(definition_id, str) or not isinstance(definition, dict):
@@ -850,6 +852,8 @@ def inspect_podway_handler_contract(
         if not isinstance(node, dict) or not isinstance(node.get("id"), str):
             continue
         node_id = node["id"]
+        if "delegation" in node:
+            contract["delegation"][node_id] = node["delegation"]
         routes = node.get("routes")
         if isinstance(routes, dict) and routes:
             contract["routes"][node_id] = {
@@ -866,6 +870,10 @@ def inspect_podway_handler_contract(
                 for item in (entry.get("items") or [None])
             }
     reasons: list[str] = []
+    for node_id, expected in contract["delegation"].items():
+        node = nodes.get(node_id)
+        if not isinstance(node, dict) or node.get("delegation") != expected:
+            reasons.append(f"incompatible_delegation:{node_id}")
     missing_nodes = sorted(contract.get("nodes", set()) - nodes.keys())
     if missing_nodes:
         reasons.append("missing_required_nodes:" + ",".join(missing_nodes))

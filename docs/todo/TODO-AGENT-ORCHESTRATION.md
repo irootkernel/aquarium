@@ -321,13 +321,30 @@ activation is authorized by this checkpoint.
 
 ### TASK-112: Rebuild Task execution
 
-- [ ] Rebuild the Task Procedure, task-handler, and related phase contracts
+- [x] Rebuild the Task Procedure, task-handler, and related phase contracts
   around Worker candidates, Judge assessments, and verdict-driven rework.
-- [ ] Preserve refinement, planning, implementation, verification, technical
+- [x] Preserve refinement, planning, implementation, verification, technical
   review, documentation, acceptance, closeout, and task-commit handoffs with
   their existing authority boundaries.
-- [ ] Verify that Worker delivery alone cannot pass a phase or Task and that
+- [x] Verify that Worker delivery alone cannot pass a phase or Task and that
   absent evidence, changed targets, and uncovered corrections stop acceptance.
+
+The TASK-112 source candidate declares bundled Task version `25` and its
+[phase integration](../../plugins/aquarium/references/task-orchestration.md).
+Checkpoint-local semantic followup gates preserve native source dominance and
+require existing effect authority; a different earlier owner uses explicit
+authorized manual rework. Final evidence candidates supply complete original
+criterion and artifact bytes, including permitted Low composition and stopped
+boundaries. Required placements remain undistributed and inactive. Independent
+Review and delegated member acceptance completed this source checkpoint. Full
+Make passed 2,014 tests; all six native authoring stages and eight isolated
+structural scenarios passed. These checks do not establish actual workflow
+functionality or Master acceptance.
+
+Complete Claude multi-round lifetime and tool-bearing feedback qualification
+belong to TASK-116; actual host/workflow and Master functional results belong
+to TASK-117. Physical dispatch-response loss remains unverified. None is
+replaced by source validation or result-read recovery.
 
 ### TASK-113: Rebuild Epic execution
 

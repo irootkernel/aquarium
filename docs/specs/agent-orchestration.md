@@ -81,6 +81,12 @@ have recovered identical public histories after actual result-read response
 withholding without redispatch. Physical dispatch-response loss remains
 unverified and is required before affected placement activation.
 
+## TASK-112 Task candidate
+
+The bundled Task Procedure version `25` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
+
+The candidate declares complete role snapshot bindings and rejects Worker-only, missing or stale assessment evidence and uncovered followup authority structurally. Installed managed copies retain the released contract. Source and authoring checks do not prove distributed execution or Master functional results. TASK-116/117 must qualify complete Claude Judge lifetime, feedback source access, physical dispatch-response loss and the installed combined candidate before activation.
+
 ## Related authority
 
 - [Workflow runtime](../architecture/workflow-runtime.md) distinguishes current execution from the reserved role model.

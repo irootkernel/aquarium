@@ -5,6 +5,8 @@ description: "Update durable documentation and review status for one refined roa
 
 # Task Document
 
+When delegated by a qualified version-25 `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the complete node-specific `aquarium.worker-handoff/v1` with exact target, original requirements, native result bindings, performed and omitted checks, authority and gaps. The Primary owns native acceptance, Podway completion and Decisions; the retained Judge owns semantic assessment. Direct invocation keeps this phase's existing authority.
+
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
 Document only the refined task established by `$aquarium:task-handler`. Consume the selected current implementation identity, refinement result, verification result and observations, and verification decision; do not reconstruct them from stale narrative history. When invoked directly, require the repository, roadmap path, task ID, final behavior, and current task-owned diff.

@@ -3,7 +3,7 @@
 ## Delivery status and authority
 
 This is the reserved contract defined by `TASK-110` under `EPIC-021`. Required
-Worker and Judge placements are unimplemented and unqualified. `TASK-111`
+Worker and Judge placements await workflow implementation and qualification. The TASK-112 bundled Task candidate declares its placements under [Task orchestration](task-orchestration.md); required delegation remains inactive. `TASK-111`
 qualifies native integrations; `TASK-112` through `TASK-116` apply the contract
 to handlers, bundled Procedures, and compatibility inspection. `TASK-117`
 qualifies the combined outcome. Until those owners deliver, existing skills,

@@ -4481,7 +4481,7 @@ else:
                 "aquarium-task-v2.yaml",
                 "decide-backend-check",
                 "non-failing",
-                "confirm-review-completion",
+                "judge-review",
             ),
             (
                 "aquarium-task-v2.yaml",
@@ -5485,11 +5485,59 @@ else:
                 self.assertEqual(entry["handler_contract_status"], "compatible")
                 target.write_text(canonical, encoding="utf-8")
 
+    def test_task_required_delegation_bindings_are_handler_contracts(self) -> None:
+        name = "aquarium-task-v2.yaml"
+        canonical = (
+            ROOT / "plugins/aquarium/assets/podway/procedures" / name
+        ).read_bytes()
+        for node_id in (
+            "record-plan",
+            "implement",
+            "judge-plan",
+            "judge-review",
+            "judge-task",
+        ):
+            for field in (
+                None,
+                "binding_ref",
+                "role_ref",
+                "role_snapshot_digest",
+                "max_rounds",
+                "after_accept",
+            ):
+                with self.subTest(node=node_id, field=field):
+                    document = yaml.safe_load(canonical)
+                    placement = next(
+                        node
+                        for node in document["graph"]["nodes"]
+                        if node["id"] == node_id
+                    )
+                    if field is None:
+                        del placement["delegation"]
+                    elif field == "max_rounds":
+                        placement["delegation"][field] = 1
+                    else:
+                        placement["delegation"][field] = "changed"
+                    status, reasons = inspect_tools.inspect_podway_handler_contract(
+                        name,
+                        yaml.safe_dump(document, sort_keys=False).encode(),
+                        canonical,
+                    )
+                    self.assertEqual(status, "incompatible")
+                    self.assertTrue(reasons)
+        prior = (ROOT / "tests/fixtures/aquarium-task-v24.yaml").read_bytes()
+        status, reasons = inspect_tools.inspect_podway_handler_contract(
+            name, prior, canonical
+        )
+        self.assertEqual(status, "compatible")
+        self.assertEqual(reasons, [])
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
                     "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
                     "087555f42fd748066fce3820f32436cbd048ce78b79f440c570a8f0ac3bd1838",
                     "6a76bbc00cc8fca87a26acbfe00688c0302addef06a8494f875b2e6bd6e032d9",
