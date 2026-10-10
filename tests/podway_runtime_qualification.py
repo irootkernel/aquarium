@@ -18,16 +18,21 @@ from pathlib import Path
 from threading import Event
 from typing import Any, Self
 
+import yaml
+
 OUTPUT_SCHEMA = "podway.output/v3"
 ERROR_SCHEMA = "podway.error/v1"
 OBSERVATION_SCHEMA = "podway.observation-result/v3"
+DELEGATED_OBSERVATION_SCHEMA = "podway.observation-result/v4"
 RUNTIME_SCHEMA = "podway.managed-runtime/v3"
 RUNTIME_MODE = "release-qa"
 COMMAND_TIMEOUT_SECONDS = 20
 READINESS_TIMEOUT_SECONDS = 20
 PROCESS_EXIT_TIMEOUT_SECONDS = 10
-RUN_TIMEOUT_SECONDS = 360
-MAX_GRAPH_STEPS = 128
+# The delegated Task scenario needs 150 loop iterations and about 576s; allow
+# room for required rework coverage and variation in native command latency.
+RUN_TIMEOUT_SECONDS = 900
+MAX_GRAPH_STEPS = 192
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
     "sha256:a96aad19de8e7346629d0a4816256f697f9e6b293e44eb550527b4b3c229ddef"
@@ -41,6 +46,37 @@ TASK_REVIEW_ENTRY_NODES = {
 }
 
 SUCCESS_OPTIONS = {
+    "decide-plan-assessment": "passed",
+    "decide-implementation-assessment": "passed",
+    "decide-refinement-assessment": "passed",
+    "decide-documentation-assessment": "passed",
+    "decide-work-assessment": "passed",
+    "decide-goal-evidence-assessment": "passed",
+    "decide-context-assessment": "passed",
+    "decide-discovery-assessment": "passed",
+    "decide-draft-assessment": "passed",
+    "decide-challenge-assessment": "passed",
+    "decide-quality-assessment": "passed",
+    "decide-application-assessment": "passed",
+    "decide-baseline-assessment": "passed",
+    "decide-investigation-assessment": "passed",
+    "decide-proposal-assessment": "passed",
+    "decide-remediation-assessment": "passed",
+    "decide-validation-evidence-assessment": "passed",
+    "confirm-audit-checkpoint": "ready",
+    "confirm-re-audit-checkpoint": "ready",
+    "confirm-goal-assessment-applicability": "current",
+    "confirm-stopped-goal-assessment-applicability": "current",
+    "confirm-task-assessment-applicability": "current",
+    "confirm-stopped-task-assessment-applicability": "current",
+    "confirm-design-assessment-applicability": "current",
+    "confirm-diagnosis-assessment-applicability": "current",
+    "confirm-judge-validation-applicability": "current",
+    "confirm-judge-stopped-validation-applicability": "current",
+    "confirm-application-approval": "current",
+    "confirm-documentation-approval": "current",
+    "confirm-closeout-substitute-applicability": "current",
+    "confirm-verification-operation": "check-passed",
     "approve-closeout": "approved",
     "approve-stopped-closeout": "approved",
     "approve-diff": "approved",
@@ -987,6 +1023,9 @@ class ManagedRuntime:
         self.log = None
         self.deadline: float | None = None
         self.command_sequence = 0
+        self.missing_receipt_guards: set[tuple[str, str]] = set()
+        self.delegation_receipt_count = 0
+        self.stale_receipt_guards: set[tuple[str, str]] = set()
         self.correction_case_variants: dict[str, set[str]] = {}
         self.fixture_target = ""
         self.reset_scenario_state()
@@ -1018,6 +1057,7 @@ class ManagedRuntime:
         self.validation_one_shot_decision_used = False
         self.validation_extra_authority_rejected = False
         self.current_procedure_id = ""
+        self.placements: dict[str, dict[str, Any]] = {}
         self.entry_rework_reason = None
         self.preparation_reworks = 0
         self.low_delta_composed = False
@@ -1074,7 +1114,10 @@ class ManagedRuntime:
     def _enter(self) -> Self:
         uid = os.geteuid()
         root = Path(
-            tempfile.mkdtemp(prefix=f"podway-release-{uid}-", dir="/private/tmp")
+            tempfile.mkdtemp(
+                prefix=f"podway-release-{uid}-",
+                dir=Path(tempfile.gettempdir()).resolve(),
+            )
         )
         self.root = root
         root.chmod(0o700)
@@ -1420,8 +1463,189 @@ class ManagedRuntime:
         return output_result(
             self.raw(["observe", "--json", "--wait-for-idle"]),
             "session.observe",
-            OBSERVATION_SCHEMA,
+            DELEGATED_OBSERVATION_SCHEMA if self.placements else OBSERVATION_SCHEMA,
         )
+
+    def preview(self, relative: str) -> dict[str, Any]:
+        assert self.sandbox is not None
+        document = yaml.safe_load((self.sandbox / relative).read_bytes())
+        self.placements = {
+            node["id"]: node["delegation"]
+            for node in document["graph"]["nodes"]
+            if "delegation" in node
+        }
+        preview = output_result(
+            self.raw(["--json", "procedure", "preview", relative]),
+            "procedure.preview",
+            "podway.procedure-preview-result/v2"
+            if self.placements
+            else "podway.procedure-preview-result/v1",
+        )
+        if (
+            preview.get("procedure_id") != document["id"]
+            or preview.get("procedure_schema") != document["schema"]
+            or preview.get("procedure_version") != document["version"]
+            or preview.get("admissible") is not True
+        ):
+            raise RuntimeQualificationError(
+                "preview changed admitted Procedure identity"
+            )
+        if self.placements and (
+            preview.get("delegated_placement_count") != len(self.placements)
+            or preview.get("delegated_placements") != list(self.placements)
+        ):
+            raise RuntimeQualificationError("preview changed delegated placements")
+        return preview
+
+    def accept_fixture_delegation(self, observation: dict[str, Any]) -> dict[str, Any]:
+        node = observation["guidance"]["node"]["graph_node_id"]
+        declaration = self.placements[node]
+        status = observation["status"]
+        result = output_result(
+            self.raw(["--json", "delegation", "package"]),
+            "delegation.package",
+            "podway.delegation-package-result/v1",
+        )
+        package = result["package"]
+        goal = observation["guidance"]["goal"]
+        expected_goal = {
+            "revision": goal["revision"],
+            "statement": goal["statement"],
+            "criteria": [
+                {key: criterion[key] for key in ("criterion_id", "statement")}
+                for criterion in goal["criteria"]
+            ],
+        }
+        identities = {
+            "workspace_uuid": self.workspace_uuid(observation),
+            "session_id": status["session"]["id"],
+            "attempt_id": status["current"]["attempt"]["attempt_id"],
+        }
+        if (
+            package.get("schema") != "podway.delegation-work-package/v1"
+            or any(package.get(key) != value for key, value in identities.items())
+            or any(result.get(key) != value for key, value in identities.items())
+            or result.get("session_revision") != status["session"]["revision"]
+            or package.get("placement_id") != node
+            or package.get("procedure_digest") != status["procedure"]["digest"]
+            or package.get("goal") != expected_goal
+            or expected_goal["revision"] != status["goal_revision"]
+            or package.get("delegation") != declaration
+        ):
+            raise RuntimeQualificationError(
+                "delegation package changed admitted inputs"
+            )
+        guard = (status["procedure"]["digest"], declaration["role_ref"])
+        if guard not in self.missing_receipt_guards:
+            before = self.domain_state(observation)
+            rejected = self.invoke_template(
+                observation, "session.complete", expected_exit=None
+            )
+            after = self.observe()
+            if (
+                rejected.returncode == 0
+                or error_code(rejected) != "DELEGATION_RECEIPT_REQUIRED"
+                or self.domain_state(after) != before
+            ):
+                raise RuntimeQualificationError(
+                    "missing receipt did not block completion"
+                )
+            self.missing_receipt_guards.add(guard)
+        digest = "sha256:" + hashlib.sha256(b"synthetic structural fixture").hexdigest()
+        execution = {
+            "adapter_id": "aquarium.synthetic-qualification",
+            "adapter_version": "v1",
+            "primary_host": "external",
+            "scope_kind": "fixture",
+            "scope_ref": "disposable-official-artifact-runtime",
+            "supervisor_ref": "synthetic-primary",
+            "worker_ref": "synthetic-" + node,
+            "task_ref": "synthetic-" + identities["attempt_id"],
+            "binding_ref": declaration["binding_ref"],
+            "role_ref": declaration["role_ref"],
+            "role_snapshot_digest": declaration["role_snapshot_digest"],
+            "agent_configuration_digest": digest,
+            "accepted_task_digest": digest,
+        }
+        request = {
+            "schema": "podway.delegation-accept-input/v1",
+            **identities,
+            "session_revision": status["session"]["revision"],
+            "idempotency_key": self.next_key("synthetic-accept"),
+            "package_digest": result["package_digest"],
+            "execution": execution,
+            "accepted": True,
+            "result_digest": digest,
+            "rounds_used": 1,
+            "summary": (
+                "Synthetic disposable fixture exercises native receipt and graph guards. "
+                "It does not prove provider execution, role acknowledgement, semantic "
+                "assessment, or user approval."
+            ),
+            "worker_disposition": (
+                "idle" if declaration["after_accept"] == "retain" else "released"
+            ),
+        }
+        accepted = output_result(
+            self.raw(
+                ["--json", "delegation", "accept", "--stdin"],
+                stdin=json.dumps(request).encode(),
+            ),
+            "delegation.accept",
+            "podway.delegation-accept-result/v1",
+        )
+        current = self.observe()
+        if (
+            accepted.get("acceptance_state") != "accepted"
+            or any(accepted.get(key) != value for key, value in identities.items())
+            or accepted.get("package_digest") != request["package_digest"]
+            or accepted.get("result_digest") != request["result_digest"]
+            or current["status"]["delegation"]["state"] != "accepted"
+        ):
+            raise RuntimeQualificationError(
+                "synthetic receipt is not currently applicable"
+            )
+        self.delegation_receipt_count += 1
+        if self.scenario == "standard" and guard not in self.stale_receipt_guards:
+            editable = next(
+                item for item in current["active_items"] if item["type"] == "text"
+            )
+            changed = editable["value"] + "; fixture edit after acceptance"
+            self.record(
+                current, {editable["item_id"]: {"type": "text", "value": changed}}
+            )
+            stale = self.observe()
+            before = self.domain_state(stale)
+            rejected = self.invoke_template(
+                stale, "session.complete", expected_exit=None
+            )
+            after = self.observe()
+            if (
+                rejected.returncode == 0
+                or error_code(rejected) != "DELEGATION_RECEIPT_STALE"
+                or after["status"]["delegation"]["state"] != "stale_acceptance"
+                or self.domain_state(after) != before
+            ):
+                raise RuntimeQualificationError(
+                    "edited evidence retained a current receipt"
+                )
+            self.stale_receipt_guards.add(guard)
+            self.invoke_template(
+                after,
+                "session.retry",
+                {"<reason>": "Retry the stale synthetic fixture receipt."},
+            )
+            retried = self.observe()
+            if (
+                retried["status"]["current"]["attempt"]["attempt_id"]
+                == identities["attempt_id"]
+            ):
+                raise RuntimeQualificationError(
+                    "stale receipt retry reused its original attempt"
+                )
+            self.fill_action(retried, self.current_procedure_id)
+            return self.accept_fixture_delegation(self.observe())
+        return current
 
     def next_key(self, label: str) -> str:
         self.command_sequence += 1
@@ -1435,6 +1659,10 @@ class ManagedRuntime:
         *,
         expected_exit: int | None = 0,
     ) -> subprocess.CompletedProcess[bytes]:
+        if command == "session.complete" and expected_exit == 0:
+            node = observation["guidance"]["node"]["graph_node_id"]
+            if node in self.placements:
+                observation = self.accept_fixture_delegation(observation)
         templates = [
             template
             for template in observation.get("mutation_templates", [])
@@ -1703,7 +1931,7 @@ class ManagedRuntime:
             "--goal",
             f"Complete isolated {procedure_id} qualification.",
             "--criterion",
-            "runtime=The exact official artifact completes this Procedure.",
+            "runtime=The disposable fixture exercises this Procedure graph.",
         ]
         output_result(self.raw(argv), "session.begin", "podway.session-begin-result/v1")
 
@@ -2512,6 +2740,14 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
+                "judge-verdict": "pass",
+                "judge-goal-outcome": (
+                    "not-achieved" if "stopped" in node else "achieved"
+                ),
+                "judge-cause-outcome": (
+                    "no-work" if self.scenario == "war-room-no-work" else "established"
+                ),
+                "judge-scope-outcome": "task",
                 "workflow-owner": (
                     "epic-handler" if self.scenario == "standard" else "epic-validator"
                 ),
@@ -2923,10 +3159,10 @@ class ManagedRuntime:
                 "operation_id": constraints["operation_id"],
                 "operation_digest": constraints["operation_digest"],
                 "input_basis": {
-                    "descriptor": "isolated official-artifact qualification",
+                    "descriptor": "synthetic disposable structural qualification",
                     "digest": "sha256:" + hashlib.sha256(b"input").hexdigest(),
                 },
-                "executor": {"name": "aquarium", "version": "v0.1.12"},
+                "executor": {"name": "synthetic-fixture", "version": "v1"},
                 "outcome": outcome,
                 "summary": f"caller-supplied {outcome} result",
                 "output_digest": "sha256:"
@@ -2993,7 +3229,37 @@ class ManagedRuntime:
             )
         self.plan_artifact_verified_nodes.add(node)
 
-    def fill_action(self, observation: dict[str, Any], procedure_id: str) -> None:
+    def attach_fixture_report(
+        self, observation: dict[str, Any], item: dict[str, Any]
+    ) -> None:
+        assert self.sandbox is not None
+        path = self.sandbox / f"synthetic-{uuid.uuid4()}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.synthetic-structural-report/v1",
+                    "scope": "Disposable native graph and receipt qualification only.",
+                    "node": observation["guidance"]["node"]["graph_node_id"],
+                    "item": item["item_id"],
+                }
+            )
+        )
+        template = next(
+            template
+            for template in observation["mutation_templates"]
+            if template["command"] == "item.attach"
+            and item["item_id"] in template["argv"]
+        )
+        replacements = {
+            "<path>": path.name,
+            "<idempotency-key>": self.next_key("report"),
+        }
+        argv = [replacements.get(arg, arg) for arg in template["argv"][1:]]
+        self.raw(["--json", *argv, "--media-type", "application/json"])
+
+    def fill_action(
+        self, observation: dict[str, Any], procedure_id: str
+    ) -> dict[str, Any]:
         node = observation["guidance"]["node"]["graph_node_id"]
         if (
             self.scenario == "standard"
@@ -3026,6 +3292,15 @@ class ManagedRuntime:
                 expected, source_basis, disposition, blockers, after_target
             )
             self.low_blocker_readback_verified = True
+        required = [
+            item
+            for item in observation["active_items"]
+            if item.get("required_now") and not item.get("satisfied")
+        ]
+        for item in required:
+            if item["type"] == "artifact":
+                self.attach_fixture_report(observation, item)
+                observation = self.observe()
         required = [
             item
             for item in observation["active_items"]
@@ -3074,7 +3349,7 @@ class ManagedRuntime:
                     f"list max_items overrun was not rejected: code={code!r}"
                 )
             self.task_list_limit = True
-            return
+            return self.observe()
         current = observation
         for _ in range(10):
             required = [
@@ -3186,11 +3461,12 @@ class ManagedRuntime:
                     self.validation_extra_authority_rejected = True
                     current = after
                     continue
-            records = {
-                item["item_id"]: self.value_for(item, node)
-                for item in required
-                if item["type"] != "artifact"
-            }
+            for item in required:
+                if item["type"] == "artifact":
+                    self.attach_fixture_report(current, item)
+                    current = self.observe()
+            required = [item for item in required if item["type"] != "artifact"]
+            records = {item["item_id"]: self.value_for(item, node) for item in required}
             if (
                 self.scenario == "task-resume-active-mulgae"
                 and node == "review"
@@ -3275,9 +3551,13 @@ class ManagedRuntime:
                 and "implementation-entry-summary" in records
                 and self.entry_rework_reason is not None
             ):
-                history = json_payload(self.raw(["--json", "status", "--verbose"]))[
-                    "result"
-                ]
+                history = output_result(
+                    self.raw(["--json", "status", "--verbose"]),
+                    "session.status",
+                    "podway.status-result/v4"
+                    if self.placements
+                    else "podway.status-result/v3",
+                )
                 attempt = current["status"]["current"]["attempt"]["attempt_id"]
                 matching = [
                     entry
@@ -3333,7 +3613,7 @@ class ManagedRuntime:
                             "validation Low audit basis was not preserved exactly"
                         )
                     self.validation_source_basis_verified = True
-                return
+                return current
             self.record(current, records)
             if "waiver-summary" in records and records["waiver-summary"] is None:
                 self.task_optional_waiver_absence_recorded = True
@@ -3403,11 +3683,7 @@ class ManagedRuntime:
         fixture = self.sandbox / ".podway/procedures/aquarium-pagination-v2.yaml"
         fixture.write_bytes(source)
         relative = ".podway/procedures/aquarium-pagination-v2.yaml"
-        preview = output_result(
-            self.raw(["--json", "procedure", "preview", relative]),
-            "procedure.preview",
-            "podway.procedure-preview-result/v1",
-        )
+        preview = self.preview(relative)
         digest = preview["procedure_digest"]
         started = json_payload(
             self.raw(
@@ -3427,17 +3703,29 @@ class ManagedRuntime:
             raise RuntimeQualificationError("pagination fixture did not prepare")
         self.begin_goal(self.observe(), "aquarium-pagination-v2")
 
-        for expected_node in (
-            "record-plan",
-            "prepare-implementation",
-            "implement",
-            "refine",
-        ):
+        expected_actions = iter(
+            ("record-plan", "prepare-implementation", "implement", "refine")
+        )
+        for _ in range(MAX_GRAPH_STEPS):
             observation = self.observe()
-            if observation["guidance"]["node"]["graph_node_id"] != expected_node:
-                raise RuntimeQualificationError("pagination fixture path drifted")
-            self.fill_action(observation, "aquarium-pagination-v2")
-            self.invoke_template(self.observe(), "session.complete")
+            node = observation["guidance"]["node"]["graph_node_id"]
+            if node == "verify":
+                if next(expected_actions, None) is not None:
+                    raise RuntimeQualificationError(
+                        "pagination skipped a required action"
+                    )
+                break
+            if observation["guidance"]["node"]["node_type"] == "action":
+                if not node.startswith("judge-") and node != next(
+                    expected_actions, None
+                ):
+                    raise RuntimeQualificationError("pagination fixture path drifted")
+                self.fill_action(observation, "aquarium-pagination-v2")
+                self.invoke_template(self.observe(), "session.complete")
+            else:
+                self.decide(observation, SUCCESS_OPTIONS[node])
+        else:
+            raise RuntimeQualificationError("pagination did not reach verification")
 
         verification = self.observe()
         if verification["guidance"]["node"]["graph_node_id"] != "verify":
@@ -3456,8 +3744,13 @@ class ManagedRuntime:
                 "verification-observations": {"type": "list", "value": entries},
             },
         )
+        self.fill_action(self.observe(), "aquarium-pagination-v2")
         self.invoke_template(self.observe(), "session.complete")
         decision = self.observe()
+        if decision["guidance"]["node"]["graph_node_id"] == "judge-verification":
+            self.fill_action(decision, "aquarium-pagination-v2")
+            self.invoke_template(self.observe(), "session.complete")
+            decision = self.observe()
         self.old_page_token = self.read_evidence_page(
             decision, "verify", "verification-observations"
         )
@@ -3474,6 +3767,7 @@ class ManagedRuntime:
                 "verification-observations": {"type": "list", "value": entries},
             },
         )
+        self.fill_action(self.observe(), "aquarium-pagination-v2")
         self.invoke_template(self.observe(), "session.complete")
         self.assert_stale_evidence_page(
             self.observe(), "verify", "verification-observations"
@@ -3561,11 +3855,7 @@ class ManagedRuntime:
     ) -> dict[str, Any] | None:
         assert self.sandbox is not None
         relative = f".podway/procedures/{name}"
-        preview = output_result(
-            self.raw(["--json", "procedure", "preview", relative]),
-            "procedure.preview",
-            "podway.procedure-preview-result/v1",
-        )
+        preview = self.preview(relative)
         procedure_id = preview["procedure_id"]
         self.current_procedure_id = procedure_id
         self.scenario = scenario
@@ -3797,9 +4087,13 @@ class ManagedRuntime:
                         raise RuntimeQualificationError(
                             "Task Low blocker correction lost its basis"
                         )
-                    history = json_payload(self.raw(["--json", "status", "--verbose"]))[
-                        "result"
-                    ]
+                    history = output_result(
+                        self.raw(["--json", "status", "--verbose"]),
+                        "session.status",
+                        "podway.status-result/v4"
+                        if self.placements
+                        else "podway.status-result/v3",
+                    )
                     entries = history["rework_history"]["entries"]
                     matching = [
                         entry
@@ -3930,8 +4224,7 @@ class ManagedRuntime:
                     ),
                 }
             if node_type == "action":
-                self.fill_action(observation, procedure_id)
-                ready = self.observe()
+                ready = self.fill_action(observation, procedure_id)
                 completed = self.invoke_template(ready, "session.complete")
                 payload = json_payload(completed)
                 result = payload.get("result")
@@ -4081,12 +4374,15 @@ class ManagedRuntime:
 
             if (
                 procedure_id == "aquarium-task-v2"
-                and node == "decide-verification"
+                and node in {"decide-verification", "confirm-verification-operation"}
                 and not self.task_verification_reworked
             ):
-                observation = self.reject_guarded_decision(observation, "passed")
+                operation = node == "confirm-verification-operation"
+                observation = self.reject_guarded_decision(
+                    observation, "check-passed" if operation else "passed"
+                )
                 self.task_guard_failure = True
-                self.decide(observation, "failed")
+                self.decide(observation, "check-failed" if operation else "failed")
                 self.task_verification_reworked = True
                 continue
 
@@ -5575,6 +5871,9 @@ def execute_runtime_job(
             raise RuntimeQualificationError(
                 f"unknown runtime qualification job: {job['kind']}"
             )
+        batch["synthetic_delegation_receipt_count"] = runtime.delegation_receipt_count
+        batch["missing_receipt_guard_count"] = len(runtime.missing_receipt_guards)
+        batch["stale_receipt_guard_count"] = len(runtime.stale_receipt_guards)
         result["case_variants"] = runtime.correction_case_variants
     elapsed = time.monotonic() - started
     batch["cleanup"] = "passed"
@@ -5701,6 +6000,11 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         "route_contract_scenarios": sorted(ROUTE_QUALIFICATION_SCENARIOS),
         "recovery_contract_scenarios": sorted(
             GOAL_RECOVERY_SCENARIOS | VALIDATION_RECOVERY_SCENARIOS
+        ),
+        "delegation_contract_scope": (
+            "Synthetic disposable receipts and reports exercise native package, "
+            "readiness and graph guards. Provider execution, role acknowledgement, "
+            "semantic assessment and user approval remain unverified."
         ),
         "route_contract_scope": (
             "Procedure recording, guard rejection, and graph transitions only; "

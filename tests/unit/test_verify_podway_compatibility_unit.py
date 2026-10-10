@@ -528,6 +528,9 @@ def test_lifecycle_job_renews_each_scenario_deadline(
     driven: list[str] = []
 
     class FakeRuntime:
+        delegation_receipt_count = 0
+        missing_receipt_guards = frozenset()
+        stale_receipt_guards = frozenset()
         task_required_failure = True
         task_list_limit = True
         task_guard_failure = True
@@ -1289,3 +1292,350 @@ def test_procedure_authoring_binds_preview_schema_to_delegation(
             module.require_valid_procedure(tmp_path / "podway", tmp_path, procedure)
     else:
         module.require_valid_procedure(tmp_path / "podway", tmp_path, procedure)
+
+
+@pytest.mark.parametrize("delegated", [False, True])
+@pytest.mark.parametrize("wrong_schema", [False, True])
+def test_runtime_preview_and_observation_follow_admitted_source(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    delegated: bool,
+    wrong_schema: bool,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.sandbox = tmp_path
+    declaration = {"role_ref": "fixture-worker"}
+    node = {"id": "fixture-action", "use": "fixture"}
+    if delegated:
+        node["delegation"] = declaration
+    (tmp_path / "fixture.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "schema": "podway.procedure/v2",
+                "id": "fixture",
+                "version": "7",
+                "graph": {"nodes": [node]},
+            }
+        )
+    )
+
+    def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
+        preview = "procedure" in arguments
+        version = (2 if delegated else 1) if preview else (4 if delegated else 3)
+        if wrong_schema:
+            version = (3 - version) if preview else (7 - version)
+        result = {
+            "schema": f"podway.procedure-preview-result/v{version}"
+            if preview
+            else f"podway.observation-result/v{version}"
+        }
+        if preview:
+            result.update(
+                procedure_id="fixture",
+                procedure_schema="podway.procedure/v2",
+                procedure_version="7",
+                admissible=True,
+            )
+        if preview and delegated:
+            result.update(
+                delegated_placement_count=1, delegated_placements=["fixture-action"]
+            )
+        payload = {
+            "schema": runtime.OUTPUT_SCHEMA,
+            "command": "procedure.preview" if preview else "session.observe",
+            "result": result,
+        }
+        return subprocess.CompletedProcess(
+            arguments, 0, json.dumps(payload).encode(), b""
+        )
+
+    monkeypatch.setattr(managed, "raw", raw)
+    if wrong_schema:
+        with pytest.raises(runtime.RuntimeQualificationError):
+            managed.preview("fixture.yaml")
+    else:
+        managed.preview("fixture.yaml")
+        assert managed.placements == (
+            {"fixture-action": declaration} if delegated else {}
+        )
+        managed.observe()
+        monkeypatch.setattr(
+            managed,
+            "raw",
+            lambda args, **kw: subprocess.CompletedProcess(
+                args,
+                0,
+                json.dumps(
+                    {
+                        "schema": runtime.OUTPUT_SCHEMA,
+                        "command": "session.observe",
+                        "result": {
+                            "schema": runtime.OBSERVATION_SCHEMA
+                            if delegated
+                            else runtime.DELEGATED_OBSERVATION_SCHEMA
+                        },
+                    }
+                ).encode(),
+                b"",
+            ),
+        )
+        with pytest.raises(runtime.RuntimeQualificationError):
+            managed.observe()
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "placement_id",
+        "procedure_digest",
+        "workspace_uuid",
+        "session_id",
+        "attempt_id",
+        "goal",
+        "delegation",
+    ],
+)
+def test_runtime_rejects_delegation_package_for_different_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    declaration = {
+        "binding_ref": "fixture",
+        "role_ref": "worker",
+        "role_snapshot_digest": "sha256:" + "a" * 64,
+        "after_accept": "retain",
+        "max_rounds": 32,
+    }
+    managed.placements = {"fixture-action": declaration}
+    status = {
+        "session": {"id": "fixture-session", "revision": 3},
+        "current": {"attempt": {"attempt_id": "fixture-attempt"}},
+        "procedure": {"digest": "sha256:" + "b" * 64},
+        "goal_revision": 1,
+    }
+    observation = {
+        "status": status,
+        "guidance": {
+            "node": {"graph_node_id": "fixture-action"},
+            "goal": {"revision": 1, "statement": "Fixture goal", "criteria": []},
+        },
+        "mutation_templates": [
+            {"preconditions": {"workspace_uuid": "fixture-workspace"}}
+        ],
+    }
+    package = {
+        "workspace_uuid": "fixture-workspace",
+        "session_id": "fixture-session",
+        "attempt_id": "fixture-attempt",
+        "placement_id": "fixture-action",
+        "procedure_digest": status["procedure"]["digest"],
+        "schema": "podway.delegation-work-package/v1",
+        "goal": {"revision": 1, "statement": "Fixture goal", "criteria": []},
+        "delegation": declaration,
+    }
+    package[field] = (
+        {"revision": 2}
+        if field == "goal"
+        else {}
+        if field == "delegation"
+        else "different"
+    )
+    calls = []
+
+    def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
+        calls.append(arguments)
+        result = {
+            "schema": "podway.delegation-package-result/v1",
+            "session_revision": 3,
+            "workspace_uuid": "fixture-workspace",
+            "session_id": "fixture-session",
+            "attempt_id": "fixture-attempt",
+            "package": package,
+        }
+        return subprocess.CompletedProcess(
+            arguments,
+            0,
+            json.dumps(
+                {
+                    "schema": runtime.OUTPUT_SCHEMA,
+                    "command": "delegation.package",
+                    "result": result,
+                }
+            ).encode(),
+            b"",
+        )
+
+    monkeypatch.setattr(managed, "raw", raw)
+    with pytest.raises(
+        runtime.RuntimeQualificationError, match="changed admitted inputs"
+    ):
+        managed.accept_fixture_delegation(observation)
+    assert calls == [["--json", "delegation", "package"]]
+
+
+def test_delegated_completion_uses_accepted_revision_and_attempt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.placements = {"fixture-action": {}}
+    original = {"guidance": {"node": {"graph_node_id": "fixture-action"}}}
+    accepted = {
+        "mutation_templates": [
+            {
+                "command": "session.complete",
+                "argv": [
+                    "podway",
+                    "complete",
+                    "--if-session-revision",
+                    "7",
+                    "--if-attempt",
+                    "retried-attempt",
+                    "--idempotency-key",
+                    "<idempotency-key>",
+                ],
+            }
+        ]
+    }
+    monkeypatch.setattr(managed, "accept_fixture_delegation", lambda _: accepted)
+    monkeypatch.setattr(
+        managed, "observe", lambda: pytest.fail("No mutation needs another observation")
+    )
+    calls = []
+
+    def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
+        calls.append(arguments)
+        return subprocess.CompletedProcess(arguments, 0, b"", b"")
+
+    monkeypatch.setattr(managed, "raw", raw)
+    managed.invoke_template(original, "session.complete")
+    assert len(calls) == 1
+    arguments = calls[0]
+    assert arguments[arguments.index("--if-session-revision") + 1] == "7"
+    assert arguments[arguments.index("--if-attempt") + 1] == "retried-attempt"
+
+
+def test_action_returns_observation_after_its_last_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    before = {
+        "guidance": {"node": {"graph_node_id": "fixture-action"}},
+        "active_items": [{"item_id": "summary", "type": "text", "required_now": True}],
+    }
+    after = {**before, "active_items": [], "revision": 2}
+    records = []
+    monkeypatch.setattr(managed, "value_for", lambda *_: {"type": "text", "value": "x"})
+    monkeypatch.setattr(managed, "record", lambda _, values: records.append(values))
+    monkeypatch.setattr(managed, "observe", lambda: after)
+    assert managed.fill_action(before, "fixture-procedure") is after
+    assert records == [{"summary": {"type": "text", "value": "x"}}]
+
+
+def test_conditional_verification_returns_fresh_post_rejection_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    before = {
+        "guidance": {"node": {"graph_node_id": "verify"}},
+        "active_items": [
+            {
+                "item_id": "verification-result",
+                "type": "check_result",
+                "required_now": True,
+            },
+            {"item_id": "verification-observations", "type": "list"},
+        ],
+    }
+    missing = copy.deepcopy(before)
+    full = {**before, "revision": 3}
+    after_rejection = {**full, "post_rejection_readback": True}
+    readbacks = iter([before, missing, full, after_rejection])
+    monkeypatch.setattr(managed, "qualify_plan_artifact", lambda *_: None)
+    monkeypatch.setattr(managed, "observe", lambda: next(readbacks))
+    monkeypatch.setattr(managed, "record", lambda *_: None)
+    monkeypatch.setattr(managed, "value_for", lambda *_: {"type": "check_result"})
+    monkeypatch.setattr(
+        managed,
+        "invoke_template",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            [],
+            1,
+            json.dumps(
+                {"schema": runtime.ERROR_SCHEMA, "code": "REQUIRED_ITEMS_MISSING"}
+            ).encode(),
+            b"",
+        ),
+    )
+    rejected = []
+
+    def reject(observation, values):
+        rejected.append((observation, values))
+        return "ITEM_CONSTRAINT_FAILED"
+
+    monkeypatch.setattr(managed, "try_record_failure", reject)
+    assert managed.fill_action(before, "aquarium-task-v2") is after_rejection
+    assert rejected[0][0] is full
+    assert len(rejected[0][1]["verification-observations"]["value"]) == 21
+    assert managed.task_required_failure and managed.task_list_limit
+
+
+@pytest.mark.parametrize("elapsed", [0, 1])
+def test_expired_runtime_deadline_rejects_before_invoking_a_child(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, elapsed: int
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.snapshot_binary = tmp_path / "podway"
+    managed.sandbox = tmp_path
+    managed.environment = {}
+    managed.deadline = 100
+    monkeypatch.setattr(runtime.time, "monotonic", lambda: 100 + elapsed)
+    monkeypatch.setattr(
+        runtime,
+        "bounded_process",
+        lambda *_args, **_kwargs: pytest.fail("Expired deadline invoked a child"),
+    )
+    with pytest.raises(runtime.RuntimeQualificationError):
+        managed.raw(["observe", "--json"])
+
+
+@pytest.mark.parametrize("remaining_fraction", [0.25, 2])
+def test_runtime_clips_child_timeout_to_remaining_scenario_and_command_cap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, remaining_fraction: float
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.snapshot_binary = tmp_path / "podway"
+    managed.sandbox = tmp_path
+    managed.environment = {}
+    remaining = runtime.COMMAND_TIMEOUT_SECONDS * remaining_fraction
+    managed.deadline = 100 + remaining
+    monkeypatch.setattr(runtime.time, "monotonic", lambda: 100)
+    timeouts = []
+
+    def run(arguments, **kwargs):
+        timeouts.append(kwargs["timeout_seconds"])
+        return subprocess.CompletedProcess(arguments, 0, b"", b"")
+
+    monkeypatch.setattr(runtime, "bounded_process", run)
+    managed.raw(["observe", "--json"])
+    assert timeouts == [min(remaining, runtime.COMMAND_TIMEOUT_SECONDS)]
