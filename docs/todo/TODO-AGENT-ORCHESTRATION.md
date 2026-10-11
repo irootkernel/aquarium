@@ -436,9 +436,12 @@ acceptance.
 - [ ] Obtain actual Codex and Claude scenarios for all five workflows and
   Master's separate functional verification; distinguish structural fixtures
   from actual delegation and semantic evidence.
-- [ ] Promote durable outcomes to canonical owners, reconcile all exit criteria,
-  obtain actual overall acceptance, and settle the dossier under its consumer
-  and approved deletion rules.
+- [ ] Promote durable outcomes to canonical owners and reconcile the Task's
+  qualification criteria for subsequent internal Epic validation.
+
+Internal Epic validation follows TASK-117. Final Epic closeout requires actual
+overall acceptance and dossier settlement under the consumer and approved
+deletion rules. These remain Epic obligations after the member Task completes.
 
 ## Qualification and exit criteria
 

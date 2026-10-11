@@ -25,8 +25,193 @@ def reversed_json(value: dict[str, object]) -> str:
     return json.dumps(dict(reversed(list(value.items()))), separators=(",", ":"))
 
 
+@pytest.mark.parametrize(
+    ("scenario", "procedure", "node", "expected"),
+    [
+        (
+            "goal-completion-unmet",
+            "goal",
+            "judge-goal",
+            ("rework", "not-achieved", 1, 0),
+        ),
+        (
+            "goal-completion-unverified",
+            "goal",
+            "judge-goal",
+            ("evidence-needed", "not-achieved", 0, 1),
+        ),
+        (
+            "validation-completion-unmet",
+            "validation",
+            "judge-validation",
+            ("rework", "not-achieved", 1, 0),
+        ),
+        (
+            "validation-completion-unverified",
+            "validation",
+            "judge-stopped-validation",
+            ("evidence-needed", "not-achieved", 0, 1),
+        ),
+        (
+            "task-stop-preserves-completion",
+            "task",
+            "judge-stopped-task",
+            ("rework", "not-achieved", 1, 0),
+        ),
+        (
+            "goal-stop-preserves-completion",
+            "goal",
+            "judge-stopped-goal",
+            ("rework", "not-achieved", 1, 0),
+        ),
+        (
+            "validation-stop-preserves-completion",
+            "validation",
+            "judge-stopped-validation",
+            ("rework", "not-achieved", 1, 0),
+        ),
+        ("goal-completion-unmet", "goal", "judge-work", ("pass", "achieved", 0, 0)),
+        (
+            "goal-completion-unverified",
+            "goal",
+            "judge-goal-evidence",
+            ("pass", "achieved", 0, 0),
+        ),
+        (
+            "validation-completion-unmet",
+            "validation",
+            "judge-remediation",
+            ("pass", "achieved", 0, 0),
+        ),
+        (
+            "validation-completion-unverified",
+            "validation",
+            "judge-validation-evidence",
+            ("pass", "achieved", 0, 0),
+        ),
+        ("standard", "goal", "judge-goal", ("pass", "achieved", 0, 0)),
+        ("standard", "validation", "judge-validation", ("pass", "achieved", 0, 0)),
+    ],
+)
+def test_fixture_judge_preserves_final_gaps_and_phase_results(
+    tmp_path: Path,
+    scenario: str,
+    procedure: str,
+    node: str,
+    expected: tuple[str, str, int, int],
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.scenario = scenario
+    managed.current_procedure_id = f"aquarium-{procedure}-v2"
+    actual = []
+    for item_id, item_type, constraints in [
+        ("judge-verdict", "choice", {"choices": ["pass", "rework", "evidence-needed"]}),
+        (
+            "judge-goal-outcome",
+            "choice",
+            {"choices": ["achieved", "not-achieved", "superseded"]},
+        ),
+        ("judge-unmet-criteria", "integer", {"minimum": 0}),
+        ("judge-unverified-criteria", "integer", {"minimum": 0}),
+    ]:
+        record = managed.value_for(
+            {"item_id": item_id, "type": item_type, "constraints": constraints}, node
+        )
+        assert record["type"] == item_type
+        actual.append(record["value"])
+    assert tuple(actual) == expected
+
+
 def git(repository: Path, *arguments: str) -> None:
     subprocess.run(["git", *arguments], cwd=repository, check=True)
+
+
+@pytest.mark.parametrize(
+    ("scenario", "review_visit", "verdict", "unmet", "unverified", "checkpoint"),
+    [
+        ("task-stop-preserves-completion", 1, "rework", 1, 0, "fail"),
+        ("task-stop-preserves-completion", 3, "rework", 1, 0, "fail"),
+        ("task-stop-preserves-completion", 4, "pass", 0, 0, "pass"),
+        ("task-completion-unverified", 2, "evidence-needed", 0, 1, "inconclusive"),
+        ("task-completion-unverified", 3, "pass", 0, 0, "pass"),
+        ("task-completion-mixed-owners", 2, "rework", 1, 0, "fail"),
+        ("task-completion-owner-inconsistent", 2, "rework", 1, 0, "fail"),
+    ],
+)
+def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
+    tmp_path: Path,
+    scenario: str,
+    review_visit: int,
+    verdict: str,
+    unmet: int,
+    unverified: int,
+    checkpoint: str,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.current_procedure_id = "aquarium-task-v2"
+    managed.scenario = scenario
+    managed.node_visits["review"] = review_visit
+    for item_id, item_type, constraints, expected in [
+        (
+            "judge-verdict",
+            "choice",
+            {"choices": ["pass", "rework", "evidence-needed"]},
+            verdict,
+        ),
+        ("judge-unmet-criteria", "integer", {"minimum": 0}, unmet),
+        ("judge-unverified-criteria", "integer", {"minimum": 0}, unverified),
+        (
+            "judge-checkpoint-result",
+            "check_result",
+            {
+                "operation_id": "fixture-checkpoint",
+                "operation_digest": "sha256:" + "1" * 64,
+            },
+            checkpoint,
+        ),
+        (
+            "judge-applicability",
+            "check_result",
+            {
+                "operation_id": "fixture-applicability",
+                "operation_digest": "sha256:" + "2" * 64,
+            },
+            "pass",
+        ),
+    ]:
+        record = managed.value_for(
+            {"item_id": item_id, "type": item_type, "constraints": constraints},
+            "judge-review",
+        )
+        assert record["type"] == item_type
+        assert record["outcome" if item_type == "check_result" else "value"] == expected
+
+
+@pytest.mark.parametrize("node", ["remediate", "settle-remediation-group"])
+@pytest.mark.parametrize("completed", [0, 2, 3, 4])
+def test_fixture_preserves_completed_assessments_through_group_settlement(
+    tmp_path: Path, node: str, completed: int
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.current_procedure_id = "aquarium-validation-v2"
+    managed.completed_assessments["aquarium-validation-v2"] = completed
+    assert managed.value_for(
+        {
+            "item_id": "completed-review-assessments",
+            "type": "integer",
+            "constraints": {"minimum": 0},
+        },
+        node,
+    ) == {"type": "integer", "value": completed}
 
 
 def test_repository_identity_rejects_dirty_worktree(tmp_path: Path) -> None:

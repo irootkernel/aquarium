@@ -62,6 +62,8 @@ SUCCESS_OPTIONS = {
     "decide-investigation-assessment": "passed",
     "decide-proposal-assessment": "passed",
     "decide-remediation-assessment": "passed",
+    "confirm-remediation-group-settlement": "verified",
+    "decide-remediation-groups": "complete",
     "decide-validation-evidence-assessment": "passed",
     "confirm-audit-checkpoint": "ready",
     "confirm-re-audit-checkpoint": "ready",
@@ -84,6 +86,8 @@ SUCCESS_OPTIONS = {
     "decide-cause": "established",
     "decide-evidence": "clean",
     "decide-goal-rework-authority": "remediation",
+    "confirm-goal-rework-effect-authority": "authorized",
+    "confirm-review-evidence-authority": "authorized",
     "decide-low-handling": "settle",
     "decide-low-completion": "completed",
     "decide-low-result": "passed",
@@ -108,6 +112,7 @@ SUCCESS_OPTIONS = {
     "decide-required-evidence": "complete",
     "decide-current-blockers": "clear",
     "decide-validation-rework-authority": "remediation",
+    "confirm-validation-rework-effect-authority": "authorized",
     "decide-gaps": "clean",
     "decide-validation-pass": "initial-audit",
     "decide-remediation-audit-authority": "current-envelope",
@@ -2166,6 +2171,44 @@ class ManagedRuntime:
         item_type = item["type"]
         item_id = item["item_id"]
         constraints = item.get("constraints", {})
+        judge_gap = None
+        if node in {
+            "judge-goal",
+            "judge-stopped-goal",
+            "judge-validation",
+            "judge-stopped-validation",
+            "judge-stopped-task",
+        }:
+            if self.scenario in COMPLETION_GAP_SCENARIOS:
+                judge_gap = COMPLETION_GAP_SCENARIOS[self.scenario][1]
+            elif self.scenario in STOP_EVIDENCE_SCENARIOS:
+                judge_gap = "unmet"
+        if node == "judge-review":
+            for gap in ("unmet", "unverified"):
+                completion = self.value_for(
+                    {
+                        "item_id": f"completion-{gap}-criteria",
+                        "type": "integer",
+                        "constraints": {"minimum": 0},
+                    },
+                    "review",
+                )
+                if completion["value"]:
+                    judge_gap = gap
+                    break
+        if (
+            judge_gap
+            and item_type == "integer"
+            and item_id
+            in {
+                "judge-unmet-criteria",
+                "judge-unverified-criteria",
+            }
+        ):
+            return {
+                "type": "integer",
+                "value": int(item_id == f"judge-{judge_gap}-criteria"),
+            }
         provider_low_ids = (
             ["provider:R1:L1"]
             if self.scenario == VALIDATION_PROVIDER_LOW_SCENARIO
@@ -2713,7 +2756,10 @@ class ManagedRuntime:
                     }
                 ):
                     value = 1
-            if node == "remediate" and item_id == "completed-review-assessments":
+            if (
+                node in {"remediate", "settle-remediation-group"}
+                and item_id == "completed-review-assessments"
+            ):
                 value = self.completed_assessments.get(self.current_procedure_id, 0)
             return {"type": "integer", "value": value}
         if item_type == "choice":
@@ -2740,9 +2786,15 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
-                "judge-verdict": "pass",
+                "judge-verdict": (
+                    "rework"
+                    if judge_gap == "unmet"
+                    else "evidence-needed"
+                    if judge_gap == "unverified"
+                    else "pass"
+                ),
                 "judge-goal-outcome": (
-                    "not-achieved" if "stopped" in node else "achieved"
+                    "not-achieved" if judge_gap or "stopped" in node else "achieved"
                 ),
                 "judge-cause-outcome": (
                     "no-work" if self.scenario == "war-room-no-work" else "established"
@@ -3085,6 +3137,12 @@ class ManagedRuntime:
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
             if (
+                node == "judge-review"
+                and item_id == "judge-checkpoint-result"
+                and judge_gap
+            ):
+                outcome = "fail" if judge_gap == "unmet" else "inconclusive"
+            elif (
                 self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
                 and item_id == "route-binding-result"
                 and self.goal_evidence_round > 0
@@ -4451,7 +4509,7 @@ class ManagedRuntime:
                 and self.node_visits.get("review") == 2
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
-                self.decide(observation, "unverified")
+                self.decide(observation, "evidence-needed")
                 continue
 
             if (
@@ -4460,7 +4518,7 @@ class ManagedRuntime:
                 and self.node_visits.get("review") == 2
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
-                self.decide(observation, "unmet")
+                self.decide(observation, "rework")
                 continue
 
             if (
@@ -4473,7 +4531,7 @@ class ManagedRuntime:
                 and self.node_visits.get("review") == 2
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
-                self.decide(observation, "unmet")
+                self.decide(observation, "rework")
                 continue
 
             if (
@@ -4482,7 +4540,7 @@ class ManagedRuntime:
                 and self.node_visits.get("review") in {1, 2, 3}
             ):
                 observation = self.reject_guarded_decision(observation, "complete")
-                self.decide(observation, "unmet")
+                self.decide(observation, "rework")
                 continue
 
             if (
@@ -4763,7 +4821,7 @@ class ManagedRuntime:
                             )
                     rejected_option = (
                         "invalid-not-stopped"
-                        if procedure_id == "aquarium-task-v2"
+                        if procedure_id in {"aquarium-task-v2", "aquarium-goal-v2"}
                         else "achieved"
                     )
                     observation = self.reject_guarded_decision(
@@ -4988,11 +5046,13 @@ class ManagedRuntime:
                 )
             elif node == "decide-remediation-audit-authority":
                 special_option = self.read_complete_evidence(
-                    observation, "remediate", "remediation-authority"
+                    observation, "settle-remediation-group", "remediation-authority"
                 )
             elif node == "decide-remediation-audit-scope":
                 count = self.read_complete_evidence(
-                    observation, "remediate", "completed-review-assessments"
+                    observation,
+                    "settle-remediation-group",
+                    "completed-review-assessments",
                 )
                 special_option = "full" if count < 3 else "frozen"
                 observation = self.reject_guarded_decision(
