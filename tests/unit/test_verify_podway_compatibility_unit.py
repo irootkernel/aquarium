@@ -535,7 +535,9 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
     assert len({scenario for _procedure, scenario in waits}) == len(waits)
     assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
     assert sum(job["kind"] == "wait" for job in jobs) == len(waits)
-    assert sum(job["kind"] == "terminal" for job in jobs) == 4
+    terminal_jobs = [job for job in jobs if job["kind"] == "terminal"]
+    assert len(terminal_jobs) == len(reusable)
+    assert all(len(job["scenarios"]) == 1 for job in terminal_jobs)
     assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 10
     assert len(reusable) == 42
     assert sorted(
@@ -552,7 +554,7 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         for job in jobs
         if job["kind"] == "wait"
     ] == list(waits)
-    assert 1 + len(jobs) == 40  # one deliberate cleanup probe plus scheduled roots
+    assert 1 + len(jobs) == 3 + len(terminals) + len(waits)
     assert 5 + len(waits) + len(terminals) == 80
     assert (
         sum(

@@ -5741,11 +5741,7 @@ def merge_case_variants(
 def runtime_jobs() -> list[dict[str, Any]]:
     reusable_specs = reusable_scenario_specs()
     terminal_batches = tuple(
-        (
-            f"terminal-{index + 1}",
-            reusable_specs[index::MAX_PARALLEL_RUNTIMES],
-        )
-        for index in range(MAX_PARALLEL_RUNTIMES)
+        (f"terminal-{index + 1}", (spec,)) for index, spec in enumerate(reusable_specs)
     )
     jobs: list[dict[str, Any]] = []
     jobs.extend(
