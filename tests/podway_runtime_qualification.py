@@ -4095,7 +4095,7 @@ class ManagedRuntime:
                         "goal one-shot authorization did not begin at a fresh active decision"
                     )
                 decision = self.decide(observation, "fix-and-review")
-                self.decision_destination(decision, "complete-work")
+                self.decision_destination(decision, "record-goal-rework-basis")
                 self.goal_one_shot_decision_used = True
                 continue
             if (
