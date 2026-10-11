@@ -1059,6 +1059,97 @@ def test_low_blocker_readback_requires_exact_scenario_content(
         assert managed.low_blocker_readback_verified is False
 
 
+@pytest.mark.parametrize(
+    "scenario,authority_node,effect_node",
+    [
+        (
+            "goal-low-blocker-remediation",
+            "decide-goal-rework-authority",
+            "confirm-goal-rework-effect-authority",
+        ),
+        (
+            "validation-low-blocker-remediation",
+            "decide-validation-rework-authority",
+            "confirm-validation-rework-effect-authority",
+        ),
+    ],
+)
+def test_low_blocker_rework_effect_records_complete_cause(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    scenario: str,
+    authority_node: str,
+    effect_node: str,
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
+    )
+    managed.scenario = scenario
+    managed.fixture_target = "a" * 40
+    basis = '{"source_id":"fixture:low-source","blocker":"current"}\n'
+    evidence = {
+        "low-disposition-summary": basis,
+        "after-target": managed.fixture_target,
+    }
+    monkeypatch.setattr(
+        managed,
+        "read_complete_evidence",
+        lambda _observation, source, item: (
+            evidence[item]
+            if source == "record-low-disposition"
+            else pytest.fail("The rework cause must come from its original disposition")
+        ),
+    )
+    observation = {
+        "guidance": {"node": {"graph_node_id": authority_node}},
+        "mutation_templates": [
+            {
+                "command": "session.decide",
+                "argv": [
+                    "podway",
+                    "decide",
+                    "--option",
+                    "remediation",
+                    "--reason",
+                    "<reason>",
+                    "--if-attempt",
+                    "current-effect-attempt",
+                    "--idempotency-key",
+                    "<idempotency-key>",
+                ],
+            }
+        ],
+    }
+    calls = []
+
+    def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
+        calls.append(arguments)
+        return subprocess.CompletedProcess(arguments, 0, b"", b"")
+
+    monkeypatch.setattr(managed, "raw", raw)
+    managed.decide(observation, "remediation")
+    original_cause = managed.entry_rework_reason
+    observation["guidance"]["node"]["graph_node_id"] = effect_node
+    observation["mutation_templates"][0]["argv"][3] = "authorized"
+    monkeypatch.setattr(
+        managed,
+        "read_complete_evidence",
+        lambda *_args: pytest.fail("The effect must reuse the complete original cause"),
+    )
+    managed.decide(observation, "authorized")
+    assert len(calls) == 2
+    arguments = calls[1]
+    cause = arguments[arguments.index("--reason") + 1]
+    assert json.loads(cause) == {
+        "basis": basis,
+        "target": managed.fixture_target,
+        "authority": "fixture-current-envelope",
+    }
+    assert managed.entry_rework_reason == cause == original_cause
+    assert arguments[arguments.index("--if-attempt") + 1] == "current-effect-attempt"
+
+
 def test_workspace_removal_replay_requires_success_with_v8_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(

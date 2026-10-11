@@ -2035,6 +2035,16 @@ class ManagedRuntime:
                 separators=(",", ":"),
             )
             self.entry_rework_reason = reason
+        elif (
+            self.scenario in LOW_BLOCKER_ROUTE_CASES
+            and node
+            in {
+                "confirm-goal-rework-effect-authority",
+                "confirm-validation-rework-effect-authority",
+            }
+            and option == "authorized"
+        ):
+            reason = self.entry_rework_reason
         values = {
             "<reason>": reason,
             "<idempotency-key>": self.next_key(f"decide-{option}"),
