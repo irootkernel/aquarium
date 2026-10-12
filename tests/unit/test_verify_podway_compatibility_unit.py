@@ -1917,3 +1917,152 @@ def test_runtime_clips_child_timeout_to_remaining_scenario_and_command_cap(
     monkeypatch.setattr(runtime, "bounded_process", run)
     managed.raw(["observe", "--json"])
     assert timeouts == [min(remaining, runtime.COMMAND_TIMEOUT_SECONDS)]
+
+
+def test_execute_runtime_jobs_isolates_lifecycle_and_preserves_results(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    jobs = [
+        {"kind": "terminal", "batch_id": "first", "order": 1, "scenario": "alpha"},
+        {"kind": "wait", "batch_id": "waiting", "order": 2},
+        {"kind": "lifecycle", "batch_id": "canonical", "order": 3},
+        {"kind": "terminal", "batch_id": "second", "order": 4, "scenario": "beta"},
+        {"kind": "workspace-removal", "batch_id": "removal", "order": 5},
+        {"kind": "isolated", "batch_id": "isolated", "order": 6, "scenario": "gamma"},
+    ]
+    original_jobs = copy.deepcopy(jobs)
+    canonical_started = threading.Event()
+    canonical_release = threading.Event()
+    canonical_finished = threading.Event()
+    independent_started = threading.Event()
+    first_wave_started = threading.Event()
+    independent_release = threading.Event()
+    lock = threading.Lock()
+    observed_jobs: list[dict[str, object]] = []
+    active = 0
+    maximum_active = 0
+
+    def fake_execute_runtime_job(
+        _binary: Path,
+        _daemon: Path,
+        _procedures: Path,
+        job: dict[str, object],
+        _cancel_event: threading.Event,
+    ) -> dict[str, object]:
+        nonlocal active, maximum_active
+        with lock:
+            observed_jobs.append(job)
+        if job["kind"] == "lifecycle":
+            canonical_started.set()
+            assert canonical_release.wait(timeout=3)
+            canonical_finished.set()
+        else:
+            independent_started.set()
+            assert canonical_finished.is_set()
+            with lock:
+                active += 1
+                maximum_active = max(maximum_active, active)
+                if active == 4:
+                    first_wave_started.set()
+            try:
+                assert independent_release.wait(timeout=3)
+            finally:
+                with lock:
+                    active -= 1
+        result: dict[str, object] = {
+            "order": job["order"],
+            "batch": {"batch_id": job["batch_id"]},
+            "case_variants": {"fixture-case": {str(job["order"])}},
+        }
+        if job["kind"] == "lifecycle":
+            result["lifecycle_run"] = {"pass": "canonical"}
+        elif job["kind"] == "workspace-removal":
+            result["workspace_removal"] = {"removed": True}
+        elif job["kind"] == "wait":
+            result["wait_scenario"] = {"batch_id": job["batch_id"]}
+        else:
+            result["scenario_runs"] = [{"scenario": job["scenario"]}]
+        return result
+
+    monkeypatch.setattr(runtime, "runtime_jobs", lambda: jobs)
+    monkeypatch.setattr(runtime, "execute_runtime_job", fake_execute_runtime_job)
+    monkeypatch.setattr(
+        runtime,
+        "terminal_scenario_specs",
+        lambda: (("gamma", "fixture"), ("alpha", "fixture"), ("beta", "fixture")),
+    )
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=1) as driver:
+        future = driver.submit(
+            runtime.execute_runtime_jobs,
+            tmp_path / "podway",
+            tmp_path / "podwayd",
+            tmp_path / "procedures",
+        )
+        try:
+            assert canonical_started.wait(timeout=3)
+            assert not independent_started.wait(timeout=0.02)
+            canonical_release.set()
+            assert first_wave_started.wait(timeout=3)
+            with lock:
+                assert active == 4
+                assert maximum_active == 4
+            independent_release.set()
+            result = future.result(timeout=3)
+        finally:
+            canonical_release.set()
+            independent_release.set()
+
+    assert jobs == original_jobs
+    assert observed_jobs[0] is jobs[2]
+    assert len(observed_jobs) == len(jobs)
+    assert {id(job) for job in observed_jobs} == {id(job) for job in jobs}
+    assert maximum_active == 4
+    assert [batch["batch_id"] for batch in result["runtime_batches"]] == [
+        job["batch_id"] for job in jobs
+    ]
+    assert result["case_variants"] == {"fixture-case": {"1", "2", "3", "4", "5", "6"}}
+    assert result["lifecycle_runs"] == [{"pass": "canonical"}]
+    assert result["workspace_removal"] == {"removed": True}
+    assert result["wait_scenarios"] == [{"batch_id": "waiting"}]
+    assert [item["scenario"] for item in result["scenario_runs"]] == [
+        "gamma", "alpha", "beta"
+    ]
+
+
+def test_execute_runtime_jobs_failed_lifecycle_dispatches_no_independent_jobs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    jobs = [
+        {"kind": "test", "batch_id": "independent", "order": 1},
+        {"kind": "lifecycle", "batch_id": "canonical", "order": 2},
+    ]
+    original_jobs = copy.deepcopy(jobs)
+    called: list[dict[str, object]] = []
+    failure = runtime.RuntimeQualificationError("canonical failure")
+
+    def fake_execute_runtime_job(
+        _binary: Path,
+        _daemon: Path,
+        _procedures: Path,
+        job: dict[str, object],
+        _cancel_event: threading.Event,
+    ) -> dict[str, object]:
+        called.append(job)
+        if job["kind"] != "lifecycle":
+            raise AssertionError("independent work dispatched before canonical pass")
+        raise failure
+
+    monkeypatch.setattr(runtime, "runtime_jobs", lambda: jobs)
+    monkeypatch.setattr(runtime, "execute_runtime_job", fake_execute_runtime_job)
+    with pytest.raises(runtime.RuntimeQualificationError) as captured:
+        runtime.execute_runtime_jobs(
+            tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures"
+        )
+    assert captured.value is failure
+    assert called == [jobs[1]]
+    assert called[0] is jobs[1]
+    assert jobs == original_jobs

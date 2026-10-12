@@ -5956,6 +5956,10 @@ def execute_runtime_jobs(
     jobs = runtime_jobs()
     completed: dict[int, dict[str, Any]] = {}
     cancel_event = Event()
+    for job in jobs:
+        if job["kind"] == "lifecycle":
+            result = execute_runtime_job(binary, daemon, procedures, job, cancel_event)
+            completed[result["order"]] = result
     executor = ThreadPoolExecutor(max_workers=MAX_PARALLEL_RUNTIMES)
     futures: dict[Future[dict[str, Any]], int] = {
         executor.submit(
@@ -5967,6 +5971,7 @@ def execute_runtime_jobs(
             cancel_event,
         ): job["order"]
         for job in jobs
+        if job["kind"] != "lifecycle"
     }
     try:
         for future in as_completed(futures):
