@@ -24,7 +24,7 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
 - [Production setup status](production-status.md) links to the shipped authority for the user-global setup ledger, reporter, recorder, retention, and installation contracts.
 - [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Herdr, Independent Review, and coordinator-waived review in Task, Epic, and validation workflows.
-- [Supervised agent orchestration](agent-orchestration.md) catalogs EPIC-021 roles, native mapping components and the bundled Task candidate; required placement activation and combined native qualification remain pending.
+- [Supervised agent orchestration](agent-orchestration.md) catalogs implemented candidate roles, native mappings and all five Procedures, with bounded Codex and Claude workflow qualification; distribution and repository activation remain separate.
 
 ## Exact Authorities
 

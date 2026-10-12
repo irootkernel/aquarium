@@ -2028,7 +2028,9 @@ def test_execute_runtime_jobs_isolates_lifecycle_and_preserves_results(
     assert result["workspace_removal"] == {"removed": True}
     assert result["wait_scenarios"] == [{"batch_id": "waiting"}]
     assert [item["scenario"] for item in result["scenario_runs"]] == [
-        "gamma", "alpha", "beta"
+        "gamma",
+        "alpha",
+        "beta",
     ]
 
 

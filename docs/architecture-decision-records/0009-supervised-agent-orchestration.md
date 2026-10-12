@@ -4,8 +4,11 @@
 
 **Recorded:** `2026-10-09`
 
-**Implementation status:** Reserved design accepted for EPIC-021; required
-native mappings and workflow placements remain unimplemented and unqualified.
+**Implementation status:** Candidate native mappings and all five workflow
+placements are implemented. Bounded Codex and Claude Worker, Judge, and Primary
+scenarios are qualified; the coordinating agent performed functional verification
+under Master's task-specific delegation. These results do not establish full
+handler lifecycles, final Goal achievement, publication, or host activation.
 
 ## Context
 
@@ -22,7 +25,7 @@ and exact candidate bindings.
 
 ## Decision
 
-Reserve separate Orchestrator, Judge, and Workers roles under the
+Use separate Orchestrator, Judge, and Workers roles under the
 [shared orchestration contract](../../plugins/aquarium/references/agent-orchestration.md).
 Workers deliver bounded candidates. A report-only Judge reads canonical criteria
 and original evidence and assesses every applicable requirement. The Orchestrator
@@ -59,8 +62,13 @@ this decision.
   sessions. Immutable admitted snapshots and repository customizations remain
   preserved. This breaking change needs exact candidate upgrade verification in
   the dedicated UTM macOS VM before release.
-- Local structural validation does not qualify either host integration or
-  Master's semantic functional checks. Those remain delivery requirements.
+- Local structural validation alone does not qualify native or functional
+  behavior. Actual bounded scenarios and delegated functional verification
+  supply those candidate outcomes within their stated scope; Master's overall
+  Epic acceptance remains separate.
+- Initial Agent, inner-model, and Codex dispatch-ACK loss and arbitrary
+  outliving descendants remain unqualified. Unsupported required recovery is
+  refused rather than bypassed; these results do not widen native support.
 
 ## Rejected alternatives
 
@@ -75,6 +83,6 @@ this decision.
 
 ## References
 
-- [Reserved specification](../specs/agent-orchestration.md)
+- [Candidate specification](../specs/agent-orchestration.md)
 - [Separate workflow authority planes](0002-separate-workflow-authorities.md)
 - [Separate effect approvals](0005-separate-effect-approvals.md)

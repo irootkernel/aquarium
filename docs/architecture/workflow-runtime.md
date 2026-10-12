@@ -27,15 +27,17 @@ The epic lifecycle coordinates multiple task lifecycles and a cold validation pa
 
 Workflows prefer re-observation over replay. Unknown or interrupted external execution is quarantined until its actual state can be resolved. A retry never widens authority, and successful earlier effects are not rolled back automatically unless the owning contract explicitly provides a safe recovery action.
 
-## Reserved supervised orchestration
+## Supervised orchestration candidate
 
 The [EPIC-021 orchestration contract](../../plugins/aquarium/references/agent-orchestration.md)
-defines the accepted reserved role model and versioned handoffs. Required
-native execution remains unqualified. Current skills and admitted snapshots continue
-with the invocation and node contracts above; source updates do not activate
-reserved placements in an existing session.
+defines the implemented candidate role model and versioned handoffs. Bounded
+native Worker, Judge, and Primary scenarios qualify Task planning, Goal work,
+Validation audit, Design context, and War-room baseline on Codex and Claude.
+They do not establish full handler lifecycles or final Goal achievement. Installed
+released skills and admitted snapshots retain their existing contracts; source
+updates do not activate candidate placements in an existing session.
 
-The reserved flow separates Worker candidate delivery, report-only Judge
+The candidate flow separates Worker delivery, report-only Judge
 assessment, and Orchestrator Decisions. The Primary accepts a complete native
 delivery under its placement's delivery checks and authority before completing
 the Action. It accepts a complete Judge report without recursively judging it;
@@ -52,5 +54,9 @@ Host-native integrations own dispatch, feedback, actual identities, accepted
 task/configuration bytes, complete results, settlement, and reconnect. Podway
 owns receipts, structural progression, and fences. Native result acceptance
 precedes separate Action completion. The shared contract owns the full mapping
-requirements and recovery boundaries; TASK-111 must qualify both actual host
-paths before required delegation activates.
+requirements and recovery boundaries. TASK-111 through TASK-117 implement and
+qualify the bounded native paths; required delegation still needs an applicable
+qualified integration and admitted Procedure. Initial Agent, inner-model, and
+Codex dispatch-ACK loss and arbitrary outliving descendants remain unqualified.
+Unsupported required recovery stops at its native owner rather than direct
+fallback. Candidate qualification does not establish release or host activation.

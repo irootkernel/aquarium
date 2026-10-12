@@ -594,7 +594,9 @@ remain inactive pending combined recovery and actual workflow qualification.
 | TASK-114 | Rebuild Epic validation | Rebuild the Validation Procedure and independent validator with a fresh Judge, direct evidence, technical review aggregation, and scoped corrections. | Completed | TASK-113 |
 | TASK-115 | Rebuild design and diagnosis | Rebuild Design and War-room role handoffs while preserving the Ouroboros leaf contract, exact document approval, and product implementation boundaries. | Completed | TASK-111 |
 | TASK-116 | Align compatibility and recovery | Align all five sources, versioning, inspectors, observation contracts, reconnect and restoration, immutable snapshots, and customized Procedure compatibility. | Completed | TASK-112; TASK-113; TASK-114; TASK-115 |
-| TASK-117 | Qualify and promote outcomes | Verify local, native, and actual agent behavior on both hosts, obtain Master's functional outcomes, and promote canonical documentation for subsequent Epic validation and closeout. | In Progress | TASK-111; TASK-116 |
+| TASK-117 | Qualify and promote outcomes | Qualify the combined candidate's local, native, and bounded both-host workflow outcomes; complete delegated functional verification and promote canonical contracts for subsequent Epic validation and closeout. | Completed | TASK-111; TASK-116 |
 
-After TASK-117, complete internal Epic validation and obtain Master's actual
-overall acceptance before final Epic closeout and dossier settlement.
+All member Tasks are complete. Internal Epic validation and Master's actual
+overall acceptance remain required before final Epic closeout and dossier
+settlement. The [agent orchestration specification](../specs/agent-orchestration.md)
+owns the qualified candidate behavior and its limits.

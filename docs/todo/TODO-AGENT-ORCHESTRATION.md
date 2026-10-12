@@ -431,13 +431,23 @@ acceptance.
 
 ### TASK-117: Qualify and promote outcomes
 
-- [ ] Complete focused executable tests, required repository gates, native
+- [x] Complete focused executable tests, required repository gates, native
   Procedure authoring checks, and exact-artifact compatibility evidence.
-- [ ] Obtain actual Codex and Claude scenarios for all five workflows and
-  Master's separate functional verification; distinguish structural fixtures
-  from actual delegation and semantic evidence.
-- [ ] Promote durable outcomes to canonical owners and reconcile the Task's
+- [x] Obtain actual Codex and Claude scenarios for all five workflows and
+  complete the separate functional verification delegated by Master; distinguish
+  structural fixtures from actual delegation and semantic evidence.
+- [x] Promote durable outcomes to canonical owners and reconcile the Task's
   qualification criteria for subsequent internal Epic validation.
+
+TASK-117 is accepted under the Epic delegation for the stated candidate scope.
+Actual Worker, Judge and Primary scenarios cover all five workflows on both
+hosts. The coordinating agent completed functional verification under Master's
+task-specific delegation, preserving original negative and global criteria.
+Required executable, native authoring and exact official-artifact checks are
+settled for the implementation candidate. Durable behavior and limits are
+promoted to the canonical orchestration specification and native mapping
+contracts. This checkpoint supersedes earlier prospective qualification
+callouts within that scope; unsupported channels remain explicitly unqualified.
 
 Internal Epic validation follows TASK-117. Final Epic closeout requires actual
 overall acceptance and dossier settlement under the consumer and approved
@@ -481,6 +491,13 @@ Master separately verifies multi-step skill behavior, decisions,
 recommendations, and cross-skill handoffs. Record the actual result and exact
 candidate; test-suite success does not establish those outcomes. Required
 unverified checks prevent completion.
+
+For this Epic, Master delegated functional verification to the coordinating
+agent. Its result covers the actual installed-candidate multi-step scenarios
+on Codex and Claude, including original-evidence assessment, phase Decisions,
+authority boundaries and cold-Judge correction. Record it as agent-executed
+verification, not a Master-authored pass. This delegation preserves the separate
+requirement for Master's actual overall Epic acceptance.
 
 Epic acceptance requires all mandatory Task and Epic criteria to be met, actual
 required functional outcomes, no effective valid Medium-or-higher finding, and
