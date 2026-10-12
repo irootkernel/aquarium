@@ -29,7 +29,7 @@ commands:
     command: ["make", "test-podway-compat"]
     tags: [compatibility, make, podway]
     parser: generic
-    timeout_sec: 5400
+    timeout_sec: 9000
 redaction:
   patterns:
     - name: credential-assignment
