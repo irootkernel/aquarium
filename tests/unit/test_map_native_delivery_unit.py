@@ -2698,3 +2698,21 @@ def test_hook_collector_envelope_preserves_originals_and_native_dispatch_clock(
     else:
         assert result["state"] in ("rejected", "reconciliation_required")
     assert result["acceptance_ready"] is False
+
+
+@pytest.mark.parametrize("record", ["parent_read", "child_read"])
+@pytest.mark.parametrize("field", ["historyMode", "itemsView"])
+def test_codex_missing_history_metadata_requires_reconciliation(
+    codex_request, record, field
+):
+    native_thread = codex_request["records"][record]["thread"]
+    if field == "historyMode":
+        del native_thread[field]
+    else:
+        for turn in native_thread["turns"]:
+            del turn[field]
+    output = mapping.map_delivery(codex_request)
+    assert output["state"] == "reconciliation_required"
+    assert output["error"]["code"] == "INCOMPLETE_HISTORY"
+    assert output["acceptance_ready"] is False
+    assert output["redispatch_allowed"] is False

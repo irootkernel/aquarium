@@ -158,9 +158,9 @@ def _codex_thread(
     )
     _object(thread["status"], {"type"}, f"{key}.status")
     _require(
-        thread.get("historyMode", "legacy") in ("legacy", "paginated")
+        thread.get("historyMode") in ("legacy", "paginated")
         if journal_spawn
-        else thread.get("historyMode", "legacy") == "legacy",
+        else thread.get("historyMode") == "legacy",
         "INCOMPLETE_HISTORY",
         "paginated history must be collected by a separate supported mapper",
         reconcile=True,
@@ -171,7 +171,7 @@ def _codex_thread(
     for turn in turns:
         _object(turn, {"id", "status", "items"}, "turn")
         _require(
-            turn.get("itemsView", None if journal_spawn else "full") == "full",
+            turn.get("itemsView") == "full",
             "INCOMPLETE_HISTORY",
             "summary or unloaded turn items require reconciliation",
             reconcile=True,

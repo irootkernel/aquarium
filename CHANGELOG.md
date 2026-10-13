@@ -24,6 +24,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Preserve custom Procedures and legacy Orca evidence during Herdr migration, with Herdr v0.9.3 or newer, selected-route readiness, safe transitions for existing sessions, and the chosen backup policy; existing managed Goal and Validation files require an authorized update, and Task files need one before selecting Herdr.
 - Accept test dependencies and standalone Ruff at or above their declared minimum versions.
 
+### Fixed
+
+- Reject Codex delivery records that omit native history completeness metadata.
+
 ## v0.1.18 - 2026-10-04
 
 ### Added
