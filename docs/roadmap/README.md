@@ -546,7 +546,7 @@ separately authorized actions.
 
 ## EPIC-021: Adopt supervised agent orchestration
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Adopt an Orchestrator, Judge, and Workers model across the Task, Goal,
 Validation, Design, and War-room Procedures after `EPIC-020`. The main agent
@@ -571,7 +571,7 @@ Preserve the Herdr migration, existing approval boundaries, admitted session
 snapshots and repository customizations. Installation, activation, commits and
 publication retain their applicable authority.
 
-**Detailed SOT:** [`TODO-AGENT-ORCHESTRATION.md`](../todo/TODO-AGENT-ORCHESTRATION.md)
+**Canonical Outcomes:** [Agent orchestration](../specs/agent-orchestration.md), [Workflow runtime](../architecture/workflow-runtime.md), [ADR-0009](../architecture-decision-records/0009-supervised-agent-orchestration.md), [Orchestration contract](../../plugins/aquarium/references/agent-orchestration.md), [Native mappings](../../plugins/aquarium/references/native-agent-mappings.md), [Procedure node contracts](../../plugins/aquarium/references/procedure-node-contracts.md)
 
 All five candidate Procedures require Worker delivery and report-only Judge
 assessment before Primary semantic Decisions. Recorded bounded Codex and Claude
@@ -580,8 +580,7 @@ supported recovery boundaries. Their qualification applies only to the original
 operative inputs; changed role snapshots require fresh native acknowledgement.
 Initial Agent, inner-model and Codex dispatch-ACK loss and arbitrary outliving
 descendants remain unqualified. Installed snapshots retain their admitted rules.
-Exact candidate upgrade in UTM is a separate pre-release gate, and Master's
-actual overall acceptance remains required for Epic closeout.
+Exact candidate upgrade in UTM remains a separate pre-release gate.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -594,7 +593,7 @@ actual overall acceptance remains required for Epic closeout.
 | TASK-116 | Align compatibility and recovery | Align all five sources, versioning, inspectors, observation contracts, reconnect and restoration, immutable snapshots, and customized Procedure compatibility. | Completed | TASK-112; TASK-113; TASK-114; TASK-115 |
 | TASK-117 | Qualify and promote outcomes | Qualify the combined candidate's local, native, and bounded both-host workflow outcomes; complete delegated functional verification and promote canonical contracts for subsequent Epic validation and closeout. | Completed | TASK-111; TASK-116 |
 
-All member Tasks are complete. Internal Epic validation and Master's actual
-overall acceptance remain required before final Epic closeout and dossier
-settlement. The [agent orchestration specification](../specs/agent-orchestration.md)
-owns the qualified candidate behavior and its limits.
+All member Tasks and Epic validation are complete. Master accepted
+the overall Epic outcome. The [agent orchestration specification](../specs/agent-orchestration.md)
+owns the qualified candidate behavior and its limits; Git history retains the
+settled execution dossier.

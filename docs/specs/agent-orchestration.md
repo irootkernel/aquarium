@@ -28,10 +28,9 @@ approval constraints. Its versioned document interfaces are
 wire schemas or evidence that an adapter exists.
 
 The [roadmap](../roadmap/README.md#epic-021-adopt-supervised-agent-orchestration)
-owns delivery status and dependencies. The
-[active dossier](../todo/TODO-AGENT-ORCHESTRATION.md) owns detailed execution and
-acceptance requirements until closeout. `TASK-111` qualifies Codex and Claude
-native mappings. `TASK-112` through `TASK-116` apply and align the handlers,
+owns delivery status, dependencies, and accepted canonical outcomes. Git history
+retains the settled execution and acceptance dossier. `TASK-111` qualifies Codex
+and Claude native mappings. `TASK-112` through `TASK-116` apply and align the handlers,
 Procedures, and compatibility contract; `TASK-117` qualifies the combined
 candidate and its task-specific delegated functional outcomes.
 
