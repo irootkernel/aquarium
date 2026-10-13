@@ -51,7 +51,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
-| EPIC-021 | Adopt supervised agent orchestration | In Progress |
+| EPIC-021 | Adopt supervised agent orchestration | Completed |
 
 ## EPIC-000: Independent Tasks
 
