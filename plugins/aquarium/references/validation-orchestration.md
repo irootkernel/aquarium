@@ -2,8 +2,10 @@
 
 Apply this reference when the admitted Validation Procedure declares required
 Worker/Judge placements. Released direct snapshots keep their admitted contract.
-The bundled version `28` declares twelve placements; TASK-116/117 must qualify
-the combined candidate before activation or managed-file updates.
+The bundled version `29` declares twelve placements. Execution requires an
+admitted delegated Procedure and native qualification applicable to its exact
+role snapshot, assignment and recovery path. Managed-file updates and compatible
+successor sessions retain their separate authority.
 
 ## Judge identity and original evidence
 

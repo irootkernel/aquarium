@@ -24,38 +24,38 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "26",
+            "27",
+            "aea7cb5b93fbaaf0bcd94de2d981621afd1f547fcecd370649a8d2e6fb2f4ea6",
+            "aquarium-task-v26.yaml",
             "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
-            "aquarium-task-v25.yaml",
-            "9034dc4a36ce991cc75ee5b4f8f1a15f21649e435651621acc5463ad8a9b0efc",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "29",
+            "30",
+            "5f8d17becb9b673365cb01614a5ab9563b3c459ded93da60d18990eaa70e73b9",
+            "aquarium-goal-v29.yaml",
             "430c5423c1ddea224561970e7e5ba5c6d1b7c62c03887e9eee888e6c648a4635",
-            "aquarium-goal-v28.yaml",
-            "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "28",
+            "29",
+            "a9b225b36bddbdd2e44cd0d37b9ed5967f59b222fa182bed91ab7698a46896e1",
+            "aquarium-validation-v28.yaml",
             "cb5cad2c4d29f72f365b7a4f95274f9cfe9d1cf112154daf529b0c4efdae5867",
-            "aquarium-validation-v27.yaml",
-            "75d083e2812ea3cdee6774970bf5a2335607903468cb7c7554834c05d2a30e6c",
         ),
         (
             "aquarium-design-v2.yaml",
-            "6",
+            "7",
+            "0765991ad1fd1e3398c8ab07e8c852be0593c69efc65a89f9107caead5f04f43",
+            "aquarium-design-v6.yaml",
             "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
-            "aquarium-design-v5.yaml",
-            "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "6",
+            "7",
+            "3866de3ecc6b101f7ac10933221f711964dd3a9a77030f3c90baf3dd739fb4f6",
+            "aquarium-war-room-v6.yaml",
             "2a665a79048c7a4bb239ba348d77fc8d578e0edf82d50d301bae7843f48a18a8",
-            "aquarium-war-room-v5.yaml",
-            "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -499,7 +499,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "26"
+    assert task["version"] == "27"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -3567,11 +3567,11 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
 
 def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
     predecessors = {
-        "task": 25,
-        "goal": 28,
-        "validation": 27,
-        "design": 5,
-        "war-room": 5,
+        "task": 26,
+        "goal": 29,
+        "validation": 28,
+        "design": 6,
+        "war-room": 6,
     }
     for family, version in predecessors.items():
         current = load_procedure(f"aquarium-{family}-v2.yaml")
@@ -3608,3 +3608,35 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
                         "judge-assessment",
                     }:
                         assert item in current["node_definitions"][name]["items"]
+
+
+def test_inapplicable_phase_assessment_requires_nonpassing_current_applicability() -> (
+    None
+):
+    for family in ("task", "goal", "validation", "design", "war-room"):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        found = 0
+        for placement in nodes(procedure).values():
+            definition = procedure["node_definitions"][placement["use"]]
+            options = {option["id"]: option for option in definition.get("options", [])}
+            if "inapplicable" not in options:
+                continue
+            option = options["inapplicable"]
+            guards = normalized_guards(option)
+            sources = [
+                (node, item)
+                for node, item, field, operator, expected in guards
+                if item == "judge-applicability" and field == "outcome"
+            ]
+            assert len(sources) == 1
+            source = sources[0]
+            for outcome in ("fail", "inconclusive"):
+                assert guards_match(option, {source: {"outcome": outcome}})
+            assert not guards_match(option, {source: {"outcome": "pass"}})
+            assert not guards_match(option, {})
+            assert placement["routes"]["inapplicable"] == {
+                "to": source[0],
+                "effect": "rework",
+            }
+            found += 1
+        assert found > 0

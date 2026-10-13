@@ -50,6 +50,9 @@ this decision.
 
 ## Consequences
 
+- Native qualification applies to its original operative snapshot and assignment.
+  Changed role dependencies need fresh applicable acknowledgement and result
+  evidence, even when their semantic role boundaries remain the same.
 - Work-bearing Actions separate candidate delivery from semantic assessment;
   the Primary retains Decision execution and native authority checks.
 - Missing mandatory criteria or evidence prevent semantic progress even when technical

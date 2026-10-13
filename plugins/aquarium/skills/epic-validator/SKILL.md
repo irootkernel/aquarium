@@ -25,7 +25,8 @@ fresh Judge reading original criteria and artifacts directly; internal Epic vali
 retains its logical Epic Judge. Audit checkpoint completeness preserves actual negative
 Epic rows and their gap routing. Workers deliver one correction-group candidate; the
 Primary accepts and verifies its separate group commit before re-audit. Required
-candidate placements remain inactive pending combined qualification.
+candidate placements need an admitted delegated Procedure and native qualification
+applicable to its exact operative snapshot and supported path.
 
 ## Establish the Validation Contract
 

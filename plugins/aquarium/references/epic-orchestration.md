@@ -2,10 +2,11 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-goal-v2` version `29` requires native Worker delivery and
+The bundled `aquarium-goal-v2` version `30` requires native Worker delivery and
 retained Judge assessments for goal-centered Epic execution. Required placements
-remain inactive until TASK-116/117 qualify the native integrations, recovery and
-installed combined candidate. Released managed files and admitted direct sessions
+need an admitted delegated Procedure and native qualification applicable to its
+exact role snapshot, assignment and recovery path. Released managed files and
+admitted direct sessions
 retain their original contracts. A missing required binding blocks execution.
 Read [Task orchestration](task-orchestration.md) for the unchanged complete role
 inventory and prepared-snapshot digest domain, the [shared role contract](agent-orchestration.md),
@@ -160,11 +161,13 @@ acceptance cannot satisfy this gate. The carried conditional closeout grant
 permits its exact commit after actual acceptance without another commit question.
 Staging, commits, publication, installation and rollout retain their own authority.
 
-## Remaining qualification
+## Qualification applicability
 
-TASK-116 owns full source/runtime alignment and actual native recovery, including
-complete Claude Judge lifetime, tool-bearing feedback and descendant settlement.
-Physical dispatch-response loss remains unverified. TASK-117 owns combined
-candidate installation in UTM and Master functional results. Authoring, focused
-graph checks and explicitly synthetic fixtures establish source/protocol evidence
-only. They do not activate required placements or prove native semantic delivery.
+Bounded both-host delivery and phase Decisions do not establish full Epic
+execution or arbitrary descendant settlement. Claude SDK-facing feedback ACK
+recovery does not qualify Initial Agent, inner-model or Codex dispatch-ACK loss.
+Stop on required unsupported recovery and obtain applicable acknowledgement for
+changed operative bytes. Authoring and synthetic checks supply structural
+evidence only. Exact candidate upgrade in UTM remains a separate pre-release
+gate; delegated functional results do not supply Master's overall acceptance or
+activate released snapshots.

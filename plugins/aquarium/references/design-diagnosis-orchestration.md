@@ -1,10 +1,11 @@
 # Design and diagnosis orchestration candidate
 
 Apply this reference only when an admitted Design or War-room source declares
-required Worker/Judge placements. Both bundled version `6` candidates keep
-the released workflow identities. Required placements remain inactive until
-TASK-116/117 qualify the combined candidate; installed and admitted direct
-snapshots retain their existing contract.
+required Worker/Judge placements. Both bundled version `7` candidates keep
+the released workflow identities. Required placements need native qualification
+applicable to the exact role snapshot, assignment and recovery path; installed
+and admitted direct snapshots retain their existing contract. Source changes do
+not activate an existing session or authorize managed-file updates.
 
 ## Original evidence and phase checkpoints
 
@@ -97,4 +98,7 @@ uses `aquarium-native`, retains the accepted agent and respects native
 without an Aquarium lifetime quota, truncation or reset. These source declarations
 and structural checks do not establish authentic Codex/Claude execution,
 complete lifetime accounting, dispatch-loss recovery, installed upgrade or
-Master functional results; TASK-116/117 own that qualification.
+functional results. Native qualification must cover the exact role snapshot and
+supported path. Initial Agent, inner-model and Codex dispatch-ACK loss and
+arbitrary outliving descendants remain unqualified. Exact UTM upgrade is a
+separate pre-release gate; Master's overall acceptance remains separate.

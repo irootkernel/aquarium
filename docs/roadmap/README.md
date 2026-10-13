@@ -565,25 +565,23 @@ when possible; otherwise reconcile uncertain work and restore goals, evidence,
 and assessment state before replacement. Allow parallel research and sequential
 implementation on a shared checkout.
 
-This registration changes documentation only. No release version is selected,
-and no Podway core change is planned. Preserve the Herdr migration, existing
-approval boundaries, admitted session snapshots, and repository customizations.
-Implementation, live qualification, installation, activation, staging, commits,
-and publication require their applicable execution authority.
+The candidate implements native mappings and all five workflow integrations for
+the planned v0.1.19 release with EPIC-020. No Podway core change is planned.
+Preserve the Herdr migration, existing approval boundaries, admitted session
+snapshots and repository customizations. Installation, activation, commits and
+publication retain their applicable authority.
 
 **Detailed SOT:** [`TODO-AGENT-ORCHESTRATION.md`](../todo/TODO-AGENT-ORCHESTRATION.md)
 
-TASK-111 completed native integration qualification. Isolated Codex and Claude
-initial assignments and same-agent feedback exercised Podway acceptance,
-Action completion and result-read recovery. Source checks and Independent
-Review passed. Physical dispatch-response loss and affected workflow behavior
-remain required before activation; dependent workflow integration is next.
-
-TASK-112 completed Task source integration. Bundled Task version `25` requires
-Worker candidates and retained Judge assessments before Primary semantic
-Decisions. Full Make, native authoring, eight isolated structural scenarios
-and Independent Review passed for this source checkpoint. Required placements
-remain inactive pending combined recovery and actual workflow qualification.
+All five candidate Procedures require Worker delivery and report-only Judge
+assessment before Primary semantic Decisions. Recorded bounded Codex and Claude
+scenarios cover delivery, separate Action completion, phase Decisions and the
+supported recovery boundaries. Their qualification applies only to the original
+operative inputs; changed role snapshots require fresh native acknowledgement.
+Initial Agent, inner-model and Codex dispatch-ACK loss and arbitrary outliving
+descendants remain unqualified. Installed snapshots retain their admitted rules.
+Exact candidate upgrade in UTM is a separate pre-release gate, and Master's
+actual overall acceptance remains required for Epic closeout.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

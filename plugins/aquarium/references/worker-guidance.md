@@ -2,8 +2,9 @@
 
 This reference supplies the common Worker role for EPIC-021. The
 [orchestration contract](agent-orchestration.md) owns role boundaries and the
-handoff document. Required placements remain inactive until the native mapping
-and workflow owners qualify them.
+handoff document. Required placements need an admitted Procedure and native
+qualification applicable to the exact role snapshot and current assignment.
+Completed task labels and source declarations do not establish that qualification.
 
 ## Receive the assignment
 

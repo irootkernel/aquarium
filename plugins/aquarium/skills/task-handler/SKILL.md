@@ -15,7 +15,7 @@ Always read [evidence-residency.md](../../references/evidence-residency.md), [fi
 
 Otherwise read the Podway contract, use one `aquarium-task-v2` session for this canonical task after plan approval, coordinate with an explicitly authorized Codex goal under the shared Podway contract, and record each verified phase handoff at the matching node. In `plan-only`, create neither goal nor session; in `plan-handoff`, create the session only after approval, create a Codex goal only on explicit request, and stop at `implement` with the verified plan artifact. Do not let either goal mechanism or runtime evidence replace roadmap authority.
 
-Read [task-orchestration.md](../../references/task-orchestration.md) for version-26 Worker candidates, retained Judge assessments, exact role snapshots, report acceptance, semantic followup authority and final Task assessment. These declarations remain inactive until their native qualification owners deliver. Preserve admitted direct snapshots under their existing contracts.
+Read [task-orchestration.md](../../references/task-orchestration.md) for version-27 Worker candidates, retained Judge assessments, exact role snapshots, report acceptance, semantic followup authority and final Task assessment. Required placements need an admitted delegated Procedure and native qualification applicable to its exact operative snapshot and supported path. Preserve admitted direct snapshots under their existing contracts.
 
 ## Establish the Task Contract
 
@@ -111,7 +111,7 @@ When a Codex goal is authorized, keep it active through every phase. Mark it com
 
 ## Resume Without Shadow State
 
-Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and the selected route's evidence and finding lineage. When Podway is active, its latest native observation envelope (`podway.observation-result/v4` for delegated version-26 sources, or retained direct `v3` behavior) is also required reconstruction evidence.
+Do not create or read `.aquarium` or another orchestration state file. On continuation, reconstruct progress from the named roadmap, current Git index and worktree, goal state, repository-native documentation state, verification evidence in the conversation or repository, and the selected route's evidence and finding lineage. When Podway is active, its latest native observation envelope (`podway.observation-result/v4` for a Procedure with delegation, or retained direct `v3` behavior) is also required reconstruction evidence.
 
 Treat bounded readback previews as metadata; retrieve each selected complete value through digest-bound evidence-read pagination, and re-observe and restart when a page token is stale.
 

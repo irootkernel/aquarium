@@ -28,4 +28,6 @@ When the admitted Procedure declares required Worker/Judge placements, follow
 for complete original evidence, retained Judge checkpoints, current local effect
 authority and final assessment. Keep this skill's original Ouroboros leaf scope,
 actual approval and effect boundaries. Installed direct snapshots retain their
-admitted contract; TASK-116/117 qualification precedes activation.
+admitted contract. Required placements need native qualification applicable to
+the exact operative snapshot and supported path, plus an admitted delegated
+Procedure. Source updates do not authorize managed-file rollout.

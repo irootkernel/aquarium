@@ -2,15 +2,16 @@
 
 ## Status and scope
 
-These TASK-111 and TASK-116 profiles describe the public surfaces to wire and
-qualify for
+These profiles describe the public surfaces and qualification obligations for
 `aquarium.codex-native/v1` and `aquarium.claude-native/v1`. Local preparation and
-delivery-mapping components are implemented. Isolated native assignments and
-same-agent feedback on both hosts have exercised Podway acceptance, Action
-completion and retained settlement. Workflow wiring and combined functional
-qualification remain with TASK-112 through TASK-117. Required delegation remains
-inactive. Read the [orchestration contract](agent-orchestration.md) and the
-installed `use-podway` delegation contract for acceptance obligations.
+delivery mapping establish only their declared binding domains. Required
+delegation needs native qualification applicable to the exact operative role
+snapshot, accepted assignment, complete result and supported recovery path.
+Earlier qualification remains bound to its original inputs; changed operative
+bytes need fresh acknowledgement. Read the
+[orchestration contract](agent-orchestration.md) and the installed `use-podway`
+delegation contract for acceptance obligations. Source declarations do not
+activate released managed copies or change an admitted session.
 
 Pin the actual backend, host version, public schema, and integration revision in
 qualification evidence. The inspected reference versions are Codex CLI 0.162.0,

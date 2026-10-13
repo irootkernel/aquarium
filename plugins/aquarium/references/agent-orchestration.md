@@ -1,29 +1,28 @@
 # Supervised agent orchestration contract
 
-## Delivery status and authority
+## Qualification and authority
 
-This is the reserved contract defined by `TASK-110` under `EPIC-021`. Required
-Worker and Judge placements await workflow implementation and qualification. The TASK-112 bundled Task candidate declares its placements under [Task orchestration](task-orchestration.md); required delegation remains inactive. `TASK-111`
-qualifies native integrations; `TASK-112` through `TASK-116` apply the contract
-to handlers, bundled Procedures, and compatibility inspection. `TASK-117`
-qualifies the combined outcome. Until those owners deliver, existing skills,
-[Procedure node contracts](procedure-node-contracts.md), and admitted snapshots
-keep their current execution rules. Reading this reference does not activate
-reserved delegation or reinterpret an existing session.
+Required Worker and Judge placements need an admitted Procedure and native
+qualification applicable to their exact operative role snapshot, assignment and
+supported recovery path. Source declarations, completed task labels and reading
+this reference do not activate delegation or reinterpret an existing session.
+Released managed copies and admitted snapshots keep their own execution rules.
+Use [Procedure node contracts](procedure-node-contracts.md) and the owning
+workflow reference for the admitted placement.
 
-TASK-111's candidate role instructions are in
+The operative role instructions are in
 [Goal Judge](../skills/goal-judge/SKILL.md) and
-[Worker guidance](worker-guidance.md). Its
+[Worker guidance](worker-guidance.md). The
 [native mapping profiles](native-agent-mappings.md) describe local preparation
-and delivery-mapping components and the remaining qualification domains.
-Required placements remain inactive.
+and delivery-mapping components and their qualification domains. An unsupported
+required binding or recovery path blocks execution without direct fallback.
 
-The repository's active execution dossier,
-`docs/todo/TODO-AGENT-ORCHESTRATION.md`, owns EPIC-021's detailed requirements
-until closeout. Its canonical `docs/roadmap/README.md` owns identities,
-dependencies, and status. This reference owns the frozen shared
-role, assessment, handoff, and recovery contracts. Native tool contracts remain
-authoritative for their actual fields and lifecycle operations.
+The assignment supplies the repository's current canonical requirements and
+execution SOT. Its canonical roadmap owns identities, dependencies and status;
+qualification evidence must identify its actual source and target. This
+reference owns the frozen shared role, assessment, handoff and recovery
+contracts. Native tool contracts remain authoritative for their actual fields
+and lifecycle operations.
 
 ## Roles and lifetime
 

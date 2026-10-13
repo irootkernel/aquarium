@@ -13,7 +13,7 @@ unless the placement selects it.
 
 ## Task Procedure
 
-The bundled version-26 candidate follows [Task orchestration](task-orchestration.md). Work-bearing plan, implementation, refinement, verification, documentation, and admitted review evidence have required Worker delivery and retained Judge Action placements. Their Primary Decisions consume current applicable phase results while retaining full original global rows and gaps; the native review and authority gates remain separate. Final normal and stopped evidence candidates have their own Judge reports before goal assessment. Operational records and all Decisions stay with the Primary. Required placements remain inactive pending TASK-116/117 qualification; admitted direct snapshots retain their existing contract.
+The bundled version-27 candidate follows [Task orchestration](task-orchestration.md). Work-bearing plan, implementation, refinement, verification, documentation, and admitted review evidence have required Worker delivery and retained Judge Action placements. Their Primary Decisions consume current applicable phase results while retaining full original global rows and gaps; the native review and authority gates remain separate. Final normal and stopped evidence candidates have their own Judge reports before goal assessment. Operational records and all Decisions stay with the Primary. Required placements need an admitted delegated Procedure and native qualification applicable to their exact operative snapshot and supported path; admitted direct snapshots retain their existing contract.
 
 | Node family | Capability and required input | Boundary and result |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ states that the review predates changed bytes.
 
 ## Goal Procedure
 
-The bundled version-29 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary phase Decisions require current applicability and satisfaction of actual due obligations, preserving full global rows and their original negative routing, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements remain inactive pending TASK-116/117; released managed copies retain their direct contract.
+The bundled version-30 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary phase Decisions require current applicability and satisfaction of actual due obligations, preserving full global rows and their original negative routing, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements need native qualification applicable to the exact operative snapshot and supported path; released managed copies retain their direct contract.
 
 `epic-handler` owns goal-centered member, remediation, and closeout work. It does
 not invoke the task phase skills. `complete-work` returns the work summary, source
@@ -101,7 +101,7 @@ no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
-The bundled version-28 candidate follows [Validation
+The bundled version-29 candidate follows [Validation
 orchestration](validation-orchestration.md) with twelve required Worker/Judge
 placements. Direct audit and re-audit checkpoint Decisions preserve real negative
 original Epic rows while admitting faithful gap routing. The Primary settles each exact
@@ -110,7 +110,7 @@ evidence receives its separate Judge only after native serial provider admission
 normal/stopped candidates require current applicable Judge reports; stopped evidence
 repair stays within stopped assembly. Cold validation creates a fresh Judge with direct
 original source access; internal Epic validation retains its logical Judge and full
-history. Required placements remain inactive pending TASK-116/117; released snapshots
+history. Required placements need native qualification applicable to the exact operative snapshot and supported path; released snapshots
 retain their direct contract.
 
 `epic-handler` uses validation for final epic audit and `epic-validator` uses it
@@ -170,7 +170,7 @@ execution dossier under the shared consumer rules before final acceptance.
 
 ## Design Procedure
 
-The bundled version-6 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements remain inactive pending TASK-116/117.
+The bundled version-7 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
 
 `new-project`, `new-feature`, and `refactor` own context, discovery, drafting,
 challenge, quality, exact-diff approval, document application, assessment, and
@@ -185,7 +185,7 @@ optional at merges.
 
 ## War-room Procedure
 
-The bundled version-6 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements remain inactive pending TASK-116/117.
+The bundled version-7 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
 
 `war-room` owns safe baseline or reproduction, competing hypotheses, cause and
 scope judgments, proposal quality, exact-diff approval, document application,

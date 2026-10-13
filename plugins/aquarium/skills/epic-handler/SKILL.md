@@ -21,7 +21,7 @@ Goals below describe workflow objectives. Create a Codex goal only on explicit u
 
 ## Supervise goal-centered execution
 
-Read [epic-orchestration.md](../../references/epic-orchestration.md) for required Worker/Judge placement execution, full original evidence, retained Epic Judge identity, local effect-authority checks and final assessment. The bundled version-29 candidate remains inactive until compatible native execution and combined candidate qualification; admitted released direct snapshots keep their original contracts.
+Read [epic-orchestration.md](../../references/epic-orchestration.md) for required Worker/Judge placement execution, full original evidence, retained Epic Judge identity, local effect-authority checks and final assessment. The bundled version-30 candidate requires an admitted delegated Procedure and native qualification applicable to its exact operative snapshot and supported path; admitted released direct snapshots keep their original contracts.
 
 After approval, retain one logical Judge across member and correction Goals, successors, internal Validation and closeout. Supply complete current assignments and original criteria at every work-bearing checkpoint. Preserve actual identity, acknowledged history and lifetime rounds; never reuse an old receipt for a fresh placement. Cold independent validation alone starts a fresh Judge. Accept complete Worker delivery, then obtain and accept an applicable report-only Judge assessment before the Primary semantic Decision. Keep Decisions, simple operational records, actual approval and grant consumption with the Primary.
 

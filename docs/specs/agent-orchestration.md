@@ -4,11 +4,18 @@
 
 `TASK-110` defines the shared Orchestrator, Judge, and Workers contract for
 `EPIC-021`. `TASK-111` through `TASK-116` implement the candidate native mappings,
-handlers, Procedures, and recovery boundaries. `TASK-117` owns combined workflow
-and upgrade qualification, including functional verification delegated by Master
+handlers, Procedures, and recovery boundaries. `TASK-117` owns bounded combined
+workflow qualification, including functional verification delegated by Master
 to the coordinating agent for this Epic. Installed skills and
 admitted Procedure snapshots retain their released contracts. Candidate source
 does not establish distribution or activation.
+
+Native qualification is bound to its original operative role snapshot and
+assignment. Changed frozen dependencies require a new Procedure candidate and
+fresh applicable native acknowledgement; earlier bounded results cannot qualify
+those changed bytes. Exact candidate installation and upgrade in the dedicated
+UTM VM remain a separate pre-release gate. Qualification evidence must resolve
+current applicability before a required placement runs.
 
 The exact owner is the
 [supervised agent orchestration contract](../../plugins/aquarium/references/agent-orchestration.md).
@@ -95,7 +102,7 @@ Affected placement activation retains its native recovery requirements.
 
 ## TASK-112 Task candidate
 
-The bundled Task Procedure version `26` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
+The bundled Task Procedure version `27` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
 
 The candidate declares complete role snapshot bindings and rejects Worker-only,
 missing or stale assessment evidence and uncovered followup authority structurally.
@@ -107,7 +114,7 @@ integration and recovery capabilities must be qualified for the admitted placeme
 
 ## Epic execution candidate
 
-Goal version `29` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
+Goal version `30` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
 declare required Worker and Judge Actions for current work, admitted technical
 evidence and final normal/stopped assessment. The handler retains one logical
 Judge across members, corrections, successors, internal Validation and closeout;
@@ -127,7 +134,7 @@ activate other repositories' placements.
 
 ## Validation candidate
 
-Validation version `28` and [Validation
+Validation version `29` and [Validation
 orchestration](../../plugins/aquarium/references/validation-orchestration.md) declare
 twelve required Worker/Judge placements for audit, correction, re-audit, admitted
 technical evidence and final normal/stopped outcomes. Cold validation starts a fresh
@@ -189,7 +196,7 @@ snapshots or other repositories.
 
 ## Design and diagnosis candidate
 
-Design and War-room version `6` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
+Design and War-room version `7` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
 
 The Primary keeps cause/scope Decisions, actual effects, exact user proposal
 approval and final acceptance. Changed application proposals or target snapshots

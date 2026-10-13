@@ -5847,6 +5847,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
                     "9034dc4a36ce991cc75ee5b4f8f1a15f21649e435651621acc5463ad8a9b0efc",
                     "44992bc7e1efc048b2041e448bcdbc3dcedb3d1f70815b1ac379404a6c830e39",
                     "bc5ab9bcb7b7aa665280e41819ad84465be41777c04d4e8c6bf8daf5a4a6c895",
@@ -5872,6 +5873,7 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    "430c5423c1ddea224561970e7e5ba5c6d1b7c62c03887e9eee888e6c648a4635",
                     "f4ad2b0e66be4f141c73ff8c325c494c212dba269be499dfddca26b47540e0e2",
                     "99048bb6dba1e44446f986cb7afe0704aa05fb71177ad3cc3950aa781979506a",
                     "46ada0b0482a86ad71c09d5a5cf35c8e47f025584b87af0d4d1444b84953c0de",
@@ -5897,6 +5899,7 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    "cb5cad2c4d29f72f365b7a4f95274f9cfe9d1cf112154daf529b0c4efdae5867",
                     "75d083e2812ea3cdee6774970bf5a2335607903468cb7c7554834c05d2a30e6c",
                     "c036abf9ef161b2e8a52e8dbd5e88f8565d1010dd9becfcfa33fd54d4b72d29e",
                     "16ccd090b0cf02ecb0420b6b58c5e8af14c56cc77e6407114d69a40e36ed7c50",
@@ -5920,6 +5923,7 @@ else:
                     "17e76602d597a761720f44341de8ab33508be6dfe4bbe8ba3eaa395ea6ef9f97",
                 },
                 "aquarium-design-v2.yaml": {
+                    "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
                     "15afa90fbf532baf8cfc5c3bd25d0aa8dc6e64a0b2b262e03dac1c4f25af580c",
                     "0f24c740ab09d4668036b26ca0958b705b35d3eb8e73fdab77553245f1a6a624",
                     "3ec77c9593427753d51b21a12c2c067554aff751f4dbc2632dada0762853dc58",
@@ -5927,6 +5931,7 @@ else:
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    "2a665a79048c7a4bb239ba348d77fc8d578e0edf82d50d301bae7843f48a18a8",
                     "96b5972a45e8288539e63972cd34f1a1868f334f5b60f494d3105fb0ea8d2436",
                     "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
                     "422f063e6aa126cdb49590e1565f0927f07a70b4d7f02c574d5bebb9839bcd2b",

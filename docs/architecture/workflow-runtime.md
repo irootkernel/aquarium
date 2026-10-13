@@ -31,11 +31,14 @@ Workflows prefer re-observation over replay. Unknown or interrupted external exe
 
 The [EPIC-021 orchestration contract](../../plugins/aquarium/references/agent-orchestration.md)
 defines the implemented candidate role model and versioned handoffs. Bounded
-native Worker, Judge, and Primary scenarios qualify Task planning, Goal work,
+native Worker, Judge, and Primary scenarios have qualified Task planning, Goal work,
 Validation audit, Design context, and War-room baseline on Codex and Claude.
 They do not establish full handler lifecycles or final Goal achievement. Installed
 released skills and admitted snapshots retain their existing contracts; source
 updates do not activate candidate placements in an existing session.
+Recorded qualification applies to its original operative inputs. Changed role
+snapshots require fresh native acknowledgement and result/settlement evidence;
+earlier scenarios cannot establish applicability to those changed bytes.
 
 The candidate flow separates Worker delivery, report-only Judge
 assessment, and Orchestrator Decisions. The Primary accepts a complete native

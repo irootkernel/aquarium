@@ -2,9 +2,9 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-task-v2` version `26` declares required native Worker and
-Judge Actions. It remains undistributed and inactive until TASK-116 and TASK-117
-qualify compatible native execution, recovery and the installed candidate.
+The bundled `aquarium-task-v2` version `27` declares required native Worker and
+Judge Actions. Execution requires an admitted delegated Procedure and native
+qualification for its exact role snapshot, assignment and recovery path.
 Released managed copies and admitted direct snapshots retain their original
 contracts. Read the [shared contract](agent-orchestration.md),
 [native mappings](native-agent-mappings.md) and installed `use-podway`
@@ -143,16 +143,18 @@ remain required. Direct phase invocations retain their existing authority;
 when the handler delegates a phase, the Primary owns approval conversations,
 Podway acceptance and progression.
 
-## Remaining native qualification
+## Qualification applicability
 
-TASK-116 must extend and qualify Claude's current initial-plus-one-feedback
-mapping for the complete logical Judge lifetime. Tool-bearing feedback history
-also needs qualification; supplying complete original source bytes as bounded
-assignment evidence may avoid that path, while summaries cannot. TASK-117 owns
-actual combined host and Master functional results. Physical dispatch-response
-loss remains unverified on both hosts. Tool-bearing implementation results and
-nested technical-review lifetimes also require separately qualified complete
-native result and settlement support. These gaps block required placement
-activation and whole-workflow claims; role declarations and structural checks
-do not resolve them. Exact candidate installation and upgrade belong in the
-dedicated UTM VM before release.
+Bounded both-host scenarios cover native Worker/Judge delivery, complete
+serialized assignments and Primary phase Decisions. Claude SDK-facing feedback
+ACK withholding and result-read recovery are distinct from Initial Agent,
+inner-model and Codex dispatch-ACK loss, which remain unqualified. Arbitrary
+active or outliving descendants also remain unqualified. Stop on any required
+unsupported path; do not extrapolate a bounded result to full handler execution,
+tool-bearing implementation or nested technical-review lifetimes.
+
+Every changed operative snapshot needs fresh applicable native acknowledgement
+and result/settlement evidence. Qualification cannot activate admitted released
+snapshots or other repositories. Exact candidate installation and upgrade belong
+in the dedicated UTM VM before release; Master's actual overall acceptance
+remains the final Epic closeout gate.

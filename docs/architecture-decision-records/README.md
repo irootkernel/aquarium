@@ -11,7 +11,7 @@ This directory preserves durable Aquarium architecture decisions after they are 
 - [ADR-0005: Require Separate Approval for Distinct Effects](0005-separate-effect-approvals.md)
 - [ADR-0006: Use Local Deterministic and Exact-Candidate Verification](0006-local-exact-candidate-verification.md)
 - [ADR-0008: Separate Development and Production Environments](0008-separate-development-and-production-environments.md)
-- [ADR-0009: Use supervised agent orchestration](0009-supervised-agent-orchestration.md), accepted as a reserved EPIC-021 design; implementation and native qualification remain pending.
+- [ADR-0009: Use supervised agent orchestration](0009-supervised-agent-orchestration.md), accepted; candidate integrations are implemented with bounded native qualification, exact-snapshot applicability and separate upgrade and activation gates.
 
 ## Superseded Decisions
 
