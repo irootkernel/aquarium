@@ -288,13 +288,16 @@ reviewer. A provider completion report retains its original criterion assessment
 and provenance even when the Judge disagrees.
 
 Keep the existing serial operation, confirmation, completion, finding-class,
-rework-authority, and Low-settlement gates. Preserve consumed ordinals and
+rework-authority and settlement gates, with current local-correction classification
+before provider-rework authority. Preserve consumed ordinals and
 assessment kind, frozen findings, accepted-risk evidence, Low dispositions, and
 remaining review/correction authority. A semantic rework verdict cannot start
 another technical review or correction beyond that authority. Confirmation-only
 scope remains limited to its frozen corrections and direct regression surface.
-A permitted Low-only delta retains its original review basis and required local
-checks; do not claim the old review covered changed bytes.
+A permitted local-settlement delta retains its original review basis and required
+local checks; do not claim the old review covered changed bytes. Eligible local
+corrections consume no provider ordinal and remain within the existing effect
+authority, including in confirmation-only mode.
 
 A semantic pass is necessary for applicable work, but execution gates, native
 checks, review evidence, and user decisions must independently pass. Preserve

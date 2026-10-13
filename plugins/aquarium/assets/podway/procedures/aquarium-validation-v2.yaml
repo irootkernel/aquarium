@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "29"
+version: "30"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -815,6 +815,21 @@ node_definitions:
         required: true
         allowed_media_types:
           - application/json
+      - id: local-correction-count
+        type: integer
+        prompt: Record eligible local correction candidates separately from source severity counts; use zero when none apply.
+        required: true
+        minimum: 0
+      - id: local-correction-eligibility
+        type: check_result
+        prompt: Bind the frozen candidate correction set, original coverage, all current blockers, affected criteria, direct checks and existing effect authority; this is caller-recorded eligibility, not repair evidence.
+        required: true
+        operation_id: aquarium-local-correction-eligibility
+        operation_digest: sha256:c5d1ce604e86d6768f498be4618d6d30935d0b3134ab5290ebbcd0ac82f11c13
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
   final-review-decision:
     type: decision
     title: Settle final Low obligations
@@ -848,7 +863,7 @@ node_definitions:
     objective: Classify completion independently from operation, evidence, findings, and rework authority.
     prompt: What is the aggregate epic completion state?
     evidence_guidance:
-      - Unmet criteria use the current review mode and existing remediation authority; unverified criteria stop as incomplete evidence.
+      - Classify eligible local corrections first. Other unmet criteria use existing remediation authority; other unverified criteria retain incomplete-evidence routing.
     options:
       - id: complete
         label: Completion supported
@@ -1340,11 +1355,13 @@ node_definitions:
       prompt: Record the selected decision and its authority. For rework, include the exact source attempt and record, target, finding IDs, consumed assessment count, and correction authority.
   low-disposition-record:
     type: action
-    title: Record completed Low dispositions
-    intent: Record proportionate Low handling without claiming that the selected reviewer assessed corrected or newly recorded bytes.
+    title: Record verified local settlement
+    intent: Verify eligible local corrections and ordinary Low dispositions without claiming provider coverage of changed bytes.
     instructions:
-      - Freeze the eligible Low set across direct-audit and provider namespaces and apply only supported dispositions.
-      - Verify the exact permitted target delta locally; do not run another review or broad re-audit solely for Low.
+      - Freeze the source finding set, priorities, criterion rows and reviewed basis. Apply only admitted local-verified-fix corrections and ordinary Low dispositions under existing effect authority.
+      - Run every affected required check on the final target and reassess affected criteria under coordinator provenance. Preserve unaffected rows only with current applicability evidence; never rewrite the source reviewer assessment.
+      - Bind exact before and after targets, permitted delta, zero pending local corrections and Low dispositions, current blockers and criterion gaps. A failed or inconclusive check remains incomplete; use its owner rather than dispatching a cleaner review.
+      - The required final Judge reads every original criterion and the complete settlement composition. Another provider operation or ordinal is not required solely for eligible local settlement.
     items:
       - id: source-review-basis
         type: text
@@ -1355,26 +1372,26 @@ node_definitions:
         multiline: true
       - id: low-disposition-summary
         type: text
-        prompt: Record each finding ID, selected shared disposition, exact correction or canonical owner, impact or reason, re-entry condition, focused checks, commit when applicable, and the preceding review that predates changed bytes.
+        prompt: Record every source finding ID and original priority, local-verified-fix or ordinary Low disposition, eligibility basis, exact delta, affected criteria, authority, checks and any canonical future-work owner.
         required: true
         min_length: 1
         max_length: 5000
         multiline: true
       - id: completion-assessment-summary
         type: text
-        prompt: Carry the exact criterion-level completion assessment from the admitted review basis.
+        prompt: Record current criterion-level completion after verified local corrections; identify resolved source rows and coordinator provenance, and preserve unaffected rows with their applicability basis.
         required: true
         min_length: 1
         max_length: 7000
         multiline: true
       - id: completion-unmet-criteria
         type: integer
-        prompt: Carry the number of unmet completion criteria from the admitted review basis.
+        prompt: Record the current unmet criterion count for the final settlement target, retaining original source counts separately.
         required: true
         minimum: 0
       - id: completion-unverified-criteria
         type: integer
-        prompt: Carry the number of unverified completion criteria from the admitted review basis.
+        prompt: Record the current unverified criterion count for the final settlement target, retaining original source counts separately.
         required: true
         minimum: 0
       - id: pending-low-dispositions
@@ -1382,9 +1399,14 @@ node_definitions:
         prompt: Record frozen eligible Low findings without a completed disposition.
         required: true
         minimum: 0
+      - id: pending-local-corrections
+        type: integer
+        prompt: Record frozen local-verified-fix corrections not yet completed and directly verified; ordinary Low-only settlement records zero.
+        required: true
+        minimum: 0
       - id: current-blocking-findings
         type: integer
-        prompt: Record current blockers established during local verification.
+        prompt: Count current obligations that cannot remain in eligible local settlement, including lost eligibility and nonlocal findings. Still-eligible repairs awaiting checks remain pending local corrections.
         required: true
         minimum: 0
       - id: before-target
@@ -1403,28 +1425,35 @@ node_definitions:
         multiline: true
       - id: coverage-relationship
         type: choice
-        prompt: Record whether the current target is unchanged or contains the accepted Low-only delta.
+        prompt: Distinguish unchanged bytes, an ordinary Low-only delta and an eligible locally verified correction delta; neither delta is provider-reviewed.
         required: true
         choices:
           - same-as-review
           - review-predates-low-delta
+          - review-predates-local-correction
       - id: low-disposition-verification
         type: check_result
         prompt: Record the caller-supplied aquarium-low-disposition-verification result.
+        help: Verify the frozen dispositions, exact delta and required local checks. The graph separately routes pending work, nonlocal blockers and current criterion or evidence gaps.
         required: true
         operation_id: aquarium-low-disposition-verification
-        operation_digest: sha256:788e0961be2fcf797e891bb55e440d6779b4b9d745818ad186c840acc5df013c
+        operation_digest: sha256:02a779d773de53df7007374215ed393c58b19ad7bbec80349622756e1736f6a5
         accepted_outcomes:
           - pass
           - fail
           - inconclusive
+      - id: current-required-evidence-gaps
+        type: integer
+        prompt: Count current missing mandatory verification prerequisites or invalidated audit basis after the exact correction; bind any repaired basis in the settlement summary.
+        required: true
+        minimum: 0
   low-result-decision:
     type: decision
     title: Evaluate Low verification
     objective: Continue only when required local settlement verification passed.
     prompt: Did Low verification pass on the current target?
     evidence_guidance:
-      - Failed or inconclusive local verification returns to settlement and creates no review authority.
+      - Still-eligible failed checks retry settlement. Lost eligibility or nonlocal blockers use their existing rework owner; neither path grants another review.
     options:
       - id: passed
         label: Low verification passed
@@ -1437,27 +1466,45 @@ node_definitions:
             equals: pass
       - id: incomplete
         label: Low verification incomplete
-        criteria: The local result failed or is inconclusive.
+        criteria: A required local check failed or is inconclusive, but the repair still qualifies for the current local envelope.
         guards:
           - evidence:
               node: record-low-disposition
               item: low-disposition-verification
             field: outcome
             not_equals: pass
+          - evidence:
+              node: record-low-disposition
+              item: current-blocking-findings
+            equals: 0
+      - id: blocker-found
+        label: Local eligibility lost
+        criteria: Local verification is incomplete and an obligation requires ordinary authorized rework.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: low-disposition-verification
+            field: outcome
+            not_equals: pass
+          - evidence:
+              node: record-low-disposition
+              item: current-blocking-findings
+            at_least: 1
     reason:
       required: true
       prompt: Explain the current local verification result.
   low-completion-decision:
     type: decision
-    title: Verify Low settlement
-    objective: Advance only after every frozen Low disposition and current local check is complete and the carried completion assessment has no gap.
-    prompt: Is the finite Low settlement complete?
+    title: Verify local settlement
+    objective: Advance after every frozen local disposition and current check is complete and the current corrected-target criterion assessment has no gap.
+    prompt: Is the finite local settlement complete?
     evidence_guidance:
-      - Historical Low counts remain unchanged; use pending disposition and current blocker counts plus the completion assessment carried from final-review.
+      - Preserve historical counts and rows; use current pending work, blockers and corrected-target criterion evidence.
+      - Do not start another provider review solely for a verified local delta.
     options:
       - id: completed
         label: Low settlement completed
-        criteria: Pending dispositions and current blockers are zero, and the source review has no unmet or unverified completion criterion.
+        criteria: Required local verification passed, pending Low dispositions, local corrections and current blockers are zero, and the current final-target completion assessment has no unmet or unverified criterion.
         guards:
           - evidence:
               node: record-low-disposition
@@ -1520,6 +1567,7 @@ node_definitions:
     evidence_guidance:
       - Read the latest work revision and all selected review, verification, completion, and finding evidence.
       - Preserve their current relationship in the decision reason; this gate does not itself assess the session goal.
+      - Read current settlement alongside source rows. A settlement blocker or criterion gap is a current trigger; preserve the original source assessment.
     options:
       - id: ready
         label: Core Goal evidence ready
@@ -2762,6 +2810,7 @@ node_definitions:
       - Read the complete triggering Judge report and original evidence. A negative verdict grants no correction, check, provider, install or commit effect.
       - Before any followup, verify the exact remaining original or actual one-shot authority. Reconcile an existing provider operation before any new dispatch; never reset a review ordinal or frozen set.
       - For audit and remediation evidence before provider admission, use the baseline and prepared pass authority, not a future final-review record. Stop with authority unset or blocked when uncovered.
+      - Read current settlement alongside source rows. A settlement blocker or criterion gap is a current trigger; preserve the original source assessment.
     items:
       - id: semantic-followup-summary
         type: text
@@ -2834,14 +2883,14 @@ node_definitions:
     intent: Assemble the final validation candidate
     instructions:
       - Read complete canonical original criteria and evidence directly. Passing member labels, inherited verdicts, zero provider findings or a Worker-only summary cannot establish Epic achievement.
-      - Compose every applicable selected audit, provider and Judge report, verified group commit, Low reviewed-basis/permitted-delta/after-target composition and current checks without starting implementation or a provider.
+      - Compose every applicable selected audit, provider and Judge report, verified group commit, local reviewed-basis/permitted-delta/after-target composition and current checks without starting implementation or a provider.
       - Cold epic-validator has a fresh Judge with direct source access; internal epic-handler retains its existing logical Epic Judge and full lifetime and history.
       - For stopped assembly require the baseline and exact current stopped boundary. Include every available audit, re-audit, correction, Low, provider/Judge and disposition record, including confirmation-incomplete, review-operation-incomplete and actual direction or route-stop evidence; legitimately bypassed phases stay optional. Supply original full artifacts and stopped-core-gaps in the complete assignment beyond bounded selectors.
       - After a confirmed stopped boundary, reconcile only available evidence, preserve unresolved gaps and retain a fresh stopped Worker and Judge. No ordinary work, provider admission, achievement or renewed acceptance is authorized.
     items:
       - id: validation-assessment-summary
         type: text
-        prompt: Record complete original Epic criteria and direct artifacts, every member and integration seam, exact final target, actual audit and provider outcomes, confirmed gaps, verified groups, Low composition, authority and supported outcome.
+        prompt: Record complete original Epic criteria and direct artifacts, every member and integration seam, exact final target, actual audit and provider outcomes, confirmed gaps, verified groups, local composition, authority and supported outcome.
         required: true
         min_length: 1
         max_length: 8000
@@ -2906,6 +2955,159 @@ node_definitions:
     reason:
       required: true
       prompt: Record exact current evidence, source attempt and target, remaining authority and the next owner.
+  local-correction-handling-decision:
+    type: decision
+    title: Classify local correction
+    objective: Use direct verified settlement for eligible corrections before requesting another provider assessment.
+    prompt: Can the current correction set be settled locally under existing authority?
+    evidence_guidance:
+      - Preserve source severity, negative criterion rows and the consumed ordinal. Eligibility covers every current blocker; new judgment, missing reviewer coverage or uncovered effects use ordinary routing.
+      - Reconcile provisional eligibility with the latest Judge report. A new nonlocal obligation requires ordinary routing even after a source pass; preserve the source record.
+    options:
+      - id: local
+        label: Settle locally
+        criteria: All blocking obligations are covered by the admitted local correction set and its direct verification plan within current effect authority.
+        guards:
+          - evidence:
+              node: final-review
+              item: local-correction-count
+            at_least: 1
+          - evidence:
+              node: final-review
+              item: local-correction-eligibility
+            field: outcome
+            equals: pass
+      - id: ordinary
+        label: Keep ordinary rework or evidence routing
+        criteria: The latest Judge or current evidence establishes a nonlocal or unproven obligation, including one discovered after a provisional passing eligibility record.
+        guards:
+          - evidence:
+              node: final-review
+              item: local-correction-count
+            at_least: 1
+    reason:
+      required: true
+      prompt: Name source findings, target, affected criterion rows, required checks and effect authority, or the exact reason local settlement is unavailable.
+  local-correction-completion-decision:
+    type: decision
+    title: Confirm local corrections are settled
+    objective: Admit ordinary Low completion only after every local correction is verified.
+    prompt: Are any admitted local corrections still pending?
+    options:
+      - id: settled
+        label: Local corrections settled
+        criteria: No local correction remains pending; ordinary Low and current completion checks follow separately.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: pending-local-corrections
+            equals: 0
+      - id: pending
+        label: Local corrections pending
+        criteria: At least one admitted local correction still needs repair or direct verification.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: pending-local-corrections
+            at_least: 1
+    reason:
+      required: true
+      prompt: Name the completed correction evidence or the exact remaining work; this decision creates no review authority.
+  local-correction-candidate-decision:
+    type: decision
+    title: Check local correction candidates
+    objective: Keep ordinary routing when no local correction candidate exists; otherwise inspect its eligibility separately.
+    prompt: Does the admitted review identify any local correction candidate?
+    options:
+      - id: none
+        label: No local candidates
+        criteria: The source candidate count is zero.
+        guards:
+          - evidence:
+              node: final-review
+              item: local-correction-count
+            equals: 0
+      - id: candidate
+        label: Check candidate eligibility
+        criteria: At least one source candidate needs its separate scope, coverage and authority eligibility check.
+        guards:
+          - evidence:
+              node: final-review
+              item: local-correction-count
+            at_least: 1
+    reason:
+      required: true
+      prompt: Identify the finite source correction set or its explicit absence; this count grants no effect or review authority.
+  local-current-completion-decision:
+    type: decision
+    title: Route current settlement criteria
+    objective: Preserve current unmet and unverified criterion ownership without accepting a gap or looping completed dispositions.
+    prompt: What does the current corrected-target criterion assessment establish?
+    evidence_guidance:
+      - Use current settlement rows while retaining the original review rows and exact authorized delta.
+    options:
+      - id: complete
+        label: Current criteria satisfied
+        criteria: Every current applicable criterion is supported.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: completion-unmet-criteria
+            equals: 0
+          - evidence:
+              node: record-low-disposition
+              item: completion-unverified-criteria
+            equals: 0
+      - id: unmet
+        label: Current correction needed
+        criteria: At least one current criterion remains unmet.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: completion-unmet-criteria
+            at_least: 1
+      - id: unverified
+        label: Current evidence needed
+        criteria: No criterion is unmet but required criterion evidence is unverified.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: completion-unmet-criteria
+            equals: 0
+          - evidence:
+              node: record-low-disposition
+              item: completion-unverified-criteria
+            at_least: 1
+    reason:
+      required: true
+      prompt: Name the current criterion, exact proof or gap and its existing owner.
+  local-required-evidence-decision:
+    type: decision
+    title: Check current mandatory evidence
+    objective: Preserve the mandatory Validation evidence veto on every local settlement path.
+    prompt: Does the corrected target retain every mandatory evidence prerequisite?
+    evidence_guidance:
+      - Use the current mandatory evidence count and its proof references, not a rewritten historical source count.
+    options:
+      - id: complete
+        label: Current required evidence complete
+        criteria: No current mandatory evidence gap remains.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: current-required-evidence-gaps
+            equals: 0
+      - id: incomplete
+        label: Mandatory evidence missing
+        criteria: A current required prerequisite or audit basis is missing.
+        guards:
+          - evidence:
+              node: record-low-disposition
+              item: current-required-evidence-gaps
+            at_least: 1
+    reason:
+      required: true
+      prompt: Name the current evidence basis or missing prerequisite.
 graph:
   entry: capture-baseline
   nodes:
@@ -2947,7 +3149,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: judge-audit
@@ -2994,7 +3196,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: judge-remediation
@@ -3041,7 +3243,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: judge-re-audit
@@ -3190,7 +3392,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: confirm-final-review-route-binding
@@ -3454,10 +3656,10 @@ graph:
           to: decide-required-evidence
           effect: advance
         unmet:
-          to: decide-validation-rework-authority
+          to: classify-local-corrections
           effect: advance
         unverified:
-          to: record-incomplete
+          to: classify-local-incomplete-corrections
           effect: advance
     - id: decide-required-evidence
       use: required-evidence-decision
@@ -3485,7 +3687,7 @@ graph:
           to: decide-final-review
           effect: advance
         blocking:
-          to: decide-validation-rework-authority
+          to: classify-local-corrections
           effect: advance
     - id: decide-validation-rework-authority
       use: validation-rework-authority-decision
@@ -3504,6 +3706,10 @@ graph:
             - coverage-relationship
             - current-blocking-findings
             - low-disposition-verification
+            - pending-local-corrections
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
         - node: judge-validation-evidence
           required: false
           items:
@@ -3589,6 +3795,7 @@ graph:
             - low-disposition-summary
             - current-blocking-findings
             - after-target
+            - pending-local-corrections
       next: choose-user-direction
     - id: choose-user-direction
       use: review-direction-decision
@@ -3624,7 +3831,12 @@ graph:
             - pending-applicable-low-dispositions
             - current-applicable-blockers
             - required-evidence-gaps
-      next: decide-low-result
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+            - local-correction-eligibility
+      next: confirm-local-required-evidence
     - id: decide-low-result
       use: low-result-decision
       evidence_from:
@@ -3632,13 +3844,18 @@ graph:
           required: true
           items:
             - low-disposition-verification
+            - pending-local-corrections
+            - current-blocking-findings
       routes:
         passed:
-          to: decide-low-completion
+          to: confirm-local-corrections-settled
           effect: advance
         incomplete:
           to: record-low-disposition
           effect: rework
+        blocker-found:
+          to: decide-validation-rework-authority
+          effect: advance
     - id: decide-low-completion
       use: low-completion-decision
       evidence_from:
@@ -3656,6 +3873,7 @@ graph:
             - after-target
             - coverage-relationship
             - low-disposition-verification
+            - pending-local-corrections
       routes:
         completed:
           to: confirm-goal-assessment-core
@@ -3671,6 +3889,16 @@ graph:
       next: record-stopped-goal-boundary
     - id: record-incomplete
       use: disposition-record
+      evidence_from:
+        - node: record-low-disposition
+          required: false
+          items:
+            - low-disposition-summary
+            - after-target
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - current-required-evidence-gaps
       next: record-stopped-goal-boundary
     - id: record-confirmation-incomplete
       use: disposition-record
@@ -3707,6 +3935,22 @@ graph:
             - high-findings
             - medium-findings
             - low-findings
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - before-target
+            - after-target
+            - coverage-relationship
+            - current-blocking-findings
+            - low-disposition-verification
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - pending-low-dispositions
+            - pending-local-corrections
+            - current-required-evidence-gaps
       routes:
         ready:
           to: prepare-validation-assessment
@@ -3803,6 +4047,7 @@ graph:
             - after-target
             - coverage-relationship
             - low-disposition-verification
+            - pending-local-corrections
         - node: judge-validation
           required: true
           items:
@@ -3862,6 +4107,7 @@ graph:
             - after-target
             - coverage-relationship
             - low-disposition-verification
+            - pending-local-corrections
         - node: judge-stopped-validation
           required: true
           items:
@@ -3973,7 +4219,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: confirm-audit-checkpoint
@@ -4024,7 +4270,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: confirm-re-audit-checkpoint
@@ -4073,7 +4319,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: decide-remediation-assessment
@@ -4195,7 +4441,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: decide-validation-evidence-assessment
@@ -4220,10 +4466,10 @@ graph:
           to: judge-validation-evidence
           effect: rework
         rework:
-          to: decide-validation-rework-authority
+          to: classify-local-corrections
           effect: advance
         evidence-needed:
-          to: record-validation-evidence-followup
+          to: classify-local-evidence-corrections
           effect: advance
     - id: record-audit-followup
       use: record-audit-followup
@@ -4447,6 +4693,22 @@ graph:
             - judge-unverified-criteria
             - judge-applicability
             - judge-summary
+        - node: record-low-disposition
+          required: false
+          items:
+            - source-review-basis
+            - low-disposition-summary
+            - before-target
+            - after-target
+            - coverage-relationship
+            - current-blocking-findings
+            - low-disposition-verification
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - pending-low-dispositions
+            - pending-local-corrections
+            - current-required-evidence-gaps
       next: confirm-validation-rework-effect-authority
     - id: confirm-validation-rework-effect-authority
       use: confirm-validation-rework-effect-authority
@@ -4523,6 +4785,11 @@ graph:
             - low-disposition-verification
             - pending-low-dispositions
             - current-blocking-findings
+            - pending-local-corrections
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+            - current-required-evidence-gaps
         - node: audit
           required: false
           items:
@@ -4538,7 +4805,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: judge-validation
@@ -4558,7 +4825,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: confirm-judge-validation-applicability
@@ -4631,6 +4898,7 @@ graph:
             - low-disposition-verification
             - pending-low-dispositions
             - current-blocking-findings
+            - pending-local-corrections
         - node: record-current-audit-basis
           required: false
           items:
@@ -4642,7 +4910,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b02191134535a353df0244e3c34be1bf19e847da05e59e3f42e9df30e17a148c
+        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-validation
@@ -4666,7 +4934,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:35a2baa3071cc6ea790c8aeee28fa44aa3c4cfd1b708e5095d4b5570b109169e
+        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
         max_rounds: 32
         after_accept: retain
       next: confirm-judge-stopped-validation-applicability
@@ -4690,6 +4958,202 @@ graph:
         invalid:
           to: judge-stopped-validation
           effect: rework
+    - id: classify-local-corrections
+      use: local-correction-candidate-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        none:
+          to: decide-validation-rework-authority
+          effect: advance
+        candidate:
+          to: confirm-local-corrections-eligibility
+          effect: advance
+    - id: classify-local-evidence-corrections
+      use: local-correction-candidate-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        none:
+          to: record-validation-evidence-followup
+          effect: advance
+        candidate:
+          to: confirm-local-evidence-corrections-eligibility
+          effect: advance
+    - id: classify-local-incomplete-corrections
+      use: local-correction-candidate-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        none:
+          to: record-incomplete
+          effect: advance
+        candidate:
+          to: confirm-local-incomplete-corrections-eligibility
+          effect: advance
+    - id: confirm-local-corrections-settled
+      use: local-correction-completion-decision
+      evidence_from:
+        - node: record-low-disposition
+          required: true
+          items:
+            - pending-local-corrections
+      routes:
+        settled:
+          to: confirm-local-current-completion
+          effect: advance
+        pending:
+          to: record-low-disposition
+          effect: rework
+    - id: confirm-local-corrections-eligibility
+      use: local-correction-handling-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+            - local-correction-eligibility
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        local:
+          to: record-low-disposition
+          effect: advance
+        ordinary:
+          to: decide-validation-rework-authority
+          effect: advance
+    - id: confirm-local-evidence-corrections-eligibility
+      use: local-correction-handling-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+            - local-correction-eligibility
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        local:
+          to: record-low-disposition
+          effect: advance
+        ordinary:
+          to: record-validation-evidence-followup
+          effect: advance
+    - id: confirm-local-incomplete-corrections-eligibility
+      use: local-correction-handling-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - local-correction-count
+            - local-correction-eligibility
+        - node: judge-validation-evidence
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-summary
+            - judge-checkpoint-result
+      routes:
+        local:
+          to: record-low-disposition
+          effect: advance
+        ordinary:
+          to: record-incomplete
+          effect: advance
+    - id: confirm-local-current-completion
+      use: local-current-completion-decision
+      evidence_from:
+        - node: record-low-disposition
+          required: true
+          items:
+            - completion-assessment-summary
+            - completion-unmet-criteria
+            - completion-unverified-criteria
+      routes:
+        complete:
+          to: decide-low-completion
+          effect: advance
+        unmet:
+          to: decide-validation-rework-authority
+          effect: advance
+        unverified:
+          to: record-incomplete
+          effect: advance
+    - id: confirm-local-required-evidence
+      use: local-required-evidence-decision
+      evidence_from:
+        - node: record-low-disposition
+          required: true
+          items:
+            - current-required-evidence-gaps
+            - low-disposition-summary
+            - after-target
+      routes:
+        complete:
+          to: decide-low-result
+          effect: advance
+        incomplete:
+          to: record-incomplete
+          effect: advance
 manual_rework:
   allowed_targets:
     - prepare-validation-pass

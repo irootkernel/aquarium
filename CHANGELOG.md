@@ -26,6 +26,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Let compatible successor Task, Goal and Validation sessions settle directly verifiable corrections without redundant approval or re-review and preserve usable incident evidence, while retaining required independent judgment and mandatory evidence gates after an authorized managed-Procedure update and UTM qualification.
 - Reject Codex delivery records that omit native history completeness metadata.
 
 ## v0.1.18 - 2026-10-04

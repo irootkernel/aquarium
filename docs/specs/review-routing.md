@@ -135,7 +135,7 @@ checkpoint uses the next ordinal and preserves every prior evidence reference
 and finding.
 
 The initial workflow envelope permits at most three `work-unit` assessments and
-one `remediation-confirmation`, but a clean or settled Low-only result ends the
+one `remediation-confirmation`, but a clean or locally settled result ends the
 sequence early. Each work-unit brief identifies the named Task, Epic, or explicit
 objective, its requirements and authorities, the exact candidate, relevant work
 or correction commits, changed paths and artifacts, verification evidence, and
@@ -145,7 +145,7 @@ target implicit or invite a repository-wide audit.
 Ordinal four and any later checkpoint inspect only the frozen prior finding
 IDs, correction commits or captured delta, invalidated criteria, directly
 affected callers, contracts and tests, and regressions caused by the correction.
-If Medium-or-higher work or an affected completion gap remains after ordinal
+If work requiring another provider assessment remains after ordinal
 four, the workflow stops for user direction. Each explicit `fix-and-review`
 choice authorizes one correction and one next-ordinal remediation confirmation.
 A broader objective, requirement set, or changed surface requires an approved
@@ -214,9 +214,9 @@ A waived workflow may reach its successful roadmap state only when:
 Reports must say `review waived`. They must not call the result independently
 reviewed, provider-reviewed, or a clean delegated review.
 
-A route change or waiver never erases an earlier finding. A valid Medium-or-higher
-finding must still be corrected and verified. The corrected target then receives
-the next authorized delegated review or waiver assessment under the
+A route change or waiver never erases an earlier finding. A valid Medium-or-higher finding must still be corrected and verified. Ordinary Low dispositions retain their shared contract. Eligible corrections use
+local settlement; other corrected targets receive the next authorized delegated
+review or waiver assessment under the
 assessment-kind boundary above. The existing bounded rework policy still applies,
 including fresh user direction when its authority is exhausted.
 
@@ -267,3 +267,9 @@ Current routing does not add automatic fallback, create a persistent route
 preference, make route guarantees equivalent, or weaken required verification.
 Historical `native-codex` Procedure snapshots retain their original meaning;
 new checkpoints select `independent-review` only in a snapshot that supports it.
+
+## Local corrections and compatibility
+
+Current Task `28`, Goal `31` and Validation `30` snapshots classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
+
+This is a breaking managed-Procedure update: existing users need an authorized file update and compatible successor sessions. Active and archived snapshots retain their original meanings. Candidate installation, upgrade and affected agent behavior require exact-candidate UTM qualification before release; source tests alone do not establish that result. Design and War-room graph behavior is unchanged; their next versions refresh the shared operative role bindings.

@@ -91,6 +91,18 @@ SUCCESS_OPTIONS = {
     "decide-low-handling": "settle",
     "decide-low-completion": "completed",
     "decide-low-result": "passed",
+    "classify-local-corrections": "none",
+    "classify-local-evidence-corrections": "none",
+    "classify-local-incomplete-corrections": "none",
+    "confirm-local-corrections-settled": "settled",
+    "confirm-local-corrections-eligibility": "local",
+    "confirm-local-evidence-corrections-eligibility": "local",
+    "confirm-local-incomplete-corrections-eligibility": "local",
+    "confirm-local-corrections-consistency": "consistent",
+    "confirm-local-evidence-corrections-consistency": "consistent",
+    "confirm-local-incomplete-corrections-consistency": "consistent",
+    "confirm-local-current-completion": "complete",
+    "confirm-local-required-evidence": "complete",
     "decide-operational-evidence": "passed",
     "decide-review-basis": "native-review",
     "decide-final-review": "validated",
@@ -607,7 +619,20 @@ def route_qualification_evidence_reference(route: str, scenario: str) -> str:
     return f"{kind}:official-runtime:{scenario}"
 
 
+LOCAL_CORRECTION_SCENARIOS = {
+    f"{family}-local-{mode}": (f"aquarium-{family}-v2", mode)
+    for family in ("task", "goal", "validation")
+    for mode in ("settled", "retry")
+}
+
+LOCAL_CORRECTION_SOURCE_ITEMS = {
+    "aquarium-task-v2": ("review", "effective-medium-or-higher-findings"),
+    "aquarium-goal-v2": ("record-evidence", "effective-medium-or-higher-findings"),
+    "aquarium-validation-v2": ("final-review", "medium-or-higher-findings"),
+}
+
 EXPECTED_NATIVE_CASE_VARIANTS = {
+    "C-17": set(LOCAL_CORRECTION_SCENARIOS),
     "C-01": {"audit-2-provider-0"},
     "C-02": {"audit-2-provider-1"},
     "C-03": {
@@ -654,6 +679,12 @@ EXPECTED_NATIVE_CASE_VARIANTS = {
 }
 
 CASE_ASSERTIONS = {
+    "C-17": [
+        "a positive local candidate reached current settlement and final judgment",
+        "source Medium severity and criterion gap remained historical",
+        "failed local checks rejected the passing route then retried without another review",
+        "local settlement preserved the original provider assessment count",
+    ],
     "C-01": [
         "validated guard rejected pending audit Low obligations",
         "domain state unchanged after rejection",
@@ -712,6 +743,10 @@ def wait_scenario_specs() -> tuple[tuple[str, str], ...]:
 
 def terminal_scenario_specs() -> tuple[tuple[str, str], ...]:
     return (
+        *(
+            (scenario, f"{procedure_id}.yaml")
+            for scenario, (procedure_id, _mode) in LOCAL_CORRECTION_SCENARIOS.items()
+        ),
         *(
             (scenario, f"{procedure_id}.yaml")
             for scenario, (procedure_id, _route) in (
@@ -1067,6 +1102,7 @@ class ManagedRuntime:
         self.preparation_reworks = 0
         self.low_delta_composed = False
         self.low_review_ordinal = None
+        self.local_source_basis_checked = False
         self.plan_artifact_verified_nodes = set()
         self.scenario = "standard"
 
@@ -2181,6 +2217,57 @@ class ManagedRuntime:
         item_type = item["type"]
         item_id = item["item_id"]
         constraints = item.get("constraints", {})
+        local_scenario = LOCAL_CORRECTION_SCENARIOS.get(self.scenario)
+        if local_scenario:
+            source, medium_item = LOCAL_CORRECTION_SOURCE_ITEMS[
+                self.current_procedure_id
+            ]
+            retry = (
+                local_scenario[1] == "retry"
+                and self.node_visits.get("record-low-disposition", 0) == 1
+            )
+            if (
+                item_type == "integer"
+                and node == source
+                and item_id
+                in {
+                    "local-correction-count",
+                    medium_item,
+                    "medium-findings",
+                    "current-applicable-blockers",
+                    "unresolved-valid-findings",
+                    "completion-unmet-criteria",
+                    "effective-low-findings",
+                    "low-findings",
+                }
+            ):
+                return {
+                    "type": "integer",
+                    "value": int(
+                        item_id not in {"effective-low-findings", "low-findings"}
+                    ),
+                }
+            if (
+                item_type == "integer"
+                and node == "record-low-disposition"
+                and item_id == "pending-local-corrections"
+            ):
+                return {"type": "integer", "value": int(retry)}
+            if (
+                item_type == "integer"
+                and node == "record-low-disposition"
+                and item_id
+                in {
+                    "pending-low-dispositions",
+                    "current-blocking-findings",
+                    "completion-unmet-criteria",
+                    "completion-unverified-criteria",
+                    "current-required-evidence-gaps",
+                }
+            ):
+                return {"type": "integer", "value": 0}
+            if item_type == "choice" and item_id == "coverage-relationship":
+                return {"type": "choice", "value": "review-predates-local-correction"}
         judge_gap = None
         if node in {
             "judge-goal",
@@ -2511,7 +2598,11 @@ class ManagedRuntime:
             ):
                 value = 0
             if (
-                self.scenario.startswith("validation-completion-")
+                (
+                    self.scenario.startswith("validation-completion-")
+                    or self.scenario
+                    in {"validation-local-settled", "validation-local-retry"}
+                )
                 and node == ("audit")
                 and item_id
                 in {
@@ -3147,6 +3238,13 @@ class ManagedRuntime:
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
             if (
+                local_scenario
+                and node == "record-low-disposition"
+                and item_id == "low-disposition-verification"
+                and retry
+            ):
+                outcome = "fail"
+            elif (
                 node == "judge-review"
                 and item_id == "judge-checkpoint-result"
                 and judge_gap
@@ -3237,6 +3335,35 @@ class ManagedRuntime:
                 + hashlib.sha256(outcome.encode()).hexdigest(),
             }
         raise RuntimeQualificationError(f"unsupported required item type: {item_type}")
+
+    def local_correction_decision(
+        self, observation: dict[str, Any], node: str
+    ) -> str | None:
+        profile = LOCAL_CORRECTION_SCENARIOS.get(self.scenario)
+        if profile is None:
+            return None
+        if node.startswith("classify-local-"):
+            return "candidate"
+        if node in {"decide-review", "decide-evidence"}:
+            return "blocking"
+        if node == "confirm-completion-assessment":
+            return "unmet"
+        if node == "confirm-review-completion":
+            verdict = self.read_complete_evidence(
+                observation, "judge-review", "judge-verdict"
+            )
+            return {
+                "pass": "complete",
+                "rework": "rework",
+                "evidence-needed": "evidence-needed",
+            }[verdict]
+        if (
+            node == "decide-low-result"
+            and profile[1] == "retry"
+            and self.node_visits.get("record-low-disposition") == 1
+        ):
+            return "incomplete"
+        return None
 
     def qualify_plan_artifact(self, observation: dict[str, Any], node: str) -> None:
         if node not in {"record-plan", "prepare-implementation", "implement"}:
@@ -3934,7 +4061,10 @@ class ManagedRuntime:
                 f"route scenario {scenario!r} does not target {procedure_id!r}"
             )
         self.node_visits = {}
-        if scenario in LOW_BLOCKER_ROUTE_CASES:
+        if (
+            scenario in LOW_BLOCKER_ROUTE_CASES
+            or scenario in LOCAL_CORRECTION_SCENARIOS
+        ):
             self.task_verification_reworked = True
             self.task_review_reworked = True
             self.task_medium_reworked = True
@@ -4292,6 +4422,20 @@ class ManagedRuntime:
                     ),
                 }
             if node_type == "action":
+                if (
+                    scenario in LOCAL_CORRECTION_SCENARIOS
+                    and node == "record-low-disposition"
+                ):
+                    source, medium_item = LOCAL_CORRECTION_SOURCE_ITEMS[procedure_id]
+                    for item_id in (medium_item, "completion-unmet-criteria"):
+                        if (
+                            self.read_complete_evidence(observation, source, item_id)
+                            != 1
+                        ):
+                            raise RuntimeQualificationError(
+                                "local settlement lost its historical source obligations"
+                            )
+                    self.local_source_basis_checked = True
                 ready = self.fill_action(observation, procedure_id)
                 completed = self.invoke_template(ready, "session.complete")
                 payload = json_payload(completed)
@@ -5662,6 +5806,15 @@ class ManagedRuntime:
                 }.get(node)
                 or SUCCESS_OPTIONS.get(node)
             )
+            if scenario in LOCAL_CORRECTION_SCENARIOS:
+                option = self.local_correction_decision(observation, node) or option
+                if node.startswith("classify-local-"):
+                    observation = self.reject_guarded_decision(observation, "none")
+                elif node == "decide-low-result" and option == "incomplete":
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    observation = self.reject_guarded_decision(
+                        observation, "blocker-found"
+                    )
             if option is None:
                 raise RuntimeQualificationError(
                     f"no successful qualification option for {procedure_id}:{node}"
@@ -5716,6 +5869,26 @@ class ManagedRuntime:
             )
 
         terminal = self.observe()
+        if scenario in LOCAL_CORRECTION_SCENARIOS:
+            source, _medium_item = LOCAL_CORRECTION_SOURCE_ITEMS[procedure_id]
+            final_judge = {
+                "aquarium-task-v2": "judge-task",
+                "aquarium-goal-v2": "judge-goal",
+                "aquarium-validation-v2": "judge-validation",
+            }[procedure_id]
+            expected_visits = (
+                2 if LOCAL_CORRECTION_SCENARIOS[scenario][1] == "retry" else 1
+            )
+            if (
+                self.node_visits.get(source) != 1
+                or self.node_visits.get("record-low-disposition") != expected_visits
+                or not self.node_visits.get(final_judge)
+                or not self.local_source_basis_checked
+            ):
+                raise RuntimeQualificationError(
+                    f"local correction skipped settlement or repeated review: {self.node_visits!r}"
+                )
+            self.mark_case_variant("C-17", scenario)
         terminal_status = terminal["status"]
         disposition = self.raw(
             [

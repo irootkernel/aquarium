@@ -87,13 +87,13 @@ retry quota, or timeout policy.
 
 Before delegating a new root, the Aquarium caller must establish an independent
 reason and remaining authority for that exact target. When an owning workflow
-supplies a mode, ordinal, and goal revision, bind the root to them. Eligible Low
-settlement and its permitted locally verified delta are
+supplies a mode, ordinal, and goal revision, bind the root to them. Eligible local
+settlement and its permitted verified delta are
 explicit negative authorization for another root. Do not replace a pending or
 uncertain invocation, reset an ordinal after context restoration, or run a broad
 self-audit under another name to make historical Low findings disappear. A
-required first review and a confirmation owed by an earlier Medium-or-higher
-correction remain independent reasons to dispatch.
+required first review and a confirmation owed by a correction ineligible for local
+settlement remain independent reasons to dispatch.
 
 ## Accept Recovery Evidence
 
@@ -187,10 +187,10 @@ coverage, publication, CI, findings, or approval. Keep raw provider session and
 turn identifiers private.
 
 When every effective Medium-or-higher finding and confirmation gap is resolved,
-the selected review is operationally complete with passing CI, and its finite Low
-set has verified dispositions, the owning workflow may advance even though the
+the selected review is operationally complete with passing CI, and its finite local
+settlement has verified dispositions, the owning workflow may advance even though the
 source Low count is nonzero. Preserve the original target and report that the
-review predates any permitted Low-only correction bytes. Do not describe those
+review predates any permitted locally verified correction bytes. Do not describe those
 bytes as provider-reviewed.
 
 Inspect the exact committed publication through the paired skill's verified
@@ -216,3 +216,5 @@ aggregate criterion states under the review-intent contract. A clean finding
 query does not establish criterion coverage. Missing, unreadable, conflicting,
 or silent role evidence remains an assessment gap without changing Mulgae's
 native CI, coverage, publication, extraction, finding, or lifecycle facts.
+
+An owning execution envelope may settle a `local-verified-fix` through the shared finding-disposition contract after this operation is complete and all native admission and CI requirements pass. Preserve the exact root, publication and original criterion assessment. Current completion uses the locally verified composition without calling corrected bytes Mulgae-reviewed. This exception creates no capture, native result, CI pass or hardening-deferral evidence.

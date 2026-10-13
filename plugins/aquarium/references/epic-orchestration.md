@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-goal-v2` version `30` requires native Worker delivery and
+The bundled `aquarium-goal-v2` version `31` requires native Worker delivery and
 retained Judge assessments for goal-centered Epic execution. Required placements
 need an admitted delegated Procedure and native qualification applicable to its
 exact role snapshot, assignment and recovery path. Released managed files and
@@ -121,8 +121,8 @@ all original work, technical-review and Judge reports, checks and exact target.
 Include branch-specific Low, hardening, closeout and stopped records when present.
 The handoff supplies all original bytes beyond the bounded graph selectors.
 Assembly performs no new implementation, broad audit or provider review.
-Finite Low composition preserves the reviewed basis, permitted verified delta,
-exact after-target, carried criterion applicability and coverage limitation
+Finite local composition preserves the reviewed basis, permitted verified delta,
+exact after-target, current criterion evidence and coverage limitation
 without consuming another provider ordinal.
 
 Final Epic assessment includes integration seams and overall purpose. Every
@@ -171,3 +171,5 @@ changed operative bytes. Authoring and synthetic checks supply structural
 evidence only. Exact candidate upgrade in UTM remains a separate pre-release
 gate; delegated functional results do not supply Master's overall acceptance or
 activate released snapshots.
+
+After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

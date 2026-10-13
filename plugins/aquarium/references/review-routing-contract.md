@@ -164,9 +164,9 @@ or corrected-target confirmation obligation.
 
 For Independent Review, a host wait timeout leaves the same delegations pending. Resume those references through the host while any worker is active or its state is unknown. Once all three are authoritatively settled, explicit `resume-current` may authorize one fresh three-agent operation for the same target, Brief, model and effort; retain every earlier report and finding, and reuse the unconsumed ordinal. Recheck mutable target identity first. Changed bytes require a refreshed authorized Brief and affected verification, never an assertion that the old review covered them. An embedded restart remains subject to the owning workflow's scope and remaining authority; standalone restart needs explicit authority. Do not silently substitute a provider or reuse successful agents as a replacement for the required fresh three-agent operation.
 
-Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed Low-only settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
+Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed local settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
 
-Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining Medium-or-higher finding or completion gap after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
+Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining finding or completion gap requiring provider reassessment after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
 
 A material objective, requirement, or changed-surface expansion requires an explicitly approved new goal revision. Do not reset ordinals, silently broaden a remediation confirmation, or use unrelated observations to extend the current loop.
 
@@ -211,9 +211,9 @@ waived` and must not claim independent, provider, or delegated review.
 ## Preserve Findings and Low Settlement
 
 Every route uses the shared finding-disposition contract. A route change or
-waiver never erases an earlier finding. A valid Medium-or-higher finding remains
-blocking until corrected, verified, and assessed at the next authorized
-checkpoint. Preserve the existing bounded correction and confirmation budget.
+waiver never erases an earlier finding. A valid Medium-or-higher finding remains blocking until corrected and verified. Ordinary Low dispositions retain their shared contract. Eligible local
+corrections settle through the shared composition without a new ordinal; other
+corrections require the next authorized provider checkpoint. Preserve the existing bounded correction and confirmation budget.
 
 All routes support the ordinary finite Low dispositions. The promoted
 `hardening-deferral` path remains Mulgae-only because it requires exact run and
@@ -231,5 +231,11 @@ never migrated or reinterpreted in place.
 Runtime and orchestration references remain non-canonical. Do not place backend
 run IDs, subagent identities, provider or model names, reports, transcripts, or
 waiver execution logs in tracked roadmap or product documentation. A commit
-handoff carries bounded provenance and the complete Low-settlement composition,
-or explicitly states that neither a Low-only delta nor promoted evidence applies.
+handoff carries bounded provenance and the complete local-settlement composition,
+or explicitly states that neither a local-settlement delta nor promoted evidence applies.
+
+## Local correction and incident routing
+
+After completed-operation admission, finding confirmation, mandatory backend checks and the existing review-evidence Judge, classify bounded local corrections before asking for provider-rework authority. `classify-local-corrections` uses the source record's count and caller-recorded eligibility. A positive count with `pass` permits `record-low-disposition` after reconciling the latest Judge report. Zero candidates, failed or inconclusive eligibility, or a Judge-established nonlocal obligation retain their original rework or evidence route. The record preserves original priorities, source negative criterion rows and consumed ordinals, and separately verifies current completion, zero pending local corrections and the exact permitted delta. Only this current composition and the final original-criteria Judge support advancement. Ordinary Low deferral is unchanged.
+
+Neither a settled correction nor an execution incident consumes a provider ordinal. Incidents follow the shared [review contract](review-contract.md#reviewer-instruction-deviations). Backend failure, missing coverage or compromised evidence still uses its native owner; recovery within existing authority does not need a redundant approval. Prior snapshots keep their original Low-only contract.

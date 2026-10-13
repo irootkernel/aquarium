@@ -528,10 +528,15 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         ("validation-provider-low-settlement", "aquarium-validation-v2.yaml"),
     }
 
+    expected_terminals.update(
+        (f"{family}-local-{mode}", f"aquarium-{family}-v2.yaml")
+        for family in ("task", "goal", "validation")
+        for mode in ("settled", "retry")
+    )
     assert set(waits) == expected_waits
     assert set(terminals) == expected_terminals
     assert len(waits) == 23
-    assert len(terminals) == 52
+    assert len(terminals) == 58
     assert len({scenario for _procedure, scenario in waits}) == len(waits)
     assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
     assert sum(job["kind"] == "wait" for job in jobs) == len(waits)
@@ -539,7 +544,7 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
     assert len(terminal_jobs) == len(reusable)
     assert all(len(job["scenarios"]) == 1 for job in terminal_jobs)
     assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 10
-    assert len(reusable) == 42
+    assert len(reusable) == 48
     assert sorted(
         spec for job in jobs if job["kind"] == "terminal" for spec in job["scenarios"]
     ) == sorted(reusable)
@@ -555,7 +560,7 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         if job["kind"] == "wait"
     ] == list(waits)
     assert 1 + len(jobs) == 3 + len(terminals) + len(waits)
-    assert 5 + len(waits) + len(terminals) == 80
+    assert 5 + len(waits) + len(terminals) == 86
     assert (
         sum(
             scenario == runtime.VALIDATION_PROVIDER_LOW_SCENARIO
@@ -2068,3 +2073,133 @@ def test_execute_runtime_jobs_failed_lifecycle_dispatches_no_independent_jobs(
     assert called == [jobs[1]]
     assert called[0] is jobs[1]
     assert jobs == original_jobs
+
+
+@pytest.mark.parametrize("family", ["task", "goal", "validation"])
+@pytest.mark.parametrize("mode", ["settled", "retry"])
+def test_local_qualification_profiles_retain_source_and_retry_current_checks(
+    tmp_path: Path, family: str, mode: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    scenario = f"{family}-local-{mode}"
+    assert (scenario, f"aquarium-{family}-v2.yaml") in runtime.terminal_scenario_specs()
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.scenario = scenario
+    managed.current_procedure_id = f"aquarium-{family}-v2"
+    source = {
+        "task": "review",
+        "goal": "record-evidence",
+        "validation": "final-review",
+    }[family]
+    procedure = yaml.safe_load(
+        (
+            Path(__file__).parents[2]
+            / f"plugins/aquarium/assets/podway/procedures/aquarium-{family}-v2.yaml"
+        ).read_bytes()
+    )
+    graph = {node["id"]: node for node in procedure["graph"]["nodes"]}
+    source_items = {
+        item["id"]: item
+        for item in procedure["node_definitions"][graph[source]["use"]]["items"]
+    }
+    settlement_items = {
+        item["id"]: item
+        for item in procedure["node_definitions"][
+            graph["record-low-disposition"]["use"]
+        ]["items"]
+    }
+    for visit in (1, 2):
+        managed.node_visits["record-low-disposition"] = visit
+        for item_id in (
+            "local-correction-count",
+            "medium-or-higher-findings"
+            if family == "validation"
+            else "effective-medium-or-higher-findings",
+            "completion-unmet-criteria",
+        ):
+            assert source_items[item_id]["type"] == "integer"
+            assert (
+                managed.value_for(
+                    {
+                        "item_id": item_id,
+                        "type": "integer",
+                        "constraints": {"minimum": 0},
+                    },
+                    source,
+                )["value"]
+                == 1
+            )
+        pending = managed.value_for(
+            {
+                "item_id": "pending-local-corrections",
+                "type": "integer",
+                "constraints": {"minimum": 0},
+            },
+            "record-low-disposition",
+        )
+        assert pending["value"] == int(mode == "retry" and visit == 1)
+        managed.low_settlement_rounds[managed.current_procedure_id] = visit - 1
+        for item_id in (
+            "pending-low-dispositions",
+            "current-blocking-findings",
+            "completion-unmet-criteria",
+            "completion-unverified-criteria",
+            *(("current-required-evidence-gaps",) if family == "validation" else ()),
+        ):
+            assert settlement_items[item_id]["type"] == "integer"
+            assert (
+                managed.value_for(
+                    {
+                        "item_id": item_id,
+                        "type": "integer",
+                        "constraints": {"minimum": 0},
+                    },
+                    "record-low-disposition",
+                )["value"]
+                == 0
+            )
+        check = managed.value_for(
+            {
+                "item_id": "low-disposition-verification",
+                "type": "check_result",
+                "constraints": {
+                    "operation_id": "fixture",
+                    "operation_digest": "sha256:" + "a" * 64,
+                },
+            },
+            "record-low-disposition",
+        )
+        assert check["outcome"] == (
+            "fail" if mode == "retry" and visit == 1 else "pass"
+        )
+        assert isinstance(check["input_basis"], dict)
+        assert isinstance(check["executor"], dict)
+
+
+@pytest.mark.parametrize(
+    "verdict,expected",
+    [
+        ("pass", "complete"),
+        ("rework", "rework"),
+        ("evidence-needed", "evidence-needed"),
+    ],
+)
+def test_local_task_qualification_routes_latest_judge_verdict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, verdict: str, expected: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(
+        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
+    )
+    managed.scenario = "task-local-settled"
+
+    def read(observation: dict, node: str, item: str) -> str:
+        assert node == "judge-review" and item == "judge-verdict"
+        return verdict
+
+    monkeypatch.setattr(managed, "read_complete_evidence", read)
+    assert (
+        managed.local_correction_decision({}, "confirm-review-completion") == expected
+    )

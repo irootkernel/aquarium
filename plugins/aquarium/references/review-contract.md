@@ -127,9 +127,9 @@ native operation is operationally incomplete and never technical `APPROVE`.
 Permitted external or ignored review output alone is not a deviation and requires
 no extra check, approval or review.
 
-## Herdr operational deviations
+## Reviewer instruction deviations
 
-Distinguish defects in the declared target from violations of review instructions.
+Apply this distinction to every static review route. Distinguish defects in the declared target from violations of review instructions.
 Report adjudicated findings, technical verdict, observed deviations and native
 operation status separately. For each deviation, identify the action, instruction,
 available evidence, effect on trustworthiness and necessary follow-up. A
@@ -140,6 +140,8 @@ coordinator issues the final verdict after complete result admission and local
 adjudication. An advisory `APPROVE` means no actionable finding was identified
 in the available evidence; it does not certify workflow acceptance or later pane
 disposition.
+
+Record the action, violated instruction and a concrete prevention step. An unauthorized command, read or file creation is an execution incident, not automatically a product finding or a reason to repeat the review. Exclude prohibited command results and out-of-scope source content from the judgment. Decide whether the remaining authorized evidence still establishes the requested target, reviewer identity, coverage and lifecycle. A promise to avoid the mistake does not establish missing evidence.
 
 Use existing authorized output and read-only Git evidence to assess deviations.
 If target integrity, scope, reviewer identity, purpose-specific report coverage
@@ -154,3 +156,5 @@ permits no tests, new snapshots, fingerprints, pre/post inventory, instruction
 violation, automatic retry or cleanup of side effects. Native failure,
 incomplete output or unproven review guarantees cannot produce final technical
 `APPROVE`. Other backends retain their own contracts.
+
+An embedded execution owner may perform recovery covered by its envelope. Remove only incident-created artifacts when safe, restore affected state from an established basis, and obtain the affected authorized evidence. Preserve usable reports and their provenance. Reassess only compromised coverage; do not discard the entire review or ask for another review merely to record an incident. When the target or reviewer coverage remains unproven, keep the affected verdict pending and use the selected route's native recovery. A real scope, transmission, privacy or destructive-effect boundary still requires its own authority. Standalone review remains report-only and cannot perform this cleanup or recovery.

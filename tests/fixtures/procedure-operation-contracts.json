@@ -1,7 +1,7 @@
 {
   "document_kind": "aquarium-operation-contract-fixture",
   "status": "implemented-caller-recorded-contract",
-  "scope": "The eleven selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
+  "scope": "The twelve selected operations declared below; this fixture is not an inventory of every Procedure check_result operation.",
   "digest_rule": "SHA-256 over exact descriptor UTF-8 bytes, with no trailing newline.",
   "assurance_boundary": "Caller-recorded structured claims; neither Podway nor these descriptors execute tools or establish semantic truth.",
   "operations": [
@@ -117,9 +117,20 @@
     },
     {
       "operation_id": "aquarium-low-disposition-verification",
-      "descriptor": "Verify complete supported dispositions for the frozen eligible Low finding set and the exact permitted post-review candidate delta with all required current local checks, while preserving the original review coverage.",
+      "descriptor": "Verify complete supported dispositions for the frozen Low and eligible local correction set, the exact permitted post-review delta and required local check results, while preserving original review coverage and source assessments; pending obligations, current blockers and completion or required-evidence gaps are independently routed by the graph.",
       "meaning": "Local settlement and delta verification, not a new provider review and not fresh provider coverage of corrected bytes.",
-      "operation_digest": "sha256:788e0961be2fcf797e891bb55e440d6779b4b9d745818ad186c840acc5df013c",
+      "operation_digest": "sha256:02a779d773de53df7007374215ed393c58b19ad7bbec80349622756e1736f6a5",
+      "accepted_outcomes": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    {
+      "operation_id": "aquarium-local-correction-eligibility",
+      "descriptor": "Verify that every current blocking obligation is an isolated correction to an already approved requirement, has complete original review coverage and a bounded direct verification plan, and can be corrected with existing effect authority without new independent judgment; preserve source priorities, criterion rows, candidate identity and native admission requirements.",
+      "meaning": "Caller-recorded scope, coverage, direct-verification and effect-authority classification; it executes no checks, authenticates no authority and creates no provider ordinal.",
+      "operation_digest": "sha256:c5d1ce604e86d6768f498be4618d6d30935d0b3134ab5290ebbcd0ac82f11c13",
       "accepted_outcomes": [
         "pass",
         "fail",

@@ -83,3 +83,5 @@ The Judge does not repeat Worker implementation or serve as a technical-review
 provider. It assesses the selected technical findings and original evidence.
 The Primary accepts the complete report under its report checks without another
 Judge assessment, then uses the verdict at the semantic Decision.
+
+For a final candidate with an admitted local-settlement composition, retain source reviewer rows and counts as historical evidence. Assess current affected criteria from the exact permitted delta and current authorized checks, preserving unaffected coverage only with its applicability basis. A locally corrected source `unmet` row can become `met`; do not require another provider review merely because the original priority was Medium or the review predates the correction. Missing original coverage, failed checks or an unrelated delta still prevent achievement.

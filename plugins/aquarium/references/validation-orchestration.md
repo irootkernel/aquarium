@@ -2,7 +2,7 @@
 
 Apply this reference when the admitted Validation Procedure declares required
 Worker/Judge placements. Released direct snapshots keep their admitted contract.
-The bundled version `29` declares twelve placements. Execution requires an
+The bundled version `30` declares twelve placements. Execution requires an
 admitted delegated Procedure and native qualification applicable to its exact
 role snapshot, assignment and recovery path. Managed-file updates and compatible
 successor sessions retain their separate authority.
@@ -89,9 +89,9 @@ applicable audit Low obligation.
 
 The final normal Worker `prepare-validation-assessment` and `judge-validation`
 consume every original criterion, current full or frozen audit, provider/Judge
-report, verified correction commit, applicable manual result and Low composition.
+report, verified correction commit, applicable manual result and local composition.
 Preserve the reviewed basis, permitted delta, exact after-target, current local
-checks and carried applicability; the earlier review predates the Low delta.
+checks and criterion evidence; the earlier review predates the local delta.
 A current final report precedes `assess-goal`. Achievement requires its exact
 `achieved` outcome, pass verdict, zero mandatory unmet/unverified rows and fresh
 original native criterion assessments. Passing members cannot erase a failed
@@ -118,3 +118,5 @@ Master acceptance remains required for later Epic closeout. Preserve exact
 accepted bytes and the existing separate commit, publication and installation
 boundaries. A clean no-change validation records its supported no-change result
 without a validation-record or empty commit.
+
+After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

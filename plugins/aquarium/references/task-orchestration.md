@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-task-v2` version `27` declares required native Worker and
+The bundled `aquarium-task-v2` version `28` declares required native Worker and
 Judge Actions. Execution requires an admitted delegated Procedure and native
 qualification for its exact role snapshot, assignment and recovery path.
 Released managed copies and admitted direct snapshots retain their original
@@ -118,9 +118,10 @@ owner and reconciles an existing provider operation before any new dispatch.
 Keep selected technical evidence and Judge assessments distinct. Route binding,
 operation admission, ordinal, evidence, provenance, finding confirmation and
 backend checks still precede `judge-review`. A failed backend check retains its
-existing correction-authority path. Judge-owned unmet completion enters
-`record-task-rework-basis` and the existing serial authority and phase-owner
-chain; missing evidence uses the dedicated review evidence/authority path.
+existing correction-authority path. Judge-owned negative completion first classifies eligible local corrections.
+Nonlocal unmet completion enters `record-task-rework-basis` and the existing
+serial authority and phase-owner chain; missing evidence retains its dedicated
+review evidence/authority path.
 Preserve original provider completion rows, frozen findings, accepted risks,
 Low dispositions, review mode and every consumed ordinal. A Judge never counts
 as a technical reviewer or permits another review by itself.
@@ -131,9 +132,9 @@ evidence in its handoff. Include branch-specific Low and stopped records when
 present. The graph selectors provide current core and report references. The handoff
 must also supply the remaining original evidence in full. Its summary cannot
 substitute for those bytes. No new implementation, broad audit or provider
-review occurs during assembly. Low-only composition retains the reviewed basis,
-verified permitted delta, exact after-target, carried criterion applicability and
-honest coverage limit. Do not consume a new review ordinal for that delta.
+review occurs during assembly. Local-settlement composition retains the reviewed basis, verified permitted
+delta, exact after-target, current criterion evidence and honest coverage limit;
+ordinary Low-only settlement carries unaffected source rows unchanged. Do not consume a new review ordinal for that delta.
 
 `achieved` requires the final applicable Judge pass, zero mandatory gaps and the
 Judge's exact achieved outcome. Explicit stops retain their structural exclusion
@@ -158,3 +159,5 @@ and result/settlement evidence. Qualification cannot activate admitted released
 snapshots or other repositories. Exact candidate installation and upgrade belong
 in the dedicated UTM VM before release; Master's actual overall acceptance
 remains the final Epic closeout gate.
+
+After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

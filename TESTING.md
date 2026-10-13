@@ -163,3 +163,20 @@ behavior; they do not qualify downloaded distribution artifacts.
 - Residual risk: The waived integration layer does not use pytest-native fixtures, assertions, markers, or diagnostics. New unit and E2E layers remain outside this waiver and use pytest.
 - Approved by Master
 - Revalidation triggers: A change to the waived layer's stage mapping or runner command, framework or major version, waiver scope, layer identity, integration boundary, isolation or failure semantics, execution-affecting CI, environment, or dependency authority, `aquarium-test-contract` version, or a failure of the recorded equivalence evidence. Routine additions or edits to test cases inside the same waived suites do not by themselves stale the waiver while those supporting facts remain unchanged. A stale waiver does not authorize execution or establish conformance.
+
+## Local review settlement qualification
+
+Procedure guard and graph tests cover local-correction eligibility, retained source gaps, serial pending-correction admission, failed checks, ordinary rework for nonlocal or mixed issues, native backend admission and required final Judge dominance. Existing native fixtures default to zero local candidates and retain their original rework scenarios. C-17 adds six native qualification scenarios: Task, Goal and Validation each record one eligible Medium correction with an original unmet criterion, then settle immediately or retry a failed local check. Each scenario requires final judgment and preserves the original review count and source obligations. Helper unit tests verify the generated values; native execution of these new scenarios is unverified until an exact-artifact qualification receipt records it. These checks do not prove skill decisions.
+
+Before release, exercise these cases against the exact candidate installed in the dedicated UTM VM, over the host's installed release combination:
+
+| Case | Agent-observed expectation |
+| --- | --- |
+| LOCAL-01 | A documentation correction that originally fails a completion criterion is read back and checked, then advances with current criterion evidence and no new provider ordinal or approval request. |
+| LOCAL-02 | A simple behavioral fix passes its focused regression and affected required checks, retains the original Medium priority and proceeds through the final Judge without provider re-review. |
+| LOCAL-03 | A harmless unauthorized command, read or file creation is reported separately; prohibited results are excluded and usable complete reports remain admitted. Covered cleanup creates no product finding or provider round. |
+| LOCAL-04 | A target write, lost reviewer coverage or missing required evidence keeps the affected verdict pending; recovery addresses that guarantee and never converts an apology into proof. |
+| LOCAL-05 | A mixed set containing a design or safety issue takes ordinary authorized rework and necessary review; a failed local check or unresolved final criterion cannot advance. |
+| LOCAL-06 | A confirmation-only review can settle an eligible correction within existing effect authority; a genuine further provider assessment with no remaining grant asks for its exact bounded authority. |
+
+Run the applicable Task, Goal and Validation cases on Independent Review, Herdr and Mulgae, retaining native CI, publication and coverage admission for Mulgae. A waiver uses coordinator provenance. Verify resumption, exact staged or committed composition, commit handoff, prior snapshot preservation and fresh-session discovery after an authorized managed-file update. Master's functional results and exact-candidate upgrade evidence remain required; a source gate does not report those outcomes.

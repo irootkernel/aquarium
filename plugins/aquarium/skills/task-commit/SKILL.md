@@ -42,7 +42,7 @@ A handler commit handoff must include:
 - the lifecycle decision as either an exact approved edit or an explicit statement that no lifecycle edit applies;
 - the record decision as either an exact approved edit or an explicit statement that no record edit applies;
 - verification and review evidence identifying command, actor, exit status, exact reviewed and final target identities, verdict, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, and waiver summary when applicable. Include a Mulgae run only for the Mulgae route; mark every inapplicable route-specific field explicitly rather than inventing an identity.
-- the complete Low-settlement composition defined by the shared finding-disposition contract, or an explicit statement that no accepted Low-only delta applies;
+- the complete local-settlement composition defined by the shared finding-disposition contract, or an explicit statement that no accepted local delta applies;
 - the release-note decision as exact `entry` text already present in the accepted diff, `intentional no-note`, or `not-enrolled`; delegated Epic acceptance must cover that exact decision and any entry bytes, while final Epic closeout requires actual user acceptance;
 - zero or more staged promoted-evidence manifest paths paired with exact `sha256:<64-hex>` manifest digests and the owning workflow's current native-evidence, native-target-digest, and copied-projection validation result, or an explicit statement that no promoted evidence applies;
 - for an epic member task with a hardening deferral, the exact current Mulgae run and finding IDs, committed publication, successful findings query, exact finding membership, authoritative native target digest, and promoted-manifest digest used for pre-commit verification. Every Herdr, Independent Review, or waiver handoff must instead state explicitly that no hardening deferral applies because those routes cannot supply the required native digest, publication, findings-query, and membership evidence.
@@ -75,14 +75,14 @@ Stage only the authorized paths or hunks. Preserve unrelated staged and unstaged
 - the selected task relationship and approved terminal or unchanged-checkpoint status still match the user's answer;
 - the handler handoff's lifecycle or record edit, including an explicit absence, still matches the staged snapshot;
 - a declared unrelated commit contains no unintended task lifecycle transition;
-- for a completion commit, the reviewed implementation plus any exact accepted and locally verified Low-only delta, accepted lifecycle or record decision, and accepted post-review promoted-evidence packages equal the staged diff; for a validation-remediation commit, the accepted verified correction and its explicitly approved decisions equal that diff while whole-Epic confirmation remains pending;
+- for a completion commit, the reviewed implementation plus any exact accepted and verified local-settlement delta, accepted lifecycle or record decision, and accepted post-review promoted-evidence packages equal the staged diff; for a validation-remediation commit, the accepted verified correction and its explicitly approved decisions equal that diff while whole-Epic confirmation remains pending;
 - unrelated pre-existing staged content is absent from the intended commit.
 
 For an explicitly authorized amend, inspect the existing HEAD's parent, author, message, complete diff, and live remote publication state. Require one unambiguous unpublished HEAD whose existing content and staged delta both belong to the approved replacement. Record the intended full staged tree, parent, author, and message before amending. Stop if publication cannot be ruled out, the existing commit includes unrelated work, or the replacement scope is unclear.
 
-An accepted Low-only composition may differ from the provider-reviewed target only
+An accepted local-settlement composition may differ from the provider-reviewed target only
 by its enumerated verified delta. Do not require or launch another provider review
-for that difference. Reject an unknown source basis, nonzero pending disposition or
+for that difference. Reject an unknown source basis, nonzero pending Low disposition, local correction or
 current blocker count, failed or stale local check, mismatched final target, or any
 extra path or hunk. This commit skill never owns review dispatch.
 

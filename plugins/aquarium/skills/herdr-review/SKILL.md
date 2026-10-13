@@ -109,7 +109,7 @@ submission and wait outcomes, and any report file used for the result in private
 or disposable evidence. Claim no immutable capture, backend CI or Mulgae-only
 hardening-deferral guarantees. A technical verdict is not workflow acceptance.
 
-Apply the shared [Herdr operational deviation policy](../../references/review-contract.md#herdr-operational-deviations)
+Apply the shared [reviewer instruction deviation policy](../../references/review-contract.md#reviewer-instruction-deviations)
 when an instruction violation is observed. Use existing authorized evidence;
 never launch checks to certify an unknown side effect.
 

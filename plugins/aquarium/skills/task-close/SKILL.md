@@ -5,7 +5,7 @@ description: "Confirm and close one reviewed roadmap task, including an explicit
 
 # Task Close
 
-For a qualified version-27 handler, require the applicable final `aquarium.judge-assessment/v1` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
+For a qualified Task handler with required Worker/Judge placements, require the applicable final `aquarium.judge-assessment/v1` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
@@ -23,8 +23,8 @@ For Mulgae, retain its exact root or verified composite, reviewer provenance, co
 
 Successful closeout also requires current workflow verification, zero `unmet` and zero `unverified` completion criteria, no unresolved valid Medium-or-higher or confirmation-needed finding, and complete disposition of every admitted Low finding. A waiver removes only delegated review. It does not remove verification or completion assessment. Do not invent a terminal state when the roadmap lacks one.
 
-When the review predates an accepted Low-only delta, require the complete
-Low-settlement composition defined by the shared finding-disposition contract.
+When the review predates an accepted local-settlement delta, require the complete
+local-settlement composition defined by the shared finding-disposition contract.
 Verify that the final diff contains only that permitted
 delta plus separately approved lifecycle and promoted-evidence changes. Do not
 request another provider review solely because the target changed in this allowed
@@ -32,7 +32,7 @@ way. Reject any stale, failed, ambiguous, or additional change.
 
 Keep final evidence in the orchestration report and native runtime. Do not add a completion log or validation record to the roadmap, and never treat an ignored runtime path or run ID as durable documentation.
 
-Verify any repository-required task-linked dossier settlement is already part of the reviewed documentation candidate. In a standing group such as Aquarium's `EPIC-000`, close this Task's dossier after durable promotion and shared-consumer checks while preserving the parent group's active status. If the candidate omitted that work, return it for documentation and review under the current authority instead of adding an unreviewed closeout edit.
+Verify any repository-required task-linked dossier settlement is already part of the reviewed documentation candidate. In a standing group such as Aquarium's `EPIC-000`, close this Task's dossier after durable promotion and shared-consumer checks while preserving the parent group's active status. If the candidate omitted that work, return it to the owning handler phase for correction and required checks. Local eligibility applies through an admitted review's classification; closeout does not add an edit or bypass that graph entry.
 
 ## Select the Terminal Status
 
@@ -60,7 +60,7 @@ Only after all three answers are affirmative, apply the exact approved status ed
 
 For `Approve and close without commit`, do not stage or commit anything. Verify the task is terminal while the complete task-owned diff remains uncommitted, and return the approved lifecycle and record decisions, including explicit absence of a record edit. This path is unavailable when repository authority requires a commit for completion.
 
-For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff retaining the verified `change-origin` and naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, approved record edit or explicit `no record edit`, exact commit scope, the documented `entry`, `intentional no-note`, or `not-enrolled` release-note decision, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, waiver summary when applicable, exact reviewed and final target identities, the accepted Low-only composition fields or their explicit inapplicability, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization. Include Mulgae-specific evidence only for the Mulgae route. For Herdr, Independent Review, or waiver, state explicitly that no hardening deferral applies.
+For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff retaining the verified `change-origin` and naming the repository, canonical roadmap path, exact task ID, approved terminal status edit, approved record edit or explicit `no record edit`, exact commit scope, the documented `entry`, `intentional no-note`, or `not-enrolled` release-note decision, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, consumed `assessment-ordinal` and `assessment-kind` when applicable, waiver summary when applicable, exact reviewed and final target identities, the complete accepted local-settlement composition or its explicit inapplicability, zero or more approved promoted manifest path and digest pairs plus their owning-workflow native validation results or their explicit absence, and the user's one-commit authorization. Include Mulgae-specific evidence only for the Mulgae route. For Herdr, Independent Review, or waiver, state explicitly that no hardening deferral applies.
 
 Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
 

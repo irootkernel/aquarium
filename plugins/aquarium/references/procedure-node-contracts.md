@@ -13,7 +13,7 @@ unless the placement selects it.
 
 ## Task Procedure
 
-The bundled version-27 candidate follows [Task orchestration](task-orchestration.md). Work-bearing plan, implementation, refinement, verification, documentation, and admitted review evidence have required Worker delivery and retained Judge Action placements. Their Primary Decisions consume current applicable phase results while retaining full original global rows and gaps; the native review and authority gates remain separate. Final normal and stopped evidence candidates have their own Judge reports before goal assessment. Operational records and all Decisions stay with the Primary. Required placements need an admitted delegated Procedure and native qualification applicable to their exact operative snapshot and supported path; admitted direct snapshots retain their existing contract.
+The bundled version-28 candidate follows [Task orchestration](task-orchestration.md). Work-bearing plan, implementation, refinement, verification, documentation, and admitted review evidence have required Worker delivery and retained Judge Action placements. Their Primary Decisions consume current applicable phase results while retaining full original global rows and gaps; the native review and authority gates remain separate. Final normal and stopped evidence candidates have their own Judge reports before goal assessment. Operational records and all Decisions stay with the Primary. Required placements need an admitted delegated Procedure and native qualification applicable to their exact operative snapshot and supported path; admitted direct snapshots retain their existing contract.
 
 | Node family | Capability and required input | Boundary and result |
 | --- | --- | --- |
@@ -23,8 +23,8 @@ The bundled version-27 candidate follows [Task orchestration](task-orchestration
 | Verify | `task-verify` consumes the current refined target and requirement matrix | No review or commit; return a typed current result and check identities |
 | Document | `task-document` consumes current implementation, refinement, verification, and verification decision evidence | Update canonical current behavior without copying runtime history |
 | Review and serial routing | `task-review` receives the named Task objective and criteria, exact candidate, relevant work or correction commits or staged capture, included and excluded paths, verification evidence, ordinal, assessment kind, mode, and source scope; the checkpoint carries the prior operation's route identity, and `task-handler` adjudicates route entry, confirmation and CI, accepts the retained Judge report, and uses its verdict for completion before finding class with a finding-count consistency guard, rework authority, then implementation, verification, and documentation ownership | Ordinals one through three are `work-unit`; ordinal four and every explicitly authorized later checkpoint are `remediation-confirmation` and inspect only the frozen correction set and direct regression surface. `resume-current` reads the actual preceding unsettled operation and explicit direction, authorizes only Mulgae, Herdr, or Independent Review, and re-enters only the matching existing provider entry; it cannot switch providers, resume a waiver, bypass authorization, or act as fallback. `continue-current` reads an exact completed delegated or waived operation, requires the same effective route and `completed-checkpoint` readiness, preserves lineage and authority, and consumes the next ordinal. Switching or waiving after incomplete or failed work requires `safe-to-change` and preserves the pending ordinal; after a completed checkpoint it requires `completed-checkpoint`, preserves lineage, and consumes the next ordinal. Native counts remain descriptive; inconsistent totals return to review before finding classification; phase obligation totals alone select owners after authority is admitted; each correction after ordinal four consumes one fresh `fix-and-review` decision when it leaves the user-choice node, so repeated rework stops at a new unset choice; no phase can bypass an earlier failing gate |
-| Low settlement | `task-handler` consumes the frozen Low set and delegates only disposition-owned local work | Return exact source basis, dispositions, carried completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for Low |
-| Assessment and closeout | `task-handler` consumes the carried completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
+| Local settlement | `task-handler` consumes the frozen eligible local correction and Low sets and delegates only disposition-owned local work | Return exact source basis, dispositions, current completion summary and zero gap counts, target delta, checks, pending count, blocker count, and coverage; no provider review solely for eligible local settlement |
+| Assessment and closeout | `task-handler` consumes the current completion summary and gap counts, their consistency when present, and any user direction before `task-close` and an independently authorized `task-commit` | A stop direction must assess the goal as not achieved; non-achieved work cannot close, and actual user approval plus exact final-target composition remain required |
 
 `record-task-rework-basis` records the current correction set before its
 authority decision. Owner decisions use fresh phase obligations, including
@@ -42,7 +42,7 @@ states that the review predates changed bytes.
 
 ## Goal Procedure
 
-The bundled version-30 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary phase Decisions require current applicability and satisfaction of actual due obligations, preserving full global rows and their original negative routing, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements need native qualification applicable to the exact operative snapshot and supported path; released managed copies retain their direct contract.
+The bundled version-31 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary phase Decisions require current applicability and satisfaction of actual due obligations, preserving full global rows and their original negative routing, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements need native qualification applicable to the exact operative snapshot and supported path; released managed copies retain their direct contract.
 
 `epic-handler` owns goal-centered member, remediation, and closeout work. It does
 not invoke the task phase skills. `complete-work` returns the work summary, source
@@ -63,7 +63,7 @@ classification. A first adequate Low-only review alone records either
 finite settlement or the supported bounded hardening handoff. Final evidence assembly and its retained Judge follow the core gate before goal assessment. The derived
 `current-rework-obligations` total is not part of the contract. The final-closeout substitute is valid only
 for `goal-kind=epic-closeout` with exact successful validation evidence, unchanged implementation and current focused checks under a separate applicability gate. Goal
-assessment consumes the carried completion summary and gap counts, their
+assessment consumes the current completion summary and gap counts, their
 consistency when present, and any user direction. A stop direction must produce a
 not-achieved assessment rather than closing the goal.
 
@@ -101,7 +101,7 @@ no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
-The bundled version-29 candidate follows [Validation
+The bundled version-30 candidate follows [Validation
 orchestration](validation-orchestration.md) with twelve required Worker/Judge
 placements. Direct audit and re-audit checkpoint Decisions preserve real negative
 original Epic rows while admitting faithful gap routing. The Primary settles each exact
@@ -151,7 +151,7 @@ exhausted authority at `await-user-direction`, complete that action, and stop at
 Each `fix-and-review` answer authorizes one correction and one next remediation
 confirmation. A broadened objective or changed surface requires a new goal
 revision instead.
-Validation assessment consumes the carried completion summary and gap counts,
+Validation assessment consumes the current completion summary and gap counts,
 their consistency when present, and any user direction. A stop direction must
 produce a not-achieved assessment rather than validating or closing the epic.
 
@@ -170,7 +170,7 @@ execution dossier under the shared consumer rules before final acceptance.
 
 ## Design Procedure
 
-The bundled version-7 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
+The bundled version-8 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
 
 `new-project`, `new-feature`, and `refactor` own context, discovery, drafting,
 challenge, quality, exact-diff approval, document application, assessment, and
@@ -185,7 +185,7 @@ optional at merges.
 
 ## War-room Procedure
 
-The bundled version-7 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
+The bundled version-8 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
 
 `war-room` owns safe baseline or reproduction, competing hypotheses, cause and
 scope judgments, proposal quality, exact-diff approval, document application,
@@ -222,3 +222,5 @@ effects and writer/descendant quiescence are reconciled. Route managed-source
 replacement through the existing repository-setup boundary before starting a
 new workflow. Prior canonical identity establishes provenance, not new graph
 support or permission to overwrite customizations.
+
+After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

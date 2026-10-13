@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from itertools import pairwise
 from pathlib import Path
@@ -24,38 +25,38 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "27",
+            "28",
+            "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
+            "aquarium-task-v27.yaml",
             "aea7cb5b93fbaaf0bcd94de2d981621afd1f547fcecd370649a8d2e6fb2f4ea6",
-            "aquarium-task-v26.yaml",
-            "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "30",
+            "31",
+            "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
+            "aquarium-goal-v30.yaml",
             "5f8d17becb9b673365cb01614a5ab9563b3c459ded93da60d18990eaa70e73b9",
-            "aquarium-goal-v29.yaml",
-            "430c5423c1ddea224561970e7e5ba5c6d1b7c62c03887e9eee888e6c648a4635",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "29",
+            "30",
+            "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
+            "aquarium-validation-v29.yaml",
             "a9b225b36bddbdd2e44cd0d37b9ed5967f59b222fa182bed91ab7698a46896e1",
-            "aquarium-validation-v28.yaml",
-            "cb5cad2c4d29f72f365b7a4f95274f9cfe9d1cf112154daf529b0c4efdae5867",
         ),
         (
             "aquarium-design-v2.yaml",
-            "7",
+            "8",
+            "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
+            "aquarium-design-v7.yaml",
             "0765991ad1fd1e3398c8ab07e8c852be0593c69efc65a89f9107caead5f04f43",
-            "aquarium-design-v6.yaml",
-            "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "7",
+            "8",
+            "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
+            "aquarium-war-room-v7.yaml",
             "3866de3ecc6b101f7ac10933221f711964dd3a9a77030f3c90baf3dd739fb4f6",
-            "aquarium-war-room-v6.yaml",
-            "2a665a79048c7a4bb239ba348d77fc8d578e0edf82d50d301bae7843f48a18a8",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -251,7 +252,7 @@ def test_correction_matrix_has_complete_inventory_metadata() -> None:
     matrix = fixture["correction_acceptance_matrix"]
 
     assert [case["id"] for case in matrix] == [
-        f"C-{index:02d}" for index in range(1, 17)
+        f"C-{index:02d}" for index in range(1, 18)
     ]
     assert all(case["evidence_class"] for case in matrix)
     assert all(case["runner"] for case in matrix)
@@ -338,7 +339,7 @@ def test_low_completion_routes_to_goal_assessment_without_a_review_loop() -> Non
         nodes = {node["id"]: node for node in procedure["graph"]["nodes"]}
 
         assert nodes["decide-low-result"]["routes"]["passed"]["to"] == (
-            "decide-low-completion"
+            "confirm-local-corrections-settled"
         )
         assert nodes["decide-low-completion"]["routes"]["completed"] == {
             "to": "confirm-goal-assessment-core",
@@ -499,7 +500,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "27"
+    assert task["version"] == "28"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -2652,7 +2653,7 @@ def test_task_semantic_followup_cannot_create_correction_or_review_authority() -
         assert placement["routes"]["authorized"]["effect"] == "rework"
     assert (
         graph["confirm-review-completion"]["routes"]["rework"]["to"]
-        == "record-task-rework-basis"
+        == "classify-local-corrections"
     )
     assert graph["record-task-rework-basis"]["next"] == "decide-task-rework-authority"
 
@@ -2907,7 +2908,7 @@ def test_goal_followup_needs_exact_effect_authority_after_mode_classification() 
         assert placement["routes"]["blocked"] == {"to": source, "effect": "rework"}
     assert (
         graph["decide-goal-evidence-assessment"]["routes"]["rework"]["to"]
-        == "decide-goal-rework-authority"
+        == "classify-local-corrections"
     )
     assert (
         graph["decide-goal-rework-authority"]["routes"]["remediation"]["to"]
@@ -3567,11 +3568,11 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
 
 def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
     predecessors = {
-        "task": 26,
-        "goal": 29,
-        "validation": 28,
-        "design": 6,
-        "war-room": 6,
+        "task": 27,
+        "goal": 30,
+        "validation": 29,
+        "design": 7,
+        "war-room": 7,
     }
     for family, version in predecessors.items():
         current = load_procedure(f"aquarium-{family}-v2.yaml")
@@ -3581,11 +3582,67 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
         assert current["id"] == previous["id"]
         assert int(current["version"]) == version + 1
         current_nodes, previous_nodes = nodes(current), nodes(previous)
-        assert set(current_nodes) == set(previous_nodes)
-        for name, placement in current_nodes.items():
-            prior = previous_nodes[name]
-            assert placement.get("next") == prior.get("next")
-            assert placement.get("routes") == prior.get("routes")
+        added = set(current_nodes) - set(previous_nodes)
+        expected_added = (
+            {
+                "classify-local-corrections",
+                "classify-local-evidence-corrections",
+                "confirm-local-corrections-settled",
+                "confirm-local-corrections-eligibility",
+                "confirm-local-evidence-corrections-eligibility",
+                "confirm-local-current-completion",
+            }
+            if family in {"task", "goal", "validation"}
+            else set()
+        )
+        if family in {"task", "goal"}:
+            expected_added.update(
+                {
+                    "confirm-local-corrections-consistency",
+                    "confirm-local-evidence-corrections-consistency",
+                }
+            )
+        if family in {"goal", "validation"}:
+            expected_added.update(
+                {
+                    "classify-local-incomplete-corrections",
+                    "confirm-local-incomplete-corrections-eligibility",
+                }
+            )
+        if family == "goal":
+            expected_added.add("confirm-local-incomplete-corrections-consistency")
+        if family == "validation":
+            expected_added.add("confirm-local-required-evidence")
+        assert added == expected_added
+        assert set(previous_nodes) <= set(current_nodes)
+        for name, prior in previous_nodes.items():
+            placement = current_nodes[name]
+            expected_next = prior.get("next")
+            actual_next = placement.get("next")
+            if actual_next == "confirm-local-required-evidence":
+                actual_next = current_nodes[actual_next]["routes"]["complete"]["to"]
+            assert actual_next == expected_next
+            previous_routes = prior.get("routes", {})
+            current_routes = placement.get("routes", {})
+            assert set(current_routes) == set(previous_routes) | (
+                {"blocker-found"} if name == "decide-low-result" else set()
+            )
+            for option, route in previous_routes.items():
+                destination = current_routes[option]["to"]
+                if destination.startswith("classify-local-"):
+                    assert current_nodes[destination]["routes"]["none"] == route
+                elif destination == "confirm-local-corrections-settled":
+                    assert route["to"] == "decide-low-completion"
+                    completion = current_nodes[destination]["routes"]["settled"]
+                    assert completion == {
+                        "to": "confirm-local-current-completion",
+                        "effect": "advance",
+                    }
+                    assert (
+                        current_nodes[completion["to"]]["routes"]["complete"] == route
+                    )
+                else:
+                    assert current_routes[option] == route
             assert placement.get("use") == prior.get("use")
             assert ("delegation" in placement) == ("delegation" in prior)
         assert current["manual_rework"] == previous["manual_rework"]
@@ -3640,3 +3697,335 @@ def test_inapplicable_phase_assessment_requires_nonpassing_current_applicability
             }
             found += 1
         assert found > 0
+
+
+def test_local_corrections_require_complete_eligibility_and_existing_authority() -> (
+    None
+):
+    for family, source, fallback in (
+        ("task", "review", "record-task-rework-basis"),
+        ("goal", "record-evidence", "decide-goal-rework-authority"),
+        ("validation", "final-review", "decide-validation-rework-authority"),
+    ):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        graph = nodes(procedure)
+        choices = options(procedure, "local-correction-handling-decision")
+        values = {
+            (source, "local-correction-count"): 1,
+            (source, "local-correction-eligibility"): {"outcome": "pass"},
+            (source, "assessment-ordinal"): 4,
+            (source, "completion-unmet-criteria"): 1,
+        }
+        assert guards_match(choices["local"], values)
+        router = graph["classify-local-corrections"]
+        checker = graph[router["routes"]["candidate"]["to"]]
+        if family in {"task", "goal"}:
+            assert checker["routes"]["inconsistent"] == {
+                "to": "prepare-review" if family == "task" else "record-evidence",
+                "effect": "rework",
+            }
+            checker = graph[checker["routes"]["consistent"]["to"]]
+        assert checker["routes"]["local"] == {
+            "to": "record-low-disposition",
+            "effect": "advance",
+        }
+        assert router["routes"]["none"]["to"] == fallback
+        assert checker["routes"]["ordinary"]["to"] == fallback
+        assert guards_match(choices["ordinary"], values)
+        judge = {
+            "task": "judge-review",
+            "goal": "judge-goal-evidence",
+            "validation": "judge-validation-evidence",
+        }[family]
+        for placement in (router, checker):
+            evidence = next(
+                item for item in placement["evidence_from"] if item["node"] == judge
+            )
+            assert {
+                "judge-assessment",
+                "judge-unmet-criteria",
+                "judge-unverified-criteria",
+                "judge-checkpoint-result",
+            } <= set(evidence["items"])
+        for missing in ("local-correction-count", "local-correction-eligibility"):
+            incomplete = dict(values)
+            del incomplete[source, missing]
+            assert not guards_match(choices["local"], incomplete)
+        for outcome in ("fail", "inconclusive"):
+            nonlocal_set = dict(values)
+            nonlocal_set[source, "local-correction-eligibility"] = {"outcome": outcome}
+            assert not guards_match(choices["local"], nonlocal_set)
+            assert guards_match(choices["ordinary"], nonlocal_set)
+        values[source, "local-correction-count"] = 0
+        assert guards_match(
+            options(procedure, "local-correction-candidate-decision")["none"], values
+        )
+        assert not guards_match(choices["local"], values)
+
+
+def test_local_settlement_rejects_pending_repairs_failed_checks_and_current_gaps() -> (
+    None
+):
+    for family in ("task", "goal", "validation"):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        graph = nodes(procedure)
+        local = options(procedure, "local-correction-completion-decision")
+        for pending in (1, 2):
+            values = {("record-low-disposition", "pending-local-corrections"): pending}
+            assert not guards_match(local["settled"], values)
+            assert guards_match(local["pending"], values)
+        assert not guards_match(local["settled"], {})
+        assert graph["confirm-local-corrections-settled"]["routes"]["pending"] == {
+            "to": "record-low-disposition",
+            "effect": "rework",
+        }
+        verification = options(procedure, "low-result-decision")
+        for outcome in ("fail", "inconclusive"):
+            values = {
+                ("record-low-disposition", "low-disposition-verification"): {
+                    "outcome": outcome
+                },
+                ("record-low-disposition", "current-blocking-findings"): 0,
+            }
+            assert not guards_match(verification["passed"], values)
+            assert guards_match(verification["incomplete"], values)
+            values["record-low-disposition", "current-blocking-findings"] = 1
+            assert not guards_match(verification["incomplete"], values)
+            assert guards_match(verification["blocker-found"], values)
+        completed = options(procedure, "low-completion-decision")["completed"]
+        current = {
+            ("record-low-disposition", item): 0
+            for item in (
+                "pending-low-dispositions",
+                "current-blocking-findings",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
+            )
+        }
+        assert guards_match(completed, current)
+        for item in current:
+            negative = dict(current)
+            negative[item] = 1
+            assert not guards_match(completed, negative)
+
+
+def test_local_correction_cannot_skip_native_admission_or_final_judgment() -> None:
+    for family, backend, failure, final_judge in (
+        ("task", "decide-backend-check", "record-task-rework-basis", "judge-task"),
+        (
+            "goal",
+            "confirm-mulgae-fail-finding-validity",
+            "decide-goal-rework-authority",
+            "judge-goal",
+        ),
+        (
+            "validation",
+            "decide-final-backend-check",
+            "decide-validation-rework-authority",
+            "judge-validation",
+        ),
+    ):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        graph = nodes(procedure)
+        assert failure in {route["to"] for route in graph[backend]["routes"].values()}
+        assert "classify-local-corrections" not in {
+            route["to"] for route in graph[backend]["routes"].values()
+        }
+        edges = graph_edges(procedure)
+        completed = graph["decide-low-completion"]["routes"]["completed"]["to"]
+        assert "assess-goal" in reachable_nodes(edges, completed)
+        assert "assess-goal" not in reachable_nodes(
+            edges, completed, without=final_judge
+        )
+        assembly = graph[
+            {
+                "task": "prepare-task-assessment",
+                "goal": "prepare-goal-assessment",
+                "validation": "prepare-validation-assessment",
+            }[family]
+        ]
+        settlement = next(
+            source
+            for source in assembly["evidence_from"]
+            if source["node"] == "record-low-disposition"
+        )
+        assert {
+            "pending-local-corrections",
+            "completion-assessment-summary",
+            "completion-unmet-criteria",
+            "completion-unverified-criteria",
+        } <= set(settlement["items"])
+
+
+def test_current_local_criteria_route_to_their_existing_owners() -> None:
+    for family, correction, evidence, effect in (
+        ("task", "record-task-rework-basis", "record-review-evidence", "advance"),
+        ("goal", "decide-goal-rework-authority", "record-evidence", "rework"),
+        (
+            "validation",
+            "decide-validation-rework-authority",
+            "record-incomplete",
+            "advance",
+        ),
+    ):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        graph = nodes(procedure)
+        choices = options(procedure, "local-current-completion-decision")
+        for unmet, unverified, selected in (
+            (0, 0, "complete"),
+            (1, 0, "unmet"),
+            (0, 1, "unverified"),
+            (1, 1, "unmet"),
+        ):
+            values = {
+                ("record-low-disposition", "completion-unmet-criteria"): unmet,
+                (
+                    "record-low-disposition",
+                    "completion-unverified-criteria",
+                ): unverified,
+            }
+            assert [
+                name for name, option in choices.items() if guards_match(option, values)
+            ] == [selected]
+        routes = graph["confirm-local-current-completion"]["routes"]
+        assert routes["unmet"] == {"to": correction, "effect": "advance"}
+        assert routes["unverified"] == {"to": evidence, "effect": effect}
+        assert graph["decide-low-result"]["routes"]["blocker-found"] == {
+            "to": correction,
+            "effect": "advance",
+        }
+
+
+def test_validation_current_required_evidence_veto_precedes_local_completion() -> None:
+    procedure = load_procedure("aquarium-validation-v2.yaml")
+    graph = nodes(procedure)
+    assert graph["record-low-disposition"]["next"] == "confirm-local-required-evidence"
+    choices = options(procedure, "local-required-evidence-decision")
+    for gap in (0, 1, 2):
+        values = {("record-low-disposition", "current-required-evidence-gaps"): gap}
+        assert guards_match(choices["complete"], values) == (gap == 0)
+        assert guards_match(choices["incomplete"], values) == (gap > 0)
+    assert not guards_match(choices["complete"], {})
+    assert graph["confirm-local-required-evidence"]["routes"]["incomplete"] == {
+        "to": "record-incomplete",
+        "effect": "advance",
+    }
+    source = next(
+        source
+        for source in graph["prepare-validation-assessment"]["evidence_from"]
+        if source["node"] == "record-low-disposition"
+    )
+    assert {"current-required-evidence-gaps", "current-blocking-findings"} <= set(
+        source["items"]
+    )
+
+
+def test_every_local_classifier_preserves_full_ordinary_and_consistency_routes() -> (
+    None
+):
+    for family in ("task", "goal", "validation"):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        graph = nodes(procedure)
+        for name, router in graph.items():
+            if not name.startswith("classify-local-"):
+                continue
+            successor = graph[router["routes"]["candidate"]["to"]]
+            if family in {"task", "goal"}:
+                assert successor["routes"]["inconsistent"] == {
+                    "to": "prepare-review" if family == "task" else "record-evidence",
+                    "effect": "rework",
+                }
+                successor = graph[successor["routes"]["consistent"]["to"]]
+            assert successor["routes"]["ordinary"] == router["routes"]["none"]
+
+
+def test_local_core_and_rework_consumers_bind_current_settlement() -> None:
+    for family in ("goal", "validation"):
+        graph = nodes(load_procedure(f"aquarium-{family}-v2.yaml"))
+        for name in ("confirm-goal-assessment-core", f"record-{family}-rework-basis"):
+            source = next(
+                source
+                for source in graph[name]["evidence_from"]
+                if source["node"] == "record-low-disposition"
+            )
+            assert source["required"] is False
+            assert {
+                "after-target",
+                "completion-assessment-summary",
+                "completion-unmet-criteria",
+                "completion-unverified-criteria",
+                "current-blocking-findings",
+            } <= set(source["items"])
+            if family == "validation":
+                assert "current-required-evidence-gaps" in source["items"]
+
+
+def test_validation_local_profiles_match_the_actual_clean_audit_guards() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "podway_runtime_qualification", ROOT / "tests/podway_runtime_qualification.py"
+    )
+    assert spec is not None and spec.loader is not None
+    runtime = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runtime)
+
+    procedure = load_procedure("aquarium-validation-v2.yaml")
+    graph = nodes(procedure)
+    audit = procedure["node_definitions"][graph["audit"]["use"]]
+    for scenario in ("validation-local-settled", "validation-local-retry"):
+        managed = runtime.ManagedRuntime(
+            Path("/unused/podway"), Path("/unused/podwayd"), PROCEDURES, 1
+        )
+        managed.scenario = scenario
+        managed.current_procedure_id = "aquarium-validation-v2"
+        values = {}
+        for item in audit["items"]:
+            if item["type"] in {"integer", "check_result"}:
+                constraints = {
+                    key: item[key]
+                    for key in ("minimum", "operation_id", "operation_digest")
+                    if key in item
+                }
+                value = managed.value_for(
+                    {
+                        "item_id": item["id"],
+                        "type": item["type"],
+                        "constraints": constraints,
+                    },
+                    "audit",
+                )
+                values["audit", item["id"]] = (
+                    value["value"] if item["type"] == "integer" else value
+                )
+        assert all(
+            values["audit", item] == 0
+            for item in (
+                "confirmed-gap-count",
+                "blocking-gap-count",
+                "eligible-low-gap-count",
+                "confirmation-needed-gap-count",
+            )
+        )
+        choices = options(procedure, graph["decide-gaps"]["use"])
+        assert guards_match(choices["clean"], values)
+        assert not guards_match(choices["low-only"], values)
+
+
+def test_goal_current_unverified_evidence_owner_binds_its_local_target() -> None:
+    graph = nodes(load_procedure("aquarium-goal-v2.yaml"))
+    assert graph["confirm-local-current-completion"]["routes"]["unverified"] == {
+        "to": "record-evidence",
+        "effect": "rework",
+    }
+    source = next(
+        source
+        for source in graph["record-evidence"]["evidence_from"]
+        if source["node"] == "record-low-disposition"
+    )
+    assert source["required"] is False
+    assert {
+        "after-target",
+        "low-disposition-summary",
+        "completion-assessment-summary",
+        "completion-unmet-criteria",
+        "completion-unverified-criteria",
+    } <= set(source["items"])
