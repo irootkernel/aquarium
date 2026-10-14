@@ -1,5 +1,7 @@
 # Development Channel Architecture
 
+Podway references in this retained development-channel contract describe legacy daemon-era generations only. Direct Podway >=v0.2.14 has no supported enrollment here. Candidate development uses the host's installed release and disposable fixtures; EPIC-019 owns shared-channel retirement and any separately approved controller or host cleanup.
+
 The development channel separates repository production from host-local consumption:
 
 1. A native post-commit marker queues only a completed canonical local-`main` SHA.

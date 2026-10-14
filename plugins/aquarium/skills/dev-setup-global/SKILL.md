@@ -39,7 +39,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 - Sanho, Dolgorae, Mulgae, Gaori, Sorage, and Podway user-global CLIs.
 - `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, and `use-podway` under `~/.agents/skills`.
 - Mulgae and Gaori user-global MCP registrations.
-- Podway's per-user production daemon and Sorage's minimal user-global initialization.
+- Podway's single Direct CLI identity and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
 - The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
@@ -66,7 +66,7 @@ im-not-ai's `humanize-korean` skill also belongs to the active Codex home. Use `
 
 In Plan Mode, perform local and network read-only diagnosis and return exact proposals without mutation. Defer Sorage doctor or initialization checks that may update its database or journal to execution mode.
 
-Outside Plan Mode, use the version-only result to identify a pre-v0.1.2 installation before any Sorage doctor call. For an existing pre-Memo installation, prepare the upstream format-1 backup and separate restore drill before replacing the binary or opening it with v0.1.2. A v0.1.2 executable alone does not prove that preparation occurred. The inspector admits a missing or empty home and a database already carrying the Project Memo migration without upgrade confirmation; a nonempty home with no database or an incomplete installation configuration requires recovery. Disclose any selected Sorage diagnostic side effect before running it. Keep release lookup, archive download, executable installation, skill installation or replacement, daemon changes, Sorage initialization or reconfiguration, global MCP changes, Ouroboros package changes, and Ouroboros setup or refresh as distinct actions.
+Outside Plan Mode, use the version-only result to identify a pre-v0.1.2 installation before any Sorage doctor call. For an existing pre-Memo installation, prepare the upstream format-1 backup and separate restore drill before replacing the binary or opening it with v0.1.2. A v0.1.2 executable alone does not prove that preparation occurred. The inspector admits a missing or empty home and a database already carrying the Project Memo migration without upgrade confirmation; a nonempty home with no database or an incomplete installation configuration requires recovery. Disclose any selected Sorage diagnostic side effect before running it. Keep release lookup, archive download, executable installation, skill installation or replacement, legacy Podway service retirement, Sorage initialization or reconfiguration, global MCP changes, Ouroboros package changes, and Ouroboros setup or refresh as distinct actions.
 
 Before every persistent action:
 

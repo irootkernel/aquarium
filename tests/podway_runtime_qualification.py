@@ -5,37 +5,34 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
-import signal
-import socket
-import struct
+import sqlite3
 import subprocess
 import tempfile
 import time
 import uuid
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from contextlib import closing
 from pathlib import Path
 from threading import Event
 from typing import Any, Self
 
 import yaml
 
-OUTPUT_SCHEMA = "podway.output/v3"
-ERROR_SCHEMA = "podway.error/v1"
-OBSERVATION_SCHEMA = "podway.observation-result/v3"
-DELEGATED_OBSERVATION_SCHEMA = "podway.observation-result/v4"
-RUNTIME_SCHEMA = "podway.managed-runtime/v3"
-RUNTIME_MODE = "release-qa"
+OUTPUT_SCHEMA = "podway.output/v4"
+ERROR_SCHEMA = "podway.error/v2"
+OBSERVATION_SCHEMA = "podway.observation-result/v5"
+EXPECTED_VERSION = "v0.2.14"
+RELEASE_SOURCE_COMMIT = "fa29dba929777b020377bc9803cb0a3954d219b1"
 COMMAND_TIMEOUT_SECONDS = 20
-READINESS_TIMEOUT_SECONDS = 20
-PROCESS_EXIT_TIMEOUT_SECONDS = 10
 # The delegated Task scenario needs 150 loop iterations and about 576s; allow
 # room for required rework coverage and variation in native command latency.
 RUN_TIMEOUT_SECONDS = 900
 MAX_GRAPH_STEPS = 192
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:a96aad19de8e7346629d0a4816256f697f9e6b293e44eb550527b4b3c229ddef"
+    "sha256:c699977dd232891041f4063d66295b94004702875855baace876f8a7e0c6391d"
 )
 
 TASK_REVIEW_ENTRY_NODES = {
@@ -904,17 +901,22 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def exact_sibling_daemon(binary: Path) -> Path:
-    daemon = binary.with_name("podwayd")
-    if daemon.is_symlink() or daemon.resolve() != daemon:
+def release_identity(completed: subprocess.CompletedProcess[bytes]) -> dict[str, Any]:
+    identity = output_result(completed, "version", "podway.version-result/v2")
+    if (
+        identity.get("product") != "podway"
+        or identity.get("version") != EXPECTED_VERSION
+        or identity.get("target") != "aarch64-apple-darwin"
+        or identity.get("source_commit") != RELEASE_SOURCE_COMMIT
+        or identity.get("contract_manifest_schema") != "podway.contract-manifest/v2"
+        or identity.get("contract_manifest_digest") != CONTRACT_MANIFEST_DIGEST
+        or not isinstance(identity.get("build_identity"), str)
+        or re.fullmatch(r"sha256:[0-9a-f]{64}", identity["build_identity"]) is None
+    ):
         raise RuntimeQualificationError(
-            "the sibling podwayd and its path components must not be symlinks"
+            "CLI does not match the official v0.2.14 identity"
         )
-    if not daemon.is_file() or not os.access(daemon, os.X_OK):
-        raise RuntimeQualificationError(
-            "PODWAY_BIN must have an executable sibling podwayd"
-        )
-    return daemon
+    return identity
 
 
 def bounded_process(
@@ -991,7 +993,7 @@ def error_code(completed: subprocess.CompletedProcess[bytes]) -> str:
     payload = json_payload(completed)
     code = payload.get("code")
     if payload.get("schema") != ERROR_SCHEMA or not isinstance(code, str):
-        raise RuntimeQualificationError("Podway failure did not use podway.error/v1")
+        raise RuntimeQualificationError("Podway failure did not use podway.error/v2")
     return code
 
 
@@ -1001,19 +1003,17 @@ def workspace_removal_result(
     workspace_uuid: str | None,
 ) -> dict[str, Any]:
     result = output_result(
-        completed, "workspace.remove", "podway.workspace-removal-result/v1"
+        completed, "workspace.remove", "podway.workspace-removal-result/v2"
     )
     if result != {
-        "schema": "podway.workspace-removal-result/v1",
+        "schema": "podway.workspace-removal-result/v2",
         "worktree_root": worktree_root,
         "workspace_uuid": workspace_uuid,
-        "registry_entry_removed": workspace_uuid is not None,
         "podway_directory_removed": workspace_uuid is not None,
         "already_absent": workspace_uuid is None,
     } or any(
         type(result.get(field)) is not bool
         for field in (
-            "registry_entry_removed",
             "podway_directory_removed",
             "already_absent",
         )
@@ -1029,38 +1029,17 @@ def private_directory(path: Path) -> None:
     path.chmod(0o700)
 
 
-def receive_exact(client: socket.socket, size: int) -> bytes:
-    chunks: list[bytes] = []
-    remaining = size
-    while remaining:
-        chunk = client.recv(remaining)
-        if not chunk:
-            raise RuntimeQualificationError(
-                "daemon closed an incomplete response frame"
-            )
-        chunks.append(chunk)
-        remaining -= len(chunk)
-    return b"".join(chunks)
-
-
 class ManagedRuntime:
-    """Own one exact official CLI/daemon pair and its disposable state."""
+    """Own one exact official CLI and a disposable Git workspace."""
 
-    def __init__(self, binary: Path, daemon: Path, procedures: Path, run_index: int):
+    def __init__(self, binary: Path, procedures: Path, run_index: int):
         self.binary = binary
-        self.daemon = daemon
         self.procedures = procedures
         self.run_index = run_index
         self.root: Path | None = None
-        self.account: Path | None = None
-        self.dev_home: Path | None = None
         self.sandbox: Path | None = None
         self.snapshot_binary: Path | None = None
-        self.snapshot_daemon: Path | None = None
         self.environment: dict[str, str] | None = None
-        self.process: subprocess.Popen[bytes] | None = None
-        self.daemon_pid: int | None = None
-        self.log = None
         self.deadline: float | None = None
         self.command_sequence = 0
         self.missing_receipt_guards: set[tuple[str, str]] = set()
@@ -1163,74 +1142,23 @@ class ManagedRuntime:
         self.root = root
         root.chmod(0o700)
         self.deadline = time.monotonic() + RUN_TIMEOUT_SECONDS
-        self.account = root / "account"
-        self.dev_home = root
         self.sandbox = root / "sandbox"
-        cache = root / "cache"
         temporary = root / "tmp"
-        snapshot_id = sha256_file(self.daemon)[:16]
-        snapshot = root / "snapshots" / snapshot_id
-        private_directory(self.account)
-        private_directory(self.sandbox)
-        private_directory(cache)
-        private_directory(temporary)
-        private_directory(root / "snapshots")
-        private_directory(snapshot)
-        private_directory(root / "run")
-        private_directory(root / "state")
-        private_directory(root / "logs")
-
+        snapshot = root / "snapshot"
+        for directory in (self.sandbox, temporary, snapshot):
+            private_directory(directory)
         self.snapshot_binary = snapshot / "podway"
-        self.snapshot_daemon = snapshot / "podwayd"
         shutil.copyfile(self.binary, self.snapshot_binary)
-        shutil.copyfile(self.daemon, self.snapshot_daemon)
         self.snapshot_binary.chmod(0o755)
-        self.snapshot_daemon.chmod(0o755)
-        metadata = {
-            "schema": RUNTIME_SCHEMA,
-            "metadata_version": 3,
-            "purpose": "release-qualification",
-            "euid": uid,
-            "canonical_root": str(root),
-            "mode": RUNTIME_MODE,
-            "paths": {
-                "lock": str(root / "run" / "podwayd.lock"),
-                "socket": str(root / "run" / "podwayd.sock"),
-                "service_state": str(root / "state" / "service.json"),
-                "registry": str(root / "state" / "workspaces.json"),
-                "recovery": str(root / "state" / "recovery.json"),
-                "log": str(root / "logs" / "podwayd.log"),
-                "bootstrap_log": str(root / "logs" / "podwayd-bootstrap.log"),
-            },
-            "sandbox_root": str(self.sandbox),
-            "executables": {
-                "cli": {
-                    "path": str(self.snapshot_binary),
-                    "sha256": f"sha256:{sha256_file(self.snapshot_binary)}",
-                },
-                "daemon": {
-                    "path": str(self.snapshot_daemon),
-                    "sha256": f"sha256:{sha256_file(self.snapshot_daemon)}",
-                },
-                "controller": None,
-            },
-            "generation": None,
-        }
-        metadata_path = root / "runtime.json"
-        metadata_path.write_text(
-            json.dumps(metadata, sort_keys=True, separators=(",", ":")) + "\n",
-            encoding="utf-8",
-        )
-        metadata_path.chmod(0o600)
+        if sha256_file(self.snapshot_binary) != sha256_file(self.binary):
+            raise RuntimeQualificationError("CLI snapshot changed artifact bytes")
         self.environment = {
-            "HOME": str(self.account),
             "PATH": "/usr/bin:/bin",
-            "PODWAY_DEV_HOME": str(self.dev_home),
             "TMPDIR": str(temporary),
-            "XDG_CACHE_HOME": str(cache),
-            "XDG_CONFIG_HOME": str(root / "config"),
-            "XDG_STATE_HOME": str(root / "state"),
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "/dev/null",
         }
+        release_identity(self.raw(["--json", "version", "--identity"]))
         bounded_process(["git", "init", "-q"], cwd=self.sandbox)
         bounded_process(
             ["git", "config", "user.name", "Aquarium Qualification"],
@@ -1249,22 +1177,17 @@ class ManagedRuntime:
             .stdout.decode("utf-8")
             .strip()
         )
-        daemon_log = root / "logs" / "qualification-harness.log"
-        self.log = daemon_log.open("xb")
-        self.process = subprocess.Popen(
-            [str(self.snapshot_daemon), "--mode", RUNTIME_MODE],
-            cwd=self.sandbox,
-            env=self.environment,
-            stdin=subprocess.DEVNULL,
-            stdout=self.log,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
-        self.wait_ready()
+        self.init_arguments = [
+            "--json",
+            "init",
+            "--idempotency-key",
+            self.next_key("init"),
+        ]
+        self.init_response = self.raw(self.init_arguments)
         initialized = output_result(
-            self.raw(["--json", "init"]),
+            self.init_response,
             "workspace.init",
-            "podway.workspace-init-result/v1",
+            "podway.workspace-init-result/v2",
         )
         if initialized.get("initialized") is not True:
             raise RuntimeQualificationError("isolated workspace did not initialize")
@@ -1280,199 +1203,252 @@ class ManagedRuntime:
         return self
 
     def __exit__(self, exc_type, exc, traceback) -> bool:
-        cleanup_error: Exception | None = None
-        try:
-            self.terminate()
-        except (
-            OSError,
-            RuntimeQualificationError,
-            subprocess.SubprocessError,
-        ) as error:  # cleanup must preserve the original failure
-            cleanup_error = error
-        finally:
-            if self.log is not None:
-                self.log.close()
-            if cleanup_error is None and self.root is not None:
-                shutil.rmtree(self.root)
-                if self.root.exists():
-                    cleanup_error = RuntimeQualificationError(
-                        "release-qualification root survived cleanup"
-                    )
-        if cleanup_error is not None:
-            raise RuntimeQualificationError(
-                f"release-qualification cleanup failed: {cleanup_error}"
-            ) from exc
+        if self.root is not None:
+            shutil.rmtree(self.root)
+            if self.root.exists():
+                raise RuntimeQualificationError(
+                    "qualification root survived cleanup"
+                ) from exc
         return False
 
-    @property
-    def socket(self) -> Path:
-        assert self.dev_home is not None
-        return self.dev_home / "run" / "podwayd.sock"
-
-    def wait_ready(self) -> None:
-        deadline = time.monotonic() + READINESS_TIMEOUT_SECONDS
-        last_error: OSError | RuntimeQualificationError | None = None
-        while time.monotonic() < deadline:
-            if self.process is not None and self.process.poll() is not None:
-                raise RuntimeQualificationError(
-                    "official podwayd exited before reaching readiness"
-                )
-            try:
-                result = self.daemon_status_probe()
-            except (OSError, RuntimeQualificationError) as error:
-                last_error = error
-                time.sleep(0.05)
-                continue
-            pid = result.get("pid")
-            if isinstance(pid, int) and pid > 0:
-                self.daemon_pid = pid
-            if (
-                result.get("readiness_state") == "ready"
-                and result.get("readiness_stage") == "ready"
-                and result.get("mode") == RUNTIME_MODE
-                and result.get("daemon_version") == "v0.2.12"
-                and result.get("contract_manifest_digest") == CONTRACT_MANIFEST_DIGEST
-                and (
-                    result.get("in_flight_client_count") is None
-                    or (
-                        isinstance(result.get("in_flight_client_count"), int)
-                        and not isinstance(result.get("in_flight_client_count"), bool)
-                        and 0 <= result["in_flight_client_count"] <= 1024
-                    )
-                )
-                and (
-                    result.get("maintenance_operation_count") is None
-                    or (
-                        isinstance(result.get("maintenance_operation_count"), int)
-                        and not isinstance(
-                            result.get("maintenance_operation_count"), bool
-                        )
-                        and 0 <= result["maintenance_operation_count"] <= 10_000
-                    )
-                )
-            ):
-                if self.daemon_pid is None:
-                    raise RuntimeQualificationError(
-                        "ready daemon omitted its process identity"
-                    )
-                return
-            time.sleep(0.05)
-        detail = type(last_error).__name__ if last_error is not None else "not-ready"
-        log_tail = ""
-        runtime_files: list[str] = []
-        if self.root is not None:
-            for candidate in sorted(self.root.rglob("*")):
-                if candidate.is_file():
-                    runtime_files.append(candidate.relative_to(self.root).as_posix())
-                    if candidate.name.endswith(".log"):
-                        try:
-                            log_tail += candidate.read_text(
-                                encoding="utf-8", errors="replace"
-                            )[-1000:]
-                        except OSError:
-                            pass
-        raise RuntimeQualificationError(
-            "daemon did not reach v0.2.12 release-qa readiness: "
-            f"{detail}; files={runtime_files!r}; daemon_log={log_tail!r}"
+    def exercise_outcomes(self) -> dict[str, bool]:
+        original = json_payload(self.init_response)
+        key = self.init_arguments[-1]
+        found = output_result(
+            self.raw(["--json", "outcome", "lookup", "--idempotency-key", key]),
+            "outcome.lookup",
+            "podway.outcome-lookup-result/v1",
         )
-
-    def daemon_status_probe(self) -> dict[str, Any]:
-        request = {
-            "protocol": "podway.ipc/v1",
-            "request_id": str(uuid.uuid4()),
-            "client": {
-                "name": "aquarium-release-qualification",
-                "pid": os.getpid(),
-                "product": "podway",
-                "version": "v0.2.12",
-                "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
-            },
-            "operation": "control",
-            "command": "daemon.status",
-            "options": {"detach": False, "wait_timeout_ms": 0},
-            "payload": {},
-        }
-        encoded = json.dumps(request, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-            client.settimeout(1.0)
-            client.connect(str(self.socket))
-            client.sendall(struct.pack(">I", len(encoded)) + encoded)
-            client.shutdown(socket.SHUT_WR)
-            size = struct.unpack(">I", receive_exact(client, 4))[0]
-            if size <= 0 or size > 1024 * 1024:
-                raise RuntimeQualificationError("invalid daemon response frame size")
-            try:
-                response = json.loads(receive_exact(client, size))
-            except json.JSONDecodeError as error:
-                raise RuntimeQualificationError(
-                    "daemon status response is not JSON"
-                ) from error
-        if not isinstance(response, dict):
-            raise RuntimeQualificationError("daemon status response is not an object")
-        result = response.get("result")
         if (
-            response.get("schema") != OUTPUT_SCHEMA
-            or response.get("command") != "daemon.status"
-            or not isinstance(result, dict)
-            or result.get("schema") != "podway.daemon-status-result/v3"
+            found.get("found") is not True
+            or found.get("outcome", {}).get("response") != original
         ):
-            raise RuntimeQualificationError("invalid daemon status response")
-        return result
-
-    def terminate(self) -> None:
-        if self.process is not None and self.process.poll() is None:
-            try:
-                os.killpg(self.process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(self.process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                self.process.wait(timeout=PROCESS_EXIT_TIMEOUT_SECONDS)
-        if self.daemon_is_alive() and self.daemon_pid is not None:
-            try:
-                os.kill(self.daemon_pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            deadline = time.monotonic() + PROCESS_EXIT_TIMEOUT_SECONDS
-            while time.monotonic() < deadline and self.daemon_is_alive():
-                time.sleep(0.05)
-        if self.daemon_is_alive() and self.daemon_pid is not None:
-            try:
-                os.kill(self.daemon_pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        if self.daemon_is_alive():
             raise RuntimeQualificationError(
-                "release-qualification daemon survived shutdown"
+                "outcome lookup lost the committed response"
             )
-        if self.dev_home is not None and self.socket.exists():
-            if self.socket.is_symlink() or not self.socket.is_socket():
+        if json_payload(self.raw(self.init_arguments)) != original:
+            raise RuntimeQualificationError("exact init replay changed its response")
+        rejected_key = self.next_key("rejected-init")
+        rejected = self.raw(
+            ["--json", "init", "--idempotency-key", rejected_key], expected_exit=None
+        )
+        if (
+            rejected.returncode == 0
+            or error_code(rejected) != "WORKSPACE_ALREADY_INITIALIZED"
+        ):
+            raise RuntimeQualificationError(
+                "a new init replaced an initialized workspace"
+            )
+        for missing_key in (rejected_key, self.next_key("missing-outcome")):
+            missing = output_result(
+                self.raw(
+                    ["--json", "outcome", "lookup", "--idempotency-key", missing_key]
+                ),
+                "outcome.lookup",
+                "podway.outcome-lookup-result/v1",
+            )
+            if missing.get("found") is not False or missing.get("outcome") is not None:
                 raise RuntimeQualificationError(
-                    "release-qualification socket path changed type"
+                    "a rejected or unknown key retained an outcome"
                 )
-            self.socket.unlink()
-            if self.socket.exists():
-                raise RuntimeQualificationError(
-                    "release-qualification socket survived cleanup"
-                )
+        relative = ".podway/procedures/aquarium-task-v2.yaml"
+        preview = self.preview(relative)
+        session_key = self.next_key("session-outcome")
+        start = [
+            "--json",
+            "start",
+            "--procedure",
+            relative,
+            "--expect-procedure-digest",
+            preview["procedure_digest"],
+            "--task",
+            "session outcome qualification",
+            "--idempotency-key",
+            session_key,
+        ]
+        started = self.raw(start)
+        session_response = json_payload(started)
+        if (
+            output_result(
+                started, "session.start", "podway.session-start-result/v4"
+            ).get("session_state")
+            != "prepared"
+        ):
+            raise RuntimeQualificationError(
+                "session outcome fixture did not prepare a session"
+            )
+        before = self.observe()["status"]
+        session_outcome = output_result(
+            self.raw(["--json", "outcome", "lookup", "--idempotency-key", session_key]),
+            "outcome.lookup",
+            "podway.outcome-lookup-result/v1",
+        )
+        if (
+            session_outcome.get("found") is not True
+            or session_outcome.get("outcome", {}).get("response") != session_response
+            or json_payload(self.raw(start)) != session_response
+            or self.observe()["status"] != before
+        ):
+            raise RuntimeQualificationError(
+                "session outcome lookup or exact replay changed state"
+            )
+        return {
+            "success_lookup": True,
+            "exact_replay": True,
+            "rejection_not_retained": True,
+            "missing_lookup": True,
+            "session_success_lookup": True,
+            "session_exact_replay": True,
+        }
 
-    def daemon_is_alive(self) -> bool:
-        if self.daemon_pid is None:
-            return False
-        try:
-            os.kill(self.daemon_pid, 0)
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            return True
-        return True
+    def exercise_upgrade(self, legacy_sql: Path) -> list[dict[str, Any]]:
+        assert self.sandbox is not None
+        podway = self.sandbox / ".podway"
+        database = podway / "runtime/state.sqlite3"
+        sentinel = self.sandbox / "upgrade-sentinel.txt"
+        sentinel.write_bytes(b"preserve unrelated work\n")
+        config = podway / "config.yaml"
+        config.write_bytes(
+            config.read_bytes() + b"\n# Preserve local configuration bytes.\n"
+        )
+        preserved = {
+            path.relative_to(self.sandbox): path.read_bytes()
+            for path in (
+                podway / "config.yaml",
+                podway / ".gitignore",
+                *sorted((podway / "procedures").glob("*.yaml")),
+                sentinel,
+            )
+        }
+        results = []
+        for kind, expected_code in (
+            ("legacy-generation-13", "LEGACY_RUNTIME_STATE_UNSUPPORTED"),
+            ("v0.2.13-writer-manifest", "WORKSPACE_CONTRACT_MISMATCH"),
+        ):
+            shown = json_payload(self.raw(["--json", "workspace", "show"]))
+            old_uuid = shown["workspace"]["uuid"]
+            if kind == "legacy-generation-13":
+                shutil.rmtree(database.parent)
+                database.parent.mkdir()
+                with closing(sqlite3.connect(database)) as connection:
+                    connection.executescript(legacy_sql.read_text())
+                    connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                    old_uuid = connection.execute(
+                        "SELECT workspace_uuid FROM workspace_state WHERE singleton = 1"
+                    ).fetchone()[0]
+            else:
+                with closing(sqlite3.connect(database)) as connection:
+                    connection.execute(
+                        "UPDATE writer_contract SET contract_manifest_digest = ?",
+                        (
+                            "sha256:dc47bcc5449f7c2e60c920c5b820eb793405b5f2d2f573346ee326f90264d2aa",
+                        ),
+                    )
+                    connection.commit()
+                    connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+            def image() -> dict[str, tuple[bytes, int, int]]:
+                return {
+                    path.relative_to(podway).as_posix(): (
+                        path.read_bytes(),
+                        path.stat().st_mode,
+                        path.stat().st_ino,
+                    )
+                    for path in podway.rglob("*")
+                    if path.is_file()
+                    and path.name not in {"maintenance.lock", "maintenance-intent.lock"}
+                }
+
+            before = image()
+            for arguments in (
+                ["--json", "status"],
+                ["--json", "doctor"],
+                [
+                    "--json",
+                    "init",
+                    "--idempotency-key",
+                    self.next_key("rejected-old-init"),
+                ],
+                [
+                    "--json",
+                    "reset",
+                    "--all",
+                    "--yes",
+                    "--if-workspace-uuid",
+                    old_uuid,
+                    "--idempotency-key",
+                    self.next_key("fenced-old-reset"),
+                ],
+            ):
+                rejected = self.raw(arguments, expected_exit=None)
+                code = error_code(rejected)
+                expected_errors = {expected_code}
+                if "--if-workspace-uuid" in arguments:
+                    expected_errors.add("WORKSPACE_ID_CONFLICT")
+                if (
+                    rejected.returncode == 0
+                    or code not in expected_errors
+                    or image() != before
+                ):
+                    raise RuntimeQualificationError(
+                        f"{kind} refusal changed Store/source or error class: {code}"
+                    )
+            reset = json_payload(
+                self.raw(
+                    [
+                        "--json",
+                        "reset",
+                        "--all",
+                        "--yes",
+                        "--idempotency-key",
+                        self.next_key("approved-fixture-reset"),
+                    ]
+                )
+            )
+            after = json_payload(self.raw(["--json", "workspace", "show"]))
+            if (
+                reset.get("schema") != OUTPUT_SCHEMA
+                or reset.get("command") != "workspace.reset_all"
+                or reset.get("result")
+                != {
+                    "reset": True,
+                    "revision": 0,
+                    "workspace_uuid": after["workspace"]["uuid"],
+                }
+            ):
+                raise RuntimeQualificationError(
+                    "fixture reset returned an invalid result"
+                )
+            if after["workspace"]["uuid"] == old_uuid:
+                raise RuntimeQualificationError(
+                    "fixture reset retained the old workspace UUID"
+                )
+            if any(
+                (self.sandbox / path).read_bytes() != contents
+                for path, contents in preserved.items()
+            ):
+                raise RuntimeQualificationError(
+                    "fixture reset changed configuration or unrelated files"
+                )
+            no_session = self.raw(["--json", "observe"], expected_exit=None)
+            if (
+                no_session.returncode == 0
+                or error_code(no_session) != "SESSION_NOT_FOUND"
+            ):
+                raise RuntimeQualificationError(
+                    "fixture reset retained a current session"
+                )
+            release_identity(self.raw(["--json", "version", "--identity"]))
+            results.append(
+                {
+                    "scenario": kind,
+                    "store_and_source_unchanged": True,
+                    "fenced_reset_refused": True,
+                    "fresh_uuid": True,
+                    "preserved_source_and_files": True,
+                }
+            )
+        return results
 
     def raw(
         self,
@@ -1492,7 +1468,7 @@ class ManagedRuntime:
                 "isolated runtime exceeded overall deadline"
             )
         return bounded_process(
-            [str(self.snapshot_binary), "--mode", RUNTIME_MODE, *arguments],
+            [str(self.snapshot_binary), *arguments],
             cwd=self.sandbox,
             environment=self.environment,
             stdin=stdin,
@@ -1502,9 +1478,9 @@ class ManagedRuntime:
 
     def observe(self) -> dict[str, Any]:
         return output_result(
-            self.raw(["observe", "--json", "--wait-for-idle"]),
+            self.raw(["observe", "--json"]),
             "session.observe",
-            DELEGATED_OBSERVATION_SCHEMA if self.placements else OBSERVATION_SCHEMA,
+            OBSERVATION_SCHEMA,
         )
 
     def preview(self, relative: str) -> dict[str, Any]:
@@ -1538,7 +1514,9 @@ class ManagedRuntime:
             raise RuntimeQualificationError("preview changed delegated placements")
         return preview
 
-    def accept_fixture_delegation(self, observation: dict[str, Any]) -> dict[str, Any]:
+    def accept_fixture_delegation(
+        self, observation: dict[str, Any], *, missing_item: str | None = None
+    ) -> dict[str, Any]:
         node = observation["guidance"]["node"]["graph_node_id"]
         declaration = self.placements[node]
         status = observation["status"]
@@ -1627,13 +1605,27 @@ class ManagedRuntime:
                 "idle" if declaration["after_accept"] == "retain" else "released"
             ),
         }
+        before = self.domain_state(observation)
+        response = self.raw(
+            ["--json", "delegation", "accept", "--stdin"],
+            stdin=json.dumps(request).encode(),
+            expected_exit=None if missing_item else 0,
+        )
+        if missing_item:
+            payload = json_payload(response)
+            current = self.observe()
+            if (
+                response.returncode == 0
+                or error_code(response) != "REQUIRED_ITEMS_MISSING"
+                or missing_item not in payload.get("details", {}).get("item_ids", [])
+                or self.domain_state(current) != before
+            ):
+                raise RuntimeQualificationError(
+                    "delegation accepted missing conditional evidence"
+                )
+            return current
         accepted = output_result(
-            self.raw(
-                ["--json", "delegation", "accept", "--stdin"],
-                stdin=json.dumps(request).encode(),
-            ),
-            "delegation.accept",
-            "podway.delegation-accept-result/v1",
+            response, "delegation.accept", "podway.delegation-accept-result/v2"
         )
         current = self.observe()
         if (
@@ -1851,7 +1843,7 @@ class ManagedRuntime:
     def decision_destination(
         completed: subprocess.CompletedProcess[bytes], expected: str
     ) -> None:
-        result = output_result(completed, "session.decide", "podway.decision-result/v1")
+        result = output_result(completed, "session.decide", "podway.decision-result/v2")
         if result.get("target_graph_node_id") != expected:
             raise RuntimeQualificationError(
                 "decision reached the wrong destination: "
@@ -1891,6 +1883,8 @@ class ManagedRuntime:
                 "--if-workspace-uuid",
                 mismatched_uuid,
                 "--yes",
+                "--idempotency-key",
+                self.next_key("rejected-removal"),
             ],
             expected_exit=None,
         )
@@ -1914,6 +1908,8 @@ class ManagedRuntime:
             "--if-workspace-uuid",
             workspace_uuid,
             "--yes",
+            "--idempotency-key",
+            str(uuid.uuid4()),
         ]
         workspace_removal_result(
             self.raw(removal_arguments), str(self.sandbox.resolve()), workspace_uuid
@@ -1931,26 +1927,23 @@ class ManagedRuntime:
         replay = workspace_removal_result(
             self.raw(removal_arguments), str(self.sandbox.resolve()), None
         )
-        post_removal_status = self.daemon_status_probe()
         if (
             podway_directory.exists()
             or not self.sandbox.is_dir()
             or not git_directory.exists()
             or sentinel.read_bytes() != sentinel_contents
-            or post_removal_status.get("registered_worktree_count") != 0
         ):
             raise RuntimeQualificationError(
                 "workspace removal replay did not preserve the verified terminal state"
             )
 
         return {
-            "result_schema": "podway.workspace-removal-result/v1",
+            "result_schema": "podway.workspace-removal-result/v2",
             "uuid_mismatch_rejected": True,
             "initial_removal_passed": True,
             "replay_result": replay,
             "replay_postcondition_verified": True,
             "podway_directory_absent": True,
-            "registry_absent": True,
             "git_worktree_preserved": True,
         }
 
@@ -1965,6 +1958,11 @@ class ManagedRuntime:
                 "prepared observation omitted one begin template"
             )
         argv = list(templates[0]["argv"])[1:]
+        key = self.next_key("begin")
+        if "--idempotency-key" in argv:
+            argv[argv.index("--idempotency-key") + 1] = key
+        else:
+            argv.extend(["--idempotency-key", key])
         if "--json" not in argv:
             argv.insert(0, "--json")
         begin_index = argv.index("begin") + 1
@@ -1974,7 +1972,7 @@ class ManagedRuntime:
             "--criterion",
             "runtime=The disposable fixture exercises this Procedure graph.",
         ]
-        output_result(self.raw(argv), "session.begin", "podway.session-begin-result/v1")
+        output_result(self.raw(argv), "session.begin", "podway.session-begin-result/v2")
 
     def decide(
         self,
@@ -2180,7 +2178,7 @@ class ManagedRuntime:
         output_result(
             completed,
             "item.record_many",
-            "podway.item-record-many-result/v1",
+            "podway.item-record-many-result/v2",
         )
 
     def try_record_failure(
@@ -3509,15 +3507,19 @@ class ManagedRuntime:
             check = next(item for item in required if item["type"] == "check_result")
             self.record(observation, {check["item_id"]: self.value_for(check, node)})
             missing = self.observe()
-            failed = self.invoke_template(
-                missing, "session.complete", expected_exit=None
-            )
-            observed_code = error_code(failed) if failed.returncode != 0 else None
-            if failed.returncode == 0 or observed_code != "REQUIRED_ITEMS_MISSING":
-                raise RuntimeQualificationError(
-                    "conditional verification observations were not required: "
-                    f"exit={failed.returncode}; code={observed_code!r}"
+            if node in self.placements:
+                missing = self.accept_fixture_delegation(
+                    missing, missing_item="verification-observations"
                 )
+            else:
+                failed = self.invoke_template(
+                    missing, "session.complete", expected_exit=None
+                )
+                observed_code = error_code(failed) if failed.returncode != 0 else None
+                if failed.returncode == 0 or observed_code != "REQUIRED_ITEMS_MISSING":
+                    raise RuntimeQualificationError(
+                        "conditional verification observations were not required"
+                    )
             self.task_required_failure = True
             observations = next(
                 item
@@ -3635,24 +3637,29 @@ class ManagedRuntime:
                     if records_without_authority:
                         self.record(current, records_without_authority)
                     missing = self.observe()
-                    before = self.domain_state(missing)
-                    failed = self.invoke_template(
-                        missing, "session.complete", expected_exit=None
-                    )
-                    observed_code = (
-                        error_code(failed) if failed.returncode != 0 else None
-                    )
-                    after = self.observe()
-                    if (
-                        failed.returncode == 0
-                        or observed_code != "REQUIRED_ITEMS_MISSING"
-                        or self.domain_state(after) != before
-                    ):
-                        raise RuntimeQualificationError(
-                            "Validation extra assessment authority was not required "
-                            "without changing domain state: "
-                            f"exit={failed.returncode}; code={observed_code!r}"
+                    if node in self.placements:
+                        after = self.accept_fixture_delegation(
+                            missing, missing_item="extra-assessment-authority-reference"
                         )
+                    else:
+                        before = self.domain_state(missing)
+                        failed = self.invoke_template(
+                            missing, "session.complete", expected_exit=None
+                        )
+                        observed_code = (
+                            error_code(failed) if failed.returncode != 0 else None
+                        )
+                        after = self.observe()
+                        if (
+                            failed.returncode == 0
+                            or observed_code != "REQUIRED_ITEMS_MISSING"
+                            or self.domain_state(after) != before
+                        ):
+                            raise RuntimeQualificationError(
+                                "Validation extra assessment authority was not required "
+                                "without changing domain state: "
+                                f"exit={failed.returncode}; code={observed_code!r}"
+                            )
                     self.validation_extra_authority_rejected = True
                     current = after
                     continue
@@ -3749,9 +3756,7 @@ class ManagedRuntime:
                 history = output_result(
                     self.raw(["--json", "status", "--verbose"]),
                     "session.status",
-                    "podway.status-result/v4"
-                    if self.placements
-                    else "podway.status-result/v3",
+                    "podway.status-result/v5",
                 )
                 attempt = current["status"]["current"]["attempt"]["attempt_id"]
                 matching = [
@@ -3837,7 +3842,7 @@ class ManagedRuntime:
             if (
                 payload.get("schema") != OUTPUT_SCHEMA
                 or not isinstance(result, dict)
-                or result.get("schema") != "podway.criterion-assessment-result/v1"
+                or result.get("schema") != "podway.criterion-assessment-result/v2"
             ):
                 raise RuntimeQualificationError(
                     "criterion assessment result is invalid"
@@ -3891,6 +3896,8 @@ class ManagedRuntime:
                     digest,
                     "--task",
                     "qualify bounded evidence pagination",
+                    "--idempotency-key",
+                    self.next_key("pagination-start"),
                 ]
             )
         )
@@ -4095,7 +4102,13 @@ class ManagedRuntime:
             raise RuntimeQualificationError(
                 "preview omitted the exact digest-fenced start"
             )
-        start = ["--json", "start", *suggestion[2:]]
+        start = [
+            "--json",
+            "start",
+            *suggestion[2:],
+            "--idempotency-key",
+            self.next_key("start"),
+        ]
         start[start.index("<title>")] = f"qualification {procedure_id}"
         start_payload = json_payload(self.raw(start))
         started = start_payload.get("result")
@@ -4104,7 +4117,7 @@ class ManagedRuntime:
             or start_payload.get("command")
             not in {"session.start", "session.start_replace"}
             or not isinstance(started, dict)
-            or started.get("schema") != "podway.session-start-result/v3"
+            or started.get("schema") != "podway.session-start-result/v4"
         ):
             raise RuntimeQualificationError("digest-fenced start result is invalid")
         if started.get("session_state") != "prepared":
@@ -4288,9 +4301,7 @@ class ManagedRuntime:
                     history = output_result(
                         self.raw(["--json", "status", "--verbose"]),
                         "session.status",
-                        "podway.status-result/v4"
-                        if self.placements
-                        else "podway.status-result/v3",
+                        "podway.status-result/v5",
                     )
                     entries = history["rework_history"]["entries"]
                     matching = [
@@ -4443,7 +4454,7 @@ class ManagedRuntime:
                 if (
                     payload.get("schema") != OUTPUT_SCHEMA
                     or not isinstance(result, dict)
-                    or result.get("schema") != "podway.stage-transition-result/v2"
+                    or result.get("schema") != "podway.stage-transition-result/v3"
                 ):
                     raise RuntimeQualificationError(
                         "action transition result is invalid"
@@ -5859,7 +5870,7 @@ class ManagedRuntime:
             if (
                 payload.get("schema") != OUTPUT_SCHEMA
                 or not isinstance(result, dict)
-                or result.get("schema") != "podway.decision-result/v1"
+                or result.get("schema") != "podway.decision-result/v2"
             ):
                 raise RuntimeQualificationError("decision result is invalid")
         else:
@@ -5898,7 +5909,9 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.12-run-{self.run_index}",
+                f"official-v0.2.14-run-{self.run_index}",
+                "--idempotency-key",
+                self.next_key("terminal-disposition"),
                 "--if-workspace-uuid",
                 self.workspace_uuid(terminal),
                 "--if-session-id",
@@ -5910,7 +5923,7 @@ class ManagedRuntime:
         output_result(
             disposition,
             "session.terminal_disposition",
-            "podway.terminal-disposition-result/v1",
+            "podway.terminal-disposition-result/v2",
         )
 
 
@@ -5962,7 +5975,6 @@ def runtime_jobs() -> list[dict[str, Any]]:
 
 def execute_runtime_job(
     binary: Path,
-    daemon: Path,
     procedures: Path,
     job: dict[str, Any],
     cancel_event: Event,
@@ -5982,7 +5994,7 @@ def execute_runtime_job(
     }
     if cancel_event.is_set():
         raise RuntimeJobCancelled(f"runtime job cancelled before start: {batch_id}")
-    with ManagedRuntime(binary, daemon, procedures, job["order"]) as runtime:
+    with ManagedRuntime(binary, procedures, job["order"]) as runtime:
         if job["kind"] == "workspace-removal":
             result["workspace_removal"] = runtime.exercise_workspace_removal()
         elif job["kind"] == "wait":
@@ -6123,22 +6135,19 @@ def execute_runtime_job(
     return result
 
 
-def execute_runtime_jobs(
-    binary: Path, daemon: Path, procedures: Path
-) -> dict[str, Any]:
+def execute_runtime_jobs(binary: Path, procedures: Path) -> dict[str, Any]:
     jobs = runtime_jobs()
     completed: dict[int, dict[str, Any]] = {}
     cancel_event = Event()
     for job in jobs:
         if job["kind"] == "lifecycle":
-            result = execute_runtime_job(binary, daemon, procedures, job, cancel_event)
+            result = execute_runtime_job(binary, procedures, job, cancel_event)
             completed[result["order"]] = result
     executor = ThreadPoolExecutor(max_workers=MAX_PARALLEL_RUNTIMES)
     futures: dict[Future[dict[str, Any]], int] = {
         executor.submit(
             execute_runtime_job,
             binary,
-            daemon,
             procedures,
             job,
             cancel_event,
@@ -6195,13 +6204,17 @@ def execute_runtime_jobs(
     }
 
 
-def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, Any]:
+def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
     """Qualify the official artifact with bounded parallel runtime batches."""
     procedures = repository / "plugins/aquarium/assets/podway/procedures"
     probe_root: Path | None = None
     try:
-        with ManagedRuntime(binary, daemon, procedures, 0) as cleanup_probe:
+        with ManagedRuntime(binary, procedures, 0) as cleanup_probe:
             probe_root = cleanup_probe.root
+            outcome_recovery = cleanup_probe.exercise_outcomes()
+            upgrade_scenarios = cleanup_probe.exercise_upgrade(
+                repository / "tests/fixtures/podway/generation-13-populated.sql"
+            )
             raise ExpectedCleanupProbe("deliberate failure cleanup probe")
     except ExpectedCleanupProbe:
         pass
@@ -6209,7 +6222,7 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         raise RuntimeQualificationError(
             "failure cleanup probe left its disposable runtime root"
         )
-    runtime_results = execute_runtime_jobs(binary, daemon, procedures)
+    runtime_results = execute_runtime_jobs(binary, procedures)
     workspace_removal = runtime_results["workspace_removal"]
     wait_scenarios = runtime_results["wait_scenarios"]
     scenario_runs = runtime_results["scenario_runs"]
@@ -6232,12 +6245,15 @@ def qualify_runtime(binary: Path, daemon: Path, repository: Path) -> dict[str, A
         for case_id in sorted(case_variants)
     ]
     return {
-        "runtime_mode": RUNTIME_MODE,
-        "daemon_status_schema": "podway.daemon-status-result/v3",
+        "execution_model": "direct",
+        "contract_manifest_digest": CONTRACT_MANIFEST_DIGEST,
+        "podway_source_commit": RELEASE_SOURCE_COMMIT,
         "canonical_lifecycle_pass_count": 1,
         "runtime_procedure_count": 5,
         "max_parallel_runtimes": MAX_PARALLEL_RUNTIMES,
         "failure_cleanup": "passed",
+        "outcome_recovery": outcome_recovery,
+        "upgrade_scenarios": upgrade_scenarios,
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,
         "scenario_runs": scenario_runs,

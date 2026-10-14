@@ -3,10 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
-import os
-import socket
 import subprocess
-import tempfile
 import threading
 from pathlib import Path
 from typing import Self
@@ -101,9 +98,7 @@ def test_fixture_judge_preserves_final_gaps_and_phase_results(
     expected: tuple[str, str, int, int],
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.scenario = scenario
     managed.current_procedure_id = f"aquarium-{procedure}-v2"
     actual = []
@@ -151,9 +146,7 @@ def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
     checkpoint: str,
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.current_procedure_id = "aquarium-task-v2"
     managed.scenario = scenario
     managed.node_visits["review"] = review_visit
@@ -199,9 +192,7 @@ def test_fixture_preserves_completed_assessments_through_group_settlement(
     tmp_path: Path, node: str, completed: int
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.current_procedure_id = "aquarium-validation-v2"
     managed.completed_assessments["aquarium-validation-v2"] = completed
     assert managed.value_for(
@@ -258,7 +249,7 @@ def test_procedure_result_accepts_only_the_expected_contract() -> None:
     assert (
         verify_podway_compatibility.procedure_result(
             {
-                "schema": "podway.output/v3",
+                "schema": "podway.output/v4",
                 "command": "procedure.check",
                 "result": result,
             }
@@ -273,16 +264,15 @@ def test_procedure_result_rejects_an_unexpected_envelope() -> None:
         match="output envelope is incompatible",
     ):
         verify_podway_compatibility.procedure_result(
-            {"schema": "podway.output/v4", "command": "procedure.check"}
+            {"schema": "podway.output/v3", "command": "procedure.check"}
         )
 
 
 def removal_replay_process(**changes: object) -> subprocess.CompletedProcess[bytes]:
     result = {
-        "schema": "podway.workspace-removal-result/v1",
+        "schema": "podway.workspace-removal-result/v2",
         "worktree_root": "/tmp/repository",
         "workspace_uuid": None,
-        "registry_entry_removed": False,
         "podway_directory_removed": False,
         "already_absent": True,
     }
@@ -292,7 +282,7 @@ def removal_replay_process(**changes: object) -> subprocess.CompletedProcess[byt
         0,
         stdout=json.dumps(
             {
-                "schema": "podway.output/v3",
+                "schema": "podway.output/v4",
                 "command": "workspace.remove",
                 "result": result,
             }
@@ -307,10 +297,10 @@ def decision_process(target: str) -> subprocess.CompletedProcess[bytes]:
         0,
         stdout=json.dumps(
             {
-                "schema": "podway.output/v3",
+                "schema": "podway.output/v4",
                 "command": "session.decide",
                 "result": {
-                    "schema": "podway.decision-result/v1",
+                    "schema": "podway.decision-result/v2",
                     "target_graph_node_id": target,
                 },
             }
@@ -365,7 +355,6 @@ def test_task_assessment_ordinal_uses_one_scenario_aware_calculation(
     runtime = verify_podway_compatibility.podway_runtime_qualification
     managed = runtime.ManagedRuntime(
         tmp_path / "podway",
-        tmp_path / "podwayd",
         tmp_path / "procedures",
         1,
     )
@@ -588,9 +577,7 @@ def test_prepare_scenario_restores_procedure_and_resets_session_state(
     target.write_bytes(b"mutated: true\n")
     other_target = installed / other_source.name
     other_target.write_bytes(b"other-mutated: true\n")
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", procedures, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", procedures, 1)
     managed.sandbox = sandbox
     managed.fixture_target = "fixture-target"
     managed.command_sequence = 7
@@ -653,7 +640,6 @@ def test_execute_runtime_job_stops_between_scenarios_and_cleans_up(
     with pytest.raises(runtime.RuntimeJobCancelled, match="between scenarios"):
         runtime.execute_runtime_job(
             tmp_path / "podway",
-            tmp_path / "podwayd",
             tmp_path / "procedures",
             job,
             cancel_event,
@@ -676,7 +662,6 @@ def test_execute_runtime_jobs_signals_peer_cancellation(
 
     def fake_execute_runtime_job(
         _binary: Path,
-        _daemon: Path,
         _procedures: Path,
         job: dict[str, object],
         cancel_event: threading.Event,
@@ -694,7 +679,6 @@ def test_execute_runtime_jobs_signals_peer_cancellation(
     with pytest.raises(runtime.RuntimeQualificationError, match="injected failure"):
         runtime.execute_runtime_jobs(
             tmp_path / "podway",
-            tmp_path / "podwayd",
             tmp_path / "procedures",
         )
 
@@ -771,7 +755,7 @@ def test_lifecycle_job_renews_each_scenario_deadline(
                 0,
                 stdout=json.dumps(
                     {
-                        "schema": "podway.output/v3",
+                        "schema": "podway.output/v4",
                         "command": "session.archive_list",
                         "result": {
                             "schema": "podway.session-archive-list-result/v2",
@@ -788,7 +772,6 @@ def test_lifecycle_job_renews_each_scenario_deadline(
     monkeypatch.setattr(runtime, "ManagedRuntime", FakeRuntime)
     result = runtime.execute_runtime_job(
         tmp_path / "podway",
-        tmp_path / "podwayd",
         procedures,
         {"kind": "lifecycle", "batch_id": "lifecycle", "order": 1},
         threading.Event(),
@@ -797,29 +780,6 @@ def test_lifecycle_job_renews_each_scenario_deadline(
     assert driven == [*names, "pagination"]
     assert len(renewals) == len(names) + 1
     assert result["lifecycle_run"]["cleanup"] == "passed"
-
-
-def test_terminate_removes_owned_stale_socket_after_daemon_exit() -> None:
-    runtime = verify_podway_compatibility.podway_runtime_qualification
-    with tempfile.TemporaryDirectory(
-        prefix="podway-socket-", dir="/private/tmp"
-    ) as root:
-        root_path = Path(root)
-        managed = runtime.ManagedRuntime(
-            root_path / "podway",
-            root_path / "podwayd",
-            root_path / "procedures",
-            1,
-        )
-        managed.dev_home = root_path
-        run_directory = root_path / "run"
-        run_directory.mkdir()
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stale_socket:
-            stale_socket.bind(str(managed.socket))
-
-        managed.terminate()
-
-        assert not managed.socket.exists()
 
 
 @pytest.mark.parametrize(
@@ -1010,9 +970,7 @@ def test_low_blocker_readback_requires_exact_scenario_content(
     variant: str,
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path / "procedures", 1)
     managed.scenario = scenario
     managed.fixture_target = "a" * 40
     expected = runtime.low_blocker_fixture(scenario, managed.fixture_target)
@@ -1087,9 +1045,7 @@ def test_low_blocker_rework_effect_records_complete_cause(
     effect_node: str,
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path / "procedures", 1)
     managed.scenario = scenario
     managed.fixture_target = "a" * 40
     basis = '{"source_id":"fixture:low-source","blocker":"current"}\n'
@@ -1155,7 +1111,7 @@ def test_low_blocker_rework_effect_records_complete_cause(
     assert arguments[arguments.index("--if-attempt") + 1] == "current-effect-attempt"
 
 
-def test_workspace_removal_replay_requires_success_with_v8_receipt() -> None:
+def test_workspace_removal_replay_requires_success_with_v9_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(
         removal_replay_process(), "/tmp/repository", None
@@ -1163,18 +1119,18 @@ def test_workspace_removal_replay_requires_success_with_v8_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v8"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v9"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.12"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.14"
 
 
 @pytest.mark.parametrize(
     ("name", "version", "accepted"),
     [
-        ("podway", "v0.2.12", True),
-        ("podwayd", "v0.2.12", True),
+        ("podway", "v0.2.14", True),
+        ("podway", "v0.2.13", False),
         ("podway", "v0.2.11", False),
-        ("podwayd", "v0.2.11", False),
+        ("podway", "v0.3.0", False),
     ],
 )
 def test_compatibility_requires_exact_release_identity(
@@ -1207,7 +1163,7 @@ def test_compatibility_requires_exact_release_identity(
         {"registry_entry_removed": 0},
         {"podway_directory_removed": 0},
         {"already_absent": 1},
-        {"schema": "podway.workspace-removal-result/v2"},
+        {"schema": "podway.workspace-removal-result/v1"},
     ],
 )
 def test_workspace_removal_replay_rejects_incompatible_results(changes: dict) -> None:
@@ -1242,7 +1198,6 @@ def test_workspace_removal_requires_exact_fields_and_boolean_flags(
     runtime = verify_podway_compatibility.podway_runtime_qualification
     expected = {
         "workspace_uuid": workspace_uuid,
-        "registry_entry_removed": workspace_uuid is not None,
         "podway_directory_removed": workspace_uuid is not None,
         "already_absent": workspace_uuid is None,
     }
@@ -1268,7 +1223,7 @@ def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None
         returncode,
         stdout=json.dumps(
             {
-                "schema": "podway.error/v1",
+                "schema": "podway.error/v2",
                 "command": "workspace.remove",
                 "code": "WORKSPACE_CONFIG_INVALID",
                 "retryable": False,
@@ -1280,99 +1235,14 @@ def test_workspace_removal_replay_rejects_the_old_error(returncode: int) -> None
         runtime.workspace_removal_result(completed, "/tmp/repository", None)
 
 
-@pytest.mark.parametrize(
-    "changes",
-    [
-        {},
-        {"daemon_version": "v0.2.11"},
-        {"daemon_version": "0.2.12"},
-        {"daemon_version": "v0.2.9"},
-        {"contract_manifest_digest": "sha256:" + "0" * 64},
-    ],
-)
-def test_managed_runtime_requires_v0212_daemon_identity(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changes: dict
-) -> None:
-    runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures", 1
-    )
-    status = {
-        "pid": 123,
-        "readiness_state": "ready",
-        "readiness_stage": "ready",
-        "mode": "release-qa",
-        "daemon_version": "v0.2.12",
-        "contract_manifest_digest": (
-            "sha256:a96aad19de8e7346629d0a4816256f697f9e6b293e44eb550527b4b3c229ddef"
-        ),
-        "in_flight_client_count": 0,
-        "maintenance_operation_count": 0,
-    }
-    status.update(changes)
-    monkeypatch.setattr(managed, "daemon_status_probe", lambda: status)
-    times = iter([0, 0, runtime.READINESS_TIMEOUT_SECONDS + 1])
-    monkeypatch.setattr(runtime.time, "monotonic", lambda: next(times))
-    monkeypatch.setattr(runtime.time, "sleep", lambda _: None)
-    if changes:
-        with pytest.raises(runtime.RuntimeQualificationError):
-            managed.wait_ready()
-    else:
-        managed.wait_ready()
-        assert managed.daemon_pid == 123
-
-
-def test_managed_runtime_cleans_up_when_readiness_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    runtime_module = verify_podway_compatibility.podway_runtime_qualification
-    binary = tmp_path / "podway"
-    daemon = tmp_path / "podwayd"
-    procedures = tmp_path / "procedures"
-    procedures.mkdir()
-    for executable in (binary, daemon):
-        executable.write_bytes(b"fixture")
-        executable.chmod(0o755)
-
-    class ExitedProcess:
-        def poll(self) -> int:
-            return 0
-
-    monkeypatch.setattr(
-        runtime_module,
-        "bounded_process",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, b"", b""),
-    )
-    monkeypatch.setattr(
-        runtime_module.subprocess,
-        "Popen",
-        lambda *args, **kwargs: ExitedProcess(),
-    )
-    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
-
-    def fail_readiness() -> None:
-        raise runtime_module.RuntimeQualificationError("readiness fixture failed")
-
-    monkeypatch.setattr(managed, "wait_ready", fail_readiness)
-
-    with pytest.raises(
-        runtime_module.RuntimeQualificationError, match="readiness fixture failed"
-    ):
-        managed.__enter__()
-
-    assert managed.root is not None
-    assert not managed.root.exists()
-
-
 def test_managed_runtime_cleans_up_when_setup_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime_module = verify_podway_compatibility.podway_runtime_qualification
     binary = tmp_path / "podway"
-    daemon = tmp_path / "podwayd"
     procedures = tmp_path / "procedures"
     procedures.mkdir()
-    for executable in (binary, daemon):
+    for executable in (binary,):
         executable.write_bytes(b"fixture")
         executable.chmod(0o755)
 
@@ -1382,7 +1252,7 @@ def test_managed_runtime_cleans_up_when_setup_fails(
         raise runtime_module.RuntimeQualificationError("setup fixture failed")
 
     monkeypatch.setattr(runtime_module, "bounded_process", fail_setup)
-    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+    managed = runtime_module.ManagedRuntime(binary, procedures, 1)
 
     with pytest.raises(
         runtime_module.RuntimeQualificationError, match="setup fixture failed"
@@ -1398,10 +1268,9 @@ def test_managed_runtime_preserves_failure_before_snapshot_setup(
 ) -> None:
     runtime_module = verify_podway_compatibility.podway_runtime_qualification
     binary = tmp_path / "podway"
-    daemon = tmp_path / "podwayd"
     procedures = tmp_path / "procedures"
     procedures.mkdir()
-    for executable in (binary, daemon):
+    for executable in (binary,):
         executable.write_bytes(b"fixture")
         executable.chmod(0o755)
 
@@ -1409,45 +1278,11 @@ def test_managed_runtime_preserves_failure_before_snapshot_setup(
         raise OSError("chmod fixture failed")
 
     monkeypatch.setattr(runtime_module.Path, "chmod", fail_chmod)
-    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
+    managed = runtime_module.ManagedRuntime(binary, procedures, 1)
 
     with pytest.raises(OSError, match="chmod fixture failed"):
         managed.__enter__()
 
-    assert managed.dev_home is None
-    assert managed.root is not None
-    assert not managed.root.exists()
-
-
-def test_managed_runtime_closes_log_and_cleans_up_when_daemon_start_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    runtime_module = verify_podway_compatibility.podway_runtime_qualification
-    binary = tmp_path / "podway"
-    daemon = tmp_path / "podwayd"
-    procedures = tmp_path / "procedures"
-    procedures.mkdir()
-    for executable in (binary, daemon):
-        executable.write_bytes(b"fixture")
-        executable.chmod(0o755)
-
-    monkeypatch.setattr(
-        runtime_module,
-        "bounded_process",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, b"", b""),
-    )
-
-    def fail_start(*args: object, **kwargs: object) -> None:
-        raise OSError("daemon fixture failed")
-
-    monkeypatch.setattr(runtime_module.subprocess, "Popen", fail_start)
-    managed = runtime_module.ManagedRuntime(binary, daemon, procedures, 1)
-
-    with pytest.raises(OSError, match="daemon fixture failed"):
-        managed.__enter__()
-
-    assert managed.log is not None
-    assert managed.log.closed
     assert managed.root is not None
     assert not managed.root.exists()
 
@@ -1458,46 +1293,6 @@ def test_exact_binary_requires_an_absolute_path() -> None:
         match="absolute path",
     ):
         verify_podway_compatibility.exact_binary("podway")
-
-
-def test_exact_sibling_daemon_requires_an_executable_peer(tmp_path: Path) -> None:
-    binary = tmp_path / "podway"
-    binary.write_bytes(b"cli")
-    binary.chmod(0o755)
-    with pytest.raises(
-        verify_podway_compatibility.podway_runtime_qualification.RuntimeQualificationError,
-        match="executable sibling",
-    ):
-        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
-            binary
-        )
-
-    daemon = tmp_path / "podwayd"
-    daemon.write_bytes(b"daemon")
-    daemon.chmod(0o755)
-    assert (
-        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
-            binary
-        )
-        == daemon
-    )
-
-
-def test_exact_sibling_daemon_rejects_a_symlink(tmp_path: Path) -> None:
-    binary = tmp_path / "podway"
-    binary.write_bytes(b"cli")
-    binary.chmod(0o755)
-    target = tmp_path / "real-podwayd"
-    target.write_bytes(b"daemon")
-    target.chmod(0o755)
-    os.symlink(target.name, tmp_path / "podwayd")
-    with pytest.raises(
-        verify_podway_compatibility.podway_runtime_qualification.RuntimeQualificationError,
-        match="must not be symlinks",
-    ):
-        verify_podway_compatibility.podway_runtime_qualification.exact_sibling_daemon(
-            binary
-        )
 
 
 @pytest.mark.parametrize(
@@ -1586,9 +1381,7 @@ def test_runtime_preview_and_observation_follow_admitted_source(
     wrong_schema: bool,
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.sandbox = tmp_path
     declaration = {"role_ref": "fixture-worker"}
     node = {"id": "fixture-action", "use": "fixture"}
@@ -1607,7 +1400,7 @@ def test_runtime_preview_and_observation_follow_admitted_source(
 
     def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
         preview = "procedure" in arguments
-        version = (2 if delegated else 1) if preview else (4 if delegated else 3)
+        version = (2 if delegated else 1) if preview else 5
         if wrong_schema:
             version = (3 - version) if preview else (7 - version)
         result = {
@@ -1655,11 +1448,7 @@ def test_runtime_preview_and_observation_follow_admitted_source(
                     {
                         "schema": runtime.OUTPUT_SCHEMA,
                         "command": "session.observe",
-                        "result": {
-                            "schema": runtime.OBSERVATION_SCHEMA
-                            if delegated
-                            else runtime.DELEGATED_OBSERVATION_SCHEMA
-                        },
+                        "result": {"schema": "podway.observation-result/v4"},
                     }
                 ).encode(),
                 b"",
@@ -1685,9 +1474,7 @@ def test_runtime_rejects_delegation_package_for_different_inputs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     declaration = {
         "binding_ref": "fixture",
         "role_ref": "worker",
@@ -1766,9 +1553,7 @@ def test_delegated_completion_uses_accepted_revision_and_attempt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.placements = {"fixture-action": {}}
     original = {"guidance": {"node": {"graph_node_id": "fixture-action"}}}
     accepted = {
@@ -1810,9 +1595,7 @@ def test_action_returns_observation_after_its_last_record(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     before = {
         "guidance": {"node": {"graph_node_id": "fixture-action"}},
         "active_items": [{"item_id": "summary", "type": "text", "required_now": True}],
@@ -1830,9 +1613,7 @@ def test_conditional_verification_returns_fresh_post_rejection_observation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     before = {
         "guidance": {"node": {"graph_node_id": "verify"}},
         "active_items": [
@@ -1882,9 +1663,7 @@ def test_expired_runtime_deadline_rejects_before_invoking_a_child(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, elapsed: int
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.snapshot_binary = tmp_path / "podway"
     managed.sandbox = tmp_path
     managed.environment = {}
@@ -1904,9 +1683,7 @@ def test_runtime_clips_child_timeout_to_remaining_scenario_and_command_cap(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, remaining_fraction: float
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.snapshot_binary = tmp_path / "podway"
     managed.sandbox = tmp_path
     managed.environment = {}
@@ -1950,7 +1727,6 @@ def test_execute_runtime_jobs_isolates_lifecycle_and_preserves_results(
 
     def fake_execute_runtime_job(
         _binary: Path,
-        _daemon: Path,
         _procedures: Path,
         job: dict[str, object],
         _cancel_event: threading.Event,
@@ -2003,7 +1779,6 @@ def test_execute_runtime_jobs_isolates_lifecycle_and_preserves_results(
         future = driver.submit(
             runtime.execute_runtime_jobs,
             tmp_path / "podway",
-            tmp_path / "podwayd",
             tmp_path / "procedures",
         )
         try:
@@ -2053,7 +1828,6 @@ def test_execute_runtime_jobs_failed_lifecycle_dispatches_no_independent_jobs(
 
     def fake_execute_runtime_job(
         _binary: Path,
-        _daemon: Path,
         _procedures: Path,
         job: dict[str, object],
         _cancel_event: threading.Event,
@@ -2066,9 +1840,7 @@ def test_execute_runtime_jobs_failed_lifecycle_dispatches_no_independent_jobs(
     monkeypatch.setattr(runtime, "runtime_jobs", lambda: jobs)
     monkeypatch.setattr(runtime, "execute_runtime_job", fake_execute_runtime_job)
     with pytest.raises(runtime.RuntimeQualificationError) as captured:
-        runtime.execute_runtime_jobs(
-            tmp_path / "podway", tmp_path / "podwayd", tmp_path / "procedures"
-        )
+        runtime.execute_runtime_jobs(tmp_path / "podway", tmp_path / "procedures")
     assert captured.value is failure
     assert called == [jobs[1]]
     assert called[0] is jobs[1]
@@ -2083,9 +1855,7 @@ def test_local_qualification_profiles_retain_source_and_retry_current_checks(
     runtime = verify_podway_compatibility.podway_runtime_qualification
     scenario = f"{family}-local-{mode}"
     assert (scenario, f"aquarium-{family}-v2.yaml") in runtime.terminal_scenario_specs()
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.scenario = scenario
     managed.current_procedure_id = f"aquarium-{family}-v2"
     source = {
@@ -2190,9 +1960,7 @@ def test_local_task_qualification_routes_latest_judge_verdict(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, verdict: str, expected: str
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
-    managed = runtime.ManagedRuntime(
-        tmp_path / "podway", tmp_path / "podwayd", tmp_path, 1
-    )
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
     managed.scenario = "task-local-settled"
 
     def read(observation: dict, node: str, item: str) -> str:
@@ -2203,3 +1971,43 @@ def test_local_task_qualification_routes_latest_judge_verdict(
     assert (
         managed.local_correction_decision({}, "confirm-review-completion") == expected
     )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {},
+        {"version": "v0.2.13"},
+        {"version": "v0.3.0"},
+        {"target": "x86_64-apple-darwin"},
+        {"source_commit": "a" * 40},
+        {"contract_manifest_digest": "sha256:" + "a" * 64},
+        {"contract_manifest_schema": "podway.contract-manifest/v1"},
+        {"build_identity": "invalid"},
+    ],
+)
+def test_exact_artifact_identity_requires_release_contract(changes: dict) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    identity = {
+        "schema": "podway.version-result/v2",
+        "product": "podway",
+        "version": runtime.EXPECTED_VERSION,
+        "target": "aarch64-apple-darwin",
+        "source_commit": runtime.RELEASE_SOURCE_COMMIT,
+        "contract_manifest_digest": runtime.CONTRACT_MANIFEST_DIGEST,
+        "contract_manifest_schema": "podway.contract-manifest/v2",
+        "build_identity": "sha256:" + "b" * 64,
+    } | changes
+    completed = subprocess.CompletedProcess(
+        [],
+        0,
+        json.dumps(
+            {"schema": "podway.output/v4", "command": "version", "result": identity}
+        ).encode(),
+        b"",
+    )
+    if changes:
+        with pytest.raises(runtime.RuntimeQualificationError):
+            runtime.release_identity(completed)
+    else:
+        assert runtime.release_identity(completed) == identity

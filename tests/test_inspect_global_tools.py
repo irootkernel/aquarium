@@ -270,7 +270,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v5"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v6"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
@@ -299,34 +299,6 @@ class TestInspectGlobalTools:
             "aquarium-status",
         }
         assert list(payload["tools"]) == list(inspect_global_tools.GLOBAL_COMPONENTS)
-
-    def test_missing_podway_daemon_preserves_documented_shape(self) -> None:
-        payload = self.run_inspector(GLOBAL_SCRIPT)
-        daemon = payload["tools"]["podway"]["daemon"]
-
-        assert daemon == {
-            "installed": False,
-            "loaded": False,
-            "reachable": False,
-            "running": False,
-            "version": None,
-            "target": None,
-            "ready": False,
-            "mode": None,
-            "readiness_state": None,
-            "readiness_stage": None,
-            "readiness_elapsed_ms": None,
-            "worktree_recovery": None,
-            "status": "missing",
-            "versions_match": False,
-            "probe": {
-                "attempted": False,
-                "ok": False,
-                "exit_code": None,
-                "timed_out": False,
-                "reason": "executable_missing",
-            },
-        }
 
     def test_global_paired_skill_uses_only_agents_canonical_root(self) -> None:
         codex_skill = self.codex_home / "skills/use-sorage"
@@ -455,7 +427,7 @@ class TestInspectGlobalTools:
             "probes": {},
         }
         sorage = {**cli, "probes": {"doctor": {"attempted": False}}}
-        podway = {**cli, "daemon": {"status": "missing"}}
+        podway = {**cli, "identity": None, "probes": {"identity": {"attempted": False}}}
 
         with (
             mock.patch.object(
@@ -552,140 +524,6 @@ class TestInspectGlobalTools:
         inspector.inspect_agent_skill.assert_called_once_with("use-dolgorae", ())
         inspector.inspect_mulgae_installation_prerequisites.assert_not_called()
         inspector.inspect_ouroboros.assert_not_called()
-
-    def test_global_podway_wait_ready_uses_native_timeout_with_headroom(self) -> None:
-        inspector = mock.MagicMock()
-        inspector.PODWAY_SKILL_FILES = ()
-        inspector.PODWAY_DAEMON_WAIT_SECONDS = 120.0
-        inspector.PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS = 125.0
-        inspector.inspect_agent_skill.return_value = {"status": "configured"}
-        inspector.json_probe.return_value = {"ok": True}
-        inspector.normalize_podway_daemon_probe.return_value = (
-            {"ok": True},
-            {
-                "installed": True,
-                "loaded": True,
-                "reachable": True,
-                "running": True,
-                "version": "v0.2.12",
-                "target": "aarch64-apple-darwin",
-                "ready": True,
-                "mode": "prod",
-                "readiness_state": "ready",
-                "readiness_stage": "ready",
-                "readiness_elapsed_ms": 1,
-                "worktree_recovery": {"total": 1, "completed": 1, "failed": 0},
-            },
-        )
-        inspector.normalized_version.side_effect = lambda version: version.removeprefix(
-            "v"
-        )
-        tool = {
-            "status": "installed",
-            "installed": True,
-            "executable": "/usr/local/bin/podway",
-            "version": "v0.2.12",
-            "probes": {},
-        }
-
-        with mock.patch.object(
-            inspect_global_tools, "inspect_versioned_cli", return_value=tool
-        ):
-            result = inspect_global_tools.inspect_global_podway(
-                inspector, self.repository, 3.5
-            )
-
-        inspector.json_probe.assert_called_once_with(
-            [
-                "/usr/local/bin/podway",
-                "--json",
-                "daemon",
-                "wait-ready",
-                "--timeout",
-                "120s",
-            ],
-            Path(self.repository.anchor),
-            125.0,
-        )
-        assert result["daemon"]["status"] == "configured"
-        assert result["daemon"]["versions_match"] is True
-
-    @pytest.mark.parametrize(
-        ("override", "normalized", "expected_field"),
-        (
-            (
-                {"mode": "dev"},
-                {"ok": False, "error_code": "unsupported_daemon_mode"},
-                ("mode", "dev"),
-            ),
-            ({"ready": False}, {"ok": True}, ("ready", False)),
-            ({"version": "v0.2.10"}, {"ok": True}, ("versions_match", False)),
-            (
-                {"target": "x86_64-apple-darwin"},
-                {"ok": True},
-                ("target", "x86_64-apple-darwin"),
-            ),
-            (
-                {
-                    "ready": False,
-                    "worktree_recovery": {"total": 2, "completed": 1, "failed": 0},
-                },
-                {"ok": True},
-                (
-                    "worktree_recovery",
-                    {"total": 2, "completed": 1, "failed": 0},
-                ),
-            ),
-        ),
-    )
-    def test_global_podway_rejects_unhealthy_daemon_state(
-        self,
-        override: dict[str, object],
-        normalized: dict[str, object],
-        expected_field: tuple[str, object],
-    ) -> None:
-        inspector = mock.MagicMock()
-        inspector.PODWAY_SKILL_FILES = ()
-        inspector.PODWAY_DAEMON_WAIT_SECONDS = 120.0
-        inspector.PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS = 125.0
-        inspector.inspect_agent_skill.return_value = {"status": "configured"}
-        inspector.json_probe.return_value = {"ok": True}
-        daemon = {
-            "installed": True,
-            "loaded": True,
-            "reachable": True,
-            "running": True,
-            "version": "v0.2.12",
-            "target": "aarch64-apple-darwin",
-            "ready": True,
-            "mode": "prod",
-            "readiness_state": "ready",
-            "readiness_stage": "ready",
-            "readiness_elapsed_ms": 1,
-            "worktree_recovery": {"total": 1, "completed": 1, "failed": 0},
-        }
-        daemon.update(override)
-        inspector.normalize_podway_daemon_probe.return_value = (normalized, daemon)
-        inspector.normalized_version.side_effect = lambda version: version.removeprefix(
-            "v"
-        )
-        tool = {
-            "status": "installed",
-            "installed": True,
-            "executable": "/usr/local/bin/podway",
-            "version": "v0.2.12",
-            "probes": {},
-        }
-
-        with mock.patch.object(
-            inspect_global_tools, "inspect_versioned_cli", return_value=tool
-        ):
-            result = inspect_global_tools.inspect_global_podway(
-                inspector, self.repository, 3.5
-            )
-
-        assert result["daemon"]["status"] == "degraded"
-        assert result["daemon"][expected_field[0]] == expected_field[1]
 
     def test_non_sorage_version_probe_does_not_require_a_matching_name(self) -> None:
         inspector = mock.MagicMock()
@@ -1004,7 +842,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v21"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v22"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -1060,7 +898,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v21"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v22"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(
@@ -1758,7 +1596,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v5"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v6"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),
@@ -2306,3 +2144,109 @@ def test_dolgorae_paired_skill_is_independent_and_exposes_freshness_evidence(
             assert (
                 hashes[relative] == hashlib.sha256(content.encode()).hexdigest()
             ) is (case == "complete")
+
+
+def test_global_podway_identity_uses_neutral_directory(tmp_path: Path) -> None:
+    inspector = mock.MagicMock()
+    inspector.PODWAY_SKILL_FILES = ()
+    inspector.inspect_agent_skill.return_value = {"status": "missing"}
+    inspector.normalize_podway_identity.return_value = (
+        {"ok": True},
+        {"version": "v0.3.0"},
+    )
+    inspector.normalized_version.side_effect = lambda value: value.removeprefix("v")
+    tool = {
+        "installed": True,
+        "version_supported": True,
+        "version": "v0.3.0",
+        "status": "installed",
+        "executable": "/fixture/podway",
+        "probes": {},
+    }
+    with mock.patch.object(
+        inspect_global_tools, "inspect_versioned_cli", return_value=tool
+    ):
+        result = inspect_global_tools.inspect_global_podway(inspector, tmp_path, 3.5)
+    inspector.json_probe.assert_called_once_with(
+        ["/fixture/podway", "--json", "version", "--identity"],
+        Path(tmp_path.anchor),
+        3.5,
+    )
+    assert result["status"] == "installed"
+    assert result["identity"] == {"version": "v0.3.0"}
+    assert "daemon" not in result
+
+
+def test_missing_podway_has_no_service_requirement(tmp_path: Path) -> None:
+    inspector = mock.MagicMock()
+    inspector.PODWAY_SKILL_FILES = ()
+    inspector.inspect_agent_skill.return_value = {"status": "missing"}
+    tool = {"installed": False, "status": "missing", "probes": {}}
+    with mock.patch.object(
+        inspect_global_tools, "inspect_versioned_cli", return_value=tool
+    ):
+        result = inspect_global_tools.inspect_global_podway(inspector, tmp_path, 3.5)
+    inspector.json_probe.assert_not_called()
+    assert result["identity"] is None
+    assert "daemon" not in result
+
+
+@pytest.mark.parametrize(
+    "case", ["failed", "invalid_schema", "extra_field", "version_mismatch"]
+)
+def test_global_podway_rejects_unusable_identity(
+    tmp_path: Path, monkeypatch, case: str
+) -> None:
+    inspector = inspect_global_tools.load_inspector()
+    identity = {
+        "schema": "podway.version-result/v2",
+        "product": "podway",
+        "version": "v0.2.14",
+        "target": "aarch64-apple-darwin",
+        "build_identity": "sha256:" + "a" * 64,
+        "source_commit": None,
+        "contract_manifest_schema": "podway.contract-manifest/v2",
+        "contract_manifest_digest": "sha256:" + "b" * 64,
+    }
+    probe = {
+        "attempted": True,
+        "ok": case != "failed",
+        "exit_code": 1 if case == "failed" else 0,
+        "timed_out": False,
+        "result": {
+            "schema": "podway.output/v4",
+            "command": "version",
+            "result": identity,
+        },
+    }
+    if case == "invalid_schema":
+        probe["result"]["schema"] = "podway.output/v3"
+    elif case == "extra_field":
+        identity["private_metadata"] = "private-value"
+    elif case == "version_mismatch":
+        identity["version"] = "v0.3.0"
+    tool = {
+        "installed": True,
+        "version_supported": True,
+        "version": "v0.2.14",
+        "status": "installed",
+        "executable": "/fixture/podway",
+        "probes": {},
+    }
+    monkeypatch.setattr(
+        inspect_global_tools, "inspect_versioned_cli", lambda *args, **kwargs: tool
+    )
+    monkeypatch.setattr(
+        inspect_global_tools,
+        "inspect_canonical_agent_skill",
+        lambda *args: {"status": "missing"},
+    )
+    monkeypatch.setattr(inspector, "json_probe", lambda *args: probe)
+    result = inspect_global_tools.inspect_global_podway(inspector, tmp_path, 3.5)
+    assert result["status"] == "degraded"
+    assert "private-value" not in json.dumps(result)
+    if case != "version_mismatch":
+        assert result["identity"] is None
+        assert result["probes"]["identity"]["ok"] is False
+    else:
+        assert result["identity"]["version"] == "v0.3.0"

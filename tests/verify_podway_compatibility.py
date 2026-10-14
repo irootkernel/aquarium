@@ -1,4 +1,4 @@
-"""Verify one exact Podway v0.2.12 binary against Aquarium Procedures."""
+"""Verify one exact Podway v0.2.14 binary against Aquarium Procedures."""
 
 from __future__ import annotations
 
@@ -23,13 +23,13 @@ if RUNTIME_SPEC is None or RUNTIME_SPEC.loader is None:
 podway_runtime_qualification = importlib.util.module_from_spec(RUNTIME_SPEC)
 RUNTIME_SPEC.loader.exec_module(podway_runtime_qualification)
 
-EXPECTED_VERSION = "v0.2.12"
-OUTPUT_SCHEMA = "podway.output/v3"
+EXPECTED_VERSION = "v0.2.14"
+OUTPUT_SCHEMA = "podway.output/v4"
 DIAGNOSTICS_SCHEMA = "podway.procedure-diagnostics-result/v1"
 SOURCE_SCHEMA = "podway.procedure-source-result/v1"
 PREVIEW_SCHEMA = "podway.procedure-preview-result/v1"
 DELEGATED_PREVIEW_SCHEMA = "podway.procedure-preview-result/v2"
-RESULT_SCHEMA = "aquarium-podway-compatibility.v8"
+RESULT_SCHEMA = "aquarium-podway-compatibility.v9"
 COMMAND_TIMEOUT_SECONDS = 30
 PROCEDURE_NAMES = (
     "aquarium-design-v2.yaml",
@@ -233,9 +233,19 @@ def repository_identity(repository: Path) -> tuple[str, bool]:
 def verify(binary: Path, repository: Path) -> dict[str, Any]:
     aquarium_head, aquarium_worktree_clean = repository_identity(repository)
     require_version(binary, repository)
+    identity_exit, identity_payload = run(
+        binary, ["--json", "version", "--identity"], repository
+    )
     try:
-        daemon = podway_runtime_qualification.exact_sibling_daemon(binary)
-        require_version(daemon, repository, "podwayd")
+        if identity_exit != 0:
+            raise podway_runtime_qualification.RuntimeQualificationError(
+                "CLI identity failed"
+            )
+        podway_runtime_qualification.release_identity(
+            subprocess.CompletedProcess(
+                [], identity_exit, json.dumps(identity_payload).encode(), b""
+            )
+        )
     except podway_runtime_qualification.RuntimeQualificationError as error:
         raise CompatibilityError(str(error)) from error
     procedures = repository / "plugins/aquarium/assets/podway/procedures"
@@ -266,9 +276,7 @@ def verify(binary: Path, repository: Path) -> dict[str, Any]:
             require_rejected_procedure(binary, repository, fixture, contract)
 
     try:
-        runtime = podway_runtime_qualification.qualify_runtime(
-            binary, daemon, repository
-        )
+        runtime = podway_runtime_qualification.qualify_runtime(binary, repository)
     except podway_runtime_qualification.RuntimeQualificationError as error:
         raise CompatibilityError(str(error)) from error
 
@@ -278,7 +286,6 @@ def verify(binary: Path, repository: Path) -> dict[str, Any]:
         "aquarium_head": aquarium_head,
         "aquarium_worktree_clean": aquarium_worktree_clean,
         "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
-        "daemon_sha256": hashlib.sha256(daemon.read_bytes()).hexdigest(),
         "canonical_procedure_count": len(PROCEDURE_NAMES),
         "negative_declaration_contracts": list(negative_fixtures),
         **runtime,

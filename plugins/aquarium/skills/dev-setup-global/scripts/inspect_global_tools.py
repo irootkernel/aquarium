@@ -14,7 +14,7 @@ from typing import Any
 
 from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v5"
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v6"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -207,56 +207,29 @@ def inspect_global_podway(
     tool["agent_skill"] = inspect_canonical_agent_skill(
         inspector, "use-podway", inspector.PODWAY_SKILL_FILES
     )
+    tool["identity"] = None
     if not tool["installed"]:
-        tool["daemon"] = {
-            "installed": False,
-            "loaded": False,
-            "reachable": False,
-            "running": False,
-            "version": None,
-            "target": None,
-            "ready": False,
-            "mode": None,
-            "readiness_state": None,
-            "readiness_stage": None,
-            "readiness_elapsed_ms": None,
-            "worktree_recovery": None,
-            "status": "missing",
-            "versions_match": False,
-            "probe": inspector.skipped_probe("executable_missing"),
-        }
+        tool["probes"]["identity"] = inspector.skipped_probe("executable_missing")
         return tool
-    daemon_probe = inspector.json_probe(
-        [
-            tool["executable"],
-            "--json",
-            "daemon",
-            "wait-ready",
-            "--timeout",
-            f"{inspector.PODWAY_DAEMON_WAIT_SECONDS:g}s",
-        ],
-        neutral_cwd,
-        max(timeout_seconds, inspector.PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS),
+    probe = (
+        inspector.json_probe(
+            [tool["executable"], "--json", "version", "--identity"],
+            neutral_cwd,
+            timeout_seconds,
+        )
+        if tool["version_supported"]
+        else inspector.skipped_probe("unsupported_version")
     )
-    normalized, daemon = inspector.normalize_podway_daemon_probe(daemon_probe)
-    versions_match = bool(
-        tool.get("version")
-        and daemon["version"]
-        and inspector.normalized_version(tool["version"])
-        == inspector.normalized_version(daemon["version"])
-    )
-    configured = bool(
+    normalized, identity = inspector.normalize_podway_identity(probe)
+    tool["probes"]["identity"] = normalized
+    tool["identity"] = identity
+    if not (
         normalized["ok"]
-        and daemon["ready"]
-        and daemon["target"] == "aarch64-apple-darwin"
-        and versions_match
-    )
-    tool["daemon"] = {
-        **daemon,
-        "status": "configured" if configured else "degraded",
-        "versions_match": versions_match,
-        "probe": normalized,
-    }
+        and identity is not None
+        and inspector.normalized_version(identity["version"])
+        == inspector.normalized_version(tool["version"])
+    ):
+        tool["status"] = "degraded"
     return tool
 
 
@@ -459,7 +432,8 @@ def inspect_global(
                 if key in raw:
                     entry[key] = raw[key]
         if name == "podway":
-            entry["daemon"] = raw["daemon"]
+            entry["identity"] = raw["identity"]
+            entry["identity_probe"] = raw["probes"]["identity"]
         if name == "sorage":
             entry["initialization_status"] = raw.get("initialization_status")
             entry["initialization_probe"] = raw["probes"]["doctor"]
@@ -547,7 +521,7 @@ def parse_arguments() -> argparse.Namespace:
         "--timeout-seconds",
         type=float,
         default=10.0,
-        help="Timeout for each ordinary read-only command; Podway readiness uses its fixed catalog wait",
+        help="Timeout for each read-only command",
     )
     parser.add_argument(
         "--component",

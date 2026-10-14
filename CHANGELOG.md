@@ -11,6 +11,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Podway v0.2.14 or newer without a version upper bound, adopt its Direct CLI and release-pinned skill, and preserve incompatible workspace state until an explicitly approved fresh-runtime reset; exact UTM upgrade and workflow verification remain required before release.
+
 - Align all five supervised Procedures, preserve admitted snapshots, and bind each serialized native assignment to its own configuration and result; reconcile lost Claude feedback acknowledgements before retrying. Required placements need qualification for their exact operative inputs, and exact UTM upgrade remains a pre-release gate.
 
 - Declare supervised Worker/Judge checkpoints for Design and War-room, preserving negative quality routing and exact document approval; existing users need separately authorized managed-file updates and compatible qualified successor sessions.

@@ -3972,9 +3972,7 @@ def test_validation_local_profiles_match_the_actual_clean_audit_guards() -> None
     graph = nodes(procedure)
     audit = procedure["node_definitions"][graph["audit"]["use"]]
     for scenario in ("validation-local-settled", "validation-local-retry"):
-        managed = runtime.ManagedRuntime(
-            Path("/unused/podway"), Path("/unused/podwayd"), PROCEDURES, 1
-        )
+        managed = runtime.ManagedRuntime(Path("/unused/podway"), PROCEDURES, 1)
         managed.scenario = scenario
         managed.current_procedure_id = "aquarium-validation-v2"
         values = {}

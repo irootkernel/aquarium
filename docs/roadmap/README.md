@@ -52,6 +52,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
+| EPIC-022 | Adopt Podway v0.2.14 | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -597,3 +598,18 @@ All member Tasks and Epic validation are complete. Master accepted
 the overall Epic outcome. The [agent orchestration specification](../specs/agent-orchestration.md)
 owns the qualified candidate behavior and its limits; Git history retains the
 settled execution dossier.
+
+## EPIC-022: Adopt Podway v0.2.14
+
+**Status:** `In Progress`
+
+Raise the Podway floor to stable v0.2.14 with no version upper bound for Aquarium v0.1.19. Adopt Direct execution, native identity and outcome recovery, update setup inspection and preserve the full Procedure qualification inventory. This is breaking: existing users need the new CLI and paired skill, original-writer retirement where applicable, and an explicitly confirmed fresh-runtime reset for incompatible workspaces. Exact candidate installation and functional verification must pass in UTM before release.
+
+**Detailed SOT:** [`TODO-PODWAY-V0214.md`](../todo/TODO-PODWAY-V0214.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-118 | Align the released Direct contract | Compare v0.2.12, v0.2.13 and v0.2.14; adopt the lower-bound-only support and upgrade contracts. | In Progress | External Podway v0.2.14 release; EPIC-021 |
+| TASK-119 | Update setup inspection | Validate single-CLI identity, workspace health and native contracts without service or mode assumptions. | In Progress | TASK-118 |
+| TASK-120 | Replace the compatibility runtime | Run the official v0.2.14 CLI against disposable fixtures, preserving Procedure scenarios and checking outcomes and removal replay. | In Progress | TASK-119 |
+| TASK-121 | Qualify and promote the combination | Verify exact artifacts, local checks, selected Herdr review and UTM installed workflows; promote documents and settle closeout after actual acceptance. | In Progress | TASK-120 |

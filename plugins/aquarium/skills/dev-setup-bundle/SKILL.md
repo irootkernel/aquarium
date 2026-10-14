@@ -29,7 +29,7 @@ The global skill maps each selected name to one `--component <name>` inspector
 argument and runs no other component. `aquarium-status` is common bundle
 infrastructure, not a new manifest tool.
 
-Prepare each selected global CLI, paired skill, daemon, Sorage initialization, third-party writing or Lore skill, and Ouroboros component at most once. Prepare a Mulgae or Gaori global MCP only when that name is in `required_global_mcp`; local-only targets do not depend on global MCP readiness for that tool. For Ouroboros, this means one CLI upgrade and one integration update per distinct discovered Codex home, not one installation per repository. Preserve every exact proposal, backup, approval, stale-target, verification, and cleanup boundary from `dev-setup-global`.
+Prepare each selected global CLI, paired skill, Sorage initialization, third-party writing or Lore skill, and Ouroboros component at most once. Prepare a Mulgae or Gaori global MCP only when that name is in `required_global_mcp`; local-only targets do not depend on global MCP readiness for that tool. For Ouroboros, this means one CLI upgrade and one integration update per distinct discovered Codex home, not one installation per repository. Preserve every exact proposal, backup, approval, stale-target, verification, and cleanup boundary from `dev-setup-global`.
 
 If a shared action fails or is declined, record the dependent targets as partial, failed, or declined while continuing independent components and targets.
 

@@ -170,11 +170,11 @@ separate authority; reconcile pending effects and establish writer/descendant
 quiescence before replacement. Primary replacement remains unsupported unless
 an explicitly authorized native successor path establishes it.
 
-Native observations keep outer `podway.output/v3`, with direct observation
-result `v3` or delegation-aware result `v4` according to the admitted Procedure.
-Standard and compact delegated status identify their respective `v4` result
-schemas and preserve native delegation state; direct status keeps its own result contract.
-The delivery helpers preserve legacy profiles and full serialized lifetime
+Native observations use outer `podway.output/v4` and observation-result `v5`
+for both direct and delegated Procedures. Standard and compact status use `v5`
+and preserve native delegation state. Required receipts, current acceptance and
+immutable Procedure snapshots retain their native fences.
+The following TASK-116 and TASK-117 qualification was performed with Podway v0.2.12 and does not establish v0.2.14 installed functionality. The delivery helpers preserve legacy profiles and full serialized lifetime
 records; source and synthetic checks cannot qualify a new native history or
 settlement surface. Bounded TASK-116 native fixtures exercised four serialized
 Codex assignments and five Claude assignments, including the SDK-facing feedback

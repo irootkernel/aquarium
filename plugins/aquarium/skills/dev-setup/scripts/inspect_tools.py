@@ -28,7 +28,7 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v21"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v22"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -43,8 +43,7 @@ MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
 }
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 MAX_COMMAND_TIMEOUT_SECONDS = 86_400.0
-PODWAY_DAEMON_WAIT_SECONDS = 120.0
-PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS = 125.0
+PODWAY_MINIMUM_VERSION = (0, 2, 14)
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 CANONICAL_NUMERIC_COMPONENT = r"(?:0|[1-9][0-9]*)"
 CANONICAL_SEMVER = re.compile(
@@ -607,10 +606,7 @@ def codex_version_from_output(output: str) -> str | None:
 
 
 def supported_podway_version(version: str | None) -> bool:
-    if not version:
-        return False
-    match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 12)
+    return supported_stable_version(version, PODWAY_MINIMUM_VERSION)
 
 
 def podway_v025_workaround_bytes(name: str, source: bytes) -> bytes | None:
@@ -1876,15 +1872,30 @@ def normalize_podway_envelope(
     if not isinstance(envelope, dict):
         return normalized, None
     schema = envelope.get("schema")
-    if schema == "podway.error/v1":
+    if schema == "podway.error/v2":
+        normalized["ok"] = False
         code = envelope.get("code")
-        if code in {"SESSION_NOT_FOUND", "LEGACY_PROCEDURE_STATE_UNSUPPORTED"}:
+        if code in {
+            "SESSION_NOT_FOUND",
+            "LEGACY_RUNTIME_STATE_UNSUPPORTED",
+            "WORKSPACE_CONTRACT_MISMATCH",
+            "WORKSPACE_SCHEMA_UNSUPPORTED",
+            "WORKSPACE_STATE_UNREADABLE",
+            "WORKSPACE_CONFIG_INVALID",
+            "WORKSPACE_NOT_INITIALIZED",
+            "WORKSPACE_ID_CONFLICT",
+            "WORKSPACE_UUID_MISMATCH",
+            "WORKSPACE_BUSY",
+            "WORKSPACE_MAINTENANCE",
+            "COMMAND_RETIRED",
+            "REQUEST_INVALID",
+        }:
             normalized["error_code"] = code
         else:
             normalized["error_code"] = "unrecognized_podway_error"
         normalized["output_schema"] = schema
         return normalized, None
-    if schema != "podway.output/v3":
+    if schema != "podway.output/v4":
         normalized["ok"] = False
         normalized["error_code"] = "unexpected_output_schema"
         return normalized, None
@@ -1908,153 +1919,45 @@ def normalize_podway_envelope(
     return normalized, payload
 
 
-def normalize_podway_daemon_probe(
-    daemon_probe: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    normalized, payload = normalize_podway_envelope(
-        daemon_probe,
-        "daemon.wait-ready",
-        ("podway.daemon-status-result/v3",),
+def normalize_podway_identity(
+    probe: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    normalized, identity = normalize_podway_envelope(
+        probe, "version", ("podway.version-result/v2",)
     )
-    daemon: dict[str, Any] = {
-        "installed": False,
-        "loaded": False,
-        "reachable": False,
-        "running": False,
-        "version": None,
-        "target": None,
-        "ready": False,
-        "mode": None,
-        "readiness_state": None,
-        "readiness_stage": None,
-        "readiness_elapsed_ms": None,
-        "worktree_recovery": None,
-    }
-    if not isinstance(payload, dict):
-        return normalized, daemon
-
-    observed_version = payload.get("daemon_version")
-    if isinstance(observed_version, str) and re.fullmatch(
-        r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", observed_version
-    ):
-        daemon["version"] = observed_version
-    observed_target = payload.get("target")
-    if observed_target in {"aarch64-apple-darwin", "x86_64-apple-darwin"}:
-        daemon["target"] = observed_target
-    daemon.update(
-        {
-            "installed": payload.get("installed") is True,
-            "loaded": payload.get("loaded") is True,
-            "reachable": payload.get("reachable") is True,
-            "running": payload.get("status") == "running",
+    if identity is None or not normalized["ok"]:
+        return normalized, None
+    source = identity.get("source_commit")
+    valid = bool(
+        set(identity)
+        == {
+            "schema",
+            "product",
+            "version",
+            "target",
+            "build_identity",
+            "source_commit",
+            "contract_manifest_schema",
+            "contract_manifest_digest",
         }
+        and identity.get("product") == "podway"
+        and isinstance(identity.get("version"), str)
+        and len(identity["version"]) <= 64
+        and supported_podway_version(identity["version"])
+        and identity.get("target") == "aarch64-apple-darwin"
+        and identity.get("contract_manifest_schema") == "podway.contract-manifest/v2"
+        and all(
+            isinstance(identity.get(field), str)
+            and re.fullmatch(r"sha256:[0-9a-f]{64}", identity[field])
+            for field in ("build_identity", "contract_manifest_digest")
+        )
+        and (source is None or isinstance(source, str) and 1 <= len(source) <= 64)
     )
-
-    observed_mode = payload.get("mode")
-    daemon["mode"] = (
-        observed_mode
-        if isinstance(observed_mode, str)
-        and len(observed_mode.encode("utf-8")) <= 64
-        and re.fullmatch(r"[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*", observed_mode)
-        else None
-    )
-    observed_state = payload.get("readiness_state")
-    if observed_state in {
-        "not_running",
-        "unreachable",
-        "starting",
-        "recovering",
-        "ready",
-        "failed",
-    }:
-        daemon["readiness_state"] = observed_state
-    observed_stage = payload.get("readiness_stage")
-    if observed_stage in {
-        "endpoint",
-        "registry",
-        "workspaces",
-        "jobs",
-        "ready",
-        "failed",
-    }:
-        daemon["readiness_stage"] = observed_stage
-    observed_elapsed = payload.get("readiness_elapsed_ms")
-    if (
-        isinstance(observed_elapsed, int)
-        and not isinstance(observed_elapsed, bool)
-        and observed_elapsed >= 0
-    ):
-        daemon["readiness_elapsed_ms"] = observed_elapsed
-    observed_recovery = payload.get("worktree_recovery")
-    if isinstance(observed_recovery, dict):
-        recovery = {
-            key: observed_recovery.get(key) for key in ("total", "completed", "failed")
-        }
-        if all(
-            isinstance(value, int)
-            and not isinstance(value, bool)
-            and 0 <= value <= 10_000
-            for value in recovery.values()
-        ):
-            daemon["worktree_recovery"] = recovery
-
-    observed_clients = payload.get("in_flight_client_count")
-    observed_maintenance = payload.get("maintenance_operation_count")
-    activity_valid = bool(
-        (
-            observed_clients is None
-            or isinstance(observed_clients, int)
-            and not isinstance(observed_clients, bool)
-            and 0 <= observed_clients <= 1024
-        )
-        and (
-            observed_maintenance is None
-            or isinstance(observed_maintenance, int)
-            and not isinstance(observed_maintenance, bool)
-            and 0 <= observed_maintenance <= 10_000
-        )
-    )
-    if daemon["readiness_state"] in {"not_running", "unreachable"}:
-        contract_valid = bool(
-            daemon["mode"] == "prod"
-            and observed_stage is None
-            and observed_elapsed is None
-            and observed_recovery is None
-            and observed_clients is None
-            and observed_maintenance is None
-        )
-    else:
-        contract_valid = bool(
-            daemon["mode"] == "prod"
-            and daemon["readiness_state"] is not None
-            and daemon["readiness_stage"] is not None
-            and daemon["readiness_elapsed_ms"] is not None
-            and daemon["worktree_recovery"] is not None
-            and activity_valid
-        )
-    if not contract_valid:
+    if not valid:
         normalized["ok"] = False
-        normalized["error_code"] = (
-            "unsupported_daemon_mode"
-            if daemon["mode"] is not None and daemon["mode"] != "prod"
-            else "invalid_daemon_readiness"
-        )
-    recovery = daemon["worktree_recovery"]
-    daemon["ready"] = bool(
-        contract_valid
-        and daemon["reachable"]
-        and daemon["running"]
-        and daemon["readiness_state"] == "ready"
-        and daemon["readiness_stage"] == "ready"
-        and isinstance(recovery, dict)
-        and recovery["completed"] == recovery["total"]
-    )
-    normalized["result"] = {
-        **daemon,
-        "version_valid": daemon["version"] is not None,
-        "target_supported": daemon["target"] is not None,
-    }
-    return normalized, daemon
+        normalized["error_code"] = "invalid_podway_identity"
+        return normalized, None
+    return normalized, identity
 
 
 def inspect_sanho(
@@ -4570,6 +4473,7 @@ def inspect_podway(
     tool["legacy_managed_procedures"] = legacy_managed
     tool["migration_kinds"] = {
         "product_rename": legacy_present_count > 0,
+        "runtime_contract": False,
     }
     tool["migration_required"] = any(tool["migration_kinds"].values())
     tool["readiness_status"] = (
@@ -4579,14 +4483,13 @@ def inspect_podway(
     )
     tool["legacy_state_detected"] = False
     tool["version_supported"] = False
-    tool["daemon_version"] = None
-    tool["versions_match"] = False
+    tool["identity"] = None
     if not tool["installed"]:
         for entry in managed:
             if entry["source_state"] in {"canonical", "pending_validation"}:
                 entry["source_state"] = "unverifiable"
         tool["probes"]["version"] = skipped_probe("executable_missing")
-        tool["probes"]["daemon_status"] = skipped_probe("executable_missing")
+        tool["probes"]["identity"] = skipped_probe("executable_missing")
         tool["probes"]["doctor"] = skipped_probe("executable_missing")
         tool["probes"]["session_status"] = skipped_probe("executable_missing")
         if present_count or legacy_present_count:
@@ -4600,28 +4503,23 @@ def inspect_podway(
     tool["version"] = version_from_probe(version_probe)
     tool["version_supported"] = supported_podway_version(tool["version"])
 
-    daemon_probe = json_probe(
-        [
-            tool["executable"],
-            "--json",
-            "daemon",
-            "wait-ready",
-            "--timeout",
-            f"{PODWAY_DAEMON_WAIT_SECONDS:g}s",
-        ],
-        repository,
-        max(timeout_seconds, PODWAY_DAEMON_CALLER_TIMEOUT_SECONDS),
+    identity_probe = (
+        json_probe(
+            [tool["executable"], "--json", "version", "--identity"],
+            repository,
+            timeout_seconds,
+        )
+        if tool["version_supported"]
+        else skipped_probe("unsupported_version")
     )
-    normalized_daemon, daemon = normalize_podway_daemon_probe(daemon_probe)
-    daemon_version = daemon["version"]
-    daemon_ready = daemon["ready"]
-    daemon_target = daemon["target"]
-    tool["probes"]["daemon_status"] = normalized_daemon
-    tool["daemon_version"] = daemon_version
-    tool["versions_match"] = (
-        normalized_version(tool["version"]) == normalized_version(daemon_version)
-        if tool["version"] and daemon_version
-        else False
+    normalized_identity, identity = normalize_podway_identity(identity_probe)
+    tool["probes"]["identity"] = normalized_identity
+    tool["identity"] = identity
+    identity_ok = bool(
+        normalized_identity["ok"]
+        and identity is not None
+        and normalized_version(identity["version"])
+        == normalized_version(tool["version"])
     )
 
     initialized = tool["configuration"][0]["present"]
@@ -4640,10 +4538,8 @@ def inspect_podway(
             session_probe,
             "session.status",
             (
-                "podway.status-result/v3",
-                "podway.compact-status-result/v3",
-                "podway.status-result/v4",
-                "podway.compact-status-result/v4",
+                "podway.status-result/v5",
+                "podway.compact-status-result/v5",
             ),
         )
         if isinstance(doctor_payload, dict) and isinstance(
@@ -4657,10 +4553,7 @@ def inspect_podway(
             current = session_result.get("current")
             node = current.get("node") if isinstance(current, dict) else None
             delegation = session_result.get("delegation")
-            delegation_valid = session_result.get("schema") not in (
-                "podway.status-result/v4",
-                "podway.compact-status-result/v4",
-            ) or (
+            delegation_valid = delegation is None or (
                 isinstance(delegation, dict)
                 and isinstance(delegation.get("state"), str)
                 and bool(delegation["state"])
@@ -4677,7 +4570,7 @@ def inspect_podway(
                 "session_lifecycle": session.get("lifecycle")
                 if isinstance(session, dict)
                 and session.get("lifecycle")
-                in {"prepared", "running", "completed", "cancelled", "discarded"}
+                in {"prepared", "running", "completed", "cancelled"}
                 else None,
                 "session_revision": session.get("revision")
                 if isinstance(session, dict)
@@ -4705,7 +4598,7 @@ def inspect_podway(
                     re.IGNORECASE,
                 )
                 and session.get("lifecycle")
-                in {"prepared", "running", "completed", "cancelled", "discarded"}
+                in {"prepared", "running", "completed", "cancelled"}
                 and isinstance(session.get("revision"), int)
                 and not isinstance(session.get("revision"), bool)
             )
@@ -4714,8 +4607,14 @@ def inspect_podway(
         session_contract_ok = (
             normalized_session["ok"] and session_payload_valid
         ) or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
+        tool["migration_kinds"]["runtime_contract"] = any(
+            probe.get("error_code")
+            in {"LEGACY_RUNTIME_STATE_UNSUPPORTED", "WORKSPACE_CONTRACT_MISMATCH"}
+            for probe in (normalized_doctor, normalized_session)
+        )
+        tool["migration_required"] = any(tool["migration_kinds"].values())
         tool["legacy_state_detected"] = any(
-            probe.get("error_code") == "LEGACY_PROCEDURE_STATE_UNSUPPORTED"
+            probe.get("error_code") == "LEGACY_RUNTIME_STATE_UNSUPPORTED"
             for probe in (normalized_doctor, normalized_session)
         )
     else:
@@ -4829,10 +4728,7 @@ def inspect_podway(
         version_probe["ok"]
         and tool["version_supported"]
         and tool["platform"]["supported"]
-        and normalized_daemon["ok"]
-        and daemon_ready
-        and daemon_target == "aarch64-apple-darwin"
-        and tool["versions_match"]
+        and identity_ok
         and doctor_ok
         and session_contract_ok
     )
@@ -4841,8 +4737,11 @@ def inspect_podway(
     elif (
         valid_managed_count == len(PODWAY_PROCEDURES)
         and tracked_count == len(PODWAY_PROCEDURES)
-        and initialized
-        and tool["configuration"][1]["present"]
+        and all(
+            entry["present"]
+            and tracked_by_git(repository, entry["path"], timeout_seconds)
+            for entry in tool["configuration"][:2]
+        )
         and healthy
         and legacy_present_count == 0
     ):
