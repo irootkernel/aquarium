@@ -61,7 +61,7 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니다. 대화에서 development channel 진단을 요청하거나 `aquarium-dev diagnose --repository <absolute-git-root>`를 실행합니다. 선택 사항인 `aquarium-dev` runtime의 최초 설치와 이후 업데이트는 `$aquarium:dev-setup-global`에 명시적으로 요청하고 완료 후 새 Codex 세션을 시작합니다. 플러그인 업데이트만으로 설치된 runtime이 자동 교체되지는 않습니다. 자세한 절차는 [development runbook](docs/ops/development-channel.md)을 참고합니다.
 
-사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용합니다. Foreground tool의 development generation이 없을 때만 두 Aquarium root 밖의 caller global `PATH`로 fallback합니다. Managed service는 producer controller가 동일 generation을 ready 또는 busy 상태로 보고할 때만 실행하며 pending, missing, mismatched, stopped, recovering 상태에서는 production으로 fallback하지 않고 fail closed합니다. Podway가 첫 번째 필수 managed service이고 Sanho는 명시적인 선택 항목입니다. Manager는 caller의 Codex home, authentication, plugin installation, global MCP configuration을 변경하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
+사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용합니다. Foreground tool의 development generation이 없을 때만 두 Aquarium root 밖의 caller global `PATH`로 fallback합니다. Managed service는 producer controller가 동일 generation을 ready 또는 busy 상태로 보고할 때만 실행하며 pending, missing, mismatched, stopped, recovering 상태에서는 production으로 fallback하지 않고 fail closed합니다. Podway의 service enrollment는 legacy development build에만 적용됩니다. 단일 Direct CLI를 쓰는 Podway >=v0.2.14는 지원하지 않습니다. Sanho는 명시적인 선택 항목입니다. Legacy development channel의 종료는 EPIC-019가 담당합니다. Manager는 caller의 Codex home, authentication, plugin installation, global MCP configuration을 변경하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
 
 ## 주요 워크플로
 
