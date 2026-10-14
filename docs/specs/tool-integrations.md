@@ -70,6 +70,8 @@ The exact official v0.2.14 compatibility gate runs one CLI in disposable Git fix
 
 Legacy and incompatible writer state remains unchanged on refusal. The [upgrade contract](../../plugins/aquarium/references/tool-catalog.md#upgrade-from-older-writers) owns the original-writer, separate service-retirement and explicit destructive-reset boundaries. Reset establishes fresh runtime history; it does not convert or preserve old sessions.
 
+Installed qualification for the v0.2.14 adoption covers explicit skill-path execution through authenticated Codex, fresh private Codex discovery and session-scoped Claude discovery. Authenticated private-plugin namespace dispatch, Claude provider execution and complete managed Worker/Judge runs remain unqualified for the combined v0.1.19 release.
+
 ## Review and Check Adapters
 
 Mulgae execution and exact recovery follow the [shared Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md) and the same-release `use-mulgae` skill loaded by the agent that performs the operation. User-global setup admits the stable v0.1.24 release floor and supported platform without claiming repository contract verification. Repository setup additionally requires command-result v18 or later, Doctor v5 or later, and the release's native supported configuration. Review execution requires preflight v7 or later, independent project binding, paired execution guards, and receipt-bound result reads through the paired skill. Setup performs no review, recovery, or cleanup writes.
