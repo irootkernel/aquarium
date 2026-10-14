@@ -11,24 +11,15 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
-- Require Podway v0.2.14 or newer without a version upper bound, adopt its Direct CLI and release-pinned skill, and preserve incompatible workspace state until an explicitly approved fresh-runtime reset; exact UTM upgrade and workflow verification remain required before release.
-
-- Align all five supervised Procedures, preserve admitted snapshots, and bind each serialized native assignment to its own configuration and result; reconcile lost Claude feedback acknowledgements before retrying. Required placements need qualification for their exact operative inputs, and exact UTM upgrade remains a pre-release gate.
-
-- Declare supervised Worker/Judge checkpoints for Design and War-room, preserving negative quality routing and exact document approval; existing users need separately authorized managed-file updates and compatible qualified successor sessions.
-
-- Rebuild Epic validation with direct original-evidence Judge assessments, faithful negative-audit routing and Primary correction-group commit settlement; managed Validation Procedures require an authorized update after candidate qualification.
-
-- Rebuild Epic goal execution with retained Judge assessments across member work and final integration, preserving delegated Task acceptance and actual overall acceptance; managed Goal Procedures require an authorized update after candidate qualification.
-
-- Rebuild Task execution around required Worker candidates, a retained report-only Judge, and authority-bound semantic decisions; existing users require updated managed Task Procedures and compatible successor sessions after candidate qualification.
-- Replace Orca workflow review with native Herdr review, remove the `orca-review` entrypoint and `orca` route for new checkpoints, and preserve exact historical route identities, peer evidence, prior Procedure snapshots and commit handoffs.
-- Preserve custom Procedures and legacy Orca evidence during Herdr migration, with Herdr v0.9.3 or newer, selected-route readiness, safe transitions for existing sessions, and the chosen backup policy; existing managed Goal and Validation files require an authorized update, and Task files need one before selecting Herdr.
+- Require Podway v0.2.14 or newer without a version upper bound, adopt its Direct CLI and release-pinned skill, and preserve incompatible workspace state until an explicitly approved fresh-runtime reset.
+- Require Worker candidates and retained report-only Judge assessments across Task, Epic, validation, Design and War-room, preserving negative rework, technical reviews, scoped correction-group commits, delegated Task acceptance and actual document/Epic approval; existing users need separately authorized managed-Procedure updates and compatible qualified successor sessions.
+- Bind serialized native assignments to their exact qualified configuration and complete results, reconcile lost Claude feedback acknowledgements before retrying, and preserve admitted Procedure snapshots.
+- Replace Orca workflow review with native Herdr Review, require Herdr v0.9.3 or newer on that route, and remove the `orca-review` entrypoint and `orca` route for new checkpoints while preserving custom Procedures, historical route identities, peer evidence and commit handoffs; existing managed Goal and Validation files need authorized updates, and Task files need one before selecting Herdr, with the chosen backup policy.
 - Accept test dependencies and standalone Ruff at or above their declared minimum versions.
 
 ### Fixed
 
-- Let compatible successor Task, Goal and Validation sessions settle directly verifiable corrections without redundant approval or re-review and preserve usable incident evidence, while retaining required independent judgment and mandatory evidence gates after an authorized managed-Procedure update and UTM qualification.
+- Let compatible successor Task, Goal and Validation sessions settle directly verifiable corrections without redundant approval or re-review, preserving usable incident evidence, required independent judgment and mandatory evidence gates after an authorized managed-Procedure update.
 - Reject Codex delivery records that omit native history completeness metadata.
 
 ## v0.1.18 - 2026-10-04
