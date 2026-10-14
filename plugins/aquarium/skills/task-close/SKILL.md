@@ -65,3 +65,5 @@ For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff
 Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
 
 Return the three answers, final roadmap state, selected terminal status, approved lifecycle and record decisions, dossier disposition when applicable, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.
+
+When a Podway-backed handler delegates this phase, identify this session's final-closeout continuation in any commit handoff and return the verified commit or permitted no-commit result with Podway finalization pending. The current Aquarium caller must follow [Finalize Before Reporting Completion](../../references/podway-integration.md#finalize-before-reporting-completion) before declaring the handler complete. This leaf result does not establish that the session is completed; a standalone invocation does not activate Podway by implication.

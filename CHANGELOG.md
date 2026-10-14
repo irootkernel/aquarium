@@ -4,6 +4,11 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.20 - Unreleased
 
+### Fixed
+
+- Require Podway-backed workflows to finish and verify session closeout after their final commit or approved no-commit/no-change result, report pending finalization separately, and recover without repeating an existing commit.
+- Update the five bundled Procedure versions and role snapshot bindings for the changed instructions; existing users need separately authorized managed-Procedure updates and compatible successor sessions, while existing sessions retain their admitted snapshots.
+
 ## v0.1.19 - 2026-10-14
 
 ### Added

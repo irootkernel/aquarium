@@ -5472,6 +5472,31 @@ else:
                     4,
                     "d151627d3f4dc4d58b9ac35ad9dc67f627bbf39b6f475a3817458fc926adb8ad",
                 ),
+                (
+                    "task",
+                    28,
+                    "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
+                ),
+                (
+                    "goal",
+                    31,
+                    "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
+                ),
+                (
+                    "validation",
+                    30,
+                    "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
+                ),
+                (
+                    "design",
+                    8,
+                    "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
+                ),
+                (
+                    "war-room",
+                    8,
+                    "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
+                ),
             )
         )
         self.install_fake_tools()
@@ -5834,6 +5859,9 @@ else:
             {
                 "aquarium-task-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-task-v28.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-task-v27.yaml").read_bytes()
                     ).hexdigest(),
                     "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
@@ -5862,6 +5890,9 @@ else:
                     "d56c421dd964f3aa83279da879245042f8135e9792af7171b9e49ecfd0cc6339",
                 },
                 "aquarium-goal-v2.yaml": {
+                    hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-goal-v31.yaml").read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-goal-v30.yaml").read_bytes()
                     ).hexdigest(),
@@ -5893,6 +5924,11 @@ else:
                 "aquarium-validation-v2.yaml": {
                     hashlib.sha256(
                         (
+                            ROOT / "tests/fixtures/aquarium-validation-v30.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
+                        (
                             ROOT / "tests/fixtures/aquarium-validation-v29.yaml"
                         ).read_bytes()
                     ).hexdigest(),
@@ -5921,6 +5957,9 @@ else:
                 },
                 "aquarium-design-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-design-v8.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-design-v7.yaml").read_bytes()
                     ).hexdigest(),
                     "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
@@ -5931,6 +5970,9 @@ else:
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-war-room-v8.yaml").read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-war-room-v7.yaml").read_bytes()
                     ).hexdigest(),

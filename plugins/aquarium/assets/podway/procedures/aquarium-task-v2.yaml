@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "28"
+version: "29"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -3465,7 +3465,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-plan
@@ -3484,7 +3484,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: decide-plan-assessment
@@ -3544,7 +3544,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-implementation
@@ -3572,7 +3572,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: decide-implementation-assessment
@@ -3613,7 +3613,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-refinement
@@ -3633,7 +3633,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: decide-refinement-assessment
@@ -3673,7 +3673,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-verification
@@ -3693,7 +3693,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: confirm-verification-operation
@@ -3760,7 +3760,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-documentation
@@ -3791,7 +3791,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: decide-documentation-assessment
@@ -4136,7 +4136,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: confirm-review-route-binding
@@ -5192,7 +5192,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: confirm-review-completion
@@ -5258,7 +5258,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-task
@@ -5323,7 +5323,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: confirm-task-assessment-applicability
@@ -5398,7 +5398,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:7544cae7f4becb8fcf0d119e8ac0aa9815bd29d7c96cfa1761b2e00acd69e53e
+        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-task
@@ -5452,7 +5452,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:a0309714155fb613eaafd0a0c67c109220e565a1b03291dfb659a9168669fb4c
+        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
         max_rounds: 32
         after_accept: retain
       next: confirm-stopped-task-assessment-applicability

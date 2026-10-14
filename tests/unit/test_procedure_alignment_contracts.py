@@ -25,38 +25,38 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "28",
+            "29",
+            "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
+            "aquarium-task-v28.yaml",
             "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
-            "aquarium-task-v27.yaml",
-            "aea7cb5b93fbaaf0bcd94de2d981621afd1f547fcecd370649a8d2e6fb2f4ea6",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "31",
+            "32",
+            "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
+            "aquarium-goal-v31.yaml",
             "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
-            "aquarium-goal-v30.yaml",
-            "5f8d17becb9b673365cb01614a5ab9563b3c459ded93da60d18990eaa70e73b9",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "30",
+            "31",
+            "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
+            "aquarium-validation-v30.yaml",
             "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
-            "aquarium-validation-v29.yaml",
-            "a9b225b36bddbdd2e44cd0d37b9ed5967f59b222fa182bed91ab7698a46896e1",
         ),
         (
             "aquarium-design-v2.yaml",
-            "8",
+            "9",
+            "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
+            "aquarium-design-v8.yaml",
             "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
-            "aquarium-design-v7.yaml",
-            "0765991ad1fd1e3398c8ab07e8c852be0593c69efc65a89f9107caead5f04f43",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "8",
+            "9",
+            "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
+            "aquarium-war-room-v8.yaml",
             "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
-            "aquarium-war-room-v7.yaml",
-            "3866de3ecc6b101f7ac10933221f711964dd3a9a77030f3c90baf3dd739fb4f6",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -500,7 +500,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "28"
+    assert task["version"] == "29"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -3580,7 +3580,8 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
             (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
         )
         assert current["id"] == previous["id"]
-        assert int(current["version"]) == version + 1
+        # Phase alignment and the operative-role snapshot refresh are separate revisions.
+        assert int(current["version"]) == version + 2
         current_nodes, previous_nodes = nodes(current), nodes(previous)
         added = set(current_nodes) - set(previous_nodes)
         expected_added = (

@@ -101,7 +101,7 @@ Affected placement activation retains its native recovery requirements.
 
 ## TASK-112 Task candidate
 
-The bundled Task Procedure version `28` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
+The bundled Task Procedure version `29` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
 
 The candidate declares complete role snapshot bindings and rejects Worker-only,
 missing or stale assessment evidence and uncovered followup authority structurally.
@@ -113,7 +113,7 @@ integration and recovery capabilities must be qualified for the admitted placeme
 
 ## Epic execution candidate
 
-Goal version `31` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
+Goal version `32` and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md)
 declare required Worker and Judge Actions for current work, admitted technical
 evidence and final normal/stopped assessment. The handler retains one logical
 Judge across members, corrections, successors, internal Validation and closeout;
@@ -133,7 +133,7 @@ activate other repositories' placements.
 
 ## Validation candidate
 
-Validation version `30` and [Validation
+Validation version `31` and [Validation
 orchestration](../../plugins/aquarium/references/validation-orchestration.md) declare
 twelve required Worker/Judge placements for audit, correction, re-audit, admitted
 technical evidence and final normal/stopped outcomes. Cold validation starts a fresh
@@ -195,7 +195,7 @@ snapshots or other repositories.
 
 ## Design and diagnosis candidate
 
-Design and War-room version `8` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
+Design and War-room version `9` follow [Design and diagnosis orchestration](../../plugins/aquarium/references/design-diagnosis-orchestration.md). Their required Worker/Judge placements cover original context or baseline, discovery or investigation, proposals, challenge where applicable, quality, exact approved document application and final original-criterion assessment. Separate phase checkpoint results preserve original negative workflow rows while faithful negative QA and supported diagnosis outcomes reach their original owners.
 
 The Primary keeps cause/scope Decisions, actual effects, exact user proposal
 approval and final acceptance. Changed application proposals or target snapshots

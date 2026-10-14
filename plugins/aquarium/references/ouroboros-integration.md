@@ -28,7 +28,7 @@ A non-Git `new-project` invocation must not inspect, initialize, or mutate Podwa
 
 Before the first provider call, show one execution envelope containing canonical identity, current authority, bounded source inputs, every planned Ouroboros operation, every planned Podway mutation, target document paths, and excluded actions. Obtain explicit approval, then create or resume the matching prepared session, re-observe it, begin attempt 1 with the approved goal, and coordinate with an explicitly requested host goal under its own creation and lifecycle rules.
 
-Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podway, not full provider prompts, transcripts, source payloads, or generated documents. Verify every provider result locally before recording it. Complete and disposition a session as `handed_off` only after the exact approved repository artifacts, their digests, repository status, and any authoritative commit required by repository policy are verified. Name the next explicit Aquarium skill when follow-up work is needed and include the exact session ID, revision, and stable artifact reference in that handoff. Otherwise leave the terminal session undisposed.
+Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podway, not full provider prompts, transcripts, source payloads, or generated documents. Verify every provider result locally before recording it. After verifying the exact approved repository artifacts, their digests, repository status, and any required authoritative commit, follow [Finalize Before Reporting Completion](podway-integration.md#finalize-before-reporting-completion). Verify the session is `completed` and apply only a supported terminal disposition before reporting workflow completion or handing off to another workflow. Include the shared finalization report fields, name the next explicit Aquarium skill when follow-up work is needed, and retain the stable artifact reference. Preserve a completed session undisposed when no disposition is supported and report why.
 
 When a later task, epic, or validation workflow needs a different Podway session, follow the existing-session choice in [podway-integration.md](podway-integration.md). Preserve the current session unless the user explicitly authorizes its lifecycle action, deletion, or eligible replacement; never route by prior skill ownership.
 
@@ -74,12 +74,22 @@ grant for that exact candidate; approval of the document diff alone does not
 authorize a commit. Hand the accepted candidate to `$aquarium:task-commit` using
 its design or diagnostic delivery-input handoff. State explicitly when no task
 or epic applies and retain the owning workflow's quality and approval evidence.
+On the Podway path, include the current session's continuation from the
+[commit handoff requirements](../skills/task-commit/SKILL.md#reconcile-roadmap-context).
 
 Verify the accepted bytes, Git identity, returned commit, and remaining worktree
-state before reporting committed delivery input or recording `handed_off`. Without
-the required commit authority, preserve the applied documents and leave terminal
-disposition pending. The next action is the explicit commit boundary, not
-implementation. When repository policy requires no commit, report that boundary
-and verify the approved artifacts before disposition. An approved no-change
-war-room outcome needs no artificial commit; use `not_required` after verifying
-that no durable artifact is owed. Non-Git outputs remain non-Git. A design or diagnostic commit grants no authority to implement, push, or publish.
+state before reporting committed delivery input. Without required commit
+authority, preserve the applied documents and report the commit boundary; on the
+Podway path, leave finalization pending and the session running. The next action
+is the explicit commit boundary, not implementation. When repository policy
+requires no commit, verify the approved artifacts and report that boundary.
+
+On the Podway path, apply the shared finalization after the verified required
+commit, permitted no-commit delivery, or approved no-change result. Observe the
+session as `completed` before recording its disposition. For verified delivery
+artifacts, record `handed_off` with their paths and digests plus the commit when
+required. An approved no-change war-room outcome needs no artificial commit;
+record `not_required` after verifying that no durable artifact is owed. Verify
+the disposition and include the shared finalization report fields and stable
+artifact reference in any downstream handoff. Non-Git outputs remain non-Git.
+A design or diagnostic commit grants no authority to implement, push, or publish.
