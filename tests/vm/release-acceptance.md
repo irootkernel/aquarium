@@ -1,8 +1,9 @@
 # Release upgrade and startup scenarios
 
-These planned EPIC-024 cases define acceptance methods, not verified outcomes.
-TASK-128 must supply the fixed fixtures and executable helpers before claiming
-the `make test-vm` gate is available. Apply the preparation, invocation, result
+These EPIC-024 cases define executable acceptance methods, not verified outcomes.
+The [driver](run_acceptance.py), [public reader](native_observation.py) and
+[fixed fixture](fixtures/greeting/) implement the guest-side `make test-vm`
+gate. Apply the preparation, invocation, result
 and cleanup rules in the [VM guide](README.md).
 
 ## Shared fixture method
@@ -13,6 +14,11 @@ separate disposable Git repositories for Task and Epic scenarios. The Task asks
 for an uppercase option. The Epic has two members: uppercase, then a repeat-count
 option. Development verification exercises complete functionality; release
 acceptance needs actual first-member progression only.
+
+The fixed dossier owns exact option behavior. The startup oracle checks
+`uppercase-default`, `uppercase-name` and `existing-behavior`: uppercase output
+for the default name and Ada, and byte-identical original output. Repeat-count
+behavior belongs to full development verification.
 
 Record exact fixture inputs and original criteria with the implementation. Grant
 the bounded fixture effects through the handler's normal approval boundary.
@@ -48,7 +54,8 @@ candidate-only clean installations.
 2. Install the exact candidate and required released dependencies through the
    supported upgrade path. Record actual installed identities.
 3. Perform authorized managed-file updates. Preserve custom files and immutable
-   session snapshots; use compatible successor sessions for new source behavior.
+   session snapshots through fresh installed dev-setup; use compatible successor
+   sessions for new source behavior. Do not overwrite managed files in the driver.
 4. Compare retained state against the baseline. Confirm candidate source identity
    and open a fresh Codex session for normal installed-plugin discovery.
 
@@ -72,7 +79,9 @@ exact repository root and roadmap Task ID. Discover the installed
 ### Steps
 
 1. Invoke the installed handler for the fixture Task and pass its ordinary
-   entry and approval boundary with the bounded fixture scope.
+   entry and approval boundary with the bounded fixture scope. An initial scope
+   grant does not accept an unseen plan or exact candidate. Resume the actual
+   invocation with the fixture operator's decision when needed.
 2. Observe an actual native Worker assignment, meaningful fixture change and
    relevant check result. Collect the actual returned result.
 3. Observe an independent Judge assess the original due criteria and artifacts.
@@ -99,7 +108,7 @@ discover the installed `aquarium:epic-handler` normally.
 ### Steps
 
 1. Invoke the installed handler and approve its bounded fixture execution scope
-   through the normal boundary.
+   through the normal boundary, retaining actual later result decisions.
 2. Observe entry into the first member goal with the correct Procedure and
    admitted review route.
 3. Observe actual native Worker output and an independent Judge assessment of

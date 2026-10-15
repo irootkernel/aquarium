@@ -159,12 +159,12 @@ installation and any verification requiring it run only in the dedicated UTM VM.
 
 ### TASK-128: Add manual VM release acceptance and reusable scenarios
 
-- [ ] Implement guest-side `make test-vm` with candidate-matched test sources, fixed small fixtures and deterministic verification helpers.
-- [ ] Verify the dedicated guest before fixture mutation, installation or agent dispatch; reject host execution with a nonzero result and no mutation, without requiring Haepari.
-- [ ] Keep the target outside normal Make aggregates and automatic Task/Epic checks; allow only release-handler or Master's explicit VM-test request.
-- [ ] Implement the methods and cases under `tests/vm/`, using manual UTM operation and Codex only, without Haepari.
-- [ ] Guide manual preparation and result collection from release-handler while preserving offline release QA.
-- [ ] Require actual observations and truthful non-success for failed or incomplete execution, including cleanup; printing instructions cannot pass.
+- [x] Implement guest-side `make test-vm` with candidate-matched test sources, fixed small fixtures and deterministic verification helpers.
+- [x] Verify the dedicated guest before fixture mutation, installation or agent dispatch; reject host execution with a nonzero result and no mutation, without requiring Haepari.
+- [x] Keep the target outside normal Make aggregates and automatic Task/Epic checks; allow only release-handler or Master's explicit VM-test request.
+- [x] Implement the methods and cases under `tests/vm/`, using manual UTM operation and Codex only, without Haepari.
+- [x] Guide manual preparation and result collection from release-handler while preserving offline release QA.
+- [x] Require actual observations and truthful non-success for failed or incomplete execution, including cleanup; printing instructions cannot pass.
 
 ### TASK-129: Verify workflow recovery and release readiness
 

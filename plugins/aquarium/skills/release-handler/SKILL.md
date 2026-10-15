@@ -48,6 +48,12 @@ If the helper rejects the retained record, evidence, ancestry, changed-surface c
 
 After QA passes, re-inspect the exact candidate and confirm that changelog entries are byte-identical to the passing candidate. The sole later candidate exception is one approved QA-neutral direct child established under the gate-convergence reference; keep its direct-QA SHA and release-basis SHA distinct.
 
+When the target repository requires installed-system VM acceptance, follow its
+declared verification environment and [manual VM acceptance](references/manual-vm-acceptance.md)
+before its release-metadata or publication boundary. Preserve offline release
+QA as a separate result. No transport, VM provider or personal environment is
+implied by this skill.
+
 Apply only repository-authorized release metadata: the published version, pinned validation expectation, the changelog heading's `Unreleased` to publication-date transition, and deterministic release links when the repository uses them. Any entry-text change invalidates QA and returns to candidate settlement.
 
 Before running the selected repository release gate, show its exact commands and obtain separate explicit authority; selecting `full` or `light` does not itself authorize tests or other gate commands. If authority is withheld, leave the gate unrun and stop as incomplete.

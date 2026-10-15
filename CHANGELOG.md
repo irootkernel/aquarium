@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.20 - Unreleased
 
+### Added
+
+- Add a separate guest-side `make test-vm` gate with reusable manual upgrade and Task/Epic startup scenarios, preserving existing state and requiring actual native Worker/Judge results for the exact candidate.
+
 ### Changed
 
 - Require Mulgae v0.1.25 and its matching skill, adopt Config v5 and native workspace/index/Git review, retire capture guards and child/replay/compose execution, and stop treating `.mulgaeignore` as an exclusion policy. Existing users need deliberate configuration migration and separately authorized managed-Procedure updates; admitted snapshots and historical reads remain intact.

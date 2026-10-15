@@ -19,6 +19,13 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/vm/run_acceptance.py \
+	tests/vm/native_observation.py \
+	tests/unit/test_vm_acceptance_unit.py \
+	tests/vm/fixtures/greeting/greet.py \
+	tests/vm/fixtures/greeting/tests/unit/test_greet.py \
+	tests/vm/fixtures/greeting/tests/integration/test_cli.py \
+	tests/vm/fixtures/greeting/tests/e2e/test_greeting_cli.py \
 	tests/unit/test_promoted_evidence_schema_unit.py \
 	tests/unit/test_source_identity_digest_unit.py \
 	plugins/aquarium/skills/task-commit/scripts/source_identity_digest.py \
@@ -97,7 +104,7 @@ PYTHON_FILES := \
 	tests/e2e/test_aquarium_status_cli.py \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
-.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat
+.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-vm
 .PHONY: aquarium-dev-describe aquarium-dev-build
 
 aquarium-dev-describe:
@@ -138,3 +145,6 @@ test-e2e: test-requirements
 
 test-podway-compat: test-requirements
 	PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py
+
+test-vm:
+	$(PYTHON) -B tests/vm/run_acceptance.py run

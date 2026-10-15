@@ -17,6 +17,7 @@ Ruby and Python validation is limited to objective package structure and executa
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
 - Exact Podway v0.2.14 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
+- Explicit manual guest acceptance: `AQUARIUM_VM_REQUEST=<absolute-request-path> make test-vm`
 
 The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository selects `.venv/bin/python` when present, otherwise `python3`. It selects `.venv/bin/ruff` independently when present, otherwise `ruff`; command-line overrides cannot replace those identities.
 
@@ -120,18 +121,20 @@ complete report, native operation outcome, criterion assessment and Master's
 manual result separate. Missing observations remain unverified; a fixture
 receipt or passing Make gate cannot substitute for them.
 
-## Planned manual VM release acceptance
+## Manual VM release acceptance
 
 [EPIC-024's dossier](docs/todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) separates
 development functional verification from release acceptance by an existing
 installed system. [VM preparation and results](tests/vm/README.md) and
 [release scenarios](tests/vm/release-acceptance.md) define the reusable manual
-methods. TASK-128 will implement `make test-vm`; the target does not exist yet.
+methods. `make test-vm` executes the guest driver and fixed scenarios. Helper
+tests exercise guards, actual byte/source identity, native-result correlation,
+failure propagation and recovery without providers; they do not verify skills.
 
 Invoke that gate only through release-handler or Master's explicit VM-test
 request. Keep it outside ordinary `make test` and automatic Task/Epic checks.
 For this Epic, operate the dedicated UTM VM manually and verify Codex only;
-Haepari is not a prerequisite. The future entrypoint runs in the guest using
+Haepari is not a prerequisite. The entrypoint runs in the guest using
 candidate-matched test sources. The host release workflow guides preparation and
 collects the result.
 
@@ -143,6 +146,22 @@ before release; the release gate does not repeat the full feature suite or Epic
 lifecycle. Preserve both evidence classes and the separate offline release-QA
 contract. Missing required observations, failed checks and incomplete cleanup
 cannot produce a passing VM result.
+
+The driver checks Darwin, the native hypervisor-present flag and the externally
+selected guest hardware UUID before writes or dispatch. Host transport and VM
+selection remain environment-owned. Candidate test sources run from a clean exact Git
+checkout; package and installed bytes are verified independently. Original
+released baseline capture and actual installed managed updates precede startup.
+
+The Python command returns 0, 1 or 2 for pass, fail or incomplete. GNU Make maps
+recipe failures to its own nonzero status. Use the current invocation's stdout
+and exit status for classification; `result.json` supports that result only when
+refreshed by the same invocation.
+A nonzero invocation cannot pass using an older result file; early binding
+failure, termination or a write error may leave that file unchanged.
+Preparation cannot pass the acceptance gate. Operator decisions
+resume actual native handles without automatic replay. Public observations and
+meaningful application artifacts are required; success sentences are insufficient.
 
 ## Test Frameworks
 

@@ -20,10 +20,11 @@ Selected technical reviews retain their native providers and obligations.
 
 The managed-Procedure update is breaking and preserves admitted snapshots and
 formal delegation requirements. No Podway producer change or Haepari adoption is
-required. [Manual VM scenarios](../../tests/vm/README.md) will check upgrades and
+required. [Manual VM scenarios](../../tests/vm/README.md) check upgrades and
 actual handler startup separately from development functional verification.
-The guest-side `make test-vm` entrypoint is planned in TASK-128 and is not yet
-available.
+The separate guest-side `make test-vm` entrypoint requires actual observations
+for the exact candidate; its availability and helper tests do not prove those
+outcomes.
 
 ## Formal v1 delivery contract
 
