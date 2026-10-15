@@ -34,9 +34,12 @@ Dependency installation is outside every handler. Prepare may rewrite only the P
 Goal Judge helper tests in `test-unit` cover assignment preparation and filesystem
 safety, operative dispatch rendering, supplied native-record correlation, Codex
 and Claude delivery binding, and the public Codex read client's protocol behavior.
-They use synthetic records and disposable transports. Actual native dispatch,
-accepted configuration, feedback, settlement and recovery require separate host
-qualification; these tests do not establish skill functionality.
+Formal v1 cases use synthetic records and disposable transports and preserve their
+original digest domains. Ordinary v2 cases validate schema-selected preparation
+and rendering without snapshot reads or telemetry and reject ordinary input at
+formal binders. These tests do not establish skill functionality. Actual native
+dispatch, feedback, settlement and recovery need separate observations; declared
+formal delegation additionally retains its genuine qualification contract.
 
 `test-podway-compat` is an external-artifact gate outside the ordinary `make test` aggregate. It requires a clean committed candidate and one absolute, executable, nonsymlink official v0.2.14 CLI. It records Aquarium HEAD, the executable SHA-256 and native release source/manifest identities. All five canonical Procedures pass format check, validate, vet, lint and check with warnings as errors, and preview with exact digest-fenced start suggestions. Declaration-limit and unknown-field fixtures must fail.
 

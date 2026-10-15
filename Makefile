@@ -52,6 +52,8 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
 	plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py \
+	plugins/aquarium/skills/goal-judge/scripts/ordinary_assignment.py \
+	tests/unit/test_ordinary_assignment_unit.py \
 	plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py \
 	plugins/aquarium/skills/goal-judge/scripts/render_dispatch.py \
 	plugins/aquarium/skills/goal-judge/scripts/bind_prepared_delivery.py \

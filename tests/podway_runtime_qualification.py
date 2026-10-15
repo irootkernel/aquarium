@@ -590,10 +590,33 @@ TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS = (
     TASK_COMPLETED_CHANGE_SCENARIOS - TASK_DIRECTION_MISMATCH_SCENARIOS
 )
 
+GROUPED_TASK_OWNERS = {
+    "task-grouped-implementation": ("implementation", "prepare-implementation"),
+    "task-grouped-refinement": ("refinement", "refine"),
+    "task-grouped-verification": ("verification", "verify"),
+}
+
+GROUPED_EVIDENCE_OWNERS = {
+    "design-context-evidence": ("aquarium-design-v2", "discovery", "capture-context"),
+    "design-discovery-evidence": ("aquarium-design-v2", "discovery", "discover"),
+    "war-room-baseline-evidence": (
+        "aquarium-war-room-v2",
+        "investigation",
+        "capture-baseline",
+    ),
+    "war-room-investigation-evidence": (
+        "aquarium-war-room-v2",
+        "investigation",
+        "investigate",
+    ),
+}
+
 ISOLATED_BOUNDED_SCENARIOS = (
     TASK_COMPLETED_CHANGE_SUCCESS_SCENARIOS
     | GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
     | VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
+    | GROUPED_TASK_OWNERS.keys()
+    | GROUPED_EVIDENCE_OWNERS.keys()
 )
 
 
@@ -740,6 +763,11 @@ def wait_scenario_specs() -> tuple[tuple[str, str], ...]:
 
 def terminal_scenario_specs() -> tuple[tuple[str, str], ...]:
     return (
+        *((scenario, "aquarium-task-v2.yaml") for scenario in GROUPED_TASK_OWNERS),
+        *(
+            (scenario, f"{procedure}.yaml")
+            for scenario, (procedure, _phase, _owner) in GROUPED_EVIDENCE_OWNERS.items()
+        ),
         *(
             (scenario, f"{procedure_id}.yaml")
             for scenario, (procedure_id, _mode) in LOCAL_CORRECTION_SCENARIOS.items()
@@ -2215,6 +2243,7 @@ class ManagedRuntime:
         item_type = item["type"]
         item_id = item["item_id"]
         constraints = item.get("constraints", {})
+        grouped_evidence = GROUPED_EVIDENCE_OWNERS.get(self.scenario)
         local_scenario = LOCAL_CORRECTION_SCENARIOS.get(self.scenario)
         if local_scenario:
             source, medium_item = LOCAL_CORRECTION_SOURCE_ITEMS[
@@ -2267,6 +2296,10 @@ class ManagedRuntime:
             if item_type == "choice" and item_id == "coverage-relationship":
                 return {"type": "choice", "value": "review-predates-local-correction"}
         judge_gap = None
+        if self.scenario in GROUPED_TASK_OWNERS and node == "judge-verification":
+            judge_gap = "unmet"
+        if grouped_evidence and node == f"judge-{grouped_evidence[1]}":
+            judge_gap = "unverified"
         if node in {
             "judge-goal",
             "judge-stopped-goal",
@@ -3225,6 +3258,13 @@ class ManagedRuntime:
                     )
                 ),
                 "reproduction-state": "reproduced",
+                "semantic-owner": (
+                    GROUPED_TASK_OWNERS[self.scenario][1]
+                    if self.scenario in GROUPED_TASK_OWNERS
+                    else grouped_evidence[2]
+                    if grouped_evidence
+                    else None
+                ),
             }.get(item_id)
             value = preferred if preferred in choices else choices[0]
             return {"type": "choice", "value": value}
@@ -3236,6 +3276,16 @@ class ManagedRuntime:
             return {"type": "list", "value": [f"qualification {item_id}"]}
         if item_type == "check_result":
             if (
+                grouped_evidence
+                and node == f"judge-{grouped_evidence[1]}"
+                and item_id == "judge-checkpoint-result"
+            ):
+                outcome = "inconclusive"
+            elif (
+                self.scenario in GROUPED_TASK_OWNERS
+                and node == "judge-verification"
+                and item_id == "judge-checkpoint-result"
+            ) or (
                 local_scenario
                 and node == "record-low-disposition"
                 and item_id == "low-disposition-verification"
@@ -3432,6 +3482,15 @@ class ManagedRuntime:
                 {
                     "schema": "aquarium.synthetic-structural-report/v1",
                     "scope": "Disposable native graph and receipt qualification only.",
+                    "expected_report_schema": (
+                        "aquarium.worker-handoff/" + ("v1" if self.placements else "v2")
+                        if item["item_id"] == "worker-handoff"
+                        else "aquarium.judge-assessment/"
+                        + ("v1" if self.placements else "v2")
+                        if item["item_id"] == "judge-assessment"
+                        else None
+                    ),
+                    "synthetic": True,
                     "node": observation["guidance"]["node"]["graph_node_id"],
                     "item": item["item_id"],
                 }
@@ -4071,6 +4130,7 @@ class ManagedRuntime:
         if (
             scenario in LOW_BLOCKER_ROUTE_CASES
             or scenario in LOCAL_CORRECTION_SCENARIOS
+            or scenario in GROUPED_TASK_OWNERS
         ):
             self.task_verification_reworked = True
             self.task_review_reworked = True
@@ -4144,6 +4204,66 @@ class ManagedRuntime:
             node = observation["guidance"]["node"]["graph_node_id"]
             node_type = observation["guidance"]["node"]["node_type"]
             self.node_visits[node] = self.node_visits.get(node, 0) + 1
+            if scenario in GROUPED_TASK_OWNERS:
+                owner_option, owner_node = GROUPED_TASK_OWNERS[scenario]
+                if node == "decide-verification":
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    decision = self.decide(observation, "rework")
+                    self.decision_destination(decision, "record-verification-followup")
+                    continue
+                if node == "confirm-verification-followup-authority":
+                    for wrong in {*GROUPED_TASK_OWNERS.values()} - {
+                        (owner_option, owner_node)
+                    }:
+                        observation = self.reject_guarded_decision(
+                            observation, wrong[0]
+                        )
+                    observation = self.reject_guarded_decision(observation, "blocked")
+                    decision = self.decide(observation, owner_option)
+                    self.decision_destination(decision, owner_node)
+                    return {
+                        "scenario": scenario,
+                        "procedure_id": procedure_id,
+                        "node": owner_node,
+                        "lifecycle": self.observe()["status"]["session"]["lifecycle"],
+                        "semantic_owner": owner_node,
+                        "guarded_owner_route": owner_option,
+                    }
+            grouped_evidence = GROUPED_EVIDENCE_OWNERS.get(scenario)
+            if grouped_evidence:
+                expected_procedure, phase, owner = grouped_evidence
+                if procedure_id != expected_procedure:
+                    raise RuntimeQualificationError(
+                        "grouped evidence scenario has the wrong Procedure"
+                    )
+                if node == f"decide-{phase}-assessment":
+                    observation = self.reject_guarded_decision(observation, "passed")
+                    decision = self.decide(observation, "evidence-needed")
+                    self.decision_destination(
+                        decision, f"record-{phase}-evidence-needed"
+                    )
+                    continue
+                if node == f"confirm-{phase}-evidence-needed-authority":
+                    for (
+                        other_procedure,
+                        _other_phase,
+                        other_owner,
+                    ) in GROUPED_EVIDENCE_OWNERS.values():
+                        if other_procedure == procedure_id and other_owner != owner:
+                            observation = self.reject_guarded_decision(
+                                observation, other_owner
+                            )
+                    observation = self.reject_guarded_decision(observation, "blocked")
+                    decision = self.decide(observation, owner)
+                    self.decision_destination(decision, owner)
+                    return {
+                        "scenario": scenario,
+                        "procedure_id": procedure_id,
+                        "node": owner,
+                        "lifecycle": self.observe()["status"]["session"]["lifecycle"],
+                        "semantic_owner": owner,
+                        "guarded_owner_route": owner,
+                    }
             if (
                 procedure_id == "aquarium-task-v2"
                 and scenario == "standard"
@@ -5949,6 +6069,7 @@ def runtime_jobs() -> list[dict[str, Any]]:
         for batch_id, specs in terminal_batches
     )
     jobs.append({"kind": "lifecycle", "batch_id": "canonical-lifecycle"})
+    jobs.append({"kind": "historical-formal", "batch_id": "historical-formal-task-v30"})
     jobs.extend(
         {
             "kind": "isolated",
@@ -5995,7 +6116,23 @@ def execute_runtime_job(
     if cancel_event.is_set():
         raise RuntimeJobCancelled(f"runtime job cancelled before start: {batch_id}")
     with ManagedRuntime(binary, procedures, job["order"]) as runtime:
-        if job["kind"] == "workspace-removal":
+        if job["kind"] == "historical-formal":
+            assert runtime.sandbox is not None
+            fixture = procedures.parents[4] / "tests/fixtures/aquarium-task-v30.yaml"
+            (runtime.sandbox / ".podway/procedures/aquarium-task-v2.yaml").write_bytes(
+                fixture.read_bytes()
+            )
+            runtime.drive_procedure("aquarium-task-v2.yaml")
+            if not (
+                runtime.delegation_receipt_count
+                and runtime.missing_receipt_guards
+                and runtime.stale_receipt_guards
+            ):
+                raise RuntimeQualificationError(
+                    "historical formal receipt guards were not exercised"
+                )
+            batch["scenario_count"] = 1
+        elif job["kind"] == "workspace-removal":
             result["workspace_removal"] = runtime.exercise_workspace_removal()
         elif job["kind"] == "wait":
             wait_result = runtime.drive_procedure(
@@ -6043,6 +6180,7 @@ def execute_runtime_job(
                     "scenario": job["scenario"],
                     "procedure_id": job["procedure_name"].removesuffix(".yaml"),
                     "batch_id": batch_id,
+                    "bounded_result": bounded_result,
                 }
             ]
             batch["scenario_count"] = 1
@@ -6262,8 +6400,9 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
             GOAL_RECOVERY_SCENARIOS | VALIDATION_RECOVERY_SCENARIOS
         ),
         "delegation_contract_scope": (
-            "Synthetic disposable receipts and reports exercise native package, "
-            "readiness and graph guards. Provider execution, role acknowledgement, "
+            "Current ordinary sources use schema-selected synthetic v2 report artifacts "
+            "without delivery receipts. A separate frozen Task v30 exercises synthetic "
+            "formal v1 receipts and readiness guards. Provider execution, role acknowledgement, "
             "semantic assessment and user approval remain unverified."
         ),
         "route_contract_scope": (

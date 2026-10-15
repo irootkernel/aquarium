@@ -151,11 +151,11 @@ installation and any verification requiring it run only in the dedicated UTM VM.
 
 ### TASK-127: Implement grouped roles and remove startup qualification blockers
 
-- [ ] Align all five bundled Procedure sources, affected handlers and linked contracts with ordinary Actions and grouped native roles.
-- [ ] Update report producers/consumers, renderers, validators and setup diagnostics together.
-- [ ] Remove obsolete qualification dependencies from ordinary startup, continuation and recovery while preserving admitted formal sessions.
-- [ ] Preserve Mulgae routing, tests, technical reviews, approvals, correction ownership and truthful failure paths.
-- [ ] Verify executable behavior and observed skill scenarios; prose matching is not skill verification.
+- [x] Align all five bundled Procedure sources, affected handlers and linked contracts with ordinary Actions and grouped native roles.
+- [x] Update report producers/consumers, renderers, validators and setup diagnostics together.
+- [x] Remove obsolete qualification dependencies from ordinary startup, continuation and recovery while preserving admitted formal sessions.
+- [x] Preserve Mulgae routing, tests, technical reviews, approvals, correction ownership and truthful failure paths.
+- [x] Verify executable behavior and observed skill scenarios; prose matching is not skill verification.
 
 ### TASK-128: Add manual VM release acceptance and reusable scenarios
 

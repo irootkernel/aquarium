@@ -1,30 +1,22 @@
-# Design and diagnosis orchestration candidate
+# Design and diagnosis orchestration
 
-Apply this reference only when an admitted Design or War-room source declares
-required Worker/Judge placements. Both bundled version `10` candidates keep
-the released workflow identities. Required placements need native qualification
-applicable to the exact role snapshot, assignment and recovery path; installed
-and admitted direct snapshots retain their existing contract. Source changes do
-not activate an existing session or authorize managed-file updates.
+Design and War-room version `11` use ordinary Actions under the
+[v2 contract](ordinary-agent-orchestration.md). Native roles use the current
+Primary harness without role-snapshot, private-history or configuration
+qualification. Admitted formal snapshots keep their original
+[v1 contract](formal-agent-orchestration-v1.md) and receipt requirements.
 
 ## Original evidence and phase checkpoints
 
-Use the complete frozen [Worker guidance](worker-guidance.md),
-[Goal Judge](../skills/goal-judge/SKILL.md), role/dependency snapshots and
-[native mappings](native-agent-mappings.md). Retain one logical report-only
-Judge throughout the invocation and its complete history. Each current Worker
-hands off complete original artifacts, current target and requirement basis,
-checks, authority and gaps. The Primary accepts authentic applicable native
-results, verifies retained idle state and current receipt, then completes each
-Action separately. A bounded preview never replaces direct source access.
-
-Design pairs cover context, discovery, draft, challenge, quality, application
-and final evidence. War-room pairs cover baseline, investigation, each of four
-alternative proposal drafts, quality, documentation and final evidence. The
-four proposals share one Judge placement; optional branch selectors and the
-complete current handoff identify the actual selected proposal. Decisions,
-operational records, user approval, effects and final acceptance stay with the
-Primary. A Judge never judges another Judge.
+Supply original requirements, current artifacts, checks, actual authority and
+available public handles. Design groups context/discovery, draft/challenge/quality
+and approved application. War-room groups baseline/investigation,
+proposal/quality and approved documentation or no-change delivery. The Primary
+records simple operations and Decisions; the report-only Judge independently
+assesses each coherent phase. Final assembly adds no Worker or Judge cycle when
+a complete final assessment remains applicable to unchanged candidate, criteria
+and checks; otherwise obtain fresh affected assessment without relabeling a phase
+report as final.
 
 Every phase report retains all original criterion rows, the actual global
 verdict and unmet/unverified counts. It also includes current phase obligations
@@ -61,8 +53,11 @@ evidence record. Each local authority Decision requires actual applicable
 unconsumed authority for its exact operation, target and owner. A negative
 verdict cannot grant or renew checks, providers, clipboard access, document
 application, installation, implementation, staging, commit or publication.
-Uncovered work stops at its local authority gate. An earlier different owner
-requires an explicitly authorized manual rework operation.
+Uncovered work stops at its local authority gate. Discovery evidence gaps select
+`capture-context` or `discover`; investigation gaps select `capture-baseline` or
+`investigate`. Each grouped route requires both its exact owner and passing
+existing effect authority. Other earlier owners use an explicitly authorized
+manual rework operation with a supported target.
 
 The original `approve-diff` gate binds the complete actual user-approved
 proposal or no-change and unchanged target snapshots. Before writing, the
@@ -84,7 +79,7 @@ Design Gates apply only to an already enrolled registry.
 
 ## Final assessment and retained history
 
-Final Worker evidence and the current applicable final Judge precede the
+The Primary final evidence index and applicable independent Judge assessment precede the
 original native `assess-goal`. Achievement requires the exact `achieved` outcome,
 pass verdict, zero mandatory unmet/unverified rows and fresh assessments of
 every original native criterion. Phase labels, inherited verdicts, provider zero
@@ -92,13 +87,10 @@ or unsupported manual claims cannot prove success. Preserve honest
 `not-achieved` and `superseded` outcomes and separate document delivery from
 product implementation and commit/publication authority.
 
-Every required placement binds its full frozen role and eight dependencies,
-uses `aquarium-native`, retains the accepted agent and respects native
-`max_rounds=32` per placement. Preserve complete logical Judge lifetime records
-without an Aquarium lifetime quota, truncation or reset. These source declarations
-and structural checks do not establish authentic Codex/Claude execution,
-complete lifetime accounting, dispatch-loss recovery, installed upgrade or
-functional results. Native qualification must cover the exact role snapshot and
-supported path. Initial Agent, inner-model and Codex dispatch-ACK loss and
-arbitrary outliving descendants remain unqualified. Exact UTM upgrade is a
-separate pre-release gate; Master's overall acceptance remains separate.
+Use actual public native results and preserve unavailable telemetry as unknown.
+Local structure and synthetic fixtures do not prove installed startup, rework,
+recovery or upgrade. Follow the target repository's verification environment
+policy for installation-dependent behavior and keep actual Master acceptance
+separate. Ordinary recovery reconciles known work before
+replay and settles mutating Workers before replacement, without requiring full
+executor history.

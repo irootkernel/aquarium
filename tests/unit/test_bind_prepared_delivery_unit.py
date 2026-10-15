@@ -864,3 +864,65 @@ def test_codex_v2_binding_retains_every_preparation_and_actual_alias(feedback_in
     assert (prepared, request) == original
     assert len(output["round_bindings"]) == len(request["expected"]["rounds"])
     assert output["acceptance_ready"] is False and output["redispatch_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "profile",
+    [binder.native.CODEX_ROUNDS_PROFILE, binder.native.CODEX_ROUNDS_V2_PROFILE],
+)
+@pytest.mark.parametrize("round_kind", ["initial", "feedback"])
+def test_ordinary_nested_round_is_rejected_before_formal_binding(
+    feedback_inputs, profile: str, round_kind: str
+) -> None:
+    prepared, request = feedback_inputs
+    request["profile"] = profile
+    if profile == binder.native.CODEX_ROUNDS_V2_PROFILE:
+        request["records"]["initial"]["child_read"]["thread"]["cliVersion"] = "0.162.1"
+        path = request["records"]["initial"]["journal"]["response"]["task_name"]
+        for record in request["records"]["feedback"]:
+            for key in ("before_child_read", "after_child_read"):
+                record[key]["thread"]["cliVersion"] = "0.162.1"
+            record["request"]["target"] = path.rsplit("/", 1)[-1]
+    assert binder.bind_delivery(prepared, request)["state"] == "delivery_bound"
+    ordinary = {
+        "schema": "aquarium.assignment/v2",
+        "work": {"id": "TASK-127"},
+        "target": {"basis": "candidate"},
+        "authority": {"allowed": ["Read evidence"], "excluded": ["Mutation"]},
+        "procedure": None,
+        "native": {"harness": "codex", "model": None},
+        "evidence": [],
+        "gaps": [],
+        "role": "judge",
+        "purpose": "Assess original criteria",
+        "instructions": "Report only",
+        "checkpoint": "verification",
+        "deliverables": ["Assessment"],
+        "success_criteria": ["Preserve original gaps"],
+    }
+    assert (
+        binder.renderer.render_dispatch(ordinary)["schema"]
+        == "aquarium.prepared-dispatch/v2"
+    )
+    record = (
+        request["records"]["initial"]
+        if round_kind == "initial"
+        else request["records"]["feedback"][0]
+    )
+    record["preparation"] = ordinary
+    result = binder.bind_delivery(prepared, request)
+    assert result["state"] == "rejected"
+    assert result["error"]["code"] == "INVALID_PREPARATION"
+    assert result["acceptance_ready"] is False
+    response = cli(
+        binder.native.canonical_bytes(
+            {
+                "schema": binder.REQUEST_SCHEMA,
+                "preparation": prepared,
+                "mapping_request": request,
+            }
+        )
+    )
+    assert response.returncode == 2
+    assert response.stderr == b""
+    assert json.loads(response.stdout) == result

@@ -5,15 +5,15 @@ description: "Assess an assigned node, Task, Epic, design, or diagnosis goal aga
 
 # Goal Judge
 
-Read the [orchestration contract](../../references/agent-orchestration.md) for
-criterion states, applicability, logical lifetime, and the assessment document.
-Read [native mappings](../../references/native-agent-mappings.md) when native
-execution or recovery provenance is part of the assigned assessment.
+Read the [ordinary v2 contract](../../references/ordinary-agent-orchestration.md)
+for criterion states, applicability, logical lifetime, assessment documents,
+minimal public provenance and recovery. Admitted formal sessions retain their
+original role snapshot and [formal v1 contract](../../references/formal-agent-orchestration-v1.md).
 
 Return a semantic assessment of the assigned exact candidate. The caller owns
 dispatch, native result acceptance, Podway progression, and user authority.
-This capability does not activate required Procedure placements or qualify an
-integration. Those EPIC-021 obligations remain with their implementation owners.
+This capability supplies independent assessment without requiring private native
+history, model telemetry or configuration qualification.
 
 ## Establish the assessment
 
@@ -34,8 +34,8 @@ work keeps its actual global gap. A cold
 validation reads original evidence independently and uses a fresh Judge.
 
 Preserve the caller's logical Judge identity across feedback and reassessment.
-For a recovered or replacement Judge, establish applicability from the complete
-checkpoint and current native evidence. Restored context does not establish an
+For a recovered or replacement Judge, establish applicability from original criteria, current artifacts, remaining authority and available
+public native evidence. Restored context does not establish an
 applicable verdict by itself.
 
 ## Assess and report
@@ -47,12 +47,13 @@ criterion `unverified`. Distinguish firsthand reads from supplied check results
 and user-owned functional evidence. Empty technical findings cannot compensate
 for missing mandatory evidence.
 
-Return `aquarium.judge-assessment/v1` under the shared contract, including all
-common fields and the Worker result binding, checkpoint, complete criterion
-rows, candidate applicability, verification freshness, technical-review basis,
-remaining authority, and follow-up obligations. Use actual native identities
-only when supported records provide them. Declare unavailable provenance as a
-gap; never replace it with a role name or Podway attempt identity.
+Return `aquarium.judge-assessment/v2` under the shared contract, including all
+common fields, current assignment, available public native handles and actual
+result evidence, checkpoint, complete criterion rows, candidate applicability,
+verification freshness, technical-review basis, remaining authority and follow-up
+obligations. Use actual native identities only when supported records provide
+them. Keep unavailable telemetry explicitly unknown; it is not a product gap or
+an admission blocker. Missing evidence for a due requirement remains a gap.
 
 For a nonfinal checkpoint, report a separate `pass`, `fail`, or `inconclusive`
 phase result from actual current work and required checks. A valid plan need not
@@ -68,7 +69,8 @@ evidence gaps remain. Preserve both kinds when they coexist. A changed target,
 requirement, or material check input invalidates affected assessments. Carry an
 unaffected row only with its current applicability basis.
 
-Reassess a disputed verdict against the original sources and the supplied
+Confirm findings against due requirements and reachable user impact. Optional
+future hardening does not block current acceptance. Reassess a disputed verdict against the original sources and the supplied
 conflicting evidence. Do not replace a supported gap with majority
 agreement or treat a negative verdict as permission for another review or fix.
 

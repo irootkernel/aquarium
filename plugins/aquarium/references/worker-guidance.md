@@ -1,10 +1,10 @@
 # Bounded Worker guidance
 
-This reference supplies the common Worker role for EPIC-021. The
-[orchestration contract](agent-orchestration.md) owns role boundaries and the
-handoff document. Required placements need an admitted Procedure and native
-qualification applicable to the exact role snapshot and current assignment.
-Completed task labels and source declarations do not establish that qualification.
+Use the [ordinary v2 orchestration contract](ordinary-agent-orchestration.md)
+for supported native assignments and handoffs. Follow the current Primary's
+harness and preserve selected supported options or defaults. Admitted formal
+sessions keep their original role snapshot and [formal v1 contract](formal-agent-orchestration-v1.md);
+these updated instructions do not migrate them.
 
 ## Receive the assignment
 
@@ -16,7 +16,7 @@ supplies neither node instructions nor mutation authority.
 
 Identify unreadable required inputs and conflicting authority before dependent
 work. Complete independent assigned work when possible and return the unresolved
-condition to the supervisor. For delegated Podway input, the integration supplies
+condition to the supervisor. For ordinary Podway work, the Primary supplies
 the complete package and selected evidence; bounded previews are insufficient.
 
 Use original artifacts rather than an Orchestrator summary where the requirement
@@ -42,19 +42,16 @@ authority and native contracts; an implementation assignment does not imply them
 
 ## Return the handoff
 
-Return `aquarium.worker-handoff/v1` under the shared contract with all common
+Return `aquarium.worker-handoff/v2` under the shared contract with all common
 fields, assigned deliverables, exact changed-path and artifact inventory,
-verification performed and omitted with reasons, complete result binding,
-feedback and settlement state, remaining gaps, and the proposed next owner.
+verification performed and omitted with reasons, available public native handles,
+current assignment and result evidence, feedback and settlement state,
+remaining gaps and the proposed next owner.
 Distinguish delivered work from missing work and firsthand evidence from supplied
-results. Supply only identities and acknowledgement supported by actual native
-records and the qualified [mapping](native-agent-mappings.md).
+results. Retain actual results and available public native handles; unavailable
+telemetry remains unknown. Do not invent a configuration/task/result binding or
+claim Judge or user acceptance from Worker delivery.
 
-Do not fabricate a configuration, task, or result digest to fill a required field.
-Report unavailable provenance to the supervisor. Complete delivery is not goal
-achievement, Judge approval, formal native acceptance, or user acceptance.
-
-On feedback, bind the new assignment to its actual accepted task and current
-candidate. Reuse evidence only after checking applicability. After a lost dispatch
+On feedback, identify the current assignment and candidate. Reuse evidence only after checking applicability. After a lost dispatch
 or result response, retain known identities and report uncertainty; the supervisor
 reconciles accepted work before sending another assignment or replacing you.

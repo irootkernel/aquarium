@@ -1,17 +1,17 @@
 # Supervised agent orchestration
 
-## Reserved ordinary native workflow contract
+## Ordinary native workflow contract
 
 [EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
 defines ordinary native Worker and independent report-only Judge work at
-meaningful phase boundaries. TASK-126 reserves the interfaces in the
+meaningful phase boundaries. TASK-127 implements the interfaces in the
 [ordinary native contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md):
 `aquarium.assignment/v2`, `aquarium.worker-handoff/v2`,
 `aquarium.judge-assessment/v2` and `aquarium.orchestration-checkpoint/v2`.
 That owner defines roles, grouped assessments, minimal relevant evidence,
-recovery and the producer/consumer map. TASK-127 owns implementation in handlers,
-role instructions, helpers and all five bundled Procedures. The startup defect
-remains until that work is verified.
+recovery and the producer/consumer map. Handlers, role instructions, helpers and all five bundled Procedures use the
+ordinary contract. Source and structural results do not establish installed
+functionality; actual startup, rework and recovery remain separate verification.
 
 Operational roles use the current Primary's supported native harness, preserving
 selected supported options or its defaults. Ordinary work does not require
@@ -27,11 +27,11 @@ available.
 
 ## Formal v1 delivery contract
 
-The formal v1 contract still applies to current bundled sources and installed
-handlers until the TASK-127 transition. The remaining sections also preserve
+The formal v1 contract applies to retained formal sources, installed handlers
+that have not received an authorized update, and their admitted sessions. The remaining sections also preserve
 EPIC-021 qualification outcomes, historical records and admitted snapshots,
 including their original v1 meanings, source identities and digest domains.
-They do not add prerequisites to the reserved ordinary v2 contract.
+They do not add prerequisites to the ordinary v2 contract.
 
 `TASK-110` defines the shared Orchestrator, Judge, and Workers contract for
 `EPIC-021`. `TASK-111` through `TASK-116` implement the candidate native mappings,
@@ -49,7 +49,7 @@ UTM VM remain a separate pre-release gate. Qualification evidence must resolve
 current applicability before a required placement runs.
 
 The exact owner is the
-[supervised agent orchestration contract](../../plugins/aquarium/references/agent-orchestration.md).
+[formal v1 orchestration contract](../../plugins/aquarium/references/formal-agent-orchestration-v1.md).
 It defines role ownership and logical Judge lifetimes, original-criterion
 assessment, applicability, all five Procedure evaluation boundaries, native
 acknowledgement responsibilities, recovery, and retained technical-review and
@@ -132,7 +132,7 @@ Affected placement activation retains its native recovery requirements.
 
 ## TASK-112 Task candidate
 
-The bundled Task Procedure version `30` and [Task orchestration](../../plugins/aquarium/references/task-orchestration.md) apply Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
+TASK-112 delivered Task Procedure version `30` under the [formal v1 contract](../../plugins/aquarium/references/formal-agent-orchestration-v1.md), with Worker candidate Actions, retained Judge reports and Primary semantic Decisions to planning, implementation, refinement, verification, documentation, admitted review evidence and final normal/stopped Task outcomes. Technical route admission, ordinals, provenance, findings, backend checks, Low settlement, correction authority, actual approval and separate commit grants retain their own gates.
 
 The candidate declares complete role snapshot bindings and rejects Worker-only,
 missing or stale assessment evidence and uncovered followup authority structurally.

@@ -13,7 +13,12 @@ unless the placement selects it.
 
 ## Task Procedure
 
-The bundled version-30 candidate follows [Task orchestration](task-orchestration.md). Work-bearing plan, implementation, refinement, verification, documentation, and admitted review evidence have required Worker delivery and retained Judge Action placements. Their Primary Decisions consume current applicable phase results while retaining full original global rows and gaps; the native review and authority gates remain separate. Final normal and stopped evidence candidates have their own Judge reports before goal assessment. Operational records and all Decisions stay with the Primary. Required placements need an admitted delegated Procedure and native qualification applicable to their exact operative snapshot and supported path; admitted direct snapshots retain their existing contract.
+The bundled version-31 source follows [Task orchestration](task-orchestration.md).
+Ordinary native work assesses the plan, combined implementation/refinement/verification,
+documentation and completion after admitted review. The Primary records bookkeeping
+and Decisions. Original mandatory criteria, selected technical review, actual approval,
+correction ownership and commit authority remain independent; formal historical
+sessions retain their admitted rules.
 
 | Node family | Capability and required input | Boundary and result |
 | --- | --- | --- |
@@ -42,7 +47,11 @@ states that the review predates changed bytes.
 
 ## Goal Procedure
 
-The bundled version-33 candidate follows [Epic orchestration](epic-orchestration.md). Required Worker candidates and retained Judge reports bracket goal work, admitted technical evidence and final normal/stopped assessment. `judge-work` precedes evidence acquisition; `judge-goal-evidence` follows serial technical admission and operational checks. Primary phase Decisions require current applicability and satisfaction of actual due obligations, preserving full global rows and their original negative routing, while effect-authority checks preserve actual correction and evidence grants. Final assessment includes original Goal and applicable Epic integration criteria. Required placements need native qualification applicable to the exact operative snapshot and supported path; released managed copies retain their direct contract.
+The bundled version-34 source follows [Epic orchestration](epic-orchestration.md).
+Ordinary Worker delivery and independent Judge assessment cover current work and
+completion after admitted review; final integration includes applicable Epic seams.
+The Primary owns bookkeeping and Decisions without an extra assessment cycle.
+Admitted formal snapshots retain their original contracts.
 
 `epic-handler` owns goal-centered member, remediation, and closeout work. It does
 not invoke the task phase skills. `complete-work` returns the work summary, source
@@ -88,8 +97,8 @@ also require a user decision and cannot use delegated acceptance. Each path reta
 its own assessment and exact acceptance evidence.
 
 Stopped core evidence repair passes through the Primary's
-`record-stopped-core-gaps` before the stopped final Worker and Judge. Carry its
-gap record in the full assignment beyond the bounded selectors. This path
+`record-stopped-core-gaps` before stopped final Primary assembly and Judge
+assessment. Carry its gap record in the full assignment beyond the bounded selectors. This path
 reconciles available evidence and preserves unresolved gaps; it cannot enter
 ordinary work or provider review before actual renewed user direction.
 
@@ -101,17 +110,11 @@ no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
-The bundled version-32 candidate follows [Validation
-orchestration](validation-orchestration.md) with twelve required Worker/Judge
-placements. Direct audit and re-audit checkpoint Decisions preserve real negative
-original Epic rows while admitting faithful gap routing. The Primary settles each exact
-accepted correction-group commit before serializing another group or re-audit. Technical
-evidence receives its separate Judge only after native serial provider admission. Its current phase result preserves faithful original provider rows for completion and finding routing. Final
-normal/stopped candidates require current applicable Judge reports; stopped evidence
-repair stays within stopped assembly. Cold validation creates a fresh Judge with direct
-original source access; internal Epic validation retains its logical Judge and full
-history. Required placements need native qualification applicable to the exact operative snapshot and supported path; released snapshots
-retain their direct contract.
+The bundled version-33 source follows [Validation orchestration](validation-orchestration.md).
+Audit and re-audit are direct independent Judge work. Workers implement authorized
+correction groups with checks; the Primary verifies exact accepted group commits
+before re-audit. Final assessment covers admitted technical evidence and integration.
+No private history or native qualification is an ordinary prerequisite.
 
 `epic-handler` uses validation for final epic audit and `epic-validator` uses it
 for cold validation. Baseline, audit, remediation, re-audit, final review, user
@@ -170,7 +173,7 @@ execution dossier under the shared consumer rules before final acceptance.
 
 ## Design Procedure
 
-The bundled version-10 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fourteen required Worker/Judge placements for context, discovery, draft, challenge, quality, application and final evidence. Current phase checkpoint results preserve full original outcome rows and faithful negative quality routing. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
+The bundled version-11 source follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md). Ordinary native roles assess context/discovery, proposal/challenge/quality and approved application, preserving original negative routing and actual exact-diff authority. Final bookkeeping alone creates no new Judge dispatch.
 
 `new-project`, `new-feature`, and `refactor` own context, discovery, drafting,
 challenge, quality, exact-diff approval, document application, assessment, and
@@ -185,7 +188,7 @@ optional at merges.
 
 ## War-room Procedure
 
-The bundled version-10 candidate follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md) with fifteen required Worker/Judge placements, including four alternative proposal Workers and their common Judge. Primary cause/scope recommendations, faithful negative quality routing, actual exact document approval and supported incomplete/no-work delivery remain distinct from whole-goal achievement. Required placements need an admitted delegated Procedure and native qualification applicable to the exact operative snapshot and supported path.
+The bundled version-11 source follows [Design and diagnosis orchestration](design-diagnosis-orchestration.md). Ordinary native roles assess baseline/investigation, proposal/quality and approved document or no-change delivery. The Primary owns cause/scope Decisions; incomplete/no-work delivery remains distinct from fixing a defect.
 
 `war-room` owns safe baseline or reproduction, competing hypotheses, cause and
 scope judgments, proposal quality, exact-diff approval, document application,
@@ -213,8 +216,9 @@ item, choice, evidence, and route inventory from the current canonical Procedure
 Its structural classification does not prove that customized instructions have
 equivalent meaning or that Podway executed or verified any external work.
 
-Current readiness requires the complete canonical graph, selected evidence and
-role snapshot bindings for all five Procedures, including recognized prior files.
+Current readiness requires the compatible ordinary graph and selected evidence
+for all five Procedures. No role snapshot or native qualification is required.
+Declared formal sources retain their genuine delegation contract.
 Preserve every prior file and immutable admitted snapshot. Continue an old
 session only with its supported released handler contract; otherwise retain
 state and explain the separately authorized compatible successor after pending

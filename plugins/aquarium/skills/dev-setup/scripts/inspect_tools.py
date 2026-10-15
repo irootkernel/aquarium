@@ -297,6 +297,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
         "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
         "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
         "aea7cb5b93fbaaf0bcd94de2d981621afd1f547fcecd370649a8d2e6fb2f4ea6",
@@ -326,6 +327,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
         "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
         "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
         "5f8d17becb9b673365cb01614a5ab9563b3c459ded93da60d18990eaa70e73b9",
@@ -355,6 +357,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
         "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
         "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
         "a9b225b36bddbdd2e44cd0d37b9ed5967f59b222fa182bed91ab7698a46896e1",
@@ -382,6 +385,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
+        "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
         "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
         "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
         "0765991ad1fd1e3398c8ab07e8c852be0593c69efc65a89f9107caead5f04f43",
@@ -393,6 +397,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
     },
     "aquarium-war-room-v2.yaml": {
+        "e370766f3ef8e057b818eca42e2757844950b4536a3d7ac8c41624154ec41cd2",
         "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
         "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
         "3866de3ecc6b101f7ac10933221f711964dd3a9a77030f3c90baf3dd739fb4f6",
@@ -885,9 +890,11 @@ def inspect_podway_handler_contract(
                 for item in (entry.get("items") or [None])
             }
     reasons: list[str] = []
-    for node_id, expected in contract["delegation"].items():
+    for node_id in sorted(contract["nodes"]):
         node = nodes.get(node_id)
-        if not isinstance(node, dict) or node.get("delegation") != expected:
+        if isinstance(node, dict) and node.get("delegation") != contract[
+            "delegation"
+        ].get(node_id):
             reasons.append(f"incompatible_delegation:{node_id}")
     missing_nodes = sorted(contract.get("nodes", set()) - nodes.keys())
     if missing_nodes:

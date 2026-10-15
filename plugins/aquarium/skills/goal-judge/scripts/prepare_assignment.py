@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import importlib.util
 import json
 import os
 import stat
@@ -136,6 +137,17 @@ def prepare(source_root: Path, request: dict[str, Any]) -> dict[str, Any]:
     records. Canonical sources name readable authority; selected_evidence names
     files to include in full. An explicitly empty evidence list is permitted.
     """
+    if isinstance(request, dict) and request.get("schema") == "aquarium.assignment/v2":
+        spec = importlib.util.spec_from_file_location(
+            "aquarium_ordinary_assignment",
+            Path(__file__).with_name("ordinary_assignment.py"),
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        try:
+            return module.prepare(request)
+        except ValueError as error:
+            raise PreparationError(str(error)) from error
     _object(request, {"schema", "role", "node"}, "request")
     if request["schema"] != REQUEST_SCHEMA:
         raise PreparationError(f"request schema must be {REQUEST_SCHEMA}")

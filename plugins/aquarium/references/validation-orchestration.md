@@ -1,36 +1,19 @@
-# Validation orchestration candidate
+# Validation orchestration
 
-Apply this reference when the admitted Validation Procedure declares required
-Worker/Judge placements. Released direct snapshots keep their admitted contract.
-The bundled version `32` declares twelve placements. Execution requires an
-admitted delegated Procedure and native qualification applicable to its exact
-role snapshot, assignment and recovery path. Managed-file updates and compatible
-successor sessions retain their separate authority.
-
-## Judge identity and original evidence
-
-An independently invoked `epic-validator` creates a fresh report-only Judge.
-The Judge reads every original canonical Epic criterion, member obligation,
-integration seam and supporting artifact directly. It may use retained reports
-as provenance, but a prior verdict, completed roadmap label, Worker summary or
-clean provider count cannot establish current achievement. Continuing internal
-`epic-handler` Validation retains its existing logical Epic Judge, complete
-history, original constraints and lifetime accounting across sessions.
-
-Use the frozen [Worker guidance](worker-guidance.md),
-[Goal Judge](../skills/goal-judge/SKILL.md), complete role/dependency snapshots and
-[native mapping](native-agent-mappings.md). Each Action supplies its complete
-objective, instructions, original criteria and selected original evidence.
-Bounded Podway previews do not replace complete artifacts or direct source
-access. The Primary verifies applicable native receipts, accepts each current
-result, establishes retained idle state and completes the Action separately.
-A semantic report supplies no implementation, check, provider, installation,
-acceptance or commit authority.
+Validation version `33` uses ordinary Actions and the [v2 contract](ordinary-agent-orchestration.md).
+An independent cold Judge reads original Epic criteria and current artifacts;
+internal validation retains its logical Epic Judge when supported. Use available
+public handles, actual evidence and authority without qualification, private
+history or configuration-digest admission. Admitted formal sessions retain their
+original [v1 contract](formal-agent-orchestration-v1.md) and genuine receipts.
 
 ## Audit and correction checkpoints
 
-`audit` and `re-audit` deliver Worker candidates to `judge-audit` and
-`judge-re-audit`. Their Primary checkpoint Decisions require current
+`audit` and `re-audit` are direct report-only Judge assessments. Before each
+dispatch, the Primary or an authorized Worker executes the due repository checks
+and supplies their actual results and current candidate evidence. The Judge reads
+that evidence without running checks. The Primary records the aggregate audit and
+check result. Their checkpoint Decisions require current
 `judge-applicability` and passing `judge-checkpoint-result` before the existing
 `decide-gaps` or `decide-re-audit` router. The checkpoint checks a complete,
 faithful audit within its admitted full or frozen scope. Its report preserves
@@ -41,7 +24,7 @@ real blockers, confirmation gaps or Low findings without claiming Epic success.
 Incomplete audit evidence enters its local followup record and effect-authority
 Decision. The baseline and prepared pass supply authority before provider
 records exist. Inapplicable reports return to their current Judge; missing or
-stale receipts cannot stand in for reassessment. Negative reports never restore
+stale candidate evidence cannot stand in for reassessment. Negative reports never restore
 a consumed correction envelope or technical-review ordinal.
 
 `remediate` implements one admitted correction group and authorized checks.
@@ -58,7 +41,7 @@ actual post-hook commit bytes, identity, owner attribution and residue.
 `group-settlement-result` must pass before `decide-remediation-groups` admits
 another serialized group or the original post-remediation audit scope.
 
-The settlement summary carries every earlier verified group from native history
+The settlement summary carries every earlier verified group from retained records
 and actual commit evidence. Corrections retain original task or Epic ownership,
 dependency order and distinct unconsumed group grants within the same Validation
 session. No per-group Goal session, concurrent correction set, implicit Worker
@@ -87,12 +70,14 @@ report nor Low settlement consumes a provider ordinal. Audit and provider
 finding identities remain separate; zero provider findings cannot erase an
 applicable audit Low obligation.
 
-The final normal Worker `prepare-validation-assessment` and `judge-validation`
+The final Primary assembly `prepare-validation-assessment` and `judge-validation`
 consume every original criterion, current full or frozen audit, provider/Judge
 report, verified correction commit, applicable manual result and local composition.
 Preserve the reviewed basis, permitted delta, exact after-target, current local
 checks and criterion evidence; the earlier review predates the local delta.
-A current final report precedes `assess-goal`. Achievement requires its exact
+A complete existing final report may be reused only with current exact coverage,
+candidate, requirements and checks; assembly alone causes no new Judge dispatch.
+Otherwise obtain fresh affected assessment before `assess-goal`. Achievement requires its exact
 `achieved` outcome, pass verdict, zero mandatory unmet/unverified rows and fresh
 original native criterion assessments. Passing members cannot erase a failed
 integration or an unsupported manual claim.
@@ -105,8 +90,8 @@ required; legitimately bypassed audit, re-audit, provider/Judge, correction and
 Low records remain optional. Supply every available record, including actual
 direction and route-stop evidence, in the complete final assignment.
 
-Both core Decision branches reach fresh `prepare-stopped-validation-assessment`
-and `judge-stopped-validation`. `needs-rework` first records bounded
+Both core branches reach stopped Primary evidence assembly and an applicable
+independent stopped Judge assessment. `needs-rework` first records bounded
 `record-stopped-core-gaps`; reconciliation preserves unresolved gaps and cannot
 reopen ordinary work, provider admission, normal assessment or achievement.
 Inapplicable stopped reports return to that stopped Judge. Only actual renewed

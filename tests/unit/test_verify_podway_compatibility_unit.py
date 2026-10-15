@@ -523,17 +523,31 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         for mode in ("settled", "retry")
     )
     assert set(waits) == expected_waits
+    expected_terminals.update(
+        (scenario, "aquarium-task-v2.yaml") for scenario in runtime.GROUPED_TASK_OWNERS
+    )
+    expected_terminals.update(
+        (scenario, f"{procedure}.yaml")
+        for scenario, (
+            procedure,
+            _phase,
+            _owner,
+        ) in runtime.GROUPED_EVIDENCE_OWNERS.items()
+    )
     assert set(terminals) == expected_terminals
     assert len(waits) == 23
-    assert len(terminals) == 58
+    assert len(terminals) == 65
     assert len({scenario for _procedure, scenario in waits}) == len(waits)
     assert len({scenario for scenario, _procedure in terminals}) == len(terminals)
     assert sum(job["kind"] == "wait" for job in jobs) == len(waits)
     terminal_jobs = [job for job in jobs if job["kind"] == "terminal"]
     assert len(terminal_jobs) == len(reusable)
     assert all(len(job["scenarios"]) == 1 for job in terminal_jobs)
-    assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 10
+    assert sum(job["kind"] == "isolated" for job in jobs) == len(isolated) == 17
     assert len(reusable) == 48
+    assert [job["batch_id"] for job in jobs if job["kind"] == "historical-formal"] == [
+        "historical-formal-task-v30"
+    ]
     assert sorted(
         spec for job in jobs if job["kind"] == "terminal" for spec in job["scenarios"]
     ) == sorted(reusable)
@@ -548,8 +562,8 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         for job in jobs
         if job["kind"] == "wait"
     ] == list(waits)
-    assert 1 + len(jobs) == 3 + len(terminals) + len(waits)
-    assert 5 + len(waits) + len(terminals) == 86
+    assert 1 + len(jobs) == 4 + len(terminals) + len(waits)
+    assert 6 + len(waits) + len(terminals) == 94
     assert (
         sum(
             scenario == runtime.VALIDATION_PROVIDER_LOW_SCENARIO
@@ -558,6 +572,187 @@ def test_runtime_job_inventory_preserves_behavior_scope() -> None:
         == 1
     )
     assert runtime.MAX_PARALLEL_RUNTIMES == 4
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "task-grouped-implementation",
+        "task-grouped-refinement",
+        "task-grouped-verification",
+        "design-context-evidence",
+        "design-discovery-evidence",
+        "war-room-baseline-evidence",
+        "war-room-investigation-evidence",
+    ],
+)
+def test_grouped_owner_fixture_records_failure_and_selects_exact_route(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, scenario: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
+    managed.sandbox = tmp_path
+    evidence_group = runtime.GROUPED_EVIDENCE_OWNERS.get(scenario)
+    if evidence_group:
+        procedure, phase, owner = evidence_group
+        option = owner
+        source = f"record-{phase}-evidence-needed"
+        gate = f"confirm-{phase}-evidence-needed-authority"
+        expected_route, expected_outcome = "evidence-needed", "inconclusive"
+        owners = {
+            value[2]
+            for value in runtime.GROUPED_EVIDENCE_OWNERS.values()
+            if value[0] == procedure
+        }
+        rejected_options = owners - {owner}
+    else:
+        procedure, phase = "aquarium-task-v2", "verification"
+        option, owner = runtime.GROUPED_TASK_OWNERS[scenario]
+        source, gate = (
+            "record-verification-followup",
+            "confirm-verification-followup-authority",
+        )
+        expected_route, expected_outcome = "rework", "fail"
+        owners = {value[1] for value in runtime.GROUPED_TASK_OWNERS.values()}
+        rejected_options = {"implementation", "refinement", "verification"} - {option}
+    installed = tmp_path / f".podway/procedures/{procedure}.yaml"
+    installed.parent.mkdir(parents=True)
+    installed.write_text(f"id: {procedure}\n")
+    digest = "sha256:" + "0" * 64
+    monkeypatch.setattr(
+        managed,
+        "preview",
+        lambda _: {
+            "procedure_id": procedure,
+            "procedure_digest": digest,
+            "start_suggestion": {
+                "argv": [
+                    "podway",
+                    "start",
+                    "--procedure",
+                    f".podway/procedures/{procedure}.yaml",
+                    "--expect-procedure-digest",
+                    digest,
+                    "--task",
+                    "<title>",
+                ]
+            },
+        },
+    )
+    monkeypatch.setattr(
+        managed,
+        "raw",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            [],
+            0,
+            json.dumps(
+                {
+                    "schema": runtime.OUTPUT_SCHEMA,
+                    "command": "session.start",
+                    "result": {
+                        "schema": "podway.session-start-result/v4",
+                        "session_state": "prepared",
+                    },
+                }
+            ).encode(),
+            b"",
+        ),
+    )
+    monkeypatch.setattr(managed, "begin_goal", lambda *_: None)
+
+    def observation(node: str) -> dict:
+        return {
+            "status": {
+                "procedure": {"digest": digest},
+                "session": {"lifecycle": "running"},
+            },
+            "guidance": {"node": {"graph_node_id": node, "node_type": "decision"}},
+        }
+
+    observed = iter(
+        [
+            observation("prepared"),
+            observation(
+                f"decide-{phase}-assessment"
+                if evidence_group
+                else "decide-verification"
+            ),
+            observation(gate),
+            observation(owner),
+        ]
+    )
+    monkeypatch.setattr(managed, "observe", lambda: next(observed))
+    rejected = []
+    monkeypatch.setattr(
+        managed,
+        "reject_guarded_decision",
+        lambda obs, value: rejected.append(value) or obs,
+    )
+    monkeypatch.setattr(managed, "decide", lambda _obs, value: value)
+    destinations = []
+    monkeypatch.setattr(
+        managed,
+        "decision_destination",
+        lambda decision, target: destinations.append((decision, target)),
+    )
+    result = managed.drive_procedure(installed.name, scenario=scenario)
+    assert result["semantic_owner"] == owner
+    assert result["guarded_owner_route"] == option
+    assert destinations == [(expected_route, source), (option, owner)]
+    assert set(rejected) == {
+        "passed",
+        "blocked",
+        *rejected_options,
+    }
+    owner_record = managed.value_for(
+        {
+            "type": "choice",
+            "item_id": "semantic-owner",
+            "constraints": {"choices": sorted(owners)},
+        },
+        source,
+    )
+    assert owner_record["value"] == owner
+    check = managed.value_for(
+        {
+            "type": "check_result",
+            "item_id": "judge-checkpoint-result",
+            "constraints": {"operation_id": "checkpoint", "operation_digest": digest},
+        },
+        f"judge-{phase}",
+    )
+    assert check["outcome"] == expected_outcome
+
+
+@pytest.mark.parametrize("formal", [False, True])
+@pytest.mark.parametrize("item_id", ["worker-handoff", "judge-assessment"])
+def test_structural_reports_select_contract_without_claiming_actual_delivery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, formal: bool, item_id: str
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
+    managed.sandbox = tmp_path
+    managed.placements = {"fixture": {}} if formal else {}
+    monkeypatch.setattr(managed, "raw", lambda *_args, **_kwargs: None)
+    managed.attach_fixture_report(
+        {
+            "guidance": {"node": {"graph_node_id": "fixture"}},
+            "mutation_templates": [
+                {
+                    "command": "item.attach",
+                    "argv": ["podway", item_id, "<path>", "<idempotency-key>"],
+                }
+            ],
+        },
+        {"item_id": item_id},
+    )
+    report = json.loads(next(tmp_path.glob("synthetic-*.json")).read_text())
+    assert report["schema"] == "aquarium.synthetic-structural-report/v1"
+    assert report["synthetic"] is True
+    assert (
+        report["expected_report_schema"]
+        == f"aquarium.{item_id}/{'v1' if formal else 'v2'}"
+    )
 
 
 def test_prepare_scenario_restores_procedure_and_resets_session_state(
@@ -2011,3 +2206,56 @@ def test_exact_artifact_identity_requires_release_contract(changes: dict) -> Non
             runtime.release_identity(completed)
     else:
         assert runtime.release_identity(completed) == identity
+
+
+@pytest.mark.parametrize("guards_exercised", [False, True])
+def test_historical_formal_job_requires_its_preserved_source_and_receipt_guards(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, guards_exercised: bool
+) -> None:
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    procedures = Path(__file__).parents[2] / "plugins/aquarium/assets/podway/procedures"
+    fixture = Path(__file__).parents[1] / "fixtures/aquarium-task-v30.yaml"
+    target = tmp_path / ".podway/procedures/aquarium-task-v2.yaml"
+    target.parent.mkdir(parents=True)
+    cleaned = []
+
+    class FakeRuntime:
+        def __init__(self, *_args: object) -> None:
+            self.sandbox = tmp_path
+            self.correction_case_variants = {}
+            self.delegation_receipt_count = int(guards_exercised)
+            self.missing_receipt_guards = (
+                {("record-plan", "attempt")} if guards_exercised else set()
+            )
+            self.stale_receipt_guards = (
+                {("record-plan", "attempt")} if guards_exercised else set()
+            )
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            cleaned.append(True)
+
+        def drive_procedure(self, name: str) -> None:
+            assert name == target.name
+            assert target.read_bytes() == fixture.read_bytes()
+
+    monkeypatch.setattr(runtime, "ManagedRuntime", FakeRuntime)
+    job = {
+        "kind": "historical-formal",
+        "batch_id": "historical-formal-task-v30",
+        "order": 1,
+    }
+    if guards_exercised:
+        result = runtime.execute_runtime_job(
+            tmp_path / "podway", procedures, job, threading.Event()
+        )
+        assert result["batch"]["synthetic_delegation_receipt_count"] == 1
+        assert result["batch"]["cleanup"] == "passed"
+    else:
+        with pytest.raises(runtime.RuntimeQualificationError, match="receipt guards"):
+            runtime.execute_runtime_job(
+                tmp_path / "podway", procedures, job, threading.Event()
+            )
+    assert cleaned == [True]

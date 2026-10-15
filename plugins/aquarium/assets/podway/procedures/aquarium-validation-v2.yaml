@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "32"
+version: "33"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -62,16 +62,18 @@ node_definitions:
     title: Audit the epic
     intent: Record a fresh requirement matrix, checks, review evidence, and confirmed gaps.
     instructions:
+      - Before dispatch, the Primary or an authorized Worker executes the due repository-authoritative checks and supplies their actual results and current candidate evidence. The report-only Judge does not run checks.
       - Audit the exact current candidate without source mutation and adjudicate gaps against canonical requirements.
       - Separate blockers, eligible Low gaps, unresolved confirmation, and operational result; total confirmed count is descriptive only.
       - Run the complete Epic audit on the current target. After correction, use the current prepared pass and completed remediation as provenance; this audit does not reset review ordinals or restore consumed authority.
-      - Deliver a complete aquarium.worker-handoff/v1 with the exact target, original criteria, current checks, evidence gaps and authentic native result bindings. This Action delivers a candidate; the separate Judge assesses it.
-      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh Judge reading all original criteria and artifacts directly; continuing epic-handler retains its logical Epic Judge and complete lifetime and history. Required placements remain inactive until combined qualification.
+      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh independent Judge reading original criteria and artifacts directly; internal epic-handler validation retains its logical Judge when supported. Recover available public handles, current evidence and authority without requiring private history.
       - The audit-result describes completed faithful audit execution, not Epic success. Retain actual unmet and unverified original criterion rows and gap classifications, including member integration seams. A complete negative audit must remain routable through decide-gaps without changing its rows to satisfied.
+      - Assign the report-only native Judge directly to read original requirements and current artifacts. Return the audit facts and aquarium.judge-assessment/v2 together; no Worker audit is judged recursively. Preserve actual negative criterion rows and original gap routing.
+      - The Primary records the aggregate audit-result from the completed Judge audit and supplied check results; neither report completeness nor this recording proves Epic success.
     items:
       - id: audit-result
         type: check_result
-        prompt: Record the caller-supplied result for aquarium-epic-audit; Podway does not execute or attest the operation.
+        prompt: Record the aggregate result of the completed direct Judge audit and actual caller-executed repository checks for aquarium-epic-audit; Podway does not execute or attest the operation.
         help: The declared operation is "Run the complete Aquarium epic audit and repository-authoritative checks for the current validation candidate in the recorded input basis." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
         required: true
         operation_id: aquarium-epic-audit
@@ -114,26 +116,75 @@ node_definitions:
         choices:
           - current-envelope
           - user-direction
-      - id: worker-handoff
+      - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
+      - id: judge-verdict
+        type: choice
+        prompt: Record the Judge verdict.
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: judge-unmet-criteria
+        type: integer
+        prompt: Count mandatory unmet criteria, including omitted original criteria.
+        required: true
+        minimum: 0
+      - id: judge-unverified-criteria
+        type: integer
+        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
+        required: true
+        minimum: 0
+      - id: judge-applicability
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify every original criterion and all due phase obligations against direct original evidence, exact current candidate, requirements, checks, authority and available public native handles. Unknown telemetry is not a product gap. Preserve original negative rows and truthful verdicts/counts.
+        required: true
+        operation_id: aquarium-validation-judge-applicability
+        operation_digest: sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: judge-summary
+        type: text
+        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: judge-checkpoint-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-faithful-audit-checkpoint against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify that the audit is complete and faithful for its admitted full or frozen scope, every original criterion row and actual unmet/unverified gap is preserved, and original audit gap counts, identities, classifications and correction authority agree with direct evidence. This scoped checkpoint does not require Epic achievement or zero original outcome gaps.
+        required: true
+        operation_id: aquarium-validation-faithful-audit-checkpoint
+        operation_digest: sha256:b69aa94a7acf13238ba1a5d5c94fa307ea3be584ef2c1a049bfcdb5e2a9ce7e5
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
   remediation-confirmation-audit-record:
     type: action
     title: Confirm one Validation remediation
     intent: Confirm only the frozen correction set and its directly affected regression surface after one remediation pass.
     instructions:
+      - Before dispatch, the Primary or an authorized Worker executes the due repository-authoritative checks and supplies their actual results and current candidate evidence. The report-only Judge does not run checks.
       - Check only the frozen finding IDs, correction delta, invalidated criteria, directly affected callers, contracts, and tests, and correction-caused regressions.
       - Do not reopen the whole Epic, admit unrelated findings into this correction loop, or authorize another correction pass.
-      - Deliver a complete aquarium.worker-handoff/v1 with the exact target, original criteria, current checks, evidence gaps and authentic native result bindings. This Action delivers a candidate; the separate Judge assesses it.
-      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh Judge reading all original criteria and artifacts directly; continuing epic-handler retains its logical Epic Judge and complete lifetime and history. Required placements remain inactive until combined qualification.
+      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh independent Judge reading original criteria and artifacts directly; internal epic-handler validation retains its logical Judge when supported. Recover available public handles, current evidence and authority without requiring private history.
       - Preserve the original frozen obligations and actual negative rows. Audit execution completeness does not establish corrected Epic success or grant another correction pass.
+      - Assign the report-only native Judge directly to read original requirements and current artifacts. Return the audit facts and aquarium.judge-assessment/v2 together; no Worker audit is judged recursively. Preserve actual negative criterion rows and original gap routing.
+      - The Primary records the aggregate audit-result from the completed Judge audit and supplied check results; neither report completeness nor this recording proves Epic success.
     items:
       - id: audit-result
         type: check_result
-        prompt: Record the caller-supplied result for aquarium-validation-remediation-confirmation-audit; Podway does not execute or attest the operation.
+        prompt: Record the aggregate result of the completed direct Judge audit and actual caller-executed repository checks for aquarium-validation-remediation-confirmation-audit; Podway does not execute or attest the operation.
         help: The declared operation is "Confirm only the frozen Validation finding IDs, correction delta, invalidated criteria, directly affected callers, contracts, and tests, and correction-caused regressions without reopening unrelated Epic scope." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
         required: true
         operation_id: aquarium-validation-remediation-confirmation-audit
@@ -181,12 +232,59 @@ node_definitions:
         choices:
           - current-envelope
           - user-direction
-      - id: worker-handoff
+      - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
+      - id: judge-verdict
+        type: choice
+        prompt: Record the Judge verdict.
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: judge-unmet-criteria
+        type: integer
+        prompt: Count mandatory unmet criteria, including omitted original criteria.
+        required: true
+        minimum: 0
+      - id: judge-unverified-criteria
+        type: integer
+        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
+        required: true
+        minimum: 0
+      - id: judge-applicability
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify every original criterion and all due phase obligations against direct original evidence, exact current candidate, requirements, checks, authority and available public native handles. Unknown telemetry is not a product gap. Preserve original negative rows and truthful verdicts/counts.
+        required: true
+        operation_id: aquarium-validation-judge-applicability
+        operation_digest: sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: judge-summary
+        type: text
+        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: judge-checkpoint-result
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-validation-faithful-audit-checkpoint against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify that the audit is complete and faithful for its admitted full or frozen scope, every original criterion row and actual unmet/unverified gap is preserved, and original audit gap counts, identities, classifications and correction authority agree with direct evidence. This scoped checkpoint does not require Epic achievement or zero original outcome gaps.
+        required: true
+        operation_id: aquarium-validation-faithful-audit-checkpoint
+        operation_digest: sha256:b69aa94a7acf13238ba1a5d5c94fa307ea3be584ef2c1a049bfcdb5e2a9ce7e5
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
   gap-decision:
     type: decision
     title: Evaluate audit gaps
@@ -385,8 +483,8 @@ node_definitions:
       - Read the required prepare-validation-pass summary before correction. Its source attempt and native rework reason identify the admitted trigger and authority; record the completed correction against that fresh preparation basis.
       - Reconstruct completed assessment ordinals and the exact current-envelope or one-shot user authority from native history and source review references before work. Preserve them across rework without treating a stale review as a current assessment.
       - After this correction, use a complete Epic audit before the first, second, or third work-unit assessment. After the third completed assessment, or a separately authorized one-shot correction, restrict confirmation to the frozen correction set and direct regression surface.
-      - Deliver a complete aquarium.worker-handoff/v1 with the exact target, original criteria, current checks, evidence gaps and authentic native result bindings. This Action delivers a candidate; the separate Judge assesses it.
-      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh Judge reading all original criteria and artifacts directly; continuing epic-handler retains its logical Epic Judge and complete lifetime and history. Required placements remain inactive until combined qualification.
+      - Deliver a complete aquarium.worker-handoff/v2 with the exact target, original criteria, current checks, evidence gaps and actual results and available public native handles. This Action delivers a candidate; the separate Judge assesses it.
+      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh independent Judge reading original criteria and artifacts directly; internal epic-handler validation retains its logical Judge when supported. Recover available public handles, current evidence and authority without requiring private history.
       - Implement only one owned correction group at a time. Workers cannot accept, stage or commit; the Primary settles the exact applicable group after its Judge assessment, then serializes the next group in this same Validation session. Do not create per-group Goal sessions or provider reviews.
     items:
       - id: remediation-candidate-summary
@@ -410,7 +508,7 @@ node_definitions:
           - one-shot
       - id: worker-handoff
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.worker-handoff/v2 candidate, exact target, requirement basis, checks, authority, gaps and actual results and available public native handles.
         required: true
         allowed_media_types:
           - application/json
@@ -468,8 +566,8 @@ node_definitions:
       - Do not launch another provider root solely because Low findings or their accepted local delta remain.
       - Compose the current obligation summary from the selected audit basis and provider findings under separate namespaces; provider counts never erase an applicable audit Low set.
       - Use the selected current-audit-basis-summary and its matching resolved audit source. A stale earlier audit cannot supply current target evidence.
-      - Deliver a complete aquarium.worker-handoff/v1 with the exact target, original criteria, current checks, evidence gaps and authentic native result bindings. This Action delivers a candidate; the separate Judge assesses it.
-      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh Judge reading all original criteria and artifacts directly; continuing epic-handler retains its logical Epic Judge and complete lifetime and history. Required placements remain inactive until combined qualification.
+      - Deliver a complete aquarium.worker-handoff/v2 with the exact target, original criteria, current checks, evidence gaps and actual results and available public native handles. This Action delivers a candidate; the separate Judge assesses it.
+      - Preserve the baseline workflow owner. Cold epic-validator uses a fresh independent Judge reading original criteria and artifacts directly; internal epic-handler validation retains its logical Judge when supported. Recover available public handles, current evidence and authority without requiring private history.
     items:
       - id: review-route
         type: choice
@@ -829,7 +927,7 @@ node_definitions:
         minimum: 0
       - id: worker-handoff
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.worker-handoff/v2 candidate, exact target, requirement basis, checks, authority, gaps and actual results and available public native handles.
         required: true
         allowed_media_types:
           - application/json
@@ -1981,13 +2079,13 @@ node_definitions:
       - Supply all original Epic exit criteria, member obligations, integration seams, purpose and original artifacts directly to the fresh cold Judge or retained internal Epic Judge. A Worker summary and inherited verdict never replace direct evidence.
       - Preserve every original criterion row, actual global verdict and unmet/unverified count. Separately assess all obligations due at this current phase and applicable parent constraints from direct evidence; unfinished later work remains a global gap, not a fabricated pass or non-applicability claim.
       - A passing checkpoint verifies actual current work, required checks and authority. For review evidence, preserve faithful negative provider rows and their original routing; report completeness alone cannot establish correction, implementation or verification success.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
       - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
@@ -2012,10 +2110,10 @@ node_definitions:
       - id: judge-applicability
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify complete original Epic criterion coverage and direct evidence, exact current target, requirement basis, goal revision, placement and attempt, Worker result, fresh cold or retained internal logical Judge identity and full history, and authentic acknowledged role/configuration/task/result bindings.
+        help: Verify every original criterion and all due phase obligations against direct original evidence, exact current candidate, requirements, checks, authority and available public native handles. Unknown telemetry is not a product gap. Preserve original negative rows and truthful verdicts/counts.
         required: true
         operation_id: aquarium-validation-judge-applicability
-        operation_digest: sha256:ad3371ef8a2d6a4bb4bafac1e33ed131f1b9d46fbd8be4781d0e898b4b8ac776
+        operation_digest: sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1
         accepted_outcomes:
           - pass
           - fail
@@ -2038,84 +2136,20 @@ node_definitions:
           - pass
           - fail
           - inconclusive
-  audit-judge-assessment-record:
-    type: action
-    title: Assess the current candidate
-    intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
-    instructions:
-      - Supply all original Epic exit criteria, member obligations, integration seams, purpose and original artifacts directly to the fresh cold Judge or retained internal Epic Judge. A Worker summary and inherited verdict never replace direct evidence.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
-      - Preserve the actual original Epic verdict and unmet/unverified rows. A complete faithful negative audit passes the separate checkpoint-result and reaches its original gap router; never report Epic pass or zero gaps merely to advance. Incomplete or inconsistent audit evidence needs bounded evidence repair, not invented gap classifications.
-    items:
-      - id: judge-assessment
-        type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
-        required: true
-        allowed_media_types:
-          - application/json
-      - id: judge-verdict
-        type: choice
-        prompt: Record the Judge verdict.
-        required: true
-        choices:
-          - pass
-          - rework
-          - evidence-needed
-      - id: judge-unmet-criteria
-        type: integer
-        prompt: Count mandatory unmet criteria, including omitted original criteria.
-        required: true
-        minimum: 0
-      - id: judge-unverified-criteria
-        type: integer
-        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
-        required: true
-        minimum: 0
-      - id: judge-applicability
-        type: check_result
-        prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify complete original Epic criterion coverage and direct evidence, exact current target, requirement basis, goal revision, placement and attempt, Worker result, fresh cold or retained internal logical Judge identity and full history, and authentic acknowledged role/configuration/task/result bindings.
-        required: true
-        operation_id: aquarium-validation-judge-applicability
-        operation_digest: sha256:ad3371ef8a2d6a4bb4bafac1e33ed131f1b9d46fbd8be4781d0e898b4b8ac776
-        accepted_outcomes:
-          - pass
-          - fail
-          - inconclusive
-      - id: judge-summary
-        type: text
-        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
-        required: true
-        min_length: 1
-        max_length: 4000
-        multiline: true
-      - id: judge-checkpoint-result
-        type: check_result
-        prompt: Record the caller-supplied result for aquarium-validation-faithful-audit-checkpoint against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify that the audit is complete and faithful for its admitted full or frozen scope, every original criterion row and actual unmet/unverified gap is preserved, and original audit gap counts, identities, classifications and correction authority agree with direct evidence. This scoped checkpoint does not require Epic achievement or zero original outcome gaps.
-        required: true
-        operation_id: aquarium-validation-faithful-audit-checkpoint
-        operation_digest: sha256:b69aa94a7acf13238ba1a5d5c94fa307ea3be584ef2c1a049bfcdb5e2a9ce7e5
-        accepted_outcomes:
-          - pass
-          - fail
-          - inconclusive
   remediation-judge-assessment-record:
     type: action
     title: Assess the current candidate
     intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
     instructions:
       - Supply all original Epic exit criteria, member obligations, integration seams, purpose and original artifacts directly to the fresh cold Judge or retained internal Epic Judge. A Worker summary and inherited verdict never replace direct evidence.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
       - Keep judge-verdict and unmet/unverified counts faithful to the full original Epic outcome. Record the distinct judge-group-result only from actual current group repair and required checks; other Epic gaps remain negative. A group checkpoint pass admits only existing Primary acceptance and commit settlement, not Epic achievement.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
       - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
@@ -2140,10 +2174,10 @@ node_definitions:
       - id: judge-applicability
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify complete original Epic criterion coverage and direct evidence, exact current target, requirement basis, goal revision, placement and attempt, Worker result, fresh cold or retained internal logical Judge identity and full history, and authentic acknowledged role/configuration/task/result bindings.
+        help: Verify every original criterion and all due phase obligations against direct original evidence, exact current candidate, requirements, checks, authority and available public native handles. Unknown telemetry is not a product gap. Preserve original negative rows and truthful verdicts/counts.
         required: true
         operation_id: aquarium-validation-judge-applicability
-        operation_digest: sha256:ad3371ef8a2d6a4bb4bafac1e33ed131f1b9d46fbd8be4781d0e898b4b8ac776
+        operation_digest: sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1
         accepted_outcomes:
           - pass
           - fail
@@ -2172,13 +2206,14 @@ node_definitions:
     intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
     instructions:
       - Supply all original Epic exit criteria, member obligations, integration seams, purpose and original artifacts directly to the fresh cold Judge or retained internal Epic Judge. A Worker summary and inherited verdict never replace direct evidence.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Reuse an existing complete final assessment only when its actual checkpoint coverage, candidate, original criteria, required checks and authority remain applicable. The Primary records that applicability without another Judge dispatch. Otherwise obtain a fresh independent assessment; never relabel a phase-only report as final or reuse a negative report as pass after correction.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
       - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
@@ -2203,10 +2238,10 @@ node_definitions:
       - id: judge-applicability
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify complete original Epic criterion coverage and direct evidence, exact current target, requirement basis, goal revision, placement and attempt, Worker result, fresh cold or retained internal logical Judge identity and full history, and authentic acknowledged role/configuration/task/result bindings.
+        help: Verify every original criterion and all due phase obligations against direct original evidence, exact current candidate, requirements, checks, authority and available public native handles. Unknown telemetry is not a product gap. Preserve original negative rows and truthful verdicts/counts.
         required: true
         operation_id: aquarium-validation-judge-applicability
-        operation_digest: sha256:ad3371ef8a2d6a4bb4bafac1e33ed131f1b9d46fbd8be4781d0e898b4b8ac776
+        operation_digest: sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1
         accepted_outcomes:
           - pass
           - fail
@@ -2238,21 +2273,21 @@ node_definitions:
         criteria: The applicable complete audit preserves its real original negative rows and classifications for the existing gap router.
         guards:
           - evidence:
-              node: judge-audit
+              node: audit
               item: judge-applicability
             field: outcome
             equals: pass
           - evidence:
-              node: judge-audit
+              node: audit
               item: judge-checkpoint-result
             field: outcome
             equals: pass
       - id: inapplicable
         label: Report inapplicable
-        criteria: Repair current original evidence or native binding without relabeling the report.
+        criteria: Repair current original evidence or candidate applicability without relabeling the report.
         guards:
           - evidence:
-              node: judge-audit
+              node: audit
               item: judge-applicability
             field: outcome
             not_equals: pass
@@ -2261,12 +2296,12 @@ node_definitions:
         criteria: The applicable report identifies incomplete or inconsistent audit evidence; bounded repair needs existing effect authority.
         guards:
           - evidence:
-              node: judge-audit
+              node: audit
               item: judge-applicability
             field: outcome
             equals: pass
           - evidence:
-              node: judge-audit
+              node: audit
               item: judge-checkpoint-result
             field: outcome
             not_equals: pass
@@ -2284,21 +2319,21 @@ node_definitions:
         criteria: The applicable complete audit preserves its real original negative rows and classifications for the existing gap router.
         guards:
           - evidence:
-              node: judge-re-audit
+              node: re-audit
               item: judge-applicability
             field: outcome
             equals: pass
           - evidence:
-              node: judge-re-audit
+              node: re-audit
               item: judge-checkpoint-result
             field: outcome
             equals: pass
       - id: inapplicable
         label: Report inapplicable
-        criteria: Repair current original evidence or native binding without relabeling the report.
+        criteria: Repair current original evidence or candidate applicability without relabeling the report.
         guards:
           - evidence:
-              node: judge-re-audit
+              node: re-audit
               item: judge-applicability
             field: outcome
             not_equals: pass
@@ -2307,12 +2342,12 @@ node_definitions:
         criteria: The applicable report identifies incomplete or inconsistent audit evidence; bounded repair needs existing effect authority.
         guards:
           - evidence:
-              node: judge-re-audit
+              node: re-audit
               item: judge-applicability
             field: outcome
             equals: pass
           - evidence:
-              node: judge-re-audit
+              node: re-audit
               item: judge-checkpoint-result
             field: outcome
             not_equals: pass
@@ -2909,7 +2944,7 @@ node_definitions:
     title: Record stopped core evidence gaps
     intent: Preserve the core evidence repair request within the confirmed stopped boundary.
     instructions:
-      - Record the missing, stale or incoherent evidence identified by the core Decision and include this record in the stopped final Worker assignment.
+      - Record the missing, stale or incoherent evidence identified by the core Decision and include this record in the stopped final Primary evidence assembly and Judge assignment.
       - Reconcile only available evidence; preserve unresolved gaps and the stopped boundary without implementation, provider review or renewed acceptance.
     items:
       - id: stopped-core-gaps
@@ -2924,11 +2959,7 @@ node_definitions:
     title: Assemble the final validation candidate
     intent: Assemble the final validation candidate
     instructions:
-      - Read complete canonical original criteria and evidence directly. Passing member labels, inherited verdicts, zero provider findings or a Worker-only summary cannot establish Epic achievement.
-      - Compose every applicable selected audit, provider and Judge report, verified group commit, local reviewed-basis/permitted-delta/after-target composition and current checks without starting implementation or a provider.
-      - Cold epic-validator has a fresh Judge with direct source access; internal epic-handler retains its existing logical Epic Judge and full lifetime and history.
-      - For stopped assembly require the baseline and exact current stopped boundary. Include every available audit, re-audit, correction, Low, provider/Judge and disposition record, including confirmation-incomplete, review-operation-incomplete and actual direction or route-stop evidence; legitimately bypassed phases stay optional. Supply original full artifacts and stopped-core-gaps in the complete assignment beyond bounded selectors.
-      - After a confirmed stopped boundary, reconcile only available evidence, preserve unresolved gaps and retain a fresh stopped Worker and Judge. No ordinary work, provider admission, achievement or renewed acceptance is authorized.
+      - The Primary assembles existing original evidence and current applicability; perform no new implementation, broad audit or provider review. Preserve actual reports, remaining gaps and stopped-work boundaries.
     items:
       - id: validation-assessment-summary
         type: text
@@ -2937,9 +2968,9 @@ node_definitions:
         min_length: 1
         max_length: 8000
         multiline: true
-      - id: worker-handoff
+      - id: candidate-evidence
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Attach the Primary evidence index with original artifact references, current candidate and authority; this is bookkeeping and supplies no Worker or Judge claim.
         required: true
         allowed_media_types:
           - application/json
@@ -2951,7 +2982,7 @@ node_definitions:
     options:
       - id: current
         label: Report current
-        criteria: Complete original coverage, direct artifacts and exact target and native bindings are applicable.
+        criteria: Complete original coverage, direct artifacts and exact target and available result references are applicable.
         guards:
           - evidence:
               node: judge-validation
@@ -2978,7 +3009,7 @@ node_definitions:
     options:
       - id: current
         label: Report current
-        criteria: Complete original coverage, direct artifacts and exact target and native bindings are applicable.
+        criteria: Complete original coverage, direct artifacts and exact target and available result references are applicable.
         guards:
           - evidence:
               node: judge-stopped-validation
@@ -3220,13 +3251,13 @@ graph:
             - remediation-summary
             - completed-review-assessments
             - remediation-authority
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
-      next: judge-audit
+        - node: capture-baseline
+          required: true
+          items:
+            - workflow-owner
+            - baseline-summary
+            - review-target-scope
+      next: confirm-audit-checkpoint
     - id: decide-gaps
       use: gap-decision
       evidence_from:
@@ -3267,12 +3298,6 @@ graph:
           items:
             - pass-kind
             - pass-basis-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: judge-remediation
     - id: decide-remediation-audit-authority
       use: remediation-audit-authority-decision
@@ -3314,13 +3339,13 @@ graph:
             - remediation-summary
             - completed-review-assessments
             - remediation-authority
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
-      next: judge-re-audit
+        - node: capture-baseline
+          required: true
+          items:
+            - workflow-owner
+            - baseline-summary
+            - review-target-scope
+      next: confirm-re-audit-checkpoint
     - id: decide-re-audit
       use: re-audit-decision
       evidence_from:
@@ -3463,12 +3488,6 @@ graph:
             - audit-low-finding-count
             - audit-low-finding-identities
             - audit-low-basis-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: confirm-final-review-route-binding
     - id: confirm-final-review-route-binding
       use: final-review-route-binding-decision
@@ -4297,37 +4316,10 @@ graph:
     - id: stopped-closeout
       use: closeout-record
       terminal: true
-    - id: judge-audit
-      use: audit-judge-assessment-record
-      evidence_from:
-        - node: audit
-          required: true
-          items:
-            - audit-result
-            - audit-summary
-            - confirmed-gap-count
-            - blocking-gap-count
-            - eligible-low-gap-count
-            - confirmation-needed-gap-count
-            - blocking-rework-authority
-            - worker-handoff
-        - node: capture-baseline
-          required: true
-          items:
-            - workflow-owner
-            - baseline-summary
-            - review-target-scope
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
-      next: confirm-audit-checkpoint
     - id: confirm-audit-checkpoint
       use: confirm-audit-checkpoint
       evidence_from:
-        - node: judge-audit
+        - node: audit
           required: true
           items:
             - judge-assessment
@@ -4342,43 +4334,15 @@ graph:
           to: decide-gaps
           effect: advance
         inapplicable:
-          to: judge-audit
+          to: audit
           effect: rework
         evidence-needed:
           to: record-audit-followup
           effect: advance
-    - id: judge-re-audit
-      use: audit-judge-assessment-record
-      evidence_from:
-        - node: re-audit
-          required: true
-          items:
-            - audit-result
-            - audit-summary
-            - confirmed-gap-count
-            - blocking-gap-count
-            - eligible-low-gap-count
-            - confirmation-needed-gap-count
-            - direction-required-gap-count
-            - blocking-rework-authority
-            - worker-handoff
-        - node: capture-baseline
-          required: true
-          items:
-            - workflow-owner
-            - baseline-summary
-            - review-target-scope
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
-      next: confirm-re-audit-checkpoint
     - id: confirm-re-audit-checkpoint
       use: confirm-re-audit-checkpoint
       evidence_from:
-        - node: judge-re-audit
+        - node: re-audit
           required: true
           items:
             - judge-assessment
@@ -4393,7 +4357,7 @@ graph:
           to: decide-re-audit
           effect: advance
         inapplicable:
-          to: judge-re-audit
+          to: re-audit
           effect: rework
         evidence-needed:
           to: record-re-audit-followup
@@ -4417,12 +4381,6 @@ graph:
           items:
             - workflow-owner
             - baseline-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: decide-remediation-assessment
     - id: decide-remediation-assessment
       use: decide-remediation-assessment
@@ -4544,12 +4502,6 @@ graph:
           items:
             - workflow-owner
             - baseline-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: decide-validation-evidence-assessment
     - id: decide-validation-evidence-assessment
       use: decide-validation-evidence-assessment
@@ -4580,7 +4532,7 @@ graph:
     - id: record-audit-followup
       use: record-audit-followup
       evidence_from:
-        - node: judge-audit
+        - node: audit
           required: true
           items:
             - judge-assessment
@@ -4618,7 +4570,7 @@ graph:
     - id: record-re-audit-followup
       use: record-re-audit-followup
       evidence_from:
-        - node: judge-re-audit
+        - node: re-audit
           required: true
           items:
             - judge-assessment
@@ -4907,19 +4859,13 @@ graph:
           items:
             - audit-summary
             - audit-result
-            - worker-handoff
+            - judge-assessment
         - node: re-audit
           required: false
           items:
             - audit-summary
             - audit-result
-            - worker-handoff
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
+            - judge-assessment
       next: judge-validation
     - id: judge-validation
       use: final-judge-assessment-record
@@ -4927,19 +4873,13 @@ graph:
         - node: prepare-validation-assessment
           required: true
           items:
-            - worker-handoff
+            - candidate-evidence
             - validation-assessment-summary
         - node: capture-baseline
           required: true
           items:
             - workflow-owner
             - baseline-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: confirm-judge-validation-applicability
     - id: confirm-judge-validation-applicability
       use: confirm-judge-validation-applicability
@@ -5021,12 +4961,6 @@ graph:
           required: true
           items:
             - goal-outcome-boundary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: judge-stopped-validation
     - id: judge-stopped-validation
       use: final-judge-assessment-record
@@ -5034,7 +4968,7 @@ graph:
         - node: prepare-stopped-validation-assessment
           required: true
           items:
-            - worker-handoff
+            - candidate-evidence
             - validation-assessment-summary
         - node: capture-baseline
           required: true
@@ -5045,12 +4979,6 @@ graph:
           required: false
           items:
             - stopped-core-gaps
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: confirm-judge-stopped-validation-applicability
     - id: confirm-judge-stopped-validation-applicability
       use: confirm-judge-stopped-validation-applicability
@@ -5304,7 +5232,5 @@ manual_rework:
     - judge-validation
     - prepare-stopped-validation-assessment
     - judge-stopped-validation
-    - judge-audit
-    - judge-re-audit
     - judge-remediation
     - judge-validation-evidence

@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "33"
+version: "34"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -14,7 +14,7 @@ node_definitions:
       - Use epic-handler for one goal-centered member, remediation, or closeout goal; do not invoke task phase skills.
       - Preserve the exact authorized scope and return current target and focused evidence without implicit commit, push, publication, or session replacement.
       - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason. On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
-      - Deliver the complete aquarium.worker-handoff/v1 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
+      - Deliver the complete aquarium.worker-handoff/v2 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
     items:
       - id: work-summary
         type: text
@@ -61,7 +61,7 @@ node_definitions:
           - text/markdown
       - id: worker-handoff
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.worker-handoff/v2 candidate, exact target, requirement basis, checks, authority, gaps and actual results and available public native handles.
         required: true
         allowed_media_types:
           - application/json
@@ -74,7 +74,7 @@ node_definitions:
       - New Mulgae roots use live_source v1 and project binding only; keep workspace/index unchanged through terminal completion. Terminal failure permits no rerun or compose; a fresh root needs explicit new-review-current-route authority after settlement and preserves the pending ordinal.
       - Reconstruct the exact work target, review lineage, pending invocation, checks, and remaining review authority before any new provider call.
       - Do not start another review or broad audit solely for eligible local settlement or its permitted locally checked delta.
-      - Deliver the complete aquarium.worker-handoff/v1 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
+      - Deliver the complete aquarium.worker-handoff/v2 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
       - For current settlement evidence gaps, use its after-target and current criterion rows alongside the original review; preserve its consumed ordinal and coverage limit.
     items:
       - id: goal-kind
@@ -428,7 +428,7 @@ node_definitions:
         multiline: true
       - id: worker-handoff
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 candidate, exact target, requirement basis, checks, authority, gaps and authentic native result bindings.
+        prompt: Reference the complete aquarium.worker-handoff/v2 candidate, exact target, requirement basis, checks, authority, gaps and actual results and available public native handles.
         required: true
         allowed_media_types:
           - application/json
@@ -1285,10 +1285,11 @@ node_definitions:
         multiline: true
       - id: closeout-substitute-applicability
         type: check_result
-        prompt: Verify the exact successful terminal internal Epic validation and unchanged validated implementation, original Epic criteria and retained Judge history, together with current focused closeout checks; reject a member or remediation goal and any changed implementation.
+        prompt: Record the caller-supplied result for aquarium-goal-closeout-substitute-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify the exact successful terminal internal Epic validation and unchanged validated implementation, original Epic criteria and currently applicable independent Judge evidence, together with current focused closeout checks and actual authority; reject a member or remediation goal and any changed implementation. A replacement Judge may establish applicability from original evidence without private history or configuration qualification.
         required: true
         operation_id: aquarium-goal-closeout-substitute-applicability
-        operation_digest: sha256:171b9ba3cc43cdb5ecb2834d888a45b5ee797a14a57d6fb7c89bdd7637b90b98
+        operation_digest: sha256:d896603dfaf3bfc5073372755f9f918ac80ba99bb7c596a94f3591d93dd443f8
         accepted_outcomes:
           - pass
           - fail
@@ -1956,7 +1957,7 @@ node_definitions:
     title: Record stopped core evidence gaps
     intent: Preserve the core evidence repair request within the confirmed stopped boundary.
     instructions:
-      - Record the missing, stale or incoherent evidence identified by the core Decision and include this record in the stopped final Worker assignment.
+      - Record the missing, stale or incoherent evidence identified by the core Decision and include this record in the stopped final Primary evidence assembly and Judge assignment.
       - Reconcile only available evidence; preserve unresolved gaps and the stopped boundary without implementation, provider review or renewed acceptance.
     items:
       - id: stopped-core-gaps
@@ -2212,16 +2213,16 @@ node_definitions:
     title: Assess the current candidate
     intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
     instructions:
-      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the same logical Judge.
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the logical Judge when supported, or a fresh independent replacement supplied the complete original evidence and current authority.
       - Preserve every original criterion row, actual global verdict and unmet/unverified count. Separately assess all obligations due at this current phase and applicable parent constraints from direct evidence; unfinished later work remains a global gap, not a fabricated pass or non-applicability claim.
       - A passing checkpoint verifies actual current work, required checks and authority. For review evidence, preserve faithful negative provider rows and their original routing; report completeness alone cannot establish correction, implementation or verification success.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
       - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
@@ -2245,10 +2246,11 @@ node_definitions:
         minimum: 0
       - id: judge-applicability
         type: check_result
-        prompt: Verify complete original Goal and applicable Epic criterion coverage, exact current target and requirement basis, goal revision, placement and attempt, Worker result, retained Epic Judge identity and history, and acknowledged native role/configuration/task/result bindings.
+        prompt: Record the caller-supplied result for aquarium-goal-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify complete original Goal and applicable Epic criterion coverage and all due obligations against current original evidence, candidate, requirement and check basis, actual independent Judge role, assigned work and result evidence and applicable authority. Reconcile Procedure, node, attempt and goal revision when applicable, and record available public native handles with unknowns explicit. A supported replacement Judge may establish current applicability from this evidence; private executor history, model telemetry and configuration digests are not prerequisites.
         required: true
         operation_id: aquarium-goal-judge-applicability
-        operation_digest: sha256:445cbfb2c44471dfd8be9b77c1639815d4994ece0ec4a883e5ea6e23bc722fb9
+        operation_digest: sha256:f6f0b091a0b64620c1cc27c0772622c9e4ae91327c7ccfbebf95be29ad77c6d0
         accepted_outcomes:
           - pass
           - fail
@@ -2276,14 +2278,15 @@ node_definitions:
     title: Assess the current candidate
     intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
     instructions:
-      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the same logical Judge.
-      - Accept a complete applicable native report without reassessing it or recursively judging the Judge. Record its distinct semantic fields after retaining technical evidence unchanged.
-      - Missing original criteria, changed targets, unsupported bindings or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Record all final items, establish retained idle state, accept the native result through Podway, then complete separately with fresh fences.
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the logical Judge when supported, or a fresh independent replacement supplied the complete original evidence and current authority.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Reuse an existing complete final assessment only when its actual checkpoint coverage, candidate, original criteria, required checks and authority remain applicable. The Primary records that applicability without another Judge dispatch. Otherwise obtain a fresh independent assessment; never relabel a phase-only report as final or reuse a negative report as pass after correction.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
       - id: judge-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v1 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
@@ -2307,10 +2310,11 @@ node_definitions:
         minimum: 0
       - id: judge-applicability
         type: check_result
-        prompt: Verify complete original Goal and applicable Epic criterion coverage, exact current target and requirement basis, goal revision, placement and attempt, Worker result, retained Epic Judge identity and history, and acknowledged native role/configuration/task/result bindings.
+        prompt: Record the caller-supplied result for aquarium-goal-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify complete original Goal and applicable Epic criterion coverage and all due obligations against current original evidence, candidate, requirement and check basis, actual independent Judge role, assigned work and result evidence and applicable authority. Reconcile Procedure, node, attempt and goal revision when applicable, and record available public native handles with unknowns explicit. A supported replacement Judge may establish current applicability from this evidence; private executor history, model telemetry and configuration digests are not prerequisites.
         required: true
         operation_id: aquarium-goal-judge-applicability
-        operation_digest: sha256:445cbfb2c44471dfd8be9b77c1639815d4994ece0ec4a883e5ea6e23bc722fb9
+        operation_digest: sha256:f6f0b091a0b64620c1cc27c0772622c9e4ae91327c7ccfbebf95be29ad77c6d0
         accepted_outcomes:
           - pass
           - fail
@@ -2353,7 +2357,7 @@ node_definitions:
             equals: pass
       - id: inapplicable
         label: Assessment inapplicable
-        criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
+        criteria: The report lacks current complete applicability; repair original evidence or candidate applicability without relabeling the report.
         guards:
           - evidence:
               node: judge-work
@@ -2533,7 +2537,7 @@ node_definitions:
             equals: pass
       - id: inapplicable
         label: Assessment inapplicable
-        criteria: The report lacks current complete applicability; repair original evidence or native binding without relabeling a receipt.
+        criteria: The report lacks current complete applicability; repair original evidence or candidate applicability without relabeling the report.
         guards:
           - evidence:
               node: judge-goal-evidence
@@ -2696,7 +2700,7 @@ node_definitions:
   closeout-substitute-applicability-decision:
     type: decision
     title: Confirm final assessment applicability
-    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    objective: Reject missing original coverage, stale target, wrong attempt and missing required candidate or result evidence.
     prompt: Is the complete final report applicable?
     options:
       - id: current
@@ -2719,19 +2723,17 @@ node_definitions:
             not_equals: pass
     reason:
       required: true
-      prompt: Explain current coverage, target and native binding applicability.
+      prompt: Explain current coverage, target and result applicability.
   goal-assessment-candidate:
     type: action
     title: Assemble the final Goal candidate
     intent: Deliver complete original Goal and applicable Epic evidence without new implementation or provider work.
     instructions:
-      - Assemble canonical original Goal and applicable Epic criteria, omitted assignment criteria, exact final target, original work/review/Judge reports, full evidence bytes, checks and authority. At Epic assessment include integration and overall purpose even when all member Tasks passed.
-      - Compose the reviewed basis with any permitted local-settlement delta and current criterion evidence and unaffected applicability. Preserve its review coverage limit and all consumed authority.
-      - For a stopped path, preserve the stop, gaps and non-achievement. Never reopen work from this evidence assembly.
+      - The Primary assembles existing original evidence and current applicability; perform no new implementation, broad audit or provider review. Preserve actual reports, remaining gaps and stopped-work boundaries.
     items:
-      - id: worker-handoff
+      - id: candidate-evidence
         type: artifact
-        prompt: Reference the complete aquarium.worker-handoff/v1 final evidence candidate and exact target.
+        prompt: Attach the Primary evidence index with original artifact references, current candidate and authority; this is bookkeeping and supplies no Worker or Judge claim.
         required: true
         allowed_media_types:
           - application/json
@@ -2745,7 +2747,7 @@ node_definitions:
   final-assessment-applicability-decision:
     type: decision
     title: Confirm final assessment applicability
-    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    objective: Reject missing original coverage, stale target, wrong attempt and missing required candidate or result evidence.
     prompt: Is the complete final report applicable?
     options:
       - id: current
@@ -2768,11 +2770,11 @@ node_definitions:
             not_equals: pass
     reason:
       required: true
-      prompt: Explain current coverage, target and native binding applicability.
+      prompt: Explain current coverage, target and result applicability.
   stopped-final-assessment-applicability-decision:
     type: decision
     title: Confirm final assessment applicability
-    objective: Reject missing original coverage, stale target, wrong attempt and unsupported native bindings.
+    objective: Reject missing original coverage, stale target, wrong attempt and missing required candidate or result evidence.
     prompt: Is the complete final report applicable?
     options:
       - id: current
@@ -2795,7 +2797,7 @@ node_definitions:
             not_equals: pass
     reason:
       required: true
-      prompt: Explain current coverage, target and native binding applicability.
+      prompt: Explain current coverage, target and result applicability.
   stopped-goal-boundary-decision:
     type: decision
     title: Confirm the stopped goal boundary
@@ -3011,12 +3013,6 @@ graph:
   nodes:
     - id: complete-work
       use: work-record
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: judge-work
     - id: record-evidence
       use: evidence-record
@@ -3039,12 +3035,6 @@ graph:
             - completion-assessment-summary
             - completion-unmet-criteria
             - completion-unverified-criteria
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: decide-review-basis
     - id: decide-review-basis
       use: review-basis-decision
@@ -4432,12 +4422,6 @@ graph:
             - review-selection-summary
             - plan-handoff-artifact
             - worker-handoff
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: decide-work-assessment
     - id: decide-work-assessment
       use: semantic-work-decision
@@ -4597,12 +4581,6 @@ graph:
           items:
             - closeout-substitute-summary
             - closeout-substitute-applicability
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: decide-goal-evidence-assessment
     - id: decide-goal-evidence-assessment
       use: semantic-goal-evidence-decision
@@ -4806,12 +4784,6 @@ graph:
           items:
             - closeout-substitute-summary
             - closeout-substitute-applicability
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: judge-goal
     - id: judge-goal
       use: final-judge-assessment-record
@@ -4819,14 +4791,8 @@ graph:
         - node: prepare-goal-assessment
           required: true
           items:
-            - worker-handoff
+            - candidate-evidence
             - goal-assessment-summary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: confirm-goal-assessment-applicability
     - id: confirm-goal-assessment-applicability
       use: final-assessment-applicability-decision
@@ -4920,12 +4886,6 @@ graph:
           required: true
           items:
             - goal-outcome-boundary
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
-        max_rounds: 32
-        after_accept: retain
       next: judge-stopped-goal
     - id: judge-stopped-goal
       use: final-judge-assessment-record
@@ -4933,18 +4893,12 @@ graph:
         - node: prepare-stopped-goal-assessment
           required: true
           items:
-            - worker-handoff
+            - candidate-evidence
             - goal-assessment-summary
         - node: record-stopped-core-gaps
           required: false
           items:
             - stopped-core-gaps
-      delegation:
-        binding_ref: aquarium-native
-        role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
-        max_rounds: 32
-        after_accept: retain
       next: confirm-stopped-goal-assessment-applicability
     - id: confirm-stopped-goal-assessment-applicability
       use: stopped-final-assessment-applicability-decision

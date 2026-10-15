@@ -3966,7 +3966,7 @@ else:
                         "exit_code": 0,
                         "timed_out": False,
                         "output_schema": "podway.output/v4",
-                        "result_schema": "podway.procedure-preview-result/v2",
+                        "result_schema": "podway.procedure-preview-result/v1",
                         "admissible": True,
                         "procedure_id": Path(entry["path"]).stem,
                     },
@@ -5168,9 +5168,26 @@ else:
                     )
                 self.assertEqual(podway["readiness_status"], "degraded")
 
-    def test_delegated_preview_requires_its_exact_declared_placements(self) -> None:
+    def test_historical_delegated_preview_requires_its_exact_declared_placements(
+        self,
+    ) -> None:
         self.install_fake_tools()
         self.install_managed_podway_procedures()
+        for family, version in (
+            ("task", 30),
+            ("goal", 33),
+            ("validation", 32),
+            ("design", 10),
+            ("war-room", 10),
+        ):
+            target = (
+                self.repository / ".podway/procedures" / f"aquarium-{family}-v2.yaml"
+            )
+            target.write_bytes(
+                (
+                    ROOT / "tests/fixtures" / f"aquarium-{family}-v{version}.yaml"
+                ).read_bytes()
+            )
         original_probe = inspect_tools.json_probe
         for case in ("direct-schema", "missing", "count", "placement"):
             with self.subTest(case=case):
@@ -5631,11 +5648,11 @@ else:
                 self.assertEqual(entry["handler_contract_status"], "compatible")
                 target.write_text(canonical, encoding="utf-8")
 
-    def test_task_required_delegation_bindings_are_handler_contracts(self) -> None:
+    def test_historical_task_required_delegation_bindings_are_handler_contracts(
+        self,
+    ) -> None:
         name = "aquarium-task-v2.yaml"
-        canonical = (
-            ROOT / "plugins/aquarium/assets/podway/procedures" / name
-        ).read_bytes()
+        canonical = (ROOT / "tests/fixtures/aquarium-task-v30.yaml").read_bytes()
         for node_id in (
             "record-plan",
             "implement",
@@ -5678,11 +5695,11 @@ else:
         self.assertEqual(status, "incompatible")
         self.assertTrue(reasons)
 
-    def test_goal_required_delegation_bindings_and_prior_direct_snapshot(self) -> None:
+    def test_historical_goal_required_delegation_bindings_and_prior_direct_snapshot(
+        self,
+    ) -> None:
         name = "aquarium-goal-v2.yaml"
-        canonical = (
-            ROOT / "plugins/aquarium/assets/podway/procedures" / name
-        ).read_bytes()
+        canonical = (ROOT / "tests/fixtures/aquarium-goal-v33.yaml").read_bytes()
         document = yaml.safe_load(canonical)
         placements = [
             node["id"] for node in document["graph"]["nodes"] if "delegation" in node
@@ -5732,13 +5749,11 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
         )
 
-    def test_validation_required_delegation_bindings_and_prior_direct_snapshot(
+    def test_historical_validation_required_delegation_bindings_and_prior_direct_snapshot(
         self,
     ) -> None:
         name = "aquarium-validation-v2.yaml"
-        canonical = (
-            ROOT / "plugins/aquarium/assets/podway/procedures" / name
-        ).read_bytes()
+        canonical = (ROOT / "tests/fixtures/aquarium-validation-v32.yaml").read_bytes()
         document = yaml.safe_load(canonical)
         placements = [
             node["id"] for node in document["graph"]["nodes"] if "delegation" in node
@@ -5788,7 +5803,7 @@ else:
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
         )
 
-    def test_design_diagnosis_required_bindings_preserve_prior_direct_snapshots(
+    def test_historical_design_diagnosis_required_bindings_preserve_prior_direct_snapshots(
         self,
     ) -> None:
         for kind, count, digest in (
@@ -5805,7 +5820,7 @@ else:
         ):
             name = f"aquarium-{kind}-v2.yaml"
             canonical = (
-                ROOT / "plugins/aquarium/assets/podway/procedures" / name
+                ROOT / "tests/fixtures" / f"aquarium-{kind}-v10.yaml"
             ).read_bytes()
             document = yaml.safe_load(canonical)
             placements = [
@@ -5853,11 +5868,62 @@ else:
             entry = "capture-context" if kind == "design" else "capture-baseline"
             self.assertIn("incompatible_delegation:" + entry, reasons)
 
+    def test_ordinary_canonical_rejects_formal_relabel_and_preserves_history(
+        self,
+    ) -> None:
+        for family, version in (
+            ("task", 30),
+            ("goal", 33),
+            ("validation", 32),
+            ("design", 10),
+            ("war-room", 10),
+        ):
+            name = f"aquarium-{family}-v2.yaml"
+            canonical = (
+                ROOT / "plugins/aquarium/assets/podway/procedures" / name
+            ).read_bytes()
+            status, reasons = inspect_tools.inspect_podway_handler_contract(
+                name, canonical, canonical
+            )
+            self.assertEqual((status, reasons), ("compatible", []))
+            self.assertEqual(inspect_tools.podway_delegated_placements(canonical), [])
+            prior = (
+                ROOT / "tests/fixtures" / f"aquarium-{family}-v{version}.yaml"
+            ).read_bytes()
+            self.assertIn(
+                hashlib.sha256(prior).hexdigest(),
+                inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
+            )
+            status, reasons = inspect_tools.inspect_podway_handler_contract(
+                name, prior, canonical
+            )
+            self.assertEqual(status, "incompatible")
+            self.assertTrue(reasons)
+            original = yaml.safe_load(prior)
+            declaration = next(
+                n["delegation"] for n in original["graph"]["nodes"] if "delegation" in n
+            )
+            changed = yaml.safe_load(canonical)
+            node = next(
+                n
+                for n in changed["graph"]["nodes"]
+                if changed["node_definitions"][n["use"]]["type"] == "action"
+            )
+            node["delegation"] = declaration
+            status, reasons = inspect_tools.inspect_podway_handler_contract(
+                name, yaml.safe_dump(changed, sort_keys=False).encode(), canonical
+            )
+            self.assertEqual(status, "incompatible")
+            self.assertIn("incompatible_delegation:" + node["id"], reasons)
+
     def test_prior_canonical_identities_are_bounded_update_explanations(self) -> None:
         self.assertEqual(
             inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256,
             {
                 "aquarium-task-v2.yaml": {
+                    hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-task-v30.yaml").read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-task-v29.yaml").read_bytes()
                     ).hexdigest(),
@@ -5894,6 +5960,9 @@ else:
                 },
                 "aquarium-goal-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-goal-v33.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-goal-v32.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -5928,6 +5997,11 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-validation-v32.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (
                             ROOT / "tests/fixtures/aquarium-validation-v31.yaml"
@@ -5968,6 +6042,9 @@ else:
                 },
                 "aquarium-design-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-design-v10.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-design-v9.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -5984,6 +6061,11 @@ else:
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-war-room-v10.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-war-room-v9.yaml").read_bytes()
                     ).hexdigest(),

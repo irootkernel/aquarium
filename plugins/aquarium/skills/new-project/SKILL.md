@@ -25,17 +25,10 @@ Run upstream `$qa` on the draft, adjudicate every issue, then present the exact 
 
 Apply the shared QA outcome mapping and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input). Report whether documents are applied or committed before naming the next explicit workflow.
 
-## Required orchestration candidate
+## Ordinary native orchestration
 
-When the admitted Procedure declares required Worker/Judge placements, follow
-[Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md)
-for complete original evidence, retained Judge checkpoints, current local effect
-authority and final assessment. Keep this skill's original Ouroboros leaf scope,
-actual approval and effect boundaries. Installed direct snapshots retain their
-admitted contract. Required placements need native qualification applicable to
-the exact operative snapshot and supported path, plus an admitted delegated
-Procedure. Source updates do not authorize managed-file rollout.
+Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v2 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
 
-For a qualified non-Git invocation, use the same Worker/Judge evidence and
+For an authorized non-Git invocation, use the same Worker/Judge evidence and
 exact document approval with Podway explicitly inapplicable. Preserve the
 existing prohibition on implicit Git or Podway initialization.

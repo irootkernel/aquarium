@@ -25,46 +25,50 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "30",
+            "31",
+            "90c8e7df6a20f8b27134be4a3507db49af4de23b5506cd7a2bfe9ae2a2836731",
+            "aquarium-task-v30.yaml",
             "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
-            "aquarium-task-v29.yaml",
-            "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "33",
+            "34",
+            "8ae119c01a94dae12b02ff17ddee6aab90f377aadd0bc3bb08e701861e87f0cc",
+            "aquarium-goal-v33.yaml",
             "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
-            "aquarium-goal-v32.yaml",
-            "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "32",
+            "33",
+            "aa9bc9da3445c795af71bcc9f558977ec9e53fa48391335dbc3a493159eabba6",
+            "aquarium-validation-v32.yaml",
             "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
-            "aquarium-validation-v31.yaml",
-            "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
         ),
         (
             "aquarium-design-v2.yaml",
-            "10",
+            "11",
+            "3ca2e4d6bd7506033a575eada996a15853334ec5e9570b86894e7ded28e94a08",
+            "aquarium-design-v10.yaml",
             "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
-            "aquarium-design-v9.yaml",
-            "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "10",
+            "11",
+            "07e0f59d3681b37584199ba94bb37a3c0d0ead7f527b1af934cac0202f13dcc9",
+            "aquarium-war-room-v10.yaml",
             "e370766f3ef8e057b818eca42e2757844950b4536a3d7ac8c41624154ec41cd2",
-            "aquarium-war-room-v9.yaml",
-            "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
-        current = PROCEDURES / current_name
-        prior = FIXTURES / prior_name
         assert load_procedure(current_name)["version"] == version
-        assert hashlib.sha256(current.read_bytes()).hexdigest() == current_digest
-        assert hashlib.sha256(prior.read_bytes()).hexdigest() == prior_digest
+        assert (
+            hashlib.sha256((PROCEDURES / current_name).read_bytes()).hexdigest()
+            == current_digest
+        )
+        assert (
+            hashlib.sha256((FIXTURES / prior_name).read_bytes()).hexdigest()
+            == prior_digest
+        )
 
 
 PREDICATE_OPERATORS = (
@@ -500,7 +504,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "30"
+    assert task["version"] == "31"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -2348,9 +2352,7 @@ def test_war_room_no_work_keeps_quality_approval_and_documentation() -> None:
         "to": "draft-no-work",
         "effect": "advance",
     }
-    assert graph["draft-no-work"]["next"] == "judge-proposal"
-    assert graph["judge-proposal"]["next"] == "decide-proposal-assessment"
-    assert graph["decide-proposal-assessment"]["routes"]["passed"]["to"] == "quality"
+    assert graph["draft-no-work"]["next"] == "quality"
     edges = graph_edges(procedure)
     for gate in ("quality", "decide-quality", "approve-diff", "document"):
         assert "assess-goal" not in reachable_nodes(
@@ -2557,8 +2559,6 @@ def test_task_candidate_delivery_requires_a_separate_native_judge() -> None:
     graph = nodes(task)
     checkpoints = (
         ("record-plan", "judge-plan", "decide-plan-assessment"),
-        ("implement", "judge-implementation", "decide-implementation-assessment"),
-        ("refine", "judge-refinement", "decide-refinement-assessment"),
         ("verify", "judge-verification", "decide-verification"),
         ("document", "judge-documentation", "decide-documentation-assessment"),
         ("review", "judge-review", "confirm-review-completion"),
@@ -2577,16 +2577,18 @@ def test_task_candidate_delivery_requires_a_separate_native_judge() -> None:
             placement = graph[node_id]
             definition = task["node_definitions"][placement["use"]]
             assert definition["type"] == "action"
-            assert placement["delegation"]["role_ref"] == role
-            assert placement["delegation"]["binding_ref"] == "aquarium-native"
-            assert placement["delegation"]["after_accept"] == "retain"
+            assert "delegation" not in placement
         selected = {
             item
             for source in graph[judge]["evidence_from"]
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
-        assert "worker-handoff" in selected
+        assert (
+            "candidate-evidence"
+            if candidate.startswith("prepare-")
+            else "worker-handoff"
+        ) in selected
         assert judge not in reachable_nodes(
             graph_edges(task), task["graph"]["entry"], without=candidate
         )
@@ -2603,8 +2605,6 @@ def test_task_semantic_pass_rejects_missing_stale_and_incomplete_reports() -> No
     graph = nodes(task)
     for suffix, decision in (
         ("plan", "decide-plan-assessment"),
-        ("implementation", "decide-implementation-assessment"),
-        ("refinement", "decide-refinement-assessment"),
         ("verification", "decide-verification"),
         ("documentation", "decide-documentation-assessment"),
         ("review", "confirm-review-completion"),
@@ -2660,13 +2660,14 @@ def test_task_semantic_followup_cannot_create_correction_or_review_authority() -
             continue
         actual = options(task, placement["use"])
         source = placement["evidence_from"][0]["node"]
-        assert not guards_match(actual["authorized"], {})
+        permitted = [key for key in actual if key != "blocked"]
+        assert all(not guards_match(actual[key], {}) for key in permitted)
         for outcome in ("fail", "inconclusive"):
             values = {(source, "semantic-authority"): {"outcome": outcome}}
-            assert not guards_match(actual["authorized"], values)
+            assert all(not guards_match(actual[key], values) for key in permitted)
             assert guards_match(actual["blocked"], values)
         assert placement["routes"]["blocked"] == {"to": source, "effect": "rework"}
-        assert placement["routes"]["authorized"]["effect"] == "rework"
+        assert all(placement["routes"][key]["effect"] == "rework" for key in permitted)
     assert (
         graph["confirm-review-completion"]["routes"]["rework"]["to"]
         == "classify-local-corrections"
@@ -2704,64 +2705,89 @@ def test_final_task_pass_is_exact_and_stopped_goal_cannot_achieve() -> None:
         )
 
 
-def test_required_procedures_bind_complete_frozen_operative_bytes() -> None:
-    import base64
-
-    task = load_procedure("aquarium-task-v2.yaml")
-    dependencies = [
-        "plugins/aquarium/references/" + name
-        for name in (
-            "agent-orchestration.md",
-            "native-agent-mappings.md",
-            "evidence-residency.md",
-            "review-routing-contract.md",
-            "review-intent-contract.md",
-            "finding-disposition.md",
-            "ouroboros-integration.md",
-            "design-gates.md",
-        )
-    ]
-    roles = {
-        "aquarium-worker/v1": "plugins/aquarium/references/worker-guidance.md",
-        "aquarium-goal-judge/v1": "plugins/aquarium/skills/goal-judge/SKILL.md",
+def test_ordinary_sources_preserve_exact_historical_formal_declarations() -> None:
+    versions = {"task": 30, "goal": 33, "validation": 32, "design": 10, "war-room": 10}
+    expected = {
+        "aquarium-worker/v1": "sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5",
+        "aquarium-goal-judge/v1": "sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd",
     }
-    digests = {}
-    for role, path in roles.items():
-        files = []
-        for relative in sorted([path, *dependencies]):
-            content = (ROOT / relative).read_bytes()
-            files.append(
-                {
-                    "path": relative,
-                    "size_bytes": len(content),
-                    "sha256": hashlib.sha256(content).hexdigest(),
-                    "content_base64": base64.b64encode(content).decode("ascii"),
-                }
+    for family, version in versions.items():
+        current = load_procedure(f"aquarium-{family}-v2.yaml")
+        assert all("delegation" not in node for node in nodes(current).values())
+        prior = yaml.safe_load(
+            (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
+        )
+        declarations = [
+            node["delegation"] for node in nodes(prior).values() if "delegation" in node
+        ]
+        assert declarations
+        for declaration in declarations:
+            assert (
+                declaration["role_snapshot_digest"] == expected[declaration["role_ref"]]
             )
-        snapshot = {
-            "schema": "aquarium.prepared-role-snapshot/v1",
-            "role_path": path,
-            "files": files,
-        }
-        content = json.dumps(
-            snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-        ).encode("ascii")
-        digests[role] = "sha256:" + hashlib.sha256(content).hexdigest()
-    for procedure in (
-        task,
-        load_procedure("aquarium-goal-v2.yaml"),
-        load_procedure("aquarium-validation-v2.yaml"),
-        load_procedure("aquarium-design-v2.yaml"),
-        load_procedure("aquarium-war-room-v2.yaml"),
+            assert declaration["max_rounds"] == 32
+
+
+def test_grouped_task_delivery_keeps_handoffs_and_authorized_rework_owners() -> None:
+    task = load_procedure("aquarium-task-v2.yaml")
+    graph = nodes(task)
+    assert graph["implement"]["next"] == "refine"
+    assert graph["refine"]["next"] == "verify"
+    assert graph["verify"]["next"] == "judge-verification"
+    selected = {
+        source["node"]: set(source.get("items", []))
+        for source in graph["judge-verification"]["evidence_from"]
+    }
+    for source in ("implement", "refine", "verify"):
+        assert "worker-handoff" in selected[source]
+    assert "record-plan" in selected
+    for kind in ("followup", "evidence"):
+        source = f"record-verification-{kind}"
+        gate = graph[f"confirm-verification-{kind}-authority"]
+        choices = options(task, gate["use"])
+        for choice, owner in (
+            ("implementation", "prepare-implementation"),
+            ("refinement", "refine"),
+            ("verification", "verify"),
+        ):
+            values = {
+                (source, "semantic-authority"): {"outcome": "pass"},
+                (source, "semantic-owner"): owner,
+            }
+            assert [
+                key for key, option in choices.items() if guards_match(option, values)
+            ] == [choice]
+            assert gate["routes"][choice] == {"to": owner, "effect": "rework"}
+            for outcome in ("fail", "inconclusive"):
+                values[source, "semantic-authority"] = {"outcome": outcome}
+                assert [
+                    key
+                    for key, option in choices.items()
+                    if guards_match(option, values)
+                ] == ["blocked"]
+
+
+def test_validation_audit_is_one_direct_assessment_with_original_gap_routes() -> None:
+    validation = load_procedure("aquarium-validation-v2.yaml")
+    graph = nodes(validation)
+    for audit, checkpoint in (
+        ("audit", "confirm-audit-checkpoint"),
+        ("re-audit", "confirm-re-audit-checkpoint"),
     ):
-        for placement in nodes(procedure).values():
-            if declaration := placement.get("delegation"):
-                assert (
-                    declaration["role_snapshot_digest"]
-                    == digests[declaration["role_ref"]]
-                )
-                assert declaration["max_rounds"] == 32
-    assert digests["aquarium-worker/v1"] != digests["aquarium-goal-judge/v1"]
+        assert "judge-" + audit not in graph
+        assert graph[audit]["next"] == checkpoint
+        definition = validation["node_definitions"][graph[audit]["use"]]
+        fields = {item["id"] for item in definition["items"]}
+        assert {
+            "judge-assessment",
+            "judge-applicability",
+            "judge-checkpoint-result",
+            "blocking-gap-count",
+        } <= fields
+        assert "worker-handoff" not in fields
+        assert {source["node"] for source in graph[checkpoint]["evidence_from"]} == {
+            audit
+        }
 
 
 def test_goal_native_candidates_and_judges_dominate_semantic_progress() -> None:
@@ -2786,27 +2812,25 @@ def test_goal_native_candidates_and_judges_dominate_semantic_progress() -> None:
             (judge, "aquarium-goal-judge/v1"),
         ):
             assert goal["node_definitions"][graph[node_id]["use"]]["type"] == "action"
-            declaration = graph[node_id]["delegation"]
-            assert declaration["binding_ref"] == "aquarium-native"
-            assert declaration["role_ref"] == role
-            assert declaration["after_accept"] == "retain"
-            assert declaration["max_rounds"] == 32
+            assert "delegation" not in graph[node_id]
         selected = {
             item
             for source in graph[judge]["evidence_from"]
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
-        assert "worker-handoff" in selected
+        assert (
+            "candidate-evidence"
+            if candidate.startswith("prepare-")
+            else "worker-handoff"
+        ) in selected
         assert judge not in reachable_nodes(
             edges, goal["graph"]["entry"], without=candidate
         )
         assert decision not in reachable_nodes(
             edges, goal["graph"]["entry"], without=judge
         )
-    assert {
-        node_id for node_id, node in graph.items() if "delegation" in node
-    } == expected
+    assert {node_id for node_id, node in graph.items() if "delegation" in node} == set()
     assert (
         graph["decide-operational-evidence"]["routes"]["passed"]["to"]
         == "judge-goal-evidence"
@@ -3000,9 +3024,7 @@ def test_validation_worker_judge_pairs_dominate_their_semantic_decisions() -> No
     graph = nodes(validation)
     edges = graph_edges(validation)
     checkpoints = (
-        ("audit", "judge-audit", "decide-gaps"),
         ("remediate", "judge-remediation", "settle-remediation-group"),
-        ("re-audit", "judge-re-audit", "decide-re-audit"),
         (
             "final-review",
             "judge-validation-evidence",
@@ -3025,11 +3047,7 @@ def test_validation_worker_judge_pairs_dominate_their_semantic_decisions() -> No
             assert validation["node_definitions"][graph[node_id]["use"]]["type"] == (
                 "action"
             )
-            binding = graph[node_id]["delegation"]
-            assert binding["role_ref"] == role
-            assert binding["binding_ref"] == "aquarium-native"
-            assert binding["max_rounds"] == 32
-            assert binding["after_accept"] == "retain"
+            assert "delegation" not in graph[node_id]
         assert judge not in reachable_nodes(
             edges, validation["graph"]["entry"], without=candidate
         )
@@ -3042,8 +3060,12 @@ def test_validation_worker_judge_pairs_dominate_their_semantic_decisions() -> No
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
-        assert "worker-handoff" in selected
-    assert {key for key, node in graph.items() if "delegation" in node} == expected
+        assert (
+            "candidate-evidence"
+            if candidate.startswith("prepare-")
+            else "worker-handoff"
+        ) in selected
+    assert {key for key, node in graph.items() if "delegation" in node} == set()
     for node in graph.values():
         if validation["node_definitions"][node["use"]]["type"] == "decision":
             assert "delegation" not in node
@@ -3056,10 +3078,10 @@ def test_validation_faithful_negative_audit_preserves_original_gap_routing() -> 
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
     for audit, judge, gate, destination in (
-        ("audit", "judge-audit", "confirm-audit-checkpoint", "decide-gaps"),
+        ("audit", "audit", "confirm-audit-checkpoint", "decide-gaps"),
         (
             "re-audit",
-            "judge-re-audit",
+            "re-audit",
             "confirm-re-audit-checkpoint",
             "decide-re-audit",
         ),
@@ -3331,10 +3353,7 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
         (
             "design",
             (
-                ("capture-context", "judge-context", "decide-context-assessment"),
                 ("discover", "judge-discovery", "decide-discovery-assessment"),
-                ("draft", "judge-draft", "decide-draft-assessment"),
-                ("challenge", "judge-challenge", "decide-challenge-assessment"),
                 ("quality", "judge-quality", "decide-quality-assessment"),
                 (
                     "apply-documents",
@@ -3347,7 +3366,6 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
         (
             "war-room",
             (
-                ("capture-baseline", "judge-baseline", "decide-baseline-assessment"),
                 (
                     "investigate",
                     "judge-investigation",
@@ -3367,19 +3385,18 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
                 (worker, "aquarium-worker/v1"),
                 (judge, "aquarium-goal-judge/v1"),
             ):
-                declaration = graph[placement]["delegation"]
-                assert declaration["role_ref"] == role
-                assert declaration["binding_ref"] == "aquarium-native"
-                assert declaration["after_accept"] == "retain"
-                assert declaration["max_rounds"] == 32
+                assert "delegation" not in graph[placement]
             items = {
                 i["id"]: i
                 for i in procedure["node_definitions"][graph[worker]["use"]]["items"]
             }
-            assert items["worker-handoff"]["required"]
-            assert items["worker-handoff"]["allowed_media_types"] == [
-                "application/json"
-            ]
+            handoff = (
+                "candidate-evidence"
+                if worker.startswith("prepare-")
+                else "worker-handoff"
+            )
+            assert items[handoff]["required"]
+            assert items[handoff]["allowed_media_types"] == ["application/json"]
             assert judge not in reachable_nodes(
                 edges, procedure["graph"]["entry"], without=worker
             )
@@ -3392,10 +3409,10 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
     war = load_procedure("aquarium-war-room-v2.yaml")
     graph = nodes(war)
     for branch in ("draft-task", "draft-epic", "draft-incomplete", "draft-no-work"):
-        assert graph[branch]["delegation"]["role_ref"] == "aquarium-worker/v1"
-        assert graph[branch]["next"] == "judge-proposal"
+        assert "delegation" not in graph[branch]
+        assert graph[branch]["next"] == "quality"
         selected = next(
-            e for e in graph["judge-proposal"]["evidence_from"] if e["node"] == branch
+            e for e in graph["judge-quality"]["evidence_from"] if e["node"] == branch
         )
         assert selected["required"] is False
         assert "worker-handoff" in selected["items"]
@@ -3471,7 +3488,6 @@ def test_diagnostic_cause_and_scope_keep_supported_negative_outcomes() -> None:
     assert graph["classify-scope"]["routes"]["incomplete"]["to"] == "draft-incomplete"
     for draft in ("draft-task", "draft-epic", "draft-incomplete", "draft-no-work"):
         for dominator in (
-            "judge-proposal",
             "quality",
             "judge-quality",
             "approve-diff",
@@ -3492,17 +3508,28 @@ def test_design_diagnosis_followup_requires_actual_local_effect_authority() -> N
                 continue
             choices = options(procedure, node["use"])
             source = node["evidence_from"][0]["node"]
-            assert not guards_match(choices["authorized"], {})
-            for result in ("fail", "inconclusive"):
-                values = {(source, "semantic-authority"): {"outcome": result}}
-                assert not guards_match(choices["authorized"], values)
-                assert guards_match(choices["blocked"], values)
-            assert guards_match(
-                choices["authorized"],
-                {(source, "semantic-authority"): {"outcome": "pass"}},
-            )
+            admitted = {
+                key: option for key, option in choices.items() if key != "blocked"
+            }
+            for key, option in admitted.items():
+                assert not guards_match(option, {})
+                for result in ("fail", "inconclusive"):
+                    values = {(source, "semantic-authority"): {"outcome": result}}
+                    assert not guards_match(option, values)
+                    assert guards_match(choices["blocked"], values)
+                values = {(source, "semantic-authority"): {"outcome": "pass"}}
+                if key != "authorized":
+                    values[source, "semantic-owner"] = key
+                assert guards_match(option, values)
+                if key != "authorized":
+                    assert [
+                        owner
+                        for owner, choice in admitted.items()
+                        if guards_match(choice, values)
+                    ] == [key]
+                    assert node["routes"][key] == {"to": key, "effect": "rework"}
+                assert node["routes"][key]["effect"] == "rework"
             assert node["routes"]["blocked"] == {"to": source, "effect": "rework"}
-            assert node["routes"]["authorized"]["effect"] == "rework"
 
 
 def test_changed_application_approval_requires_original_quality_and_reapproval() -> (
@@ -3582,7 +3609,9 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
             )
 
 
-def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
+def test_historical_formal_phase_alignment_preserves_original_routes_and_final_vetoes() -> (
+    None
+):
     predecessors = {
         "task": 27,
         "goal": 30,
@@ -3591,7 +3620,9 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
         "war-room": 7,
     }
     for family, version in predecessors.items():
-        current = load_procedure(f"aquarium-{family}-v2.yaml")
+        current = yaml.safe_load(
+            (FIXTURES / f"aquarium-{family}-v{version + 3}.yaml").read_bytes()
+        )
         previous = yaml.safe_load(
             (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
         )
@@ -4127,3 +4158,48 @@ def test_new_mulgae_execution_requires_terminal_settlement_and_the_same_route() 
             if item["id"] == "prior-route-lifecycle-state"
         )
         assert "terminal-complete" in lifecycle["choices"]
+
+
+def test_ordinary_applicability_and_grouped_evidence_operation_identities() -> None:
+    observed = 0
+    for path in sorted(PROCEDURES.glob("aquarium-*-v2.yaml")):
+        procedure = yaml.safe_load(path.read_text())
+        for definition in procedure["node_definitions"].values():
+            for item in definition.get("items", []):
+                if item.get("id") not in {
+                    "judge-applicability",
+                    "closeout-substitute-applicability",
+                } and item.get("operation_id") not in {
+                    "aquarium-design-discovery-evidence-needed-authority",
+                    "aquarium-war-room-investigation-evidence-needed-authority",
+                }:
+                    continue
+                descriptor = item.get("help", item["prompt"])
+                assert (
+                    item["operation_digest"]
+                    == "sha256:" + hashlib.sha256(descriptor.encode()).hexdigest()
+                )
+                observed += 1
+    assert observed == 20
+
+
+def test_grouped_first_owner_evidence_routes_retain_approval_dominators() -> None:
+    for kind, phase, owners, applied in (
+        ("design", "discovery", {"capture-context", "discover"}, "apply-documents"),
+        ("war-room", "investigation", {"capture-baseline", "investigate"}, "document"),
+    ):
+        procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
+        graph = nodes(procedure)
+        source = f"record-{phase}-evidence-needed"
+        action = procedure["node_definitions"][graph[source]["use"]]
+        selected = next(
+            item for item in action["items"] if item["id"] == "semantic-owner"
+        )
+        assert set(selected["choices"]) == owners
+        gate = graph[f"confirm-{phase}-evidence-needed-authority"]
+        assert set(gate["routes"]) == owners | {"blocked"}
+        for owner in owners:
+            for dominator in ("quality", "decide-quality", "approve-diff"):
+                assert applied not in reachable_nodes(
+                    graph_edges(procedure), owner, without=dominator
+                )

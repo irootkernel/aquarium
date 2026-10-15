@@ -20,6 +20,7 @@ import argparse
 import base64
 import binascii
 import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -116,6 +117,20 @@ def _block(kind: str, file: dict, text: str) -> str:
 
 def render_dispatch(preparation: dict) -> dict:
     """Return a verified local rendering; native acknowledgement remains separate."""
+    if (
+        isinstance(preparation, dict)
+        and preparation.get("schema") == "aquarium.assignment/v2"
+    ):
+        spec = importlib.util.spec_from_file_location(
+            "aquarium_ordinary_assignment",
+            Path(__file__).with_name("ordinary_assignment.py"),
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        try:
+            return module.render_dispatch(preparation)
+        except ValueError as error:
+            raise RenderingError(str(error)) from error
     _object(
         preparation,
         {

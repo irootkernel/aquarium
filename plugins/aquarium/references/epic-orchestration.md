@@ -1,57 +1,22 @@
 # Epic orchestration
 
-## Candidate and activation
+## Ordinary execution and Judge continuity
 
-The bundled `aquarium-goal-v2` version `33` requires native Worker delivery and
-retained Judge assessments for goal-centered Epic execution. Required placements
-need an admitted delegated Procedure and native qualification applicable to its
-exact role snapshot, assignment and recovery path. Released managed files and
-admitted direct sessions
-retain their original contracts. A missing required binding blocks execution.
-Read [Task orchestration](task-orchestration.md) for the unchanged complete role
-inventory and prepared-snapshot digest domain, the [shared role contract](agent-orchestration.md),
-[native mappings](native-agent-mappings.md) and installed `use-podway` delegation
-contract. Task phase skills do not govern this Goal workflow.
+Goal version `34` uses ordinary Actions under the [v2 contract](ordinary-agent-orchestration.md).
+Task phase skills do not govern goal-centered Epic work. Supply original criteria,
+current candidate, evidence, checks, exact authority and available public handles.
+Retain one logical native Judge across members, corrections, internal validation
+and closeout when supported. Reconnect known handles or restore original criteria
+and current evidence to a fresh independent Judge; private executor history and
+configuration digests are not prerequisites. Settle a mutating Worker before
+replacement. Independent cold validation uses a fresh Judge.
 
-Use `aquarium-native`, Worker `aquarium-worker/v1`, Judge
-`aquarium-goal-judge/v1`, `after_accept=retain` and native per-placement
-`max_rounds=32`. This native bound creates no Aquarium lifetime quota. Each
-placement needs a fresh full assignment, authentic acknowledgement, complete
-result and applicable receipt. Supply its objective, purpose, instructions,
-original canonical criteria, selected evidence in full, exact target and base,
-authority, exclusions, deliverables and success checks. Role text is operative
-through the dispatch renderer. Preserve complete original files and reports
-outside Podway; artifact metadata and recorded summaries cannot replace them.
-Podway enforces structural progression and caller-supplied checks without
-executing work, authenticating authority or establishing semantic truth.
-
-## One Judge throughout the Epic
-
-Retain one logical Judge across member Tasks, pre-validation corrections,
-successor Goal sessions, internal Validation, audit corrections and final
-closeout. Preserve its actual native agent identity, immutable role and
-configuration provenance, complete acknowledged assignment and assessment
-history, original evidence and lifetime round accounting. A reused session
-label, retained report or matching role name does not establish continuity.
-A new placement requires current task/result bindings and acknowledgement;
-never relabel an old receipt, truncate history or reset lifetime rounds.
-Settle all descendants before recording retained idle state. Unsupported
-identity, history or settlement evidence blocks activation or continuation.
-
-An independently invoked cold `epic-validator` starts a fresh Judge and obtains
-original evidence independently. The continuing handler's internal Validation
-keeps the Epic Judge. TASK-114 owns its Validation graph. If continuity is lost,
-reconcile the native lifecycle and original history through supported recovery.
-Do not silently replace the Judge or treat a new agent as the same identity.
-For a supported replacement, retain predecessor provenance and quiescence,
-restore original goals and complete evidence, and record the replacement's actual
-native identity and configuration. The replacement Judge establishes current
-verdict applicability. Restoring an old report alone cannot establish a pass or
-erase prior assessments, findings, criterion gaps or consumed grants.
+Admitted formal snapshots keep the [v1 contract](formal-agent-orchestration-v1.md)
+and genuine receipts. Ordinary execution cannot reinterpret them.
 
 ## Goal checkpoints
 
-| Worker candidate | Retained Judge | Primary progression |
+| Work or Primary evidence record | Independent Judge | Primary progression |
 | --- | --- | --- |
 | `complete-work` | `judge-work` | `decide-work-assessment` then `record-evidence` |
 | `record-evidence` | `judge-goal-evidence` | `decide-goal-evidence-assessment` then `confirm-completion-assessment` |
@@ -59,14 +24,14 @@ erase prior assessments, findings, criterion gaps or consumed grants.
 | `prepare-stopped-goal-assessment` | `judge-stopped-goal` | Applicability confirmation then `assess-stopped-goal` |
 
 The Primary keeps all Decisions and simple operational, approval, Low and
-closeout records. Worker Actions deliver `aquarium.worker-handoff/v1` candidates;
-Judge Actions deliver `aquarium.judge-assessment/v1` reports with complete
-original criterion rows. Accept Worker delivery under its delivery checks and
-authority, then complete separately to reach the Judge. Accept the Judge report
-under coverage, provenance and applicability checks without repeating its
-semantic assessment or recursively judging it. Record all final items, verify
-retained idle settlement, submit the exact native acceptance and complete with
-fresh fences. An actual later item edit can stale the receipt.
+closeout records. Worker Actions deliver `aquarium.worker-handoff/v2` candidates; final assembly
+records the Primary candidate-evidence index;
+Judge Actions deliver `aquarium.judge-assessment/v2` reports with complete
+original criterion rows. Record actual Worker delivery and applicable independent Judge assessments
+with current fences. Keep Decisions, technical operation admission and acceptance
+with the Primary. Final assembly is bookkeeping: reuse a complete existing final
+assessment only when original coverage, current candidate, requirements and checks
+remain applicable; otherwise reassess affected obligations independently.
 
 Scope each checkpoint to its work: `judge-work` assesses the current candidate
 before technical evidence acquisition. It does not require future review work
@@ -85,10 +50,9 @@ provider rows unchanged. Report fidelity alone cannot establish correction.
 Final whole-goal passage still requires global Judge `pass` and zero mandatory
 unmet and unverified rows. Missing original criteria, incomplete
 compound criteria, absent reports, stale targets, changed requirements and
-unsupported native bindings prevent passage. Return a disputed or inconsistent
+missing required candidate evidence prevent passage. Return a disputed or inconsistent
 assessment to the same Judge with original conflicting evidence. An unchanged
-artifact still needs current revalidation and authentic acknowledgement after
-rework. Judge report fields never replace original provider completion rows.
+artifact still needs current artifact and check revalidation after rework. Judge report fields never replace original provider completion rows.
 
 ## Review and effect authority
 
@@ -134,7 +98,7 @@ neither success status nor reopening stopped work.
 
 When stopped core evidence needs repair, the Primary records the gaps at
 `record-stopped-core-gaps` and supplies that record and the Decision to the
-stopped final assembly Worker. The Worker reconciles the
+stopped final Primary assembly and Judge assignment. The Primary reconciles
 available evidence and records remaining gaps without resuming implementation
 or provider review. Require a fresh stopped Judge assessment and applicability
 check. Ordinary work can resume only after actual renewed user direction.
@@ -148,7 +112,7 @@ user acceptance.
 
 Only `goal-kind=epic-closeout` may use `validated-closeout` after exact successful
 internal Validation. Its separate applicability check binds the unchanged
-validated implementation, original Epic criteria, retained Judge history and
+validated implementation, original Epic criteria, applicable Judge evidence and
 current focused closeout checks. Changed implementation invalidates the
 substitute. Member and pre-validation remediation Goals cannot use it. The final
 Goal Judge remains required even when technical review uses that substitute.
@@ -161,15 +125,12 @@ acceptance cannot satisfy this gate. The carried conditional closeout grant
 permits its exact commit after actual acceptance without another commit question.
 Staging, commits, publication, installation and rollout retain their own authority.
 
-## Qualification applicability
+## Verification limits
 
-Bounded both-host delivery and phase Decisions do not establish full Epic
-execution or arbitrary descendant settlement. Claude SDK-facing feedback ACK
-recovery does not qualify Initial Agent, inner-model or Codex dispatch-ACK loss.
-Stop on required unsupported recovery and obtain applicable acknowledgement for
-changed operative bytes. Authoring and synthetic checks supply structural
-evidence only. Exact candidate upgrade in UTM remains a separate pre-release
-gate; delegated functional results do not supply Master's overall acceptance or
-activate released snapshots.
+Structural and synthetic tests do not prove actual installed functionality or
+upgrade success. Follow the target repository's policy for installed checks,
+record unknown outcomes truthfully and preserve Master's separate overall
+acceptance. Ordinary work needs
+no prior qualification, private history or internal model telemetry.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

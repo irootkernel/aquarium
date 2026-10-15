@@ -2,6 +2,16 @@
 
 ## Status and scope
 
+These v1 profiles serve declared formal delegation and historical records.
+Ordinary work follows the [v2 contract](ordinary-agent-orchestration.md) and does
+not require native qualification or a private executor-record collector. The
+assignment preparer and renderer select the ordinary branch for
+`aquarium.assignment/v2`: preparation validates and copies supplied assignment
+content without reading a role snapshot; rendering returns
+`aquarium.prepared-dispatch/v2` with operative `dispatch_text`. It creates no
+accepted-task, configuration or result binding. Existing v1 inputs, outputs and
+digest encodings below remain unchanged; formal binders reject ordinary v2.
+
 These profiles describe the public surfaces and qualification obligations for
 `aquarium.codex-native/v1` and `aquarium.claude-native/v1`. Local preparation and
 delivery mapping establish only their declared binding domains. Required
@@ -9,7 +19,7 @@ delegation needs native qualification applicable to the exact operative role
 snapshot, accepted assignment, complete result and supported recovery path.
 Earlier qualification remains bound to its original inputs; changed operative
 bytes need fresh acknowledgement. Read the
-[orchestration contract](agent-orchestration.md) and the installed `use-podway`
+[formal v1 contract](formal-agent-orchestration-v1.md) and the installed `use-podway`
 delegation contract for acceptance obligations. Source declarations do not
 activate released managed copies or change an admitted session.
 

@@ -1,93 +1,45 @@
 # Task orchestration
 
-## Candidate and activation
+## Ordinary execution
 
-The bundled `aquarium-task-v2` version `30` declares required native Worker and
-Judge Actions. Execution requires an admitted delegated Procedure and native
-qualification for its exact role snapshot, assignment and recovery path.
-Released managed copies and admitted direct snapshots retain their original
-contracts. Read the [shared contract](agent-orchestration.md),
-[native mappings](native-agent-mappings.md) and installed `use-podway`
-delegation contract. An unavailable required binding blocks execution; it never
-permits direct fallback or a synthetic acceptance.
-
-## Assignments and role identity
-
-Use `binding_ref=aquarium-native`, Worker role `aquarium-worker/v1`, and Judge
-role `aquarium-goal-judge/v1`. `after_accept=retain` requires acknowledged idle
-settlement. `max_rounds=32` uses Podway's native per-placement maximum, without
-imposing an Aquarium retry budget. Keep actual lifetime accounting across all
-placements and retain one logical Judge throughout a standalone Task. Each
-placement needs its own current acknowledged assignment, result and receipt;
-prior package bindings remain historical. Never reset lifetime rounds or relabel
-an earlier acceptance for a different Action. An
-Epic-handler member keeps that Epic's Judge under its owning workflow.
-
-Compute each declared role snapshot with
-[prepare_assignment.py](../skills/goal-judge/scripts/prepare_assignment.py).
-The Worker role path is `plugins/aquarium/references/worker-guidance.md`; the
-Judge role path is `plugins/aquarium/skills/goal-judge/SKILL.md`. Both inventories
-include these operative dependencies under `plugins/aquarium/references/`:
-
-- `agent-orchestration.md`
-- `native-agent-mappings.md`
-- `evidence-residency.md`
-- `review-routing-contract.md`
-- `review-intent-contract.md`
-- `finding-disposition.md`
-- `ouroboros-integration.md`
-- `design-gates.md`
-
-The snapshot is `aquarium.prepared-role-snapshot/v1`: the role path and sorted
-inventory contain each exact file path, byte count, SHA-256 and base64 body.
-Its digest covers compact sorted-key ASCII JSON without a final newline. Preserve
-complete bytes, including final newlines. Resolve tool contracts and phase
-instructions as node-specific assignment input; original repository criteria and
-artifacts remain task evidence. A changed operative dependency requires a new
-snapshot, Procedure candidate and applicable native acknowledgement.
-
-Every assignment carries the current full package, complete selected values,
-objective, purpose, phase instructions, original canonical criteria, exact target
-and base, authority, excluded effects, deliverables and success criteria. Use
-operative role text through the dispatch renderer. Recompute and compare the
-accepted role, configuration, task and complete result domains separately.
-Local preparation establishes no native acceptance.
+Task version `31` uses ordinary Actions and the [v2 role and evidence contract](ordinary-agent-orchestration.md).
+Use the Primary harness's supported native Workers and independent report-only
+Judge without prior qualification, role snapshots or configuration digests.
+Actual original criteria, current candidate, checks, authority and available
+public handles remain necessary. Existing formal sessions retain their original
+[formal v1 contract](formal-agent-orchestration-v1.md) and supported released continuation.
 
 ## Planning and phase progression
 
 Before a session, a read-only `task-plan` Worker proposes the plan. The Primary
 obtains actual approval and any required dossier waiver. `plan-only` ends there.
-After approval and session admission, acknowledge or explicitly revalidate the
-exact approved artifact against the fresh `record-plan` package. Preserve the
-actual native acknowledgement; never relabel the pre-session receipt.
+After approval and session admission, revalidate the exact approved artifact
+against the current record-plan inputs without inventing formal acceptance.
 
-| Worker candidate | Retained Judge | Primary Decision |
+| Work or Primary evidence record | Independent Judge | Primary Decision |
 | --- | --- | --- |
 | `record-plan` | `judge-plan` | `decide-plan-assessment` |
-| `implement` | `judge-implementation` | `decide-implementation-assessment` |
-| `refine` | `judge-refinement` | `decide-refinement-assessment` |
-| `verify` | `judge-verification` | `confirm-verification-operation`, then `decide-verification` |
+| `implement`, `refine`, `verify` | `judge-verification` | `confirm-verification-operation`, then `decide-verification` |
 | `document` | `judge-documentation` | `decide-documentation-assessment` |
 | Admitted `review` evidence | `judge-review` | `confirm-review-completion` |
 | `prepare-task-assessment` | `judge-task` | Applicability confirmation, then `assess-goal` |
 | `prepare-stopped-task-assessment` | `judge-stopped-task` | Applicability confirmation, then `assess-stopped-goal` |
 
 The Primary retains all Decisions and operational records. Judge Actions have no
-recursive Judge. Candidate Actions return `aquarium.worker-handoff/v1`; Judge
-Actions return `aquarium.judge-assessment/v1` with all original criterion rows.
+recursive Judge. Worker Actions return `aquarium.worker-handoff/v2`; Judge
+Actions return `aquarium.judge-assessment/v2` with all original criterion rows.
+Final assembly records the Primary candidate-evidence index instead of a Worker handoff.
 Record their exact artifact metadata and retain complete bytes outside Podway.
 Podway stores caller assertions and metadata; it neither authenticates records
 nor establishes semantic truth.
 
-For each delegated Action, read the complete current package and selected evidence,
-obtain authentic acknowledgement and full delivery, check scope, provenance,
-complete original criterion coverage, current target and authority, and explicitly
-accept the native result. Record every final item, establish retained idle state
-including descendants, submit the exact Podway acceptance, then complete with a
-current receipt and fresh fences. Worker acceptance establishes delivery. Judge
-report acceptance checks the report and its applicability without repeating its
-semantic assessment. The following Primary Decision consumes that assessment.
-Any actual later item edit can stale the receipt.
+For each ordinary Action, read complete current inputs and selected evidence,
+receive the actual result, check scope and authority, then record the work and
+complete with current Podway fences. Worker delivery is not semantic passage.
+The Primary checks the independent Judge report and uses its current assessment
+without another Judge cycle for report acceptance. Final assembly is bookkeeping;
+reuse an existing complete final report only with verified current coverage,
+candidate, requirements and checks. Corrections require fresh affected assessment.
 
 A phase pass requires current applicability and a passing `judge-checkpoint-result`
 for all actual due phase obligations and applicable parent constraints. Retain
@@ -98,13 +50,14 @@ required checks. Review evidence preserves faithful negative provider rows and
 their original completion, severity and Low routing. Report completeness alone
 cannot establish implementation, correction or verification success. Worker-only
 delivery, omitted original criteria, absent
-reports, changed targets, stale requirements, unsupported native bindings and
+reports, changed targets, stale requirements, missing required candidate evidence and
 inconsistent reports block passage. Return disputed or inapplicable assessments
 to the retained Judge with original conflicting evidence. An unchanged artifact
-still needs current revalidation and qualified acknowledgement after rework.
+still needs current artifact and check revalidation after rework.
 
 Established gaps and missing evidence use separate checkpoint-local followup
-records. Before returning to the phase, the authority gate requires a passing
+records. The implementation/refinement/verification group selects its earliest actual
+owner (prepare-implementation, refine or verify). Before returning, its authority gate requires a passing
 caller-supplied result for the exact existing grant, effect, target and owner.
 A negative verdict grants no new effect, review ordinal or provider operation.
 If another earlier phase owns the change, use its already authorized manual
@@ -126,10 +79,9 @@ Preserve original provider completion rows, frozen findings, accepted risks,
 Low dispositions, review mode and every consumed ordinal. A Judge never counts
 as a technical reviewer or permits another review by itself.
 
-Final candidate assembly supplies the complete original phase, review and Judge
-reports and all applicable canonical Task and parent constraints as original file
-evidence in its handoff. Include branch-specific Low and stopped records when
-present. The graph selectors provide current core and report references. The handoff
+The Primary assembles original phase, review and Judge reports and applicable
+Task and parent criteria in its final evidence index. Include branch-specific Low and stopped records when
+present. The graph selectors provide current core and report references. The index
 must also supply the remaining original evidence in full. Its summary cannot
 substitute for those bytes. No new implementation, broad audit or provider
 review occurs during assembly. Local-settlement composition retains the reviewed basis, verified permitted
@@ -144,20 +96,13 @@ remain required. Direct phase invocations retain their existing authority;
 when the handler delegates a phase, the Primary owns approval conversations,
 Podway acceptance and progression.
 
-## Qualification applicability
+## Verification limits
 
-Bounded both-host scenarios cover native Worker/Judge delivery, complete
-serialized assignments and Primary phase Decisions. Claude SDK-facing feedback
-ACK withholding and result-read recovery are distinct from Initial Agent,
-inner-model and Codex dispatch-ACK loss, which remain unqualified. Arbitrary
-active or outliving descendants also remain unqualified. Stop on any required
-unsupported path; do not extrapolate a bounded result to full handler execution,
-tool-bearing implementation or nested technical-review lifetimes.
-
-Every changed operative snapshot needs fresh applicable native acknowledgement
-and result/settlement evidence. Qualification cannot activate admitted released
-snapshots or other repositories. Exact candidate installation and upgrade belong
-in the dedicated UTM VM before release; Master's actual overall acceptance
-remains the final Epic closeout gate.
+Structural and synthetic tests do not prove installed native execution. Verify
+actual startup, failure, rework and public-handle recovery separately; every
+installation-dependent check follows the target repository's verification
+environment policy. Preserve unknown outcomes and settle mutating Workers before
+replacement. Actual overall acceptance and
+managed rollout retain their separate authority.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

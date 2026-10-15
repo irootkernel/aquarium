@@ -27,39 +27,34 @@ The epic lifecycle coordinates multiple task lifecycles and a cold validation pa
 
 Workflows prefer re-observation over replay. Unknown or interrupted external execution is quarantined until its actual state can be resolved. A retry never widens authority, and successful earlier effects are not rolled back automatically unless the owning contract explicitly provides a safe recovery action.
 
-## Supervised orchestration candidate
+## Ordinary native orchestration
 
-The [EPIC-021 orchestration contract](../../plugins/aquarium/references/agent-orchestration.md)
-defines the implemented candidate role model and versioned handoffs. Bounded
-native Worker, Judge, and Primary scenarios have qualified Task planning, Goal work,
-Validation audit, Design context, and War-room baseline on Codex and Claude.
-They do not establish full handler lifecycles or final Goal achievement. Installed
-released skills and admitted snapshots retain their existing contracts; source
-updates do not activate candidate placements in an existing session.
-Recorded qualification applies to its original operative inputs. Changed role
-snapshots require fresh native acknowledgement and result/settlement evidence;
-earlier scenarios cannot establish applicability to those changed bytes.
+The [ordinary v2 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md)
+owns the current source roles, assignments, handoffs and recovery boundaries.
+The current Primary's harness runs native Workers and an independent report-only
+Judge. Workers deliver coherent implementation or documentation with refinement
+and required checks; the Judge assesses due criteria from original artifacts.
+The Primary records workflow evidence and makes permitted Decisions. Operational
+bookkeeping and unchanged final-report assembly create no extra Judge cycle.
 
-The candidate flow separates Worker delivery, report-only Judge
-assessment, and Orchestrator Decisions. The Primary accepts a complete native
-delivery under its placement's delivery checks and authority before completing
-the Action. It accepts a complete Judge report without recursively judging it;
-phase progression then requires current applicability and a result proving
-actual due obligations. Complete original global rows and gaps stay intact, and
-final achievement still requires the full original Goal to pass.
-The Judge reads original criteria and evidence, including omitted assignment
-criteria and Epic integration goals. One logical Judge follows an Epic-handler
-across member Tasks and internal validation; independent cold validation starts
-fresh. Operational records and approval transitions retain native checks without
-an extra semantic cycle.
+Ordinary Podway Actions retain structural progression and current fences without
+native receipts. Available public handles and actual results support recovery;
+private executor history, internal model telemetry and configuration digests are
+not startup prerequisites. Reconcile unknown work before replay and settle a
+mutating Worker before replacement. A fresh independent Judge can restore
+original criteria, current artifacts, prior gaps and remaining authority.
 
-Host-native integrations own dispatch, feedback, actual identities, accepted
-task/configuration bytes, complete results, settlement, and reconnect. Podway
-owns receipts, structural progression, and fences. Native result acceptance
-precedes separate Action completion. The shared contract owns the full mapping
-requirements and recovery boundaries. TASK-111 through TASK-117 implement and
-qualify the bounded native paths; required delegation still needs an applicable
-qualified integration and admitted Procedure. Initial Agent, inner-model, and
-Codex dispatch-ACK loss and arbitrary outliving descendants remain unqualified.
-Unsupported required recovery stops at its native owner rather than direct
-fallback. Candidate qualification does not establish release or host activation.
+Selected technical reviews, required checks, scope, correction grants, actual
+user acceptance and commit boundaries retain their own contracts. Every due
+criterion must have sufficient evidence; future work remains distinct from
+current obligations. A complete existing final assessment is reusable only with
+verified applicability to current candidate, original criteria and checks.
+
+The [formal v1 contract](../../plugins/aquarium/references/formal-agent-orchestration-v1.md)
+and native mappings preserve genuine delegation receipts, original digest domains
+and admitted historical snapshots. Never reinterpret a formal session as ordinary.
+Source updates require authorized managed rollout and compatible successors;
+customized bytes and existing sessions are preserved. Local structural fixtures
+prove neither actual native functionality nor installed upgrades. Record those
+observed results separately. In this repository, installation-dependent checks
+run only in the dedicated UTM VM.

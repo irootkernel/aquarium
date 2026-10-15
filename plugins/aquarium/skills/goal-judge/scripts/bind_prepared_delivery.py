@@ -68,6 +68,14 @@ def bind_delivery(preparation: dict, mapping_request: dict) -> dict:
         "record_authenticity": "caller_supplied_unverified",
     }
     try:
+        if (
+            isinstance(preparation, dict)
+            and preparation.get("schema") == "aquarium.assignment/v2"
+        ):
+            raise BindingError(
+                "INVALID_PREPARATION",
+                "ordinary v2 assignments are not formal native preparations",
+            )
         output["request_digest"] = native.digest(
             {
                 "schema": REQUEST_SCHEMA,
@@ -124,6 +132,14 @@ def bind_delivery(preparation: dict, mapping_request: dict) -> dict:
             for index, (record, native_round) in enumerate(
                 zip(round_records, mapped["rounds"])
             ):
+                if (
+                    isinstance(record["preparation"], dict)
+                    and record["preparation"].get("schema") == "aquarium.assignment/v2"
+                ):
+                    raise BindingError(
+                        "INVALID_PREPARATION",
+                        "ordinary v2 assignments are not formal round preparations",
+                    )
                 try:
                     round_dispatch = renderer.render_dispatch(record["preparation"])
                 except (ValueError, TypeError) as error:

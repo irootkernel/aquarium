@@ -44,13 +44,6 @@ Use the shared [QA outcome mapping](../../references/ouroboros-integration.md#in
 and [delivery-input commit boundary](../../references/ouroboros-integration.md#commit-approved-delivery-input).
 Never treat diagnostic document approval as authority to implement the fix.
 
-## Required orchestration candidate
+## Ordinary native orchestration
 
-When the admitted Procedure declares required Worker/Judge placements, follow
-[Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md)
-for complete original evidence, retained Judge checkpoints, current local effect
-authority and final assessment. Keep this skill's original Ouroboros leaf scope,
-actual approval and effect boundaries. Installed direct snapshots retain their
-admitted contract. Required placements need native qualification applicable to
-the exact operative snapshot and supported path, plus an admitted delegated
-Procedure. Source updates do not authorize managed-file rollout.
+Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v2 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.

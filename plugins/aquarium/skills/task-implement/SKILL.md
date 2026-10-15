@@ -5,7 +5,7 @@ description: "Implement the approved plan for one named roadmap task. Use when $
 
 # Task Implement
 
-When delegated by a qualified `task-handler` with required Worker/Judge placements, follow [Task orchestration](../../references/task-orchestration.md). Return the complete node-specific `aquarium.worker-handoff/v1` with exact target, original requirements, native result bindings, performed and omitted checks, authority and gaps. The Primary owns native acceptance, Podway completion and Decisions; the retained Judge owns semantic assessment. Direct invocation keeps this phase's existing authority.
+Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.worker-handoff/v2` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Primary owns Podway records and Decisions; the independent Judge assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
