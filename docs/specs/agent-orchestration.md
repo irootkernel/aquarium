@@ -1,13 +1,22 @@
 # Supervised agent orchestration
 
-## Planned native workflow recovery
+## Reserved ordinary native workflow contract
 
 [EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
-plans harness-native Worker and independent report-only Judge work at meaningful
-phase boundaries, with ordinary Podway Actions and minimal task-relevant evidence.
-Its [dossier](../todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) defines the pending
-contract changes, including versioned ordinary reports and recovery. The current
-candidate contract below remains unchanged until implementation.
+defines ordinary native Worker and independent report-only Judge work at
+meaningful phase boundaries. TASK-126 reserves the interfaces in the
+[ordinary native contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md):
+`aquarium.assignment/v2`, `aquarium.worker-handoff/v2`,
+`aquarium.judge-assessment/v2` and `aquarium.orchestration-checkpoint/v2`.
+That owner defines roles, grouped assessments, minimal relevant evidence,
+recovery and the producer/consumer map. TASK-127 owns implementation in handlers,
+role instructions, helpers and all five bundled Procedures. The startup defect
+remains until that work is verified.
+
+Operational roles use the current Primary's supported native harness, preserving
+selected supported options or its defaults. Ordinary work does not require
+private executor history, effective configuration digests or prior qualification.
+Selected technical reviews retain their native providers and obligations.
 
 The managed-Procedure update is breaking and preserves admitted snapshots and
 formal delegation requirements. No Podway producer change or Haepari adoption is
@@ -16,7 +25,13 @@ actual handler startup separately from development functional verification.
 The guest-side `make test-vm` entrypoint is planned in TASK-128 and is not yet
 available.
 
-## Candidate delivery contract
+## Formal v1 delivery contract
+
+The formal v1 contract still applies to current bundled sources and installed
+handlers until the TASK-127 transition. The remaining sections also preserve
+EPIC-021 qualification outcomes, historical records and admitted snapshots,
+including their original v1 meanings, source identities and digest domains.
+They do not add prerequisites to the reserved ordinary v2 contract.
 
 `TASK-110` defines the shared Orchestrator, Judge, and Workers contract for
 `EPIC-021`. `TASK-111` through `TASK-116` implement the candidate native mappings,

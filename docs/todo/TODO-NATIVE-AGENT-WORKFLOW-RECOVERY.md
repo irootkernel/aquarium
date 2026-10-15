@@ -41,16 +41,19 @@ retaining genuine formal delegation requirements and meaningful verification.
 ## Planning baseline
 
 The planning baseline is main at
-`fa9f79b3432ae5f7604f667a5c46ef2c54f17e17`, after EPIC-023. Implementation has
-not started. This registration changes documentation only. The open v0.1.20
-release remains a separate publication lifecycle. No Podway producer change or
+`fa9f79b3432ae5f7604f667a5c46ef2c54f17e17`, after EPIC-023; registration changed
+documentation only. TASK-126 defines the reserved
+[ordinary v2 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md)
+and producer/consumer map. TASK-127 still owns implementation and startup
+recovery; TASK-126 activates no bundled Procedure or installed handler. The open
+v0.1.20 release remains a separate publication lifecycle. No Podway producer change or
 Haepari adoption is required. Actual verification in this Epic covers Codex only.
 
 ## Source map
 
 | Concern | Owner to inspect and update during implementation |
 | --- | --- |
-| Roles, assignments, handoffs and recovery | [Orchestration contract](../../plugins/aquarium/references/agent-orchestration.md), [native mappings](../../plugins/aquarium/references/native-agent-mappings.md), [specification](../specs/agent-orchestration.md) |
+| Roles, assignments, handoffs and recovery | [Ordinary v2 contract and producer/consumer map](../../plugins/aquarium/references/ordinary-agent-orchestration.md), [formal v1 contract](../../plugins/aquarium/references/agent-orchestration.md), [native mappings](../../plugins/aquarium/references/native-agent-mappings.md), [specification](../specs/agent-orchestration.md) |
 | Procedure semantics and installed sources | [Node contracts](../../plugins/aquarium/references/procedure-node-contracts.md), [bundled sources](../../plugins/aquarium/assets/podway/procedures/), affected handlers and their linked references |
 | Technical review and correction routing | [Review routing](../specs/review-routing.md), [review intent](../../plugins/aquarium/references/review-intent-contract.md), [finding disposition](../../plugins/aquarium/references/finding-disposition.md) |
 | Verification and release authority | [TESTING.md](../../TESTING.md), [AGENTS.md](../../AGENTS.md), [VM methods](../../tests/vm/README.md), [release scenarios](../../tests/vm/release-acceptance.md) |
@@ -70,8 +73,10 @@ not remove that dependency.
 | Judge | Independently assess due criteria against original requirements and actual current artifacts | Report only; no implementation, approval attribution or lifecycle mutation |
 
 Use the current AI harness's supported native subagents. Preserve selected
-supported model options or its existing defaults. Codex verification is not
-evidence for Claude, Grok, GLM or other harnesses; their ordinary use is not gated
+supported model options or its existing defaults. A Codex Primary uses Codex
+Workers and Judge; a Claude Primary uses Claude Workers and Judge. A selected
+technical-review route keeps its own providers and topology. Codex verification
+does not establish results for Claude, Grok, GLM or other harnesses; their ordinary use is not gated
 on this Epic's verification. Unavailable internal model telemetry does not block
 ordinary work.
 
@@ -138,11 +143,11 @@ installation and any verification requiring it run only in the dedicated UTM VM.
 
 ### TASK-126: Define harness-native role and recovery contracts
 
-- [ ] Define role duties, meaningful evaluation boundaries and minimal relevant evidence.
-- [ ] Define ordinary v2 assignments, handoffs, assessments and recovery checkpoints; map every affected producer and consumer.
-- [ ] Include Procedure item prompts, Task phase skills, goal-judge, worker-guidance, report helpers and setup delegation inspection in that map.
-- [ ] Preserve formal delegation, historical v1 interpretation, actual native capability limits and truthful unknown outcomes.
-- [ ] Record breaking-update, customized-source and successor-session requirements.
+- [x] Define role duties, meaningful evaluation boundaries and minimal relevant evidence.
+- [x] Define ordinary v2 assignments, handoffs, assessments and recovery checkpoints; map every affected producer and consumer.
+- [x] Include Procedure item prompts, Task phase skills, goal-judge, worker-guidance, report helpers and setup delegation inspection in that map.
+- [x] Preserve formal delegation, historical v1 interpretation, actual native capability limits and truthful unknown outcomes.
+- [x] Record breaking-update, customized-source and successor-session requirements.
 
 ### TASK-127: Implement grouped roles and remove startup qualification blockers
 
