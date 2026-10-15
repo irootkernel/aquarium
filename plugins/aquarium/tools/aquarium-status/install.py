@@ -45,6 +45,9 @@ RECEIPT_KEYS = {
 }
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 VERSION_RE = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
+DEV_VERSION_RE = re.compile(
+    r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)-dev\.[0-9a-f]{12}$"
+)
 
 
 class RuntimeFailure(RuntimeError):
@@ -85,7 +88,10 @@ def source_identity(source: Path) -> dict[str, Any]:
     files = {name: sha256(source / name) for name in PAYLOAD}
     manifest = source.parents[1] / ".codex-plugin/plugin.json"
     plugin_version = f"v{json.loads(manifest.read_text(encoding='utf-8'))['version']}"
-    if VERSION_RE.fullmatch(plugin_version) is None:
+    if (
+        VERSION_RE.fullmatch(plugin_version) is None
+        and DEV_VERSION_RE.fullmatch(plugin_version) is None
+    ):
         raise RuntimeFailure("bundled plugin version is invalid")
     return {
         "plugin_version": plugin_version,
@@ -177,7 +183,10 @@ def validate_receipt(value: Any) -> dict[str, Any]:
     if (
         value["schema"] != RUNTIME_SCHEMA
         or not isinstance(value["plugin_version"], str)
-        or VERSION_RE.fullmatch(value["plugin_version"]) is None
+        or (
+            VERSION_RE.fullmatch(value["plugin_version"]) is None
+            and DEV_VERSION_RE.fullmatch(value["plugin_version"]) is None
+        )
         or not isinstance(value["source_sha256"], str)
         or SHA_RE.fullmatch(value["source_sha256"]) is None
         or not isinstance(value["python_version"], str)

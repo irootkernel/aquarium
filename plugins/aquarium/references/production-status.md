@@ -74,8 +74,11 @@ completion cannot precede start. The stored input digest is lowercase SHA-256 of
 the canonical record request.
 
 `aquarium_version` and every other version observation have exactly `value`,
-`source`, and `status`. `status` is `observed`, `unknown`, or `not_checked`;
-`value` is stable `vMAJOR.MINOR.PATCH` only for `observed` and is otherwise null.
+`source`, and `status`. `status` is `observed`, `unknown`, or `not_checked`.
+An `observed` value is either stable `vMAJOR.MINOR.PATCH` or Aquarium's official
+development form `vMAJOR.MINOR.PATCH-dev.<sha12>`, where `sha12` is exactly 12
+lowercase hexadecimal characters from the producer's Git identity. Other
+prerelease and build metadata forms are rejected. Unobserved values are null.
 `source` is one of `bundled_plugin_manifest`, `installed_runtime_receipt`,
 `recorded_attempt`, `official_github_release`, `source_root_manifest`,
 `source_root_changelog`, `not_requested`, or `unavailable`. An observed value
@@ -249,9 +252,12 @@ or omitted optional observation does not by itself make the report partial.
 Configuration freshness compares `last_full_ready` with the reporter. Release
 freshness compares the reporter with the refreshed stable release. Each result
 is independently `current`, `behind`, `ahead`, `unknown`, or `not_checked`.
-Comparison accepts only numeric stable `vMAJOR.MINOR.PATCH` values and compares
-their integer triples; prerelease or build metadata is never admitted. The
-reporter uses the installed runtime receipt. `source_plugin` uses the selected
+Stable versions compare their numeric integer triples. Equal development
+identities are `current`; distinct pairs containing a development identity are
+`unknown`, including development versus stable. Git prefixes do not define
+version order. Official release tags and source-root observations still require
+stable versions. The reporter uses the installed runtime receipt. `source_plugin`
+uses the selected
 source root's manifest, and `source_unreleased` uses its one stable Unreleased
 CHANGELOG target.
 
@@ -383,6 +389,9 @@ lowercase SHA-256. `files` covers the exact payload below;
 `dependency_files` covers every admitted non-directory wheel member installed
 under the generation. The selector, receipt, payload, interpreter, and private
 dependency tree jointly define the installed identity.
+`plugin_version` preserves the exact stable or official development version
+from the bundled plugin manifest; installation and diagnosis compare the complete
+value.
 
 The runtime payload is exactly `aquarium_status.py`, `language_inventory.py`,
 `status_contract.py`, `status_store.py`, `status_report.py`,

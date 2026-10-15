@@ -477,6 +477,50 @@ def test_freshness_is_derived_independently(status_modules, left, right, expecte
     assert status_modules.report.freshness(left, right) == expected
 
 
+@pytest.mark.parametrize(
+    "left,right,expected",
+    [
+        ("v0.1.19-dev.0123456789ab", "v0.1.19-dev.0123456789ab", "current"),
+        ("v0.1.19-dev.0123456789ab", "v0.1.19-dev.abcdef012345", "unknown"),
+        ("v0.1.19-dev.0123456789ab", "v0.1.20-dev.0123456789ab", "unknown"),
+        ("v0.1.19-dev.0123456789ab", "v0.1.19", "unknown"),
+        ("v0.1.19", "v0.1.19-dev.0123456789ab", "unknown"),
+        ("v0.1.19-dev.0123456789ab", "v0.1.20", "unknown"),
+    ],
+)
+def test_development_freshness_preserves_identity_without_ordering_git_prefixes(
+    status_modules, left, right, expected
+):
+    assert status_modules.report.freshness(_version(left), _version(right)) == expected
+
+
+def test_observed_development_identity_does_not_enter_stable_numeric_comparison(
+    status_modules,
+):
+    value = _version("v0.1.19-dev.0123456789ab", "installed_runtime_receipt")
+    assert status_modules.contract.validate_version(value) == value
+    with pytest.raises(status_modules.contract.ContractError) as raised:
+        status_modules.contract.version_tuple(value["value"])
+    assert raised.value.code == "invalid_input"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "v0.1.19-dev.0123456789a",
+        "v0.1.19-dev.0123456789abc",
+        "v0.1.19-dev.0123456789AB",
+        "v0.1.19-rc.0123456789ab",
+        "v0.1.19-dev.0123456789ab+build",
+        "v00.1.19-dev.0123456789ab",
+    ],
+)
+def test_observed_version_rejects_other_development_shapes(status_modules, value):
+    with pytest.raises(status_modules.contract.ContractError) as raised:
+        status_modules.contract.validate_version(_version(value))
+    assert raised.value.code == "invalid_input"
+
+
 def test_release_observation_is_offline_by_default(status_modules, monkeypatch):
     report = status_modules.report
     monkeypatch.setattr(
@@ -491,8 +535,9 @@ def test_release_observation_is_offline_by_default(status_modules, monkeypatch):
     assert warning is None
 
 
+@pytest.mark.parametrize("tag", ["v2.3.4", "v2.3.4-dev.0123456789ab"])
 def test_release_refresh_accepts_only_a_stable_official_tag(
-    status_modules, monkeypatch
+    status_modules, monkeypatch, tag
 ):
     report = status_modules.report
     observed = {}
@@ -506,7 +551,7 @@ def test_release_refresh_accepts_only_a_stable_official_tag(
 
         def read(self, limit):
             observed["limit"] = limit
-            return b'{"tag_name":"v2.3.4"}'
+            return json.dumps({"tag_name": tag}).encode()
 
     def open_request(request, timeout):
         observed.update(url=request.full_url, timeout=timeout)
@@ -516,12 +561,16 @@ def test_release_refresh_accepts_only_a_stable_official_tag(
 
     value, warning = report.release_version(True)
 
-    assert value == {
-        "value": "v2.3.4",
-        "source": "official_github_release",
-        "status": "observed",
-    }
-    assert warning is None
+    if tag == "v2.3.4":
+        assert value == {
+            "value": tag,
+            "source": "official_github_release",
+            "status": "observed",
+        }
+        assert warning is None
+    else:
+        assert value == {"value": None, "source": "unavailable", "status": "unknown"}
+        assert warning == "release_refresh_failed"
     assert observed == {
         "url": report.LATEST_RELEASE_URL,
         "timeout": 10,
@@ -629,13 +678,16 @@ def test_source_versions_require_and_preserve_the_exact_source_root(
     assert raised.value.code == "invalid_source_root"
 
 
+@pytest.mark.parametrize(
+    "changelog", ["# Changelog\n", "## v1.3.0-dev.0123456789ab - Unreleased\n"]
+)
 def test_source_observation_without_one_open_version_is_independently_unknown(
-    status_modules, tmp_path, monkeypatch
+    status_modules, tmp_path, monkeypatch, changelog
 ):
     report = status_modules.report
     source = tmp_path / "source"
     source.mkdir()
-    _source_tree(source, changelog="# Changelog\n")
+    _source_tree(source, changelog=changelog)
     monkeypatch.setattr(
         report, "_git_identity", lambda root: (str(source), str(source / ".git"))
     )

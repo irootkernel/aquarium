@@ -16,6 +16,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Accept official development candidate identities in the status runtime and preserve them in recorded state, so installed setup can proceed during guest upgrade verification.
 - Require Podway-backed workflows to finish and verify session closeout after their final commit or approved no-commit/no-change result, report pending finalization separately, and recover without repeating an existing commit.
 - Restore ordinary native workflow startup and recovery without private executor or configuration qualification. Assess coherent Worker delivery with an independent Judge, retain formal delegation and historical snapshots, and require authorized managed-Procedure updates with compatible successor sessions.
 

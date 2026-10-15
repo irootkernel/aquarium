@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from status_contract import VERSION_RE, ContractError, version_tuple
+from status_contract import DEV_VERSION_RE, VERSION_RE, ContractError, version_tuple
 
 LATEST_RELEASE_URL = "https://api.github.com/repos/irootkernel/aquarium/releases/latest"
 MAX_EXTERNAL_BYTES = 1024 * 1024
@@ -48,6 +48,10 @@ def freshness(left: dict[str, Any], right: dict[str, Any]) -> str:
         return "not_checked"
     if left["status"] != "observed" or right["status"] != "observed":
         return "unknown"
+    if DEV_VERSION_RE.fullmatch(left["value"]) or DEV_VERSION_RE.fullmatch(
+        right["value"]
+    ):
+        return "current" if left["value"] == right["value"] else "unknown"
     current = version_tuple(left["value"])
     target = version_tuple(right["value"])
     return (

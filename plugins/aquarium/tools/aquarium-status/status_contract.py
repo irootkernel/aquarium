@@ -24,6 +24,9 @@ LANGUAGE_REFRESH_RECEIPT_SCHEMA = (
 FORGET_RECEIPT_SCHEMA = "aquarium-production-status-forget-receipt/v1"
 ERROR_SCHEMA = "aquarium-production-status-error/v1"
 VERSION_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+DEV_VERSION_RE = re.compile(
+    r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)-dev\.[0-9a-f]{12}$"
+)
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _VERSION_ATOM = (
     r"[0-9]{1,4}(?:\.(?:[0-9]{1,4}|x|\*)){0,3}"
@@ -227,12 +230,13 @@ def validate_version(value: Any, label: str = "version") -> dict[str, Any]:
     ):
         raise ContractError("invalid_input", f"{label} has an invalid status or source")
     if status == "observed":
-        if (
-            not isinstance(result["value"], str)
-            or VERSION_RE.fullmatch(result["value"]) is None
+        if not isinstance(result["value"], str) or (
+            VERSION_RE.fullmatch(result["value"]) is None
+            and DEV_VERSION_RE.fullmatch(result["value"]) is None
         ):
             raise ContractError(
-                "invalid_input", f"{label}.value must be a stable version"
+                "invalid_input",
+                f"{label}.value must be a stable or Aquarium development version",
             )
         if source in {"not_requested", "unavailable"}:
             raise ContractError(

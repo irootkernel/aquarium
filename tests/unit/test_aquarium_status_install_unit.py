@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -86,6 +87,122 @@ def selected(runtime_install):
     generation = root / relative
     receipt = json.loads((generation / "runtime.json").read_text(encoding="utf-8"))
     return generation, receipt
+
+
+@pytest.mark.parametrize(
+    "version",
+    [
+        "0.1.19-dev.0123456789a",
+        "0.1.19-dev.0123456789abc",
+        "0.1.19-dev.0123456789AB",
+        "0.1.19-rc.0123456789ab",
+        "0.1.19-dev.0123456789ab+build",
+        "00.1.19-dev.0123456789ab",
+    ],
+)
+def test_runtime_source_and_receipt_reject_unsupported_development_versions(
+    runtime_install, package, version
+):
+    identity = runtime_install.source_identity(package)
+    receipt = {
+        "schema": runtime_install.RUNTIME_SCHEMA,
+        **identity,
+        "plugin_version": "v" + version,
+        "python_version": "3.13.0",
+        "python_executable": str(Path(sys.executable).resolve()),
+        "python_executable_sha256": "a" * 64,
+        "requirements_sha256": identity["files"]["requirements.txt"],
+        "dependency_files": {},
+    }
+    with pytest.raises(runtime_install.RuntimeFailure):
+        runtime_install.validate_receipt(receipt)
+    manifest = package.parents[1] / ".codex-plugin/plugin.json"
+    document = json.loads(manifest.read_text())
+    document["version"] = version
+    manifest.write_text(json.dumps(document))
+    with pytest.raises(runtime_install.RuntimeFailure):
+        runtime_install.source_identity(package)
+
+
+def test_development_runtime_install_records_and_reports_existing_stable_state(
+    runtime_install, package, offline_dependencies, tmp_path
+):
+    install(runtime_install, package)
+    stable_generation, stable_receipt = selected(runtime_install)
+    stable_files = {
+        path.relative_to(stable_generation): path.read_bytes()
+        for path in stable_generation.rglob("*")
+        if path.is_file()
+    }
+    repository = tmp_path / "repository"
+    subprocess.run(["git", "init", "-q", str(repository)], check=True)
+    request = {
+        "schema": "aquarium-production-status-record/v1",
+        "attempt_id": str(uuid.uuid4()),
+        "expected_row_revision": 0,
+        "git_root": str(repository.resolve()),
+        "project": "Runtime upgrade fixture",
+        "started_at": "2026-10-15T00:00:00Z",
+        "completed_at": "2026-10-15T00:01:00Z",
+        "outcome": "ready",
+        "scope": {"kind": "full"},
+        "components": {},
+    }
+
+    def invoke(*arguments, value=None):
+        process = subprocess.run(
+            [str(runtime_install.launcher_path()), *arguments],
+            input=json.dumps(value) if value else None,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert process.returncode == 0, process.stderr
+        return json.loads(process.stdout)
+
+    assert invoke("record", value=request)["row_revision"] == 1
+    stable_report = invoke("show", "--format", "json")
+    stable_attempt = stable_report["repositories"][0]["last_full_ready"]
+    assert (
+        stable_attempt["aquarium_version"]["value"] == stable_receipt["plugin_version"]
+    )
+
+    manifest = package.parents[1] / ".codex-plugin/plugin.json"
+    document = json.loads(manifest.read_text())
+    document["version"] = "0.1.19-dev.0123456789ab"
+    manifest.write_text(json.dumps(document))
+    assert runtime_install.diagnose(package)["status"] == "outdated"
+    result = install(runtime_install, package)
+    assert result["status"] == "current"
+    generation, receipt = selected(runtime_install)
+    assert generation != stable_generation
+    assert receipt["plugin_version"] == "v0.1.19-dev.0123456789ab"
+    assert runtime_install.validate_receipt(receipt) == receipt
+    assert (
+        runtime_install.diagnose(package)["installed"]["plugin_version"]
+        == receipt["plugin_version"]
+    )
+    request.update(
+        attempt_id=str(uuid.uuid4()),
+        expected_row_revision=1,
+        scope={"kind": "scoped", "components": ["podway"]},
+    )
+    assert invoke("record", value=request)["row_revision"] == 2
+    report = invoke("show", "--format", "json")
+    assert report["reporter"] == {
+        "value": receipt["plugin_version"],
+        "source": "installed_runtime_receipt",
+        "status": "observed",
+    }
+    row = report["repositories"][0]
+    assert row["last_attempt"]["aquarium_version"] == report["reporter"]
+    assert row["last_full_ready"] == stable_attempt
+    assert row["configuration_freshness"] == "unknown"
+    assert len(offline_dependencies) == 2
+    assert all(
+        (stable_generation / relative).read_bytes() == content
+        for relative, content in stable_files.items()
+    )
 
 
 @pytest.mark.parametrize(
