@@ -54,7 +54,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
-| EPIC-024 | Restore native agent workflows and add manual VM release acceptance | In Progress |
+| EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -639,13 +639,13 @@ Master directed completion of the scoped Mulgae adoption after Opus/Sonnet revie
 
 ## EPIC-024: Restore native agent workflows and add manual VM release acceptance
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Remove the native-qualification startup blocker from ordinary Aquarium workflows, group harness-native Worker and independent Judge work at meaningful boundaries, and add reusable manual UTM release-acceptance scenarios. Complete functional verification during development; release acceptance checks whether the existing installed system can upgrade and start real work. This Epic verifies Codex only and has no Haepari or Podway producer-change dependency.
 
 This is a breaking managed-Procedure update. Preserve existing custom files and immutable session snapshots; apply new sources through authorized managed updates and compatible successor sessions. Existing formal delegation retains its native receipt requirements.
 
-**Detailed SOT:** [Native agent workflow recovery dossier](../todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md)
+**Canonical Outcomes:** [Native orchestration](../specs/agent-orchestration.md), [ordinary roles and recovery](../../plugins/aquarium/references/ordinary-agent-orchestration.md), [Procedure node contracts](../../plugins/aquarium/references/procedure-node-contracts.md), [production status](../../plugins/aquarium/references/production-status.md), [testing](../../TESTING.md#manual-vm-release-acceptance), and [VM scenarios](../../tests/vm/release-acceptance.md).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -653,5 +653,3 @@ This is a breaking managed-Procedure update. Preserve existing custom files and 
 | TASK-127 | Implement grouped roles and remove startup qualification blockers | Align all five Procedure sources, handlers, report consumers, renderers, validators and setup diagnostics without weakening formal delegation. | Completed | TASK-126 |
 | TASK-128 | Add manual VM release acceptance and reusable scenarios | Implement the guest-side test-vm entrypoint, fixed fixtures, truthful outcomes and release-handler guidance using tests/vm. | Completed | TASK-127 |
 | TASK-129 | Verify workflow recovery and release readiness | Verify development functionality, keep release acceptance separate, and promote accepted canonical outcomes. | Completed | TASK-127; TASK-128 |
-
-The dossier defines the direct manual recovery route because the installed epic-handler is affected. TASK-126 reserves the ordinary v2 contracts; TASK-127 owns startup implementation. VM execution, installation, staging, commits and publication retain their applicable authority.

@@ -20,7 +20,7 @@ Haepari is not required.
 | --- | --- |
 | Executable gate and test contract | [Makefile](../../Makefile), [TESTING.md](../../TESTING.md#manual-vm-release-acceptance) |
 | Scenario steps and criteria | [Release acceptance](release-acceptance.md) |
-| Implementation scope and task acceptance | [Recovery dossier](../../docs/todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) |
+| Implementation scope and task acceptance | [Canonical scope and outcomes](../../docs/roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance) |
 | Release and installation authority | [AGENTS.md](../../AGENTS.md#release-policy), installed release-handler |
 
 ## Manual preparation and execution

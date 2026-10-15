@@ -123,10 +123,10 @@ receipt or passing Make gate cannot substitute for them.
 
 ## Manual VM release acceptance
 
-[EPIC-024's dossier](docs/todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) separates
-development functional verification from release acceptance by an existing
-installed system. [VM preparation and results](tests/vm/README.md) and
-[release scenarios](tests/vm/release-acceptance.md) define the reusable manual
+Complete development functional verification before release preparation.
+Release acceptance checks whether an existing installed system accepts the exact
+candidate and starts real work. [VM preparation and results](tests/vm/README.md)
+and [release scenarios](tests/vm/release-acceptance.md) define the reusable manual
 methods. `make test-vm` executes the guest driver and fixed scenarios. Helper
 tests exercise guards, actual byte/source identity, native-result correlation,
 failure propagation and recovery without providers; they do not verify skills.
