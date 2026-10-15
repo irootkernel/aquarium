@@ -265,6 +265,15 @@ Judge remains report-only. Native role metadata may be null; child user messages
 model telemetry, full private history and formal accepted-task bindings are not
 required. This collection protocol belongs to VM acceptance, not ordinary startup.
 
+Use a cumulative delivery handoff that lists the Worker's actual implementation
+changes and subsequent refinement and check results. Preserve a verification
+phase's no-op result without dropping the earlier changes from that handoff.
+Both reports use `sha256:<64 lowercase hex>` for `target.greet_sha256`.
+Return the complete report JSON in the native final result, or its original
+absolute path and `sha256:<64 lowercase hex>` digest. Point `startup-evidence.json`
+to that original report path. Preserve previous captures when reconciling a
+collection reference or recovering report delivery.
+
 ## Result record
 
 Record candidate identity, installed combination, case IDs, actual steps,

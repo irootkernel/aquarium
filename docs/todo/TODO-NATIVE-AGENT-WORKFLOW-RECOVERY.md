@@ -168,12 +168,16 @@ installation and any verification requiring it run only in the dedicated UTM VM.
 
 ### TASK-129: Verify workflow recovery and release readiness
 
-- [ ] Complete development functional, failure, rework and recovery checks before release preparation; use UTM for installed-candidate behavior.
-- [ ] Observe first Worker/Judge progression for every affected entrypoint: task-handler, epic-handler, epic-validator, new-feature, new-project, refactor and war-room. Keep the release smoke cases limited to Task/Epic startup.
-- [ ] Run required local checks and admitted technical reviews; keep structural success distinct from functional results.
-- [ ] If the VM gate runs for this Epic, use release-handler or Master's explicit VM-test request in the execution authority. The envelope states whether an observed development run of the new gate is part of Epic acceptance; ordinary Epic implementation approval alone does not invoke it.
-- [ ] Promote accepted canonical contracts and settle task evidence; request Master's overall Epic acceptance once required work is complete.
-- [ ] Keep release-acceptance evidence separate and exact-candidate-bound; do not infer publication readiness from document registration or local checks.
+- [x] Complete development functional, failure, rework and recovery checks before release preparation; use UTM for installed-candidate behavior.
+- [x] Observe first Worker/Judge progression for every affected entrypoint: task-handler, epic-handler, epic-validator, new-feature, new-project, refactor and war-room. Keep the release smoke cases limited to Task/Epic startup.
+- [x] Run required local checks and admitted technical reviews; keep structural success distinct from functional results.
+- [x] If the VM gate runs for this Epic, use release-handler or Master's explicit VM-test request in the execution authority. The envelope states whether an observed development run of the new gate is part of Epic acceptance; ordinary Epic implementation approval alone does not invoke it.
+- [x] Promote accepted canonical contracts and settle task evidence.
+- [x] Keep release-acceptance evidence separate and exact-candidate-bound; do not infer publication readiness from document registration or local checks.
+
+After internal Epic validation and closeout preparation, request Master's overall
+verification and acceptance once. Final Epic closeout remains pending that actual
+acceptance.
 
 ## Development verification and release acceptance
 

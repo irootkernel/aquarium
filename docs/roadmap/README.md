@@ -652,6 +652,6 @@ This is a breaking managed-Procedure update. Preserve existing custom files and 
 | TASK-126 | Define harness-native role and recovery contracts | Define grouped roles, ordinary v2 evidence contracts, recovery and breaking-update boundaries. | Completed | EPIC-023 |
 | TASK-127 | Implement grouped roles and remove startup qualification blockers | Align all five Procedure sources, handlers, report consumers, renderers, validators and setup diagnostics without weakening formal delegation. | Completed | TASK-126 |
 | TASK-128 | Add manual VM release acceptance and reusable scenarios | Implement the guest-side test-vm entrypoint, fixed fixtures, truthful outcomes and release-handler guidance using tests/vm. | Completed | TASK-127 |
-| TASK-129 | Verify workflow recovery and release readiness | Verify development functionality, keep release acceptance separate, and promote accepted canonical outcomes. | In Progress | TASK-127; TASK-128 |
+| TASK-129 | Verify workflow recovery and release readiness | Verify development functionality, keep release acceptance separate, and promote accepted canonical outcomes. | Completed | TASK-127; TASK-128 |
 
 The dossier defines the direct manual recovery route because the installed epic-handler is affected. TASK-126 reserves the ordinary v2 contracts; TASK-127 owns startup implementation. VM execution, installation, staging, commits and publication retain their applicable authority.
