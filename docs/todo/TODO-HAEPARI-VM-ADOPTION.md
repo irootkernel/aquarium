@@ -32,15 +32,17 @@ Do not remove native `use-*` skills, external global skills, `dev-setup`, `dev-s
 
 ### Project-owned entrypoints and immutable input
 
-Every adopting project exposes `make test-vm SUITE=install|migration|regression|all MODE=auto|manual`, or a documented equivalent adapter satisfying the same contract. Its host wrapper freezes candidate and test bytes, submits once through the supported Haepari CLI, reports the Job reference, blocks on that same job, and returns a truthful result. It never controls UTM directly or falls back to installing a candidate on the host.
+EPIC-024 owns Aquarium's manual guest-side `make test-vm` entrypoint and reusable `tests/vm/` scenarios without a Haepari dependency. TASK-088 and TASK-089 later reuse those outputs when adding Haepari host submission and result transport. They retain their roadmap lifecycle and producer dependencies; Haepari adoption does not block EPIC-024.
 
-The guest entrypoint is distinct, such as `make test-vm-guest` or `tests/vm/run.sh`. It verifies guest/lease identity before installation and never recursively submits a job. Development snapshots may include selected dirty-worktree bytes; their content digest is the candidate identity. Release evidence must satisfy the existing exact committed/distributed candidate policy. Queue waiting must not cause later worktree changes to alter the admitted candidate.
+For this later adoption, every project exposes a separate Haepari host wrapper with `SUITE=install|migration|regression|all MODE=auto|manual`, or a documented equivalent adapter. The wrapper freezes candidate and test bytes, submits once through the supported Haepari CLI, reports the Job reference, blocks on that same job, and returns a truthful result. It never controls UTM directly or falls back to installing a candidate on the host. The proposed suite/mode interface belongs to this later adoption, not EPIC-024's initial manual gate.
+
+The guest entrypoint stays distinct from host submission and reuses EPIC-024's `make test-vm` for Aquarium. Haepari-managed execution verifies guest/lease identity before installation and never recursively submits a job. Development snapshots may include selected dirty-worktree bytes; their content digest is the candidate identity. Release evidence must satisfy the existing exact committed/distributed candidate policy. Queue waiting must not cause later worktree changes to alter the admitted candidate.
 
 The all suite submits separate install and migration/regression jobs as required, using the same fixed candidate. Reset between independent jobs, but never reset between old-state creation and assertions inside one migration job. Retain all Job results and report skipped or unobserved required suites rather than returning aggregate success.
 
 ### Managed VM execution and external review leases
 
-UTM tests use Haepari-managed execution, including manual hands-on ownership. Ordinary reviews use a separately configured `mulgae-review` external resource, not a managed Job wrapper. `auto/manual` is a test-mode distinction; `managed/external` names the execution owner. The same scheduler accounts for reserved, active and unresolved occupancy in both resource queues. One external review segment consumes one slot regardless of its native role/provider count.
+After this adoption, UTM tests use Haepari-managed execution, including manual hands-on ownership. EPIC-024's earlier manual UTM gate remains independent of Haepari. Ordinary reviews use a separately configured `mulgae-review` external resource, not a managed Job wrapper. `auto/manual` is a test-mode distinction; `managed/external` names the execution owner. The same scheduler accounts for reserved, active and unresolved occupancy in both resource queues. One external review segment consumes one slot regardless of its native role/provider count.
 
 The external request must atomically grant or queue. Accepted admission is not a grant, and a grant is not native execution or user authorization. A single caller executor activates the grant and records a first-claim-only execution intent before each native CLI/MCP mutation. Replayed admission or begin cannot authorize a second native call. Use blocking wait/events, stable request/operation keys and protected owner material. No silent unqueued fallback is allowed when the selected queue path is unavailable.
 
@@ -162,9 +164,9 @@ Verify and complete:
 
 Implement and document:
 
-- [ ] Add the host `test-vm` wrapper, separate guest entrypoint, immutable package/test bundle and truthful per-suite result mapping.
+- [ ] Add the separate Haepari host wrapper, reusing EPIC-024's guest entrypoint and scenarios, with an immutable package/test bundle and truthful per-suite result mapping.
 - [ ] Add actual candidate plugin installation, initial setup, previous-version synthetic state, upgrade, existing-behavior regression, restart and bounded migration failure/recovery scenarios.
-- [ ] Keep UTM/SSH/reset in Haepari and preserve the ordinary local test gate.
+- [ ] Keep managed UTM/SSH/reset in Haepari and preserve the ordinary local test gate; do not impose Haepari on EPIC-024's manual execution.
 
 Do not:
 
@@ -180,7 +182,7 @@ Verify and complete:
 Implement and document:
 
 - [ ] Add complete skill/rules/configuration installation inspection and fresh native session discovery, representative workflow behavior and explicit manual observation records.
-- [ ] Connect a separate installed VM release step with candidate/profile-bound evidence to the existing release workflow, preserving current offline release-QA and publication authority.
+- [ ] Extend EPIC-024's manual release step with Haepari-managed execution and candidate/profile-bound result transport, preserving its invocation authority, offline release-QA and publication authority.
 - [ ] Define full intended release-combination and existing-stable-to-candidate upgrade scenarios, plus final distribution identity checks.
 
 Do not:

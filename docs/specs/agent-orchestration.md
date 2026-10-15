@@ -1,5 +1,21 @@
 # Supervised agent orchestration
 
+## Planned native workflow recovery
+
+[EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
+plans harness-native Worker and independent report-only Judge work at meaningful
+phase boundaries, with ordinary Podway Actions and minimal task-relevant evidence.
+Its [dossier](../todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) defines the pending
+contract changes, including versioned ordinary reports and recovery. The current
+candidate contract below remains unchanged until implementation.
+
+The managed-Procedure update is breaking and preserves admitted snapshots and
+formal delegation requirements. No Podway producer change or Haepari adoption is
+required. [Manual VM scenarios](../../tests/vm/README.md) will check upgrades and
+actual handler startup separately from development functional verification.
+The guest-side `make test-vm` entrypoint is planned in TASK-128 and is not yet
+available.
+
 ## Candidate delivery contract
 
 `TASK-110` defines the shared Orchestrator, Judge, and Workers contract for

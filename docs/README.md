@@ -46,6 +46,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - `docs/implementation-tips/README.md` owns guidance for changing, verifying, and releasing Aquarium; `docs/ops/README.md` separately owns environment operation, diagnosis, and recovery guidance.
 - The plugin manifest owns the published version, skill entrypoints and linked references own workflow behavior, `plugins/aquarium/references/development-contract.md` and its linked tool code own development-manager behavior, bundled Procedure files own installed Procedure source bytes, and `Makefile` with `TESTING.md` owns executable test behavior and its meaning.
 - `CHANGELOG.md` owns cumulative release notes and the planned stable version; `README.md`, `PRIVACY.md`, and `TERMS.md` own the public product, privacy, and authority contracts.
+- `tests/vm/` owns reusable manual VM acceptance scenarios and methods referenced by `TESTING.md`. Scenario definitions are distinct from actual candidate-bound execution results.
 - A conflict is corrected at the exact domain owner first, followed by any affected index or summary; generated output and ignored runtime evidence never become canonical documentation.
 
 ## Roadmap Identity

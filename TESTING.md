@@ -102,7 +102,9 @@ broker operation, deletion, commit, or publication.
 | War-room no-work and incomplete investigation | Require evidence that expected behavior holds for no-work, retain quality and approval, use canonical note owners or verified no-change, and leave unexplained symptoms incomplete. |
 | Status removal after path reuse or symlink replacement | Show and approve the exact stored row; preserve all revision and digest fences and leave replacement paths untouched. |
 
-Do not claim functional completion before Master confirms the required outcomes.
+Complete applicable functional verification during development, before release
+preparation. Do not claim functional completion before Master confirms the
+required outcomes or their explicitly delegated verification is settled.
 Producer source fixes, release, installation, activation, and cross-skill
 acceptance remain separate evidence classes.
 
@@ -114,6 +116,30 @@ legacy state and peer routes. Keep reviewer identity and activity,
 complete report, native operation outcome, criterion assessment and Master's
 manual result separate. Missing observations remain unverified; a fixture
 receipt or passing Make gate cannot substitute for them.
+
+## Planned manual VM release acceptance
+
+[EPIC-024's dossier](docs/todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md) separates
+development functional verification from release acceptance by an existing
+installed system. [VM preparation and results](tests/vm/README.md) and
+[release scenarios](tests/vm/release-acceptance.md) define the reusable manual
+methods. TASK-128 will implement `make test-vm`; the target does not exist yet.
+
+Invoke that gate only through release-handler or Master's explicit VM-test
+request. Keep it outside ordinary `make test` and automatic Task/Epic checks.
+For this Epic, operate the dedicated UTM VM manually and verify Codex only;
+Haepari is not a prerequisite. The future entrypoint runs in the guest using
+candidate-matched test sources. The host release workflow guides preparation and
+collects the result.
+
+Observe meaningful released-version state before upgrading. Release acceptance
+checks the exact candidate upgrade, state preservation, managed-file updates,
+fresh skill discovery and actual Task/Epic startup with initial Worker/Judge
+progression. Development verification covers full functionality and recovery
+before release; the release gate does not repeat the full feature suite or Epic
+lifecycle. Preserve both evidence classes and the separate offline release-QA
+contract. Missing required observations, failed checks and incomplete cleanup
+cannot produce a passing VM result.
 
 ## Test Frameworks
 

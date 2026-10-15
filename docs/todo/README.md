@@ -21,6 +21,9 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Workflow review corrections dossier](TODO-WORKFLOW-REVIEW-CORRECTIONS.md) maps
   the 2026-09-25 review findings, Aquarium-owned corrections, producer requests,
   and acceptance for `EPIC-018` and `TASK-077` through `TASK-085`.
+- [Native agent workflow recovery dossier](TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md)
+  owns the role, recovery and manual VM acceptance plan for `EPIC-024` and
+  `TASK-126` through `TASK-129`.
 
 ## Unadopted TODO Candidates
 

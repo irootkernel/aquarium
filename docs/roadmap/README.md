@@ -54,6 +54,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
+| EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -485,8 +486,8 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 | --- | --- | --- | --- | --- |
 | TASK-086 | Accept Haepari and freeze the consumer contract | Verify exact release, runner, skill, managed/external capabilities, first-claim execution and continuation fixtures plus real backend evidence; freeze consumer and authority boundaries. | Blocked | External verified Haepari v0.1.0 producer handoff |
 | TASK-087 | Define fixed profiles and complete installation inventories | Specify immutable binary/plugin/skill/configuration combinations, starting profiles, whole-tree checks and supported migration edges without a shadow global registry. | Planned | TASK-086 |
-| TASK-088 | Implement Aquarium's project-owned VM suites | Add host submission and separate guest execution, candidate installation, meaningful old-state migration and regression without changing the ordinary local gate. | Planned | TASK-087 |
-| TASK-089 | Integrate skills, hands-on and the VM release gate | Verify fresh installed-session behavior and explicit manual results; connect a separate exact-combination VM release step without weakening existing offline release QA. | Planned | TASK-088 |
+| TASK-088 | Implement Aquarium's project-owned VM suites | Reuse EPIC-024's guest entrypoint and scenarios when adding Haepari host submission, fixed candidate transport, installation, migration and regression jobs. | Planned | TASK-087; EPIC-024 |
+| TASK-089 | Integrate skills, hands-on and the VM release gate | Extend EPIC-024's manual release acceptance with Haepari-managed execution, installed-session observations and result transport while preserving offline release QA. | Planned | TASK-088 |
 | TASK-090 | Qualify the Aquarium pilot and freeze producer packets | Accept the real pilot, freeze Sorage packets including Mulgae VM plus external lease/partial-recovery scope, and safely detach Aquarium's own legacy use while retaining shared consumers. | Planned | TASK-089 |
 | TASK-091 | Delegate and accept Podway | Send the authorized producer request, verify the returned implementation, skill/migration evidence and native legacy detachment; do not edit Podway source from Aquarium. | Planned | TASK-090; external Podway implementation return |
 | TASK-092 | Delegate and accept Mulgae | Through Sorage accept producer-owned VM/skill/migration tests and use-mulgae external leases, same-invocation continuation, release-before-user-wait and explicitly authorized fresh-lease current-source review; reconcile Aquarium references and legacy detachment. | Planned | TASK-091; external Mulgae implementation return |
@@ -635,3 +636,22 @@ Raise the Mulgae floor to stable v0.1.25 and align setup, live-source review, fa
 | TASK-125 | Align and verify Mulgae adoption | Align Procedure sources and documentation, verify scoped UTM integration, and retain separate combined-release qualification. | Completed | TASK-122; TASK-123; TASK-124 |
 
 Master directed completion of the scoped Mulgae adoption after Opus/Sonnet review, correction verification and agent-operated UTM checks. The canonical contracts retain the verification limits and the separate pre-release requirements.
+
+## EPIC-024: Restore native agent workflows and add manual VM release acceptance
+
+**Status:** `Planned`
+
+Remove the native-qualification startup blocker from ordinary Aquarium workflows, group harness-native Worker and independent Judge work at meaningful boundaries, and add reusable manual UTM release-acceptance scenarios. Complete functional verification during development; release acceptance checks whether the existing installed system can upgrade and start real work. This Epic verifies Codex only and has no Haepari or Podway producer-change dependency.
+
+This is a breaking managed-Procedure update. Preserve existing custom files and immutable session snapshots; apply new sources through authorized managed updates and compatible successor sessions. Existing formal delegation retains its native receipt requirements.
+
+**Detailed SOT:** [Native agent workflow recovery dossier](../todo/TODO-NATIVE-AGENT-WORKFLOW-RECOVERY.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-126 | Define harness-native role and recovery contracts | Define grouped roles, ordinary v2 evidence contracts, recovery and breaking-update boundaries. | Planned | EPIC-023 |
+| TASK-127 | Implement grouped roles and remove startup qualification blockers | Align all five Procedure sources, handlers, report consumers, renderers, validators and setup diagnostics without weakening formal delegation. | Planned | TASK-126 |
+| TASK-128 | Add manual VM release acceptance and reusable scenarios | Implement the guest-side test-vm entrypoint, fixed fixtures, truthful outcomes and release-handler guidance using tests/vm. | Planned | TASK-127 |
+| TASK-129 | Verify workflow recovery and release readiness | Verify development functionality, keep release acceptance separate, and promote accepted canonical outcomes. | Planned | TASK-127; TASK-128 |
+
+Registration records the plan only. The dossier defines a direct recovery execution route for the next session because the installed epic-handler is affected. Implementation, VM execution, installation, commits and publication retain their applicable authority.
