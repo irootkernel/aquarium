@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aquarium.local/schemas/promoted-evidence-v2.schema.json",
+  "title": "Promoted Mulgae live-source evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "work_unit",
+    "purpose",
+    "target",
+    "source",
+    "payloads"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aquarium.promoted-evidence/v2"
+    },
+    "work_unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "task",
+            "epic"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000\\r\\n]+$",
+          "not": {
+            "pattern": "[\\u0000\\r\\n]"
+          }
+        }
+      }
+    },
+    "purpose": {
+      "enum": [
+        "hardening-deferral",
+        "accepted-risk",
+        "external-handoff",
+        "repository-required"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "source_identity_sha256",
+        "consistency"
+      ],
+      "properties": {
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "scope",
+            "operand",
+            "base_oid",
+            "head_oid",
+            "empty_base"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "mulgae-live-source.v1"
+            },
+            "scope": {
+              "enum": [
+                "workspace",
+                "stage",
+                "head",
+                "commit",
+                "diff"
+              ]
+            },
+            "operand": {
+              "type": "string",
+              "maxLength": 4096,
+              "pattern": "^[^\u0000\r\n]*$",
+              "not": {
+                "pattern": "[\\u0000\\r\\n]"
+              }
+            },
+            "base_oid": {
+              "$ref": "#/$defs/oid"
+            },
+            "head_oid": {
+              "$ref": "#/$defs/oid"
+            },
+            "empty_base": {
+              "type": "boolean"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "const": "workspace"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "operand": {
+                    "const": ""
+                  },
+                  "base_oid": {
+                    "const": ""
+                  },
+                  "head_oid": {
+                    "const": ""
+                  },
+                  "empty_base": {
+                    "const": false
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "const": "head"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "operand": {
+                    "const": ""
+                  },
+                  "base_oid": {
+                    "const": ""
+                  },
+                  "head_oid": {
+                    "minLength": 1
+                  },
+                  "empty_base": {
+                    "const": false
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "const": "stage"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "operand": {
+                    "const": ""
+                  },
+                  "head_oid": {
+                    "const": ""
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "const": "commit"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "operand": {
+                    "minLength": 1
+                  },
+                  "head_oid": {
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "const": "diff"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "operand": {
+                    "minLength": 1
+                  },
+                  "base_oid": {
+                    "minLength": 1
+                  },
+                  "head_oid": {
+                    "minLength": 1
+                  },
+                  "empty_base": {
+                    "const": false
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scope": {
+                    "enum": [
+                      "stage",
+                      "commit"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "base_oid": {
+                        "minLength": 1
+                      },
+                      "empty_base": {
+                        "const": false
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "base_oid": {
+                        "const": ""
+                      },
+                      "empty_base": {
+                        "const": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "source_identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "consistency": {
+          "enum": [
+            "caller_maintained",
+            "resolved_git_objects"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "identity": {
+                "properties": {
+                  "scope": {
+                    "enum": [
+                      "workspace",
+                      "stage"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "consistency": {
+                "const": "caller_maintained"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "consistency": {
+                "const": "resolved_git_objects"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool"
+      ],
+      "properties": {
+        "tool": {
+          "const": "mulgae"
+        }
+      }
+    },
+    "payloads": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "media_type",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?!manifest\\.json$)[A-Za-z0-9_-][A-Za-z0-9._-]*\\.json$",
+            "not": {
+              "pattern": "[\\u0000\\r\\n]"
+            }
+          },
+          "media_type": {
+            "const": "application/json"
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "oid": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})?$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    }
+  }
+}

@@ -2462,7 +2462,7 @@ class ManagedRuntime:
                     value += "-permitted-low-delta"
             elif self.scenario == "goal-hardening-defer" and item_id in {
                 "hardening-deferral-evidence-sha256",
-                "hardening-deferral-native-target-sha256",
+                "hardening-deferral-native-binding-sha256",
             }:
                 value = (
                     "sha256:"

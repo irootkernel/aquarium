@@ -25,38 +25,38 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "29",
+            "30",
+            "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
+            "aquarium-task-v29.yaml",
             "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
-            "aquarium-task-v28.yaml",
-            "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "32",
+            "33",
+            "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
+            "aquarium-goal-v32.yaml",
             "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
-            "aquarium-goal-v31.yaml",
-            "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "31",
+            "32",
+            "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
+            "aquarium-validation-v31.yaml",
             "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
-            "aquarium-validation-v30.yaml",
-            "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
         ),
         (
             "aquarium-design-v2.yaml",
-            "9",
+            "10",
+            "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
+            "aquarium-design-v9.yaml",
             "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
-            "aquarium-design-v8.yaml",
-            "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "9",
+            "10",
+            "e370766f3ef8e057b818eca42e2757844950b4536a3d7ac8c41624154ec41cd2",
+            "aquarium-war-room-v9.yaml",
             "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
-            "aquarium-war-room-v8.yaml",
-            "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
         ),
     )
     for current_name, version, current_digest, prior_name, prior_digest in identities:
@@ -305,7 +305,7 @@ def test_task_review_route_fixture_covers_required_task_paths() -> None:
     ]
 
     assert [case["id"] for case in cases] == [
-        f"TR-{index:02d}" for index in range(1, 18)
+        f"TR-{index:02d}" for index in range(1, 19)
     ]
     assert {case["route"] for case in cases} == {
         "mulgae",
@@ -500,7 +500,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "29"
+    assert task["version"] == "30"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -746,6 +746,15 @@ def test_task_070_serial_gates_preserve_every_prior_selected_evidence_item() -> 
             else set(),
         )
         prior_selected = selected_items(prior[prior_node_id])
+        prior_selected = {
+            (
+                node,
+                "hardening-deferral-native-binding-sha256"
+                if item == "hardening-deferral-native-target-sha256"
+                else item,
+            )
+            for node, item in prior_selected
+        }
         if current_node_ids == ("confirm-goal-assessment-core", "assess-goal"):
             prior_selected -= {
                 ("record-stopped", "disposition-summary"),
@@ -764,7 +773,8 @@ def test_task_route_authorization_paths_cannot_cross_select() -> None:
     graph = nodes(task)
     assert graph["validate-review-route-entry"]["routes"] == {
         "planned": {"to": "authorize-planned-review-route", "effect": "advance"},
-        "changed": {"to": "classify-review-route-change", "effect": "advance"},
+        "changed": {"to": "confirm-changed-review-continuity", "effect": "advance"},
+        "new-review": {"to": "authorize-new-mulgae-review", "effect": "advance"},
         "continued": {
             "to": "authorize-completed-current-review-route",
             "effect": "advance",
@@ -815,6 +825,7 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
         "explicit-route-change",
         "explicit-waiver",
         "resume-current",
+        "new-review-current-route",
     ]
     assert checkpoint["prior-review-operation"]["choices"] == [
         "not-applicable",
@@ -827,6 +838,7 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
         "not-applicable",
         "continue-current",
         "resume-current",
+        "new-review-current-route",
         "switch-route",
         "waive",
     ]
@@ -838,14 +850,14 @@ def test_task_checkpoint_direction_matrix_guards_every_authorization_basis() -> 
         "aquarium-task-review-route-direction-continuity"
     )
     assert continuity["operation_digest"] == (
-        "sha256:ff10d6b0b0cc4c06a73d8b9edcdda1716c7831e535c9d8b47754f391d76b8fd6"
+        "sha256:428c03483fc0178e990d9be72ce5283b6d7588479c711ac3347e6bbd639667a9"
     )
 
     entry = options(task, "review-route-entry-decision")
     for option_id in (
-        "changed",
         "continued",
         "resumed",
+        "new-review",
     ):
         assert (
             "prepare-review",
@@ -1616,7 +1628,7 @@ def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
         ): "successful",
         (
             "record-hardening-deferral",
-            "hardening-deferral-native-target-sha256",
+            "hardening-deferral-native-binding-sha256",
         ): "sha256:fixture",
     }
     assert guards_match(defer, valid)
@@ -1630,7 +1642,7 @@ def test_hardening_deferral_rejects_every_non_mulgae_route() -> None:
         ("record-evidence", "assessment-ordinal"),
         ("record-hardening-deferral", "hardening-deferral-publication-state"),
         ("record-hardening-deferral", "hardening-deferral-findings-query-state"),
-        ("record-hardening-deferral", "hardening-deferral-native-target-sha256"),
+        ("record-hardening-deferral", "hardening-deferral-native-binding-sha256"),
     ):
         invalid = dict(valid)
         invalid[key] = None
@@ -1827,6 +1839,10 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
         "stop": {"to": "record-stopped", "effect": "advance"},
     }
     assert graph["choose-settled-route-direction"]["routes"] == {
+        "new-review-current-route": {
+            "to": "authorize-new-mulgae-review",
+            "effect": "advance",
+        },
         "recover": {"to": "final-review", "effect": "rework"},
         "stop": {"to": "record-stopped", "effect": "advance"},
     }
@@ -3581,7 +3597,7 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
         )
         assert current["id"] == previous["id"]
         # Phase alignment and the operative-role snapshot refresh are separate revisions.
-        assert int(current["version"]) == version + 2
+        assert int(current["version"]) == version + 3
         current_nodes, previous_nodes = nodes(current), nodes(previous)
         added = set(current_nodes) - set(previous_nodes)
         expected_added = (
@@ -3614,6 +3630,10 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
             expected_added.add("confirm-local-incomplete-corrections-consistency")
         if family == "validation":
             expected_added.add("confirm-local-required-evidence")
+        if family in {"task", "goal", "validation"}:
+            expected_added.add("authorize-new-mulgae-review")
+        if family == "task":
+            expected_added.add("confirm-changed-review-continuity")
         assert added == expected_added
         assert set(previous_nodes) <= set(current_nodes)
         for name, prior in previous_nodes.items():
@@ -3625,12 +3645,24 @@ def test_phase_alignment_preserves_original_routes_and_final_vetoes() -> None:
             assert actual_next == expected_next
             previous_routes = prior.get("routes", {})
             current_routes = placement.get("routes", {})
-            assert set(current_routes) == set(previous_routes) | (
+            expected_options = (
                 {"blocker-found"} if name == "decide-low-result" else set()
             )
+            if name == "validate-review-route-entry":
+                expected_options.add("new-review")
+            if name in {
+                "choose-active-review-route-direction",
+                "choose-not-started-review-route-direction",
+                "choose-terminal-review-route-direction",
+                "choose-settled-route-direction",
+            }:
+                expected_options.add("new-review-current-route")
+            assert set(current_routes) == set(previous_routes) | expected_options
             for option, route in previous_routes.items():
                 destination = current_routes[option]["to"]
-                if destination.startswith("classify-local-"):
+                if destination == "confirm-changed-review-continuity":
+                    assert current_nodes[destination]["routes"]["pass"] == route
+                elif destination.startswith("classify-local-"):
                     assert current_nodes[destination]["routes"]["none"] == route
                 elif destination == "confirm-local-corrections-settled":
                     assert route["to"] == "decide-low-completion"
@@ -4028,3 +4060,70 @@ def test_goal_current_unverified_evidence_owner_binds_its_local_target() -> None
         "completion-unmet-criteria",
         "completion-unverified-criteria",
     } <= set(source["items"])
+
+
+def test_new_mulgae_execution_requires_terminal_settlement_and_the_same_route() -> None:
+    for family, source in (
+        ("task", "prepare-review"),
+        ("goal", "record-evidence"),
+        ("validation", "final-review"),
+    ):
+        procedure = load_procedure(f"aquarium-{family}-v2.yaml")
+        admitted = options(procedure, "new-live-review-admission-decision")["start"]
+        values = {
+            (source, "prior-route-lifecycle-state"): "terminal-incomplete-or-failed",
+            (
+                source,
+                "prior-route-change-readiness"
+                if family == "task"
+                else "route-change-readiness",
+            ): "safe-to-change",
+        }
+        if family == "task":
+            values[(source, "prior-review-route")] = "mulgae"
+            values[(source, "effective-review-route")] = "mulgae"
+        else:
+            values[(source, "review-route")] = "mulgae"
+            values[(source, "route-direction")] = "new-review-current-route"
+        assert guards_match(admitted, values)
+        for key, invalid in (
+            ((source, "prior-route-lifecycle-state"), "active-or-unknown"),
+            ((source, "prior-route-lifecycle-state"), "not-started"),
+            ((source, "prior-route-lifecycle-state"), "terminal-complete"),
+            (
+                (
+                    source,
+                    "effective-review-route" if family == "task" else "review-route",
+                ),
+                "herdr",
+            ),
+            (
+                (
+                    source,
+                    "prior-route-change-readiness"
+                    if family == "task"
+                    else "route-change-readiness",
+                ),
+                "current-route-only",
+            ),
+        ):
+            changed = dict(values)
+            changed[key] = invalid
+            assert not guards_match(admitted, changed)
+        definition_id = {
+            "task": "review-record",
+            "goal": "evidence-record",
+            "validation": "final-review-record",
+        }[family]
+        items = {
+            i["id"]: i for i in procedure["node_definitions"][definition_id]["items"]
+        }
+        assert items["review-source-contract"]["required"]
+        assert items["review-source-binding"]["required"]
+        source_definition = nodes(procedure)[source]["use"]
+        lifecycle = next(
+            item
+            for item in procedure["node_definitions"][source_definition]["items"]
+            if item["id"] == "prior-route-lifecycle-state"
+        )
+        assert "terminal-complete" in lifecycle["choices"]

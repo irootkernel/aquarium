@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "31"
+version: "32"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -39,7 +39,7 @@ node_definitions:
           - waived
       - id: review-target-scope
         type: text
-        prompt: Record the exact Epic goal and acceptance authority, committed candidate identity, relevant correction commits or captured delta, changed paths and artifacts, verification evidence, and excluded state supplied to the route.
+        prompt: Record the exact Epic goal and acceptance authority, committed candidate identity, relevant correction commits or exact source delta, changed paths and artifacts, verification evidence, and excluded state supplied to the route.
         required: true
         min_length: 1
         max_length: 2000
@@ -462,6 +462,8 @@ node_definitions:
     title: Record final validation evidence
     intent: Record the latest audit and route-specific whole-Epic assessment, including every confirmation finding that requires user direction.
     instructions:
+      - new-review-current-route preserves the selected route authorization basis; record the separate explicit one-root execution grant in route-change-authority-reference and route-binding evidence. It is neither a route change nor resumed provider execution.
+      - New Mulgae roots use live_source v1 and project binding only; keep workspace/index unchanged through terminal completion. Terminal failure permits no rerun or compose; a fresh root needs explicit new-review-current-route authority after settlement and preserves the pending ordinal.
       - Dispatch only the approved whole-Epic route and preserve its exact target, operation, evidence reference, provenance, optional backend check, and assurance limits.
       - Do not launch another provider root solely because Low findings or their accepted local delta remain.
       - Compose the current obligation summary from the selected audit basis and provider findings under separate namespaces; provider counts never erase an applicable audit Low set.
@@ -522,6 +524,21 @@ node_definitions:
           - pass
           - fail
           - inconclusive
+      - id: review-source-contract
+        type: choice
+        prompt: Record live-source-v1 for new Mulgae execution, historical-capture for an existing captured result, or not-applicable for another route or closeout substitute.
+        required: true
+        choices:
+          - mulgae-live-source-v1
+          - mulgae-historical-capture
+          - not-applicable
+      - id: review-source-binding
+        type: text
+        prompt: Preserve the public preflight target and digest, receipt-bound run digest, scope-derived consistency, applicable staged content binding and caller observation when available; state pending or unavailable facts explicitly. Metadata is not source content. Other routes record not-applicable.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
       - id: review-evidence-reference
         type: text
         prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
@@ -633,6 +650,7 @@ node_definitions:
         required: false
         choices:
           - resume-current
+          - new-review-current-route
           - switch-route
           - waive
           - stop
@@ -660,10 +678,10 @@ node_definitions:
       - id: route-binding-result
         type: check_result
         prompt: Record the caller-supplied result for aquarium-validation-review-route-binding; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the effective whole-Epic review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved validation envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify the whole-Epic validation route against its approved envelope or explicit direction, preceding route and operation, lifecycle, findings, goal revision, ordinal and remaining authority. Same-route resume after proven not-started repeats preflight and first execution under the unused grant; otherwise it continues existing native work or publication. A new-review-current-route grant admits one full Mulgae root only after terminal incomplete or failed settlement, retaining findings and the pending ordinal and refreshing current-source preflight. Preserve accepted scope; resume grants no replay or replacement." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: true
         operation_id: aquarium-validation-review-route-binding
-        operation_digest: sha256:231042f4ce3156ba7b9a770e23960766ebe5cf3167b774d01b1365970f2c8792
+        operation_digest: sha256:f059142871216eda78b34715a428a28a47b75ba59b5b0f72e25112249e97fa75
         accepted_outcomes:
           - pass
           - fail
@@ -1146,6 +1164,10 @@ node_definitions:
             not_equals: stop
           - evidence:
               node: final-review
+              item: route-direction
+            not_equals: new-review-current-route
+          - evidence:
+              node: final-review
               item: route-change-readiness
             equals: safe-to-change
       - id: stop
@@ -1156,6 +1178,26 @@ node_definitions:
               node: final-review
               item: route-direction
             equals: stop
+      - id: new-review-current-route
+        label: Start one newly authorized Mulgae review
+        criteria: Explicit user intent authorizes a fresh current-source root after terminal settlement, retaining earlier findings and the pending ordinal.
+        guards:
+          - evidence:
+              node: final-review
+              item: route-direction
+            equals: new-review-current-route
+          - evidence:
+              node: final-review
+              item: review-route
+            equals: mulgae
+          - evidence:
+              node: final-review
+              item: prior-route-lifecycle-state
+            equals: terminal-incomplete-or-failed
+          - evidence:
+              node: final-review
+              item: route-change-readiness
+            equals: safe-to-change
     reason:
       required: true
       prompt: Record the explicit recovery direction and authoritative safe-settlement state.
@@ -1812,7 +1854,7 @@ node_definitions:
         multiline: true
       - id: promoted-evidence-references
         type: list
-        prompt: Record each committed aquarium.promoted-evidence/v1 manifest as its repository-relative path followed by exactly one sha256-prefixed 64-hex manifest digest; leave absent when no package applies.
+        prompt: Record each committed aquarium.promoted-evidence/v1 or v2 manifest as its repository-relative path followed by exactly one sha256-prefixed 64-hex manifest digest; leave absent when no package applies.
         required: false
         min_items: 0
         max_items: 50
@@ -3108,6 +3150,38 @@ node_definitions:
     reason:
       required: true
       prompt: Name the current evidence basis or missing prerequisite.
+  new-live-review-admission-decision:
+    type: decision
+    title: Admit one fresh Mulgae root
+    objective: Separate explicit new execution from pending invocation resume and retired source replay.
+    prompt: Does explicit authority admit a fresh current-source review after terminal settlement?
+    options:
+      - id: start
+        label: Prepare the newly authorized root
+        criteria: Explicit user intent covers one fresh current-source root and all selected roles, with prior findings and the pending ordinal preserved; refresh the Brief, source preflight and affected verification before execution.
+        guards:
+          - evidence:
+              node: final-review
+              item: review-route
+            equals: mulgae
+          - evidence:
+              node: final-review
+              item: route-direction
+            equals: new-review-current-route
+          - evidence:
+              node: final-review
+              item: prior-route-lifecycle-state
+            equals: terminal-incomplete-or-failed
+          - evidence:
+              node: final-review
+              item: route-change-readiness
+            equals: safe-to-change
+      - id: stop
+        label: Stop without starting another review
+        criteria: Current source, explicit authority or terminal settlement is not established; preserve the prior operation and evidence.
+    reason:
+      required: true
+      prompt: Bind the user's exact new-execution authority, current source and retained pending ordinal, or explain the stopped boundary.
 graph:
   entry: capture-baseline
   nodes:
@@ -3149,7 +3223,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-audit
@@ -3196,7 +3270,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-remediation
@@ -3243,7 +3317,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-re-audit
@@ -3392,7 +3466,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: confirm-final-review-route-binding
@@ -3442,6 +3516,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         assessed:
           to: confirm-final-assessment-ordinal
@@ -3486,6 +3562,8 @@ graph:
             - assessment-provenance-kind
             - assessment-provenance-result
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         valid:
           to: determine-final-backend-applicability
@@ -3508,6 +3586,8 @@ graph:
             - assessment-provenance-kind
             - assessment-provenance-result
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         valid:
           to: determine-final-backend-applicability
@@ -3530,6 +3610,8 @@ graph:
             - assessment-provenance-kind
             - assessment-provenance-result
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         valid:
           to: confirm-final-route-settlement
@@ -3589,9 +3671,14 @@ graph:
         - node: final-review
           required: true
           items:
+            - review-route
+            - prior-route-lifecycle-state
             - route-direction
             - route-change-readiness
       routes:
+        new-review-current-route:
+          to: authorize-new-mulgae-review
+          effect: advance
         recover:
           to: final-review
           effect: rework
@@ -3743,6 +3830,8 @@ graph:
             - pending-applicable-low-dispositions
             - current-applicable-blockers
             - required-evidence-gaps
+            - review-source-contract
+            - review-source-binding
       routes:
         validated:
           to: confirm-goal-assessment-core
@@ -3831,6 +3920,8 @@ graph:
             - pending-applicable-low-dispositions
             - current-applicable-blockers
             - required-evidence-gaps
+            - review-source-contract
+            - review-source-binding
         - node: final-review
           required: true
           items:
@@ -3935,6 +4026,11 @@ graph:
             - high-findings
             - medium-findings
             - low-findings
+        - node: final-review
+          required: false
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: record-low-disposition
           required: false
           items:
@@ -3984,6 +4080,11 @@ graph:
             - high-findings
             - medium-findings
             - low-findings
+        - node: final-review
+          required: false
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: record-stopped
           required: false
           items:
@@ -4219,7 +4320,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-audit-checkpoint
@@ -4270,7 +4371,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-re-audit-checkpoint
@@ -4319,7 +4420,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-remediation-assessment
@@ -4429,6 +4530,11 @@ graph:
             - current-applicable-blockers
             - required-evidence-gaps
             - finding-lineage-summary
+        - node: final-review
+          required: true
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: record-current-audit-basis
           required: true
           items:
@@ -4441,7 +4547,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-validation-evidence-assessment
@@ -4652,6 +4758,8 @@ graph:
             - review-mode
             - assessment-ordinal
             - review-evidence-reference
+            - review-source-contract
+            - review-source-binding
       next: confirm-validation-evidence-followup-authority
     - id: confirm-validation-evidence-followup-authority
       use: confirm-validation-evidence-followup-authority
@@ -4680,6 +4788,8 @@ graph:
             - review-evidence-reference
             - completion-assessment-summary
             - current-applicable-blockers
+            - review-source-contract
+            - review-source-binding
         - node: capture-baseline
           required: true
           items:
@@ -4758,6 +4868,8 @@ graph:
             - completion-unverified-criteria
             - applicable-obligation-summary
             - pending-applicable-low-dispositions
+            - review-source-contract
+            - review-source-binding
         - node: judge-validation-evidence
           required: false
           items:
@@ -4805,7 +4917,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-validation
@@ -4825,7 +4937,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-judge-validation-applicability
@@ -4871,6 +4983,8 @@ graph:
             - completion-unverified-criteria
             - applicable-obligation-summary
             - pending-applicable-low-dispositions
+            - review-source-contract
+            - review-source-binding
         - node: judge-validation-evidence
           required: false
           items:
@@ -4910,7 +5024,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-validation
@@ -4934,7 +5048,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-judge-stopped-validation-applicability
@@ -5153,6 +5267,23 @@ graph:
           effect: advance
         incomplete:
           to: record-incomplete
+          effect: advance
+    - id: authorize-new-mulgae-review
+      use: new-live-review-admission-decision
+      evidence_from:
+        - node: final-review
+          required: true
+          items:
+            - review-route
+            - route-direction
+            - prior-route-lifecycle-state
+            - route-change-readiness
+      routes:
+        start:
+          to: final-review
+          effect: rework
+        stop:
+          to: record-stopped
           effect: advance
 manual_rework:
   allowed_targets:

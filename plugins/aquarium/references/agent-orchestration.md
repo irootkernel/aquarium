@@ -129,7 +129,7 @@ All three document schemas carry these common fields:
 | --- | --- |
 | `schema` | Exactly one versioned schema identifier below |
 | `work` | Repository/roadmap scope, named work unit and objective, authoritative requirement sources and their revision or approved basis; supplied by the owning workflow |
-| `target` | Exact candidate representation, base revision, included and excluded paths/artifacts, and immutable content binding; use actual Git/native capture identity and retain how independently checked artifacts bind to it |
+| `target` | Exact candidate representation, base revision, included and excluded paths/artifacts, and immutable content binding; use actual Git content identity or historical native capture identity and retain how independently checked artifacts bind to it; record live-source selector metadata separately |
 | `procedure` | Current session, Procedure ID/version, node, attempt, and goal revision from current Podway observation, or explicit inapplicability for an authorized non-Podway path |
 | `native` | Actual backend, integration version, Primary/supervisor, agent, and task identities with references to supported public records; native output and the qualified integration supply these values |
 | `configuration` | Complete immutable role content/dependencies and accepted agent configuration bindings with their source and digest provenance |

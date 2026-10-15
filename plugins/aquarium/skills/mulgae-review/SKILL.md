@@ -7,7 +7,7 @@ description: "Run one report-only standalone Mulgae review of an exact supported
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
-Run one standalone review through Mulgae and return an advisory report. This skill supplies review intent and consumes the result; `$use-mulgae` owns capture, provider execution, waiting, recovery, publication, retention, and every other native lifecycle action.
+Run one standalone review through Mulgae and return an advisory report. This skill supplies review intent and consumes the result; `$use-mulgae` owns source admission, provider execution, waiting, recovery, publication, retention, and every other native lifecycle action.
 
 ## Load the contracts
 
@@ -25,9 +25,9 @@ Preserve an already supplied purpose, target, roles, work-unit identity, and rev
 - Select `completion` when the request asks whether a named Task, Epic, or bounded requirement set is fully satisfied. Resolve and read its canonical authority and applicable checkpoint before dispatch.
 - Reject an unidentified or materially underspecified completion basis as unqualified. Return the supported defect review and the missing authority; do not invent criteria, assign the latest active Epic, or silently convert the request to `change`.
 
-Resolve exactly one target supported by the installed Mulgae release: `stage`, `workspace`, `dirty`, `diff`, or `patch`. Keep its native meaning. For `stage`, inspect Git state read-only and require a nonempty HEAD-to-index candidate; unstaged or untracked bytes remain excluded. Resolve every revision used by `diff` before dispatch and record the immutable endpoints. A completion request with no new diff must use an existing immutable committed target, such as an exact resolved commit range; never stage files or manufacture a change. If `patch` cannot expose enough context for completion, report the limitation and obtain a supported target instead of broadening it.
+Resolve exactly one target supported by the installed Mulgae release: `workspace`, `stage`, `head`, `commit`, or `diff`. Keep its native meaning. For `stage`, inspect Git state read-only and preserve the HEAD-to-index target and index context; unstaged or untracked bytes remain excluded. Resolve committed operands once, preserve the `..`/`...` diff operator, and use resolved Git content for head/commit/diff. A completion request without a diff may use the whole resolved HEAD tree. Never stage files or manufacture a change. Reject retired dirty/patch/stdin requests before provider work instead of translating them silently.
 
-Read relevant unchanged implementation and authority as context only when the selected capture makes them available. Do not transmit another repository, private conversation, credential, or raw provider artifact without separate authority. Stop on conflicts, an ambiguous target, or a target that cannot be isolated safely.
+Read relevant unchanged implementation and authority through the native source plan. Keep workspace/index unchanged through terminal completion; the source identity is selection metadata, not a snapshot. Do not transmit another repository, private conversation, credential, or raw provider artifact without separate authority. Follow native conflict and unsafe-source admission for the selected scope; an unrelated index conflict alone does not reject a committed Git target.
 
 See [examples.md](references/examples.md) for the three required standalone request shapes.
 
@@ -39,13 +39,13 @@ A standalone invocation has no embedded goal revision, review ordinal, review mo
 
 Assign every applicable criterion to at least one responsibility in the already selected role arrangement. Do not add roles or provider calls merely to fill a gap. If the authorized arrangement leaves a criterion uncovered, keep it `unverified` in the result.
 
-Give `$use-mulgae` the exact target, roles, and identical Review Brief for preflight and execution. Follow its asynchronous start-and-await flow, retention advisory, and exact recovery rules. Do not duplicate or override provider selection, budgets, capture, retries, cancellation, extraction, composition, or publication. Do not replace a pending or uncertain invocation, and do not start another root merely to obtain a cleaner result.
+Give `$use-mulgae` the exact target, roles, and identical Review Brief for preflight and execution. Follow its asynchronous start-and-await flow, retention advisory, and exact recovery rules. Do not duplicate or override provider selection, budgets, source access, retries, cancellation, extraction, or publication. Do not replace a pending or uncertain invocation, and do not start another root merely to obtain a cleaner result.
 
-Operational completion requires one authoritative committed root or verified composite with complete selected-role coverage and a successful findings query. A transport success, provider success, passing CI, `reports_only`, or zero findings cannot substitute for those facts or for the criterion assessment.
+Operational completion requires one authoritative committed current-source root with complete selected-role coverage and a successful findings query. A transport success, provider success, passing CI, `reports_only`, or zero findings cannot substitute for those facts or for the criterion assessment.
 
 ## Aggregate and adjudicate
 
-Read every accepted selected-role Markdown report admitted for the exact candidate. Preserve report identity and verified composite lineage. Aggregate criterion evidence conservatively under the shared contract:
+Read every accepted selected-role Markdown report admitted for the exact candidate. Preserve report identity and native source identity and consistency. Aggregate criterion evidence conservatively under the shared contract:
 
 Apply the intent contract's assessment-state, partial-coverage, conflict-resolution, silence, non-applicability, duplicate-gap, and coordinator-evidence rules directly. Do not restate or weaken them locally. In particular, evidence that establishes a real gap makes the criterion `unmet`; an otherwise unresolved conflict remains `unverified`.
 
@@ -55,8 +55,8 @@ Adjudicate every finding as a hypothesis using read-only evidence. Preserve repo
 
 Report these sections distinctly:
 
-1. Purpose, work unit, checkpoint, exact target, immutable identities, and included or excluded state.
-2. Native lifecycle facts: invocation, session, root or composite run, accepted reports, coverage, publication, CI, extraction quality, findings-query status, and recovery lineage.
+1. Purpose, work unit, checkpoint, exact target, source identity and resolved Git operands, and included or excluded state.
+2. Native lifecycle facts: invocation, session, current root run or historical composite read, accepted reports, coverage, publication, CI, extraction quality, findings-query status, and recovery lineage.
 3. Adjudicated findings and counts by reported severity, effective priority, validity, and disposition.
 4. For `completion`, every criterion with source, assigned responsibility, `met`, `unmet`, `unverified`, or `not-applicable` state, evidence provenance, remaining gap, and aggregate counts. For `change`, state explicitly that whole-work-unit completion was not assessed.
 5. Verification evidence and limitations, separating observed results from author-reported claims.

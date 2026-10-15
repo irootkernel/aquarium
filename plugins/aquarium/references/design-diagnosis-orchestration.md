@@ -1,7 +1,7 @@
 # Design and diagnosis orchestration candidate
 
 Apply this reference only when an admitted Design or War-room source declares
-required Worker/Judge placements. Both bundled version `9` candidates keep
+required Worker/Judge placements. Both bundled version `10` candidates keep
 the released workflow identities. Required placements need native qualification
 applicable to the exact role snapshot, assignment and recovery path; installed
 and admitted direct snapshots retain their existing contract. Source changes do

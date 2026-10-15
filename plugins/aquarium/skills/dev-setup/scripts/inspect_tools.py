@@ -28,13 +28,13 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v22"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v23"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_MINIMUM_VERSION = (0, 1, 24)
+MULGAE_MINIMUM_VERSION = (0, 1, 25)
 MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
-    "minimum_command_schema": 18,
+    "minimum_command_schema": 19,
     "minimum_doctor_schema": 5,
     "provider_compatibility_fields": (
         "cli_compatible",
@@ -297,6 +297,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
         "6f5ff6992aeca1a9cb6fcf28ca39d3dc2b778f087ec6016b5720b652d865ebbe",
         "aea7cb5b93fbaaf0bcd94de2d981621afd1f547fcecd370649a8d2e6fb2f4ea6",
         "529c046037db1d3d0ec72a6e5829cca5e777be7e8d4058cac0dd498c18715042",
@@ -325,6 +326,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
         "f286964245e92c7fbedd9aa6d187a8afba3253f63c81c434d9fcd003683a292f",
         "5f8d17becb9b673365cb01614a5ab9563b3c459ded93da60d18990eaa70e73b9",
         "430c5423c1ddea224561970e7e5ba5c6d1b7c62c03887e9eee888e6c648a4635",
@@ -353,6 +355,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
         "acf7498f908955a8f61632c70d57667e792d4989521f70686086e08f29879a52",
         "a9b225b36bddbdd2e44cd0d37b9ed5967f59b222fa182bed91ab7698a46896e1",
         "cb5cad2c4d29f72f365b7a4f95274f9cfe9d1cf112154daf529b0c4efdae5867",
@@ -379,6 +382,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
+        "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
         "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
         "0765991ad1fd1e3398c8ab07e8c852be0593c69efc65a89f9107caead5f04f43",
         "3003bd1afb18d43c4f3d636572b78db5b911171e0eeb6add4b1bc2c7014511ae",
@@ -389,6 +393,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
     },
     "aquarium-war-room-v2.yaml": {
+        "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
         "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",
         "3866de3ecc6b101f7ac10933221f711964dd3a9a77030f3c90baf3dd739fb4f6",
         "2a665a79048c7a4bb239ba348d77fc8d578e0edf82d50d301bae7843f48a18a8",
@@ -3137,7 +3142,6 @@ def inspect_mulgae(
             timeout_seconds,
             ".mulgae/runtime/example",
         ),
-        mulgae_configuration_entry(repository, ".mulgaeignore", timeout_seconds),
         configuration_entry(repository, ".codex/config.toml", timeout_seconds),
     ]
     tool["mcp_registration"] = inspect_mulgae_mcp(

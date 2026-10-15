@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-task-v2` version `29` declares required native Worker and
+The bundled `aquarium-task-v2` version `30` declares required native Worker and
 Judge Actions. Execution requires an admitted delegated Procedure and native
 qualification for its exact role snapshot, assignment and recovery path.
 Released managed copies and admitted direct snapshots retain their original

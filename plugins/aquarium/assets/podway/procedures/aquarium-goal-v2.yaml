@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "32"
+version: "33"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -70,6 +70,8 @@ node_definitions:
     title: Record verification and review
     intent: Record current checks and route-specific review evidence for this goal.
     instructions:
+      - new-review-current-route preserves the selected route authorization basis; record the separate explicit one-root execution grant in route-change-authority-reference and route-binding evidence. It is neither a route change nor resumed provider execution.
+      - New Mulgae roots use live_source v1 and project binding only; keep workspace/index unchanged through terminal completion. Terminal failure permits no rerun or compose; a fresh root needs explicit new-review-current-route authority after settlement and preserves the pending ordinal.
       - Reconstruct the exact work target, review lineage, pending invocation, checks, and remaining review authority before any new provider call.
       - Do not start another review or broad audit solely for eligible local settlement or its permitted locally checked delta.
       - Deliver the complete aquarium.worker-handoff/v1 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
@@ -160,6 +162,21 @@ node_definitions:
           - pass
           - fail
           - inconclusive
+      - id: review-source-contract
+        type: choice
+        prompt: Record live-source-v1 for new Mulgae execution, historical-capture for an existing captured result, or not-applicable for another route or closeout substitute.
+        required: true
+        choices:
+          - mulgae-live-source-v1
+          - mulgae-historical-capture
+          - not-applicable
+      - id: review-source-binding
+        type: text
+        prompt: Preserve the public preflight target and digest, receipt-bound run digest, scope-derived consistency, applicable staged content binding and caller observation when available; state pending or unavailable facts explicitly. Metadata is not source content. Other routes record not-applicable.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
       - id: review-evidence-reference
         type: text
         prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
@@ -275,19 +292,20 @@ node_definitions:
         required: false
         choices:
           - resume-current
+          - new-review-current-route
           - switch-route
           - waive
           - stop
       - id: route-binding-result
         type: check_result
         prompt: Record the caller-supplied result for aquarium-goal-review-route-binding; Podway does not execute or attest the operation.
-        help: The declared operation is "Verify that the effective Goal review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
+        help: The declared operation is "Verify the Goal route against its approved envelope or explicit direction, preceding route and operation, lifecycle, findings, goal revision, ordinal and remaining authority. Same-route resume after proven not-started repeats preflight and first execution under the unused grant; otherwise it continues existing native work or publication. A new-review-current-route grant admits one full Mulgae root only after terminal incomplete or failed settlement, retaining findings and the pending ordinal and refreshing current-source preflight. Preserve accepted scope; resume grants no replay or replacement." The matching digest identifies only this abstract slot contract and does not prove that the check ran.
         required: false
         required_when:
           - item: review-evidence-kind
             equals: native-review
         operation_id: aquarium-goal-review-route-binding
-        operation_digest: sha256:b2ca6dfab76630882c281060a69a33e1c13b6da4f7b382059c791ffc49fe32a9
+        operation_digest: sha256:aabb71389a9124957ba1bc1dfac5e02e07d904477c7960fb2f8bfa185699e87b
         accepted_outcomes:
           - pass
           - fail
@@ -314,7 +332,7 @@ node_definitions:
         multiline: true
       - id: corrected-target-summary
         type: text
-        prompt: Record the prior review and target, frozen finding IDs, correction commits or capture delta, invalidated criteria, directly affected paths, callers, contracts and tests, or state that no correction is pending.
+        prompt: Record the prior review and target, frozen finding IDs, correction commits or exact source delta, invalidated criteria, directly affected paths, callers, contracts and tests, or state that no correction is pending.
         required: false
         required_when:
           - item: review-evidence-kind
@@ -1094,6 +1112,10 @@ node_definitions:
             not_equals: stop
           - evidence:
               node: record-evidence
+              item: route-direction
+            not_equals: new-review-current-route
+          - evidence:
+              node: record-evidence
               item: route-change-readiness
             equals: safe-to-change
       - id: stop
@@ -1104,6 +1126,26 @@ node_definitions:
               node: record-evidence
               item: route-direction
             equals: stop
+      - id: new-review-current-route
+        label: Start one newly authorized Mulgae review
+        criteria: Explicit user intent authorizes a fresh current-source root after terminal settlement, retaining earlier findings and the pending ordinal.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: route-direction
+            equals: new-review-current-route
+          - evidence:
+              node: record-evidence
+              item: review-route
+            equals: mulgae
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
+            equals: terminal-incomplete-or-failed
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
+            equals: safe-to-change
     reason:
       required: true
       prompt: Record the explicit direction and retained route state.
@@ -1330,7 +1372,7 @@ node_definitions:
           - recorded
       - id: hardening-deferral-run-id
         type: text
-        prompt: Record the exact committed second-round Mulgae root or verified composite review run ID; verify the original root and role sources through review_composition for a composite.
+        prompt: Record the exact committed ordinal-two Mulgae root under its live or historical source contract. An existing historical composite retains its original verified lineage and grants no new composition authority.
         required: false
         required_when:
           - item: hardening-deferral-state
@@ -1372,7 +1414,7 @@ node_definitions:
         multiline: true
       - id: hardening-deferral-evidence-path
         type: text
-        prompt: Record the staged repository-relative aquarium.promoted-evidence/v1 manifest path that durably preserves this deferral.
+        prompt: Record the staged repository-relative promoted manifest path; v2 for a new live result, or v1 for existing captured evidence.
         required: false
         required_when:
           - item: hardening-deferral-state
@@ -1408,9 +1450,29 @@ node_definitions:
             equals: recorded
         choices:
           - successful
-      - id: hardening-deferral-native-target-sha256
+      - id: hardening-deferral-source-contract
+        type: choice
+        prompt: Bind the deferral to live-source-v1/v2 promotion or an existing historical capture/v1 package.
+        required: false
+        required_when:
+          - item: hardening-deferral-state
+            equals: recorded
+        choices:
+          - mulgae-live-source-v1
+          - mulgae-historical-capture
+      - id: hardening-deferral-source-binding
         type: text
-        prompt: Record the authoritative native reviewed-target digest as sha256 followed by a colon and 64 lowercase hexadecimal characters.
+        prompt: Record the retained public preflight target and digest, matching receipt-bound run digest, scope-derived consistency and caller source-consistency observation for v2, or historical content binding for v1; preserve the manifest version and bytes.
+        required: false
+        required_when:
+          - item: hardening-deferral-state
+            equals: recorded
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: hardening-deferral-native-binding-sha256
+        type: text
+        prompt: Record the verified native binding digest, using source_identity_sha256 metadata for v2 or the historical content SHA-256 for v1. Use sha256 followed by a colon and 64 lowercase hexadecimal characters. This field alone proves no unchanged live content.
         required: false
         required_when:
           - item: hardening-deferral-state
@@ -1621,7 +1683,7 @@ node_definitions:
     options:
       - id: recorded
         label: Hardening record complete
-        criteria: The deferral has a later assessment, committed evidence, a successful findings query, and an exact native target digest.
+        criteria: The deferral has a later assessment, committed evidence, a successful findings query, and the verified schema-specific native binding.
         guards:
           - evidence:
               node: record-evidence
@@ -1637,7 +1699,7 @@ node_definitions:
             equals: successful
           - evidence:
               node: record-hardening-deferral
-              item: hardening-deferral-native-target-sha256
+              item: hardening-deferral-native-binding-sha256
             non_empty: true
       - id: incomplete
         label: Hardening record incomplete
@@ -2912,6 +2974,38 @@ node_definitions:
     reason:
       required: true
       prompt: Record the source counts and supported relationship or exact same-operation correction.
+  new-live-review-admission-decision:
+    type: decision
+    title: Admit one fresh Mulgae root
+    objective: Separate explicit new execution from pending invocation resume and retired source replay.
+    prompt: Does explicit authority admit a fresh current-source review after terminal settlement?
+    options:
+      - id: start
+        label: Prepare the newly authorized root
+        criteria: Explicit user intent covers one fresh current-source root and all selected roles, with prior findings and the pending ordinal preserved; refresh the Brief, source preflight and affected verification before execution.
+        guards:
+          - evidence:
+              node: record-evidence
+              item: review-route
+            equals: mulgae
+          - evidence:
+              node: record-evidence
+              item: route-direction
+            equals: new-review-current-route
+          - evidence:
+              node: record-evidence
+              item: prior-route-lifecycle-state
+            equals: terminal-incomplete-or-failed
+          - evidence:
+              node: record-evidence
+              item: route-change-readiness
+            equals: safe-to-change
+      - id: stop
+        label: Stop without starting another review
+        criteria: Current source, explicit authority or terminal settlement is not established; preserve the prior operation and evidence.
+    reason:
+      required: true
+      prompt: Bind the user's exact new-execution authority, current source and retained pending ordinal, or explain the stopped boundary.
 graph:
   entry: complete-work
   nodes:
@@ -2920,7 +3014,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-work
@@ -2948,7 +3042,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: decide-review-basis
@@ -3050,6 +3144,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3073,6 +3169,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3096,6 +3194,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3119,6 +3219,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3143,6 +3245,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - prior-route-lifecycle-state
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3167,6 +3271,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - prior-route-lifecycle-state
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3191,6 +3297,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - prior-route-lifecycle-state
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3215,6 +3323,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - prior-route-lifecycle-state
+            - review-source-contract
+            - review-source-binding
       routes:
         completed:
           to: confirm-completed-assessment-ordinal
@@ -3309,6 +3419,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae-pass:
           to: confirm-mulgae-pass-finding-validity
@@ -3339,6 +3451,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae-pass:
           to: confirm-mulgae-pass-finding-validity
@@ -3369,6 +3483,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae-pass:
           to: confirm-mulgae-pass-finding-validity
@@ -3399,6 +3515,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae-pass:
           to: confirm-mulgae-pass-finding-validity
@@ -3428,6 +3546,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - assessment-provenance-kind
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae:
           to: confirm-mulgae-review-route-settlement
@@ -3506,6 +3626,9 @@ graph:
             - route-direction
             - route-change-readiness
       routes:
+        new-review-current-route:
+          to: authorize-new-mulgae-review
+          effect: advance
         resume-current:
           to: record-evidence
           effect: rework
@@ -3526,6 +3649,9 @@ graph:
             - route-direction
             - route-change-readiness
       routes:
+        new-review-current-route:
+          to: authorize-new-mulgae-review
+          effect: advance
         resume-current:
           to: record-evidence
           effect: rework
@@ -3546,6 +3672,9 @@ graph:
             - route-direction
             - route-change-readiness
       routes:
+        new-review-current-route:
+          to: authorize-new-mulgae-review
+          effect: advance
         resume-current:
           to: record-evidence
           effect: rework
@@ -3567,6 +3696,8 @@ graph:
             - prior-route-lifecycle-state
             - route-change-readiness
             - route-direction
+            - review-source-contract
+            - review-source-binding
       next: record-stopped-goal-boundary
     - id: decide-operational-evidence
       use: operational-evidence-decision
@@ -3695,6 +3826,8 @@ graph:
             - effective-low-findings
             - confirmation-needed-findings
             - finding-disposition-summary
+            - review-source-contract
+            - review-source-binding
       next: decide-low-handling
     - id: decide-low-handling
       use: low-handling-decision
@@ -3719,7 +3852,9 @@ graph:
             - hardening-deferral-evidence-sha256
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
       routes:
         settle:
           to: record-low-disposition
@@ -3756,7 +3891,9 @@ graph:
           items:
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
       routes:
         recorded:
           to: record-hardening-handoff
@@ -3791,6 +3928,11 @@ graph:
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
             - effective-low-findings
+        - node: record-evidence
+          required: true
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: record-evidence
           required: true
           items:
@@ -3850,6 +3992,8 @@ graph:
             - completion-assessment-summary
             - completion-unmet-criteria
             - completion-unverified-criteria
+            - review-source-contract
+            - review-source-binding
         - node: record-low-disposition
           required: false
           items:
@@ -3891,6 +4035,8 @@ graph:
             - effective-low-findings
             - confirmation-needed-findings
             - finding-disposition-summary
+            - review-source-contract
+            - review-source-binding
         - node: record-evidence
           required: true
           items:
@@ -3958,7 +4104,9 @@ graph:
             - hardening-deferral-evidence-sha256
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
       next: confirm-goal-assessment-core
     - id: record-stopped-goal-boundary
       use: stopped-goal-boundary-record
@@ -3990,6 +4138,11 @@ graph:
             - finding-count-consistency
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
+        - node: record-evidence
+          required: true
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: record-low-disposition
           required: false
           items:
@@ -4039,6 +4192,11 @@ graph:
             - finding-count-consistency
             - unresolved-valid-findings
             - effective-medium-or-higher-findings
+        - node: record-evidence
+          required: true
+          items:
+            - review-source-contract
+            - review-source-binding
       routes:
         ready:
           to: prepare-stopped-goal-assessment
@@ -4084,7 +4242,9 @@ graph:
             - hardening-deferral-evidence-sha256
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
         - node: record-low-disposition
           required: false
           items:
@@ -4275,7 +4435,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-work-assessment
@@ -4386,6 +4546,11 @@ graph:
         - node: record-evidence
           required: true
           items:
+            - review-source-contract
+            - review-source-binding
+        - node: record-evidence
+          required: true
+          items:
             - prior-review-route
             - prior-review-operation
             - prior-route-lifecycle-state
@@ -4435,7 +4600,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-goal-evidence-assessment
@@ -4592,6 +4757,11 @@ graph:
             - finding-lineage-summary
             - finding-disposition-summary
             - finding-count-consistency
+            - review-source-contract
+        - node: record-evidence
+          required: true
+          items:
+            - review-source-binding
         - node: judge-goal-evidence
           required: true
           items:
@@ -4628,7 +4798,9 @@ graph:
             - hardening-deferral-evidence-sha256
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
         - node: record-closeout-substitute
           required: false
           items:
@@ -4637,7 +4809,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-goal
@@ -4652,7 +4824,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-goal-assessment-applicability
@@ -4702,6 +4874,7 @@ graph:
             - finding-lineage-summary
             - finding-disposition-summary
             - finding-count-consistency
+            - review-source-binding
         - node: judge-goal-evidence
           required: false
           items:
@@ -4735,7 +4908,9 @@ graph:
             - hardening-deferral-evidence-sha256
             - hardening-deferral-publication-state
             - hardening-deferral-findings-query-state
-            - hardening-deferral-native-target-sha256
+            - hardening-deferral-native-binding-sha256
+            - hardening-deferral-source-contract
+            - hardening-deferral-source-binding
         - node: record-closeout-substitute
           required: false
           items:
@@ -4748,7 +4923,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-goal
@@ -4767,7 +4942,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-stopped-goal-assessment-applicability
@@ -5026,6 +5201,23 @@ graph:
         inconsistent:
           to: record-evidence
           effect: rework
+    - id: authorize-new-mulgae-review
+      use: new-live-review-admission-decision
+      evidence_from:
+        - node: record-evidence
+          required: true
+          items:
+            - review-route
+            - route-direction
+            - prior-route-lifecycle-state
+            - route-change-readiness
+      routes:
+        start:
+          to: record-evidence
+          effect: rework
+        stop:
+          to: record-review-route-stop
+          effect: advance
 manual_rework:
   allowed_targets:
     - complete-work

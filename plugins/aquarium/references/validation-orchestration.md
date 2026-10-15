@@ -2,7 +2,7 @@
 
 Apply this reference when the admitted Validation Procedure declares required
 Worker/Judge placements. Released direct snapshots keep their admitted contract.
-The bundled version `31` declares twelve placements. Execution requires an
+The bundled version `32` declares twelve placements. Execution requires an
 admitted delegated Procedure and native qualification applicable to its exact
 role snapshot, assignment and recovery path. Managed-file updates and compatible
 successor sessions retain their separate authority.

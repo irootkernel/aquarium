@@ -13,7 +13,7 @@ The workflow plan selects exactly one route and, where required, its reviewer:
 
 | Route | Selection and native ownership |
 | --- | --- |
-| `mulgae` | Default when no alternative is selected. Mulgae owns capture, provider execution, recovery, publication, CI, findings, and retention. |
+| `mulgae` | Default when no alternative is selected. Mulgae owns source admission, provider execution, publication reconciliation, publication, CI, findings, and retention. |
 | `herdr` | Requires an explicit reviewer kind and a supported target; honors any requested native model and effort. Herdr owns the local pane, agent, submission, observation, output and recovery. |
 | `independent-review` | Requires explicit selection and three fresh host subagents. Aquarium coordinates their static reports; the host owns delegation lifecycle and provenance. |
 | `waived` | Requires an explicit delegated-review waiver. It launches no reviewer; the coordinator assesses the same complete Review Brief from current authorized evidence. |
@@ -37,7 +37,7 @@ vocabulary and report the exact included and excluded state.
 
 Before delegating a staged Task review, the owning handler uses its approved staging authority to stage the complete Task candidate, including new files and documentation. Reconcile the index with the intended candidate and preserve unrelated entries; if those entries prevent isolation, stop for a concrete target or staging decision. The report-only reviewer never prepares or repairs the index. Repeat this preparation after authorized corrections before a later staged checkpoint.
 
-- Mulgae retains its supported target meanings and immutable-capture contract.
+- Mulgae uses workspace, stage, head, commit or diff through its native live-source contract. Keep workspace/index unchanged through completion, preserve resolved Git operands and record source identity and consistency without claiming a content snapshot.
 - Herdr uses `staged`, `head`, `commit`, or `range` through the static review
   contract. A Task may use `staged` only when the complete candidate is isolated
   from unrelated index entries. Epic and validation checkpoints may use an
@@ -94,7 +94,7 @@ workflow-lifecycle decisions:
 
 Admit only these completed combinations:
 
-- `mulgae` plus `complete` requires an exact root or verified composite,
+- `mulgae` plus `complete` requires an exact live-source root, or verified historical composite,
   reviewer provenance, committed publication, complete coverage, a successful
   findings query, and `backend-check-result` of `pass` or `fail`. Mulgae CI may
   not be `not-provided`.
@@ -137,7 +137,8 @@ A route failure stops for user direction. Never start another route or apply a
 waiver automatically. Offer only the actions supported by current authority:
 
 - `resume-current`: continue or recover the current native operation through
-  its owner, or restart a settled incomplete Independent Review as specified below;
+  its owner, or restart a settled incomplete Independent Review as specified below. For Mulgae, an authoritatively not-started preflight or prerequisite failure returns to preflight and first execution under the still-unconsumed review grant. Once native work started, resume continues the existing invocation or provider-free publication reconciliation and never replaces its root;
+- `new-review-current-route`: authorize one fresh Mulgae root only after the previous operation is terminally failed or incomplete and safely settled; refresh current-source preflight, preserve findings and the pending ordinal, and cover the full selected arrangement without rerun or composition;
 - `continue-current` (Task only): run the next authorized assessment on the
   same route after an exact completed delegated review or waiver assessment;
 - `switch-route`: select one supported route after the prior operation reaches
@@ -150,13 +151,14 @@ Apply the requested transition according to the prior operation state:
 
 | Prior state | Admission rule |
 | --- | --- |
-| Not started because preflight or a prerequisite failed | Apply the explicit route change or waiver immediately. |
+| Not started because preflight or a prerequisite failed | `resume-current` repeats preflight and admits first execution on the same route under remaining review authority, preserving the pending ordinal. An explicit route change or waiver is also safe. |
 | Active or terminal state unknown | Record intent only. Resume, await, or explicitly cancel through the native owner before another route starts or waiver can close. |
-| Terminal failed or incomplete | Complete native settlement, retain available evidence, then change route without consuming an ordinal. |
+| Terminal failed or incomplete | Complete native settlement and retain evidence. Explicit same-route new Mulgae review, route change or waiver preserves the pending ordinal; none starts automatically. |
 | Terminal complete | Retain its ordinal, findings, dispositions, and remaining authority; use the new route only at the next authorized checkpoint. |
 
 A timeout is not terminal evidence. An uncertain mutation or missing native
 identity is an operational gap, not permission to launch another reviewer.
+Classify Mulgae as `not-started` only when its native result establishes a preflight or prerequisite failure before any invocation or run was created. An issued invocation with uncertain state remains `active-or-unknown`; a terminal diagnostic run remains terminal. Handle `review_preparation_failed` through the native diagnostic recovery contract. Before first execution, refresh the Brief, source preflight, applicable staged content binding and affected verification without changing the selected arrangement or transmission scope.
 Changing route does not reset the goal revision, remediation budget, findings,
 or corrected-target confirmation obligation.
 
@@ -164,9 +166,9 @@ or corrected-target confirmation obligation.
 
 For Independent Review, a host wait timeout leaves the same delegations pending. Resume those references through the host while any worker is active or its state is unknown. Once all three are authoritatively settled, explicit `resume-current` may authorize one fresh three-agent operation for the same target, Brief, model and effort; retain every earlier report and finding, and reuse the unconsumed ordinal. Recheck mutable target identity first. Changed bytes require a refreshed authorized Brief and affected verification, never an assertion that the old review covered them. An embedded restart remains subject to the owning workflow's scope and remaining authority; standalone restart needs explicit authority. Do not silently substitute a provider or reuse successful agents as a replacement for the required fresh three-agent operation.
 
-Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed local settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or capture identity, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
+Assessment budgets are maxima, not rounds to consume. Stop after a clean result or completed local settlement. For one goal revision, ordinals one through three use `assessment-kind=work-unit` with the exact named objective, authority, candidate, work commits or exact candidate content binding, changed paths, artifacts, and verification evidence. Ordinal four uses `assessment-kind=remediation-confirmation` and is the last checkpoint authorized by the initial workflow envelope.
 
-Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or capture delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining finding or completion gap requiring provider reassessment after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
+Ordinal four and every later checkpoint may inspect only the frozen prior findings, correction commits or exact source delta, invalidated criteria, directly affected callers, contracts and tests, and correction-caused regressions. A remaining finding or completion gap requiring provider reassessment after ordinal four stops for user direction. Each explicit `fix-and-review` choice authorizes one correction and one next-ordinal remediation confirmation. It does not authorize another work-unit assessment or a reusable review loop.
 
 A material objective, requirement, or changed-surface expansion requires an explicitly approved new goal revision. Do not reset ordinals, silently broaden a remediation confirmation, or use unrelated observations to extend the current loop.
 
@@ -217,8 +219,8 @@ corrections require the next authorized provider checkpoint. Preserve the existi
 
 All routes support the ordinary finite Low dispositions. The promoted
 `hardening-deferral` path remains Mulgae-only because it requires exact run and
-finding membership, committed publication, a successful findings query, and an
-authoritative native target SHA-256. Herdr, Independent Review, and waiver evidence must
+finding membership, committed publication, a successful findings query, and a
+verified schema-specific native target binding. Herdr, Independent Review, and waiver evidence must
 state that no promoted hardening evidence applies; never invent a Mulgae run,
 finding identity, capture, publication, query, or target digest.
 
@@ -239,3 +241,5 @@ or explicitly states that neither a local-settlement delta nor promoted evidence
 After completed-operation admission, finding confirmation, mandatory backend checks and the existing review-evidence Judge, classify bounded local corrections before asking for provider-rework authority. `classify-local-corrections` uses the source record's count and caller-recorded eligibility. A positive count with `pass` permits `record-low-disposition` after reconciling the latest Judge report. Zero candidates, failed or inconclusive eligibility, or a Judge-established nonlocal obligation retain their original rework or evidence route. The record preserves original priorities, source negative criterion rows and consumed ordinals, and separately verifies current completion, zero pending local corrections and the exact permitted delta. Only this current composition and the final original-criteria Judge support advancement. Ordinary Low deferral is unchanged.
 
 Neither a settled correction nor an execution incident consumes a provider ordinal. Incidents follow the shared [review contract](review-contract.md#reviewer-instruction-deviations). Backend failure, missing coverage or compromised evidence still uses its native owner; recovery within existing authority does not need a redundant approval. Prior snapshots keep their original Low-only contract.
+
+Current Task v30, Goal v33 and Validation v32 sources record `review-source-contract` and `review-source-binding`. New Mulgae roots use `mulgae-live-source-v1`; existing captured results use `mulgae-historical-capture`; other routes and the closeout substitute use `not-applicable`. Bind identity, native consistency, receipt and caller source-consistency observation in runtime evidence, preserving unavailable facts explicitly. These records do not prove an atomic source view. A prior snapshot lacking the required evidence or direction stays unchanged and needs a separately authorized compatible successor before that checkpoint.

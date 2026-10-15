@@ -584,6 +584,35 @@
       "remaining_review_authority": "user direction required",
       "corrected_target_assessment": true,
       "expected": "fourth-remediation-confirmation"
+    },
+    {
+      "id": "TR-18",
+      "plan_route": "mulgae",
+      "route": "mulgae",
+      "route_authorization_basis": "approved-plan",
+      "route_authorization_option": "planned-mulgae",
+      "entry_option": "start",
+      "prior_review_operation": "not-applicable",
+      "prior_review_route": "not-applicable",
+      "prior_route_change_readiness": "not-applicable",
+      "prior_ordinal": 0,
+      "operation": "failed",
+      "backend_check": "not-provided",
+      "ordinal": 0,
+      "provenance": "mulgae-operation",
+      "waiver_summary": null,
+      "operation_option": "unsettled",
+      "evidence_option": "mulgae",
+      "provenance_option": "delegated",
+      "prior_state": "not-started",
+      "route_change_readiness": "safe-to-change",
+      "settlement_option": "settled-safe",
+      "direction_option": "continue",
+      "requested_direction": "resume-current",
+      "route_transition_outcome": "pass",
+      "resume_authorization_option": "mulgae",
+      "resume_prior_route": "mulgae",
+      "expected": "same-provider-first-execution-after-preflight-failure"
     }
   ],
   "goal_review_route_cases": [
@@ -761,6 +790,24 @@
       "remaining_review_authority": "user direction required",
       "corrected_target": "commit:fourth-confirmation",
       "expected": "fourth-remediation-confirmation"
+    },
+    {
+      "id": "GR-10",
+      "plan_route": "mulgae",
+      "route": "mulgae",
+      "route_authorization_option": "planned-mulgae",
+      "prior_ordinal": 0,
+      "ordinal": 0,
+      "operation": "failed",
+      "operation_option": "unsuccessful",
+      "backend_check": "not-provided",
+      "evidence_option": "mulgae",
+      "provenance": "mulgae-lifecycle",
+      "prior_lifecycle": "not-started",
+      "settlement_option": "not-started-safe",
+      "direction_option": "resume-current",
+      "requested_direction": "resume-current",
+      "expected": "same-provider-first-execution-after-preflight-failure"
     }
   ],
   "validation_review_route_cases": [
@@ -931,6 +978,23 @@
       "remaining_review_authority": "user direction required",
       "corrected_target": "commit:fourth-confirmation",
       "expected": "fourth-remediation-confirmation"
+    },
+    {
+      "id": "VR-10",
+      "route": "mulgae",
+      "route_binding": "pass",
+      "prior_ordinal": 0,
+      "ordinal": 0,
+      "operation": "failed",
+      "operation_option": "unassessed",
+      "backend_check": "not-provided",
+      "provenance_option": "valid",
+      "provenance": "mulgae-lifecycle",
+      "prior_lifecycle": "not-started",
+      "settlement_option": "change-safe",
+      "direction_option": "recover",
+      "requested_direction": "resume-current",
+      "expected": "same-provider-first-execution-after-preflight-failure"
     }
   ],
   "cases": [

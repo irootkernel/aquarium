@@ -18,9 +18,9 @@
     },
     {
       "operation_id": "aquarium-task-review-route-direction-continuity",
-      "descriptor": "Validate one Task review checkpoint direction: approved-plan has no prior operation; resume-current requires incomplete or failed on the same provider and retains the pending ordinal; continued-checkpoint requires exact complete or waived, completed readiness, unchanged route, positive prior ordinal, preserved lineage and authority, and the next ordinal; switch-route and waive require explicit authority and either safe unsettled state retaining the pending ordinal or completed state preserving lineage and consuming the next ordinal, with the requested effective route.",
+      "descriptor": "Validate Task checkpoint direction, same-route authority, prior lifecycle, findings, goal revision and ordinal: approved-plan has no prior operation; resume-current after proven not-started repeats preflight and first execution under the unused grant, otherwise continues existing native work or publication; continued-checkpoint follows exact complete or waived readiness and consumes the next ordinal; safe switch or waiver needs explicit authority and preserves pending or advances completed ordinals; new-review-current-route needs explicit one-root authority after terminal failed or incomplete settlement and refreshed current-source inputs. Preserve lineage and remaining authority; resume grants no replay or replacement.",
       "meaning": "A caller-recorded matrix check over checkpoint direction, route basis, prior lifecycle, change readiness, and effective provider route.",
-      "operation_digest": "sha256:ff10d6b0b0cc4c06a73d8b9edcdda1716c7831e535c9d8b47754f391d76b8fd6",
+      "operation_digest": "sha256:428c03483fc0178e990d9be72ce5283b6d7588479c711ac3347e6bbd639667a9",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -40,9 +40,9 @@
     },
     {
       "operation_id": "aquarium-goal-review-route-binding",
-      "descriptor": "Verify that the effective Goal review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority.",
+      "descriptor": "Verify the Goal route against its approved envelope or explicit direction, preceding route and operation, lifecycle, findings, goal revision, ordinal and remaining authority. Same-route resume after proven not-started repeats preflight and first execution under the unused grant; otherwise it continues existing native work or publication. A new-review-current-route grant admits one full Mulgae root only after terminal incomplete or failed settlement, retaining findings and the pending ordinal and refreshing current-source preflight. Preserve accepted scope; resume grants no replay or replacement.",
       "meaning": "A caller-recorded binding check over the planned route, immediately preceding review operation, effective route, current authority, and native lifecycle settlement.",
-      "operation_digest": "sha256:b2ca6dfab76630882c281060a69a33e1c13b6da4f7b382059c791ffc49fe32a9",
+      "operation_digest": "sha256:aabb71389a9124957ba1bc1dfac5e02e07d904477c7960fb2f8bfa185699e87b",
       "accepted_outcomes": [
         "pass",
         "fail",
@@ -84,9 +84,9 @@
     },
     {
       "operation_id": "aquarium-validation-review-route-binding",
-      "descriptor": "Verify that the effective whole-Epic review route preserves the immediately preceding review route and operation, lifecycle state, findings, goal revision, assessment ordinal, and remaining authority, and matches the approved validation envelope or the user's explicit lifecycle-safe resume, route-change, or waiver direction without reusing incompatible authority.",
+      "descriptor": "Verify the whole-Epic validation route against its approved envelope or explicit direction, preceding route and operation, lifecycle, findings, goal revision, ordinal and remaining authority. Same-route resume after proven not-started repeats preflight and first execution under the unused grant; otherwise it continues existing native work or publication. A new-review-current-route grant admits one full Mulgae root only after terminal incomplete or failed settlement, retaining findings and the pending ordinal and refreshing current-source preflight. Preserve accepted scope; resume grants no replay or replacement.",
       "meaning": "A caller-recorded binding check over the planned route, immediately preceding review operation, effective route, requested direction, lifecycle settlement, findings, ordinal, goal revision, and remaining authority.",
-      "operation_digest": "sha256:231042f4ce3156ba7b9a770e23960766ebe5cf3167b774d01b1365970f2c8792",
+      "operation_digest": "sha256:f059142871216eda78b34715a428a28a47b75ba59b5b0f72e25112249e97fa75",
       "accepted_outcomes": [
         "pass",
         "fail",

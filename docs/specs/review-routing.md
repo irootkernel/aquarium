@@ -40,7 +40,7 @@ preferred route.
 
 | Route | Availability and behavior |
 | --- | --- |
-| `mulgae` | Default route. It retains immutable capture, selected-role execution, recovery, publication, findings, CI, and retention under the Mulgae contract. |
+| `mulgae` | Default route. It owns live-source admission, selected-role execution, provider-free publication reconciliation, findings, CI and retention under the Mulgae contract. A new root after terminal failure requires explicit authority; historical composites remain readable. |
 | `herdr` | Requires an explicitly selected reviewer and a Herdr-supported target. Herdr supervises one fresh static reviewer in the current local session; admission requires submission/activity correlation and the complete purpose-specific report. |
 | `independent-review` | Requires explicit selection and three fresh host delegations. The subagents review one target and Brief with separate focus; Aquarium aggregates their static reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
@@ -68,7 +68,8 @@ When no alternative is requested, Aquarium selects Mulgae. If the selected route
 is unavailable or cannot represent the target, the workflow stops before another
 provider call and asks the user to choose one of these actions:
 
-- resume or recover the current route;
+- resume the current invocation or supported publication reconciliation, or repeat preflight and first execution under the unused review grant when native evidence establishes that no invocation or run started;
+- explicitly authorize one fresh same-route Mulgae review after terminal incomplete/failed settlement, preserving the pending ordinal and findings;
 - switch to one supported route;
 - waive delegated review; or
 - stop the workflow.
@@ -119,7 +120,7 @@ The following combinations are valid for a completed checkpoint:
 
 | Route and operation | Required evidence |
 | --- | --- |
-| `mulgae` and `complete` | An exact root or composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
+| `mulgae` and `complete` | An exact live-source root or verified historical composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
 | `herdr` and `complete` | Fresh requested identity, submission/activity correlation, applicable target and Brief, complete report and native operation references under Herdr supervision, reviewer provenance, and `backend-check-result=not-provided`. Idle or done alone is insufficient. |
 | `independent-review` and `complete` | Three completed host delegations for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
 | `waived` and `waived` | Waiver authority, `assessment-provenance=coordinator-waiver`, a waiver summary, and `backend-check-result=not-provided`. |
@@ -143,7 +144,7 @@ excluded state. This package is the review boundary; Aquarium does not leave the
 target implicit or invite a repository-wide audit.
 
 Ordinal four and any later checkpoint inspect only the frozen prior finding
-IDs, correction commits or captured delta, invalidated criteria, directly
+IDs, correction commits or exact source delta, invalidated criteria, directly
 affected callers, contracts and tests, and regressions caused by the correction.
 If work requiring another provider assessment remains after ordinal
 four, the workflow stops for user direction. Each explicit `fix-and-review`
@@ -184,8 +185,11 @@ requirements.
 
 The member-task `hardening-deferral` promotion path has stronger evidence needs.
 It requires an exact Mulgae run and finding membership, committed publication,
-a successful findings query, and an authoritative native target SHA-256 that
-matches the promoted manifest. Only Mulgae supplies that contract in this epic.
+a successful findings query, and a verified schema-specific native target binding
+that matches the promoted manifest: a v1 content digest, or a v2 preflight identity
+whose recomputed metadata digest matches the completed run, with scope-derived
+consistency and the caller source-consistency observation. Only Mulgae supplies
+that contract in this epic.
 
 Herdr, Independent Review, and `waived` must not invent a Mulgae run, finding ID,
 capture, or target digest. Their Low findings use the ordinary dispositions. If
@@ -270,6 +274,6 @@ new checkpoints select `independent-review` only in a snapshot that supports it.
 
 ## Local corrections and compatibility
 
-Current Task `29`, Goal `32` and Validation `31` snapshots classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
+Current Task `30`, Goal `33` and Validation `32` snapshots classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
 
 This is a breaking managed-Procedure update: existing users need an authorized file update and compatible successor sessions. Active and archived snapshots retain their original meanings. Candidate installation, upgrade and affected agent behavior require exact-candidate UTM qualification before release; source tests alone do not establish that result. Design and War-room graph behavior is unchanged; their next versions refresh the shared operative role bindings.

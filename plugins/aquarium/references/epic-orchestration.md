@@ -2,7 +2,7 @@
 
 ## Candidate and activation
 
-The bundled `aquarium-goal-v2` version `32` requires native Worker delivery and
+The bundled `aquarium-goal-v2` version `33` requires native Worker delivery and
 retained Judge assessments for goal-centered Epic execution. Required placements
 need an admitted delegated Procedure and native qualification applicable to its
 exact role snapshot, assignment and recovery path. Released managed files and

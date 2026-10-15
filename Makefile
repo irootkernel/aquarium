@@ -19,6 +19,9 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/unit/test_promoted_evidence_schema_unit.py \
+	tests/unit/test_source_identity_digest_unit.py \
+	plugins/aquarium/skills/task-commit/scripts/source_identity_digest.py \
 	tests/check_test_requirements.py \
 	tests/unit/test_check_test_requirements_unit.py \
 	tests/unit/test_setup_package_contracts.py \

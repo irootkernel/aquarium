@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "29"
+version: "30"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -34,7 +34,7 @@ node_definitions:
           - waived
       - id: review-target-scope
         type: text
-        prompt: Record the Task identity, objective and authorities, base revision, exact staged or captured candidate, ordered work commits when present, included paths and artifacts, and excluded state.
+        prompt: Record the Task identity, objective and authorities, base revision, exact staged index tree and path inventory or resolved Git candidate, ordered work commits when present, included paths and artifacts, and excluded state.
         required: true
         min_length: 1
         max_length: 1000
@@ -215,6 +215,7 @@ node_definitions:
           - explicit-route-change
           - explicit-waiver
           - resume-current
+          - new-review-current-route
       - id: checkpoint-requested-direction
         type: choice
         prompt: Carry the exact direction requested for this checkpoint, or record not-applicable for the initial planned route.
@@ -223,6 +224,7 @@ node_definitions:
           - not-applicable
           - continue-current
           - resume-current
+          - new-review-current-route
           - switch-route
           - waive
       - id: route-change-authority-reference
@@ -256,6 +258,16 @@ node_definitions:
           - herdr
           - independent-review
           - waived
+      - id: prior-route-lifecycle-state
+        type: choice
+        prompt: Carry the prior native lifecycle, using not-applicable for the first checkpoint.
+        required: true
+        choices:
+          - not-applicable
+          - not-started
+          - active-or-unknown
+          - terminal-incomplete-or-failed
+          - terminal-complete
       - id: prior-route-change-readiness
         type: choice
         prompt: Carry whether the prior operation is settled for change or was already completed, or record not-applicable for the initial planned route.
@@ -286,7 +298,7 @@ node_definitions:
         multiline: true
       - id: corrected-target-summary
         type: text
-        prompt: Record the prior review and target, frozen finding IDs, correction commits or capture delta, invalidated criteria, directly affected paths, callers, contracts and tests, or state that no correction is pending.
+        prompt: Record the prior review and target, frozen finding IDs, correction commits or exact source delta, invalidated criteria, directly affected paths, callers, contracts and tests, or state that no correction is pending.
         required: true
         min_length: 1
         max_length: 2000
@@ -304,13 +316,13 @@ node_definitions:
       - id: route-direction-continuity
         type: check_result
         prompt: Record the caller-supplied continuity result binding the requested checkpoint direction to its exact authorization basis, prior lifecycle, readiness, and effective provider route.
-        help: "The declared operation is \"Validate one Task review checkpoint direction: approved-plan has no prior operation; resume-current requires incomplete or failed on the same provider and retains the pending ordinal; continued-checkpoint requires exact complete or waived, completed readiness, unchanged route, positive prior ordinal, preserved lineage and authority, and the next ordinal; switch-route and waive require explicit authority and either safe unsettled state retaining the pending ordinal or completed state preserving lineage and consuming the next ordinal, with the requested effective route.\" The matching digest identifies only this abstract slot contract and does not prove that any operation ran."
+        help: "The declared operation is \"Validate Task checkpoint direction, same-route authority, prior lifecycle, findings, goal revision and ordinal: approved-plan has no prior operation; resume-current after proven not-started repeats preflight and first execution under the unused grant, otherwise continues existing native work or publication; continued-checkpoint follows exact complete or waived readiness and consumes the next ordinal; safe switch or waiver needs explicit authority and preserves pending or advances completed ordinals; new-review-current-route needs explicit one-root authority after terminal failed or incomplete settlement and refreshed current-source inputs. Preserve lineage and remaining authority; resume grants no replay or replacement.\" The matching digest identifies only this abstract slot contract and does not prove that any operation ran."
         required: false
         required_when:
           - item: route-authorization-basis
             not_equals: approved-plan
         operation_id: aquarium-task-review-route-direction-continuity
-        operation_digest: sha256:ff10d6b0b0cc4c06a73d8b9edcdda1716c7831e535c9d8b47754f391d76b8fd6
+        operation_digest: sha256:428c03483fc0178e990d9be72ce5283b6d7588479c711ac3347e6bbd639667a9
         accepted_outcomes:
           - pass
           - fail
@@ -347,21 +359,20 @@ node_definitions:
         guards:
           - evidence:
               node: prepare-review
-              item: checkpoint-requested-direction
-            not_equals: not-applicable
+              item: route-authorization-basis
+            not_equals: approved-plan
           - evidence:
               node: prepare-review
-              item: checkpoint-requested-direction
-            not_equals: continue-current
+              item: route-authorization-basis
+            not_equals: continued-checkpoint
           - evidence:
               node: prepare-review
-              item: checkpoint-requested-direction
+              item: route-authorization-basis
             not_equals: resume-current
           - evidence:
               node: prepare-review
-              item: route-direction-continuity
-            field: outcome
-            equals: pass
+              item: route-authorization-basis
+            not_equals: new-review-current-route
       - id: continued
         label: Continue the completed route
         criteria: The exact completed operation has passing continuity.
@@ -391,6 +402,23 @@ node_definitions:
               node: prepare-review
               item: checkpoint-requested-direction
             equals: resume-current
+          - evidence:
+              node: prepare-review
+              item: route-direction-continuity
+            field: outcome
+            equals: pass
+      - id: new-review
+        label: Authorize a new current-route review
+        criteria: The explicitly authorized fresh review preserves the pending ordinal after terminal settlement.
+        guards:
+          - evidence:
+              node: prepare-review
+              item: route-authorization-basis
+            equals: new-review-current-route
+          - evidence:
+              node: prepare-review
+              item: checkpoint-requested-direction
+            equals: new-review-current-route
           - evidence:
               node: prepare-review
               item: route-direction-continuity
@@ -889,7 +917,8 @@ node_definitions:
     title: Record selected completion review
     intent: Record the route-specific operation, evidence, completion assessment, and adjudicated findings without claiming another backend's guarantees.
     instructions:
-      - Use task-review for the route selected in the approved plan and the exact named Task candidate, including its goal, authorities, work commits or staged capture, changed paths, artifacts, verification evidence, and excluded state; preserve route-specific lifecycle evidence, provenance, backend checks, and finding lineage.
+      - New Mulgae roots use live_source v1 and project binding only; keep workspace/index unchanged through terminal completion. Terminal failure permits no rerun or compose; a fresh root needs explicit new-review-current-route authority after settlement and preserves the pending ordinal.
+      - Use task-review for the route selected in the approved plan and the exact named Task candidate, including its goal, authorities, work commits or native source identity, changed paths, artifacts, verification evidence, and excluded state; preserve route-specific lifecycle evidence, provenance, backend checks, and finding lineage.
       - Review is report-only; do not edit files or start another root solely because eligible Low findings exist.
       - An incomplete or failed operation consumes no assessment ordinal and stops for explicit route direction without automatic fallback.
       - Complete delivery is a Worker candidate only. Accept its authentic applicable native result, record the final evidence, obtain the current Podway receipt, and complete separately before Judge assessment.
@@ -942,6 +971,21 @@ node_definitions:
         choices:
           - work-unit
           - remediation-confirmation
+      - id: review-source-contract
+        type: choice
+        prompt: Record live-source-v1 for new Mulgae execution, historical-capture for an existing captured result, or not-applicable for another route or closeout substitute.
+        required: true
+        choices:
+          - mulgae-live-source-v1
+          - mulgae-historical-capture
+          - not-applicable
+      - id: review-source-binding
+        type: text
+        prompt: Preserve the public preflight target and digest, receipt-bound run digest, scope-derived consistency, applicable staged content binding and caller observation when available; state pending or unavailable facts explicitly. Metadata is not source content. Other routes record not-applicable.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
       - id: review-evidence-reference
         type: text
         prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
@@ -1704,6 +1748,7 @@ node_definitions:
         required: true
         choices:
           - resume-current
+          - new-review-current-route
           - switch-route
           - waive
           - stop
@@ -1717,10 +1762,10 @@ node_definitions:
       - id: route-transition-admission
         type: check_result
         prompt: Record the caller-supplied result binding the lifecycle state, route-change readiness, and requested direction for this unsettled operation.
-        help: The declared operation is "Validate that the recorded prior review lifecycle and requested direction admit either same-provider resume, safe route switch or waiver, or stop without changing native state." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
+        help: The declared operation is "Validate that the recorded prior review lifecycle and requested direction admit same-provider resume, one explicitly authorized new Mulgae review after terminal settlement, safe route switch or waiver, or stop without changing native state. For an authoritatively not-started preflight or prerequisite failure, same-provider resume repeats preflight and first execution under the unused review grant; an uncertain start and review_preparation_failed cannot use this path." The matching digest identifies only this abstract slot contract and does not prove that any operation ran.
         required: true
         operation_id: review-route-transition-admission
-        operation_digest: sha256:197f79759144ae753d78678e92487d08f7f78cc582c69190f1e38ca4426ba0ec
+        operation_digest: sha256:22af97b8d2d1d7466e44fecb7865148951fd1b4cf984e4190bbc2424aeb88eb9
         accepted_outcomes:
           - pass
           - fail
@@ -2242,7 +2287,7 @@ node_definitions:
         multiline: true
       - id: promoted-evidence-references
         type: list
-        prompt: Record each committed aquarium.promoted-evidence/v1 manifest as its repository-relative path followed by exactly one sha256-prefixed 64-hex manifest digest; leave absent when no package applies.
+        prompt: Record each committed aquarium.promoted-evidence/v1 or v2 manifest as its repository-relative path followed by exactly one sha256-prefixed 64-hex manifest digest; leave absent when no package applies.
         required: false
         min_items: 0
         max_items: 50
@@ -3457,6 +3502,59 @@ node_definitions:
     reason:
       required: true
       prompt: Record the source counts and supported relationship or exact same-operation correction.
+  new-live-review-admission-decision:
+    type: decision
+    title: Admit one fresh Mulgae root
+    objective: Separate explicit new execution from pending invocation resume and retired source replay.
+    prompt: Does explicit authority admit a fresh current-source review after terminal settlement?
+    options:
+      - id: start
+        label: Prepare the newly authorized root
+        criteria: Explicit user intent covers one fresh current-source root and all selected roles, with prior findings and the pending ordinal preserved; refresh the Brief, source preflight and affected verification before execution.
+        guards:
+          - evidence:
+              node: prepare-review
+              item: prior-review-route
+            equals: mulgae
+          - evidence:
+              node: prepare-review
+              item: effective-review-route
+            equals: mulgae
+          - evidence:
+              node: prepare-review
+              item: prior-route-lifecycle-state
+            equals: terminal-incomplete-or-failed
+          - evidence:
+              node: prepare-review
+              item: prior-route-change-readiness
+            equals: safe-to-change
+      - id: reprepare
+        label: Reprepare without starting another review
+        criteria: Current source, explicit authority or terminal settlement is not established; preserve the prior operation and evidence.
+    reason:
+      required: true
+      prompt: Bind the user's exact new-execution authority, current source and retained pending ordinal, or explain the stopped boundary.
+  changed-review-continuity-decision:
+    type: decision
+    title: Verify explicit route-change continuity
+    objective: Require the recorded continuity result before classifying an explicit route change or waiver.
+    prompt: Did the route-change continuity check pass?
+    options:
+      - id: pass
+        label: Classify the admitted change
+        criteria: The recorded direction, authority and prior operation have passing continuity.
+        guards:
+          - evidence:
+              node: prepare-review
+              item: route-direction-continuity
+            field: outcome
+            equals: pass
+      - id: reprepare
+        label: Reprepare the checkpoint
+        criteria: Continuity failed or remains unverified.
+    reason:
+      required: true
+      prompt: Preserve the exact continuity result and remaining authority.
 graph:
   entry: record-plan
   nodes:
@@ -3465,7 +3563,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-plan
@@ -3484,7 +3582,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-plan-assessment
@@ -3544,7 +3642,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-implementation
@@ -3572,7 +3670,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-implementation-assessment
@@ -3613,7 +3711,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-refinement
@@ -3633,7 +3731,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-refinement-assessment
@@ -3673,7 +3771,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-verification
@@ -3693,7 +3791,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-verification-operation
@@ -3760,7 +3858,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-documentation
@@ -3791,7 +3889,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: decide-documentation-assessment
@@ -3843,6 +3941,8 @@ graph:
             - completion-unverified-criteria
             - reported-severity-summary
             - unresolved-valid-findings
+            - review-source-contract
+            - review-source-binding
         - node: record-review-route-direction
           required: false
           items:
@@ -3869,13 +3969,16 @@ graph:
           to: authorize-planned-review-route
           effect: advance
         changed:
-          to: classify-review-route-change
+          to: confirm-changed-review-continuity
           effect: advance
         continued:
           to: authorize-completed-current-review-route
           effect: advance
         resumed:
           to: authorize-current-review-route-resume
+          effect: advance
+        new-review:
+          to: authorize-new-mulgae-review
           effect: advance
     - id: classify-review-route-change
       use: review-route-change-state-decision
@@ -4136,7 +4239,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: confirm-review-route-binding
@@ -4176,6 +4279,8 @@ graph:
             - review-operation
             - assessment-ordinal
             - review-evidence-reference
+            - review-source-contract
+            - review-source-binding
       routes:
         assessed:
           to: confirm-assessment-ordinal
@@ -4193,6 +4298,8 @@ graph:
             - review-operation
             - assessment-ordinal
             - review-evidence-reference
+            - review-source-contract
+            - review-source-binding
       routes:
         assessed:
           to: confirm-assessment-ordinal
@@ -4210,6 +4317,8 @@ graph:
             - review-operation
             - assessment-ordinal
             - review-evidence-reference
+            - review-source-contract
+            - review-source-binding
       routes:
         assessed:
           to: confirm-assessment-ordinal
@@ -4254,6 +4363,8 @@ graph:
             - review-evidence-reference
             - backend-check-result
             - assessment-provenance
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae:
           to: confirm-incomplete-mulgae-provenance
@@ -4272,6 +4383,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         delegated:
           to: record-review-route-direction
@@ -4290,6 +4403,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         delegated:
           to: record-review-route-direction
@@ -4310,6 +4425,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae:
           to: confirm-mulgae-provenance
@@ -4333,6 +4450,8 @@ graph:
             - backend-check-result
             - assessment-provenance
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         mulgae:
           to: confirm-mulgae-provenance
@@ -4354,6 +4473,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         delegated:
           to: confirm-review-findings
@@ -4372,6 +4493,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         delegated:
           to: confirm-review-findings
@@ -4390,6 +4513,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - waiver-summary
+            - review-source-contract
+            - review-source-binding
       routes:
         delegated:
           to: confirm-review-findings
@@ -4487,6 +4612,8 @@ graph:
             - effective-low-findings
             - finding-count-consistency
             - unresolved-valid-findings
+            - review-source-contract
+            - review-source-binding
       routes:
         clean:
           to: confirm-goal-assessment-core
@@ -4515,6 +4642,8 @@ graph:
             - implementation-rework-obligations
             - verification-rework-obligations
             - documentation-rework-obligations
+            - review-source-contract
+            - review-source-binding
         - node: record-low-disposition
           required: false
           items:
@@ -4584,6 +4713,8 @@ graph:
             - assessment-provenance
             - assessment-provenance-kind
             - review-summary
+            - review-source-contract
+            - review-source-binding
       next: choose-review-route-direction
     - id: choose-review-route-direction
       use: review-route-direction-decision
@@ -4613,6 +4744,8 @@ graph:
             - route-authorization-basis
             - checkpoint-requested-direction
             - prior-review-operation
+            - prior-route-lifecycle-state
+            - prior-route-change-readiness
             - prior-review-route
             - route-direction-continuity
       routes:
@@ -4634,6 +4767,8 @@ graph:
             - review-route
             - review-operation
             - review-evidence-reference
+            - review-source-contract
+            - review-source-binding
         - node: record-review-route-direction
           required: true
           items:
@@ -4665,6 +4800,11 @@ graph:
             - effective-medium-or-higher-findings
             - effective-low-findings
             - unresolved-valid-findings
+        - node: review
+          required: true
+          items:
+            - review-source-contract
+            - review-source-binding
         - node: review
           required: true
           items:
@@ -4772,6 +4912,8 @@ graph:
             - effective-medium-or-higher-findings
             - effective-low-findings
             - confirmation-needed-findings
+            - review-source-contract
+            - review-source-binding
         - node: review
           required: true
           items:
@@ -4935,6 +5077,8 @@ graph:
         - node: review
           required: true
           items:
+            - review-source-contract
+            - review-source-binding
             - confirmation-needed-findings
             - unresolved-valid-findings
             - unresolved-implementation-findings
@@ -5051,6 +5195,8 @@ graph:
         - node: review
           required: true
           items:
+            - review-source-contract
+            - review-source-binding
             - confirmation-needed-findings
             - unresolved-valid-findings
             - unresolved-implementation-findings
@@ -5172,6 +5318,11 @@ graph:
         - node: review
           required: true
           items:
+            - review-source-contract
+            - review-source-binding
+        - node: review
+          required: true
+          items:
             - effective-medium-or-higher-findings
             - effective-low-findings
             - finding-count-consistency
@@ -5192,7 +5343,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-review-completion
@@ -5249,6 +5400,8 @@ graph:
             - assessment-provenance
             - finding-count-consistency
             - worker-handoff
+            - review-source-contract
+            - review-source-binding
         - node: judge-review
           required: false
           items:
@@ -5258,7 +5411,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-task
@@ -5320,10 +5473,12 @@ graph:
             - assessment-provenance
             - finding-count-consistency
             - worker-handoff
+            - review-source-contract
+            - review-source-binding
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-task-assessment-applicability
@@ -5389,6 +5544,8 @@ graph:
             - assessment-provenance
             - finding-count-consistency
             - worker-handoff
+            - review-source-contract
+            - review-source-binding
         - node: judge-review
           required: false
           items:
@@ -5398,7 +5555,7 @@ graph:
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-worker/v1
-        role_snapshot_digest: sha256:b8bdac541e6e5127c7698fe3f66cfa2b4137ce83395ded1988645d6d716e1a88
+        role_snapshot_digest: sha256:193732056972228fa535ac49f3986244ea4d67712e1be06b1e79bb98da3d55c5
         max_rounds: 32
         after_accept: retain
       next: judge-stopped-task
@@ -5449,10 +5606,12 @@ graph:
             - assessment-provenance
             - finding-count-consistency
             - worker-handoff
+            - review-source-contract
+            - review-source-binding
       delegation:
         binding_ref: aquarium-native
         role_ref: aquarium-goal-judge/v1
-        role_snapshot_digest: sha256:55f0792add1cb9c21dfb9d2e711cc5366a218a2eb03780623773fda84f3f9bd7
+        role_snapshot_digest: sha256:97fe70694c9150e6eb6176758059b8770fbb81a03c004334d73a427925f46cbd
         max_rounds: 32
         after_accept: retain
       next: confirm-stopped-task-assessment-applicability
@@ -5951,6 +6110,37 @@ graph:
           to: confirm-local-evidence-corrections-eligibility
           effect: advance
         inconsistent:
+          to: prepare-review
+          effect: rework
+    - id: authorize-new-mulgae-review
+      use: new-live-review-admission-decision
+      evidence_from:
+        - node: prepare-review
+          required: true
+          items:
+            - prior-review-route
+            - effective-review-route
+            - prior-route-lifecycle-state
+            - prior-route-change-readiness
+      routes:
+        start:
+          to: enter-mulgae-review-route
+          effect: advance
+        reprepare:
+          to: prepare-review
+          effect: rework
+    - id: confirm-changed-review-continuity
+      use: changed-review-continuity-decision
+      evidence_from:
+        - node: prepare-review
+          required: true
+          items:
+            - route-direction-continuity
+      routes:
+        pass:
+          to: classify-review-route-change
+          effect: advance
+        reprepare:
           to: prepare-review
           effect: rework
 manual_rework:

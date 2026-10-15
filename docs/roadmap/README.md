@@ -53,6 +53,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
+| EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -488,7 +489,7 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 | TASK-089 | Integrate skills, hands-on and the VM release gate | Verify fresh installed-session behavior and explicit manual results; connect a separate exact-combination VM release step without weakening existing offline release QA. | Planned | TASK-088 |
 | TASK-090 | Qualify the Aquarium pilot and freeze producer packets | Accept the real pilot, freeze Sorage packets including Mulgae VM plus external lease/partial-recovery scope, and safely detach Aquarium's own legacy use while retaining shared consumers. | Planned | TASK-089 |
 | TASK-091 | Delegate and accept Podway | Send the authorized producer request, verify the returned implementation, skill/migration evidence and native legacy detachment; do not edit Podway source from Aquarium. | Planned | TASK-090; external Podway implementation return |
-| TASK-092 | Delegate and accept Mulgae | Through Sorage accept producer-owned VM/skill/migration tests and use-mulgae external leases, same-lease recovery, release-before-user-wait, fresh-lease continuation and native compose; reconcile Aquarium references and legacy detachment. | Planned | TASK-091; external Mulgae implementation return |
+| TASK-092 | Delegate and accept Mulgae | Through Sorage accept producer-owned VM/skill/migration tests and use-mulgae external leases, same-invocation continuation, release-before-user-wait and explicitly authorized fresh-lease current-source review; reconcile Aquarium references and legacy detachment. | Planned | TASK-091; external Mulgae implementation return |
 | TASK-093 | Delegate and accept Gaori | Request and accept Gaori-owned VM tests, both native skills, waiting/output and migration evidence, and legacy detachment through Sorage. | Planned | TASK-092; external Gaori implementation return |
 | TASK-094 | Delegate and accept Sorage | Request and accept guest-only broker/Vault/configuration migration and skill tests while stable host Sorage remains the rollout control plane. | Planned | TASK-093; external Sorage implementation return |
 | TASK-095 | Delegate and accept Sanho | Request and accept native commit/push/configuration tests using disposable remotes, full skill verification and safe legacy detachment. | Planned | TASK-094; external Sanho implementation return |
@@ -496,7 +497,7 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 | TASK-097 | Delegate and accept Gul | Request and accept installed UI/backend compatibility, configuration migration, applicable skill inventory and representative hands-on evidence. | Planned | TASK-096; external Gul implementation return |
 | TASK-098 | Delegate and accept Seongge | Request and accept current skill-evaluation/package/backend tests, migration and explicitly scoped live/manual evidence without reviving legacy expansion. | Planned | TASK-097; external Seongge implementation return |
 | TASK-099 | Delegate and accept Gaebokchi | Request and accept provider/account/output and configuration migration tests with guest-only identities and evidence-backed skill/legacy applicability. | Planned | TASK-098; external Gaebokchi implementation return |
-| TASK-100 | Reconcile the full combination and upgrade path | Verify accepted identities, clean-install and prior-combination migration/regression, installed skills, managed/external occupancy and native Mulgae partial-recovery continuation without a second lease wrapper. | Planned | TASK-099 |
+| TASK-100 | Reconcile the full combination and upgrade path | Verify accepted identities, clean-install and prior-combination migration/regression, installed skills, managed/external occupancy and native Mulgae terminal-failure handling and fresh-review continuation without a second lease wrapper. | Planned | TASK-099 |
 | TASK-101 | Retire shared legacy source and approved host state | Remove obsolete common CLI/MCP/setup/status dependencies, preserve production history, and perform separately approved final host/root cleanup after all consumers detach. | Planned | TASK-100 |
 | TASK-102 | Cold-validate, promote documentation and close out | Verify final managed/external behavior and review-recovery acceptance, obtain actual overall/manual results, promote canonical outcomes and settle dossiers under their reference/deletion rules. | Planned | TASK-101 |
 
@@ -617,3 +618,20 @@ Raise the Podway floor to stable v0.2.14 with no version upper bound for Aquariu
 Master accepted the overall Podway support outcome after agent-operated verification.
 The canonical contracts retain the installed qualification limits and separate
 pre-release requirements; Git history retains the settled execution dossier.
+
+## EPIC-023: Adopt Mulgae v0.1.25
+
+**Status:** `Completed`
+
+Raise the Mulgae floor to stable v0.1.25 and align setup, live-source review, failure handling and promoted evidence. This is breaking: users need the matching CLI and skill, deliberate Config v5 migration and compatible managed Procedures. Historical artifacts and admitted snapshots retain their original meaning. Exact candidate upgrade and skill functional verification in UTM remain required before release.
+
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md), [review routing](../specs/review-routing.md), [evidence residency](../../plugins/aquarium/references/evidence-residency.md), and [testing contract](../../TESTING.md#mulgae-v0125-adoption).
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-122 | Adopt release and configuration contracts | Raise the release and envelope floors, align Config v5 setup and preserve private diagnostic boundaries. | Completed | External Mulgae v0.1.25 release |
+| TASK-123 | Adopt live-source review | Replace capture/replay execution with native targets, source evidence, project binding and explicit failed-review continuation. | Completed | TASK-122 |
+| TASK-124 | Add promoted evidence v2 | Preserve native source identity and consistency in durable packages and align hardening and commit handoffs. | Completed | TASK-123 |
+| TASK-125 | Align and verify Mulgae adoption | Align Procedure sources and documentation, verify scoped UTM integration, and retain separate combined-release qualification. | Completed | TASK-122; TASK-123; TASK-124 |
+
+Master directed completion of the scoped Mulgae adoption after Opus/Sonnet review, correction verification and agent-operated UTM checks. The canonical contracts retain the verification limits and the separate pre-release requirements.
