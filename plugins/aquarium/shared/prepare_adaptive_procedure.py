@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Select or prepare Procedure source from an ordinary Worker assignment."""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repository", required=True)
+    parser.add_argument(
+        "--assignment",
+        required=True,
+        help="Ordinary aquarium.assignment/v2 JSON file, or - for stdin",
+    )
+    parser.add_argument(
+        "--podway",
+        help="Exact supported binary; required only for approved preparation",
+    )
+    args = parser.parse_args()
+    try:
+        from adaptive_admission import NativeClient
+        from adaptive_bundles import BundleError
+        from adaptive_definitions import DefinitionError
+        from adaptive_preparation import prepare
+    except ModuleNotFoundError as error:
+        print(
+            json.dumps(
+                {
+                    "status": "missing-prerequisite",
+                    "dependency": error.name,
+                    "interpreter": sys.executable,
+                }
+            )
+        )
+        return 2
+    try:
+        text = (
+            sys.stdin.read()
+            if args.assignment == "-"
+            else Path(args.assignment).read_text()
+        )
+        assignment = json.loads(text)
+        mode = assignment["target"]["procedure_plan"]["mode"]
+        if mode == "prepare" and not args.podway:
+            raise BundleError(
+                "missing-prerequisite",
+                "Approved preparation requires an explicit Podway binary",
+            )
+        client = (
+            NativeClient(args.repository, args.podway) if mode == "prepare" else None
+        )
+        print(
+            json.dumps(
+                prepare(args.repository, assignment, client=client), sort_keys=True
+            )
+        )
+        return 0
+    except (
+        BundleError,
+        DefinitionError,
+        ValueError,
+        KeyError,
+        TypeError,
+        OSError,
+        RecursionError,
+    ) as error:
+        code = getattr(error, "code", "invalid-input")
+        if isinstance(error, DefinitionError):
+            code = "incompatible"
+        print(
+            json.dumps(
+                {
+                    "status": code,
+                    "message": str(error),
+                    "details": getattr(error, "details", {}),
+                }
+            )
+        )
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

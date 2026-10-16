@@ -31,9 +31,10 @@ definition layer described in the [adaptive contract](../../plugins/aquarium/ref
 Selected admission now accepts exact known sources, retains complete ignored
 bundles atomically and resolves them by native tuple across the worktree.
 Retained definitions are self-contained; recovery needs neither mutable origin
-libraries nor a central session database. Selection, composition, full
-qualification and handler activation remain planned. Existing sessions and
-installed source contracts retain their current behavior.
+libraries nor a central session database. Ordinary-assignment selection and
+source-only preparation retain exact ignored candidates separately from adopted
+bundles. Composition, full qualification and handler activation remain planned.
+Existing sessions and installed source contracts retain their current behavior.
 
 ## Exact Authorities
 

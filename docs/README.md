@@ -46,8 +46,10 @@ composition, qualification, retention, promotion and recovery design. These are
 implementation requirements. The [shared adaptive contract](../plugins/aquarium/references/adaptive-procedures.md)
 now defines closed binding/fragment formats and declaration signatures, selected
 exact-known-source admission, atomic locally ignored retention and native-tuple
-recovery. Handler selection and execution remain unactivated. Continue using
-the existing skill and native contracts until the corresponding implementation
+recovery. Explicit ordinary-assignment helpers now select by fit and prepare
+exact source/binding candidates within approved scope. Handler selection and
+execution remain unactivated. Continue using the existing skill and native
+contracts until the corresponding implementation
 and authorized update. The roadmap owns task order and status.
 
 ## Source-of-Truth Precedence

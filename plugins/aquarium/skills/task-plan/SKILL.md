@@ -21,6 +21,13 @@ When invoked directly, perform the shared semantic discovery and return the reso
 
 Do not create a goal, edit files, generate code, run rewriting formatters, stage changes, invoke providers, or alter external state.
 
+Adaptive fit planning may read approved source locations under the
+[shared preparation contract](../../references/adaptive-procedures.md#selection-and-source-only-preparation).
+Preserve complete original requirement sources and unresolved semantic coverage.
+Use only its `plan-only` mode here; source rendering and native authoring belong
+to the owning handler's approved preparation interval. This does not activate
+adaptive handler selection or change this phase's mutation boundary.
+
 ## Produce and Approve the Plan
 
 Produce a decision-complete plan containing:

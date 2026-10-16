@@ -326,8 +326,8 @@ def publication_lock(repository):
         os.close(descriptor)
 
 
-def _ignored_local(repository, root, bundle_id):
-    local = root / ".local"
+def _ignored_local(repository, root, bundle_id, local_name=".local"):
+    local = root / local_name
     relative = str(local.relative_to(repository))
     target = local / bundle_id
     paths = [

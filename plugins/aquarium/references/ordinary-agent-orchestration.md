@@ -66,6 +66,14 @@ optional future hardening does not block acceptance. Request more information
 only when it can change that decision. Scope, mandatory checks, selected review,
 correction authority, actual approvals and commit boundaries remain independent.
 
+Source-only adaptive preparation may carry original source references in `work`
+and selection, coverage and exact prepared-definition data in `target`, under the
+[shared adaptive preparation contract](adaptive-procedures.md#selection-and-source-only-preparation).
+These remain ordinary assignment/plan data. Reconcile full original sources and
+compound criteria independently; a generated coverage plan supplies no second
+requirements authority or Judge passage. Handler activation remains with its
+own implementation task.
+
 ## Ordinary v2 documents
 
 These Aquarium documents are not native wire schemas. Use the exact identifiers

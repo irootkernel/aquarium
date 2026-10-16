@@ -90,6 +90,45 @@ class NativeClient:
             raise BundleError(
                 "unsupported-runtime", f"Native {command} machine contract differs"
             )
+        if (
+            command
+            in {
+                "procedure.format",
+                "procedure.validate",
+                "procedure.vet",
+                "procedure.lint",
+            }
+            and payload.get("schema") == "podway.procedure-diagnostics-result/v1"
+        ):
+            if not isinstance(payload.get("valid"), bool):
+                raise BundleError(
+                    "unsupported-runtime",
+                    "Native authoring diagnostics lack typed validity",
+                )
+            if result.returncode or payload["valid"] is False:
+                raise BundleError(
+                    "native-invalid",
+                    "Procedure failed its native authoring gate",
+                    {"native_exit_status": result.returncode, "native_result": payload},
+                )
+        if (
+            command == "procedure.format"
+            and payload.get("schema") == "podway.procedure-source-result/v1"
+        ):
+            if (
+                not isinstance(payload.get("changed"), bool)
+                or payload.get("target_schema") != "podway.procedure/v2"
+            ):
+                raise BundleError(
+                    "unsupported-runtime",
+                    "Native formatter result lacks typed source status",
+                )
+            if result.returncode or ("--check" in arguments and payload["changed"]):
+                raise BundleError(
+                    "native-invalid",
+                    "Procedure failed its native format gate",
+                    {"native_exit_status": result.returncode, "native_result": payload},
+                )
         if command == "procedure.check":
             if not isinstance(payload.get("valid"), bool):
                 raise BundleError(
@@ -259,17 +298,10 @@ def known_source(source):
     )
 
 
-def reference_binding(source, preview):
-    """Map only exact current canonical bytes whose contracts are already known."""
+def reference_mapping(source):
+    """Return the supported definition mapping without inventing a native digest."""
     record, document = known_source(source)
     family = record["family"]
-    if (
-        preview.get("procedure_id") != document["id"]
-        or preview.get("procedure_version") != document["version"]
-    ):
-        raise BundleError(
-            "incompatible", "Native preview identity differs from the known source"
-        )
     placements = {node["id"]: node for node in document["graph"]["nodes"]}
     nodes, obligations, goals, closeout = {}, {}, [], []
     for identifier, placement in placements.items():
@@ -306,18 +338,31 @@ def reference_binding(source, preview):
         "compatibility": "aquarium.adaptive/v1",
         "family": family,
         "entrypoints": sorted(FAMILY_ENTRYPOINTS[family]),
-        "procedure": {
-            "id": document["id"],
-            "version": document["version"],
-            "digest": preview["procedure_digest"],
-            "source_sha256": sha256(source),
-        },
         "nodes": nodes,
         "parameters": {},
         "obligations": obligations,
         "goal_assessments": goals,
         "closeout": closeout,
         "origins": [],
+    }
+    return binding
+
+
+def reference_binding(source, preview):
+    _, document = known_source(source)
+    if (
+        preview.get("procedure_id") != document["id"]
+        or preview.get("procedure_version") != document["version"]
+    ):
+        raise BundleError(
+            "incompatible", "Native preview identity differs from the known source"
+        )
+    binding = reference_mapping(source)
+    binding["procedure"] = {
+        "id": document["id"],
+        "version": document["version"],
+        "digest": preview["procedure_digest"],
+        "source_sha256": sha256(source),
     }
     validate_definition(binding)
     return binding

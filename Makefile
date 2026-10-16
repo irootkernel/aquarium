@@ -19,6 +19,9 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	plugins/aquarium/shared/adaptive_preparation.py \
+	plugins/aquarium/shared/prepare_adaptive_procedure.py \
+	tests/unit/test_adaptive_preparation_unit.py \
 	plugins/aquarium/shared/adaptive_bundles.py \
 	plugins/aquarium/shared/adaptive_admission.py \
 	plugins/aquarium/shared/manage_adaptive_procedure.py \

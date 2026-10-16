@@ -130,8 +130,21 @@ agent execution. The shared `adaptive_admission.py` and `adaptive_bundles.py`
 helpers admit exact known sources and implement atomic locally ignored
 retention and exact native `(id, version, digest)` recovery across all approved
 searched roots. Their retained complete source/binding does not depend on mutable
-origin libraries. Whole-graph qualification, selection/composition and family
-activation remain reserved for their EPIC-026 implementation tasks.
+origin libraries. Fit selection and source-only preparation now use ordinary
+Worker assignment/plan data and retain ignored `.candidates` bundles without
+adoption. Whole-graph qualification, composition and family activation remain
+reserved for their EPIC-026 implementation tasks.
+
+The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
+takes `--repository`, `--assignment <file-or->` and, for approved preparation,
+`--podway <exact-binary>`. The ordinary assignment's `target.procedure_plan.mode`
+selects read-only `plan-only` or approved source-only `prepare`. Its full input,
+coverage identities, output and exit contract are in the
+[shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md#selection-and-source-only-preparation).
+Exit 0 returns JSON `planned` or `prepared`; exit 2 returns a distinct failure
+status. A prepared target names exact source and binding paths, native tuple,
+source SHA, coverage plan and outstanding qualification. This interface performs
+no session operation or generated-source adoption and changes no handler default.
 
 The [adaptive launcher](../../plugins/aquarium/shared/manage_adaptive_procedure.py)
 accepts `inspect`, `retain` or `resume` with the owning repository, every approved

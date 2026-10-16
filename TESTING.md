@@ -204,6 +204,36 @@ applicable disposable native-test authority; ordinary Make does not invoke it.
 It proves neither actual agent execution nor installed handler behavior and is
 separate from the clean-candidate compatibility gate.
 
+TASK-139 adds objective ordinary-assignment selection/preparation tests in
+`tests/unit/test_adaptive_preparation_unit.py`. They cover adequate known reuse,
+original and compound requirement coverage, adopted-custom obligations, selected
+review aliases and effects, read-only planning, absent authority, source drift,
+identity collision/revision, malformed historical sources, ignored atomic
+candidate retention, custom-name reuse and rejection of generated-source
+admission. Synthetic native oracles establish helper behavior only. Separate
+source-only disposable checks use actual released Podway formatting, validation,
+vetting, lint/check warnings-as-errors and preview on documentation and measured
+performance structures with different producers, evidence and Decisions. They
+start no session and establish neither TASK-141 suitability nor installed
+handler behavior. Full ordinary-assignment fields remain the existing v2 contract.
+
+Preparation controls also exercise actual managed source authority before reuse
+or generation, prior-canonical/workaround provenance, fence-aware Markdown
+sections, malformed containers and parser failures, candidate/binding/base drift
+and mid-preparation currency, native/source identity differences, descriptor
+ownership, publication competition, post-publication verification and cleanup
+failure. The plan-only snapshot includes directories. Produced source structures
+are inspected after preparation; synthetic canonical digests remain distinct
+from raw source SHA.
+
+The task-plan, Worker-guidance and ordinary-orchestration changes still need
+manual functional verification: read-only fit planning; source-only preparation
+under the original effect/review grants; complete original and adopted-source
+handoff without a new requirements authority or a fabricated Judge pass; and
+known reuse without extra assessment cycles. These skill behaviors remain
+unverified by the unit and source-only native checks. Candidate installation and
+installed observations stay with the authorized VM integration work.
+
 Each family implements its own minimum resume path. TASK-145 completes and commits
 VM driver/fixture extensions, including
 explicit canonical-source selection, adaptive semantic checkpoints and the

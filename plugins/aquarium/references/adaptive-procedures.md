@@ -5,8 +5,9 @@
 TASK-137 implements the closed Aquarium definition formats, canonical JSON
 identity helper and necessary declaration signatures described here. TASK-138
 implements selected known-source admission, atomic local retention and exact-key
-recovery. Selection, composition, structural qualification and handler activation
-remain reserved for TASK-139 through TASK-145. These interfaces do not activate
+recovery. TASK-139 implements fit selection and approved source-only preparation
+through an ordinary Worker assignment. Composition, structural qualification and
+handler activation remain reserved for TASK-140 through TASK-145. These interfaces do not activate
 adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
 sources and immutable formal v1 sessions retain their current contracts.
 
@@ -40,6 +41,140 @@ selected source.
 Plan-only stays read-only. Opted-out workflows do no Podway discovery or source
 rendering. Non-Git new-project retains semantic assessment and exact document
 approval without Git initialization or Podway operations.
+
+## Selection and source-only preparation
+
+`shared/adaptive_preparation.py` validates the existing
+`aquarium.assignment/v2` input and returns planning or prepared-definition data
+in that ordinary assignment. It adds no requirements owner or runtime executor.
+The invoking Primary supplies actual approved scope and source access; the
+helper cannot establish semantic completeness or approval authenticity.
+
+`work.requirement_sources` identifies original inputs by `id`, repository-relative
+`path` and exact raw-byte `sha256`. A source has role `requirements` or
+`adopted-customization`; optional `template` and `historical` entries contribute
+no obligations. Unknown role/family values are invalid input; a recognized
+other-family source remains conditional and is not required here. An optional
+`family` limits applicability. Structured original
+JSON has `criteria` rows with `id`, `text` and optional `parts` (`id`, `text`).
+Markdown uses the complete document or a unique `section` selector for an ATX
+or Setext heading (the heading line or its title) and its body. Fenced
+heading-like text remains in the body; a real heading of equal or higher level
+ends the section. Missing, ambiguous or unsupported selectors return
+`not-established`; malformed selector types return `invalid-input`. Paragraphs,
+nested bullets and compound clauses remain in that original basis.
+The helper does not infer their semantic independence from Markdown formatting.
+
+`target.procedure_plan` holds invocation data:
+
+- `family`, `entrypoint`, `mode` (`plan-only` or `prepare`), actual `effects` and
+  selected `review`, including its team and transmission scope;
+- caller-approved repository-relative `discovery_roots`, existing `candidates`
+  and optional `source_dispositions` with concrete reasons;
+- candidate source `path` and raw `sha256`, or an `installed` package filename;
+  an optional binding reference has its own `path` and raw `sha256`;
+- `coverage` rows with original `criterion`, `part`, binding `obligation` and
+  concrete `reason`. Structured criterion identities are `<source-id>:<row-id>`;
+  Markdown uses `<source-id>:whole`. A criterion without declared parts has part
+  `whole`. All original rows and declared compound parts remain due even when the
+  assignment summary omits them. `criterion_links` may trace an assigned summary
+  to multiple original criterion identities;
+- bounded `drafts` with `kind` (`adapt`, `compose` or `author`), concrete `reason`,
+  complete native `document`, definition `mapping` and `coverage`. Adaptation
+  identifies exact `base` source bytes. `revision_of` identifies an adaptive
+  source whose positive decimal revision will be advanced. Composition returns
+  `not-established` until TASK-140 supplies its mechanism.
+
+Discovery compares package defaults and sources in approved locations. An
+adequate unchanged known source is preferred; byte-identical aliases and other
+optional files need no separate disposition after adequate reuse is selected.
+Before generation, discoverable known sources need a current fit consideration
+or concrete limitation. Invalid historical entries remain diagnostics. Source
+presence or a caller's adequacy label establishes neither fit nor suitability.
+Before fit or generation, read the actual conventional managed family slot even
+when it is outside `discovery_roots`. Reuse the inspector's static current, prior
+canonical and supported workaround byte classifications without runtime or health
+probes. Keep prior-canonical/workaround provenance distinct from local
+customization. The coverage plan's `source_authority` retains exact managed
+source text, path and raw SHA. Arbitrary same-ID templates or historical bundles
+do not become adopted sources. Explicitly adopted custom sources and workflow
+rules remain original requirement inputs. Adopted customization obligations
+remain due even if their Procedure has not qualified. Preserve them and record a
+meaningful existing-envelope textual disposition in
+`customization_disposition`; an optional template cannot become policy by being
+listed in discovery.
+
+Mechanical fit checks complete declared original-source coverage, actual
+producer/evidence items and consuming Decision placements. It checks the family,
+entrypoint, effect scope and any explicitly mapped review-route declarations,
+including typed field aliases. Unrelated item names establish no review
+capability. Provider-specialized and new operations may omit a route-choice
+field; preparation preserves the selected review and reports its continuity as
+`not-established` for TASK-141. A contradictory mapped choice is incompatible. Exact known reuse preserves its
+established structural review contract and original assessment boundaries;
+actual selected review execution remains due.
+The exact `review` object must agree with `authority.review`, and definition
+work effects must remain within `effects` and `authority.effects` (the abstract
+`covered-work` effect is resolved by the invocation). Full evidence connections,
+review-control continuity, acceptance provenance and post-gate effects remain
+TASK-141 obligations. Coverage results explicitly retain
+`requires-independent-original-source-assessment`; they are not Judge passage.
+
+`plan-only` reads original sources and approved source locations. It writes no
+files, renders no source, invokes no provider or native command, initializes no
+repository or workflow and creates no goal/session. Unresolved fit returns
+`not-established`. Approved `prepare` requires the existing envelope's
+`authority.preparation` with disclosed `roots`, `write_root` and
+`native_authoring: true`. These fields express authority already granted; they
+supply no additional grant and do not replace `authority.allowed`/`excluded`.
+The disclosed preparation effects include creating candidate parent directories
+and, when needed, exclusively creating their local self-ignore file. Existing
+ignore policy is honored and conflicts are preserved. Preparation performs no
+product, investigation or design-document work.
+
+Prepared source and binding are complete ignored bundles under
+`<write_root>/.candidates/<binding-id>/`. They are separate from adopted `.local`
+bundles and are never resolver admission evidence. Existing ignore/track policy
+is checked before definition bytes are written. Formatting uses no-follow
+regular-file descriptors. New identities are collision-checked across approved
+roots before hashing; changed canonical sources receive an adaptive identity.
+Adaptive revisions are positive decimal strings. Exact native identity and raw
+source SHA remain separate, and exact source/binding bytes are verified before
+atomic retention. Retention and stage directory identities remain bound to held
+descriptors; cleanup removes only the owned stage. Verify the published complete
+bundle and native tuple before returning success. Publication competition is a
+typed conflict, and a cleanup failure remains explicit. Existing identical
+candidates are reused without overwriting.
+The retained copy makes custom filenames or separately located bindings safe to
+handoff without depending on their mutable origins.
+
+New or changed source uses the released native formatter, `format --check`,
+`validate`, `vet`, `lint --warnings-as-errors`, `check --warnings-as-errors` and
+`preview`, with supported `--` source operands and the disposable/approved source
+worktree as process cwd. Native diagnostics and nonzero gate exits remain
+failures. Known unchanged reuse preserves original bytes, supported reference
+mapping and existing independent checkpoints, including Goal's absence of a
+plan Judge. It uses the supported check/preview path and does not acquire new
+authoring gates or an extra suitability cycle. Newly prepared sources retain `TASK-141-exact-target-suitability-required`; native checks alone
+establish no suitability or activation.
+
+The public source-preparation CLI is
+`shared/prepare_adaptive_procedure.py --repository <path> --assignment <json-file-or->`.
+A dash reads the ordinary assignment from stdin. Approved `prepare` also takes
+`--podway <exact-binary>`; plan-only needs no binary. JSON success is `planned`
+with selection/reasons/coverage and `writes: []`, or `prepared` with the original
+assignment plus `target.prepared_definition`: exact source/binding paths, binding
+ID, native tuple, source SHA, coverage plan, qualification limit and observations.
+Its `storage` describes the candidate directory and the already permitted
+directory/self-ignore effects.
+It reports `adoption: not-performed` and unchanged handler activation. Exit 0
+means this bounded operation succeeded; exit 2 reports unresolved authority,
+`source-drift`, `native-invalid`, `incompatible`, `not-established`,
+`unsupported-runtime`, `runtime-failure`, input/path errors or
+`missing-prerequisite`. Native Error v2 codes remain available when the runtime
+refuses an operation. Diagnostics are returned in JSON, not mandatory report
+files. Python, PyYAML and jsonschema must exist in the selected supported helper
+environment; this command installs nothing and assumes no target `.venv`.
 
 ## Families and due capabilities
 
@@ -345,7 +480,7 @@ installed handler behavior.
 | Task | Exact existing owner/rule to amend when implemented |
 | --- | --- |
 | TASK-138 | Implemented: podway-integration and tool-catalog selected/library readiness distinction; dev-setup inspect_tools selected path; atomic writer/resolver and dependency-reporting launcher with lazy imports |
-| TASK-139 | shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
+| TASK-139 | Implemented: shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
 | TASK-140 | shared composition, namespaces, typed ports and self-contained flattening; preserve semantic operation IDs/digests and fragment/session control distinction |
 | TASK-141 | shared structural qualifier and exact suitability/bootstrap lifecycle; procedure-node-contracts adaptive compatibility alongside current canonical inventory |
 | TASK-142 | task-handler/task-orchestration fixed seven-phase loading and unconditional refine discovery; ordinary-agent-orchestration five-bundled-source restriction and goal-judge helper; epic/validation orchestration, worker-guidance, plan-handoff, task-close/task-commit adaptive mappings/recovery; runtime readiness before activation |
