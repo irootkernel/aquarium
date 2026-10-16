@@ -35,6 +35,47 @@ Podway v0.2.14 permits at most 1,024 definitions and 1,024 graph placements, eig
 
 The Task Procedure's `confirm-goal-assessment-core` and `confirm-stopped-goal-assessment-core` placements consume the implementation evidence before `assess-goal` or `assess-stopped-goal`. The assessment placements consume the carried completion assessment and applicable user direction. Check each placement's current references before changing its evidence budget.
 
+## Planned adaptive Procedure implementation
+
+[EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+and its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) define the transition
+from canonical-shape admission to qualified selected-source execution. The
+current installed-source rules above remain effective until implementation and
+an authorized update; registration does not turn managed assets into examples.
+
+Implement adaptive admission alongside canonical/custom/formal checks. Derive
+success from native session-goal outcomes, then verify due assessment, review,
+acceptance and effect-order relationships. Minimal capability signatures may
+recognize different node names and equivalent structures; they do not authenticate
+an agent or require the entire canonical graph. Keep binding/fragment metadata
+outside native schemas and validate complete flattened instances with Podway.
+
+Provide exact native-ID/version/digest resolution and atomic local retention
+before the first adaptive start. A retained bundle must resume without reading
+mutable origin library files. Preserve adopted customization obligations without
+making every optional library entry mandatory, and support approved custom roots.
+Task phase applicability comes from actual work and repository requirements,
+not the presence or absence of a generated node. Update old fixed-phase rules
+only when the corresponding adaptive family is implemented.
+
+After actual consent to an unexpected active topology replacement, use the
+native atomic preserve-start path with its supported fences and outcome recovery.
+Do not emulate it with cancel-then-start, reset or deletion. Normal rework and
+approved terminal successors retain their existing authority.
+
+Pin canonical sources explicitly in fixed VM regressions. Adaptive smoke checks
+the verified admitted mapping, actual native work and a fixture oracle. Complete
+and commit driver/fixture changes in TASK-145 before TASK-146's installed checks;
+local uncommitted helper tests remain distinct from clean-candidate gates.
+Candidate installation stays guest-only.
+
+Ask about whole/fragment preservation at closeout only when actual use and reuse
+value justify it. Apply the accepted tracked library diff after the original
+result and Podway finalization. Specific preservation consent and a separate
+promotion commit grant may be requested together; broad or consumed completion
+grants do not authorize it. Revalidate transformed definitions without claiming
+unobserved runtime success or adding a mandatory preservation Judge round.
+
 ## Compatibility Evidence
 
 A local development Podway binary can establish development-contract evidence. It cannot satisfy a release requirement that names an official archive and checksum. When the release policy requires Podway v0.2.14 compatibility, the required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.14-podway> gaori run test-podway-compat` against the exact Aquarium candidate. The agent performing the check must load `$use-gaori` and follow its transport and waiting policy. Use MCP only when it demonstrably preserves the exact environment input; an agent-shell assignment does not update an already running MCP server. When CLI is required, start it once and await the same process handle. Use the authoritative `make test-podway-compat` target directly only when Gaori is unavailable. Do not start or restart an MCP server or change host configuration to make MCP eligible.

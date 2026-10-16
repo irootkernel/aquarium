@@ -26,6 +26,16 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Herdr, Independent Review, and coordinator-waived review in Task, Epic, and validation workflows.
 - [Supervised agent orchestration](agent-orchestration.md) catalogs ordinary v2 roles, reports and recovery and preserves formal v1 mappings, Procedures and bounded qualification; distribution and repository activation remain separate.
 
+## Adopted work awaiting implementation
+
+[EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+plans goal-specific Procedure selection and composition across seven handlers.
+Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns the planned binding,
+fragment, selected-source admission and user-approved reuse contracts. This
+registration creates no shipped schema or new runtime prerequisite. Implementing
+tasks must promote verified behavior to its exact skill/reference and update
+this catalog without replacing the existing ordinary v2 and review contracts.
+
 ## Exact Authorities
 
 | Domain | Exact authority |

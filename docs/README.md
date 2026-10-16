@@ -37,6 +37,16 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Use the [operations runbooks](ops/README.md) for environment setup, deployment, recurring failures, recovery, and other operator-facing first aid.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
+## Planned adaptive Procedure work
+
+[EPIC-026: ADAPT](roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+is registered for all seven delivery, design and diagnosis handlers. Its
+[Detailed SOT](todo/TODO-ADAPTIVE-PROCEDURES.md) contains the adopted selection,
+composition, qualification, retention, promotion and recovery design. These are
+implementation requirements, not current installed capabilities. Continue using
+the existing skill and native contracts until the corresponding implementation
+and authorized update. The roadmap owns task order and status.
+
 ## Source-of-Truth Precedence
 
 - `docs/roadmap/README.md` alone owns delivery identity and lifecycle state; TODO and deferred feedback never act as competing status authorities.

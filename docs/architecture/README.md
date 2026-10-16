@@ -18,6 +18,17 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 - `aquarium-status` alone owns the private production setup ledger and its installed reporting runtime. Setup skills submit closed terminal-attempt documents; they do not write YAML. Ledger history remains separate from repository authority, live tool health, and `aquarium-dev` enrollment.
 - Canonical documentation describes current structure and delivery intent; it does not replace executable source, Git history, external release proof, or runtime activation evidence.
 
+## Planned adaptive composition
+
+[EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+adds an Aquarium-owned authoring and qualification path that produces a complete
+immutable Procedure v2 before each new session. The
+[Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) separates definition bindings
+from existing native execution and progress. It preserves current role, review
+and delivery contracts and adds no Podway engine, scheduler or central state.
+This is planned architecture; existing sessions and installed source contracts
+remain unchanged by registration.
+
 ## Exact Authorities
 
 The package layout and release version come from the [plugin manifest](../../plugins/aquarium/.codex-plugin/plugin.json). Workflow behavior comes from [skill entrypoints](../../plugins/aquarium/skills/) and their linked references. Installed Procedure bytes come from [Procedure assets](../../plugins/aquarium/assets/podway/procedures/). The [Makefile](../../Makefile), [TESTING.md](../../TESTING.md), and tests own executable verification.

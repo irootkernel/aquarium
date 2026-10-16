@@ -163,6 +163,36 @@ Preparation cannot pass the acceptance gate. Operator decisions
 resume actual native handles without automatic replay. Public observations and
 meaningful application artifacts are required; success sentences are insufficient.
 
+## Planned ADAPT acceptance
+
+[EPIC-026](docs/roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+is planned work. Its
+[acceptance scenarios](docs/todo/TODO-ADAPTIVE-PROCEDURES.md#11-verification-and-evidence)
+cover all seven entrypoints, native goal outcomes, capability/effect ordering,
+review controls, composition, exact recovery and post-finalization Git promotion.
+Include passing canonical and equivalent noncanonical definitions as well as
+native-invalid, incompatible and not-established cases. Old canonical-shape
+rejections are not all adaptive safety failures. Registration is not a result
+and adds no command or automated LLM gate to the current Make aggregate.
+
+TASK-138 supplies the minimal writer/resolver and permitted disposable native
+slice before handler activation. Each family implements its own minimum resume
+path. TASK-145 completes and commits VM driver/fixture extensions, including
+explicit canonical-source selection, adaptive semantic checkpoints and the
+actual Ouroboros/clipboard prerequisites for applicable cases. TASK-146 observes
+the exact committed candidate, rather than its own uncommitted driver changes.
+Local helper/native checks remain distinct from gates requiring a clean commit.
+
+Reuse the existing guest guard, native observations and fixture oracles. Do not
+infer success from terminal names, role labels or supplied mapping alone. Verify
+forward changes after final assessment separately from native rework invalidation;
+test multi-root binding ambiguity, intact-bundle resume after library changes,
+atomic consented supersede, and promotion only after original-work finalization.
+Keep candidate installation in the dedicated VM, complete development behavior
+separate from release startup smoke, and VM collection out of ordinary admission.
+Report actual observations and unperformed cases separately; source and helper
+success cannot establish installed adaptive functionality.
+
 ## Test Frameworks
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |

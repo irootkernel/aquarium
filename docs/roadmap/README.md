@@ -56,6 +56,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
+| EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -691,3 +692,73 @@ source closeout and subject to the existing pre-release policy.
 | TASK-134 | Enable cross-agent Herdr review teams | Let a fresh cross-AI main reviewer use multiple native subagents, including a UI/UX specialist when applicable, and return their evidence with its synthesis. | Completed | TASK-130 |
 | TASK-135 | Establish review-result and decision handoffs | Define transport-specific production, submission and receiver readback; recover existing results before considering fresh review, and carry finding decisions and correction evidence into subsequent Briefs. | Completed | TASK-131; TASK-132; TASK-133; TASK-134 |
 | TASK-136 | Verify review workflows and promote documentation | Review delivery, readback and same-operation recovery contracts; use focused fixtures where executable interfaces own the behavior, and promote canonical outcomes without a dedicated VM E2E suite. | Completed | TASK-135 |
+
+## EPIC-026: ADAPT: Goal-adaptive Procedure orchestration
+
+**Status:** `Planned`
+
+**Detailed SOT:** [Adaptive Procedure design and acceptance](../todo/TODO-ADAPTIVE-PROCEDURES.md).
+
+Let `task-handler`, `epic-handler`, `epic-validator`, `new-feature`,
+`new-project`, `refactor` and `war-room` select, author and compose Procedures
+for their actual goals. Reuse suitable complete definitions or fragments while
+preserving original requirements, independent assessment, current review
+strategies, native result delivery and each workflow's effect boundaries.
+
+The approved execution envelope covers automatic selection, bounded authoring,
+validation, local retention and adoption. After successful use and assessment
+of future reuse value, ask Master whether to preserve the whole definition or a
+useful fragment in the repository's reusable library. Specific promotion consent
+is required even when broad file-editing or commit authority exists. A declined
+promotion changes no tracked file and does not request local recovery deletion.
+Present preservation candidates at closeout, then apply tracked promotion after
+the original result and Podway finalization, with its own explicit commit scope
+when committing. Content consent and commit authority may be requested together.
+Use the native atomic preserve-start path only after consent to an unexpected
+running-session topology replacement. Declared rework and approved normal
+successor sessions continue without repeated questions.
+
+Build on completed EPIC-024 and EPIC-025 source contracts. The planning baseline
+is `4840434b80da08e8f18302d80515a880947ecca8`; later improvements must be preserved.
+Edit Aquarium only and use supported released Podway Procedure v2. No Podway
+producer change, optimization completion, live graph mutation, Haepari service,
+central catalog or new native-authentication system is required.
+
+This is a breaking Aquarium workflow/admission update, not a release assignment.
+Preserve legacy/custom/formal sources and immutable sessions. Keep candidate
+installation and observed handler verification in the dedicated UTM VM under
+separately applicable authority. Reuse the existing VM driver and keep complete
+development functionality separate from release upgrade/startup smoke.
+Registration does not activate the feature, start implementation, install tools,
+mutate sessions, stage, commit or publish.
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-137 | Establish adaptive contracts and preservation baseline | Define native success and capability obligations, conditional Task phases, source authority, binding/fragment identities and exact recovery, suitability and promotion policies; preserve EPIC-024/025. | Planned | EPIC-024; EPIC-025 |
+| TASK-138 | Admit selected Procedure definitions | Separate adaptive session/route admission from five-ID and five-file coupling; ship the minimal atomic writer and exact-key resolver, preserve adopted customization, and prove the known-source native start/resume slice. | Planned | TASK-137 |
+| TASK-139 | Select and author work-specific Procedures | Implement fit-based reuse and bounded generation, original-source coverage, approved preparation and selected-review preservation without new native qualification prerequisites. | Planned | TASK-138 |
+| TASK-140 | Compose reusable Procedures and fragments | Resolve typed ports and namespaces without changing operation identities; materialize self-contained Procedure v2 candidates and validate work-fragment versus session-control responsibilities. | Planned | TASK-139 |
+| TASK-141 | Qualify structure and independent plan suitability | Verify native achieved outcomes, assessment/effect order, review control and acceptance provenance with positive/negative/not-established cases; integrate exact suitability without duplicate Judge cycles. | Planned | TASK-140 |
+| TASK-142 | Integrate adaptive delivery and validation | Activate Task/Goal/Validation with mapped conditional phases and working recovery; preserve reviewer teams, in-session route control, local settlement, native outcomes and acceptance/finalization boundaries. | Planned | TASK-141 |
+| TASK-143 | Integrate adaptive design workflows | Adapt new-feature, new-project and refactor with upstream QA, exact-diff approval, non-implementation and non-Git/opt-out boundaries. | Planned | TASK-142 |
+| TASK-144 | Integrate adaptive diagnosis | Activate diagnosis with safe reproduction and truthful incomplete/no-work delivery; implement shared consented atomic supersede and amend conflicting lifecycle rules without resetting authority. | Planned | TASK-143 |
+| TASK-145 | Complete promotion, recovery and installed-test preparation | Finish cross-family recovery, post-finalization consent-based promotion and guidance compatibility; complete and commit VM driver/fixtures, source-pinned regressions and adaptive checkpoints for TASK-146. | Planned | TASK-144 |
+| TASK-146 | Verify adaptive orchestration and promote outcomes | Observe integrated functionality across seven handlers on committed predecessor implementation/test artifacts; verify failure, recovery and promotion, route defects to their owners, and prepare actual Epic acceptance. | Planned | TASK-145 |
+
+Each Task includes focused verification and affected documentation. TASK-146
+checks integration rather than postponing all testing until the end. The dossier
+owns task-level acceptance and scenario IDs; this table alone owns ordering,
+dependencies and lifecycle. Implementation starts with TASK-137 under a newly
+approved execution envelope, without requiring the unfinished ADAPT path to
+implement itself. Authoring helpers do not activate handlers early; each family
+switches only in its integration task with working storage and recovery.
+Task-local helper/native checks remain distinct from clean-commit official and
+installed checks. TASK-145 prepares the committed test artifacts, and TASK-146
+uses them rather than testing its own uncommitted driver.
+
+The revised acceptance covers native goal outcomes instead of terminal labels,
+minimal semantic capability signatures, forward changes after assessment,
+review control and user-versus-delegated acceptance, and exact binding recovery.
+Equivalent noncanonical graphs and approved custom roots remain supported.
+Optional library files do not become repository obligations by existing, and
+preservation does not require new native authentication or extra routine review.
