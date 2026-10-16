@@ -1,0 +1,1832 @@
+{
+  "schema": "aquarium.known-procedure-sources/v1",
+  "mapping_version": "1",
+  "sources": [
+    {
+      "source_sha256": "sha256:79a1430528934d2941551432703a68be28047bc3e8095bc52acf24c7a057466f",
+      "id": "aquarium-task-v2",
+      "version": "32",
+      "family": "task",
+      "definitions": {
+        "plan-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "implementation-entry-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "implementation-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "verification-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "refinement-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "documentation-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "review-checkpoint-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.review-routing/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "review-route-entry-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-change-state-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "current-review-route-resume-authorization-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "authorized-review-route-entry-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "planned-review-route-authorization-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "incomplete-review-route-authorization-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "completed-review-route-authorization-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "completed-current-review-route-authorization-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.review-control/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "review-route-binding-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-operation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "assessment-ordinal-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "incomplete-review-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-provenance-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-confirmation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "completion-status-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "backend-check-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "task-rework-authority-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "implementation-owner-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "verification-owner-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "documentation-owner-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-direction-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "review-route-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-stop-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "user-direction-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "user-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-disposition-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "low-result-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "goal-assessment-core-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-boundary-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "stopped-core-gap-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "stopped-goal-boundary-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "outcome-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "closeout-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.closeout/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "task-rework-basis-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.phase-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "final-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.task.final-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "semantic-plan-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-verification-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "verification-operation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-documentation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "task-assessment-candidate": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-assessment-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-stopped-assessment-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-plan-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "semantic-plan-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-plan-followup-authority-evidence": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-verification-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "semantic-verification-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-verification-followup-authority-evidence": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-documentation-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "semantic-documentation-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-documentation-followup-authority-evidence": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-review-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "semantic-review-followup-authority-evidence": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-handling-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-candidate-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-current-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-finding-consistency-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "new-live-review-admission-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "changed-review-continuity-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    },
+    {
+      "source_sha256": "sha256:99ae1a42372ec91c8de98cfc61e99c1defc4c99615610bd598c57418c01ea9b5",
+      "id": "aquarium-goal-v2",
+      "version": "35",
+      "family": "goal",
+      "definitions": {
+        "work-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "evidence-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.review-control/v1",
+              "fields": {}
+            },
+            {
+              "signature": "aquarium.goal.review-routing/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "review-route-binding-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-operation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "changed-review-operation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "assessment-ordinal-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "assessment-extra-ordinal-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "route-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "incomplete-route-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-settlement-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "review-route-stop-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "review-basis-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "operational-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "closeout-substitute-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "finding-validity-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "waived-finding-validity-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "hardening-deferral-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "completion-status-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "goal-rework-authority-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-handling-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "hardening-review-eligibility-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "hardening-record-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-disposition-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "low-result-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "user-direction-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "user-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "goal-assessment-core-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-core-gap-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "stopped-goal-boundary-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "hardening-deferral-disposition": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "outcome-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.acceptance/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "stopped-approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "closeout-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.closeout/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.phase-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "final-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.goal.final-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "semantic-work-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-work-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "record-work-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-work-evidence": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "record-work-evidence-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "semantic-goal-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-goal-evidence-evidence": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "record-goal-evidence-evidence-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-goal-rework-basis": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-goal-rework-effect-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "closeout-substitute-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "goal-assessment-candidate": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-assessment-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-final-assessment-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-boundary-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-handling-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-candidate-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-current-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-finding-consistency-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "new-live-review-admission-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    },
+    {
+      "source_sha256": "sha256:23ce1dff7afe24fc3e2aa0438db6e9c3b7a162f1e131061181018d5ec80a769a",
+      "id": "aquarium-validation-v2",
+      "version": "34",
+      "family": "validation",
+      "definitions": {
+        "baseline-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "audit-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.audit-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "remediation-confirmation-audit-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.confirmation-audit-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "gap-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "re-audit-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "remediation-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "audit-low-basis-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-review-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.review-control/v1",
+              "fields": {}
+            },
+            {
+              "signature": "aquarium.validation.review-routing/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "final-review-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "completion-status-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-review-route-binding-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "assessment-ordinal-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "assessment-provenance-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-backend-applicability-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-backend-check-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-route-settlement-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "current-route-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "settled-route-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-review-operation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-review-readiness-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-review-confirmation-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "required-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "applicable-blocker-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "validation-rework-authority-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "user-direction-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "review-direction-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-disposition-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "low-result-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "low-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "disposition-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "goal-assessment-core-record": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-boundary-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "outcome-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.acceptance/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "stopped-approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "closeout-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.closeout/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "remediation-audit-scope-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "validation-pass-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "validation-pass-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "remediation-audit-authority-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "current-audit-basis-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.phase-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "remediation-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.correction-group-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "final-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.validation.final-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "confirm-audit-checkpoint": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "confirm-re-audit-checkpoint": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "decide-remediation-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "remediation-group-settlement-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-remediation-group-settlement": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "decide-remediation-groups": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "decide-validation-evidence-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-audit-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-audit-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-re-audit-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-re-audit-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-remediation-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-remediation-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-remediation-evidence": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-remediation-evidence-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-validation-evidence-followup": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-validation-evidence-followup-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-validation-rework-basis": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-validation-rework-effect-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "stopped-core-gap-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "validation-assessment-candidate": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-judge-validation-applicability": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "confirm-judge-stopped-validation-applicability": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-handling-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-correction-candidate-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-current-completion-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "local-required-evidence-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "new-live-review-admission-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    },
+    {
+      "source_sha256": "sha256:3ca2e4d6bd7506033a575eada996a15853334ec5e9570b86894e7ded28e94a08",
+      "id": "aquarium-design-v2",
+      "version": "11",
+      "family": "design",
+      "definitions": {
+        "context-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "discovery-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "draft-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "challenge-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "quality-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.upstream-quality/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "quality-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "application-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.application-approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "closeout-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.closeout/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "judge-discovery-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.phase-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-discovery-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-discovery-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-discovery-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-discovery-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-discovery-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "judge-quality-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.quality-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-quality-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "judge-application-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.application-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-application-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-assessment-candidate": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.final-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "confirm-design-assessment-applicability": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "confirm-application-approval": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-approval-gap": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-approval-gap-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    },
+    {
+      "source_sha256": "sha256:07e0f59d3681b37584199ba94bb37a3c0d0ead7f527b1af934cac0202f13dcc9",
+      "id": "aquarium-war-room-v2",
+      "version": "11",
+      "family": "diagnosis",
+      "definitions": {
+        "baseline-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "investigation-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "cause-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "scope-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "proposal-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "quality-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.upstream-quality/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "quality-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "approval-decision": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "documentation-record": {
+          "role": "worker",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.application-approval/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "goal-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "closeout-record": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.closeout/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "judge-investigation-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.phase-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-investigation-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-investigation-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-investigation-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-investigation-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-investigation-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "judge-quality-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.quality-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-quality-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "judge-documentation-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.documentation-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-documentation-assessment": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-documentation-rework": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-documentation-rework-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-documentation-evidence-needed": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-documentation-evidence-needed-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-assessment-candidate": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-judge-assessment-record": {
+          "role": "judge",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.diagnosis.final-assessment/v1",
+              "fields": {}
+            }
+          ]
+        },
+        "confirm-diagnosis-assessment-applicability": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "confirm-documentation-approval": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-documentation-approval-gap": {
+          "role": "orchestrator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-documentation-approval-gap-authority": {
+          "role": "orchestrator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    }
+  ]
+}

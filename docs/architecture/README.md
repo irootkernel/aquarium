@@ -28,8 +28,12 @@ from existing native execution and progress. It preserves current role, review
 and delivery contracts and adds no Podway engine, scheduler or central state.
 The shared definition parser and declaration-signature helper now implement the
 definition layer described in the [adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
-Selection, composition, admission and handler activation remain planned;
-existing sessions and installed source contracts retain their current behavior.
+Selected admission now accepts exact known sources, retains complete ignored
+bundles atomically and resolves them by native tuple across the worktree.
+Retained definitions are self-contained; recovery needs neither mutable origin
+libraries nor a central session database. Selection, composition, full
+qualification and handler activation remain planned. Existing sessions and
+installed source contracts retain their current behavior.
 
 ## Exact Authorities
 

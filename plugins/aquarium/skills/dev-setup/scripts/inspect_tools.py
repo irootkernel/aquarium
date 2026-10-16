@@ -4370,8 +4370,12 @@ def inspect_podway(
     repository: Path,
     timeout_seconds: float,
     agent_skill: dict[str, Any] | None = None,
+    executable: str | None = None,
 ) -> dict[str, Any]:
     tool = base_tool("podway")
+    if executable is not None:
+        tool["executable"] = executable
+        tool["installed"] = True
     tool["agent_skill"] = (
         agent_skill
         if agent_skill is not None
@@ -4503,6 +4507,12 @@ def inspect_podway(
     tool["legacy_state_detected"] = False
     tool["version_supported"] = False
     tool["identity"] = None
+    tool["runtime_readiness"] = {
+        "state": "unavailable",
+        "session_procedure": None,
+        "session_lifecycle": None,
+        "session_contract_supported": None,
+    }
     if not tool["installed"]:
         for entry in managed:
             if entry["source_state"] in {"canonical", "pending_validation"}:
@@ -4543,6 +4553,9 @@ def inspect_podway(
 
     initialized = tool["configuration"][0]["present"]
     session_contract_ok = True
+    native_session_contract_ok = True
+    native_session_procedure = None
+    native_session_lifecycle = None
     if initialized:
         doctor_probe = json_probe(
             [tool["executable"], "doctor", "--json"], repository, timeout_seconds
@@ -4566,6 +4579,7 @@ def inspect_podway(
         ):
             normalized_doctor["result"] = {"healthy": doctor_payload["healthy"]}
         session_payload_valid = False
+        native_session_payload_valid = False
         if isinstance(session_result, dict):
             procedure = session_result.get("procedure")
             session = session_result.get("session")
@@ -4588,6 +4602,7 @@ def inspect_podway(
                 "session_present": isinstance(session, dict),
                 "session_lifecycle": session.get("lifecycle")
                 if isinstance(session, dict)
+                and isinstance(session.get("lifecycle"), str)
                 and session.get("lifecycle")
                 in {"prepared", "running", "completed", "cancelled"}
                 else None,
@@ -4600,13 +4615,15 @@ def inspect_podway(
                 and isinstance(node.get("graph_node_id"), str),
             }
             allowed_procedure_ids = {Path(name).stem for name in PODWAY_PROCEDURES}
-            session_payload_valid = bool(
+            native_session_payload_valid = bool(
                 delegation_valid
                 and isinstance(procedure, dict)
                 and procedure.get("schema") == "podway.procedure/v2"
-                and procedure.get("id") in allowed_procedure_ids
+                and isinstance(procedure.get("id"), str)
+                and re.fullmatch(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", procedure["id"])
+                and len(procedure["id"]) <= 64
                 and isinstance(procedure.get("version"), str)
-                and re.fullmatch(r"\d+", procedure["version"])
+                and 1 <= len(procedure["version"]) <= 64
                 and isinstance(procedure.get("digest"), str)
                 and re.fullmatch(r"sha256:[0-9A-Za-z._-]{1,128}", procedure["digest"])
                 and isinstance(session, dict)
@@ -4616,15 +4633,28 @@ def inspect_podway(
                     session["id"],
                     re.IGNORECASE,
                 )
+                and isinstance(session.get("lifecycle"), str)
                 and session.get("lifecycle")
                 in {"prepared", "running", "completed", "cancelled"}
                 and isinstance(session.get("revision"), int)
                 and not isinstance(session.get("revision"), bool)
             )
+            session_payload_valid = native_session_payload_valid and (
+                procedure["id"] in allowed_procedure_ids
+                and re.fullmatch(r"\d+", procedure["version"]) is not None
+            )
+            if native_session_payload_valid:
+                native_session_procedure = {
+                    field: procedure[field] for field in ("id", "version", "digest")
+                }
+                native_session_lifecycle = session["lifecycle"]
         tool["probes"]["doctor"] = normalized_doctor
         tool["probes"]["session_status"] = normalized_session
         session_contract_ok = (
             normalized_session["ok"] and session_payload_valid
+        ) or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
+        native_session_contract_ok = (
+            normalized_session["ok"] and native_session_payload_valid
         ) or normalized_session.get("error_code") == "SESSION_NOT_FOUND"
         tool["migration_kinds"]["runtime_contract"] = any(
             probe.get("error_code")
@@ -4751,6 +4781,22 @@ def inspect_podway(
         and doctor_ok
         and session_contract_ok
     )
+    tool["runtime_readiness"] = {
+        "state": "ready"
+        if initialized
+        and version_probe["ok"]
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+        and identity_ok
+        and doctor_ok
+        and native_session_contract_ok
+        else "degraded",
+        "session_procedure": native_session_procedure,
+        "session_lifecycle": native_session_lifecycle,
+        "session_contract_supported": native_session_contract_ok
+        if initialized
+        else None,
+    }
     if present_count == 0:
         tool["status"] = "installed" if healthy else "degraded"
     elif (
@@ -4776,6 +4822,145 @@ def inspect_podway(
                 qualified=tool["readiness_status"] == "ready",
             )
     return tool
+
+
+def inspect_selected_podway(
+    repository,
+    timeout_seconds,
+    *,
+    source=None,
+    roots=(),
+    entrypoint=None,
+    route=None,
+    resume=False,
+    bootstrap=None,
+    customization_basis=None,
+    executable=None,
+):
+    """Inspect only selected Podway capabilities; keep broad library diagnostics."""
+    shared = Path(__file__).resolve().parents[3] / "shared"
+    sys.path.insert(0, str(shared))
+    try:
+        from adaptive_admission import NativeClient, resume_selected, selected_source
+        from adaptive_bundles import BundleError
+    except ModuleNotFoundError as error:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "selected_procedure": {
+                "status": "missing-prerequisite",
+                "dependency": error.name,
+                "interpreter": sys.executable,
+            },
+            "tools": {},
+        }
+    finally:
+        sys.path.remove(str(shared))
+    tool = (
+        inspect_podway(repository, timeout_seconds, executable=executable)
+        if executable is not None
+        else inspect_podway(repository, timeout_seconds)
+    )
+    result = {
+        "schema_version": SCHEMA_VERSION,
+        "repository": repository_inventory(repository, timeout_seconds),
+        "inspection_scope": "selected-podway",
+        "tools": {"podway": tool},
+    }
+    runtime = tool["runtime_readiness"]
+    client = NativeClient(repository, tool.get("executable"), timeout_seconds)
+    try:
+        if runtime["state"] != "ready":
+            raise BundleError(
+                "runtime-unavailable",
+                "Native CLI/workspace/session health is not established",
+                {
+                    "runtime_readiness": runtime,
+                    "probes": {
+                        name: tool.get("probes", {}).get(name)
+                        for name in ("version", "identity", "doctor", "session_status")
+                    },
+                    "migration_kinds": tool.get("migration_kinds", {}),
+                    "identity": tool.get("identity"),
+                    "version_supported": tool.get("version_supported"),
+                    "platform": tool.get("platform"),
+                },
+            )
+        if resume:
+            if runtime.get("session_procedure") is None:
+                raise BundleError(
+                    "missing-session", "There is no selected native session to resume"
+                )
+            bundle = resume_selected(
+                repository,
+                roots,
+                runtime["session_procedure"],
+                client=client,
+                bootstrap=bootstrap,
+            )
+            source = str(Path(bundle["path"]) / "procedure.yaml")
+        admission = selected_source(
+            repository,
+            Path(source),
+            roots=roots,
+            entrypoint=entrypoint,
+            route=route,
+            runtime_ready=True,
+            client=client,
+        )
+        family = admission["binding"]["family"]
+        adopted = [
+            entry
+            for entry in tool["managed_procedures"]
+            if entry["update_explanation"] == "local_customization"
+            and (
+                Path(entry["path"]).stem
+                == "aquarium-"
+                + ("war-room" if family == "diagnosis" else family)
+                + "-v2"
+            )
+        ]
+        if adopted and not customization_basis:
+            raise BundleError(
+                "not-established",
+                "Selected alternative needs the existing envelope's adopted-customization obligation disposition",
+            )
+        procedure = runtime.get("session_procedure")
+        key = admission["binding"]["procedure"]
+        conflict = procedure is not None and any(
+            procedure[field] != key[field] for field in ("id", "version", "digest")
+        )
+        result["selected_procedure"] = {
+            "status": "session-conflict" if conflict else "ready",
+            "source": str(source),
+            "binding": admission["binding"],
+            "retention_status": admission["retention"]["status"],
+            "retention": {
+                field: admission["retention"][field]
+                for field in ("status", "diagnostics", "aliases")
+            },
+            "session": {
+                "state": runtime.get("session_lifecycle")
+                if procedure is not None
+                else "none",
+                "procedure": procedure,
+                "definition_conflict": conflict,
+                "work_identity_reconciliation_required": procedure is not None,
+            },
+            "session_mode": "selected-resume" if resume else "source-inspection",
+            "adopted_customizations": adopted,
+            "customization_basis": customization_basis,
+            "provider_readiness": "owned-by-selected-review-route",
+            "work_identity_reconciliation_required": procedure is not None,
+            "interpreter": sys.executable,
+        }
+    except (BundleError, ValueError) as error:
+        result["selected_procedure"] = {
+            "status": getattr(error, "code", "corrupt"),
+            "message": str(error),
+            "interpreter": sys.executable,
+            "details": getattr(error, "details", {}),
+        }
+    return result
 
 
 def inspect(
@@ -4892,7 +5077,64 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument("--expected-mulgae-mcp", choices=("global", "local", "none"))
     parser.add_argument("--expected-gaori-mcp", choices=("global", "local", "none"))
+    selected = parser.add_mutually_exclusive_group()
+    selected.add_argument(
+        "--selected-podway-source",
+        help="Inspect one explicit selected Procedure without other provider probes",
+    )
+    selected.add_argument(
+        "--resume-selected-podway",
+        action="store_true",
+        help="Resolve the existing selected session by its native tuple",
+    )
+    parser.add_argument(
+        "--podway-root",
+        action="append",
+        default=[],
+        help="One approved searched Procedure root; supply every root",
+    )
+    parser.add_argument(
+        "--podway-entrypoint",
+        choices=(
+            "task-handler",
+            "epic-handler",
+            "epic-validator",
+            "new-feature",
+            "new-project",
+            "refactor",
+            "war-room",
+        ),
+    )
+    parser.add_argument(
+        "--podway-review-route",
+        choices=("mulgae", "herdr", "independent-review", "waived"),
+    )
+    parser.add_argument(
+        "--podway-bootstrap",
+        help="Additional selected binding locator to cross-check on resume",
+    )
+    parser.add_argument(
+        "--podway-customization-basis",
+        help="Existing approved envelope's adopted-customization obligation disposition",
+    )
     arguments = parser.parse_args()
+    if arguments.selected_podway_source or arguments.resume_selected_podway:
+        if not arguments.podway_root or not arguments.podway_entrypoint:
+            raise InspectionError(
+                "invalid_arguments",
+                "Selected admission needs all approved --podway-root values and --podway-entrypoint",
+            )
+    elif (
+        arguments.podway_root
+        or arguments.podway_entrypoint
+        or arguments.podway_review_route
+        or arguments.podway_bootstrap
+        or arguments.podway_customization_basis
+    ):
+        raise InspectionError(
+            "invalid_arguments",
+            "Selected-source arguments require selected admission or resume",
+        )
     if arguments.sorage_upgrade_preflight_complete and not arguments.include_sorage:
         raise InspectionError(
             "invalid_arguments",
@@ -4918,6 +5160,20 @@ def emit(payload: dict[str, Any]) -> None:
 def main() -> int:
     try:
         arguments = parse_arguments()
+        if arguments.selected_podway_source or arguments.resume_selected_podway:
+            result = inspect_selected_podway(
+                resolve_repository(arguments.repository, arguments.timeout_seconds),
+                arguments.timeout_seconds,
+                source=arguments.selected_podway_source,
+                roots=arguments.podway_root,
+                entrypoint=arguments.podway_entrypoint,
+                route=arguments.podway_review_route,
+                resume=arguments.resume_selected_podway,
+                bootstrap=arguments.podway_bootstrap,
+                customization_basis=arguments.podway_customization_basis,
+            )
+            emit(result)
+            return 0 if result["selected_procedure"]["status"] == "ready" else 2
         emit(
             inspect(
                 arguments.repository,

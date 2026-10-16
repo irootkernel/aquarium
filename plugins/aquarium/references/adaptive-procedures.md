@@ -3,9 +3,10 @@
 ## Status and ownership
 
 TASK-137 implements the closed Aquarium definition formats, canonical JSON
-identity helper and necessary declaration signatures described here. Selection,
-composition, structural qualification, storage, admission and handler activation
-remain reserved for TASK-138 through TASK-145. These interfaces do not activate
+identity helper and necessary declaration signatures described here. TASK-138
+implements selected known-source admission, atomic local retention and exact-key
+recovery. Selection, composition, structural qualification and handler activation
+remain reserved for TASK-139 through TASK-145. These interfaces do not activate
 adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
 sources and immutable formal v1 sessions retain their current contracts.
 
@@ -84,9 +85,12 @@ binding item references against the separate native source belongs to TASK-141.
 The helper currently requires Python and `jsonschema` from a supported
 environment. This repository supplies them through its development requirements;
 arbitrary target repositories cannot assume this checkout's `.venv` exists.
-TASK-138 must provide a usable selected-admission interpreter and preserve legacy
-paths without eager adaptive dependencies. TASK-142 establishes runtime readiness
-before family activation; TASK-145 owns global/setup guidance. Each uses a
+Selected admission reports its interpreter and missing `jsonschema` or YAML
+dependency before native work. Use an available supported Python environment;
+the launcher performs no installation. The setup inspector imports adaptive
+dependencies only on its explicit selected path, preserving legacy invocations.
+TASK-142 establishes runtime readiness before family activation; TASK-145 owns
+global/setup guidance. Each uses a
 supported installed environment and reports missing prerequisites. This contract
 authorizes no dependency installation or host runtime change.
 
@@ -254,7 +258,7 @@ outcome or authority reset substitutes for the transaction.
 Retention is automatic inside the approved preparation scope and locally ignored,
 normally under `.podway/procedures/.local/<bundle-id>/`. Approved custom roots and
 existing suitable ignore policy remain supported. Atomic publication and resolver
-uniqueness arrive together in TASK-138. No automatic Git inclusion, TTL eviction,
+uniqueness are implemented together. No automatic Git inclusion, TTL eviction,
 central session map or origin lookup is required for resume.
 
 After actual successful use establishes distinct reuse value, offer useful whole
@@ -269,11 +273,78 @@ recovery and completed original work. Changed/extracted definitions receive fres
 schema/port checks and representative flattened native validation; source runtime
 success never transfers to them.
 
+## Selected admission, retention and recovery
+
+[manage_adaptive_procedure.py](../shared/manage_adaptive_procedure.py) exposes
+`inspect`, `retain` and `resume`. Supply the owning `--repository`, every approved
+searched `--root`, the invoking `--entrypoint` and applicable `--review-route`.
+`inspect` and `retain` also need `--source`; retention needs an approved
+`--write-root`. `--podway` selects an available executable explicitly. The CLI
+performs native identity, workspace health, source checks and selected-route
+checks. It never starts, begins, replaces or advances a session. Current native
+state and a different-definition conflict remain visible; even the same
+definition requires the Orchestrator to reconcile actual work and authority.
+Retention can prepare a successor while preserving that conflict.
+Aquarium's source-repository interface catalog, `docs/specs/local-interfaces.md`,
+defines both CLIs' flags, result fields, failure details and exit statuses. Target
+repositories do not need that development catalog for admission.
+
+Before TASK-141, adaptive admission accepts only exact sources in
+[known-sources-v1.json](../assets/adaptive/known-sources-v1.json), with their
+supported reference binding. This bounded contract freezes source hashes and
+role/capability mappings within mapping version 1. Existing entries remain stable
+when unrelated templates or signatures change; necessary mapping changes require
+a distinct native revision. It is separate from the existing canonical,
+same-ID custom and formal-session contracts. Unknown sources return
+`not-established`, never a fabricated qualification. Whole-graph qualification
+and suitability remain planned.
+
+The selected setup inspector retains full managed-library diagnostics and
+same-family adopted-customization visibility. An alternative needs the existing
+envelope's obligation disposition through `--customization-basis` on the launcher
+or `--podway-customization-basis` on the inspector. This records an existing
+decision; it grants no replacement or scope authority. Optional templates and
+historical local bundles contribute no new obligations. Unselected providers
+are not probed by this path; the selected review route owns provider readiness.
+
+[adaptive_bundles.py](../shared/adaptive_bundles.py) publishes complete
+`procedure.yaml` and canonical `binding.json` together under
+`<approved-root>/.local/<bundle-id>/`. It validates regular non-symlink ancestry,
+actual target ignore rules and untracked state. Suitable existing ignore policy
+is preserved; a new local policy is exclusive and cannot overwrite a conflict.
+A short worktree Git-directory lock serializes writers across all supplied roots;
+exclusive atomic rename publishes the complete bundle. Interrupted staging is
+not adopted. The lock contains no session or progress data.
+
+Resolve by native `(id, version, digest)` readback before `begin` or work. Native
+preview verifies the tuple, independently of the source-file SHA-256. Identical
+aliases are accepted; an existing same-key binding reuses its original source
+bytes. Different same-key bindings are ambiguous and stop. Selected missing,
+corrupt, unsafe or unsupported material also stops without regeneration or a
+legacy fallback. Unassociated historic damage remains diagnostic, with no claim
+that its key was established. An optional bootstrap path cross-checks the result
+and cannot replace exact-key lookup. Recovery uses retained source and binding;
+mutable origin libraries are not dependencies.
+`missing` denotes absence without an associated retained candidate. Missing
+files tied to the native key or an empty exact candidate bundle location are
+`corrupt`. Preflight rejects that damage before creating a new lock or ignore
+policy.
+Safe custom names retain their literal path meaning: native source operands use
+the supported `--` separator, Git inventory uses literal pathspecs, and ignore
+checks use explicit relative paths.
+
+Report native rejection as `native-invalid`, an established contract conflict as
+`incompatible`, missing proof as `not-established`, and native execution failure
+as `runtime-failure`. Preserve native Error v2 codes, including writer mismatch.
+A nonzero check exit fails even when its typed diagnostic says `valid: true`.
+These local helpers establish neither real independent agent execution nor
+installed handler behavior.
+
 ## Amendment owners and reserved delivery
 
 | Task | Exact existing owner/rule to amend when implemented |
 | --- | --- |
-| TASK-138 | podway-integration and tool-catalog five-file readiness; dev-setup inspect_tools ID/filename/tracking coupling; selected admission plus atomic writer/resolver and supported interpreter, with lazy adaptive imports preserving legacy paths |
+| TASK-138 | Implemented: podway-integration and tool-catalog selected/library readiness distinction; dev-setup inspect_tools selected path; atomic writer/resolver and dependency-reporting launcher with lazy imports |
 | TASK-139 | shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
 | TASK-140 | shared composition, namespaces, typed ports and self-contained flattening; preserve semantic operation IDs/digests and fragment/session control distinction |
 | TASK-141 | shared structural qualifier and exact suitability/bootstrap lifecycle; procedure-node-contracts adaptive compatibility alongside current canonical inventory |

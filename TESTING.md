@@ -186,9 +186,26 @@ rejections are not all adaptive safety failures. Registration is not a result
 and adds no automated LLM gate to the current Make aggregate. Definition tests
 run in the existing unit stage; Ruff covers the shared helper and tests.
 
-TASK-138 supplies the minimal writer/resolver and permitted disposable native
-slice before handler activation. Each family implements its own minimum resume
-path. TASK-145 completes and commits VM driver/fixture extensions, including
+TASK-138 implements the minimal writer/resolver and an explicitly invoked
+disposable native slice before handler activation. Storage/admission unit tests
+cover exact-key native verification, multi-root aliases and ambiguity, concurrent
+publication, partial writes, symlinks and absent-root ancestry, real ignore and
+tracking conflicts, origin-independent recovery, selected route/entrypoint and
+session visibility, unsupported formats and missing dependencies. Their synthetic
+native oracles prove helper behavior only.
+
+`ManagedRuntime.exercise_adaptive_known_slice()` in
+`tests/podway_runtime_qualification.py` exercises exact current known source bytes,
+native check/preview, ignored retention, digest-fenced prepared start, exact-tuple
+resume before begin, and running non-bootstrap recovery through both the helper
+and public CLI. It also invokes the selected inspector with an unrelated template
+missing while retaining the aggregate library diagnostic. Run it only under
+applicable disposable native-test authority; ordinary Make does not invoke it.
+It proves neither actual agent execution nor installed handler behavior and is
+separate from the clean-candidate compatibility gate.
+
+Each family implements its own minimum resume path. TASK-145 completes and commits
+VM driver/fixture extensions, including
 explicit canonical-source selection, adaptive semantic checkpoints and the
 actual Ouroboros/clipboard prerequisites for applicable cases. TASK-146 observes
 the exact committed candidate, rather than its own uncommitted driver changes.

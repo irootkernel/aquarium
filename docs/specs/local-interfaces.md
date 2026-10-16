@@ -46,7 +46,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | --- | --- | --- | --- |
 | `dev-setup-global/scripts/inspect_global_tools.py` | Optional existing working directory, repeatable component scope and Codex homes, command timeout, Ouroboros release verification, and Sorage initialization diagnosis | `aquarium-dev-setup-global-inspection.v6` | Selected user-global CLI, paired-skill, service, global MCP, writing-skill, Lore, Ouroboros, and `aquarium-status` inspection without requiring or reading repository configuration |
 | `dev-setup-global/scripts/inspect_skill_inventory.py` | Official recursive tree JSON on stdin, resolved `--tree-sha`, and `--skill-path` | `aquarium-skill-inventory/v1` | Selects every regular file in the complete skill subtree; rejects invalid metadata or selection with `error.code=invalid_inventory` and exit 2. Commit provenance, fetch and payload digest verification remain caller-owned. |
-| `dev-setup/scripts/inspect_tools.py` | Absolute repository plus optional repository-component and expected MCP-scope flags | `aquarium-dev-setup-inspection.v23` | Normalized Git and repository configuration inspection with presence-only trust for canonical global skills, requested-versus-effective MCP scope, optional Sorage Project registration, and separate Podway source-provenance and handler-contract compatibility results. Gaori timeout readiness is structural: positive finite or absent values do not prove a command fits the host deadline. |
+| `dev-setup/scripts/inspect_tools.py` | Repository plus optional component/MCP flags, or explicit selected Podway source/resume flags described below | `aquarium-dev-setup-inspection.v23` | Default repository/tool inventory or selected-only Podway admission, with separate native runtime, managed-library and selected-definition results. Gaori timeout readiness is structural: positive finite or absent values do not prove a command fits the host deadline. |
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
 | `dev-setup-bundle/scripts/normalize_manifest.py` | External `aquarium.dev-setup-bundle/v2` YAML manifest | `aquarium-dev-setup-bundle-plan.v2` | Validates target MCP scopes, Sorage slug and Mulgae artist intent, then emits ordered targets and the needed global MCP union |
@@ -84,7 +84,7 @@ The global inspector's repeatable `--component` option selects only the named co
 
 `dev-setup-global` starts with version-only Sorage inspection. Outside Plan Mode, after disclosing native database and journal effects, `--include-sorage-initialization` checks the selected installation state before `sorage doctor`. For a pre-Memo database, it checks the configuration against the Vault marker and recorded database identities, then runs native configuration validation. A valid matching installation yields `upgrade_preflight_required`, then `upgrade_migration_required` after `--sorage-upgrade-preflight-complete`; doctor remains deferred until separately approved native migration succeeds. A missing database in a nonempty home or an incomplete or mismatched configuration yields `installation_recovery_required`. An unverifiable state yields `upgrade_state_unverifiable`. Neither recovery nor unverifiable state runs doctor.
 
-The repository inspector's v23 Podway entry exposes `identity`, `probes.identity` and an always-present `migration_kinds.runtime_contract` boolean. The latter identifies native legacy-Store or writer-manifest refusal; other configuration errors retain their native reason and remain degraded. Its payload exposes exactly twelve `trusted_global_skills` entries: `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, `lore-commits`, `lore-query`, `deslop`, `humanizer`, and `humanize-korean`. Each entry contains only `canonical_path`, `present`, and `verification_scope: "presence_only"`. The `humanize-korean` path belongs to the active Codex home. Humanizer uses a sole active-home copy when present and otherwise the shared target; the other entries use `~/.agents/skills`. The same presence-only object replaces `tools.<name>.agent_skill` for Sanho, Mulgae, Gaori, Sorage, and optional Podway. Its `tools` object excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros because those components belong to the global inspector.
+The repository inspector's v23 Podway entry exposes `identity`, `probes.identity` and an always-present `migration_kinds.runtime_contract` boolean. The latter identifies native legacy-Store or writer-manifest refusal; other configuration errors retain their native reason and remain degraded. Its default inventory payload exposes exactly twelve `trusted_global_skills` entries: `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, `lore-commits`, `lore-query`, `deslop`, `humanizer`, and `humanize-korean`. Each entry contains only `canonical_path`, `present`, and `verification_scope: "presence_only"`. The `humanize-korean` path belongs to the active Codex home. Humanizer uses a sole active-home copy when present and otherwise the shared target; the other entries use `~/.agents/skills`. The same presence-only object replaces `tools.<name>.agent_skill` for Sanho, Mulgae, Gaori, Sorage, and optional Podway. Its `tools` object excludes Dolgorae, Lora, Deslop, Humanizer, im-not-ai, and Ouroboros because those components belong to the global inspector.
 
 Each `tools.podway.managed_procedures` entry reports immutable file provenance
 through `source_state` and `update_explanation`, while
@@ -126,8 +126,97 @@ Python helper parses definitions, calculates canonical UTF-8 JSON identities,
 extracts native recovery tuples and checks declaration slices with typed aliases.
 It preserves native operation IDs/digests and accepts explicit verified signature
 extensions. These checks establish neither whole-graph qualification nor actual
-agent execution. Selection, retention, admission and family activation remain
-reserved for their EPIC-026 implementation tasks.
+agent execution. The shared `adaptive_admission.py` and `adaptive_bundles.py`
+helpers admit exact known sources and implement atomic locally ignored
+retention and exact native `(id, version, digest)` recovery across all approved
+searched roots. Their retained complete source/binding does not depend on mutable
+origin libraries. Whole-graph qualification, selection/composition and family
+activation remain reserved for their EPIC-026 implementation tasks.
+
+The [adaptive launcher](../../plugins/aquarium/shared/manage_adaptive_procedure.py)
+accepts `inspect`, `retain` or `resume` with the owning repository, every approved
+root, invoking entrypoint and selected review route. Inspect/retain take a source;
+retention also takes an approved write root. It emits JSON with source/binding,
+retention disposition and actual session context, or a distinct failure status.
+An optional bootstrap reference is a cross-check. It uses native check/preview for
+the actual canonical digest, separately verifies source-file SHA-256, and requires
+the supported frozen known-source/reference contract before TASK-141. The CLI
+does no session mutation or installation; YAML and `jsonschema` must be available
+in its reported interpreter. Missing dependencies return `missing-prerequisite`.
+The setup inspector's explicit selected mode lazily imports these helpers,
+preserves full managed-library diagnostics and exposes selected/runtime readiness
+separately. Selected-provider readiness stays with its existing review-route owner.
+
+## Selected Podway CLI contract
+
+The repository inspector enters selected mode only with one of
+`--selected-podway-source <path>` or `--resume-selected-podway`. Supply
+`--repository <path-inside-worktree>`, repeated `--podway-root <root>` for every
+approved searched root, and `--podway-entrypoint <handler>`. The seven entrypoint
+values are `task-handler`, `epic-handler`, `epic-validator`, `new-feature`,
+`new-project`, `refactor` and `war-room`. Task, Goal and Validation also require
+`--podway-review-route` with `mulgae`, `herdr`, `independent-review` or `waived`.
+`--podway-bootstrap <binding-path>` optionally cross-checks native-tuple recovery;
+`--podway-customization-basis <existing-envelope-disposition>` carries the current
+adopted-customization decision. `--timeout-seconds` retains the inspector's
+documented command timeout. Selected mode does not require `--include-podway` and
+does not probe other providers. Supplying selected-only options without a selected
+mode, or omitting roots/entrypoint, is an argument error.
+
+Selected mode returns `schema_version: aquarium-dev-setup-inspection.v23`,
+`inspection_scope: selected-podway`, Git `repository` inventory,
+`tools.podway` and `selected_procedure`. It has no `trusted_global_skills`
+inventory. Missing adaptive dependencies instead return the schema version,
+`selected_procedure` with dependency/interpreter and empty `tools`, before native
+work. `tools.podway.runtime_readiness` always has `state`, `session_procedure`,
+`session_lifecycle` and `session_contract_supported`. State is `ready`, `degraded`
+or `unavailable`; unobserved session fields are null and an unchecked session
+contract is null, without claiming incompatibility. A checked no-session response
+can establish the session contract while retaining null identity/lifecycle.
+
+Successful selected results expose source, binding, interpreter, invocation mode,
+customization disposition and selected-provider ownership. `retention_status` and
+`retention.status` report lookup disposition; `retention.diagnostics` contains
+historical failures and their key-association limits, and `retention.aliases`
+contains equivalent retained locations. `session` exposes the actual current
+tuple/lifecycle, definition conflict and remaining work-identity reconciliation.
+Failure results contain `status`, `message`, interpreter and `details`. Runtime
+failure details retain normalized version/identity/doctor/session probes, native
+error codes, timeout/exit evidence, runtime readiness and migration diagnosis.
+Selected-key damage retains resolver diagnostics and stops; `missing` means no
+associated retained candidate was found, while associated missing files or an
+empty exact candidate location are `corrupt`.
+
+The inspector exits 0 for selected `ready`, 2 for selected conflicts or failed
+admission. Typed repository/inspection errors use the existing v23 `error.code`
+and `error.message` shape and their declared exit status (2 for invalid arguments
+or repository selection, 1 for failed Git-status inspection). These results never
+authorize repair, replacement or session mutation.
+
+The adaptive launcher takes positional `inspect`, `retain` or `resume`, required
+`--repository`, repeated `--root` and `--entrypoint`, plus applicable
+`--review-route`. Inspect/retain require `--source`; retain also requires
+`--write-root`. Optional `--bootstrap` and `--customization-basis` have the meanings
+above. `--podway <executable>` overrides PATH discovery. Repository paths resolve
+to their owning Git root. The launcher emits source/binding, byte size/hash for
+source bytes, lookup diagnostics and actual session context. `retain` returns
+`retained` and may prepare material while disclosing an existing session conflict;
+it does not resolve that conflict. Other success returns `ready`. Conflicts and
+failures return status/message/interpreter/details JSON and exit 2; success exits
+0. Native runtime diagnostics appear in `details.probes`, and conflicting tuple
+and lifecycle in `details.session`. Argument-parser usage errors exit 2 with
+stderr usage text; `--help` exits 0 with help text. Missing adaptive dependencies
+instead return status, dependency and interpreter before native work. An
+unresolved resume returns its lookup failure status, including `missing`.
+
+Admission statuses distinguish `missing-prerequisite`, `missing-session`,
+`runtime-unavailable`, `unsupported-runtime`, `runtime-failure`, `native-invalid`,
+`incompatible`, `not-established`, `route-unavailable` and `session-conflict`.
+Storage failures include `corrupt`, `ambiguous`, `unsupported`, `unsafe`,
+`tracked-conflict`, `ignore-conflict`, `publication-conflict` and `git-error`.
+Direct native failures retain their Error v2 code. No status establishes actual
+agent execution or installed behavior. These explicit selected interfaces do not
+change ordinary handlers' all-five managed-library readiness rule.
 
 ## Commit attribution trailers
 

@@ -29,6 +29,28 @@ Unless the workflow is already opted out, verify that Podway is ready for Aquari
 - `.podway/procedures/aquarium-design-v2.yaml`;
 - `.podway/procedures/aquarium-war-room-v2.yaml`.
 
+The explicit [selected-admission path](adaptive-procedures.md#selected-admission-retention-and-recovery)
+checks compatible runtime, the exact selected source/binding, invoking entrypoint
+and selected route independently of this five-file aggregate. Its CLI needs an
+available supported Python environment with YAML and `jsonschema`; missing
+dependencies return `missing-prerequisite` without native work or installation.
+The setup inspector loads those dependencies only for explicit selected mode.
+Before TASK-141, only exact known source/reference bindings enter this new path.
+Existing handlers retain their defaults until family activation. Preserve
+canonical/custom/formal inspection and complete library diagnostics; unrelated
+missing templates, optional historic bundles or filename differences cannot alone
+invalidate selected compatibility. Adopted same-family custom obligations still
+need their existing envelope disposition. Source health never resolves a session
+conflict or establishes that a matching definition serves the same goal.
+
+For an adopted session, resolve its native ID/version/digest across every approved
+searched root before `begin` or work, including prepared and non-bootstrap running
+states. Verify retained source natively and its binding exactly; stop on missing,
+corrupt, ambiguous or unsupported selected material. Do not reconstruct from a
+mutable library or fall back silently to managed defaults. A selected bootstrap
+reference is an additional cross-check. Legacy admitted sessions retain their
+original contract without fabricated adaptive metadata.
+
 In the initialized owning worktree, use `podway --json observe` before starting or resuming a managed session. Require Output `podway.output/v4` and `podway.observation-result/v5` for both direct and delegated Procedures. Error `podway.error/v2` with `SESSION_NOT_FOUND` means no current session; it does not authorize initialization. Reconcile matching prepared or running sessions through the native contract. Preserve session identities, choices and mutation fences.
 
 Check the compact CLI version and `version --json --identity`, configuration, native Procedure validity, handler compatibility and workspace health independently. Later stable versions pass the version floor but must still provide the required machine contracts. Use `doctor` for health diagnosis and observation for routine admission. Follow stable Error v2 codes and native read-only recovery recipes for writer/schema mismatch, maintenance, contention or unreadable state. Do not poll a service or use retired wait/mode flags.

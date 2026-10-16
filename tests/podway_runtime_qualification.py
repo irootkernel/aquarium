@@ -9,6 +9,7 @@ import re
 import shutil
 import sqlite3
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -1238,6 +1239,197 @@ class ManagedRuntime:
                     "qualification root survived cleanup"
                 ) from exc
         return False
+
+    def exercise_adaptive_known_slice(self) -> dict[str, Any]:
+        """Observe known-source retained start/resume; no agent-execution claim."""
+        assert self.sandbox is not None
+        assert self.snapshot_binary is not None
+        assert self.environment is not None
+        shared = Path(__file__).resolve().parents[1] / "plugins/aquarium/shared"
+        sys.path.insert(0, str(shared))
+        try:
+            from adaptive_admission import (
+                NativeClient,
+                resume_selected,
+                retain_selected,
+            )
+            from adaptive_definitions import native_key
+        finally:
+            sys.path.remove(str(shared))
+        archive = output_result(
+            self.raw(["archive", "list", "--json"]),
+            "session.archive_list",
+            "podway.session-archive-list-result/v2",
+        )
+        if archive["count"] != 0:
+            raise RuntimeQualificationError(
+                "fresh adaptive fixture has unexpected archives"
+            )
+        self.raw(["help", "session.start"])
+        client = NativeClient(
+            self.sandbox, self.snapshot_binary, environment=self.environment
+        )
+        source_path = self.sandbox / ".podway/procedures/aquarium-task-v2.yaml"
+        expected = client.preview(source_path)
+        for relative in (
+            "-known.yaml",
+            "-custom flows 한글/-known.yaml",
+            ":(bad)/known.yaml",
+        ):
+            path = self.sandbox / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(source_path.read_bytes())
+            observed = client.preview(path)
+            if any(
+                observed[field] != expected[field]
+                for field in ("procedure_id", "procedure_version", "procedure_digest")
+            ):
+                raise RuntimeQualificationError(
+                    "Custom source name changed native preview"
+                )
+        roots = [".podway/procedures", "custom flows 한글"]
+        retained = retain_selected(
+            self.sandbox,
+            source_path,
+            roots=roots,
+            write_root=roots[0],
+            entrypoint="task-handler",
+            route="herdr",
+            client=client,
+        )
+        binding = retained["binding"]
+        retained_source = Path(retained["path"]) / "procedure.yaml"
+        if retained_source.read_bytes() != source_path.read_bytes():
+            raise RuntimeQualificationError(
+                "retention changed exact known source bytes"
+            )
+        (self.sandbox / ".podway/procedures/aquarium-war-room-v2.yaml").unlink()
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py"
+        )
+        environment = {
+            **self.environment,
+            "PATH": str(self.snapshot_binary.parent) + ":/usr/bin:/bin",
+        }
+        inspected = bounded_process(
+            [
+                sys.executable,
+                str(script),
+                "--repository",
+                str(self.sandbox),
+                "--selected-podway-source",
+                str(retained_source),
+                "--podway-root",
+                roots[0],
+                "--podway-root",
+                roots[1],
+                "--podway-entrypoint",
+                "task-handler",
+                "--podway-review-route",
+                "herdr",
+            ],
+            cwd=self.sandbox,
+            environment=environment,
+        )
+        diagnostic = json.loads(inspected.stdout)
+        if (
+            diagnostic["selected_procedure"]["status"] != "ready"
+            or diagnostic["tools"]["podway"]["readiness_status"] == "ready"
+        ):
+            raise RuntimeQualificationError(
+                "selected admission remained coupled to aggregate library readiness"
+            )
+        key = self.next_key("adaptive-known-start")
+        started = output_result(
+            self.raw(
+                [
+                    "--json",
+                    "start",
+                    "--procedure",
+                    str(retained_source.relative_to(self.sandbox)),
+                    "--expect-procedure-digest",
+                    binding["procedure"]["digest"],
+                    "--task",
+                    "isolated adaptive known-source slice",
+                    "--idempotency-key",
+                    key,
+                ]
+            ),
+            "session.start",
+            "podway.session-start-result/v4",
+        )
+        prepared = self.observe()
+        if (
+            started.get("session_state") != "prepared"
+            or prepared["status"]["session"]["lifecycle"] != "prepared"
+            or prepared["status"]["current"] is not None
+        ):
+            raise RuntimeQualificationError(
+                "selected start did not prepare the native session"
+            )
+        restored = resume_selected(
+            self.sandbox, roots, prepared["status"]["procedure"], client=client
+        )
+        if restored["bundle_id"] != retained["bundle_id"]:
+            raise RuntimeQualificationError(
+                "prepared native tuple restored another binding"
+            )
+        self.begin_goal(prepared, binding["procedure"]["id"])
+        running = self.observe()
+        restored = resume_selected(
+            self.sandbox, roots, running["status"]["procedure"], client=client
+        )
+        entry = yaml.safe_load(retained_source.read_bytes())["graph"]["entry"]
+        node = running["status"]["current"]["node"]["graph_node_id"]
+        if node != entry or restored["bundle_id"] != retained["bundle_id"]:
+            raise RuntimeQualificationError(
+                "running non-bootstrap recovery changed the known definition"
+            )
+        launcher = shared / "manage_adaptive_procedure.py"
+        recovered = bounded_process(
+            [
+                sys.executable,
+                str(launcher),
+                "resume",
+                "--repository",
+                str(self.sandbox),
+                "--root",
+                roots[0],
+                "--root",
+                roots[1],
+                "--entrypoint",
+                "task-handler",
+                "--review-route",
+                "herdr",
+                "--podway",
+                str(self.snapshot_binary),
+            ],
+            cwd=self.sandbox,
+            environment=self.environment,
+        )
+        recovered_value = json.loads(recovered.stdout)
+        if recovered_value["retention"]["bundle_id"] != retained["bundle_id"]:
+            raise RuntimeQualificationError(
+                "public selected-resume CLI changed the bundle"
+            )
+        return {
+            "procedure_key": list(native_key(binding)),
+            "source_sha256": binding["procedure"]["source_sha256"],
+            "bundle_id": retained["bundle_id"],
+            "native_prepared_resume": True,
+            "native_running_resume_without_bootstrap": True,
+            "public_selected_resume_cli": True,
+            "custom_source_names_preview": True,
+            "running_node": node,
+            "selected_admission_with_missing_unrelated_template": True,
+            "aggregate_library_readiness": diagnostic["tools"]["podway"][
+                "readiness_status"
+            ],
+            "binary_sha256": sha256_file(self.snapshot_binary),
+            "agent_execution": "not-observed",
+            "installed_behavior": "not-observed",
+        }
 
     def exercise_outcomes(self) -> dict[str, bool]:
         original = json_payload(self.init_response)

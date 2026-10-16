@@ -23,6 +23,10 @@ SCHEMAS = {
 class DefinitionError(ValueError):
     """Invalid Aquarium definition, distinct from native Procedure validity."""
 
+    def __init__(self, message, code="invalid-definition"):
+        super().__init__(message)
+        self.code = code
+
 
 def canonical_json(value):
     """Return the Aquarium UTF-8 definition bytes, without a trailing newline."""
@@ -75,7 +79,20 @@ def validate_definition(value):
     discriminator = value.get("schema") if isinstance(value, dict) else None
     schema_name = SCHEMAS.get(discriminator) if isinstance(discriminator, str) else None
     if schema_name is None:
-        raise DefinitionError("Unsupported Aquarium definition schema")
+        raise DefinitionError(
+            "Unsupported Aquarium definition schema",
+            "unsupported-schema"
+            if isinstance(discriminator, str)
+            else "invalid-definition",
+        )
+    if (
+        discriminator == "aquarium.procedure-binding/v1"
+        and isinstance(value.get("compatibility"), str)
+        and value["compatibility"] != "aquarium.adaptive/v1"
+    ):
+        raise DefinitionError(
+            "Unsupported Aquarium compatibility contract", "unsupported-compatibility"
+        )
     schema = json.loads((ASSETS / "schemas" / schema_name).read_text())
     errors = list(Draft202012Validator(schema).iter_errors(value))
     if errors:

@@ -558,7 +558,29 @@ For global diagnosis, use the compact `podway version --json` and `podway --json
 
 For routine managed-session admission, use `podway --json observe` in the owning worktree. Require Output v4 with observation-result v5, or Error v2 `SESSION_NOT_FOUND` for no current session. Check version identity, tracked configuration, native Procedure checks, handler compatibility and workspace health separately under [Podway Integration Contract](podway-integration.md#check-readiness-on-the-default-path). Status and compact status use v5 for both direct and delegated Procedures. A prepared, running or undisposed terminal session is a lifecycle matter, not setup repair authority.
 
-Preserve all five same-ID custom Procedures. Report source provenance as `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe` or `unverifiable`, and handler compatibility independently as `compatible`, `unqualified`, `incompatible` or `not_checked`. All absent means `readiness_status=not_configured`; ready requires tracked regular non-symlink configuration and five native-valid, handler-compatible files plus healthy compatible runtime. Selected route membership is checked from exact source bytes after those checks, independently of provider availability and an admitted immutable snapshot. Recognized prior-canonical bytes explain an offered update but never authorize replacement. Source changes apply to successor sessions.
+Preserve all five same-ID custom Procedures. Report source provenance as `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe` or `unverifiable`, and handler compatibility independently as `compatible`, `unqualified`, `incompatible` or `not_checked`. All absent means aggregate `readiness_status=not_configured`; complete-library readiness requires tracked regular non-symlink configuration and five native-valid, handler-compatible files plus healthy compatible runtime. Selected route membership is checked from exact source bytes after the selected source checks, independently of provider availability and an admitted immutable snapshot. Recognized prior-canonical bytes explain an offered update but never authorize replacement. Source changes apply to successor sessions.
+
+The explicit selected-admission inspector separates `runtime_readiness` and the
+selected source/binding/route from aggregate `readiness_status`. It accepts a
+compatible native session tuple without the managed five-ID, filename or tracking
+rules. Missing unrelated templates can degrade the library while the selected
+definition remains compatible. Keep current lifecycle/tuple, session conflicts,
+same-family adopted-customization obligations and native failure codes visible.
+An optional historical local bundle contributes diagnostics, not a startup
+prerequisite. The selected inspector exposes them under
+`selected_procedure.retention.diagnostics`, with alias and key-association limits.
+Prepared and running adopted sessions resolve by native tuple;
+missing or damaged selected material stops before begin/work with no legacy
+fallback. Existing canonical/custom/formal paths retain their own contracts.
+
+This path uses the [adaptive launcher](../shared/manage_adaptive_procedure.py)
+with an available supported Python interpreter, YAML and `jsonschema`. It reports
+missing prerequisites explicitly and does no installation. Ordinary inspector
+invocations do not import adaptive dependencies. Runtime/setup environment
+guidance remains with the later activation and setup owners; target repositories
+must not assume Aquarium's development `.venv` exists. Until TASK-141, new adaptive
+admission is limited to exact supported known-source/reference bindings. No
+family is activated by this setup interface.
 
 Tracked or untracked `root-kernel-*-v2.yaml` files retain their separately diagnosed product-rename migration. Preserve existing sessions and custom sources before an approved managed update. Never create an ownership manifest or a second source of Procedure authority.
 
