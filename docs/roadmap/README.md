@@ -56,7 +56,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
-| EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Planned |
+| EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -695,7 +695,7 @@ source closeout and subject to the existing pre-release policy.
 
 ## EPIC-026: ADAPT: Goal-adaptive Procedure orchestration
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 **Detailed SOT:** [Adaptive Procedure design and acceptance](../todo/TODO-ADAPTIVE-PROCEDURES.md).
 
@@ -734,7 +734,7 @@ mutate sessions, stage, commit or publish.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-137 | Establish adaptive contracts and preservation baseline | Define native success and capability obligations, conditional Task phases, source authority, binding/fragment identities and exact recovery, suitability and promotion policies; preserve EPIC-024/025. | Planned | EPIC-024; EPIC-025 |
+| TASK-137 | Establish adaptive contracts and preservation baseline | Define native success and capability obligations, conditional Task phases, source authority, binding/fragment identities and exact recovery, suitability and promotion policies; preserve EPIC-024/025. | Completed | EPIC-024; EPIC-025 |
 | TASK-138 | Admit selected Procedure definitions | Separate adaptive session/route admission from five-ID and five-file coupling; ship the minimal atomic writer and exact-key resolver, preserve adopted customization, and prove the known-source native start/resume slice. | Planned | TASK-137 |
 | TASK-139 | Select and author work-specific Procedures | Implement fit-based reuse and bounded generation, original-source coverage, approved preparation and selected-review preservation without new native qualification prerequisites. | Planned | TASK-138 |
 | TASK-140 | Compose reusable Procedures and fragments | Resolve typed ports and namespaces without changing operation identities; materialize self-contained Procedure v2 candidates and validate work-fragment versus session-control responsibilities. | Planned | TASK-139 |

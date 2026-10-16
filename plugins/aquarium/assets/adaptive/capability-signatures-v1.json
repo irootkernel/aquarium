@@ -1,0 +1,1729 @@
+{
+  "aquarium.task.final-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-task-judge-applicability",
+        "operation_digest": "sha256:ae4b16d70b5adf24b317a8d4d8522b5d1ae5b830e1c9ff03d170905bd5082f0b",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-goal-outcome": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "achieved",
+          "not-achieved"
+        ]
+      }
+    },
+    "relationships": [
+      "required current producer evidence reaches this assessment",
+      "a required consuming Decision checks applicability and final outcome",
+      "actual independent execution remains runtime evidence"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.task.phase-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-task-judge-applicability",
+        "operation_digest": "sha256:ae4b16d70b5adf24b317a8d4d8522b5d1ae5b830e1c9ff03d170905bd5082f0b",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-task-phase-checkpoint",
+        "operation_digest": "sha256:bfd3034f22bdd05d4dd7dac401602106c4aeff413b498ebc65496306f1721e79",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "due original-source coverage is independent of generated criteria",
+      "negative results finish recording and route to correction, evidence or stop"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.task.approval/v1": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "approval applies to the exact current target",
+      "delegated acceptance cannot satisfy user-owned final or cold acceptance",
+      "changed proposals or target bytes need renewed exact approval"
+    ]
+  },
+  "aquarium.task.closeout/v1": {
+    "kind": "action",
+    "fields": {
+      "closeout-summary": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "native session_goal mapping owns achievement",
+      "current family acceptance and finalization remain due",
+      "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
+    ]
+  },
+  "aquarium.task.review-control/v1": {
+    "kind": "action",
+    "fields": {
+      "review-operation": {
+        "type": "choice",
+        "required": true
+      },
+      "assessment-ordinal": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "assessment-ordinal-continuity": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-task-review-ordinal-continuity",
+        "operation_digest": "sha256:583d4da553c2e3f7b69dc35f5c49b28333e4e38fcebc3048f5de5c49a14eb493",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "review-mode": {
+        "type": "choice",
+        "required": true
+      },
+      "assessment-kind": {
+        "type": "choice",
+        "required": true
+      }
+    },
+    "relationships": [
+      "only a complete operation consumes the next ordinal",
+      "retrieve the same operation and provider before repeating",
+      "preserve selected route, expected team, findings and remaining authority",
+      "ordinals one through three are work-unit; later ordinals are bounded confirmation",
+      "exhausted authority needs actual fresh user direction; supersede cannot reset it"
+    ]
+  },
+  "aquarium.goal.final-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-goal-judge-applicability",
+        "operation_digest": "sha256:f6f0b091a0b64620c1cc27c0772622c9e4ae91327c7ccfbebf95be29ad77c6d0",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-goal-outcome": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "achieved",
+          "not-achieved"
+        ]
+      }
+    },
+    "relationships": [
+      "required current producer evidence reaches this assessment",
+      "a required consuming Decision checks applicability and final outcome",
+      "actual independent execution remains runtime evidence"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.goal.phase-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-goal-judge-applicability",
+        "operation_digest": "sha256:f6f0b091a0b64620c1cc27c0772622c9e4ae91327c7ccfbebf95be29ad77c6d0",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-goal-phase-checkpoint",
+        "operation_digest": "sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "due original-source coverage is independent of generated criteria",
+      "negative results finish recording and route to correction, evidence or stop"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.goal.approval/v1": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "approval applies to the exact current target",
+      "delegated acceptance cannot satisfy user-owned final or cold acceptance",
+      "changed proposals or target bytes need renewed exact approval"
+    ]
+  },
+  "aquarium.goal.closeout/v1": {
+    "kind": "action",
+    "fields": {
+      "closeout-summary": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "native session_goal mapping owns achievement",
+      "current family acceptance and finalization remain due",
+      "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
+    ]
+  },
+  "aquarium.goal.acceptance/v1": {
+    "kind": "action",
+    "fields": {
+      "acceptance-source": {
+        "type": "choice",
+        "required": true
+      },
+      "acceptance-authority": {
+        "type": "text",
+        "required": true
+      },
+      "accepted-target": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "epic-closeout requires user acceptance",
+      "cold validation requires user acceptance",
+      "delegation is valid only for an eligible goal-kind or continuing epic-handler",
+      "stopped outcomes require actual user acceptance, never delegation",
+      "TASK-141 proves exact acceptance-source values and guards with actual goal-kind or workflow-owner discriminator evidence; no label establishes provenance"
+    ]
+  },
+  "aquarium.goal.review-control/v1": {
+    "kind": "action",
+    "fields": {
+      "review-operation": {
+        "type": "choice",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "assessment-ordinal": {
+        "type": "integer",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ],
+        "minimum": 0
+      },
+      "assessment-ordinal-continuity": {
+        "type": "check_result",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ],
+        "operation_id": "aquarium-goal-review-ordinal-continuity",
+        "operation_digest": "sha256:aadeb50709f607d2d7aea0f2221c9c5f89f657b0c24d2e59321fdfcfdaa29c2c",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "review-mode": {
+        "type": "choice",
+        "required": true
+      },
+      "assessment-kind": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-assessment-ordinal": {
+        "type": "integer",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ],
+        "minimum": 0
+      },
+      "route-binding-result": {
+        "type": "check_result",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ],
+        "operation_id": "aquarium-goal-review-route-binding",
+        "operation_digest": "sha256:aabb71389a9124957ba1bc1dfac5e02e07d904477c7960fb2f8bfa185699e87b",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "only a complete operation consumes the next ordinal",
+      "retrieve the same operation and provider before repeating",
+      "preserve selected route, expected team, findings and remaining authority",
+      "ordinals one through three are work-unit; later ordinals are bounded confirmation",
+      "exhausted authority needs actual fresh user direction; supersede cannot reset it"
+    ]
+  },
+  "aquarium.validation.final-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-goal-outcome": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "achieved",
+          "not-achieved"
+        ]
+      }
+    },
+    "relationships": [
+      "required current producer evidence reaches this assessment",
+      "a required consuming Decision checks applicability and final outcome",
+      "actual independent execution remains runtime evidence"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.validation.phase-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-phase-checkpoint",
+        "operation_digest": "sha256:8db5c74a56b764977825c8be5c67ed5fb053e557a2472b562248810a19ddcb76",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "due original-source coverage is independent of generated criteria",
+      "negative results finish recording and route to correction, evidence or stop"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.validation.approval/v1": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "approval applies to the exact current target",
+      "delegated acceptance cannot satisfy user-owned final or cold acceptance",
+      "changed proposals or target bytes need renewed exact approval"
+    ]
+  },
+  "aquarium.validation.closeout/v1": {
+    "kind": "action",
+    "fields": {
+      "closeout-summary": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "native session_goal mapping owns achievement",
+      "current family acceptance and finalization remain due",
+      "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
+    ]
+  },
+  "aquarium.validation.acceptance/v1": {
+    "kind": "action",
+    "fields": {
+      "acceptance-source": {
+        "type": "choice",
+        "required": true
+      },
+      "acceptance-authority": {
+        "type": "text",
+        "required": true
+      },
+      "accepted-target": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "epic-closeout requires user acceptance",
+      "cold validation requires user acceptance",
+      "delegation is valid only for an eligible goal-kind or continuing epic-handler",
+      "stopped outcomes require actual user acceptance, never delegation",
+      "TASK-141 proves exact acceptance-source values and guards with actual goal-kind or workflow-owner discriminator evidence; no label establishes provenance"
+    ]
+  },
+  "aquarium.validation.review-control/v1": {
+    "kind": "action",
+    "fields": {
+      "review-operation": {
+        "type": "choice",
+        "required": true
+      },
+      "assessment-ordinal": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "assessment-ordinal-continuity": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-review-ordinal-continuity",
+        "operation_digest": "sha256:65c863b9bf42718e20d1a947f47161ae1826cde4c263531157319f8e2a4dff61",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "review-mode": {
+        "type": "choice",
+        "required": true
+      },
+      "assessment-kind": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-assessment-ordinal": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "route-binding-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-review-route-binding",
+        "operation_digest": "sha256:f059142871216eda78b34715a428a28a47b75ba59b5b0f72e25112249e97fa75",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "only a complete operation consumes the next ordinal",
+      "retrieve the same operation and provider before repeating",
+      "preserve selected route, expected team, findings and remaining authority",
+      "ordinals one through three are work-unit; later ordinals are bounded confirmation",
+      "exhausted authority needs actual fresh user direction; supersede cannot reset it"
+    ]
+  },
+  "aquarium.design.final-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-goal-outcome": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "achieved",
+          "not-achieved"
+        ]
+      }
+    },
+    "relationships": [
+      "required current producer evidence reaches this assessment",
+      "a required consuming Decision checks applicability and final outcome",
+      "actual independent execution remains runtime evidence"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.design.phase-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-discovery-checkpoint",
+        "operation_digest": "sha256:60e88315e8f394ada6adb39beb1132685bd26b0ec6cd414b6b638649c4088587",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "due original-source coverage is independent of generated criteria",
+      "negative results finish recording and route to correction, evidence or stop"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.design.approval/v1": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "approval applies to the exact current target",
+      "delegated acceptance cannot satisfy user-owned final or cold acceptance",
+      "changed proposals or target bytes need renewed exact approval"
+    ]
+  },
+  "aquarium.design.closeout/v1": {
+    "kind": "action",
+    "fields": {
+      "closeout-summary": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "native session_goal mapping owns achievement",
+      "current family acceptance and finalization remain due",
+      "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
+    ]
+  },
+  "aquarium.design.application-approval/v1": {
+    "kind": "action",
+    "fields": {
+      "application-approval-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-application-approval",
+        "operation_digest": "sha256:395e4186c41d5296fec5ad178af052f6f897f41b0cb9a5e242da4b6c651da546",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "actual exact approval precedes application",
+      "pre-write snapshot comparison and post-application byte verification are due",
+      "changed content after approval cannot use the old approval"
+    ]
+  },
+  "aquarium.diagnosis.final-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-goal-outcome": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "achieved",
+          "not-achieved"
+        ]
+      }
+    },
+    "relationships": [
+      "required current producer evidence reaches this assessment",
+      "a required consuming Decision checks applicability and final outcome",
+      "actual independent execution remains runtime evidence"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.diagnosis.phase-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-war-room-investigation-checkpoint",
+        "operation_digest": "sha256:2c814ef4e5b90b1b202b7ac143ebc6e2948a0fdb99c86548f739dc1e51958e74",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "due original-source coverage is independent of generated criteria",
+      "negative results finish recording and route to correction, evidence or stop"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.diagnosis.approval/v1": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "approval applies to the exact current target",
+      "delegated acceptance cannot satisfy user-owned final or cold acceptance",
+      "changed proposals or target bytes need renewed exact approval"
+    ]
+  },
+  "aquarium.diagnosis.closeout/v1": {
+    "kind": "action",
+    "fields": {
+      "closeout-summary": {
+        "type": "text",
+        "required": true
+      }
+    },
+    "relationships": [
+      "native session_goal mapping owns achievement",
+      "current family acceptance and finalization remain due",
+      "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
+    ]
+  },
+  "aquarium.diagnosis.application-approval/v1": {
+    "kind": "action",
+    "fields": {
+      "application-approval-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-war-room-application-approval",
+        "operation_digest": "sha256:395e4186c41d5296fec5ad178af052f6f897f41b0cb9a5e242da4b6c651da546",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "actual exact approval precedes application",
+      "pre-write snapshot comparison and post-application byte verification are due",
+      "changed content after approval cannot use the old approval"
+    ]
+  },
+  "aquarium.task.review-routing/v1": {
+    "kind": "action",
+    "fields": {
+      "effective-review-route": {
+        "type": "choice",
+        "required": true
+      },
+      "checkpoint-requested-direction": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-review-operation": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-review-route": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-route-lifecycle-state": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-route-change-readiness": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-assessment-ordinal": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "finding-lineage-summary": {
+        "type": "text",
+        "required": true
+      },
+      "remaining-review-authority-summary": {
+        "type": "text",
+        "required": true
+      },
+      "route-direction-continuity": {
+        "type": "check_result",
+        "required": false,
+        "required_when": [
+          {
+            "item": "route-authorization-basis",
+            "not_equals": "approved-plan"
+          }
+        ],
+        "operation_id": "aquarium-task-review-route-direction-continuity",
+        "operation_digest": "sha256:428c03483fc0178e990d9be72ce5283b6d7588479c711ac3347e6bbd639667a9",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "resume consumes the same preceding unsettled provider and operation",
+      "authorized switches preserve finding lineage and remaining authority",
+      "completed continuation consumes exactly the next ordinal",
+      "incomplete operations preserve the pending ordinal"
+    ]
+  },
+  "aquarium.goal.review-routing/v1": {
+    "kind": "action",
+    "fields": {
+      "review-evidence-kind": {
+        "type": "choice",
+        "required": true
+      },
+      "review-route": {
+        "type": "choice",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "prior-review-route": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-review-operation": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-route-lifecycle-state": {
+        "type": "choice",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "route-change-readiness": {
+        "type": "choice",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "route-direction": {
+        "type": "choice",
+        "required": false
+      },
+      "finding-lineage-summary": {
+        "type": "text",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "remaining-review-authority-summary": {
+        "type": "text",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ]
+      },
+      "route-binding-result": {
+        "type": "check_result",
+        "required": false,
+        "required_when": [
+          {
+            "item": "review-evidence-kind",
+            "equals": "native-review"
+          }
+        ],
+        "operation_id": "aquarium-goal-review-route-binding",
+        "operation_digest": "sha256:aabb71389a9124957ba1bc1dfac5e02e07d904477c7960fb2f8bfa185699e87b",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "resume consumes the same preceding unsettled provider and operation",
+      "authorized switches preserve finding lineage and remaining authority",
+      "completed continuation consumes exactly the next ordinal",
+      "incomplete operations preserve the pending ordinal"
+    ]
+  },
+  "aquarium.validation.review-routing/v1": {
+    "kind": "action",
+    "fields": {
+      "review-route": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-review-route": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-review-operation": {
+        "type": "choice",
+        "required": true
+      },
+      "prior-route-lifecycle-state": {
+        "type": "choice",
+        "required": true
+      },
+      "route-change-readiness": {
+        "type": "choice",
+        "required": true
+      },
+      "route-direction": {
+        "type": "choice",
+        "required": false
+      },
+      "finding-lineage-summary": {
+        "type": "text",
+        "required": true
+      },
+      "remaining-review-authority-summary": {
+        "type": "text",
+        "required": true
+      },
+      "route-binding-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-review-route-binding",
+        "operation_digest": "sha256:f059142871216eda78b34715a428a28a47b75ba59b5b0f72e25112249e97fa75",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "resume consumes the same preceding unsettled provider and operation",
+      "authorized switches preserve finding lineage and remaining authority",
+      "completed continuation consumes exactly the next ordinal",
+      "incomplete operations preserve the pending ordinal"
+    ]
+  },
+  "aquarium.validation.audit-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "audit-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-epic-audit",
+        "operation_digest": "sha256:4999899d1137c25f8c78e4a595724301e30e0c2e60bf7ca995521df05b88ec74",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-faithful-audit-checkpoint",
+        "operation_digest": "sha256:b69aa94a7acf13238ba1a5d5c94fa307ea3be584ef2c1a049bfcdb5e2a9ce7e5",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.validation.confirmation-audit-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "audit-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-remediation-confirmation-audit",
+        "operation_digest": "sha256:791d1cfb7ba42dfb7665b3784a4d7ee68ec14510d0e6c7aa0528c089069e9e9c",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-faithful-audit-checkpoint",
+        "operation_digest": "sha256:b69aa94a7acf13238ba1a5d5c94fa307ea3be584ef2c1a049bfcdb5e2a9ce7e5",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.validation.correction-group-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-group-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-validation-correction-group-checkpoint",
+        "operation_digest": "sha256:67305daabd7deeaffc681eb9333842aa115751251bb1218dfea7767aa80f4fa9",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.design.quality-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-quality-checkpoint",
+        "operation_digest": "sha256:d496de8c44e24922b42cae8681703885dc1ab2a64d24b982d712f7775c55295a",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.design.application-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-application-checkpoint",
+        "operation_digest": "sha256:d054ac17cd777b8e5d8e5e1fc31f80f93ae061650fdd90ed8062f6d3fc41f604",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.diagnosis.quality-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-war-room-quality-checkpoint",
+        "operation_digest": "sha256:d496de8c44e24922b42cae8681703885dc1ab2a64d24b982d712f7775c55295a",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.diagnosis.documentation-assessment/v1": {
+    "kind": "action",
+    "fields": {
+      "judge-assessment": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      },
+      "judge-verdict": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pass",
+          "rework",
+          "evidence-needed"
+        ]
+      },
+      "judge-unmet-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-unverified-criteria": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "judge-applicability": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-diagnosis-judge-applicability",
+        "operation_digest": "sha256:14d0db832e2b5992b309c058497f2e9fe6600c1e8f25be615dc5a0f50f64cca1",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "judge-checkpoint-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-war-room-documentation-checkpoint",
+        "operation_digest": "sha256:ce8bbdfa63768d3d8fedc6d91539d8e462b36311a5d6ab40295e19cda2417029",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "criterion_counts": [
+      "judge-unmet-criteria",
+      "judge-unverified-criteria"
+    ]
+  },
+  "aquarium.design.upstream-quality/v1": {
+    "kind": "action",
+    "fields": {
+      "quality-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-quality",
+        "operation_digest": "sha256:3f51262cfcf3bb213105d52e1f2c41a79308d012001ad0832903e5ba72cefa89",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "worker-handoff": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ]
+  },
+  "aquarium.diagnosis.upstream-quality/v1": {
+    "kind": "action",
+    "fields": {
+      "quality-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-diagnostic-quality",
+        "operation_digest": "sha256:c0ffd5f99c1298e6e184c69ab32ef83baa5db605e30ed201598f63770bc7cbbd",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      },
+      "worker-handoff": {
+        "type": "artifact",
+        "required": true,
+        "allowed_media_types": [
+          "application/json"
+        ]
+      }
+    },
+    "relationships": [
+      "required current original evidence reaches this assessment or quality operation",
+      "faithful negative upstream/audit results retain their original result and correction owner",
+      "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ]
+  }
+}

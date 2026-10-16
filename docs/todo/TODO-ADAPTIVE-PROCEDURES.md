@@ -6,7 +6,7 @@ Consumer: [EPIC-026](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure
 
 Planning baseline: `4840434b80da08e8f18302d80515a880947ecca8`, after the source closeout of EPIC-024 and EPIC-025. Recheck their canonical outcomes and intervening changes before implementation. Their completion does not establish installed functionality for a later candidate. Preserve improvements made after this baseline rather than restoring earlier behavior to match this plan.
 
-Registration changes documentation only. Every interface, path and behavior introduced below is planned, not installed or implemented by this registration. Existing skills, managed sources and admitted sessions retain their current contracts until the corresponding implementation and authorized update. Registration grants no implementation, provider invocation, session mutation, installation, staging, commit, push or release authority.
+TASK-137 materializes the closed definition formats, canonical JSON identity helper and necessary declaration signatures in the [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md). Selection, composition, graph qualification, retention, admission and family activation below remain planned until their owning tasks deliver them. Existing skills, managed sources and admitted sessions retain their current contracts until the corresponding implementation and authorized update. This dossier grants no implementation, provider invocation, session mutation, installation, staging, commit, push or release authority.
 
 ## Goal and scope
 

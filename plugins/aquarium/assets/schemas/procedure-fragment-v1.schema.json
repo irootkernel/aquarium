@@ -1,0 +1,358 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aquarium.local/schemas/procedure-fragment-v1.schema.json",
+  "title": "procedure-fragment-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aquarium.procedure-fragment/v1"
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "version": {
+      "$ref": "#/$defs/version"
+    },
+    "purpose": {
+      "$ref": "#/$defs/text"
+    },
+    "applicability": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/text"
+      },
+      "minItems": 1
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/parameter"
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "$ref": "#/$defs/id"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "endpoint": {
+            "$ref": "#/$defs/endpoint"
+          }
+        },
+        "required": [
+          "type",
+          "required",
+          "endpoint"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "$ref": "#/$defs/id"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "endpoint": {
+            "$ref": "#/$defs/endpoint"
+          }
+        },
+        "required": [
+          "type",
+          "required",
+          "endpoint"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "entry": {
+      "$ref": "#/$defs/id"
+    },
+    "exits": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/id"
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "node_definitions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "placements": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 1
+    },
+    "internal_rework": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/id"
+          },
+          "to": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "minItems": 0
+    },
+    "external_rework": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/id"
+          },
+          "port": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "required": [
+          "from",
+          "port"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/text"
+      },
+      "minItems": 0
+    },
+    "assessors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/id"
+          },
+          "covers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "node",
+          "covers"
+        ]
+      },
+      "minItems": 0
+    },
+    "origins": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/origin"
+      },
+      "minItems": 0
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/origin"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "purpose",
+    "applicability",
+    "parameters",
+    "inputs",
+    "outputs",
+    "entry",
+    "exits",
+    "node_definitions",
+    "placements",
+    "internal_rework",
+    "external_rework",
+    "effects",
+    "assessors",
+    "origins",
+    "dependencies"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000\\r\\n]+$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      },
+      "maxLength": 64
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "item": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "node",
+        "item"
+      ]
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "not": {
+            "pattern": "[\\u0000\\r\\n]"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "sha256",
+        "source"
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "text",
+            "integer",
+            "boolean",
+            "choice",
+            "artifact",
+            "list",
+            "check_result"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "type",
+        "required",
+        "description"
+      ]
+    },
+    "native_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    }
+  }
+}

@@ -117,6 +117,18 @@ A successful unregistered result is `registration_required`. A valid native reso
 
 The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` worker results and the `aquarium-release-qa-full-pass/v2`, `aquarium-release-qa-confirmation-prepare/v2`, `aquarium-release-qa-confirmation-begin/v2`, and `aquarium-release-qa-confirmation-finish/v2` command inputs. Full-pass v2 and record/manifest v3 explicitly bind a previous-release or first-release baseline; the latter retains every reachable commit and current tree path with null previous-release identity. They freeze the active Design Gate inventory and positive/failure scenario matrix separately from delta coverage. Confirmation preserves those exact fields, and claim, admission, and result schemas remain unchanged. These inputs and artifacts use closed shapes, create-once outputs with physically normalized parents and byte-bounded basenames, canonical bytes, and exact digests. Before a settlement admission exists, repeating an identical begin verifies the existing artifact and returns the same successful claim receipt without replacing it; begin cannot authorize another worker dispatch after admission. Finish creates one claim-keyed settlement admission that binds the canonical request, submitted evidence bytes, and terminal output path, matches scenario identities independently of array order, and computes its verdict from the same cluster bytes verified against the admission before converging on one terminal `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED` result. A canonical admission with a malformed snapshot shape settles as `REJECTED`. A changed request or output path reports `settlement_pending` before a terminal exists and `settlement_replay` afterward; neither can replace an artifact. Unexpected transient settlement failures remain recoverable by the exact admitted request and output path. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
 
+## Adaptive definition interfaces
+
+The [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md)
+owns `aquarium.procedure-binding/v1`, `aquarium.procedure-fragment/v1`, their
+closed JSON schemas and necessary native declaration signatures. The shared
+Python helper parses definitions, calculates canonical UTF-8 JSON identities,
+extracts native recovery tuples and checks declaration slices with typed aliases.
+It preserves native operation IDs/digests and accepts explicit verified signature
+extensions. These checks establish neither whole-graph qualification nor actual
+agent execution. Selection, retention, admission and family activation remain
+reserved for their EPIC-026 implementation tasks.
+
 ## Commit attribution trailers
 
 The [live-source identity helper](../../plugins/aquarium/skills/task-commit/scripts/source_identity_digest.py) reads one UTF-8 native identity JSON object from stdin and prints its `sha256:<64-hex>` metadata digest. It uses Mulgae's field order and Go JSON escaping, independently of input formatting, key order or stdin text encoding. Invalid JSON, missing or extra fields, incorrect field types and invalid UTF-8 encoding return exit 2 without a digest. Schema validation and equality with retained preflight and receipt-bound run evidence remain caller responsibilities under the [evidence contract](../../plugins/aquarium/references/evidence-residency.md#promote-live-source-evidence-v2). It reads no native runtime files and writes no state.

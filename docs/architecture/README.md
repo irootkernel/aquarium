@@ -26,8 +26,10 @@ immutable Procedure v2 before each new session. The
 [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) separates definition bindings
 from existing native execution and progress. It preserves current role, review
 and delivery contracts and adds no Podway engine, scheduler or central state.
-This is planned architecture; existing sessions and installed source contracts
-remain unchanged by registration.
+The shared definition parser and declaration-signature helper now implement the
+definition layer described in the [adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
+Selection, composition, admission and handler activation remain planned;
+existing sessions and installed source contracts retain their current behavior.
 
 ## Exact Authorities
 

@@ -30,9 +30,11 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 
 [EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
 plans goal-specific Procedure selection and composition across seven handlers.
-Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns the planned binding,
-fragment, selected-source admission and user-approved reuse contracts. This
-registration creates no shipped schema or new runtime prerequisite. Implementing
+Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns the remaining
+selected-source admission and user-approved reuse requirements. Closed
+definition formats and necessary declaration signatures are materialized in the
+[shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
+Handler activation and full structural qualification remain planned. Implementing
 tasks must promote verified behavior to its exact skill/reference and update
 this catalog without replacing the existing ordinary v2 and review contracts.
 

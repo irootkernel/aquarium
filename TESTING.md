@@ -163,17 +163,28 @@ Preparation cannot pass the acceptance gate. Operator decisions
 resume actual native handles without automatic replay. Public observations and
 meaningful application artifacts are required; success sentences are insufficient.
 
-## Planned ADAPT acceptance
+## Adaptive definition checks and planned acceptance
+
+`tests/unit/test_adaptive_definitions_unit.py` exercises closed binding/fragment
+parsing, canonical bytes and identities, exact native keys, all family overlays,
+every current canonical Judge/upstream-quality operation signature, typed aliases,
+negative recording, bounded mandatory gap counts and unknown-signature results.
+An inverse canonical-to-registry control catches omitted required operations.
+Documentation and performance binding examples have
+different producer/evidence/Decision structures. Their synthetic hashes establish
+interface coverage only. Whole-graph guarantees, selected-source admission and
+actual independent execution remain outside this helper's claims.
 
 [EPIC-026](docs/roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-is planned work. Its
+has implemented definition-level contracts; its remaining
 [acceptance scenarios](docs/todo/TODO-ADAPTIVE-PROCEDURES.md#11-verification-and-evidence)
 cover all seven entrypoints, native goal outcomes, capability/effect ordering,
 review controls, composition, exact recovery and post-finalization Git promotion.
 Include passing canonical and equivalent noncanonical definitions as well as
 native-invalid, incompatible and not-established cases. Old canonical-shape
 rejections are not all adaptive safety failures. Registration is not a result
-and adds no command or automated LLM gate to the current Make aggregate.
+and adds no automated LLM gate to the current Make aggregate. Definition tests
+run in the existing unit stage; Ruff covers the shared helper and tests.
 
 TASK-138 supplies the minimal writer/resolver and permitted disposable native
 slice before handler activation. Each family implements its own minimum resume

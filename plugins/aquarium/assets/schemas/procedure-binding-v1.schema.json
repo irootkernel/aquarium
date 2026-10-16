@@ -1,0 +1,624 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aquarium.local/schemas/procedure-binding-v1.schema.json",
+  "title": "procedure-binding-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aquarium.procedure-binding/v1"
+    },
+    "family": {
+      "enum": [
+        "task",
+        "goal",
+        "validation",
+        "design",
+        "diagnosis"
+      ]
+    },
+    "entrypoints": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "task-handler",
+          "epic-handler",
+          "epic-validator",
+          "new-feature",
+          "new-project",
+          "refactor",
+          "war-room"
+        ]
+      }
+    },
+    "compatibility": {
+      "const": "aquarium.adaptive/v1"
+    },
+    "procedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/native_id"
+        },
+        "version": {
+          "$ref": "#/$defs/native_version"
+        },
+        "digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "digest",
+        "source_sha256"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "pattern": "^aquarium-adapt-"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "$ref": "#/$defs/version"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "action",
+              "decision"
+            ]
+          },
+          "role": {
+            "enum": [
+              "worker",
+              "judge",
+              "orchestrator"
+            ]
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/text"
+            },
+            "minItems": 0
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "signature": {
+                  "$ref": "#/$defs/id"
+                },
+                "fields": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "propertyNames": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[^\\u0000\\r\\n]+$",
+                    "not": {
+                      "pattern": "[\\u0000\\r\\n]"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "signature",
+                "fields"
+              ]
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "kind",
+          "role",
+          "effects",
+          "capabilities"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/parameter"
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "obligations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/text"
+          },
+          "applicability": {
+            "$ref": "#/$defs/text"
+          },
+          "producers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/endpoint"
+            },
+            "minItems": 1
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/endpoint"
+            },
+            "minItems": 1
+          },
+          "assessor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "$ref": "#/$defs/id"
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/text"
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "source",
+          "applicability",
+          "producers",
+          "evidence",
+          "assessor",
+          "decision",
+          "effects"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000\\r\\n]+$",
+        "not": {
+          "pattern": "[\\u0000\\r\\n]"
+        }
+      }
+    },
+    "goal_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/id"
+          },
+          "outcomes": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\u0000\\r\\n]+$",
+              "not": {
+                "pattern": "[\\u0000\\r\\n]"
+              }
+            },
+            "additionalProperties": {
+              "enum": [
+                "achieved",
+                "not_achieved",
+                "superseded"
+              ]
+            }
+          }
+        },
+        "required": [
+          "node",
+          "outcomes"
+        ]
+      },
+      "minItems": 1
+    },
+    "closeout": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/id"
+          },
+          "kind": {
+            "enum": [
+              "accepted",
+              "stopped",
+              "shared"
+            ]
+          },
+          "requires": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "node",
+          "kind",
+          "requires"
+        ]
+      },
+      "minItems": 1
+    },
+    "origins": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/origin"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema",
+    "family",
+    "entrypoints",
+    "compatibility",
+    "procedure",
+    "nodes",
+    "parameters",
+    "obligations",
+    "goal_assessments",
+    "closeout",
+    "origins"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "task"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entrypoints": {
+            "items": {
+              "enum": [
+                "task-handler"
+              ]
+            }
+          },
+          "procedure": {
+            "if": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-task-[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "goal"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entrypoints": {
+            "items": {
+              "enum": [
+                "epic-handler"
+              ]
+            }
+          },
+          "procedure": {
+            "if": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-goal-[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "validation"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entrypoints": {
+            "items": {
+              "enum": [
+                "epic-validator",
+                "epic-handler"
+              ]
+            }
+          },
+          "procedure": {
+            "if": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-validation-[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "design"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entrypoints": {
+            "items": {
+              "enum": [
+                "new-feature",
+                "new-project",
+                "refactor"
+              ]
+            }
+          },
+          "procedure": {
+            "if": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-design-[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "diagnosis"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entrypoints": {
+            "items": {
+              "enum": [
+                "war-room"
+              ]
+            }
+          },
+          "procedure": {
+            "if": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "id": {
+                  "pattern": "^aquarium-adapt-diagnosis-[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000\\r\\n]+$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      },
+      "maxLength": 64
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "item": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "node",
+        "item"
+      ]
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "not": {
+            "pattern": "[\\u0000\\r\\n]"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "sha256",
+        "source"
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "text",
+            "integer",
+            "boolean",
+            "choice",
+            "artifact",
+            "list",
+            "check_result"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "type",
+        "required",
+        "description"
+      ]
+    },
+    "native_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    },
+    "native_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "not": {
+        "pattern": "[\\u0000\\r\\n]"
+      }
+    }
+  }
+}
