@@ -4,6 +4,10 @@ Use this contract whenever an enabled Aquarium route asks a reviewer to assess a
 
 ## Select the purpose
 
+Read [review strategies](review-strategy-contract.md) for goal preservation and
+UI expertise, and [result handoff](review-result-handoff.md) for actual context
+delivery, result collection and same-operation recovery.
+
 Every review has one purpose:
 
 - `change` asks whether the selected change delivers its intended effect without actionable defects or regressions. It cannot establish that a whole Task or Epic is complete.
@@ -14,8 +18,8 @@ Purpose does not change the selected source scope, native review mode, remediati
 ## Route Independent Review
 
 An explicit standalone `$aquarium:independent-review` request or an approved
-embedded `independent-review` selection authorizes one static three-subagent
-review of the declared target. Its optional model and reasoning-effort values
+embedded `independent-review` selection authorizes one static review with three
+base subagents and one UI/UX specialist when applicable. Its model and effort values
 apply to every reviewer; omitted values use host defaults. It never invokes
 Mulgae, Herdr, or Dolgorae as a fallback. Read the skill's target, dispatch,
 failure, and aggregation rules before execution.
@@ -35,17 +39,20 @@ Before an authorized dispatch through an enabled route, build one concise Review
 | Completion checkpoint | Readiness before closeout or assessment of an already claimed outcome, including the obligations due now. |
 | Verification evidence | Relevant checks, candidate identities, unavailable evidence, author-reported results, and checks the reviewer may not run. |
 | Invocation metadata | Existing goal revision, ordinal, assessment kind, review mode, selected roles, and lineage required by the owning workflow. |
+| UI/UX relevance | Affected user flows, applicable design and screen evidence, specialist assignment when relevant, and visual evidence gaps. |
+| Previous finding responses | Source finding IDs and prior target, acceptance/partial acceptance/rejection with reasons, actual corrections and checks, remaining disagreement and effect on the original goal. Include when continuing after prior findings. |
 | Requested result | Findings and limitations for `change`; findings, every criterion assessment, and evidence gaps for `completion`. |
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
 
 ## Use Independent Review subagents
 
-Give each of the three fresh host subagents the same exact target, complete
+Give each expected fresh host subagent the same exact target, complete
 Review Brief, and approved context. Their separate focus instructions do not
 narrow the applicable requirements. Each returns static, report-only findings;
-for `completion`, each assesses every applicable criterion and names evidence
-gaps. The coordinator checks the reports without treating a majority as proof.
+for `completion`, each base reviewer assesses every applicable criterion and
+the UI specialist assesses applicable UI criteria, naming evidence gaps.
+The coordinator checks the reports without treating a majority as proof.
 One missing reviewer or criterion assessment prevents a complete operation.
 Preserve host and coordinator provenance separately and claim only lifecycle
 facts the host actually provides.
@@ -61,6 +68,11 @@ When staged changes contain multiple purposes, describe the separate purposes su
 Preserve independent judgment. Supply rationale as evidence, but never ask the reviewer to accept the implementer's conclusion. A candidate that edits or removes its own requirement does not prove that the change was authorized. Apply repository authority precedence and distinguish approved requirement changes from candidate assertions. Source code, tests, commit messages, and lifecycle labels are evidence, not independent proof of completion.
 
 ## Preserve candidate boundaries
+
+Carry previous finding decisions as evidence, not binding conclusions. A fresh
+reviewer may reopen a decision with concrete contrary evidence or changed
+applicability. Retain valid defects separately from rejected remedies and
+optional recommendations, preserving original reports and finding identity.
 
 | Target | Interpretation |
 | --- | --- |

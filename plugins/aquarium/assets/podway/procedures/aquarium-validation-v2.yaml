@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "33"
+version: "34"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -13,6 +13,7 @@ node_definitions:
     instructions:
       - Use the invoking validation handler to bind the exact committed epic, scope, checks, and approved remediation and review envelope.
       - Do not mutate source, install assets, replace sessions, commit, or publish while recording the baseline.
+      - Use the review strategy contract to recommend a route from the original goal, scope, difficulty, impact and uncertainty; preserve an explicit choice and record selection and UI relevance in the existing approved plan or envelope.
     items:
       - id: workflow-owner
         type: choice
@@ -30,7 +31,7 @@ node_definitions:
         multiline: true
       - id: review-route
         type: choice
-        prompt: Record the approved whole-Epic review route, or Mulgae when no alternative was selected.
+        prompt: Record the approved whole-Epic review route, as selected through the approved plan or envelope.
         required: true
         choices:
           - mulgae
@@ -568,6 +569,7 @@ node_definitions:
       - Use the selected current-audit-basis-summary and its matching resolved audit source. A stale earlier audit cannot supply current target evidence.
       - Deliver a complete aquarium.worker-handoff/v2 with the exact target, original criteria, current checks, evidence gaps and actual results and available public native handles. This Action delivers a candidate; the separate Judge assesses it.
       - Preserve the baseline workflow owner. Cold epic-validator uses a fresh independent Judge reading original criteria and artifacts directly; internal epic-handler validation retains its logical Judge when supported. Recover available public handles, current evidence and authority without requiring private history.
+      - Use the review result handoff contract to collect every expected report through its actual native surface, record producer and receiver observations, and recover the same operation before considering fresh review; carry prior finding decisions and correction reasons in the Brief.
     items:
       - id: review-route
         type: choice
@@ -639,7 +641,7 @@ node_definitions:
         multiline: true
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record bounded native lifecycle, all expected Independent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: true
         min_length: 1
         max_length: 2000

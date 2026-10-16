@@ -135,7 +135,7 @@ are unavailable, report the actual capability gap and obtain a supported
 alternative without silently switching harnesses or inventing independence.
 
 Keep the five stable Procedure IDs; the current source versions are Task
-`31`, Goal `34`, Validation `33`, Design `11` and War-room `11`. Preserve exact
+`32`, Goal `35`, Validation `34`, Design `11` and War-room `11`. Preserve exact
 prior sources, customized bytes, immutable sessions and historical reports,
 including role/configuration/task/result/Podway digest domains. Recognized prior
 digests prove provenance, not compatibility with the new graph. Existing formal

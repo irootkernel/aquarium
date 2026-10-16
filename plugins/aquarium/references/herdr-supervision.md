@@ -40,12 +40,15 @@ on another client's focused pane or infer IDs from examples.
 
 ## Fresh reviewer and submission
 
-Follow upstream geometry rules to split a sibling pane in the caller's tab,
-preserving cwd and `--no-focus`. Verify the returned pane is an available shell
-and record that this operation created it. Start one fresh uniquely named agent
-of the explicitly selected kind in that pane. Pass requested native model or
-effort arguments through the supported native interface, after `--` where
-required. Verify the kind and identity actually established.
+Follow the current installed upstream skill's layout and geometry rules and
+the user's explicit topology instructions. Aquarium prescribes no separate
+split or new-tab policy. Preserve the caller's workspace, cwd and `--no-focus`
+unless the user explicitly requests a change. Retain the native returned pane
+and any created tab IDs. Verify the returned pane is an available shell and
+record which pane and tab this operation created. Start one fresh uniquely
+named agent of the explicitly selected kind in that pane. Pass requested native
+model or effort arguments through the supported native interface, after `--`
+where required. Verify the kind and identity actually established.
 
 A startup-blocked or not-ready agent remains available for observation. Inspect
 it, preserve the operation, and ask the user before answering approval or
@@ -60,7 +63,22 @@ state wait is lifecycle evidence, not a report or a per-turn completion receipt.
 Use upstream waiting behavior without Aquarium retry caps or cumulative wait
 budgets; a bounded observer timeout does not terminate the reviewer.
 
+## Main reviewer and native children
+
+Use the selected fresh agent as the main reviewer under
+[review strategies](review-strategy-contract.md). It uses multiple native
+subagents and adds UI expertise where applicable. Each receives the exact
+candidate, Brief and bounded focus; collect actual reports through native
+handles, then synthesize under the main reviewer's provenance. The caller
+supervises the same Herdr operation; children do not create replacement panes
+or independent review rounds. Retain available child references and evidence
+without requiring hidden executor telemetry.
+
 ## Complete output and uncertain results
+
+Use [result handoff](review-result-handoff.md) for production, submission and
+recipient readback. Native output or host-returned reports need no extra file.
+File fallback preserves the existing result and is not another assessment.
 
 Read the same agent through the native agent surface, preferring unwrapped
 output and expanding the native read when necessary. Require the complete
@@ -97,6 +115,11 @@ routine temporary output needs no inventory or automatic cleanup.
 
 Admit completion only when readiness, fresh reviewer identity, submission/activity
 correlation, applicable target and Brief, and the complete result are established.
+The result includes the expected children's roles, statuses, reports or native
+report references, and the main synthesis, including UI coverage when applicable.
+A missing required child report leaves the operation incomplete; preserve its
+available references and report the gap.
+
 Before admission, recheck the applicable Git target through the authorized
 read-only Git surface. For `staged`, confirm the live HEAD-to-index transition
 still matches the inspected candidate; for committed targets, retain the
@@ -110,9 +133,12 @@ no backend CI or Aquarium immutable-capture guarantee.
 
 After successful result admission and evidence recording, close only the pane
 created by this operation, using the native pane command and its exact returned
-ID. Verify its disposition. While active, failed, blocked or uncertain, leave it
-intact for same-operation recovery or the user's decision. Never close another
-pane, tab, workspace or session, and never stop or restart the server.
+ID. Verify its disposition. If this operation also created the tab and it is now
+empty, close that tab under the upstream skill; it may already have closed with
+the last pane. While active, failed, blocked or uncertain, leave the pane intact
+for same-operation recovery or the user's decision. Preserve the caller's pane
+and every pane or tab this operation did not create. Never close a workspace or
+session, and never stop or restart the server.
 
 Keep reports and transient identities under the [evidence residency contract](evidence-residency.md).
 Do not promote them as Mulgae hardening-deferral evidence. Static checks do not

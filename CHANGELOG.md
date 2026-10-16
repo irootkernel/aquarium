@@ -10,6 +10,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Recommend review routes by work size and complexity, add UI/UX specialists and native Herdr review teams, and preserve goals and complete result handoffs; existing managed workflows need authorized Procedure updates.
 - Require Mulgae v0.1.25 and its matching skill, adopt Config v5 and native workspace/index/Git review, retire capture guards and child/replay/compose execution, and stop treating `.mulgaeignore` as an exclusion policy. Existing users need deliberate configuration migration and separately authorized managed-Procedure updates; admitted snapshots and historical reads remain intact.
 - Add promoted-evidence v2 for Mulgae live results, preserving source metadata identity and consistency without claiming a content snapshot; retain v1 packages and bind hardening and commit handoffs to the appropriate native evidence.
 - Update Task, Goal and Validation Procedures for source evidence and explicitly authorized fresh same-route reviews after terminal failure, preserving pending assessment ordinals and existing findings.

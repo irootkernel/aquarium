@@ -1,7 +1,7 @@
 # Workflow review routing
 
 This specification describes the selectable routing contract delivered by
-`EPIC-016` and updated by `EPIC-020`. The shared
+`EPIC-016` and updated by `EPIC-020` and `EPIC-025`. The shared
 [workflow review routing contract](../../plugins/aquarium/references/review-routing-contract.md)
 defines route selection, evidence, switching, waiver, and Low-settlement
 semantics for Task delivery, Epic member delivery, whole-Epic review, and cold
@@ -23,8 +23,10 @@ supported stop and separately authorized lifecycle path.
 
 Completion review and review execution are separate concerns. A workflow may
 require review evidence without requiring one particular backend. Aquarium will
-keep Mulgae as the default while allowing the user to select another supported
-route or explicitly waive delegated review for one workflow.
+recommend Mulgae for small bounded work, Independent Review for medium work,
+and Herdr for large or consequential work, adjusted for difficulty, impact and
+uncertainty. The user selects through existing plan or envelope approval;
+explicit choices and waivers retain their authority.
 
 The selected route owns its native execution, storage, recovery, and lifecycle.
 Aquarium owns route selection, the Review Brief, local adjudication, completion
@@ -40,13 +42,14 @@ preferred route.
 
 | Route | Availability and behavior |
 | --- | --- |
-| `mulgae` | Default route. It owns live-source admission, selected-role execution, provider-free publication reconciliation, findings, CI and retention under the Mulgae contract. A new root after terminal failure requires explicit authority; historical composites remain readable. |
-| `herdr` | Requires an explicitly selected reviewer and a Herdr-supported target. Herdr supervises one fresh static reviewer in the current local session; admission requires submission/activity correlation and the complete purpose-specific report. |
-| `independent-review` | Requires explicit selection and three fresh host delegations. The subagents review one target and Brief with separate focus; Aquarium aggregates their static reports. |
+| `mulgae` | Economical specialist review, the starting recommendation for small bounded work. It owns live-source admission, selected-role execution, provider-free publication reconciliation, findings, CI and retention under the Mulgae contract. A new root after terminal failure requires explicit authority; historical composites remain readable. |
+| `herdr` | Requires an explicitly selected reviewer and a Herdr-supported target. Herdr supervises one fresh main reviewer in the current local session. The main uses multiple native subagents and adds UI expertise when applicable; admission requires actual team reports, submission/activity correlation and the complete synthesis. |
+| `independent-review` | Requires explicit selection and three fresh base host reviewers, plus one UI/UX specialist for UI-related work. The expected team reviews one target and Brief; Aquarium aggregates their reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
-Independent Review uses host-native Codex subagents. A future Dolgorae review
-would have a separate route and admission contract.
+Independent Review uses similar-capability reviewers in the Primary's native
+Codex or Claude harness. A future Dolgorae review would have a separate route
+and admission contract.
 
 ## Selection and authorization
 
@@ -64,7 +67,9 @@ the fresh assessment. Task `resume-current` is reserved for an `incomplete` or
 `failed` operation that has not consumed an ordinal. Goal and validation retain
 their existing route-direction vocabulary.
 
-When no alternative is requested, Aquarium selects Mulgae. If the selected route
+When no route is already selected, Aquarium recommends under the
+[strategy contract](../../plugins/aquarium/references/review-strategy-contract.md)
+and records the user's choice in the existing approval. If the selected route
 is unavailable or cannot represent the target, the workflow stops before another
 provider call and asks the user to choose one of these actions:
 
@@ -121,8 +126,8 @@ The following combinations are valid for a completed checkpoint:
 | Route and operation | Required evidence |
 | --- | --- |
 | `mulgae` and `complete` | An exact live-source root or verified historical composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
-| `herdr` and `complete` | Fresh requested identity, submission/activity correlation, applicable target and Brief, complete report and native operation references under Herdr supervision, reviewer provenance, and `backend-check-result=not-provided`. Idle or done alone is insufficient. |
-| `independent-review` and `complete` | Three completed host delegations for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
+| `herdr` and `complete` | Fresh requested identity, submission/activity correlation, applicable target and Brief, every expected child report and the main synthesis, native operation references including child roles, statuses and available report references, reviewer provenance, and `backend-check-result=not-provided`. Include UI coverage when applicable; a missing required child report leaves the operation incomplete. Idle or done alone is insufficient. |
+| `independent-review` and `complete` | Completed delegations from all three base reviewers and the UI specialist when applicable for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
 | `waived` and `waived` | Waiver authority, `assessment-provenance=coordinator-waiver`, a waiver summary, and `backend-check-result=not-provided`. |
 
 An `incomplete` or `failed` operation preserves every available native reference
@@ -274,6 +279,26 @@ new checkpoints select `independent-review` only in a snapshot that supports it.
 
 ## Local corrections and compatibility
 
-Current Task `30`, Goal `33` and Validation `32` snapshots classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
+Current Task `32`, Goal `35` and Validation `34` sources classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
 
-This is a breaking managed-Procedure update: existing users need an authorized file update and compatible successor sessions. Active and archived snapshots retain their original meanings. Candidate installation, upgrade and affected agent behavior require exact-candidate UTM qualification before release; source tests alone do not establish that result. Design and War-room graph behavior is unchanged; their next versions refresh the shared operative role bindings.
+This is a breaking managed-Procedure update: existing users need an authorized file update and compatible successor sessions. Active and archived snapshots retain their original meanings. Candidate installation, upgrade and affected agent behavior require exact-candidate UTM qualification before release; source tests alone do not establish that result. Design and War-room are unchanged. Earlier sources keep their admitted topology; current routing membership alone does not establish support for the new reviewer teams.
+
+## Goal preservation and result delivery
+
+The [strategy contract](../../plugins/aquarium/references/review-strategy-contract.md)
+owns original-goal preservation, finding admission, capability-preserving
+correction and UI relevance. Finding responses carry source IDs, acceptance or
+rejection reasons, corrections and verification into the next authorized Brief;
+fresh reviewers can reconsider them from new evidence.
+
+The [handoff contract](../../plugins/aquarium/references/review-result-handoff.md)
+owns result production, submission and recipient readback through each native
+surface. Mulgae retains its report-generation and publication ownership.
+Recover an existing result before considering fresh review; a guessed missing
+file is a retrieval incident. Existing references and observations carry this
+state, without another receipt store or mandatory acknowledgement turn.
+
+These source contracts apply to the current skills and bundled Procedures.
+Source checks and static review do not establish actual native reviewer-team
+dispatch, UI inspection or installed recovery behavior; Master's functional
+results remain separate.

@@ -11,6 +11,19 @@ Read [review-intent-contract.md](review-intent-contract.md) before dispatch to
 select `change` or `completion`, construct the Review Brief, assign criterion
 responsibility, and preserve the separate aggregate assessment.
 
+## Scoped review and native result ownership
+
+Apply [review strategies](review-strategy-contract.md) to the existing Brief:
+carry the original goal and due criteria, keep native specialist scopes focused,
+and aggregate assigned coverage. Preserve configured roles/providers and use
+the native artist for UI-related work when applicable. Keep accepted/rejected
+finding responses and their reasons in the next authorized root Brief.
+
+Mulgae alone owns generation, storage, publication and retention. Aquarium's
+[result handoff](review-result-handoff.md) checks native publication facts and
+reads the returned run under its existing verified-read contract. It does not
+add exports, private artifact discovery or another producer receipt protocol.
+
 ## Delegate Native Execution
 
 Use `$use-mulgae` for asynchronous execution and every native lifecycle decision,

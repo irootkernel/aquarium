@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "34"
+version: "35"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -15,6 +15,7 @@ node_definitions:
       - Preserve the exact authorized scope and return current target and focused evidence without implicit commit, push, publication, or session replacement.
       - Before rework, put the exact source attempt and record identity, target, finding or failed-check IDs, admitted correction authority, and phase obligations in the decision reason. On entry, match the native rework history target_attempt_id to the current attempt and record that bounded cause as new evidence; stale source records are historical provenance, not fresh evidence.
       - Deliver the complete aquarium.worker-handoff/v2 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
+      - Use the review strategy contract to recommend a route from the original goal, scope, difficulty, impact and uncertainty; preserve an explicit choice and record selection and UI relevance in the existing approved plan or envelope.
     items:
       - id: work-summary
         type: text
@@ -32,7 +33,7 @@ node_definitions:
         multiline: true
       - id: review-route
         type: choice
-        prompt: Record the approved review route for this goal, or Mulgae when no alternative was selected.
+        prompt: Record the approved review route for this goal, as selected through the approved plan or envelope.
         required: false
         choices:
           - mulgae
@@ -76,6 +77,7 @@ node_definitions:
       - Do not start another review or broad audit solely for eligible local settlement or its permitted locally checked delta.
       - Deliver the complete aquarium.worker-handoff/v2 candidate and original evidence. This Action establishes delivery only; the following retained Judge owns semantic assessment.
       - For current settlement evidence gaps, use its after-target and current criterion rows alongside the original review; preserve its consumed ordinal and coverage limit.
+      - Use the review result handoff contract to collect every expected report through its actual native surface, record producer and receiver observations, and recover the same operation before considering fresh review; carry prior finding decisions and correction reasons in the Brief.
     items:
       - id: goal-kind
         type: choice
@@ -179,7 +181,7 @@ node_definitions:
         multiline: true
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record bounded native lifecycle, all expected Independent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: false
         required_when:
           - item: review-evidence-kind
@@ -945,7 +947,7 @@ node_definitions:
             not_equals: coordinator-waiver
       - id: independent-review
         label: Independent Review completed
-        criteria: All three Independent Review subagents completed for one exact target and Brief, with host provenance and no backend check.
+        criteria: All expected Independent base reviewers and the UI specialist when applicable completed for one exact target and Brief, with host provenance and no backend check.
         guards:
           - evidence:
               node: record-evidence

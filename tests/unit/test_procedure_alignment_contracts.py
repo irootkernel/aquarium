@@ -25,24 +25,24 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "31",
+            "32",
+            "79a1430528934d2941551432703a68be28047bc3e8095bc52acf24c7a057466f",
+            "aquarium-task-v31.yaml",
             "90c8e7df6a20f8b27134be4a3507db49af4de23b5506cd7a2bfe9ae2a2836731",
-            "aquarium-task-v30.yaml",
-            "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "34",
+            "35",
+            "99ae1a42372ec91c8de98cfc61e99c1defc4c99615610bd598c57418c01ea9b5",
+            "aquarium-goal-v34.yaml",
             "8ae119c01a94dae12b02ff17ddee6aab90f377aadd0bc3bb08e701861e87f0cc",
-            "aquarium-goal-v33.yaml",
-            "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "33",
+            "34",
+            "23ce1dff7afe24fc3e2aa0438db6e9c3b7a162f1e131061181018d5ec80a769a",
+            "aquarium-validation-v33.yaml",
             "aa9bc9da3445c795af71bcc9f558977ec9e53fa48391335dbc3a493159eabba6",
-            "aquarium-validation-v32.yaml",
-            "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
         ),
         (
             "aquarium-design-v2.yaml",
@@ -504,7 +504,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "31"
+    assert task["version"] == "32"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -4203,3 +4203,40 @@ def test_grouped_first_owner_evidence_routes_retain_approval_dominators() -> Non
                 assert applied not in reachable_nodes(
                     graph_edges(procedure), owner, without=dominator
                 )
+
+
+def test_review_strategy_revision_preserves_control_and_evidence_surface() -> None:
+    prose = {
+        "criteria",
+        "description",
+        "evidence_guidance",
+        "help",
+        "instructions",
+        "intent",
+        "label",
+        "name",
+        "objective",
+        "prompt",
+        "purpose",
+        "title",
+    }
+
+    def control(value):
+        if isinstance(value, dict):
+            return {
+                key: control(item) for key, item in value.items() if key not in prose
+            }
+        if isinstance(value, list):
+            return [control(item) for item in value]
+        return value
+
+    for family, prior_version in (("task", 31), ("goal", 34), ("validation", 33)):
+        prior = yaml.safe_load(
+            (FIXTURES / f"aquarium-{family}-v{prior_version}.yaml").read_bytes()
+        )
+        current = load_procedure(f"aquarium-{family}-v2.yaml")
+        assert int(current["version"]) == int(prior["version"]) + 1
+        current_control, prior_control = control(current), control(prior)
+        current_control.pop("version")
+        prior_control.pop("version")
+        assert current_control == prior_control

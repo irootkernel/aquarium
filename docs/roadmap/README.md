@@ -55,6 +55,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
+| EPIC-025 | Align review strategies with delivery goals | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -653,3 +654,40 @@ This is a breaking managed-Procedure update. Preserve existing custom files and 
 | TASK-127 | Implement grouped roles and remove startup qualification blockers | Align all five Procedure sources, handlers, report consumers, renderers, validators and setup diagnostics without weakening formal delegation. | Completed | TASK-126 |
 | TASK-128 | Add manual VM release acceptance and reusable scenarios | Implement the guest-side test-vm entrypoint, fixed fixtures, truthful outcomes and release-handler guidance using tests/vm. | Completed | TASK-127 |
 | TASK-129 | Verify workflow recovery and release readiness | Verify development functionality, keep release acceptance separate, and promote accepted canonical outcomes. | Completed | TASK-127; TASK-128 |
+
+## EPIC-025: Align review strategies with delivery goals
+
+**Status:** `Completed`
+
+Use review to deliver usable software that satisfies the original Epic and
+Task goals. Define separate strategies for scoped, economical Mulgae review,
+similar-capability Independent Review, and cross-AI Herdr review teams.
+Recommend a route from work size, difficulty, impact and uncertainty, preserve
+Master's selection, and add UI/UX expertise when the work affects user
+interaction. Carry finding decisions, reasons, corrections and verification
+into the next authorized review.
+Establish result handoffs for each supported transport: confirm production and
+submission at the sender, readback at the receiver, and same-operation recovery
+when delivery fails instead of repeating the review.
+
+Build on the completed EPIC-024 ordinary v2 contracts and existing local
+settlement. This is a breaking managed-Procedure update: preserve existing
+custom files and session snapshots, and use authorized updates and compatible
+successors. Focus verification on result discovery, collection and handoff;
+this Epic adds no dedicated VM E2E suite or review-quality benchmark. Existing
+candidate-installation and release-verification policy still applies.
+Master accepted the source implementation after static reviews and verified
+local corrections. Installed functional results remain separate from this
+source closeout and subject to the existing pre-release policy.
+
+**Canonical Outcomes:** [Review strategies](../../plugins/aquarium/references/review-strategy-contract.md), [result handoffs](../../plugins/aquarium/references/review-result-handoff.md), [review routing](../specs/review-routing.md), [finding disposition](../../plugins/aquarium/references/finding-disposition.md), [Herdr supervision](../../plugins/aquarium/references/herdr-supervision.md), [skill verification guidance](../implementation-tips/changing-skills.md#review-result-handoffs), and [testing contract](../../TESTING.md).
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-130 | Define goal-centered review strategies | Apply ordinary goal-preserving assessment to common review inputs and finding admission; define the three strategies and capability-preserving correction. | Completed | EPIC-024 |
+| TASK-131 | Recommend and select review routes | Recommend a route at handler or validator startup from scope and judgment cost; record Master's choice through the existing plan or envelope approval. | Completed | TASK-130 |
+| TASK-132 | Align scoped Mulgae review | Connect focused native roles and their aggregate coverage to the original goal while preserving provider configuration and artist coverage. | Completed | TASK-130 |
+| TASK-133 | Add UI coverage to Independent Review | Retain three fresh base reviewers and add a UI/UX specialist for UI-related work; collect the complete participant set as one review operation. | Completed | TASK-130 |
+| TASK-134 | Enable cross-agent Herdr review teams | Let a fresh cross-AI main reviewer use multiple native subagents, including a UI/UX specialist when applicable, and return their evidence with its synthesis. | Completed | TASK-130 |
+| TASK-135 | Establish review-result and decision handoffs | Define transport-specific production, submission and receiver readback; recover existing results before considering fresh review, and carry finding decisions and correction evidence into subsequent Briefs. | Completed | TASK-131; TASK-132; TASK-133; TASK-134 |
+| TASK-136 | Verify review workflows and promote documentation | Review delivery, readback and same-operation recovery contracts; use focused fixtures where executable interfaces own the behavior, and promote canonical outcomes without a dedicated VM E2E suite. | Completed | TASK-135 |

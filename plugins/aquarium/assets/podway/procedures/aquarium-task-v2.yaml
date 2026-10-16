@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-task-v2
-version: "31"
+version: "32"
 name: Aquarium Task
 purpose: Deliver one approved roadmap task through the complete Aquarium evidence workflow.
 description: A Podway record of task-handler planning, implementation, refinement, verification, documentation, review, approval, and closeout.
@@ -15,6 +15,7 @@ node_definitions:
       - Do not implement, stage, review, commit, or publish while recording the plan.
       - For plan-handoff, attach the optional plan-handoff-artifact while record-plan is current, verify its recorded digest and byte size, and only then complete this action.
       - Deliver the complete aquarium.worker-handoff/v2 with original evidence, actual candidate, checks, authority and gaps. Record actual returned work and available public handles; unavailable telemetry remains unknown. Complete this ordinary Action with current fences; delivery is not Judge passage.
+      - Use the review strategy contract to recommend a route from the original goal, scope, difficulty, impact and uncertainty; preserve an explicit choice and record selection and UI relevance in the existing approved plan or envelope.
     items:
       - id: plan-summary
         type: text
@@ -41,7 +42,7 @@ node_definitions:
         multiline: true
       - id: review-selection-summary
         type: text
-        prompt: Record the route selection authority, explicit Herdr reviewer or three-subagent Independent Review requirement when applicable, and waiver authority and assurance limit when waived.
+        prompt: Record the route selection authority, explicit Herdr main reviewer and team or expected Independent base and UI reviewers when applicable, and waiver authority and assurance limit when waived.
         required: true
         min_length: 1
         max_length: 2000
@@ -922,6 +923,7 @@ node_definitions:
       - Review is report-only; do not edit files or start another root solely because eligible Low findings exist.
       - An incomplete or failed operation consumes no assessment ordinal and stops for explicit route direction without automatic fallback.
       - Deliver the complete aquarium.worker-handoff/v2 with original evidence, actual candidate, checks, authority and gaps. Record actual returned work and available public handles; unavailable telemetry remains unknown. Complete this ordinary Action with current fences; delivery is not Judge passage.
+      - Use the review result handoff contract to collect every expected report through its actual native surface, record producer and receiver observations, and recover the same operation before considering fresh review; carry prior finding decisions and correction reasons in the Brief.
     items:
       - id: review-route
         type: choice
@@ -988,7 +990,7 @@ node_definitions:
         multiline: true
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all three Independent Review delegation references and statuses when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record bounded native lifecycle, all expected Independent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: true
         min_length: 1
         max_length: 2000
@@ -1311,7 +1313,7 @@ node_definitions:
             not_equals: not-provided
       - id: static-delegated
         label: Static delegated review evidence
-        criteria: The exact Herdr route or complete three-subagent Independent Review remains in evidence without a backend check claim.
+        criteria: The exact Herdr route or complete expected Independent reviewer team remains in evidence without a backend check claim.
         guards:
           - evidence:
               node: review

@@ -13,7 +13,7 @@ unless the placement selects it.
 
 ## Task Procedure
 
-The bundled version-31 source follows [Task orchestration](task-orchestration.md).
+The bundled version-32 source follows [Task orchestration](task-orchestration.md).
 Ordinary native work assesses the plan, combined implementation/refinement/verification,
 documentation and completion after admitted review. The Primary records bookkeeping
 and Decisions. Original mandatory criteria, selected technical review, actual approval,
@@ -47,7 +47,7 @@ states that the review predates changed bytes.
 
 ## Goal Procedure
 
-The bundled version-34 source follows [Epic orchestration](epic-orchestration.md).
+The bundled version-35 source follows [Epic orchestration](epic-orchestration.md).
 Ordinary Worker delivery and independent Judge assessment cover current work and
 completion after admitted review; final integration includes applicable Epic seams.
 The Primary owns bookkeeping and Decisions without an extra assessment cycle.
@@ -110,7 +110,7 @@ no caller starts that assessment merely to qualify for it.
 
 ## Validation Procedure
 
-The bundled version-33 source follows [Validation orchestration](validation-orchestration.md).
+The bundled version-34 source follows [Validation orchestration](validation-orchestration.md).
 Audit and re-audit are direct independent Judge work. Workers implement authorized
 correction groups with checks; the Primary verifies exact accepted group commits
 before re-audit. Final assessment covers admitted technical evidence and integration.

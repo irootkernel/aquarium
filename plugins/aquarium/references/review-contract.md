@@ -22,7 +22,7 @@ before transmission. `workspace`, `staged`, `dirty`, and `head` reject a
 revision; `commit` requires one commit; `range` requires one explicit two-dot or
 three-dot expression.
 
-Independent Review inspects its exact target before and after three host-native subagent reviews. A changed mutable target prevents approval. A matching fingerprint cannot prove that files stayed unchanged between inspections. No immutable capture or copied worktree is created. The dormant [Dolgorae consumer contract](dolgorae-review-contract.md) is future material for a separately named route.
+Independent Review inspects its exact target before and after the complete expected host-native reviewer team. A changed mutable target prevents approval. A matching fingerprint cannot prove that files stayed unchanged between inspections. No immutable capture or copied worktree is created. The dormant [Dolgorae consumer contract](dolgorae-review-contract.md) is future material for a separately named route.
 
 Herdr Review reads the selected target directly in the current local checkout. For `staged`, the reviewer inspects `git diff --cached` and the staged files. It reads unchanged callers only when a changed behavior or applicable requirement establishes a plausible affected path. For `head`, `commit`, and `range`, the reviewer obtains file content and diffs from the resolved revisions through read-only Git commands and never substitutes current index or worktree bytes. Herdr Review does not replace the selected target with a copied checkout, capture manifest, snapshot, fingerprint, or digest binding. External tool output remains a review aid under the permission below. `workspace` and `dirty` remain unsupported.
 
@@ -53,18 +53,22 @@ The review is static and source-read-only. Every participant runs no tests, buil
 
 ## Backend ownership
 
-`independent-review` uses three fresh host-native Codex subagents for one exact
-target and Review Brief. The host owns delegation lifecycle; Aquarium coordinates
+`independent-review` uses three fresh base reviewers in the Primary's native
+harness and adds one UI/UX specialist when applicable, for one exact target
+and Review Brief. The host owns delegation lifecycle; Aquarium coordinates
 and adjudicates the reports. It creates no Dolgorae or Herdr object and never
 substitutes another route on failure.
 
 The `herdr` route uses `$aquarium:herdr-review` with the separately installed
-upstream `$herdr` skill. Herdr owns the current local session, fresh sibling pane
+upstream `$herdr` skill. Herdr owns the current local session, helper layout
 and requested native reviewer, prompt submission, observation, output and
 same-operation recovery. Aquarium admits the complete report and adjudicates
 its content. Do not create Run, Task, Dispatch, Delivery, acknowledgement or
-settlement objects, invoke Orca, or use Dolgorae as a fallback. The reviewer must
-not delegate or start another reviewer.
+settlement objects, invoke Orca, or use Dolgorae as a fallback. The main
+technical reviewer uses multiple native subagents under
+[review strategies](review-strategy-contract.md), adding UI expertise when
+needed. Children remain static and do not delegate further; this permission
+does not change the ordinary Judge's no-nested-dispatch boundary.
 
 Mulgae remains independent. Common source-scope meanings do not make capture,
 provider execution, extraction, publication, retention or lifecycle guarantees
@@ -79,7 +83,10 @@ explicit restart decision in
 
 Herdr Review follows [herdr-supervision.md](herdr-supervision.md) and the upstream
 skill. Require the requested fresh reviewer identity, submission/activity
-correlation, applicable target and Brief, and a complete purpose-specific report.
+correlation, applicable target and Brief, every expected child report and the
+main reviewer's complete purpose-specific synthesis, including UI coverage when
+applicable. Retain each child's role, status and available native report reference;
+missing required reports leave the operation incomplete.
 Idle, done, process exit or silence alone cannot establish completion. Read full
 native output, expanding the read before using the same-reviewer Markdown-file
 fallback. Never request file delivery in the initial prompt.
@@ -89,9 +96,16 @@ operation. Inspect that agent and output before supported recovery; never
 blindly resend, replace it or answer approval/question UI without the user's
 decision. Aquarium adds no retry quota or wait budget. Preserve active, failed,
 blocked and unknown panes. Close only the pane this operation created after
-successful admission and evidence recording, and verify its disposition.
+successful admission and evidence recording, and verify its disposition. If this
+operation created its tab and it is now empty, close that tab under the upstream
+skill. Preserve every pane and tab this operation did not create.
 
 ## Result contract
+
+Apply [goal-preserving review](review-strategy-contract.md) and
+[result handoff](review-result-handoff.md). Collect complete reports from the
+actual native surface before adjudication; missing file output alone does not
+justify another review.
 
 Require only actionable finding candidates. Each finding includes reported
 severity, triggering scenario, violated authority, impact, evidence, and the
@@ -114,13 +128,15 @@ provenance, remaining gap, and aggregate unmet and unverified counts. For
 `change`, state that whole-work-unit completion was not assessed. A clean
 technical verdict never substitutes for the completion assessment.
 
-Independent Review additionally returns its three role and host delegation
+Independent Review additionally returns every expected role and host delegation
 references, target comparison and report coverage. It claims no immutable
 capture, backend CI or native settlement.
 
 Herdr Review returns bounded session/pane and actual reviewer references,
 submission and wait outcomes, report completeness, recovery and created-pane
-disposition, plus any retained report file used for the result. Use
+and created-tab disposition, plus any retained report file used for the result.
+Include each expected child's role, status and report or native report reference,
+and the main synthesis; record missing reports as operational gaps. Use
 `backend-check-result=not-provided`; it supplies no Mulgae-only promotion evidence.
 Wrong scope, missing purpose-specific output, reviewer mismatch or incomplete
 native operation is operationally incomplete and never technical `APPROVE`.

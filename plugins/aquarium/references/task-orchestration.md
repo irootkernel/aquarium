@@ -2,7 +2,7 @@
 
 ## Ordinary execution
 
-Task version `31` uses ordinary Actions and the [v2 role and evidence contract](ordinary-agent-orchestration.md).
+Task version `32` uses ordinary Actions and the [v2 role and evidence contract](ordinary-agent-orchestration.md).
 Use the Primary harness's supported native Workers and independent report-only
 Judge without prior qualification, role snapshots or configuration digests.
 Actual original criteria, current candidate, checks, authority and available

@@ -4,6 +4,11 @@ Use this contract whenever Aquarium consumes findings from Mulgae Review, Herdr 
 
 ## Adjudicate before acting
 
+Apply [review strategies](review-strategy-contract.md): establish the applicable
+due requirement and concrete impact before assigning blocker status. Preserve
+a valid defect when rejecting an excessive remedy; seek a goal-preserving
+correction. Optional hardening and preferences do not create completion gaps.
+
 For every finding, preserve the provider's reported severity and independently record:
 
 - validity as `Valid`, `Invalid`, or `Needs confirmation`;
@@ -11,11 +16,16 @@ For every finding, preserve the provider's reported severity and independently r
 - the current requirement owner and affected repository-relative paths;
 - the disposition and the authority required for it.
 
-Effective priority records impact; it does not by itself require another review. A finding that affects current correctness, acceptance criteria, security, privacy, public API behavior, schema, migration, persistence, lifecycle safety, or required evidence is at least `Medium`. Preserve that priority when its correction qualifies for local settlement below. Invalid findings require no remediation. `Needs confirmation` cannot support completion. Resolve it from existing authorized evidence or checks covered by the owning execution envelope. Otherwise report the exact missing evidence and authority. Confirmation consumes no provider-review round unless the provider review itself runs again.
+Record acceptance, partial acceptance or rejection with reasons and evidence,
+the actual correction and checks, remaining disagreement and effect on the
+original goal. Carry the response with source finding IDs into the next
+authorized Review Brief under [review intent](review-intent-contract.md).
+
+Effective priority records impact; it does not by itself require another review. A valid finding with an established effect on current correctness, acceptance criteria, security, privacy, public API behavior, schema, migration, persistence, lifecycle safety, or required evidence is at least `Medium`. Preserve that priority when its correction qualifies for local settlement below. Invalid findings require no remediation. `Needs confirmation` cannot support completion. Resolve it from existing authorized evidence or checks covered by the owning execution envelope. Otherwise report the exact missing evidence and authority. Confirmation consumes no provider-review round unless the provider review itself runs again.
 
 ## Apply the authority envelope
 
-An explicitly selected `$aquarium:independent-review` route uses three fresh host subagents for one report-only operation. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, standalone `$aquarium:herdr-review`, or standalone `$aquarium:independent-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
+An explicitly selected `$aquarium:independent-review` route uses three fresh base reviewers and, for UI-related work, one UI/UX specialist for one report-only operation. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, standalone `$aquarium:herdr-review`, or standalone `$aquarium:independent-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
 
 An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope covers in-scope local corrections, affected checks and authorized staging without another user prompt. Report the correction afterward. A necessary provider reassessment uses the same selected route and remaining approved review budget automatically. Changing routes never erases findings or resets that budget. Stop only for effects outside the envelope, a new product or authority choice, unsafe isolation, or a necessary provider reassessment with no remaining grant. Name the uncovered effect or exhausted grant instead of asking for a generic re-review approval.
 

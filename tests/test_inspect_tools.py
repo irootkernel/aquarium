@@ -5922,6 +5922,9 @@ else:
             {
                 "aquarium-task-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-task-v31.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-task-v30.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -5960,6 +5963,9 @@ else:
                 },
                 "aquarium-goal-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-goal-v34.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-goal-v33.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -5997,6 +6003,11 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-validation-v33.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (
                             ROOT / "tests/fixtures/aquarium-validation-v32.yaml"

@@ -2,7 +2,7 @@
 
 ## Ordinary execution and Judge continuity
 
-Goal version `34` uses ordinary Actions under the [v2 contract](ordinary-agent-orchestration.md).
+Goal version `35` uses ordinary Actions under the [v2 contract](ordinary-agent-orchestration.md).
 Task phase skills do not govern goal-centered Epic work. Supply original criteria,
 current candidate, evidence, checks, exact authority and available public handles.
 Retain one logical native Judge across members, corrections, internal validation

@@ -1,6 +1,6 @@
 # Validation orchestration
 
-Validation version `33` uses ordinary Actions and the [v2 contract](ordinary-agent-orchestration.md).
+Validation version `34` uses ordinary Actions and the [v2 contract](ordinary-agent-orchestration.md).
 An independent cold Judge reads original Epic criteria and current artifacts;
 internal validation retains its logical Epic Judge when supported. Use available
 public handles, actual evidence and authority without qualification, private
