@@ -39,25 +39,24 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 
 ## Adaptive Procedure work
 
-[EPIC-026: ADAPT](roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-is registered for all seven delivery, design and diagnosis handlers. Its
-[Detailed SOT](todo/TODO-ADAPTIVE-PROCEDURES.md) contains the adopted selection,
-composition, qualification, retention, promotion and recovery design. These are
-implementation requirements. The [shared adaptive contract](../plugins/aquarium/references/adaptive-procedures.md)
-now defines closed binding/fragment formats and declaration signatures, selected
-exact-known-source admission, atomic locally ignored retention and native-tuple
-recovery. Explicit ordinary-assignment helpers now select by fit and prepare
-exact source/binding candidates within approved scope. Explicit whole/fragment
-composition resolves typed ports and namespaces into self-contained candidates.
-Guarded qualification and exact pre-start suitability/bootstrap assess those
-candidates through ordinary reports. Task, Goal, Validation, Design and Diagnosis
-selection and mapped execution are implemented. Shared unexpected running-session
-replacement uses explicit consent and native atomic preserve-start. Whole or
-fragment preservation needs specific content consent after original finalization
-and a separate grant for its commit. Cross-family recovery and seven-entrypoint
-VM tools are prepared; exact installed integration remains TASK-146. Existing
-installed skill and native contracts apply until the corresponding authorized
-update. The roadmap owns task order and status.
+[Adaptive Procedure contracts](../plugins/aquarium/references/adaptive-procedures.md)
+cover goal-specific selection, bounded authoring, whole/fragment composition,
+qualification and local retention across all seven handlers. The
+[mapped execution contract](../plugins/aquarium/references/adaptive-execution.md)
+preserves ordinary Worker/Judge reports, selected review and authority through
+native execution and exact recovery. Unexpected running-session replacement uses
+explicit consent and native atomic preserve-start. Optional
+[reusable preservation](../plugins/aquarium/references/procedure-promotion.md)
+needs specific content consent. Candidates are normally offered at closeout;
+application follows original finalization. A commit needs a separate matching
+grant.
+
+[TESTING](../TESTING.md#adaptive-acceptance-scenarios) owns the durable acceptance
+scenarios and separates source checks from installed observations. The
+[roadmap](roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
+tracks delivery status, integrated verification and actual acceptance. The linked
+dossier owns remaining task-level acceptance requirements until Epic closeout.
+Installed skills and managed sources change only through their authorized update.
 
 ## Source-of-Truth Precedence
 

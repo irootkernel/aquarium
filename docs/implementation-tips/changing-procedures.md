@@ -35,46 +35,45 @@ Podway v0.2.14 permits at most 1,024 definitions and 1,024 graph placements, eig
 
 The Task Procedure's `confirm-goal-assessment-core` and `confirm-stopped-goal-assessment-core` placements consume the implementation evidence before `assess-goal` or `assess-stopped-goal`. The assessment placements consume the carried completion assessment and applicable user direction. Check each placement's current references before changing its evidence budget.
 
-## Planned adaptive Procedure implementation
+## Adaptive Procedure maintenance
 
-[EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-and its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) define the transition
-from canonical-shape admission to qualified selected-source execution. The
-current installed-source rules above remain effective until implementation and
-an authorized update; registration does not turn managed assets into examples.
+The [adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md)
+and [mapped execution contract](../../plugins/aquarium/references/adaptive-execution.md)
+own selected-source admission and execution. Preserve canonical/custom/formal
+sources and admitted snapshots under their original supported contracts. Managed
+host assets still require their authorized update.
 
-Implement adaptive admission alongside canonical/custom/formal checks. Derive
-success from native session-goal outcomes, then verify due assessment, review,
-acceptance and effect-order relationships. Minimal capability signatures may
-recognize different node names and equivalent structures; they do not authenticate
-an agent or require the entire canonical graph. Keep binding/fragment metadata
-outside native schemas and validate complete flattened instances with Podway.
+Derive success from native session-goal outcomes and verify due assessment,
+review, acceptance and effect-order relationships. Capability signatures recognize
+equivalent structures without authenticating agents or requiring canonical
+layouts. Keep Aquarium binding/fragment metadata outside native schemas and
+validate complete flattened instances with Podway.
 
-Provide exact native-ID/version/digest resolution and atomic local retention
-before the first adaptive start. A retained bundle must resume without reading
-mutable origin library files. Preserve adopted customization obligations without
-making every optional library entry mandatory, and support approved custom roots.
-Task phase applicability comes from actual work and repository requirements,
-not the presence or absence of a generated node. Update old fixed-phase rules
-only when the corresponding adaptive family is implemented.
+Resolve adopted definitions by native ID/version/digest across approved roots.
+Keep bundles atomic, local, ignored and self-contained so recovery does not need
+mutable origin libraries. Preserve adopted customization obligations while
+keeping optional templates distinct. Task phase applicability follows actual work
+and repository requirements.
 
-After actual consent to an unexpected active topology replacement, use the
-native atomic preserve-start path with its supported fences and outcome recovery.
-Do not emulate it with cancel-then-start, reset or deletion. Normal rework and
-approved terminal successors retain their existing authority.
+Unexpected active-topology replacement needs actual consent before native atomic
+preserve-start with current fences and same-key outcome recovery. Normal rework
+and approved terminal successors retain their existing authority. Never emulate
+the atomic transition with cancel-then-start, reset or deletion.
 
-Pin canonical sources explicitly in fixed VM regressions. Adaptive smoke checks
-the verified admitted mapping, actual native work and a fixture oracle. Complete
-and commit driver/fixture changes in TASK-145 before TASK-146's installed checks;
-local uncommitted helper tests remain distinct from clean-candidate gates.
-Candidate installation stays guest-only.
+Pin canonical sources in fixed VM regressions. Adaptive checks use the admitted
+mapping, actual work and fixture oracle. Commit driver/fixture changes before
+installed use; permitted local helper checks remain separate from clean-candidate
+gates. Candidate installation stays guest-only. Follow the
+[acceptance scenarios](../../TESTING.md#adaptive-acceptance-scenarios) and
+[VM continuation methods](../../tests/vm/README.md#adaptive-development-verification)
+through representative delivery, rework, recovery and closeout.
 
-Ask about whole/fragment preservation at closeout only when actual use and reuse
-value justify it. Apply the accepted tracked library diff after the original
-result and Podway finalization. Specific preservation consent and a separate
-promotion commit grant may be requested together; broad or consumed completion
-grants do not authorize it. Revalidate transformed definitions without claiming
-unobserved runtime success or adding a mandatory preservation Judge round.
+Offer useful whole/fragment preservation at closeout after successful use. Apply
+only the specifically accepted library diff after original finalization. Content
+consent and its separate promotion commit grant may be requested together; broad
+or consumed original-work grants do not cover promotion. Revalidate transformed
+definitions and state their runtime limits. Preservation adds no mandatory Judge
+round.
 
 ## Compatibility Evidence
 

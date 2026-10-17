@@ -21,28 +21,29 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 ## Adaptive definitions and execution
 
 [EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-adds an Aquarium-owned authoring and qualification path that produces a complete
-immutable Procedure v2 before each new session. The
-[Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) separates definition bindings
-from existing native execution and progress. It preserves current role, review
-and delivery contracts and adds no Podway engine, scheduler or central state.
-The shared definition parser and declaration-signature helper now implement the
-definition layer described in the [adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
-Selected admission now accepts exact known sources, retains complete ignored
+selects suitable existing Procedures or prepares complete Procedure v2 definitions
+before native admission. The
+[adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md)
+separates definition bindings from existing native execution and progress. It
+preserves current role, review and delivery contracts. The definition parser and
+declaration-signature helper implement its binding and capability checks without
+adding a Podway engine, scheduler or central state.
+Selected admission accepts exact known sources, retains complete ignored
 bundles atomically and resolves them by native tuple across the worktree.
 Retained definitions are self-contained; recovery needs neither mutable origin
 libraries nor a central session database. Ordinary-assignment selection and
 source-only preparation retain exact ignored candidates separately from adopted
-bundles. Composition now flattens exact whole/fragment imports and explicit
+bundles. Composition flattens exact whole/fragment imports and explicit
 control/evidence/rework ports before those same fit, storage and native checks.
 Namespace expansion preserves native semantic operation identities and declared
 formal contracts. Guarded source qualification and exact ordinary pre-start
 suitability/bootstrap use the same retained definition boundary. Task, Goal, Validation, Design and Diagnosis consume those definitions through the shared mapped execution adapter. Unexpected topology replacement uses one explicitly consented native preserve-start operation with archived lineage and same-key recovery; it adds no executor or central state.
 Grouped post-use preservation offers and specifically consented post-finalization
 library publication use the existing source and authority boundaries. Cross-family
-recovery checks and guest tooling cover all seven entrypoints; actual installed
-observations remain pending. Existing sessions and installed source contracts
-retain their current behavior.
+recovery checks and guest tooling cover all seven entrypoints. The
+[testing contract](../../TESTING.md#adaptive-acceptance-scenarios) separates their
+source and installed evidence. Existing sessions retain their admitted contracts;
+managed sources change only through an authorized update.
 
 ## Exact Authorities
 

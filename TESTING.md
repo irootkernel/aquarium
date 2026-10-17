@@ -164,7 +164,7 @@ Preparation cannot pass the acceptance gate. Operator decisions
 resume actual native handles without automatic replay. Public observations and
 meaningful application artifacts are required; success sentences are insufficient.
 
-## Adaptive definition checks and planned acceptance
+## Adaptive definition checks
 
 `tests/unit/test_adaptive_definitions_unit.py` exercises closed binding/fragment
 parsing, canonical bytes and identities, exact native keys, all family overlays,
@@ -177,8 +177,8 @@ interface coverage only. Whole-graph guarantees, selected-source admission and
 actual independent execution remain outside this helper's claims.
 
 [EPIC-026](docs/roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-has implemented definition-level contracts; its remaining
-[acceptance scenarios](docs/todo/TODO-ADAPTIVE-PROCEDURES.md#11-verification-and-evidence)
+implements definition and execution contracts. Its
+[acceptance scenarios](#adaptive-acceptance-scenarios)
 cover all seven entrypoints, native goal outcomes, capability/effect ordering,
 review controls, composition, exact recovery and post-finalization Git promotion.
 Include passing canonical and equivalent noncanonical definitions as well as
@@ -403,6 +403,14 @@ actual definition: a declared missing selection still fails, while a boundary
 without a selector uses its verified checkpoint metadata. Disposable native
 controls cover canonical Validation past baseline and interrupted finalization
 with a requirement-source lifecycle edit in the single fixture commit.
+Finalization recovery controls keep pinned original criteria after an approved
+source edit or deletion. They cover ordinary and historical checkpoint shapes,
+current report postimages and deleted before-images, mapped Judge evidence,
+work and goal identity, native invalidation and concurrent drift, immutable Git
+source recovery, and the public context CLI. Delegated source-edit reconciliation
+preserves its provenance; Design application remains user-approved. These helper
+controls use synthetic role and approval declarations. Actual installed recovery
+and independent execution require separate candidate-bound observations.
 `ManagedRuntime.exercise_adaptive_admitted_slice`
 observes retained exact source, prepared resolution before begin, actual
 bootstrap artifact import when due, non-bootstrap running resolution and the
@@ -452,8 +460,61 @@ source/binding/native evidence checks, actual public role/result correlation,
 exact target and user decision checks, selected upstream readiness and leaf
 results, conditional PM clipboard authority, no-initialization and unchanged
 product oracles. Fixed Task/Epic canonical regressions retain their source-pinned
-checkpoints. No ordinary Make stage runs a provider or a VM. TASK-146 must run
-these tools from the matching clean committed candidate; missing prerequisite,
+checkpoints. No ordinary Make stage runs a provider or a VM. Installed verification
+runs these tools from the matching clean committed candidate; missing prerequisite,
 role, approval or installed evidence stays incomplete. Actual manual handler
 functional checks, including preservation recommendations and decisions, remain
 unverified until observed under that separate authority.
+
+## Adaptive acceptance scenarios
+
+These requirements cover goal-adaptive Procedure selection, authoring, composition
+and execution. Task IDs identify the implementation owners; the roadmap owns
+their lifecycle. The table specifies required evidence, not observed pass results.
+Keep source/helper checks, released-native observations and actual installed
+handler behavior distinct. Record candidate-bound results outside canonical
+documentation under the existing evidence-residency contract.
+
+Installed development verification covers representative delivery, rework,
+recovery and closeout across all seven entrypoints, including non-Git planning
+and diagnosis. The first semantic checkpoint and release upgrade/startup smoke
+each cover only their declared scope. Codex is the required observed harness for
+EPIC-026; preserve other supported mappings and report their unobserved results
+without blocking ordinary use solely for missing telemetry.
+Use actual selected upstream operations and separate PM clipboard authority when
+applicable. Missing prerequisites, approvals, role evidence or installed
+observations remain incomplete. Candidate installation stays in the dedicated
+UTM VM under its separate authority, using committed matching verification tools.
+
+| Case | Required result | Primary owner |
+| --- | --- | --- |
+| ADAPT-01 | Suitable existing Procedure is reused with a concrete fit reason and no unnecessary generation. | TASK-139 |
+| ADAPT-02 | Documentation and performance work both qualify with different producer/evidence/Decision structures, not just different IDs or no-op phases. Documentation-only work needs no unused implementation/refine/Deslop prerequisite absent an independent requirement. | TASK-139; TASK-141; TASK-142 |
+| ADAPT-03 | Whole and partial reuse preserve operation identities and resolve ports/rework; conflicting composition inputs reject. Fragment checks use exact flattened instances and origins need not remain available for resume. | TASK-140 |
+| ADAPT-04 | Reject missing final-Judge predicates, invalid applicability routed forward, unguarded achieved mappings and product work after the last covering assessment. Exercise forward post-approval/assessment content changes separately from native rework invalidation. | TASK-141 |
+| ADAPT-05 | A real fail/inconclusive assessment completes its operation and routes to rework/evidence/stop without false success. | TASK-142 |
+| ADAPT-06 | Seed original-source and compound-criterion omissions and goal-destroying remedies; current assessments discover them without changing the authoritative requirement set to match the plan. | TASK-141; TASK-142 |
+| ADAPT-07 | Selected route and complete expected Independent UI or Herdr child team survive composition; missing required reports remain incomplete. | TASK-142 |
+| ADAPT-08 | Truncated/unreadable delivery recovers the same operation, with no new reviewer, ordinal or synthetic receipt requirement. | TASK-142 |
+| ADAPT-09 | Eligible local corrections use current checks and final Judge without needless re-review or Procedure regeneration. | TASK-142 |
+| ADAPT-10 | Every member can pass while an Epic seam still blocks final acceptance; future members are not required prematurely. | TASK-142 |
+| ADAPT-11 | Feature, project and refactor designs preserve QA verdicts, exact application approval and no-implementation boundaries. | TASK-143 |
+| ADAPT-12 | Non-Git project planning and opted-out work perform no Podway discovery, source rendering, session mutation or Git initialization. | TASK-143 |
+| ADAPT-13 | Reproducible, intermittent, incomplete and no-work diagnoses retain distinct truthful results and required approval. | TASK-144 |
+| ADAPT-14 | Resolve prepared, running non-selecting-node and handoff-successor sessions by native ID/version/digest. Identical aliases work; conflicting bindings across roots, missing or corrupt bundles stop without guessing. Origin-library changes alone do not block an intact bundle. | TASK-138; TASK-142; TASK-143; TASK-144; TASK-145 |
+| ADAPT-15 | Consented native preserve-start creates linked superseded/archive/prepared-successor state atomically, with fresh fences and same-key unknown-outcome recovery. No cancel-then-start/delete substitute, grant reset or added approval for normal rework/successors. | TASK-144; TASK-145 |
+| ADAPT-16 | Bundles are local and ignored under conventional or approved custom roots. Atomic publication enforces worktree-wide key uniqueness; competing/partial writes, unsafe paths and existing ignore/track conflicts preserve existing files. | TASK-138; TASK-145 |
+| ADAPT-17 | Successful/useful whole/fragment candidates prompt together at closeout. Yes/no/partial decisions preserve local copies and original completion. Tracked promotion follows original finalization; only an explicit promotion grant permits its separate commit. One combined consent/commit question suffices. | TASK-145 |
+| ADAPT-18 | Parameterized/extracted promotion receives schema/port and representative flattened native checks. State tested inputs and actual runtime limits; never inherit the source's execution claim or copy its runtime/authority data. | TASK-145 |
+| ADAPT-19 | Legacy canonical/custom/formal state and active snapshots survive the update; unrelated missing templates do not alone block selected-source admission. | TASK-138; TASK-145 |
+| ADAPT-20 | Actual installed startup and due semantic progression work for all seven entrypoints, not only a prepared assignment or copied skill text. | TASK-146 |
+| ADAPT-21 | Plan-only remains read-only; plan-handoff restores exact artifacts and source drift invalidates only affected claims. | TASK-139; TASK-142; TASK-145 |
+| ADAPT-22 | Commit-success/finalization failure recovers without another commit or false workflow completion. | TASK-142 |
+| ADAPT-23 | Committed driver/fixture and exact installed-candidate checks reject mismatches, missing selected Ouroboros/clipboard authority and pending descendants. Old result files cannot supply a new PASS. | TASK-145; TASK-146 |
+| ADAPT-24 | Source-pinned canonical regressions keep fixed checkpoints. Adaptive smoke derives its checkpoint from the admitted verified binding plus actual native work and fixture oracle, accepting valid different node IDs without accepting missing work or a wrong family. | TASK-145; TASK-146 |
+| ADAPT-25 | All five canonical bindings accept their legitimate achieved/stopped paths, including a shared closeout terminal. Missing goal tracking, arbitrary success labels and parent-goal assessment inside an ordinary work fragment cannot manufacture success. | TASK-137; TASK-140; TASK-141 |
+| ADAPT-26 | Valid namespaced capability signatures and typed aliases qualify. Worker-labeled fake Judge evidence, text-nonempty verdicts and pass-only assessment records cannot satisfy independent assessment. Legitimate unrelated pass-only native checks remain usable. | TASK-137; TASK-140; TASK-141 |
+| ADAPT-27 | Reject missing ordinal continuity, incomplete-operation consumption, cross-provider resume, excess confirmation without new authority and delegated final/cold acceptance. An authorized in-session switch preserves findings and authority without requiring unselected providers at startup. | TASK-141; TASK-142 |
+| ADAPT-28 | Positive canonical and composed controls pass. Native-invalid, proven incompatible and valid-but-not-established cases remain distinct; test infeasible guarded paths and practical analysis cost without exhaustive-path assumptions or matching skill prose. | TASK-141; TASK-146 |
+| ADAPT-29 | Preserve applicable adopted-customization obligations and disclose a justified replacement in the existing envelope. Optional reusable templates and historic local files do not become mandatory policies merely by existing. | TASK-138; TASK-139; TASK-145 |
+| ADAPT-30 | Known unmodified reuse keeps existing assessment boundaries, including Goal without a plan Judge. New/changed candidates receive exact-target pre-start suitability and truthful bootstrap import; changed basis on re-entry cannot replay an old pass as a fresh assessment. | TASK-139; TASK-141; TASK-142 |

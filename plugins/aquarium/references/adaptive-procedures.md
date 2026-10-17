@@ -9,12 +9,13 @@ recovery. TASK-139 implements fit selection and approved source-only preparation
 through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
 composition through that preparation path. TASK-141 implements guarded structural
 qualification and exact ordinary pre-start suitability with bootstrap import.
-Task, Goal, Validation, Design and Diagnosis now use [adaptive execution](adaptive-execution.md), including shared explicitly consented atomic supersede. Cross-family recovery and consent-based preservation are implemented. Exact installed observations remain pending TASK-146. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
+Task, Goal, Validation, Design and Diagnosis now use [adaptive execution](adaptive-execution.md), including shared explicitly consented atomic supersede. Cross-family recovery and consent-based preservation are implemented. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
 
-The repository's `docs/todo/TODO-ADAPTIVE-PROCEDURES.md` owns remaining
-implementation acceptance. The roadmap owns Task identity and lifecycle. This
-reference owns the durable shared adaptive definition contract. Its signatures
-are reference implementations; a new operation can establish the same guarantee
+The source repository's `TESTING.md#adaptive-acceptance-scenarios` owns durable
+acceptance scenarios. Its roadmap owns Task identity and lifecycle, and tracks
+integrated verification and actual acceptance. The linked dossier owns remaining
+task-level acceptance requirements until Epic closeout. This reference owns the
+shared adaptive definition contract. Its signatures are reference implementations; a new operation can establish the same guarantee
 through its own explicit verified contract.
 
 ## Requirement and source basis
@@ -607,7 +608,7 @@ performs native identity, workspace health, source checks and selected-route
 checks. These admission/context actions never start, begin, replace or advance a session. The separate `transition-plan`, `transition` and `transition-recover` actions use the [explicitly consented atomic transition contract](adaptive-execution.md#consented-atomic-supersede), with exact ordinary checkpoint, successor qualification and actual user consent inputs. Current native
 state and a different-definition conflict remain visible; even the same
 definition requires the Orchestrator to reconcile actual work and authority.
-Retention can prepare a successor while preserving that conflict. Native inspection/resume success returns `ready`; retention returns `retained`. Mapped `context` exits 0 for `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, and Design/Diagnosis `approval-required` / `reapproval-required`. Both approval statuses return no dispatch and preserve actual exact-diff/target currency. Native context requires its existing session and exact ordinary qualification; the inapplicable branch does not. Other failures retain distinct status/message/details and exit 2; argparse usage errors use exit 2 and stderr usage text.
+Retention can prepare a successor while preserving that conflict. Native inspection/resume success returns `ready`; retention returns `retained`. Mapped `context` exits 0 for `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, and Design/Diagnosis `approval-required` / `reapproval-required`. Both approval statuses return no dispatch and preserve actual exact-diff/target currency. Native context requires its existing session and exact ordinary qualification; the inapplicable branch does not. Other failures retain distinct status/message/details and exit 2; argparse usage errors use exit 2 and stderr usage text.
 Aquarium's source-repository interface catalog, `docs/specs/local-interfaces.md`,
 defines both CLIs' flags, result fields, failure details and exit statuses. Target
 repositories do not need that development catalog for admission.
@@ -662,9 +663,9 @@ A nonzero check exit fails even when its typed diagnostic says `valid: true`.
 These local helpers establish neither real independent agent execution nor
 installed handler behavior.
 
-## Amendment owners and reserved delivery
+## Implementation owners
 
-| Task | Exact existing owner/rule to amend when implemented |
+| Task | Implemented owner and retained boundary |
 | --- | --- |
 | TASK-138 | Implemented: podway-integration and tool-catalog selected/library readiness distinction; dev-setup inspect_tools selected path; atomic writer/resolver and dependency-reporting launcher with lazy imports |
 | TASK-139 | Implemented: shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
@@ -673,8 +674,8 @@ installed handler behavior.
 | TASK-142 | Implemented: Task/Goal/Validation selection, public adaptive admission/context forwarding, mapped due phase and handoff consumers, self-contained prepared/running recovery and original acceptance/finalization boundaries |
 | TASK-143 | Implemented: new-feature/new-project/refactor Design consumers, mapped upstream leaves, QA owner routing, exact application currency and prepared/running/non-Git/opt-out recovery |
 | TASK-144 | Implemented: war-room and design-diagnosis adaptive diagnosis; podway-integration and epic-handler successful-terminal-only replacement wording; task-orchestration, epic-orchestration, validation-orchestration and design-diagnosis-orchestration continuation rules for shared consented atomic supersede; preserve task-handler's prohibition on replacing a session merely to recover reports |
-| TASK-145 | Implemented: exact whole/fragment preservation offer and post-finalization consented application, separate task-commit handoff, setup/source-role guidance, cross-family recovery controls and seven-entrypoint guest driver/fixtures; installed observations remain TASK-146 |
-| TASK-146 | committed-candidate observations and canonical document settlement; preserve original correction owners and actual Master acceptance |
+| TASK-145 | Implemented: exact whole/fragment preservation offer and post-finalization consented application, separate task-commit handoff, setup/source-role guidance, cross-family recovery controls and seven-entrypoint guest driver/fixtures; installed verification methods belong to TASK-146 |
+| TASK-146 | Implemented: committed-candidate verification methods and canonical document settlement; actual observations remain candidate-bound evidence, with original correction owners and actual Master acceptance preserved |
 
 Positive fixtures must include all five canonical declarations, valid namespaced
 typed aliases and genuinely different work/evidence/Decision structures. Negative

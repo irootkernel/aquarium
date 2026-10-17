@@ -272,8 +272,8 @@ Both reports use a 64-character lowercase SHA-256 hex digest for
 `target.greet_sha256`, with an optional `sha256:` prefix. Both forms must match
 the current source bytes exactly.
 Return the complete report JSON in the native final result, or its original
-absolute path and `sha256:<64 lowercase hex>` digest. Point `startup-evidence.json`
-to that original report path. Preserve previous captures when reconciling a
+absolute path and 64-character lowercase SHA-256 digest, with an optional
+`sha256:` prefix. Point `startup-evidence.json` to that original report path. Preserve previous captures when reconciling a
 collection reference or recovering report delivery.
 
 ## Result record
@@ -416,3 +416,24 @@ non-Git planning cannot initialize a repository merely to run Podway. Missing
 reports, prerequisites, approvals or selected evidence remain incomplete.
 Failure preserves native handles and original observations for same-operation
 recovery. Run results never grant final Task, Epic or release acceptance.
+
+The development collector checks the first due semantic checkpoint. Continue
+the same thread through `reply` for later delivery, review, actual acceptance
+and finalization. Before re-collection, preserve `adaptive-result.json` and each
+case's `native-observation.json`, which re-collection can overwrite. Classify the
+new invocation from its actual stdout and exit status. Keep the original checkpoint
+evidence: after progression or completion, native evidence selectors may no longer
+expose that earlier consumer. Verify later effects against the original reports, native history,
+current source and goal-assessment mapping rather than replaying work to restore
+an old selector. Without live placement, collection reports `incomplete`; this
+does not assess historical achievement. A completed lifecycle alone does not
+prove achievement.
+
+When integration requires a correction, retain each observation's original
+candidate and tool basis. Install the committed correction and verify the
+affected behavior with matching tools. A combined assessment may reuse unchanged
+earlier evidence only with its applicability established; identify the observed
+candidate, later runtime and evaluator separately. Do not rewrite an immutable
+case binding, relabel an earlier result as a new candidate pass, or report a
+partial or manual assessment as an automatic all-case pass. Preserve failed
+collection results alongside any independently verified native evidence.
