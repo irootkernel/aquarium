@@ -465,9 +465,14 @@ manually authorized guest driver with all seven entrypoints. The committed
 source/binding/native evidence checks, actual public role/result correlation,
 exact target and user decision checks, selected upstream readiness and leaf
 results, conditional PM clipboard authority, no-initialization and unchanged
-product oracles. Fixed Task/Epic canonical regressions retain their source-pinned
-checkpoints. No ordinary Make stage runs a provider or a VM. Installed verification
-runs these tools from the matching clean committed candidate; missing prerequisite,
+product oracles. Exact installed-byte `qualified-known` reuse is reported
+separately from genuine producer/evidence/Decision adaptation; both retain native
+role, tuple and selected Judge evidence checks. The declared negative Validation
+fixture keeps its original completion obligation unmet or unverified while the
+three process criteria pass; neither report delivery nor the negative-case oracle
+asserts native achievement. Fixed Task/Epic canonical regressions retain their
+source-pinned checkpoints. No ordinary Make stage runs a provider or a VM.
+Installed verification runs these tools from the matching clean committed candidate; missing prerequisite,
 role, approval or installed evidence stays incomplete. Actual manual handler
 functional checks, including preservation recommendations and decisions, remain
 unverified until observed under that separate authority.

@@ -390,13 +390,28 @@ prefix; candidate and native binding identities retain their specified formats.
 
 Git-backed adaptive cases recover the current exact source/binding through the
 installed public context helper. Their family, source bytes, native tuple,
-current role and selected producer/item values must agree. The source must show
-an actual structural difference from its canonical regression, not only renamed
-placements. Fenced native evidence reads must include the real returned Judge
+current role and selected producer/item values must agree. Adequate known reuse
+requires the installed public context's `qualified-known` result and exact bytes
+of the installed released family source. The collector reports `known-reuse`
+separately from `structurally-adapted`, which requires an actual producer/evidence/
+Decision difference. Edited bytes or renamed placements alone cannot establish
+either claim. Fenced native evidence reads must include the real returned Judge
 report or its exact content digest. This instrumentation belongs only to these
 VM cases and adds no ordinary startup receipt or authentication protocol.
 Non-Git project verification checks documents and absence of Git/Podway without
 invoking a native observer on that branch.
+
+The declared cold-validation fixture includes `original-epic-validation-completion`
+alongside the three audit/process criteria. Its expected negative assessment keeps
+that original completion row `unmet` or `unverified`, with current source and
+evidence, while the three process rows remain met. The original report retains
+`rework` or `evidence-needed` and `goal_outcome: not-achieved`; operation completion
+and a passing negative-case oracle do not establish goal achievement. The live
+native goal must retain all four obligations and cannot mark original completion
+satisfied or determine achievement. Other cases retain their positive checkpoint
+and met-row requirements. The later normal stopped completion must separately
+establish native `not_achieved` in the installed observation. A terminal session
+without live guidance remains incomplete for this semantic-checkpoint collector.
 
 Document cases require a real operator reply through the existing `reply`
 operation, using the actual case handle. For the test capture, send one JSON

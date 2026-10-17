@@ -636,8 +636,14 @@ outcome or authority reset substitutes for the transaction.
 Retention is automatic inside the approved preparation scope and locally ignored,
 normally under `.podway/procedures/.local/<bundle-id>/`. Approved custom roots and
 existing suitable ignore policy remain supported. Atomic publication and resolver
-uniqueness are implemented together. No automatic Git inclusion, TTL eviction,
-central session map or origin lookup is required for resume.
+uniqueness are implemented together. Adopted bundles have no automatic TTL or
+size-based eviction. No automatic Git inclusion, central session map or origin
+lookup is required for resume. Clean only invocation-owned unadopted drafts under
+their disclosed cleanup authority. Local retention guarantees neither backup,
+portability nor Git persistence. Losing a bundle may prevent exact continuation
+until its original definition is recovered. Do not claim survival of destructive
+native reset/removal without its verified contract; disclose any recovery-definition
+loss before a separately requested destructive action.
 
 After actual successful use establishes distinct reuse value, offer useful whole
 or fragment candidates together at closeout. Show exact changes, paths,

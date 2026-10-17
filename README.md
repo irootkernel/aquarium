@@ -55,6 +55,8 @@ Install or update the Aquarium plugin through Codex's plugin-management flow. A 
 
 Aquarium does not vendor third-party skill or documentation sources. `$aquarium:dev-setup-global` checks and updates user-global tools from exact upstream sources, while `$aquarium:dev-setup` trusts canonical global skill presence and configures repository state plus AGENTS.md guidance. Project guidance can opt English documentation into a final Humanizer pass and Korean documentation into a final im-not-ai pass. The upstream `$deslop` skill is required when Task refinement is due, including canonical and direct phase execution.
 
+Podway-backed adaptive helpers require an available supported Python environment with PyYAML and `jsonschema`. Choose an existing compatible interpreter; plugin installation and the helpers do not install these dependencies. This prerequisite does not apply to Podway opt-out or non-Git `new-project` paths. See [Podway setup](plugins/aquarium/references/tool-catalog.md#podway).
+
 ## Development Channel
 
 `aquarium-dev` provides an explicit Apple Silicon macOS development channel for Aquarium maintainers. It enrolls one named canonical local-`main` checkout, builds immutable exact-commit artifacts below `~/.aquarium-dev/`, and atomically exposes foreground executables or producer-owned managed services through `~/.aquarium-dev/bin/`. Enrollment, hook changes, builds, managed-service activation, and launcher installation each retain a separate approval boundary.

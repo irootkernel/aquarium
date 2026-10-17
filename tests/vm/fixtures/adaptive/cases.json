@@ -37,8 +37,18 @@
       "criteria": [
         "original-source-audit",
         "complete-result",
-        "no-product-change"
-      ]
+        "no-product-change",
+        "original-epic-validation-completion"
+      ],
+      "expected_assessment": {
+        "goal_outcome": "not-achieved",
+        "criteria": {
+          "original-epic-validation-completion": [
+            "unmet",
+            "unverified"
+          ]
+        }
+      }
     },
     "adaptive-feature": {
       "entrypoint": "new-feature",

@@ -4,6 +4,22 @@ Aquarium contains instructions for Codex. The plugin does not operate a hosted s
 
 Some instructed workflows can invoke local or third-party tools after explicit user approval. Bounded read-only network operations may be authorized by an explicit tool selection or skill invocation without a second network prompt.
 
+Within an approved execution envelope, adaptive Procedure preparation may read the
+selected work requirements, workflow sources and reusable definitions, and write
+local candidate definitions and self-contained adopted bundles under the
+approved repository roots. Bundles contain Procedure source and binding metadata,
+not provider-report archives. They normally remain ignored below
+`.podway/procedures/.local/<bundle-id>/`; approved custom roots are supported.
+Candidates use `.candidates/` below the approved preparation root. When needed,
+preparation creates `.candidates/.gitignore` or `.local/.gitignore` containing `*`
+without replacing existing ignore policy. Atomic publication also uses a lock in
+the worktree's Git metadata. Local retention does not automatically stage or
+commit these files or transmit their contents. Selected independent assessment
+and technical review may receive the definition and original-source scope
+covered by the existing transmission approval. After successful useful use,
+repository preservation requires specific content consent, follows original
+workflow finalization and needs a matching grant for any commit.
+
 Aquarium keeps a local production setup-status ledger at
 `~/.aquarium/status.yaml`. Terminal repository setup may record canonical
 absolute Git worktree and common-directory

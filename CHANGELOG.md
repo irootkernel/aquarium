@@ -8,7 +8,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Offer useful whole Procedures or fragments after successful use, apply specifically consented reusable source after original finalization with separate commit authority, and prepare seven-entrypoint adaptive guest verification alongside canonical regressions.
 
-- Select and compose work-specific Procedures for Task, Epic Goal, Validation, feature/project/refactor Design and Diagnosis with exact qualification, mapped work and self-contained recovery while preserving review and acceptance authority, including explicitly consented native atomic replacement that preserves running-session history and remaining grants when topology is missing; existing installed workflows require an authorized compatible update.
+- Select and compose work-specific Procedures for Task, Epic Goal, Validation, feature/project/refactor Design and Diagnosis with exact qualification, mapped work and self-contained recovery while preserving review and acceptance authority, including explicitly consented native atomic replacement that preserves running-session history and remaining grants when topology is missing; Podway-backed adaptive helpers require a supported Python environment with PyYAML and `jsonschema`, and existing installed workflows require an authorized compatible update.
 
 - Add a separate guest-side `make test-vm` gate with reusable manual upgrade and Task/Epic startup scenarios, preserving existing state and requiring actual native Worker/Judge results for the exact candidate.
 

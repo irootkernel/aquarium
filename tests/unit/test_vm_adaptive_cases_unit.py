@@ -32,6 +32,17 @@ def test_seven_entrypoints_seed_without_implicit_non_git_initialization(tmp_path
     assert not (plain / ".git").exists() and not (plain / ".podway").exists()
     assert (tmp_path / "adaptive-diagnosis/sampler.py").is_file()
     assert (tmp_path / "adaptive-task/.git").is_dir()
+    original = gate.read_json(tmp_path / "adaptive-validation/VM-REQUIREMENTS.json")
+    assert {row["id"] for row in original["criteria"]} == {
+        "original-source-audit",
+        "complete-result",
+        "no-product-change",
+        "original-epic-validation-completion",
+    }
+    assert all(
+        isinstance(row["text"], str) and row["text"].strip()
+        for row in original["criteria"]
+    )
     with pytest.raises(gate.GateError):
         cases.seed(gate, {}, tmp_path)
 
@@ -336,6 +347,7 @@ def test_adaptive_checkpoint_accepts_actual_distinct_graph_and_reads_selected_ju
         gate, request, repo, directory, case, evidence, installed, roles=roles
     )
     assert result["selected_evidence"][0]["node"] == "assess"
+    assert result["definition_selection"] == "structurally-adapted"
     assert calls[-1][-4:] == [
         "--if-workspace-uuid",
         "actual-workspace",
@@ -1777,3 +1789,301 @@ def test_known_native_runtime_does_not_block_exact_approved_non_git_document(tmp
             observation,
             before,
         )
+
+
+def known_checkpoint(checkpoint_case, monkeypatch, family):
+    """Exact installed canonical bytes with synthetic public/native transport."""
+    sys.path.insert(0, str(ROOT / "plugins/aquarium/shared"))
+    from adaptive_admission import reference_mapping
+
+    _repo, _, _, case, _, installed, roles, _, current, binding_path, _ = (
+        checkpoint_case
+    )
+    raw = (
+        installed / "assets/podway/procedures" / f"aquarium-{family}-v2.yaml"
+    ).read_bytes()
+    document = yaml.safe_load(raw)
+    source = binding_path.parent / "procedure.yaml"
+    source.write_bytes(raw)
+    binding = reference_mapping(raw)
+    binding["procedure"] = {
+        "id": document["id"],
+        "version": document["version"],
+        "digest": "sha256:" + "7" * 64,
+        "source_sha256": gate.sha256(source),
+    }
+    binding_path.write_text(json.dumps(binding))
+    case.update(
+        family=family,
+        entrypoint="epic-handler" if family == "goal" else "epic-validator",
+    )
+    current["status"]["procedure"] = binding["procedure"]
+    judge = "judge-goal" if family == "goal" else "judge-validation"
+    roles["nodes"] = {"judge": judge}
+    if family == "goal":
+        roles["nodes"]["worker"] = "complete-work"
+    current["guidance"]["node"]["graph_node_id"] = "assess-goal"
+    current["guidance"]["readback"][0]["source_graph_node_id"] = judge
+    placement = next(row for row in document["graph"]["nodes"] if row["id"] == judge)
+    current["guidance"]["readback"][0]["items"][0]["item_id"] = next(
+        row["id"]
+        for row in document["node_definitions"][placement["use"]]["items"]
+        if row["type"] == "artifact"
+    )
+    original = gate.command
+
+    def qualified(argv, **kwargs):
+        result = original(argv, **kwargs)
+        if "context" in argv:
+            context = json.loads(result.stdout)
+            context["qualification"] = {"status": "qualified-known"}
+            result.stdout = json.dumps(context)
+        return result
+
+    monkeypatch.setattr(gate, "command", qualified)
+    return source
+
+
+@pytest.mark.parametrize("family", ["goal", "validation"])
+def test_checkpoint_accepts_exact_qualified_known_reuse_without_claiming_adaptation(
+    checkpoint_case, monkeypatch, family
+):
+    source = known_checkpoint(checkpoint_case, monkeypatch, family)
+    repo, directory, request, case, evidence, installed, roles, *_ = checkpoint_case
+    before = source.read_bytes()
+    result = cases.checkpoint(
+        gate, request, repo, directory, case, evidence, installed, roles=roles
+    )
+    assert result["definition_selection"] == "known-reuse"
+    assert result["selected_evidence"][0]["node"] == roles["nodes"]["judge"]
+    assert source.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "damage", ["edited-bytes", "unqualified", "wrong-binding-tuple", "missing-judge"]
+)
+def test_known_reuse_keeps_exact_source_native_and_selected_report_guards(
+    checkpoint_case, monkeypatch, damage
+):
+    source = known_checkpoint(checkpoint_case, monkeypatch, "goal")
+    (
+        repo,
+        directory,
+        request,
+        case,
+        evidence,
+        installed,
+        roles,
+        native,
+        current,
+        binding_path,
+        _,
+    ) = checkpoint_case
+    binding = gate.read_json(binding_path)
+    if damage == "edited-bytes":
+        source.write_bytes(
+            source.read_bytes() + b"\n# Equal structure is not exact known reuse.\n"
+        )
+        binding["procedure"]["source_sha256"] = gate.sha256(source)
+        current["status"]["procedure"]["source_sha256"] = gate.sha256(source)
+    elif damage == "unqualified":
+        original = gate.command
+
+        def unknown(argv, **kwargs):
+            result = original(argv, **kwargs)
+            if "context" in argv:
+                context = json.loads(result.stdout)
+                context["qualification"]["status"] = "qualified"
+                result.stdout = json.dumps(context)
+            return result
+
+        monkeypatch.setattr(gate, "command", unknown)
+    elif damage == "wrong-binding-tuple":
+        binding["procedure"]["digest"] = "sha256:" + "0" * 64
+    else:
+        native["result"]["page"]["data"] = {"sha256": "sha256:" + "0" * 64}
+    binding_path.write_text(json.dumps(binding))
+    with pytest.raises(gate.GateError):
+        cases.checkpoint(
+            gate, request, repo, directory, case, evidence, installed, roles=roles
+        )
+
+
+def negative_validation_report(report_case, state="unmet", checkpoint=None):
+    repository, _directory, observation, evidence, case = report_case
+    declared = copy.deepcopy(cases.descriptors(gate)["adaptive-validation"])
+    case.clear()
+    case.update(declared)
+    original = repository / "VM-REQUIREMENTS.json"
+    original.write_text(
+        json.dumps(
+            {
+                "criteria": [
+                    {"id": key, "text": cases.MEANINGS[key]} for key in case["criteria"]
+                ]
+            }
+        )
+    )
+    assignment_path = Path(evidence["judge_assignment"])
+    assignment = gate.read_json(assignment_path)
+    assignment["success_criteria"] = case["criteria"][:]
+    assignment["work"]["requirement_sources"] = [
+        {
+            "id": "vm",
+            "path": original.name,
+            "sha256": gate.sha256(original),
+            "format": "json",
+            "family": "validation",
+        }
+    ]
+    assignment_path.write_text(json.dumps(assignment))
+    path = Path(evidence["judge_assessment"])
+    report = gate.read_json(path)
+    report.update(
+        verdict="rework" if state == "unmet" else "evidence-needed",
+        goal_outcome="not-achieved",
+        checkpoint_result=checkpoint,
+    )
+    report["criteria"] = [
+        {
+            "id": "vm:" + key,
+            "state": state if key == "original-epic-validation-completion" else "met",
+            "source": original.name,
+            "evidence": [
+                "Original unresolved product evidence"
+                if key == "original-epic-validation-completion"
+                else "Completed audit evidence"
+            ],
+        }
+        for key in case["criteria"]
+    ]
+    deliver_criterion_report(observation, path, report)
+    return path, report
+
+
+@pytest.mark.parametrize(
+    "state,checkpoint",
+    [
+        ("unmet", None),
+        ("unverified", None),
+        ("unmet", "pass"),
+        ("unverified", "absent"),
+    ],
+)
+def test_declared_negative_validation_preserves_truthful_goal_and_checkpoint_results(
+    report_case, state, checkpoint
+):
+    path, report = negative_validation_report(report_case, state, checkpoint)
+    repo, directory, observation, evidence, case = report_case
+    if checkpoint == "absent":
+        report.pop("checkpoint_result")
+        deliver_criterion_report(observation, path, report)
+    original = path.read_bytes()
+    result = cases.reports(gate, observation, evidence, directory, repo, case)
+    assert result["actors"] == {"judge": "judge"}
+    assert result["assessment"]["verdict"] == report["verdict"]
+    assert result["assessment"]["goal_outcome"] == "not-achieved"
+    assert result["assessment"]["checkpoint_result"] == report.get("checkpoint_result")
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing-original",
+        "false-met",
+        "achieved",
+        "missing-verdict",
+        "process-gap",
+        "no-evidence",
+        "undeclared-negative",
+        "positive-case",
+    ],
+)
+def test_negative_validation_does_not_weaken_original_or_positive_obligations(
+    report_case, damage
+):
+    path, report = negative_validation_report(report_case)
+    repo, directory, observation, evidence, case = report_case
+    if damage == "missing-original":
+        report["criteria"].pop()
+    elif damage == "false-met":
+        report["criteria"][-1]["state"] = "met"
+    elif damage == "achieved":
+        report["goal_outcome"] = "achieved"
+    elif damage == "missing-verdict":
+        report.pop("verdict")
+    elif damage == "process-gap":
+        report["criteria"][0]["state"] = "unmet"
+    elif damage == "no-evidence":
+        report["criteria"][-1]["evidence"] = []
+    elif damage == "undeclared-negative":
+        case["expected_assessment"]["criteria"]["original-source-audit"] = ["unmet"]
+    else:
+        case.pop("expected_assessment")
+    deliver_criterion_report(observation, path, report)
+    with pytest.raises(gate.GateError):
+        cases.reports(gate, observation, evidence, directory, repo, case)
+
+
+@pytest.mark.parametrize(
+    "damage", [None, "missing-original", "missing-process", "false-met", "achieved"]
+)
+def test_negative_validation_requires_live_native_original_completion_obligation(
+    checkpoint_case, monkeypatch, damage
+):
+    known_checkpoint(checkpoint_case, monkeypatch, "validation")
+    repo, directory, request, case, evidence, installed, roles, _, current, *_ = (
+        checkpoint_case
+    )
+    case.clear()
+    case.update(copy.deepcopy(cases.descriptors(gate)["adaptive-validation"]))
+    goal = {
+        "criteria": [
+            {
+                "criterion_id": key,
+                "statement": cases.MEANINGS[key],
+                "status": "unsatisfied"
+                if key == "original-epic-validation-completion"
+                else "satisfied",
+            }
+            for key in case["criteria"]
+        ],
+        "determined_outcome": "not_achieved",
+    }
+    current["guidance"]["goal"] = goal
+    case["leaves"] = ["qa"]
+    if damage == "missing-original":
+        goal["criteria"].pop()
+    elif damage == "missing-process":
+        goal["criteria"].pop(0)
+    elif damage == "false-met":
+        goal["criteria"][-1]["status"] = "satisfied"
+    elif damage == "achieved":
+        goal["determined_outcome"] = "achieved"
+    if damage:
+        with pytest.raises(gate.GateError):
+            cases.checkpoint(
+                gate, request, repo, directory, case, evidence, installed, roles=roles
+            )
+    else:
+        result = cases.checkpoint(
+            gate, request, repo, directory, case, evidence, installed, roles=roles
+        )
+        assert result["native"]["guidance"]["goal"] == goal
+        assert result["definition_selection"] == "known-reuse"
+
+
+@pytest.mark.parametrize("leaves", [["qa"], ["interview", "qa"], ["unsupported"]])
+def test_declared_negative_validation_preserves_supported_selected_leaf_customization(
+    report_case, leaves
+):
+    negative_validation_report(report_case)
+    repo, directory, observation, evidence, case = report_case
+    case["leaves"] = leaves
+    if leaves == ["unsupported"]:
+        with pytest.raises(gate.GateError):
+            cases.reports(gate, observation, evidence, directory, repo, case)
+    else:
+        result = cases.reports(gate, observation, evidence, directory, repo, case)
+        assert result["assessment"]["goal_outcome"] == "not-achieved"

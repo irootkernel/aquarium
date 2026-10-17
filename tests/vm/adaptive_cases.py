@@ -14,6 +14,7 @@ from pathlib import Path
 
 MANIFEST = Path(__file__).parent / "fixtures/adaptive/cases.json"
 MEANINGS = {
+    "original-epic-validation-completion": "The original EPIC-001 requirements and applicable validation completion evidence are established from current original sources; unresolved blocking or confirmation/evidence gaps prevent achievement.",
     "original-source-audit": "Audit all original Epic sources and compound requirements; expose unmet or unverified product criteria truthfully.",
     "complete-result": "Deliver the complete original audit findings and assessment without inferring achievement from lifecycle or terminal names.",
     "no-product-change": "Preserve every original product-source byte; diagnosis and design do not authorize product implementation.",
@@ -259,9 +260,27 @@ def criterion_ids(gate, assignment, repository, required, family, mapped):
     return identifiers
 
 
+def assessment_expectation(gate, case):
+    """Only the declared negative fixture relaxes positive assessment outcomes."""
+    if case.get("expected_assessment") is None:
+        return None
+    declared = descriptors(gate)["adaptive-validation"]
+    leaves = case.get("leaves")
+    gate.require(
+        {**case, "leaves": declared["leaves"]} == declared
+        and isinstance(leaves, list)
+        and all(isinstance(leaf, str) for leaf in leaves)
+        and set(declared["leaves"]) <= set(leaves) <= {"interview", "pm", "seed", "qa"},
+        "negative assessment is not the declared cold-validation case",
+    )
+    return declared["expected_assessment"]
+
+
 def reports(gate, observation, evidence, directory, repository, case):
     """Bind real role results to exact current bytes and original due criteria."""
     actors, targets, native_nodes, deliveries = {}, {}, {}, {}
+    expectation = assessment_expectation(gate, case)
+    assessment = None
     roles = ["judge"] if case["family"] == "validation" else ["worker", "judge"]
     for role in roles:
         child = gate.correlate_child(observation, evidence[role + "_agent"])
@@ -343,9 +362,22 @@ def reports(gate, observation, evidence, directory, repository, case):
             rows = report.get("criteria", [])
             mapped = {row["id"]: row for row in rows}
             gate.require(len(mapped) == len(rows), "duplicate Judge criterion")
-            gate.require(
-                report.get("checkpoint_result") == "pass", "due checkpoint did not pass"
-            )
+            if expectation is None:
+                gate.require(
+                    report.get("checkpoint_result") == "pass",
+                    "due checkpoint did not pass",
+                )
+            else:
+                gate.require(
+                    report.get("verdict") in {"rework", "evidence-needed"}
+                    and report.get("goal_outcome") == expectation["goal_outcome"],
+                    "cold validation lost its truthful negative assessment",
+                )
+            assessment = {
+                "checkpoint_result": report.get("checkpoint_result"),
+                "verdict": report.get("verdict"),
+                "goal_outcome": report.get("goal_outcome"),
+            }
             identifiers = criterion_ids(
                 gate, assignment, repository, case["criteria"], case["family"], mapped
             )
@@ -361,7 +393,12 @@ def reports(gate, observation, evidence, directory, repository, case):
                 )
                 row = matching[0]
                 gate.require(
-                    row.get("state", row.get("status")) == "met"
+                    row.get("state", row.get("status"))
+                    in (
+                        expectation["criteria"].get(key, ["met"])
+                        if expectation
+                        else ["met"]
+                    )
                     and row.get("source")
                     and row.get("evidence"),
                     "original due case criterion remains unestablished: " + key,
@@ -381,6 +418,7 @@ def reports(gate, observation, evidence, directory, repository, case):
         "files": targets["judge"],
         "nodes": native_nodes,
         "deliveries": deliveries,
+        "assessment": assessment,
     }
 
 
@@ -807,17 +845,54 @@ def checkpoint(
         "design": "design",
         "diagnosis": "war-room",
     }[case["family"]]
-    canonical = yaml.safe_load(
-        (
-            installed
-            / "assets/podway/procedures"
-            / ("aquarium-" + canonical_name + "-v2.yaml")
-        ).read_text()
-    )
+    canonical_bytes = (
+        installed
+        / "assets/podway/procedures"
+        / ("aquarium-" + canonical_name + "-v2.yaml")
+    ).read_bytes()
+    canonical = yaml.safe_load(canonical_bytes)
+    native_procedure = actual["status"]["procedure"]
     gate.require(
-        structure(document) != structure(canonical),
-        "adaptive case has no producer/evidence/Decision structure difference from the canonical regression",
+        all(
+            binding["procedure"][key] == native_procedure.get(key)
+            for key in ("id", "version", "digest")
+        ),
+        "binding differs from the actual native tuple",
+        "fail",
     )
+    different = structure(document) != structure(canonical)
+    if not different:
+        gate.require(
+            context.get("qualification", {}).get("status") == "qualified-known"
+            and source.read_bytes() == canonical_bytes
+            and all(
+                document[key] == native_procedure[key] for key in ("id", "version")
+            ),
+            "equal structure lacks exact installed known-source qualification",
+        )
+    if assessment_expectation(gate, case) is not None:
+        goal = guidance.get("goal")
+        gate.require(isinstance(goal, dict), "current native validation goal is absent")
+        criteria = goal.get("criteria")
+        gate.require(
+            isinstance(criteria, list)
+            and all(
+                isinstance(row, dict) and isinstance(row.get("criterion_id"), str)
+                for row in criteria
+            ),
+            "current native validation criteria are unavailable",
+        )
+        mapped = {row["criterion_id"]: row for row in criteria}
+        gate.require(
+            len(mapped) == len(criteria)
+            and set(case["criteria"]) <= set(mapped)
+            and all(mapped[key].get("statement") for key in case["criteria"])
+            and mapped["original-epic-validation-completion"].get("status")
+            in {"unassessed", "unsatisfied"}
+            and goal.get("determined_outcome")
+            in {None, "undetermined", "not_achieved"},
+            "native validation goal omits or falsely achieves original completion",
+        )
     selected = actual.get("guidance", {}).get("readback", [])
     gate.require(
         selected and any(row.get("items") for row in selected),
@@ -916,6 +991,7 @@ def checkpoint(
         "selected_evidence": consumed,
         "binding_sha256": gate.sha256(binding_path),
         "source_sha256": gate.sha256(source),
+        "definition_selection": "structurally-adapted" if different else "known-reuse",
     }
 
 
@@ -1115,8 +1191,8 @@ def run(gate, request, root):
         gate.discover(request, repository, installed, skills=(case["entrypoint"],))
         evidence_file = directory / "semantic-evidence.json"
         prompt = f"""Invoke the normally discovered installed $aquarium:{case["entrypoint"]} {case["request"]} in {repository}.
-Original criteria: {json.dumps(case["criteria"])}; full original source: VM-REQUIREMENTS.json and existing repository sources.
-Select an adequate existing adaptive definition or prepare a genuinely different work/evidence/Decision structure when needed; do not merely rename canonical nodes or bypass due suitability. Do not choose the fixed canonical regression as this adaptive case. For non-Git new-project use the ordinary no-Podway branch before any native/source discovery.
+Original criteria: {json.dumps(case["criteria"])}; full original source: VM-REQUIREMENTS.json and existing repository sources. The declared verification expectation is {json.dumps(case.get("expected_assessment"))}; a negative validation expectation does not remove original goal obligations or permit false achievement.
+Prefer an adequate existing definition, including exact qualified-known reuse; prepare a different work/evidence/Decision structure only when needed. Claim structural adaptation only for a real producer/evidence/Decision difference, preserving due suitability. Keep the separately selected fixed canonical regressions distinct. For non-Git new-project use the ordinary no-Podway branch before any native/source discovery.
 Use the authorized operator {request["authority"]["observer"]} and scope reference {request["authority"]["reference"]}. Preserve existing review, independent Judge, exact-diff approval and no-implementation boundaries. Ask for actual decisions; do not infer acceptance. Selected upstream leaves: {case["leaves"]}. Establish their actual live readiness before provider use; missing prerequisites remain incomplete. PM may replace the clipboard only with separately supplied explicit authority. No commit, publication or installation is authorized by this case.
 Deliver the first complete due semantic result and independent assessment, preserving future gaps. Stop at a mapped native consumer selecting actual original work and Judge evidence, or at the approved document application boundary; do not falsely complete the whole workflow.
 Save original role assignments, actual returned v2 reports and current ordinary qualification under {directory}; reports identify exact current assessed files as target.files (relative path to SHA-256 map). Write {evidence_file} with worker_agent,judge_agent,worker_assignment,judge_assignment,worker_result,judge_assessment,qualification paths. A cold validation with no corrective Worker uses only Judge fields. Include used_leaves and leaf_results keyed by leaf with exact path/sha256 and operation_item_id of its actual completed native public MCP/CLI call; keep complete original upstream output. Include faithful quality operation_outcome/raw_verdict, diagnosis experiments (actual hypothesis/command/result), and exact application_approval for document cases. For this VM capture, the actual operator application reply is one JSON object with schema aquarium.vm-document-decision/v1, decision approved, its reference and complete proposal. A rejected/request-changes reply or quoted proposal is not approval; do not synthesize it. Each actual role final result includes its complete report or exact path+SHA. Settle all descendants before returning. These capture files alone do not prove native execution; the driver reads public results, exact current bundles/native evidence and application oracles independently."""
