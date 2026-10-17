@@ -2270,3 +2270,846 @@ def test_public_resume_separates_managed_origin_currency_from_new_adoption(
         }
     assert qualification_path.read_bytes() == original_context
     assert {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before
+
+
+def applied_source_case(repository, family="task", kind="known", originals="capture"):
+    """Exact original inputs and synthetic active native attempts; no real actors."""
+    from unittest.mock import Mock
+
+    from adaptive_admission import reference_mapping
+    from adaptive_composition import expand
+    from adaptive_definitions import ASSETS
+    from adaptive_preparation import prepare, requirements
+    from test_adaptive_qualification_unit import adaptive
+    from test_adaptive_suitability_unit import assignment
+
+    subprocess.run(["git", "init", "-q", str(repository)], check=True)
+    value = assignment(repository, mode="prepare")
+    value["work"].update(
+        repository=str(repository),
+        epic="EPIC-900",
+        task="TASK-901" if family == "task" else None,
+    )
+    for name, text in (
+        (
+            "roadmap.md",
+            "# Original roadmap\nPreserve the full declared delivery obligations.\n",
+        ),
+        (
+            "dossier.md",
+            "# Original dossier\nKeep every original requirement and independent assessment.\n",
+        ),
+    ):
+        path = repository / name
+        path.write_text(text)
+        value["work"]["requirement_sources"].append(
+            {"id": name, "path": name, "sha256": sha256(path.read_bytes())}
+        )
+    criteria = requirements(repository, value)
+    value["success_criteria"] = list(criteria)
+    plan = value["target"]["procedure_plan"]
+    entrypoint = {
+        "task": "task-handler",
+        "goal": "epic-handler",
+        "validation": "epic-validator",
+        "design": "new-feature",
+        "diagnosis": "war-room",
+    }[family]
+    plan.update(family=family, entrypoint=entrypoint)
+    route = "herdr" if family in {"task", "goal", "validation"} else "not-applicable"
+    plan["review"]["route"] = value["authority"]["review"]["route"] = route
+    if kind == "adaptive":
+        document, binding, context = adaptive()
+        value["target"]["qualification_context"] = context
+        mapping = {key: item for key, item in binding.items() if key != "procedure"}
+    else:
+        stem = "war-room" if family == "diagnosis" else family
+        raw = (
+            ASSETS / "podway/procedures" / ("aquarium-" + stem + "-v2.yaml")
+        ).read_bytes()
+        mapping = reference_mapping(raw)
+    effects = sorted(
+        {effect for node in mapping["nodes"].values() for effect in node["effects"]}
+    )
+    plan["effects"] = effects
+    value["authority"]["effects"] = effects[:]
+    obligation = next(iter(mapping["obligations"]))
+    coverage = [
+        {
+            "criterion": identifier,
+            "part": part["id"],
+            "obligation": obligation,
+            "reason": part["text"],
+        }
+        for identifier, criterion in criteria.items()
+        for part in criterion["parts"]
+    ]
+    if kind == "known":
+        path = repository / "definitions/original.yaml"
+        path.parent.mkdir()
+        path.write_bytes(raw)
+        plan["candidates"] = [
+            {
+                "path": str(path.relative_to(repository)),
+                "sha256": sha256(raw),
+                "coverage": coverage,
+                "reason": "The exact released contract covers the original document workflow.",
+            }
+        ]
+        plan["drafts"] = []
+    else:
+        if kind == "namespaced":
+            plan["source_dispositions"]["aquarium-" + stem + "-v2.yaml"] = (
+                "The approved fixture requires equivalent namespaced placements while preserving their native obligations."
+            )
+            import yaml
+
+            document, mapping, _, _ = expand(yaml.safe_load(raw), mapping, "scope", {})
+            for row in coverage:
+                row["obligation"] = next(iter(mapping["obligations"]))
+        plan["drafts"][0].update(document=document, mapping=mapping, coverage=coverage)
+    client = Oracle(repository)
+    value = prepare(repository, value, client=client, bootstrap=True)["assignment"]
+    request = qualify_prepared(repository, value, client=client)
+    report = (
+        report_for(request["target"])
+        if request["status"] == "assessment-required"
+        else None
+    )
+    retained = qualify_prepared(
+        repository, value, client=client, assessment=report, retain=True
+    )
+    observation = {
+        "status": {
+            "procedure": {
+                key: retained["binding"]["procedure"][key]
+                for key in ("id", "version", "digest")
+            },
+            "session": {"id": str(uuid.uuid4()), "lifecycle": "running", "revision": 7},
+            "goal_revision": 1,
+            "current": None,
+            "current_trace_history": {"entries": [], "trace_truncated": False},
+        },
+        "guidance": None,
+        "active_items": [],
+        "mutation_templates": [],
+    }
+    qualification = {
+        "assignment": value,
+        "assessment": report,
+        "pending_operations": [{"kind": "existing-role", "state": "pending"}],
+    }
+    commit = None
+    if originals == "git":
+        subprocess.run(
+            ["git", "add", "--", "roadmap.md", "dossier.md"], cwd=repository, check=True
+        )
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "core.hooksPath=/dev/null",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Retain fixture originals",
+                "--no-verify",
+            ],
+            cwd=repository,
+            check=True,
+        )
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repository, text=True
+        ).strip()
+    rows, targets = [], {}
+    for name in ("roadmap.md", "dossier.md"):
+        path = repository / name
+        before = sha256(path.read_bytes())
+        capture = repository / ".captures" / name
+        capture.parent.mkdir(exist_ok=True)
+        capture.write_bytes(path.read_bytes())
+        if name == "roadmap.md":
+            path.write_text("# Approved delivered roadmap\nCurrent reviewed output.\n")
+            after = sha256(path.read_bytes())
+        else:
+            path.unlink()
+            after = None
+        rows.append(
+            {
+                "path": name,
+                **(
+                    {"commit": commit}
+                    if commit
+                    else {"capture": str(capture.relative_to(repository))}
+                ),
+            }
+        )
+        targets[name] = {"before": before, "after": after}
+    proposal = {
+        "diff": "Apply the exact approved document changes and last-consumer deletion.",
+        "targets": targets,
+    }
+    approval = {
+        "source": "user",
+        "decision": "approved",
+        "proposal": copy.deepcopy(proposal),
+        "reference": "Synthetic explicit original fixture approval",
+    }
+    recovery = {
+        "sources": rows,
+        "proposal": proposal,
+        "approval": approval,
+        "checkpoint": {
+            "schema": "aquarium.orchestration-checkpoint/v2",
+            "work": copy.deepcopy(value["work"]),
+            "procedure": None,
+            "native": {"harness": "Codex", "public_handle": "synthetic-worker"},
+        },
+    }
+    qualification["applied_source_recovery"] = recovery
+    if family in {"design", "diagnosis"}:
+        value["target"][family] = {"proposal": proposal, "applied": True}
+        value["authority"]["document_approval"] = approval
+    original_read = client.read
+    client.read = Mock(
+        side_effect=lambda argv, command, schemas: (
+            copy.deepcopy(observation["status"])
+            if command == "session.status"
+            else original_read(argv, command, schemas)
+        )
+    )
+
+    def health():
+        current = copy.deepcopy(observation)
+        current["status"].pop("current_trace_history")
+        return current
+
+    client.health = health
+    return repository, qualification, client, observation, retained
+
+
+def pending_source_node(case, node, *, active=True):
+    _, qualification, _, observation, _ = case
+    attempt = {"attempt_id": str(uuid.uuid4()), "attempt_number": 1}
+    observation["guidance"] = {"node": {"graph_node_id": node}, "readback": []}
+    observation["status"]["current"] = {
+        "node": {"graph_node_id": node},
+        "attempt": attempt if active else None,
+    }
+    observation["status"]["current_trace_history"]["entries"] = (
+        [
+            {
+                "graph_node_id": node,
+                **attempt,
+                "goal_revision": 1,
+                "validity": "valid",
+                "lifecycle": "active",
+            }
+        ]
+        if active
+        else []
+    )
+    checkpoint = copy.deepcopy(observation["status"])
+    checkpoint.pop("current_trace_history")
+    qualification["applied_source_recovery"]["checkpoint"]["procedure"] = checkpoint
+
+
+def continue_applied(case):
+    repository, qualification, client, _, _ = case
+    plan = qualification["assignment"]["target"]["procedure_plan"]
+    return execution.execution_context(
+        repository,
+        roots=["definitions"],
+        entrypoint=plan["entrypoint"],
+        qualification=qualification,
+        client=client,
+    )
+
+
+@pytest.mark.parametrize(
+    "family,kind,nodes",
+    [
+        (
+            "task",
+            "known",
+            [
+                ("document", "worker"),
+                ("judge-documentation", "judge"),
+                ("decide-documentation-assessment", "orchestrator"),
+            ],
+        ),
+        (
+            "goal",
+            "known",
+            [
+                ("complete-work", "worker"),
+                ("judge-goal", "judge"),
+                ("assess-goal", "orchestrator"),
+            ],
+        ),
+        (
+            "validation",
+            "known",
+            [
+                ("remediate", "worker"),
+                ("judge-validation", "judge"),
+                ("prepare-validation-assessment", "orchestrator"),
+            ],
+        ),
+        (
+            "design",
+            "known",
+            [
+                ("apply-documents", "worker"),
+                ("judge-application", "judge"),
+                ("prepare-design-assessment", "orchestrator"),
+                ("judge-design", "judge"),
+                ("assess-goal", "orchestrator"),
+            ],
+        ),
+        (
+            "diagnosis",
+            "known",
+            [
+                ("document", "worker"),
+                ("judge-documentation", "judge"),
+                ("prepare-diagnostic-assessment", "orchestrator"),
+                ("judge-diagnosis", "judge"),
+                ("assess-goal", "orchestrator"),
+            ],
+        ),
+        (
+            "task",
+            "adaptive",
+            [("deliver", "worker"), ("assess", "judge"), ("outcome", "orchestrator")],
+        ),
+        (
+            "design",
+            "namespaced",
+            [
+                ("scope-apply-documents", "worker"),
+                ("scope-judge-application", "judge"),
+                ("scope-assess-goal", "orchestrator"),
+            ],
+        ),
+    ],
+)
+def test_approved_sources_continue_actual_pending_roles_without_future_report(
+    tmp_path, family, kind, nodes
+):
+    case = applied_source_case(tmp_path, family, kind)
+    repository, qualification, _, observation, retained = case
+    original = copy.deepcopy(qualification["assignment"])
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    for node, role in nodes:
+        pending_source_node(case, node)
+        result = continue_applied(case)
+        assert result["node"] == node and result["role"] == role
+        assert result["status"] == (
+            "primary-owned" if role == "orchestrator" else "dispatch-ready"
+        )
+        assert result["procedure"]["session"] == observation["status"]["session"]
+        assert result["bundle_id"] == retained["retention"]["bundle_id"]
+        assert result["pending_operations"] == qualification["pending_operations"]
+        assert result["work"] == original["work"]
+        assert qualification["assignment"] == original
+        if kind == "known":
+            assert result["qualification"]["status"] == "qualified-known"
+            assert result["qualification"]["bootstrap"] is None
+        if role != "orchestrator":
+            dispatched = result["dispatch"]
+            assert dispatched["role"] == role
+            assert dispatched["work"] == original["work"]
+            sources = dispatched["target"]["applied_source_context"]["sources"]
+            assert {row["path"] for row in sources} == {"roadmap.md", "dossier.md"}
+            assert all(
+                sha256((repository / row["capture"]).read_bytes()) == row["sha256"]
+                for row in sources
+            )
+            assert (
+                dispatched["target"]["applied_source_context"]["approval"]
+                == qualification["applied_source_recovery"]["approval"]
+            )
+            if (
+                role == "judge"
+                or family in {"design", "diagnosis"}
+                and node in {"apply-documents", "scope-apply-documents", "document"}
+            ):
+                assert dispatched["authority"]["effects"] == []
+        else:
+            assert result["dispatch"] is None
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("active", [False, True])
+def test_pending_producer_needs_its_native_attempt_but_not_a_future_report(
+    tmp_path, active
+):
+    case = applied_source_case(tmp_path)
+    pending_source_node(case, "document", active=active)
+    recovery = case[1]["applied_source_recovery"]
+    assert "assessment" not in recovery and "selected_evidence" not in recovery
+    if not active:
+        with pytest.raises(BundleError) as error:
+            continue_applied(case)
+        assert error.value.code == "not-established"
+        return
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert result["dispatch"]["checkpoint"] == "document"
+    assert result["dispatch"]["work"] == case[1]["assignment"]["work"]
+    assert "achieved" not in result
+
+
+@pytest.mark.parametrize(
+    "change,code",
+    [
+        ("no-approval", "approval-required"),
+        ("rejected", "approval-required"),
+        ("unknown-source", "approval-required"),
+        ("proposal", "reapproval-required"),
+        ("postimage", "reapproval-required"),
+        ("before", "not-established"),
+        ("capture", "source-drift"),
+        ("unapproved-source", "not-established"),
+        ("other-original", "reassessment-required"),
+        ("work", "reassessment-required"),
+        ("session", "reassessment-required"),
+        ("tuple", "reassessment-required"),
+        ("checkpoint-attempt", "reassessment-required"),
+        ("invalidated", "not-established"),
+        ("old-goal", "not-established"),
+        ("absent-attempt", "not-established"),
+        ("both-variants", "invalid-input"),
+        ("prepared", "invalid-input"),
+        ("completed", "invalid-input"),
+        ("cancelled", "invalid-input"),
+    ],
+)
+def test_applied_source_view_rejects_unapproved_drift_and_invalid_current_native_state(
+    tmp_path, change, code
+):
+    case = applied_source_case(tmp_path)
+    repository, qualification, _, observation, _ = case
+    pending_source_node(case, "document")
+    recovery = qualification["applied_source_recovery"]
+    if change == "no-approval":
+        recovery.pop("approval")
+    elif change == "rejected":
+        recovery["approval"]["decision"] = "rejected"
+    elif change == "unknown-source":
+        recovery["approval"]["source"] = "judge"
+    elif change == "proposal":
+        recovery["proposal"]["diff"] += " Another change"
+    elif change == "postimage":
+        (repository / "roadmap.md").write_text("Unapproved later change")
+    elif change == "before":
+        recovery["proposal"]["targets"]["roadmap.md"]["before"] = "sha256:" + "0" * 64
+        recovery["approval"]["proposal"] = copy.deepcopy(recovery["proposal"])
+    elif change == "capture":
+        (repository / ".captures/roadmap.md").write_text("Wrong original bytes")
+    elif change == "unapproved-source":
+        recovery["sources"][0]["path"] = "requirements.json"
+    elif change == "other-original":
+        import json
+
+        path = repository / "requirements.json"
+        original = json.loads(path.read_text())
+        original["criteria"][0]["text"] = "An unapproved different original requirement"
+        path.write_text(json.dumps(original))
+    elif change == "work":
+        recovery["checkpoint"]["work"]["epic"] = "EPIC-OTHER"
+    elif change == "session":
+        recovery["checkpoint"]["procedure"]["session"]["id"] = str(uuid.uuid4())
+    elif change == "tuple":
+        recovery["checkpoint"]["procedure"]["procedure"]["digest"] = (
+            "sha256:" + "0" * 64
+        )
+    elif change == "checkpoint-attempt":
+        recovery["checkpoint"]["procedure"]["current"]["attempt"]["attempt_id"] = str(
+            uuid.uuid4()
+        )
+    elif change == "invalidated":
+        observation["status"]["current_trace_history"]["entries"][0]["validity"] = (
+            "invalidated"
+        )
+    elif change == "old-goal":
+        observation["status"]["current_trace_history"]["entries"][0][
+            "goal_revision"
+        ] += 1
+    elif change == "absent-attempt":
+        observation["status"]["current_trace_history"]["entries"] = []
+    elif change == "both-variants":
+        qualification["finalization_recovery"] = copy.deepcopy(recovery)
+    else:
+        observation["status"]["session"]["lifecycle"] = change
+        recovery["checkpoint"]["procedure"]["session"]["lifecycle"] = change
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code == code
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize(
+    "change,code",
+    [
+        ("native", "reassessment-required"),
+        ("postimage", "reapproval-required"),
+        ("definition", "source-drift"),
+    ],
+)
+def test_applied_source_continuation_rechecks_after_qualification(
+    tmp_path, change, code
+):
+    import json
+    from unittest.mock import Mock
+
+    case = applied_source_case(tmp_path)
+    repository, _, client, observation, retained = case
+    pending_source_node(case, "document")
+    original = client.read
+    reads = 0
+
+    def changed(argv, command, schemas):
+        nonlocal reads
+        if command == "session.status":
+            reads += 1
+            if reads == 2:
+                if change == "native":
+                    observation["status"]["current"]["attempt"]["attempt_id"] = str(
+                        uuid.uuid4()
+                    )
+                elif change == "postimage":
+                    (repository / "roadmap.md").write_text("Concurrent changed output")
+                else:
+                    path = Path(retained["retention"]["path"]) / "binding.json"
+                    data = json.loads(path.read_text())
+                    data["parameters"]["late"] = {
+                        "type": "text",
+                        "required": False,
+                        "description": "Late changed binding",
+                    }
+                    path.write_text(json.dumps(data))
+        return original(argv, command, schemas)
+
+    client.read = Mock(side_effect=changed)
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code == code
+
+
+@pytest.mark.parametrize("change", ["plan", "team", "effects", "source-pin"])
+def test_source_view_does_not_waive_current_adaptive_basis_or_authority(
+    tmp_path, change
+):
+    case = applied_source_case(tmp_path, "task", "adaptive")
+    pending_source_node(case, "assess")
+    value = case[1]["assignment"]
+    if change == "plan":
+        value["target"]["procedure_plan"]["source_dispositions"][
+            "aquarium-task-v2.yaml"
+        ] += " Changed plan"
+    elif change == "team":
+        value["authority"]["review"]["team"] = ["different-reviewer"]
+        value["target"]["procedure_plan"]["review"]["team"] = ["different-reviewer"]
+    elif change == "effects":
+        value["authority"]["effects"] = []
+    else:
+        value["work"]["requirement_sources"][1]["sha256"] = "sha256:" + "0" * 64
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code in {
+        "reassessment-required",
+        "authority-required",
+        "not-established",
+    }
+
+
+def settle_applied_sources(case):
+    """Synthetic current ordinary delivery selected by completed/active native attempts."""
+    import json
+
+    repository, qualification, _, observation, retained = case
+    pending_source_node(case, "assess-goal")
+    recovery = qualification.pop("applied_source_recovery")
+    judge = {
+        "task": "judge-task",
+        "goal": "judge-goal",
+        "validation": "judge-validation",
+        "design": "judge-design",
+        "diagnosis": "judge-diagnosis",
+    }[retained["binding"]["family"]]
+    producer = {
+        "graph_node_id": judge,
+        "attempt_id": str(uuid.uuid4()),
+        "attempt_number": 2,
+    }
+    consumer = {
+        "graph_node_id": "assess-goal",
+        **observation["status"]["current"]["attempt"],
+    }
+    observation["status"]["current_trace_history"]["entries"].append(
+        {**producer, "goal_revision": 1, "validity": "valid", "lifecycle": "completed"}
+    )
+    report = {
+        "schema": "aquarium.judge-assessment/v2",
+        "work": copy.deepcopy(qualification["assignment"]["work"]),
+        "procedure": None,
+        "checkpoint_result": "pass",
+        "verdict": "pass",
+        "target": {
+            "files": {
+                path: image["after"]
+                for path, image in recovery["proposal"]["targets"].items()
+                if image["after"] is not None
+            },
+            "deleted_before": {
+                path: image["before"]
+                for path, image in recovery["proposal"]["targets"].items()
+                if image["after"] is None
+            },
+        },
+        "criteria": [
+            {"id": key, "state": "met", "evidence": ["roadmap.md"]}
+            for key in qualification["assignment"]["target"]["prepared_definition"][
+                "coverage_plan"
+            ]["criteria"]
+        ],
+        "evidence": [
+            "roadmap.md",
+            "Synthetic current affected report; no independent execution claim.",
+        ],
+    }
+    path = repository / "affected-report.json"
+    path.write_text(json.dumps(report))
+    recovery["assessment"] = {"path": path.name, "sha256": sha256(path.read_bytes())}
+    recovery["selected_evidence"] = {
+        "schema": "podway.output/v4",
+        "workspace": {"root": str(repository), "uuid": "synthetic-workspace"},
+        "result": {
+            "schema": "podway.evidence-read-result/v1",
+            "source": producer,
+            "consumer": consumer,
+            "item": {"type": "artifact"},
+            "truncated": False,
+            "page": {
+                "data": {
+                    "location_type": "path",
+                    "location": path.name,
+                    "sha256_digest": sha256(path.read_bytes()),
+                }
+            },
+        },
+    }
+    qualification["finalization_recovery"] = recovery
+    return recovery
+
+
+@pytest.mark.parametrize("family", ["design", "diagnosis"])
+@pytest.mark.parametrize("settled", [False, True])
+@pytest.mark.parametrize("source", ["user", "epic-delegation"])
+def test_document_source_recovery_preserves_user_only_family_approval(
+    tmp_path, family, settled, source
+):
+    case = applied_source_case(tmp_path, family)
+    pending_source_node(case, "apply-documents" if family == "design" else "document")
+    recovery = (
+        settle_applied_sources(case) if settled else case[1]["applied_source_recovery"]
+    )
+    recovery["approval"]["source"] = source
+    if source != "user":
+        with pytest.raises(BundleError) as error:
+            continue_applied(case)
+        assert error.value.code == "approval-required"
+    else:
+        result = continue_applied(case)
+        assert result["status"] == (
+            "finalization-resolved" if settled else "dispatch-ready"
+        )
+        assert (
+            result["dispatch"] is None
+            if settled
+            else result["dispatch"]["authority"]["effects"] == []
+        )
+        assert "achieved" not in result
+
+
+@pytest.mark.parametrize("family", ["task", "goal"])
+def test_source_edit_delegation_preserves_scope_without_final_acceptance(
+    tmp_path, family
+):
+    case = applied_source_case(tmp_path, family)
+    pending_source_node(case, "document" if family == "task" else "complete-work")
+    case[1]["applied_source_recovery"]["approval"]["source"] = "epic-delegation"
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert (
+        result["dispatch"]["target"]["applied_source_context"]["approval"]["source"]
+        == "epic-delegation"
+    )
+    assert result["dispatch"]["authority"] == case[1]["assignment"]["authority"]
+    assert "achieved" not in result and "acceptance" not in result
+
+
+def test_settled_report_can_have_current_active_native_consumer(tmp_path):
+    case = applied_source_case(tmp_path)
+    recovery = settle_applied_sources(case)
+    result = continue_applied(case)
+    assert result["status"] == "finalization-resolved"
+    assert result["dispatch"] is None
+    assert (
+        case[3]["status"]["current_trace_history"]["entries"][0]["lifecycle"]
+        == "active"
+    )
+    (tmp_path / recovery["assessment"]["path"]).unlink()
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code == "missing"
+
+
+def test_applied_source_view_reads_immutable_git_originals(tmp_path):
+    case = applied_source_case(tmp_path, originals="git")
+    pending_source_node(case, "judge-documentation")
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    sources = result["dispatch"]["target"]["applied_source_context"]["sources"]
+    assert all("commit" in row and "capture" not in row for row in sources)
+    assert {row["path"] for row in sources} == {"roadmap.md", "dossier.md"}
+
+
+@pytest.mark.parametrize(
+    "node,role",
+    [
+        ("apply-documents", "worker"),
+        ("judge-application", "judge"),
+        ("assess-goal", "orchestrator"),
+    ],
+)
+def test_public_context_continues_pending_applied_sources_through_real_native_transport(
+    tmp_path, monkeypatch, capsys, node, role
+):
+    import json
+    from types import SimpleNamespace
+
+    import adaptive_admission
+    import manage_adaptive_procedure
+
+    case = applied_source_case(tmp_path, "design")
+    repository, qualification, oracle, observation, retained = case
+    pending_source_node(case, node)
+    context_path = repository / "applied-context.json"
+    context_path.write_text(json.dumps(qualification))
+    original_context = context_path.read_bytes()
+    config = repository / ".podway/config.yaml"
+    config.parent.mkdir(exist_ok=True)
+    config.write_text("{}\n")
+    monkeypatch.setattr(adaptive_admission.platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(adaptive_admission.platform, "machine", lambda: "arm64")
+    original_run = adaptive_admission.subprocess.run
+    calls = []
+
+    def native(argv, **kwargs):
+        if argv[0] != "fixture-podway":
+            return original_run(argv, **kwargs)
+        arguments = argv[argv.index("--json") + 1 :]
+        calls.append(arguments)
+        assert Path(kwargs["cwd"]) == repository
+        if arguments == ["version", "--identity"]:
+            command, value = (
+                "version",
+                {
+                    "schema": "podway.version-result/v2",
+                    "product": "podway",
+                    "version": "v0.2.14",
+                    "target": "aarch64-apple-darwin",
+                    "build_identity": "sha256:" + "1" * 64,
+                    "source_commit": None,
+                    "contract_manifest_schema": "podway.contract-manifest/v2",
+                    "contract_manifest_digest": "sha256:" + "2" * 64,
+                },
+            )
+        elif arguments == ["doctor"]:
+            command, value = (
+                "workspace.doctor",
+                {"schema": "podway.doctor-result/v1", "healthy": True},
+            )
+        elif arguments == ["observe"]:
+            command, value = "session.observe", copy.deepcopy(observation)
+            value["status"].pop("current_trace_history")
+            value["schema"] = "podway.observation-result/v5"
+        elif arguments == ["status", "--verbose"]:
+            command, value = (
+                "session.status",
+                {
+                    **copy.deepcopy(observation["status"]),
+                    "schema": "podway.status-result/v5",
+                },
+            )
+        elif arguments[:2] == ["procedure", "check"]:
+            command, value = (
+                "procedure.check",
+                {"schema": "podway.procedure-diagnostics-result/v1", "valid": True},
+            )
+        elif arguments[:2] == ["procedure", "preview"]:
+            command, value = (
+                "procedure.preview",
+                {
+                    **oracle.preview(repository / arguments[-1]),
+                    "schema": "podway.procedure-preview-result/v2",
+                    "admissible": True,
+                },
+            )
+        else:
+            raise AssertionError(arguments)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {"schema": "podway.output/v4", "command": command, "result": value}
+            ).encode(),
+            stderr=b"",
+        )
+
+    monkeypatch.setattr(adaptive_admission.subprocess, "run", native)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "manage_adaptive_procedure.py",
+            "context",
+            "--repository",
+            str(repository),
+            "--root",
+            "definitions",
+            "--entrypoint",
+            "new-feature",
+            "--session",
+            observation["status"]["session"]["id"],
+            "--qualification",
+            str(context_path),
+            "--podway",
+            "fixture-podway",
+        ],
+    )
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    assert manage_adaptive_procedure.main() == 0
+    output = capsys.readouterr()
+    result = json.loads(output.out)
+    assert not output.err
+    assert result["role"] == role and result["node"] == node
+    assert result["status"] == (
+        "primary-owned" if role == "orchestrator" else "dispatch-ready"
+    )
+    assert result["bundle_id"] == retained["retention"]["bundle_id"]
+    assert result["pending_operations"] == qualification["pending_operations"]
+    assert ["status", "--verbose"] in calls
+    assert all(
+        not row or row[0] not in {"start", "begin", "work", "decide"} for row in calls
+    )
+    assert context_path.read_bytes() == original_context
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before

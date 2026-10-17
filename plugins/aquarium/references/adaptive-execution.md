@@ -150,6 +150,36 @@ settlement remains within its original effect grant, including confirmation-only
 review switch or waiver needs its existing explicit direction and native continuity
 gates, not a new routine question.
 
+When an approved output changes a declared original source, optional
+`qualification.applied_source_recovery` keeps that original readable while the
+existing session continues. It uses the `sources`, `proposal`, actual `approval`
+and current ordinary `checkpoint` fields below. It does not require the pending
+Worker or Judge's future assessment or selected report artifact. Supply this
+input only after the exact approved images have been applied, including any
+approved deletion; an application Worker can then finish its evidence-only
+handoff, and subsequent evidence Workers, Judges and Primary Decisions keep
+their actual admitted roles.
+
+This continuation is limited to a running session. A fresh native observation and
+`status --verbose` must agree on the session, revision, goal, Procedure tuple and
+current placement. The current attempt must be present and valid in native trace
+history, including the released `active` lifecycle. Missing or invalidated current
+attempts return `not-established`. The helper rechecks native state, approved
+postimages and the retained definition before returning the normal mapped result.
+It never advances a node, dispatches a new pre-start assessment or claims success.
+Prepared, completed and cancelled sessions cannot gain work through this input.
+
+Dispatched assignments retain their original `work.requirement_sources` and
+coverage. `target.applied_source_context` supplies readable capture/Git references,
+original pins, approved current images and the existing approval object, including
+its reference when present. Recipients read those pinned originals to assess the
+current deliverables; the new text and generated coverage do not replace the
+original authority. Other source reads, genuine plan/review/effect changes and
+current suitability checks remain in force. Unchanged known reuse preserves its
+first due checkpoint. This input and `finalization_recovery` are mutually exclusive.
+Neither creates effect, acceptance or commit authority, and unproved chains of
+source edits still stop at the original approved before-image check.
+
 A caller recovering approved finalization changes to original sources, including
 last-consumer deletion, may supply optional
 `qualification.finalization_recovery` in its existing context input. This is an
@@ -164,11 +194,12 @@ The input contains:
   promoted summary or the approved new text for original criteria.
 - `proposal` and actual `approval`: the existing exact diff/targets approval shape,
   checked against current applied postimages, including the approved source absence.
-  Source-edit reconciliation accepts `source: user` or `source: epic-delegation`;
-  preserve the actual provenance. Primary verifies the existing parent grant, work,
-  exact scope and remaining authority. Delegated source-edit approval establishes
-  no user acceptance, goal achievement or additional effect authority. Design
-  application retains its user-only approval requirement.
+  Design and Diagnosis require `source: user` in both continuation and settled
+  recovery. Other families retain their applicable `source: user` or
+  `source: epic-delegation` source-edit provenance. Primary verifies the existing
+  parent grant, work, exact scope and remaining authority. Delegated source-edit
+  approval establishes no user acceptance, goal achievement or additional effect
+  authority; final Epic and cold Validation acceptance remain user-owned.
 - `assessment`: the current affected ordinary Judge report's existing `path` and
   `sha256`. The due affected Judge assignment requests `target.files`, mapping
   approved current paths to postimage SHA-256 values, and `target.deleted_before`,

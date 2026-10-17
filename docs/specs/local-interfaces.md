@@ -334,9 +334,21 @@ their stop or reassessment route. A handoff boundary uses native selected
 artifact evidence when declared, and otherwise the previously verified ordinary
 checkpoint metadata with current session/attempt and exact-byte checks.
 
-Optional `qualification.finalization_recovery` reconciles approved source edits
-or deletion using exact original bytes, the current affected Judge assessment
-and native evidence.
+Optional `qualification.applied_source_recovery` reconciles already applied,
+exactly approved source edits or deletion before the next due assessment exists.
+It uses pinned capture/Git originals, actual approval and the current ordinary
+checkpoint. Only a running session with a valid current native attempt can return
+its existing mapped Worker/Judge dispatch or Primary ownership. Original criteria,
+coverage, selected reviews and grants remain unchanged. Dispatched
+`target.applied_source_context` includes readable original references and the
+existing approval evidence; the helper supplies no new effect or acceptance.
+Design and Diagnosis remain user-only. Other families retain their applicable
+source-edit delegation, separate from final user acceptance.
+
+Optional `qualification.finalization_recovery` remains the separate settled path:
+it reconciles approved source edits or deletion using exact original bytes, the
+current affected Judge assessment and selected native evidence. Both inputs
+cannot be supplied together.
 Its `finalization-resolved` response has no dispatch and preserves current authority
 and pending operations; it establishes no achievement. The execution contract
 defines the exact recovery inputs and checks.

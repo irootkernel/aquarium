@@ -1,5 +1,6 @@
 """Recover original work sources through approved finalization changes."""
 
+import copy
 import json
 from pathlib import Path
 
@@ -50,6 +51,7 @@ def finalization_observation(client, observation):
         )
     if (
         status.get("session") != initial["session"]
+        or status.get("current") != initial.get("current")
         or status.get("goal_revision") != initial.get("goal_revision")
         or tuple(status["procedure"].get(key) for key in ("id", "version", "digest"))
         != tuple(initial["procedure"].get(key) for key in ("id", "version", "digest"))
@@ -60,11 +62,62 @@ def finalization_observation(client, observation):
     return {**observation, "status": status}
 
 
-def finalization_sources(repository, assignment, recovery, observation):
-    """Keep original extraction intact through approved changes or deletion."""
-    recovery = object_value(recovery, "finalization_recovery")
+def current_attempt(observation):
+    """Pending work needs current native placement/attempt facts, never its future report."""
     status = observation["status"]
-    if status["session"]["lifecycle"] not in {"running", "completed", "cancelled"}:
+    guidance = object_value(observation.get("guidance"), "Current native guidance")
+    node = object_value(guidance.get("node"), "Current native guidance node").get(
+        "graph_node_id"
+    )
+    if not isinstance(node, str) or not node:
+        raise BundleError(
+            "unsupported-runtime", "Current native placement is unavailable"
+        )
+    current = status.get("current")
+    if current is None:
+        raise BundleError("not-established", "Current native attempt is absent")
+    current = object_value(current, "Current native placement")
+    if (
+        object_value(current.get("node"), "Current native node").get("graph_node_id")
+        != node
+    ):
+        raise BundleError("reassessment-required", "Current native placement changed")
+    attempt = current.get("attempt")
+    if attempt is None:
+        raise BundleError("not-established", "Current native attempt is absent")
+    attempt = object_value(attempt, "Current native attempt")
+    identifier = attempt.get("attempt_id")
+    if not isinstance(identifier, str) or not identifier:
+        raise BundleError(
+            "unsupported-runtime", "Current native attempt is unavailable"
+        )
+    entries = status["current_trace_history"]["entries"]
+    if not any(
+        isinstance(entry, dict)
+        and entry.get("graph_node_id") == node
+        and entry.get("attempt_id") == identifier
+        and (
+            "attempt_number" not in attempt
+            or entry.get("attempt_number") == attempt["attempt_number"]
+        )
+        and entry.get("goal_revision") == status["goal_revision"]
+        and entry.get("validity") == "valid"
+        and entry.get("lifecycle") in {"active", "completed"}
+        for entry in entries
+    ):
+        raise BundleError(
+            "not-established", "Current native attempt is absent or invalidated"
+        )
+
+
+def approved_sources(
+    repository, assignment, recovery, observation, *, continuation=False
+):
+    """Keep original extraction intact through approved changes or deletion."""
+    recovery = object_value(recovery, "Approved source recovery")
+    status = observation["status"]
+    lifecycles = {"running"} if continuation else {"running", "completed", "cancelled"}
+    if status["session"]["lifecycle"] not in lifecycles:
         raise BundleError(
             "invalid-input", "Source retirement is not pre-start recovery"
         )
@@ -84,19 +137,26 @@ def finalization_sources(repository, assignment, recovery, observation):
         or native.get("session") != status["session"]
         or type(status.get("goal_revision")) is not int
         or native.get("goal_revision") != status.get("goal_revision")
+        or ("current" in native and native["current"] != status.get("current"))
         or tuple(native_procedure.get(key) for key in ("id", "version", "digest"))
         != tuple(status["procedure"].get(key) for key in ("id", "version", "digest"))
     ):
         raise BundleError(
             "reassessment-required", "Finalization checkpoint is not current"
         )
+    if continuation:
+        current_attempt(observation)
+    family = assignment["target"]["procedure_plan"]["family"]
+    approval_sources = (
+        ("user",) if family in {"design", "diagnosis"} else ("user", "epic-delegation")
+    )
     proposal = object_value(recovery.get("proposal"), "Finalization proposal")
     applied = application(
         repository,
         proposal,
         recovery.get("approval"),
         applied=True,
-        approval_sources=("user", "epic-delegation"),
+        approval_sources=approval_sources,
     )
     if applied["status"] != "verified-applied":
         raise BundleError(
@@ -104,6 +164,120 @@ def finalization_sources(repository, assignment, recovery, observation):
             "Approved finalization postimages are not current",
             applied,
         )
+    rows = object_rows(recovery.get("sources"), "Affected original sources")
+    references = {row["path"]: row for row in assignment["work"]["requirement_sources"]}
+    recovered = {}
+    readable = []
+    for row in rows:
+        path = row.get("path")
+        if not isinstance(path, str):
+            raise BundleError("invalid-input", "Retired source path must be a string")
+        original = references.get(path)
+        images = proposal["targets"].get(path)
+        if (
+            original is None
+            or path in recovered
+            or images is None
+            or images["before"] != original["sha256"]
+        ):
+            raise BundleError(
+                "not-established",
+                "Affected source lacks its original approved before-image",
+            )
+        if row.get("capture") is not None:
+            if not isinstance(row["capture"], str) or not row["capture"]:
+                raise BundleError(
+                    "invalid-input", "Retained capture needs its existing path"
+                )
+            raw = read_regular(repository, Path(row["capture"]))
+        else:
+            commit = row.get("commit")
+            if (
+                not isinstance(commit, str)
+                or len(commit) not in {40, 64}
+                or any(char not in "0123456789abcdef" for char in commit)
+                or Path(path).is_absolute()
+                or ".." in Path(path).parts
+            ):
+                raise BundleError(
+                    "invalid-input",
+                    "Recovery needs an exact capture or immutable commit",
+                )
+            verified = git(
+                repository,
+                "--no-replace-objects",
+                "rev-parse",
+                "--quiet",
+                "--verify",
+                commit + "^{commit}",
+            )
+            if verified.returncode or verified.stdout.decode().strip() != commit:
+                raise BundleError(
+                    "not-established", "Original immutable commit is unavailable"
+                )
+            blob = git(
+                repository,
+                "--no-replace-objects",
+                "rev-parse",
+                "--quiet",
+                "--verify",
+                commit + ":" + path,
+            )
+            if blob.returncode or not blob.stdout.strip():
+                raise BundleError(
+                    "not-established", "Original immutable source is unavailable"
+                )
+            blob_id = blob.stdout.decode().strip()
+            kind = git(
+                repository, "--no-replace-objects", "cat-file", "-t", blob_id
+            ).stdout.strip()
+            if kind != b"blob":
+                raise BundleError(
+                    "not-established", "Original immutable source is not a blob"
+                )
+            raw = git(
+                repository, "--no-replace-objects", "cat-file", "blob", blob_id
+            ).stdout
+        if sha256(raw) != original["sha256"]:
+            raise BundleError(
+                "source-drift", "Retained original source differs from approved bytes"
+            )
+        recovered[path] = raw
+        readable.append(
+            {
+                "path": path,
+                "sha256": original["sha256"],
+                **(
+                    {"capture": row["capture"]}
+                    if row.get("capture") is not None
+                    else {"commit": row["commit"]}
+                ),
+                "applied": copy.deepcopy(images),
+            }
+        )
+    if not recovered:
+        raise BundleError(
+            "invalid-input", "No approved affected original source was supplied"
+        )
+
+    def source_reader(reference):
+        if reference["path"] in recovered:
+            return recovered[reference["path"]]
+        return read_regular(repository, Path(reference["path"]))
+
+    return source_reader, {
+        "sources": readable,
+        "proposal": copy.deepcopy(proposal),
+        "approval_source": recovery["approval"]["source"],
+        "approval": copy.deepcopy(recovery["approval"]),
+    }
+
+
+def finalization_sources(repository, assignment, recovery, observation):
+    """Settled finalization additionally needs the actual current affected assessment."""
+    source_reader, _ = approved_sources(repository, assignment, recovery, observation)
+    status = observation["status"]
+    proposal = recovery["proposal"]
     reference = object_value(
         recovery.get("assessment"), "Affected assessment reference"
     )
@@ -203,7 +377,7 @@ def finalization_sources(repository, assignment, recovery, observation):
     entries = object_rows(history.get("entries"), "Current native attempts")
     for endpoint, lifecycles in (
         (source, {"completed"}),
-        (consumer, {"running", "completed"}),
+        (consumer, {"active", "running", "completed"}),
     ):
         if not any(
             all(
@@ -218,94 +392,6 @@ def finalization_sources(repository, assignment, recovery, observation):
             raise BundleError(
                 "not-established", "Selected native attempt is absent or invalidated"
             )
-    rows = object_rows(recovery.get("sources"), "Affected original sources")
-    references = {row["path"]: row for row in assignment["work"]["requirement_sources"]}
-    recovered = {}
-    for row in rows:
-        path = row.get("path")
-        if not isinstance(path, str):
-            raise BundleError("invalid-input", "Retired source path must be a string")
-        original = references.get(path)
-        images = proposal["targets"].get(path)
-        if (
-            original is None
-            or path in recovered
-            or images is None
-            or images["before"] != original["sha256"]
-        ):
-            raise BundleError(
-                "not-established",
-                "Affected source lacks its original approved before-image",
-            )
-        if row.get("capture") is not None:
-            if not isinstance(row["capture"], str) or not row["capture"]:
-                raise BundleError(
-                    "invalid-input", "Retained capture needs its existing path"
-                )
-            raw = read_regular(repository, Path(row["capture"]))
-        else:
-            commit = row.get("commit")
-            if (
-                not isinstance(commit, str)
-                or len(commit) not in {40, 64}
-                or any(char not in "0123456789abcdef" for char in commit)
-                or Path(path).is_absolute()
-                or ".." in Path(path).parts
-            ):
-                raise BundleError(
-                    "invalid-input",
-                    "Recovery needs an exact capture or immutable commit",
-                )
-            verified = git(
-                repository,
-                "--no-replace-objects",
-                "rev-parse",
-                "--quiet",
-                "--verify",
-                commit + "^{commit}",
-            )
-            if verified.returncode or verified.stdout.decode().strip() != commit:
-                raise BundleError(
-                    "not-established", "Original immutable commit is unavailable"
-                )
-            blob = git(
-                repository,
-                "--no-replace-objects",
-                "rev-parse",
-                "--quiet",
-                "--verify",
-                commit + ":" + path,
-            )
-            if blob.returncode or not blob.stdout.strip():
-                raise BundleError(
-                    "not-established", "Original immutable source is unavailable"
-                )
-            blob_id = blob.stdout.decode().strip()
-            kind = git(
-                repository, "--no-replace-objects", "cat-file", "-t", blob_id
-            ).stdout.strip()
-            if kind != b"blob":
-                raise BundleError(
-                    "not-established", "Original immutable source is not a blob"
-                )
-            raw = git(
-                repository, "--no-replace-objects", "cat-file", "blob", blob_id
-            ).stdout
-        if sha256(raw) != original["sha256"]:
-            raise BundleError(
-                "source-drift", "Retained original source differs from approved bytes"
-            )
-        recovered[path] = raw
-    if not recovered:
-        raise BundleError(
-            "invalid-input", "No approved affected original source was supplied"
-        )
-
-    def source_reader(reference):
-        if reference["path"] in recovered:
-            return recovered[reference["path"]]
-        return read_regular(repository, Path(reference["path"]))
-
     return source_reader, report
 
 

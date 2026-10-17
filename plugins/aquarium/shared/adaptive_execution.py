@@ -8,7 +8,12 @@ from pathlib import Path
 import yaml
 from adaptive_admission import resume_selected
 from adaptive_bundles import BundleError, read_regular, sha256
-from adaptive_definitions import canonical_json, capability_signatures, native_key
+from adaptive_definitions import (
+    canonical_json,
+    capability_signatures,
+    native_key,
+    parse_definition,
+)
 
 ACTIVATED = {
     "task-handler": {"task"},
@@ -258,7 +263,25 @@ def execution_context(
             "Observed session differs from the requested continuation",
         )
     recovery = qualification.get("finalization_recovery")
+    continuation = qualification.get("applied_source_recovery")
+    if recovery is not None and continuation is not None:
+        raise BundleError(
+            "invalid-input",
+            "Choose applied continuation or settled finalization recovery",
+        )
     source_reader = None
+    source_context = None
+    if continuation is not None:
+        from adaptive_finalization import approved_sources, finalization_observation
+
+        recovery_observation = finalization_observation(client, observation)
+        source_reader, source_context = approved_sources(
+            repository,
+            assignment,
+            continuation,
+            recovery_observation,
+            continuation=True,
+        )
     if recovery is not None:
         from adaptive_finalization import finalization_observation, finalization_sources
 
@@ -317,6 +340,33 @@ def execution_context(
             "Native declarations and records do not establish independent execution or actual approval.",
         ],
     }
+
+    def checked(value):
+        if continuation is not None:
+            current = finalization_observation(client, observation)
+            _, current_sources = approved_sources(
+                repository, assignment, continuation, current, continuation=True
+            )
+            if current_sources != source_context:
+                raise BundleError(
+                    "source-drift",
+                    "Approved source context changed during continuation",
+                )
+            if (
+                read_regular(repository, Path(resolved["path"]) / "procedure.yaml")
+                != resolved["source"]
+                or parse_definition(
+                    read_regular(repository, Path(resolved["path"]) / "binding.json")
+                )
+                != binding
+            ):
+                raise BundleError(
+                    "source-drift", "Admitted definition changed during continuation"
+                )
+        return value
+
+    if source_context is not None:
+        result["applied_sources"] = copy.deepcopy(source_context)
     if recovery is not None:
         from adaptive_finalization import selected_assessment
 
@@ -334,13 +384,13 @@ def execution_context(
     lifecycle = status["session"]["lifecycle"]
     if lifecycle == "prepared":
         result["status"] = "prepared-resolved"
-        return result
+        return checked(result)
     if lifecycle in {"completed", "cancelled"}:
         result["status"] = "terminal-resolved"
         result["next_owner"] = (
             "Primary finalization/disposition or approved normal successor"
         )
-        return result
+        return checked(result)
     guidance = observation.get("guidance")
     if not isinstance(guidance, dict) or not isinstance(guidance.get("node"), dict):
         raise BundleError(
@@ -374,7 +424,7 @@ def execution_context(
         application = result["design"].get("application", {})
         if application.get("status") in {"approval-required", "reapproval-required"}:
             result["status"] = application["status"]
-            return result
+            return checked(result)
     if binding["family"] == "diagnosis":
         from adaptive_diagnosis import context as diagnosis_context
 
@@ -384,7 +434,7 @@ def execution_context(
         application = result["diagnosis"].get("application", {})
         if application.get("status") in {"approval-required", "reapproval-required"}:
             result["status"] = application["status"]
-            return result
+            return checked(result)
     handoff = handoff_context(
         repository,
         document,
@@ -397,10 +447,10 @@ def execution_context(
     result["handoff"] = handoff
     if handoff and handoff["status"] in {"attachment-required", "stop-before-work"}:
         result["status"] = handoff["status"]
-        return result
+        return checked(result)
     if declaration["role"] == "orchestrator" or declaration["kind"] == "decision":
         result["status"] = "primary-owned"
-        return result
+        return checked(result)
     dispatched = copy.deepcopy(assignment)
     dispatched.update(
         role=declaration["role"],
@@ -421,6 +471,11 @@ def execution_context(
     )
     definition = document["node_definitions"][placement["use"]]
     dispatched["target"]["active_operation"] = definition
+    if source_context is not None:
+        dispatched["target"]["applied_source_context"] = copy.deepcopy(source_context)
+        dispatched["instructions"] += (
+            "\nRead the original pinned requirement bytes through target.applied_source_context capture/Git references. The approved current images are deliverables; preserve every original criterion and all due checks."
+        )
     dispatched["checkpoint"] = node
     dispatched["instructions"] += (
         "\nRead the complete selected native evidence and original sources. Follow this exact active operation and load each named installed leaf skill completely. Return actual evidence; do not advance Podway or grant approval."
@@ -473,7 +528,7 @@ def execution_context(
         dispatch=ordinary(dispatched),
         next_owner=declaration["role"],
     )
-    return result
+    return checked(result)
 
 
 def handoff_context(

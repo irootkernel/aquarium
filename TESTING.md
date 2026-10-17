@@ -407,9 +407,15 @@ Finalization recovery controls keep pinned original criteria after an approved
 source edit or deletion. They cover ordinary and historical checkpoint shapes,
 current report postimages and deleted before-images, mapped Judge evidence,
 work and goal identity, native invalidation and concurrent drift, immutable Git
-source recovery, and the public context CLI. Delegated source-edit reconciliation
-preserves its provenance; Design application remains user-approved. These helper
-controls use synthetic role and approval declarations. Actual installed recovery
+source recovery, and the public context CLI. Pending applied-source controls
+keep the original criteria readable for the normal mapped Worker, Judge or
+Primary without requiring its future report. They require the current valid
+native attempt, including its released `active` lifecycle, and reject unapproved
+postimages, invalidated attempts and concurrent drift. Public CLI controls use
+the actual NativeClient transport with synthetic native envelopes. Delegated
+source-edit reconciliation preserves its provenance; both Design and Diagnosis
+remain user-only. These helper controls use synthetic role and approval
+declarations. Actual installed recovery
 and independent execution require separate candidate-bound observations.
 `ManagedRuntime.exercise_adaptive_admitted_slice`
 observes retained exact source, prepared resolution before begin, actual
