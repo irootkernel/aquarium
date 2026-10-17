@@ -186,6 +186,34 @@ rejections are not all adaptive safety failures. Registration is not a result
 and adds no automated LLM gate to the current Make aggregate. Definition tests
 run in the existing unit stage; Ruff covers the shared helper and tests.
 
+TASK-140 adds `tests/unit/test_adaptive_composition_unit.py` for actual whole
+and fragment preparation, deterministic namespace expansion, typed item aliases,
+operation identity preservation, resolved evidence/control/public-rework ports,
+exact dependencies and self-contained candidate retention. Documentation and
+measured branching outputs differ in actual producers, selected evidence and
+Decisions. Negative controls cover collisions, drift, parent-goal fragments,
+private/undeclared rework, ambiguous ports, wrong item types, unreachable evidence
+and malformed public CLI input. Canonical whole imports preserve repeated
+producer selectors with distinct item sets and requiredness. Reachable graph
+negatives exercise evidence dominance and each guard's explicitly required
+item. Further controls cover implicit field aliases, bounded selector allocation,
+whole-source tuple/binding drift, fragment assessment boundaries and the optional
+goal-control template's guarded achieved path. Escaped native line-break values
+retain their exact parsed strings. Supported narrower bounds and optional native
+guard items remain positive controls; unresolved constraints are explicit
+`not-established` outcomes. The Make unit and Ruff stages include these tests.
+
+Separate disposable source-only observations use released Podway on whole reuse,
+partial documentation/measurement reuse, typed evidence, external rework and
+representative product review/whole-control templates. Every actual preparation
+runs formatting, validation, vetting, lint/check with warnings-as-errors and
+preview on its exact flattened source. These checks start no session and do not
+establish full family qualification, independent agent execution, installed
+behavior or success for unobserved parameter values. Actual skill functional
+checks for composition choice, complete source/authority handoff and required
+family review/acceptance controls remain unverified until their authorized
+manual/VM observations.
+
 TASK-138 implements the minimal writer/resolver and an explicitly invoked
 disposable native slice before handler activation. Storage/admission unit tests
 cover exact-key native verification, multi-root aliases and ambiguity, concurrent

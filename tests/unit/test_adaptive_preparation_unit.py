@@ -649,7 +649,7 @@ def test_markdown_retains_paragraph_nested_and_compound_original_text(repository
     )
 
 
-def test_strategy_preference_and_composition_boundary(repository):
+def test_strategy_preference_and_unresolved_composition(repository):
     value = assignment(repository)
     plan = value["target"]["procedure_plan"]
     base = repository / "base.yaml"
@@ -662,7 +662,7 @@ def test_strategy_preference_and_composition_boundary(repository):
     plan["drafts"].append(adapt)
     assert prep.select(repository, value)["kind"] == "adapt"
     plan["drafts"] = [plan["drafts"][0], {"kind": "compose"}]
-    assert_code("not-established", lambda: prep.select(repository, value))
+    assert_code("invalid-input", lambda: prep.select(repository, value))
 
 
 def test_malformed_unrelated_history_is_diagnostic_and_does_not_block_identity_allocation(

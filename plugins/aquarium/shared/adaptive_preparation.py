@@ -42,6 +42,21 @@ from adaptive_definitions import (
 )
 
 
+class ProcedureDumper(yaml.SafeDumper):
+    """Keep multiline values escaped on one native authoring source line."""
+
+
+def native_string(dumper, value):
+    return dumper.represent_scalar(
+        "tag:yaml.org,2002:str",
+        value,
+        style='"' if any(char in value for char in "\r\n\x85\u2028\u2029") else None,
+    )
+
+
+ProcedureDumper.add_representer(str, native_string)
+
+
 def usable_reason(value):
     return isinstance(value, str) and bool(value.strip())
 
@@ -679,19 +694,26 @@ def select(repository, assignment):
         plan.get("drafts", []),
         key=lambda entry: {"adapt": 0, "compose": 1, "author": 2}.get(entry["kind"], 3),
     ):
+        composition = None
         if draft["kind"] == "compose":
-            raise BundleError(
-                "not-established",
-                "Fragment composition belongs to TASK-140",
-                {"next_owner": "TASK-140", "considered": considered},
-            )
-        if draft["kind"] not in {"adapt", "author"}:
+            from adaptive_composition import compose
+
+            composition = compose(repository, draft)
+        if draft["kind"] not in {"adapt", "compose", "author"}:
             raise BundleError("incompatible", "Unknown preparation strategy")
         if draft["kind"] == "adapt":
             document(repository, draft["base"])
+        current_document = composition["document"] if composition else draft["document"]
+        current_mapping = composition["mapping"] if composition else draft["mapping"]
         evidence = fit(
-            assignment, criteria, draft["document"], draft["mapping"], draft["coverage"]
+            assignment, criteria, current_document, current_mapping, draft["coverage"]
         )
+        if composition:
+            evidence["composition"] = {
+                "origins": composition["origins"],
+                "parameters": composition["parameters"],
+                "qualification": composition["qualification"],
+            }
         evidence["source_authority"] = authority_basis
         if not usable_reason(draft.get("reason")):
             raise BundleError(
@@ -699,8 +721,9 @@ def select(repository, assignment):
             )
         return {
             "kind": draft["kind"],
-            "document": copy.deepcopy(draft["document"]),
-            "mapping": copy.deepcopy(draft["mapping"]),
+            "document": copy.deepcopy(current_document),
+            "mapping": copy.deepcopy(current_mapping),
+            "composition_bases": composition["bases"] if composition else [],
             "entry": draft,
             "reason": draft["reason"],
             "plan": evidence,
@@ -810,6 +833,10 @@ def allocate_identity(repository, roots, family, draft):
 
 
 def check_basis(repository, assignment, selected):
+    if selected.get("composition_bases"):
+        from adaptive_composition import check_bases
+
+        check_bases(repository, selected["composition_bases"])
     requirements(repository, assignment)
     if source_authority(repository, assignment) != selected["plan"]["source_authority"]:
         raise BundleError(
@@ -934,11 +961,25 @@ def prepare(repository, assignment, *, client=None):
                 temporary, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent
             )
             try:
+                if selected.get("composition_bases"):
+                    from adaptive_composition import verify_whole_sources
+
+                    verify_whole_sources(
+                        repository,
+                        selected["composition_bases"],
+                        client,
+                        stage,
+                        stage_descriptor,
+                    )
                 source = (
                     selected["source"]
                     if selected["kind"] == "reuse"
-                    else yaml.safe_dump(
-                        native, sort_keys=False, allow_unicode=True
+                    else yaml.dump(
+                        native,
+                        Dumper=ProcedureDumper,
+                        sort_keys=False,
+                        allow_unicode=True,
+                        width=float("inf"),
                     ).encode("utf-8")
                 )
                 write_new(stage_descriptor, "procedure.yaml", source)

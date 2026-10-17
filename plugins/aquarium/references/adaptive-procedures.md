@@ -6,9 +6,10 @@ TASK-137 implements the closed Aquarium definition formats, canonical JSON
 identity helper and necessary declaration signatures described here. TASK-138
 implements selected known-source admission, atomic local retention and exact-key
 recovery. TASK-139 implements fit selection and approved source-only preparation
-through an ordinary Worker assignment. Composition, structural qualification and
-handler activation remain reserved for TASK-140 through TASK-145. These interfaces do not activate
-adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
+through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
+composition through that preparation path. Structural qualification and handler
+activation remain reserved for TASK-141 through TASK-145. These interfaces do
+not activate adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
 sources and immutable formal v1 sessions retain their current contracts.
 
 The repository's `docs/todo/TODO-ADAPTIVE-PROCEDURES.md` owns remaining
@@ -82,8 +83,8 @@ The helper does not infer their semantic independence from Markdown formatting.
 - bounded `drafts` with `kind` (`adapt`, `compose` or `author`), concrete `reason`,
   complete native `document`, definition `mapping` and `coverage`. Adaptation
   identifies exact `base` source bytes. `revision_of` identifies an adaptive
-  source whose positive decimal revision will be advanced. Composition returns
-  `not-established` until TASK-140 supplies its mechanism.
+  source whose positive decimal revision will be advanced. Composition supplies
+  explicit exact imports and typed ports under the contract below.
 
 Discovery compares package defaults and sources in approved locations. An
 adequate unchanged known source is preferred; byte-identical aliases and other
@@ -175,6 +176,117 @@ means this bounded operation succeeded; exit 2 reports unresolved authority,
 refuses an operation. Diagnostics are returned in JSON, not mandatory report
 files. Python, PyYAML and jsonschema must exist in the selected supported helper
 environment; this command installs nothing and assumes no target `.venv`.
+
+## Explicit source-only composition
+
+A `kind: compose` draft retains the ordinary draft's native root `document`,
+root definition `mapping`, original-source `coverage` and concrete `reason`.
+Its `composition` object imports exact whole definitions or ordinary fragments.
+The root can be empty when an imported whole control supplies its placements,
+goal assessments and closeout. Final preparation validates a complete binding
+and runs the native authoring sequence on one flattened Procedure v2. Generated
+source preserves long strings and escaped newline, carriage-return, NEL, line
+separator and paragraph separator values using the released native
+source grammar; unchanged known reuse retains its original source bytes.
+
+`composition.components` contains objects with these fields:
+
+- `kind`: `fragment` or `whole`; `namespace`: a unique native identifier other
+  than `root`. Expanded placement and definition IDs are `<namespace>-<id>` and
+  must satisfy the released native identifier contract.
+- `source`: exact repository-relative `path` and raw-byte `sha256`, or an exact
+  packaged `asset` path relative to Aquarium's assets plus `sha256`. Reads use the
+  existing non-symlink, regular-file and containment checks.
+- A fragment supplies its ordinary `mapping` slice: `nodes` and optional
+  `obligations`. Native roles, effects and capability field aliases belong to
+  that slice. Its declared assessor nodes map to Judge roles and select the
+  covered original evidence. Grouped conditional coverage retains explicit
+  optional branch selectors; exact applicability proof remains due under
+  TASK-141. Fragment mappings cannot carry session-goal or closeout claims.
+- A whole definition supplies an exact `binding` reference with the same source
+  byte SHA, native ID/version and family. Native check/preview verifies its
+  actual digest inside the approved ignored preparation stage. Whole controls
+  preserve native goal mappings, formal declarations and manual rework targets.
+- `parameters` holds actual invocation values matching the definition's declared
+  types. Values remain in the ordinary coverage/preparation plan. The reusable
+  binding retains only parameter declarations under namespaced keys. Parameters
+  are caller inputs; the composer performs no text or command interpolation.
+- Optional `fields` maps original placement IDs to native item aliases. The
+  composer updates item IDs, same-action conditions, evidence selectors, guard
+  endpoints, obligation endpoints and matching capability aliases, including
+  implicit logical field identities. Semantic
+  operation IDs, operation digests, accepted outcomes, Decision option IDs,
+  criteria, prompts, instructions and commands retain their exact values.
+- Optional whole `inputs`/`outputs` use the fragment port shape (`type`,
+  `required`, `endpoint` with native `node`/`item`); whole `exits` maps names to
+  original placements. Optional `public_targets` exposes named original
+  placements for external rework. Every component's `entry` is also public.
+
+`composition.entry` identifies a component entry or a root node.
+`composition.control` holds explicit `from`/`to` edges. A component source names
+`component` and `exit`; a Decision exit also names its `option`. A destination
+names its component entry. Root endpoints name `component: root` and `node`.
+Each exit/option has one destination. Action exits become `next` transitions;
+Decision options receive native `to`/`effect: advance` routes. This does not add
+another cursor or executor.
+
+`composition.evidence` connects `from: {component, port}` outputs to
+`to: {component, port}` inputs. Each input has one producer. The composer checks
+actual native item types and supported value bounds, separately from control
+connectivity. Narrower producer ranges and choice/outcome sets may fit a broader
+consumer. Check-result operation ID/digest must agree. Unsupported differences
+or missing bounds that prevent proof return `not-established`. A required input
+needs an unconditional required producer; a required output must declare one.
+Conditional presence without a supported proof returns `not-established` with
+the affected port location.
+Unresolved required inputs stop preparation. Native `evidence_from` selectors
+retain their existing scope. Adding a connection preserves an omitted item
+selector; an explicit item list receives only missing producer items. Repeated
+rows for one producer retain their individual item scope and requiredness.
+Wiring uses a compatible applicability row or adds one within the released
+eight-row and sixteen-item limits. Required producers must dominate consumers
+for each required selector row.
+Guards require their own item in an explicitly required selector row;
+optional native guard items remain supported. Stronger workflow/suitability
+claims remain due under TASK-141.
+
+A fragment's internal rework declarations must match its actual native rework
+routes. Each external declaration's `port` is the unresolved `route.to` token
+on the declared `from` placement. Component `rework` binds each such token to
+`{component, target}`. The target is `entry` or an explicitly exposed
+`public_targets` name. Root public targets are declared in
+`composition.public_targets`. Undeclared, unresolved or cross-private jumps
+reject; native `effect: rework` remains the invalidation authority. Imported
+manual-rework declarations retain their original supported scope.
+
+Exact fragment dependencies identify `id`, `version` and source SHA of another
+resolved component. Conflicting definition identities reject; identical
+semantic aliases may be imported under different namespaces. Composition checks
+input bytes again before and during preparation, including binding bytes, and
+checks each imported whole native tuple. The resulting source, full binding and
+origin provenance are retained together. Origins and mutable libraries are no
+longer execution or recovery dependencies after the candidate is intact.
+Source-only preparation does not publish an adopted bundle.
+
+`assets/adaptive/reusable/technical-review.fragment.json` retains the selected
+technical-review record and faithful finding route. Its correction port must be
+bound. `task-goal-control.yaml` and its exact binding provide whole-session
+assessment and result delivery with native goal mappings. Its achieved path
+checks the current Judge's pass verdict, zero unmet and unverified criteria and
+passing applicability before the goal assessment. Declared stopped,
+not-achieved and superseded outcomes retain their native mappings. These optional
+building blocks impose no complete canonical topology. They establish no proof
+that all Task obligations are satisfied. Full family qualification, exact-target
+suitability, actual independent work and Master acceptance remain due. These
+product templates are within TASK-140's implementation scope; promotion of
+actually used local definitions still requires specific preservation consent.
+
+Plan-only composition reads declared sources and reports unresolved contracts. It writes no source, ignore policy or candidate and calls no native
+command. Approved preparation uses the existing disclosed `.candidates` writer;
+its native source checks apply to every exact flattened instance. Fragment-only
+validation and a representative native result cannot establish other parameter
+values, runtime execution or installed handler behavior. Failure statuses and
+CLI exit semantics remain those of source-only preparation.
 
 ## Families and due capabilities
 
@@ -481,7 +593,7 @@ installed handler behavior.
 | --- | --- |
 | TASK-138 | Implemented: podway-integration and tool-catalog selected/library readiness distinction; dev-setup inspect_tools selected path; atomic writer/resolver and dependency-reporting launcher with lazy imports |
 | TASK-139 | Implemented: shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
-| TASK-140 | shared composition, namespaces, typed ports and self-contained flattening; preserve semantic operation IDs/digests and fragment/session control distinction |
+| TASK-140 | Implemented: shared composition through existing preparation, namespaces, typed ports, self-contained flattening and reusable review/whole-control assets; preserve semantic operation IDs/digests and fragment/session control distinction |
 | TASK-141 | shared structural qualifier and exact suitability/bootstrap lifecycle; procedure-node-contracts adaptive compatibility alongside current canonical inventory |
 | TASK-142 | task-handler/task-orchestration fixed seven-phase loading and unconditional refine discovery; ordinary-agent-orchestration five-bundled-source restriction and goal-judge helper; epic/validation orchestration, worker-guidance, plan-handoff, task-close/task-commit adaptive mappings/recovery; runtime readiness before activation |
 | TASK-143 | new-feature/new-project/refactor and design-diagnosis orchestration adaptive selection, QA, exact application and non-Git recovery |
@@ -494,5 +606,5 @@ typed aliases and genuinely different work/evidence/Decision structures. Negativ
 fixtures target missing required types/operations, parent-goal assessment inside
 ordinary fragments, violated evidence or authority. Unknown contracts produce
 not-established. ADAPT-25/26 are definition/signature controls here; whole-graph
-and runtime claims remain with TASK-140/141 and activated families. Tests of
-fabricated records establish rejection behavior only.
+qualification and runtime claims remain with TASK-141 and activated families.
+Tests of fabricated records establish rejection behavior only.

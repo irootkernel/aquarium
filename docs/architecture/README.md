@@ -33,7 +33,10 @@ bundles atomically and resolves them by native tuple across the worktree.
 Retained definitions are self-contained; recovery needs neither mutable origin
 libraries nor a central session database. Ordinary-assignment selection and
 source-only preparation retain exact ignored candidates separately from adopted
-bundles. Composition, full qualification and handler activation remain planned.
+bundles. Composition now flattens exact whole/fragment imports and explicit
+control/evidence/rework ports before those same fit, storage and native checks.
+Namespace expansion preserves native semantic operation identities and declared
+formal contracts. Full qualification and handler activation remain planned.
 Existing sessions and installed source contracts retain their current behavior.
 
 ## Exact Authorities

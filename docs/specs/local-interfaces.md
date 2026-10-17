@@ -132,8 +132,11 @@ retention and exact native `(id, version, digest)` recovery across all approved
 searched roots. Their retained complete source/binding does not depend on mutable
 origin libraries. Fit selection and source-only preparation now use ordinary
 Worker assignment/plan data and retain ignored `.candidates` bundles without
-adoption. Whole-graph qualification, composition and family activation remain
-reserved for their EPIC-026 implementation tasks.
+adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
+typed ports through that same preparation CLI. It retains operation identities,
+resolves native references and dependencies, and rejects unresolved/private
+rework or unavailable required evidence. Whole-graph qualification and family
+activation remain reserved for their EPIC-026 implementation tasks.
 
 The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
 takes `--repository`, `--assignment <file-or->` and, for approved preparation,
