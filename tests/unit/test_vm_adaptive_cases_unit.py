@@ -344,6 +344,44 @@ def test_adaptive_checkpoint_accepts_actual_distinct_graph_and_reads_selected_ju
     ]
 
 
+@pytest.mark.parametrize("lifecycle", ["completed", "cancelled"])
+def test_terminal_observation_without_live_guidance_is_incomplete(
+    checkpoint_case, monkeypatch, lifecycle
+):
+    (
+        repo,
+        directory,
+        request,
+        case,
+        evidence,
+        installed,
+        roles,
+        _native,
+        current,
+        _binding,
+        _calls,
+    ) = checkpoint_case
+    current["status"]["session"]["lifecycle"] = lifecycle
+    current["guidance"] = None
+    original_command = gate.command
+
+    def terminal_context(argv, **kwargs):
+        result = original_command(argv, **kwargs)
+        if "context" in argv:
+            context = json.loads(result.stdout)
+            context["status"] = "terminal-resolved"
+            context.pop("role", None)
+            result.stdout = json.dumps(context)
+        return result
+
+    monkeypatch.setattr(gate, "command", terminal_context)
+    with pytest.raises(gate.GateError) as failure:
+        cases.checkpoint(
+            gate, request, repo, directory, case, evidence, installed, roles=roles
+        )
+    assert failure.value.outcome == "incomplete"
+
+
 @pytest.mark.parametrize(
     "damage",
     ["wrong-family", "missing-producer", "wrong-report", "truncated", "wrong-role"],

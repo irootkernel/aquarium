@@ -782,7 +782,14 @@ def checkpoint(
         "native tuple changed during semantic checkpoint",
         "fail",
     )
-    node = actual["guidance"]["node"]["graph_node_id"]
+    guidance = actual.get("guidance")
+    gate.require(
+        isinstance(guidance, dict)
+        and isinstance(guidance.get("node"), dict)
+        and isinstance(guidance["node"].get("graph_node_id"), str),
+        "live semantic checkpoint is unavailable",
+    )
+    node = guidance["node"]["graph_node_id"]
     gate.require(node in binding["nodes"], "current native node has no exact binding")
     declaration = binding["nodes"][node]
     gate.require(
