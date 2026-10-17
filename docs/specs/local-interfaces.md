@@ -136,8 +136,7 @@ adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
 typed ports through that same preparation CLI. It retains operation identities,
 resolves native references and dependencies, and rejects unresolved/private
 rework or unavailable required evidence. The explicit helpers below implement
-guarded whole-graph qualification and exact suitability/bootstrap. Task, Goal, Validation and
-Design activation is implemented; diagnosis remains planned.
+guarded whole-graph qualification and exact suitability/bootstrap. Task, Goal, Validation, Design and Diagnosis activation is implemented.
 
 The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
 takes `--repository`, `--assignment <file-or->`, optional Design `--podway-opt-out`, and, for approved native preparation,
@@ -150,16 +149,18 @@ source SHA, coverage plan and outstanding qualification. This interface performs
 no session operation or generated-source adoption and changes no handler default.
 
 The [adaptive launcher](../../plugins/aquarium/shared/manage_adaptive_procedure.py)
-accepts `inspect`, `retain`, `resume` or `context` with the owning repository and invoking entrypoint. The native path requires every approved root and applicable selected review route. Design `--podway-opt-out` and non-Git `new-project` return `podway-inapplicable` before native imports or discovery, without roots, source, qualification, binary or session. Inspect/retain take a source;
+accepts `inspect`, `retain`, `resume`, `context`, `transition-plan`, `transition` or `transition-recover` with the owning repository and invoking entrypoint. The native path requires every approved root and applicable selected review route. Design `--podway-opt-out` and non-Git `new-project` return `podway-inapplicable` before native imports or discovery, without roots, source, qualification, binary or session. Inspect/retain take a source;
 retention also takes an approved write root. It emits JSON with source/binding,
 retention disposition and actual session context, or a distinct failure status.
 An optional bootstrap reference is a cross-check. It uses native check/preview for
 the actual canonical digest, separately verifies source-file SHA-256, and requires
 the supported frozen known-source/reference contract. Changed/new qualification
-uses exact binding and ordinary suitability context. Task, Goal, Validation and Design use the activated mapped consumer; diagnosis remains planned. The CLI does no session mutation or installation. On the native path, YAML and `jsonschema` must be available in its reported interpreter. Missing dependencies return `missing-prerequisite`.
+uses exact binding and ordinary suitability context. Task, Goal, Validation, Design and Diagnosis use the activated mapped consumer. Inspect/retain/resume/context perform no session mutation. Explicit transition actions follow the consented atomic contract below; no action installs tools. On the native path, YAML and `jsonschema` must be available in its reported interpreter. Missing dependencies return `missing-prerequisite`.
 The setup inspector's explicit selected mode lazily imports these helpers,
 preserves full managed-library diagnostics and exposes selected/runtime readiness
 separately. Selected-provider readiness stays with its existing review-route owner.
+
+The shared [atomic transition interface](../../plugins/aquarium/references/adaptive-execution.md#consented-atomic-supersede) uses `--transition-input <json>`, `--qualification <ordinary-context.json>` and, for execution/recovery, `--consent <json>`, with the same repository, roots, entrypoint and Podway executable. Planning returns exit 0 `replacement-consent-required` and an exact checkpoint/disclosure without native mutation. Actual approved `transition` performs only native preserve-start; `transition-recover` looks up that original key and reconciles lineage/current state before optional identical replay with `--replay`. Success returns exit 0 `superseded-prepared-resolved`, no dispatch and separately authorized begin pending. A lookup miss with unchanged predecessor readback and no `--replay` returns exit 0 `same-request-replay-available`, the retained `checkpoint` and no dispatch or mutation; it is not a completed transition. Explicit `--replay` is required to submit the original request. Failures exit 2 with typed status, including absent consent, stale consent, native conflicts and `outcome-unknown`. Checkpoint/request data stays in ordinary local orchestration records; no central database, universal report or new authority is created.
 
 ## Selected Podway CLI contract
 
@@ -207,13 +208,13 @@ and `error.message` shape and their declared exit status (2 for invalid argument
 or repository selection, 1 for failed Git-status inspection). These results never
 authorize repair, replacement or session mutation.
 
-The adaptive launcher takes positional `inspect`, `retain`, `resume` or `context`, required `--repository` and `--entrypoint`, plus applicable `--review-route`. Repeated `--root` is required only on the native path. Optional `--podway-opt-out` is Design-only; an unsupported or absent entrypoint with this flag returns `invalid-arguments` JSON and exit 2 before native imports, discovery or source work. Valid Design opt-out and non-Git `new-project` return `podway-inapplicable` and exit 0 without native dependencies or session requirements. Inspect/retain require `--source`; retain also requires
+The adaptive launcher takes positional `inspect`, `retain`, `resume`, `context`, `transition-plan`, `transition` or `transition-recover`, required `--repository` and `--entrypoint`, plus applicable `--review-route`. Repeated `--root` is required only on the native path. Optional `--podway-opt-out` is Design-only; an unsupported or absent entrypoint with this flag returns `invalid-arguments` JSON and exit 2 before native imports, discovery or source work. Valid Design opt-out and non-Git `new-project` return `podway-inapplicable` and exit 0 without native dependencies or session requirements. Inspect/retain require `--source`; retain also requires
 `--write-root`. Optional `--bootstrap` and `--customization-basis` have the meanings
 above. `--podway <executable>` overrides PATH discovery. Repository paths resolve
 through `expanduser().resolve()` before applicability checks; native repository paths then resolve to their owning Git root. The launcher emits source/binding, byte size/hash for
 source bytes, lookup diagnostics and actual session context. `retain` returns
 `retained` and may prepare material while disclosing an existing session conflict;
-it does not resolve that conflict. Native inspection and resume success return `ready`; `context` returns the mapped statuses below, and the non-native Design branch returns `podway-inapplicable`. Conflicts and
+it does not resolve that conflict. Native inspection and resume success return `ready`; `context` returns the mapped statuses below, and the non-native Design branch returns `podway-inapplicable`. Transition actions use `--transition-input`, `--qualification`, actual `--consent` for execution/recovery, and optional explicit `--replay`, as specified above; their exit-0 statuses are `replacement-consent-required`, `same-request-replay-available` and `superseded-prepared-resolved`. Conflicts and
 failures return status/message/interpreter/details JSON and exit 2; success exits
 0. Native runtime diagnostics appear in `details.probes`, and conflicting tuple
 and lifecycle in `details.session`. Argument-parser usage errors exit 2 with
@@ -287,13 +288,12 @@ inspector forwards corresponding `--podway-binding` and
 binding path from the retained native tuple before qualification; it does not
 require a bootstrap item to be selected.
 
-On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, or Design `approval-required` / `reapproval-required`, with native
+On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
 status/templates, active items, selected evidence, current role/capabilities,
 due phase skills, original authority and an ordinary v2 dispatch when applicable.
-The Design approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
+The Design/Diagnosis approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
 errors retain status/message/details and exit 2. Terminal state does not imply
-achievement. Missing topology preserves the running session; replacement is not
-implemented here. This adapter launches no agent and performs no native mutation.
+achievement. Missing topology preserves the running session; `context` does not replace it. The separate explicitly consented transition actions own that mutation. This context adapter launches no agent and performs no native mutation.
 Before start, qualification keeps exact raw requirement-source pins. On
 in-session re-entry, it compares the complete extracted criterion/part basis
 with the approved coverage basis while retaining original provenance and report

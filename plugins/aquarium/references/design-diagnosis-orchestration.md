@@ -10,7 +10,7 @@ qualification. Admitted formal snapshots keep their original
 
 Supply original requirements, current artifacts, checks, actual authority and
 available public handles. Design uses the [mapped adaptive consumer](adaptive-execution.md#design-entrypoints) for all three entrypoints and exact prepared/running recovery. Design groups context/discovery, draft/challenge/quality
-and approved application. War-room groups baseline/investigation,
+and approved application. War-room uses the [Diagnosis mapped consumer](adaptive-execution.md#diagnosis) and groups baseline/investigation,
 proposal/quality and approved documentation or no-change delivery. The Primary
 records simple operations and Decisions; the report-only Judge independently
 assesses each coherent phase. Final assembly adds no Worker or Judge cycle when
@@ -94,3 +94,5 @@ policy for installation-dependent behavior and keep actual Master acceptance
 separate. Ordinary recovery reconciles known work before
 replay and settles mutating Workers before replacement, without requiring full
 executor history.
+
+For unexpected missing topology in a running session, use the shared [consented atomic supersede](adaptive-execution.md#consented-atomic-supersede) after reconciling pending effects and retaining the qualified successor. Preserve history, original findings, review ordinals and remaining grants. Declared rework, same-operation result retrieval and an approved normal successor remain under their existing authority; a missing report alone never warrants replacement.

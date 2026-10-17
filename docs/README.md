@@ -50,8 +50,7 @@ recovery. Explicit ordinary-assignment helpers now select by fit and prepare
 exact source/binding candidates within approved scope. Explicit whole/fragment
 composition resolves typed ports and namespaces into self-contained candidates.
 Guarded qualification and exact pre-start suitability/bootstrap assess those
-candidates through ordinary reports. Task, Goal, Validation and Design selection and
-mapped execution are implemented. Diagnosis remains planned. Existing
+candidates through ordinary reports. Task, Goal, Validation, Design and Diagnosis selection and mapped execution are implemented. Shared unexpected running-session replacement uses explicit consent and native atomic preserve-start; promotion and installed integration remain planned. Existing
 installed skill and native contracts apply until the corresponding authorized
 update. The roadmap owns task order and status.
 

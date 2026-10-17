@@ -500,7 +500,7 @@ def qualify_prepared(
     coverage = prepared["coverage_plan"]["coverage"]
     fit(assignment, basis["criteria"], document, mapping, coverage)
     design_review = (
-        binding["family"] == "design"
+        binding["family"] in {"design", "diagnosis"}
         and assignment["authority"]["review"].get("route") != "not-applicable"
     )
     try:
@@ -553,7 +553,7 @@ def qualify_prepared(
             if reviewed["status"] != "compatible":
                 raise BundleError(
                     reviewed["status"],
-                    "The selected Design technical review lacks established source continuity",
+                    "The selected technical review lacks established source continuity",
                     reviewed,
                 )
         retained = None
@@ -733,7 +733,7 @@ def qualify_prepared(
         "bootstrap": bootstrap,
         "retention": retained,
         "activation": "activated-family-consumer-available"
-        if binding["family"] in {"task", "goal", "validation", "design"}
+        if binding["family"] in {"task", "goal", "validation", "design", "diagnosis"}
         else "family-activation-remains-required",
     }
 
@@ -781,7 +781,7 @@ def reassessment_route(document, binding):
         "next_owner": "Orchestrator",
         "required_scope": ["affected-planning", "procedure-suitability"],
         "same_operation_retrieval": "Recover a pending actual result before assigning replacement assessment",
-        "replacement": "Not authorized by reassessment; use TASK-144's consented path when available.",
+        "replacement": "Not authorized by reassessment; use the shared consented atomic path only for missing topology.",
     }
 
 

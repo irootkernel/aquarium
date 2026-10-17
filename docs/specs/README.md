@@ -39,8 +39,7 @@ These interfaces join the closed definition formats and necessary declaration
 signatures in the
 [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
 Explicit shared helpers implement guarded structural qualification and exact
-pre-start suitability/bootstrap. Task, Goal, Validation and Design activation is
-implemented; diagnosis remains planned. Implementing tasks must promote
+pre-start suitability/bootstrap. Task, Goal, Validation, Design and Diagnosis activation and shared consented atomic supersede are implemented. Implementing tasks must promote
 verified behavior to its exact skill/reference and update
 this catalog without replacing the existing ordinary v2 and review contracts.
 

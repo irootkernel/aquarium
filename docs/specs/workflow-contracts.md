@@ -16,7 +16,7 @@ Task commits identify their canonical parent Epic, including standing groups, wh
 
 QA artifact `PASS`, `REVISE`, and `FAIL` remain separate from the operation result. Completed, locally adjudicable QA routes valid findings to their owner; failed or missing operation evidence requires supported recovery. Approved design documents become committed delivery input only through a separately authorized `task-commit` boundary. War-room uses canonical specification, ADR, or operations owners for durable notes and permits an evidence-backed no-work outcome through the same quality and approval path, including verified no-change when no document is owed.
 
-Git-backed Design workflows select a qualified Design Procedure, preferring adequate unchanged `aquarium-design-v2`; `war-room` uses `aquarium-war-room-v2`. Non-Git discovery remains Podway-free because no repository lifecycle exists to record.
+Git-backed Design workflows select a qualified Design Procedure, preferring adequate unchanged `aquarium-design-v2`; `war-room` selects a qualified Diagnosis Procedure, preferring adequate unchanged `aquarium-war-room-v2`. Non-Git discovery remains Podway-free because no repository lifecycle exists to record.
 
 ## Deliver One Task
 

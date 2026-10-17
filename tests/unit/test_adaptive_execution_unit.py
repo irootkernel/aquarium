@@ -173,7 +173,7 @@ def test_unchanged_running_basis_retrieves_same_current_assessment_without_new_a
 
 
 @pytest.mark.parametrize("entrypoint", ["war-room"])
-def test_other_family_activation_is_not_implied(admitted, entrypoint):
+def test_activated_family_rejects_another_familys_adopted_bundle(admitted, entrypoint):
     with pytest.raises(BundleError) as error:
         execution.execution_context(
             admitted[0],
@@ -182,7 +182,7 @@ def test_other_family_activation_is_not_implied(admitted, entrypoint):
             qualification=admitted[1],
             client=admitted[2],
         )
-    assert error.value.code == "not-established"
+    assert error.value.code == "incompatible"
 
 
 def test_approved_due_phase_owners_can_combine_documentation_and_verification():

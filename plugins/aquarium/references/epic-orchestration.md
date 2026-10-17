@@ -136,3 +136,5 @@ acceptance. Ordinary work needs
 no prior qualification, private history or internal model telemetry.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.
+
+For unexpected missing topology in a running session, use the shared [consented atomic supersede](adaptive-execution.md#consented-atomic-supersede) after reconciling pending effects and retaining the qualified successor. Preserve history, original findings, review ordinals and remaining grants. Declared rework, same-operation result retrieval and an approved normal successor remain under their existing authority; a missing report alone never warrants replacement.

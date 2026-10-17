@@ -419,3 +419,17 @@ approval and changed-target stops. Public non-Git/opt-out controls run without
 runtime dependencies and assert no created files or native calls. Synthetic ordinary
 reports and native fixtures do not prove actual provider, independent-agent or
 installed behavior; those observations remain separate VM/manual checks.
+
+TASK-144 adds `test_adaptive_diagnosis_unit.py` and
+`test_adaptive_supersede_unit.py`. Objective controls cover known Diagnosis reuse,
+grouped baseline/hypothesis work and conditional experiment structures with changed producer/evidence/Decision relationships, exact
+prepared/running recovery, mapped QA/interview leaves, honest incomplete/no-work
+recommendations, raw QA correction ownership, actual document/no-change approval
+and evidence-only postimage verification. Synthetic ordinary reports prove input
+handling and static relationships, never independent execution or real consent.
+Atomic controls cover full disclosure, exact consent, retained successor/current
+fences, worktree-relative native source operands, stale rejection, archived
+superseded lineage and same-request outcome recovery without begin or authority
+reset. Disposable released-native observations establish only their recorded
+source/lifecycle layer; actual diagnosis, upstream QA, installed handler decisions
+and Master functional verification remain separate and unverified unless observed.

@@ -71,7 +71,7 @@ and selection, coverage and exact prepared-definition data in `target`, under th
 [shared adaptive preparation contract](adaptive-procedures.md#selection-and-source-only-preparation).
 These remain ordinary assignment/plan data. Reconcile full original sources and
 compound criteria independently; a generated coverage plan supplies no second
-requirements authority or Judge passage. Task, Goal and Validation now use [mapped adaptive execution](adaptive-execution.md); design and diagnosis activation remain with their own implementation tasks. Exact changed/new suitability can use the same due Task
+requirements authority or Judge passage. Task, Goal, Validation, Design and Diagnosis now use [mapped adaptive execution](adaptive-execution.md). Exact changed/new suitability can use the same due Task
 plan Judge when its target covers both scopes. Preserve full global future gaps
 and a separate passing phase result; a pre-start definition assessment does not
 claim product delivery. The shared helper returns a truthful pre-session ordinary

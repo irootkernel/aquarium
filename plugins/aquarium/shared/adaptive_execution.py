@@ -17,6 +17,7 @@ ACTIVATED = {
     "new-feature": {"design"},
     "new-project": {"design"},
     "refactor": {"design"},
+    "war-room": {"diagnosis"},
 }
 TASK_SKILLS = {
     "task-plan",
@@ -81,11 +82,13 @@ def invocation_assignment(qualification):
 
 def phase_skills(document, binding, assignment, node):
     """Use approved work-specific phase ownership; keep original leaf contracts."""
-    if binding["family"] not in {"task", "design"}:
+    if binding["family"] not in {"task", "design", "diagnosis"}:
         return []
     from adaptive_design import LEAVES
 
-    allowed = TASK_SKILLS if binding["family"] == "task" else LEAVES
+    allowed = {"task": TASK_SKILLS, "design": LEAVES, "diagnosis": {"interview", "qa"}}[
+        binding["family"]
+    ]
     plan = assignment["target"]["procedure_plan"]
     configured = plan.get("phase_skills", {})
     if not isinstance(configured, dict):
@@ -103,6 +106,12 @@ def phase_skills(document, binding, assignment, node):
             )
     if node in configured:
         return configured[node]
+    if binding["family"] == "diagnosis":
+        return (
+            ["qa"]
+            if diagnosis_phase(document, binding, assignment, node) == "quality"
+            else []
+        )
     if binding["family"] == "design":
         phase = design_phase(document, binding, assignment, node)
         return {"discovery": ["interview"], "quality": ["qa"]}.get(phase, [])
@@ -159,6 +168,45 @@ def design_phase(document, binding, assignment, node):
     return OPERATIONS.get(sha256(canonical_json(original)))
 
 
+def diagnosis_phase(document, binding, assignment, node):
+    from adaptive_diagnosis import OPERATIONS, PHASES
+
+    configured = assignment["target"]["procedure_plan"].get("diagnosis_phases", {})
+    if not isinstance(configured, dict) or any(
+        key not in binding["nodes"] or not isinstance(value, str) or value not in PHASES
+        for key, value in configured.items()
+    ):
+        raise BundleError(
+            "invalid-input",
+            "Diagnosis phases must map actual placements to supported work",
+        )
+    signatures = capability_signatures()
+    signatures.update(binding.get("capability_definitions", {}))
+    if any(
+        signatures.get(cap["signature"], {}).get("guarantee") == "application-approval"
+        for cap in binding["nodes"][node]["capabilities"]
+    ):
+        if node in configured and configured[node] != "documentation":
+            raise BundleError(
+                "incompatible", "Documentation approval cannot be relabeled"
+            )
+        return "documentation"
+    if node in configured:
+        return configured[node]
+    placement = next(row for row in document["graph"]["nodes"] if row["id"] == node)
+    body = document["node_definitions"][placement["use"]]
+    digest = sha256(canonical_json(body))
+    if digest in OPERATIONS:
+        return OPERATIONS[digest]
+    original = (
+        binding.get("semantic_contracts", {})
+        .get(digest, {})
+        .get("derivation", {})
+        .get("definition")
+    )
+    return OPERATIONS.get(sha256(canonical_json(original)))
+
+
 def execution_context(
     repository,
     *,
@@ -190,7 +238,7 @@ def execution_context(
     review = assignment["authority"]["review"]
     approved_route = review.get("route")
     routes = {"herdr", "mulgae", "independent-review", "waived"}
-    if entrypoint in {"new-feature", "new-project", "refactor"}:
+    if entrypoint in {"new-feature", "new-project", "refactor", "war-room"}:
         routes.add("not-applicable")
     if approved_route not in routes or (route is not None and route != approved_route):
         raise BundleError(
@@ -303,6 +351,16 @@ def execution_context(
         if application.get("status") in {"approval-required", "reapproval-required"}:
             result["status"] = application["status"]
             return result
+    if binding["family"] == "diagnosis":
+        from adaptive_diagnosis import context as diagnosis_context
+
+        result["diagnosis"] = diagnosis_context(
+            repository, assignment, diagnosis_phase(document, binding, assignment, node)
+        )
+        application = result["diagnosis"].get("application", {})
+        if application.get("status") in {"approval-required", "reapproval-required"}:
+            result["status"] = application["status"]
+            return result
     handoff = handoff_context(
         repository, document, binding, assignment, observation, client
     )
@@ -351,6 +409,21 @@ def execution_context(
             dispatched["instructions"] += (
                 "\nVerify the already applied approved bytes and available original checks only. Do not apply documents again."
             )
+    if binding["family"] == "diagnosis":
+        dispatched["target"]["diagnosis_context"] = copy.deepcopy(result["diagnosis"])
+        dispatched["authority"]["excluded"] += [
+            "Product repair or implementation",
+            "Production or shared-service mutation",
+            "Ouroboros auto/run/ralph/evolve",
+            "Unapproved diagnostic document application",
+            "Publication",
+        ]
+        if (
+            result["diagnosis"].get("application", {}).get("status")
+            == "verified-applied"
+        ):
+            dispatched["authority"]["effects"] = []
+            dispatched["authority"]["excluded"].append("Document application")
     if declaration["role"] == "judge":
         dispatched["authority"]["effects"] = []
         dispatched["authority"]["allowed"] = [

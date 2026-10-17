@@ -19,6 +19,10 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	plugins/aquarium/shared/adaptive_diagnosis.py \
+	plugins/aquarium/shared/adaptive_supersede.py \
+	tests/unit/test_adaptive_diagnosis_unit.py \
+	tests/unit/test_adaptive_supersede_unit.py \
 	plugins/aquarium/shared/adaptive_entrypoint.py \
 	plugins/aquarium/shared/adaptive_design.py \
 	tests/unit/test_adaptive_design_unit.py \

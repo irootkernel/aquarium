@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect, retain or recover an exact admitted Procedure; never start a session."""
+"""Inspect or recover admitted work; explicitly consented atomic replacement is separate."""
 
 import argparse
 import importlib.util
@@ -9,9 +9,31 @@ import sys
 from pathlib import Path
 
 
+def transition_json(path):
+    from adaptive_bundles import BundleError
+
+    try:
+        return json.loads(Path(path).read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise BundleError(
+            "invalid-input", "Transition input is not readable JSON"
+        ) from error
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("inspect", "retain", "resume", "context"))
+    parser.add_argument(
+        "action",
+        choices=(
+            "inspect",
+            "retain",
+            "resume",
+            "context",
+            "transition-plan",
+            "transition",
+            "transition-recover",
+        ),
+    )
     parser.add_argument("--repository", required=True)
     parser.add_argument("--root", action="append", default=[])
     parser.add_argument("--source")
@@ -31,6 +53,18 @@ def main():
     )
     parser.add_argument("--customization-basis")
     parser.add_argument("--podway")
+    parser.add_argument(
+        "--transition-input",
+        help="Disclosed transition arguments or retained exact checkpoint JSON",
+    )
+    parser.add_argument(
+        "--consent", help="Actual explicit user consent for the exact disclosure JSON"
+    )
+    parser.add_argument(
+        "--replay",
+        action="store_true",
+        help="After native lookup and readback, replay only the original request/key",
+    )
     arguments = parser.parse_args()
     from adaptive_entrypoint import EntryPointError, branch
 
@@ -83,12 +117,16 @@ def main():
             raise BundleError(
                 "missing-prerequisite", "Podway executable is unavailable"
             )
-        if arguments.action not in {"resume", "context"} and not arguments.source:
+        if arguments.action in {"inspect", "retain"} and not arguments.source:
             raise BundleError(
                 "invalid-arguments", "Source is required for inspect or retain"
             )
         qualification = (
-            json.loads(Path(arguments.qualification).read_text())
+            (
+                transition_json(arguments.qualification)
+                if arguments.action.startswith("transition")
+                else json.loads(Path(arguments.qualification).read_text())
+            )
             if arguments.qualification
             else None
         )
@@ -109,6 +147,76 @@ def main():
             arguments.repository = str(
                 inspector.resolve_repository(arguments.repository, 30)
             )
+            if arguments.action.startswith("transition"):
+                from adaptive_supersede import (
+                    execute_transition,
+                    prepare_transition,
+                    recover_transition,
+                )
+
+                if not arguments.transition_input or qualification is None:
+                    raise BundleError(
+                        "invalid-arguments",
+                        "Transition needs its ordinary qualification and exact input",
+                    )
+                value = transition_json(arguments.transition_input)
+                if not isinstance(value, dict):
+                    raise BundleError(
+                        "invalid-input", "Transition input must be an object"
+                    )
+                client = NativeClient(arguments.repository, arguments.podway)
+                if arguments.action == "transition-plan":
+                    fields = {
+                        "title",
+                        "reason",
+                        "missing_topology",
+                        "pending_operations",
+                        "remaining_authority",
+                        "effects_reconciled",
+                        "idempotency_key",
+                    }
+                    if not fields.issubset(value) or {
+                        "repository",
+                        "roots",
+                        "qualification",
+                        "client",
+                    }.intersection(value):
+                        raise BundleError(
+                            "invalid-input",
+                            "Transition plan has missing or conflicting inputs",
+                        )
+                    if not isinstance(value["effects_reconciled"], bool):
+                        raise BundleError(
+                            "invalid-input", "effects_reconciled must be a boolean"
+                        )
+                    result = prepare_transition(
+                        arguments.repository,
+                        roots=arguments.root,
+                        qualification=qualification,
+                        client=client,
+                        **{name: value[name] for name in fields},
+                    )
+                else:
+                    consent = (
+                        transition_json(arguments.consent)
+                        if arguments.consent
+                        else None
+                    )
+                    kwargs = {
+                        "checkpoint": value,
+                        "consent": consent,
+                        "qualification": qualification,
+                        "client": client,
+                    }
+                    result = (
+                        recover_transition(
+                            arguments.repository, replay=arguments.replay, **kwargs
+                        )
+                        if arguments.action == "transition-recover"
+                        else execute_transition(arguments.repository, **kwargs)
+                    )
+                print(json.dumps(result, sort_keys=True))
+                return 0
             if arguments.action == "context":
                 from adaptive_execution import execution_context
 

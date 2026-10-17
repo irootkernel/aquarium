@@ -1,7 +1,7 @@
-# Adaptive delivery and Design execution
+# Adaptive workflow execution
 
 Task, Epic Goal and Validation use the shared [adaptive selection, qualification
-and recovery contract](adaptive-procedures.md). Design also uses the mapped consumer below; diagnosis remains planned. An opted-out workflow
+and recovery contract](adaptive-procedures.md). Design and Diagnosis use the same mapped consumer below. An opted-out workflow
 and non-Git new-project perform no Podway discovery. Direct Task phase invocations
 retain their leaf contracts.
 
@@ -49,7 +49,7 @@ After start and on every recovery boundary, run:
 ```bash
 python3 <installed-shared>/manage_adaptive_procedure.py context \
   --repository <worktree> --root <approved-root> \
-  --entrypoint <task-handler|epic-handler|epic-validator|new-feature|new-project|refactor> \
+  --entrypoint <task-handler|epic-handler|epic-validator|new-feature|new-project|refactor|war-room> \
   --qualification <ordinary-context.json> --session <native-session-id> \
   --podway <supported-executable>
 ```
@@ -161,10 +161,7 @@ After a successful commit with interrupted completion/disposition, restore the
 exact accepted target and actual commit evidence, resolve the same session and
 finish only the pending native terminal work. Never repeat the commit. Normal
 declared rework and approved disposed-terminal successors use existing native
-operations without another question. Unexpected missing topology in a running
-session stops with its exact gap until the shared consented atomic supersede
-path is implemented; no cancel/start, reset, deletion or false achieved outcome
-is available here.
+operations without another question. Unexpected missing topology in a running session uses the explicitly consented atomic transition below. Preserve the old snapshot while preparing and qualifying its successor.
 
 ## Design entrypoints
 
@@ -175,7 +172,7 @@ remain the first due checkpoints. New or changed definitions require the existin
 exact pre-start suitability/bootstrap. An approved normal successor restores its
 actual session identity and retained source; it inherits no prior product verdict
 or approval. Missing topology preserves the current session for the existing
-recovery owner. Diagnosis and unexpected atomic replacement remain planned.
+recovery owner. Diagnosis and shared unexpected atomic replacement follow the sections below.
 
 The public `manage_adaptive_procedure.py` and `prepare_adaptive_procedure.py` branch before native imports, executable
 discovery, source rendering or repository initialization when `--podway-opt-out`
@@ -234,3 +231,105 @@ without that grant, preserve applied documents and pending native finalization.
 Helper and disposable native checks establish their stated layers only. Actual
 upstream calls, clipboard effects, installed three-entrypoint behavior and Master
 functional verification remain unverified until performed under their own authority.
+
+
+## Diagnosis
+
+`war-room` activates Diagnosis through the same exact native tuple resolver and
+ordinary assignment adapter. Unchanged adequate reuse keeps its original first
+investigation Judge. New/changed definitions keep exact pre-start suitability and
+bootstrap. Original canonical/custom/formal sessions retain their supported
+contracts. An explicit skill-level Podway opt-out stays outside native setup or
+source preparation; the public Design-only `--podway-opt-out` flag remains scoped
+to Design.
+
+`procedure_plan.diagnosis_phases` maps actual qualified placements to `baseline`,
+`investigation`, `proposal`, `quality` or `documentation`. Known released operations
+and typed derivations preserve those owners. Grouped or conditional investigation
+structures may use explicit approved phase ownership; a mapped document-approval
+capability cannot be relabeled to bypass approval. Approved `procedure_plan.phase_skills` may map due `interview` or `qa` leaves; a quality placement defaults to the
+installed `qa` leaf. This selects due work without adding an executor or invoking
+upstream outer workflows. Product repair, production/shared-service mutation and
+publication remain excluded.
+
+Optional `target.diagnosis.quality` carries the same actual QA operation outcome,
+raw verdict, exact draft identity and complete source findings as Design.
+Unresolved owners are `baseline`, `investigation` or `proposal`: baseline evidence
+routes to baseline, investigation/proposal findings through investigation. Raw
+`FAIL`/`REVISE` with adjudicable output remains operation `pass`. Native selectors,
+independent quality assessment and the actual guarded router remain authoritative.
+
+Optional `target.diagnosis.conclusion` keeps cause (`established`, `no-work`,
+`investigate-more`, `blocked`), scope (`task`, `epic`, `incomplete`, `no-work`) and
+original `evidence` references. Established cause needs `causal_mechanism_established: true` and its declared causal basis;
+no-work needs `expected_behavior_established: true` and actual supporting evidence.
+An unexplained/unreproduced symptom does not establish no-work or repair. Blocked
+and continuing investigations remain incomplete. These declarations preserve the
+ordinary evidence boundary; they do not authenticate a Judge or prove causation.
+
+For diagnostic documents, `target.diagnosis.proposal` and
+`authority.document_approval` use the exact displayed diff and current target
+snapshots described for Design. Changed content returns through investigation,
+quality and fresh actual approval. Explicit no-change uses
+`{"no_change":true,"diff":"","targets":{},"reason":"<actual reason>"}` and needs
+the same exact actual user approval. `target.diagnosis.applied: true` verifies the
+approved postimage/no-change and returns evidence-only effects. Every applicable
+Task/Epic/incomplete/no-work path keeps QA, actual approval, document/no-change
+verification and final diagnosis assessment. A diagnostic deliverable is separate
+from defect repair and commit authority.
+
+## Consented atomic supersede
+
+Ordinary input changes and investigation hypotheses use declared rework. Only
+required topology absent from the running snapshot warrants unexpected replacement.
+Stop new work, settle uncertain effects and reconcile relevant descendants. Prepare,
+qualify, assess and retain the successor within the existing preparation grant.
+Use `adaptive_supersede.prepare_transition` or launcher `transition-plan` to produce
+an ordinary checkpoint and disclosure, with no native mutation. The caller supplies
+the actual missing topology, reason, title, pending operations, reconciled effects
+and remaining authority from existing orchestration records. This declaration is
+not a new source of authority or mechanical proof of semantic necessity.
+
+The disclosure binds old native tuple/session/revision and lifecycle, current
+placement, exact successor tuple/bundle, pending work/descendants, retained
+history/results, cancellation and archival, and remaining grants. Ask for actual
+explicit replacement consent. The successor becomes prepared, without beginning
+work or asserting goal achievement. A new session grants no extra provider ordinal,
+correction budget, acceptance, commit or publication authority.
+
+The launcher actions `transition-plan`, `transition` and `transition-recover` use
+`--repository`, every approved `--root`, `--entrypoint`, `--qualification` and
+`--podway`. `--transition-input` names JSON: plan input has `title`, `reason`,
+`missing_topology`, `pending_operations`, `remaining_authority`,
+`effects_reconciled: true` and one unique `idempotency_key`; the other actions take
+the returned `checkpoint`. Qualification describes the exact retained successor,
+including an actual current suitability report when due. The helper does not write
+a checkpoint file: retain the original request, resolved fences and key in the
+existing ordinary local checkpoint before submission.
+
+`--consent` supplies ordinary current user evidence
+`{"source":"user","decision":"approved","disclosure":<exact disclosure>}`.
+The caller must obtain that actual consent; a JSON value does not prove approval.
+`transition` revalidates the retained qualified target and reobserves fresh native
+workspace/session/revision fences. Changed predecessor or disclosure stops before
+mutation. It submits exactly one supported `start --on-existing preserve
+--supersede-reason` request, never cancel/start, reset or delete. Released running
+observations do not advertise this start template; preview/released command grammar
+and current native observation supply its exact supported contract.
+
+An uncertain response returns `outcome-unknown` with the retained request/key.
+`transition-recover` first performs native outcome lookup and state readback. A
+found result must prove inactive cancelled predecessor, superseded disposition and
+exact successor lineage; the successor must still be prepared revision zero with
+no goal/attempt and resolve to its retained bundle. `--replay` permits only identical
+request/key/fences after a lookup miss and unchanged predecessor readback. A miss
+cannot disprove a historical effect; changed state remains unresolved. Never submit
+a new start to recover an uncertain result.
+
+Successful JSON returns `superseded-prepared-resolved`, actual successor and
+preserved authority/pending records, with no dispatch. The Primary separately
+reconciles the successor's actual work and authorized begin. `replacement-consent-required`
+from planning is a successful exit-0 disclosure. After a lookup miss with unchanged predecessor readback, recovery without `--replay` returns exit 0 `same-request-replay-available`, its retained `checkpoint` and no dispatch or mutation. This status does not establish a completed transition; explicit `--replay` is required to submit the original request. Failures exit 2 with their typed
+status; consent absence, stale state, native conflict, missing/corrupt binding and
+unknown outcome remain distinct. Ordinary approved terminal successors and native
+same-operation recovery require no repeated replacement question.
