@@ -102,6 +102,54 @@ def report_for(target):
 
 
 @pytest.mark.parametrize("performance", [False, True])
+def test_qualification_cli_reports_success_after_initial_and_repeated_retention(
+    repository, performance, monkeypatch, capsys
+):
+    import adaptive_admission
+    import qualify_adaptive_procedure
+
+    value = prepared(repository, performance)
+    requested = qualify_prepared(repository, value, client=Oracle(repository))
+    assignment_path = repository / "assignment.json"
+    assessment_path = repository / "assessment.json"
+    assignment_path.write_text(json.dumps(value))
+    assessment_path.write_text(json.dumps(report_for(requested["target"])))
+    monkeypatch.setattr(
+        adaptive_admission, "NativeClient", lambda root, binary: Oracle(root)
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "qualify_adaptive_procedure.py",
+            "--repository",
+            str(repository),
+            "--assignment",
+            str(assignment_path),
+            "--assessment",
+            str(assessment_path),
+            "--podway",
+            "synthetic-native-oracle",
+            "--retain",
+        ],
+    )
+    results = []
+    for _ in range(2):
+        assert qualify_adaptive_procedure.main() == 0
+        result = json.loads(capsys.readouterr().out)
+        assert result["status"] == "qualified"
+        retained = result["retention"]
+        source = (Path(retained["path"]) / "procedure.yaml").read_bytes()
+        assert retained["source"] == {
+            "sha256": result["binding"]["procedure"]["source_sha256"],
+            "byte_size": len(source),
+        }
+        assert yaml.safe_load(source)["schema"] == "podway.procedure/v2"
+        results.append(retained)
+    assert results[0] == results[1]
+
+
+@pytest.mark.parametrize("performance", [False, True])
 def test_public_preparation_to_exact_suitability_import_and_retained_recovery(
     repository, performance
 ):

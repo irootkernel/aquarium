@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
     try:
         from adaptive_admission import NativeClient
-        from adaptive_bundles import BundleError
+        from adaptive_bundles import BundleError, sha256
         from adaptive_definitions import DefinitionError
         from adaptive_suitability import qualify_prepared
     except ModuleNotFoundError as error:
@@ -65,6 +65,13 @@ def main():
             retain=args.retain,
             combined_task_plan=args.combined_task_plan,
         )
+        if result.get("retention") is not None:
+            retained = result["retention"]
+            source = retained["source"]
+            result["retention"] = {
+                **retained,
+                "source": {"sha256": sha256(source), "byte_size": len(source)},
+            }
         print(json.dumps(result, sort_keys=True))
         return 0 if result["status"] != "assessment-required" else 3
     except (

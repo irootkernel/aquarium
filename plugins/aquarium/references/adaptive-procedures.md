@@ -755,6 +755,8 @@ return JSON with exit 2. Native codes/details remain available. `--retain` uses 
 current disclosed preparation grant and the existing atomic ignored writer; it
 creates no session or product artifact. Read-only qualification performs no
 provider dispatch, goal/session mutation, setup or installation.
+The CLI renders retained source as its SHA-256 and byte size; the exact source
+bytes remain in the local bundle used for recovery.
 
 Bootstrap import returns the actual ordinary report as artifact evidence and
 separate typed recording values. Its dictionary is not a native ArtifactValue.
