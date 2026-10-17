@@ -945,8 +945,19 @@ def write_new(descriptor, name, content):
     os.fsync(descriptor)
 
 
-def prepare(repository, assignment, *, client=None, bootstrap=False):
-    repository = Path(repository).resolve()
+def prepare(repository, assignment, *, client=None, bootstrap=False, opt_out=False):
+    from adaptive_entrypoint import EntryPointError, branch
+
+    target = assignment.get("target", {}) if isinstance(assignment, dict) else {}
+    plan = target.get("procedure_plan", {}) if isinstance(target, dict) else {}
+    entrypoint = plan.get("entrypoint") if isinstance(plan, dict) else None
+    try:
+        skipped = branch(repository, entrypoint, opt_out=opt_out)
+    except EntryPointError as error:
+        raise BundleError(error.code, str(error)) from error
+    if skipped is not None:
+        return skipped
+    repository = Path(repository).expanduser().resolve()
     selected = select(repository, assignment, client=client)
     plan = assignment["target"]["procedure_plan"]
     if plan["mode"] == "plan-only":

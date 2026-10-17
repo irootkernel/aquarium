@@ -172,9 +172,7 @@ def test_unchanged_running_basis_retrieves_same_current_assessment_without_new_a
     assert "assignment" not in error.value.details
 
 
-@pytest.mark.parametrize(
-    "entrypoint", ["new-feature", "new-project", "refactor", "war-room"]
-)
+@pytest.mark.parametrize("entrypoint", ["war-room"])
 def test_other_family_activation_is_not_implied(admitted, entrypoint):
     with pytest.raises(BundleError) as error:
         execution.execution_context(

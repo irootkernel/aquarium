@@ -8,12 +8,15 @@ from pathlib import Path
 import yaml
 from adaptive_admission import resume_selected
 from adaptive_bundles import BundleError, read_regular, sha256
-from adaptive_definitions import canonical_json, native_key
+from adaptive_definitions import canonical_json, capability_signatures, native_key
 
 ACTIVATED = {
     "task-handler": {"task"},
     "epic-handler": {"goal", "validation"},
     "epic-validator": {"validation"},
+    "new-feature": {"design"},
+    "new-project": {"design"},
+    "refactor": {"design"},
 }
 TASK_SKILLS = {
     "task-plan",
@@ -78,8 +81,11 @@ def invocation_assignment(qualification):
 
 def phase_skills(document, binding, assignment, node):
     """Use approved work-specific phase ownership; keep original leaf contracts."""
-    if binding["family"] != "task":
+    if binding["family"] not in {"task", "design"}:
         return []
+    from adaptive_design import LEAVES
+
+    allowed = TASK_SKILLS if binding["family"] == "task" else LEAVES
     plan = assignment["target"]["procedure_plan"]
     configured = plan.get("phase_skills", {})
     if not isinstance(configured, dict):
@@ -90,13 +96,16 @@ def phase_skills(document, binding, assignment, node):
         raise BundleError("incompatible", "A phase owner refers to an absent placement")
     for skills in configured.values():
         if not isinstance(skills, list) or any(
-            not isinstance(skill, str) or skill not in TASK_SKILLS for skill in skills
+            not isinstance(skill, str) or skill not in allowed for skill in skills
         ):
             raise BundleError(
-                "invalid-input", "Task phase owners must name supported leaf skills"
+                "invalid-input", "Phase owners must name supported family leaf skills"
             )
     if node in configured:
         return configured[node]
+    if binding["family"] == "design":
+        phase = design_phase(document, binding, assignment, node)
+        return {"discovery": ["interview"], "quality": ["qa"]}.get(phase, [])
     definition = next(
         row["use"] for row in document["graph"]["nodes"] if row["id"] == node
     )
@@ -111,6 +120,45 @@ def phase_skills(document, binding, assignment, node):
     return REFERENCE_OPERATION_PHASES.get(sha256(canonical_json(original)), [])
 
 
+def design_phase(document, binding, assignment, node):
+    from adaptive_design import OPERATIONS
+
+    configured = assignment["target"]["procedure_plan"].get("design_phases", {})
+    if not isinstance(configured, dict) or any(
+        key not in binding["nodes"]
+        or not isinstance(value, str)
+        or value
+        not in {"context", "discovery", "draft", "challenge", "quality", "application"}
+        for key, value in configured.items()
+    ):
+        raise BundleError(
+            "invalid-input",
+            "Design phases must map actual placements to supported work",
+        )
+    signatures = capability_signatures()
+    signatures.update(binding.get("capability_definitions", {}))
+    if any(
+        signatures.get(cap["signature"], {}).get("guarantee") == "application-approval"
+        for cap in binding["nodes"][node]["capabilities"]
+    ):
+        if node in configured and configured[node] != "application":
+            raise BundleError(
+                "incompatible",
+                "A mapped application cannot be relabeled as another phase",
+            )
+        return "application"
+    if node in configured:
+        return configured[node]
+    placement = next(row for row in document["graph"]["nodes"] if row["id"] == node)
+    body = document["node_definitions"][placement["use"]]
+    digest = sha256(canonical_json(body))
+    if digest in OPERATIONS:
+        return OPERATIONS[digest]
+    contract = binding.get("semantic_contracts", {}).get(digest, {})
+    original = contract.get("derivation", {}).get("definition")
+    return OPERATIONS.get(sha256(canonical_json(original)))
+
+
 def execution_context(
     repository,
     *,
@@ -121,19 +169,30 @@ def execution_context(
     session=None,
     bootstrap=None,
     route=None,
+    opt_out=False,
 ):
     """Resolve before begin/work and expose exact current native ownership/evidence."""
+    from adaptive_entrypoint import EntryPointError, branch
+
+    try:
+        skipped = branch(repository, entrypoint, opt_out=opt_out)
+    except EntryPointError as error:
+        raise BundleError(error.code, str(error)) from error
+    if skipped is not None:
+        return skipped
     if entrypoint not in ACTIVATED:
         raise BundleError(
             "not-established",
-            "This family is not activated by Task/Goal/Validation integration",
+            "This family has no activated mapped consumer",
         )
+    repository = Path(repository).expanduser().resolve()
     assignment = invocation_assignment(qualification)
     review = assignment["authority"]["review"]
     approved_route = review.get("route")
-    if approved_route not in {"herdr", "mulgae", "independent-review", "waived"} or (
-        route is not None and route != approved_route
-    ):
+    routes = {"herdr", "mulgae", "independent-review", "waived"}
+    if entrypoint in {"new-feature", "new-project", "refactor"}:
+        routes.add("not-applicable")
+    if approved_route not in routes or (route is not None and route != approved_route):
         raise BundleError(
             "route-unavailable",
             "Current selected review route differs from approved adaptive execution",
@@ -234,6 +293,16 @@ def execution_context(
         selected_evidence=placement.get("evidence_from", []),
         phase_skills=phase_skills(document, binding, assignment, node),
     )
+    if binding["family"] == "design":
+        from adaptive_design import context as design_context
+
+        result["design"] = design_context(
+            repository, assignment, design_phase(document, binding, assignment, node)
+        )
+        application = result["design"].get("application", {})
+        if application.get("status") in {"approval-required", "reapproval-required"}:
+            result["status"] = application["status"]
+            return result
     handoff = handoff_context(
         repository, document, binding, assignment, observation, client
     )
@@ -268,6 +337,20 @@ def execution_context(
     dispatched["instructions"] += (
         "\nRead the complete selected native evidence and original sources. Follow this exact active operation and load each named installed leaf skill completely. Return actual evidence; do not advance Podway or grant approval."
     )
+    if binding["family"] == "design":
+        dispatched["target"]["design_context"] = copy.deepcopy(result["design"])
+        dispatched["authority"]["excluded"] += [
+            "Product implementation",
+            "Ouroboros auto/run/ralph/evolve",
+            "Unapproved document application",
+            "Unapproved clipboard replacement",
+        ]
+        if result["design"].get("application", {}).get("status") == "verified-applied":
+            dispatched["authority"]["effects"] = []
+            dispatched["authority"]["excluded"].append("Document application")
+            dispatched["instructions"] += (
+                "\nVerify the already applied approved bytes and available original checks only. Do not apply documents again."
+            )
     if declaration["role"] == "judge":
         dispatched["authority"]["effects"] = []
         dispatched["authority"]["allowed"] = [

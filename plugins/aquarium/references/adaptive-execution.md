@@ -1,8 +1,7 @@
-# Adaptive Task, Goal and Validation execution
+# Adaptive delivery and Design execution
 
 Task, Epic Goal and Validation use the shared [adaptive selection, qualification
-and recovery contract](adaptive-procedures.md). Design and diagnosis retain their
-current entrypoint contracts until their activation tasks. An opted-out workflow
+and recovery contract](adaptive-procedures.md). Design also uses the mapped consumer below; diagnosis remains planned. An opted-out workflow
 and non-Git new-project perform no Podway discovery. Direct Task phase invocations
 retain their leaf contracts.
 
@@ -50,7 +49,7 @@ After start and on every recovery boundary, run:
 ```bash
 python3 <installed-shared>/manage_adaptive_procedure.py context \
   --repository <worktree> --root <approved-root> \
-  --entrypoint <task-handler|epic-handler|epic-validator> \
+  --entrypoint <task-handler|epic-handler|epic-validator|new-feature|new-project|refactor> \
   --qualification <ordinary-context.json> --session <native-session-id> \
   --podway <supported-executable>
 ```
@@ -166,3 +165,72 @@ operations without another question. Unexpected missing topology in a running
 session stops with its exact gap until the shared consented atomic supersede
 path is implemented; no cancel/start, reset, deletion or false achieved outcome
 is available here.
+
+## Design entrypoints
+
+`new-feature`, `new-project` and `refactor` use the same exact tuple resolver,
+qualified binding and ordinary current-operation handoff. Prefer adequate unchanged
+Design definitions; their grouped discovery, quality and application assessments
+remain the first due checkpoints. New or changed definitions require the existing
+exact pre-start suitability/bootstrap. An approved normal successor restores its
+actual session identity and retained source; it inherits no prior product verdict
+or approval. Missing topology preserves the current session for the existing
+recovery owner. Diagnosis and unexpected atomic replacement remain planned.
+
+The public `manage_adaptive_procedure.py` and `prepare_adaptive_procedure.py` branch before native imports, executable
+discovery, source rendering or repository initialization when `--podway-opt-out`
+is present for a Design entrypoint, or when `new-project` has no Git metadata.
+This returns exit 0 and `podway-inapplicable`, its reason and Primary ownership.
+No `--root`, source, binary or qualification is required by the admission CLI on this branch. The preparation CLI still reads its ordinary assignment to identify the entrypoint; it does not select or render a source. The preparation API accepts the same explicit `opt_out=True`. Git-backed subdirectories retain the native path. Continue
+the original ordinary assignments, approved external drafts, independent grouped
+assessments and exact document approval. An explicit opt-out is an invocation
+choice, not an unavailable-tool fallback. Native invocations still require every
+approved root and actual available runtime dependencies.
+
+`procedure_plan.phase_skills` can map Design placements to the authorized upstream
+`interview`, `pm`, `seed` and `qa` leaves. `procedure_plan.design_phases` can map
+work-specific placements to `context`, `discovery`, `draft`, `challenge`, `quality`
+or `application`. Known exact operations and their typed/namespaced derivations
+preserve original ownership. A mapped application capability always remains an
+application boundary. Design QA is separate from technical review. Record `authority.review.route: not-applicable` when the actual envelope has no technical-review obligation. An actually selected technical route retains the shared structural review-control, result continuity, recovery and authority checks even for unchanged Design reuse; QA cannot substitute for them. A source lacking that proof stops before adoption or prepared begin/work. Read the complete installed upstream leaf before invocation;
+readiness and provider authority remain due, and PM clipboard replacement still
+needs its separate authority. Do not invoke upstream outer execution or implement
+product changes from a Design assignment.
+
+Optional current QA evidence in `target.design.quality` uses `operation_outcome`,
+`raw_verdict`, `draft_sha256` and complete `findings`. Each finding retains its
+original `id`, local `disposition`, `basis`, and unresolved `owner` (`discovery`
+or `draft`). The adapter exposes owner counts and the original rows. Adjudicable
+raw `FAIL` or `REVISE` remains operation `pass`; failed or missing operation output
+returns to quality recovery. Discovery findings take precedence over draft findings.
+The Primary reconciles these facts with actual native selected evidence and chooses
+the original qualified router; this helper never records a result or advances a node.
+A raw verdict with zero counts requires actual dispositions for every original issue.
+
+Before an application Worker dispatch, supply the complete displayed proposal in
+`target.design.proposal`: `diff` and `targets`, mapping each relative document path
+to its exact `before` and `after` SHA-256, or `null` for absence. The actual ordinary
+user approval is `authority.document_approval` with `source: user`,
+`decision: approved`, and the exact same complete `proposal`. These are current
+invocation evidence, excluded from reusable bindings; no new report file or receipt
+is required. The adapter re-reads regular target files and returns `approval-required`
+or `reapproval-required` without dispatch on missing approval, changed proposal or
+changed targets. Renew the original draft/challenge/quality and actual exact-diff
+approval for changed content. The Worker rechecks immediately before writing.
+For evidence-only recovery after application, `target.design.applied: true` checks
+the approved `after` bytes and grants no new write. Actual native application checks
+and the independent application/final Judge remain due.
+
+All three entrypoints retain their distinct canonical artifacts and work-definition
+requirements. Feature preserves the existing Epic identity and member structure
+unless explicitly changed; project produces the PRD, user and maintainer indexes,
+all role indexes and per-scope roadmaps with testing-foundation after executable
+prerequisites; refactor retains compatibility, migration, rollback, containment
+and verification owners. Design Gates apply only to an enrolled registry.
+Document approval grants no commit, implementation or publication authority.
+Required delivery-input commits stay with the existing exact one-commit handoff;
+without that grant, preserve applied documents and pending native finalization.
+
+Helper and disposable native checks establish their stated layers only. Actual
+upstream calls, clipboard effects, installed three-entrypoint behavior and Master
+functional verification remain unverified until performed under their own authority.

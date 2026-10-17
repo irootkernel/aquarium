@@ -22,9 +22,9 @@ Treat returned paths as draft locations, verify them against the approved destin
 
 ## Use Podway as the Outer Workflow
 
-For a Git-backed invocation, use Podway by default through [podway-integration.md](podway-integration.md). `new-project`, `new-feature`, and `refactor` use `aquarium-design-v2`; `war-room` uses `aquarium-war-room-v2`. Use the canonical work identity directly without a skill-name prefix. No Aquarium skill owns the session. The current Aquarium invocation observes and advances it while Ouroboros remains Podway-blind and returns only leaf evidence to its caller.
+For a Git-backed invocation, use Podway by default through [podway-integration.md](podway-integration.md). `new-project`, `new-feature`, and `refactor` select a qualified Design Procedure through [adaptive Design execution](adaptive-execution.md#design-entrypoints), preferring adequate unchanged `aquarium-design-v2`; `war-room` uses `aquarium-war-room-v2`. Use the canonical work identity directly without a skill-name prefix. No Aquarium skill owns the session. The current Aquarium invocation observes and advances it while Ouroboros remains Podway-blind and returns only leaf evidence to its caller.
 
-A non-Git `new-project` invocation must not inspect, initialize, or mutate Podway and must not create a Git repository merely to enable Podway. It still follows the same approval and exact-diff rules for its requested output files.
+Branch on explicit Podway opt-out and non-Git `new-project` before native discovery, source rendering or initialization. A non-Git `new-project` invocation must not inspect, initialize, or mutate Podway and must not create a Git repository merely to enable Podway. It still follows the same approval and exact-diff rules for its requested output files.
 
 Before the first provider call, show one execution envelope containing canonical identity, current authority, bounded source inputs, every planned Ouroboros operation, every planned Podway mutation, target document paths, and excluded actions. Obtain explicit approval, then create or resume the matching prepared session, re-observe it, begin attempt 1 with the approved goal, and coordinate with an explicitly requested host goal under its own creation and lifecycle rules.
 

@@ -37,9 +37,8 @@ bundles. Composition now flattens exact whole/fragment imports and explicit
 control/evidence/rework ports before those same fit, storage and native checks.
 Namespace expansion preserves native semantic operation identities and declared
 formal contracts. Guarded source qualification and exact ordinary pre-start
-suitability/bootstrap use the same retained definition boundary. Task, Goal and
-Validation consume those definitions through the shared mapped execution adapter.
-Design and diagnosis remain planned.
+suitability/bootstrap use the same retained definition boundary. Task, Goal, Validation and Design consume those definitions through the shared mapped execution adapter.
+Diagnosis remains planned.
 Existing sessions and installed source contracts retain their current behavior.
 
 ## Exact Authorities

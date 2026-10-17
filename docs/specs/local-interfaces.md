@@ -136,31 +136,27 @@ adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
 typed ports through that same preparation CLI. It retains operation identities,
 resolves native references and dependencies, and rejects unresolved/private
 rework or unavailable required evidence. The explicit helpers below implement
-guarded whole-graph qualification and exact suitability/bootstrap. Task, Goal and
-Validation activation is implemented; design and diagnosis remain planned.
+guarded whole-graph qualification and exact suitability/bootstrap. Task, Goal, Validation and
+Design activation is implemented; diagnosis remains planned.
 
 The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
-takes `--repository`, `--assignment <file-or->` and, for approved preparation,
+takes `--repository`, `--assignment <file-or->`, optional Design `--podway-opt-out`, and, for approved native preparation,
 `--podway <exact-binary>`. The ordinary assignment's `target.procedure_plan.mode`
 selects read-only `plan-only` or approved source-only `prepare`. Its full input,
 coverage identities, output and exit contract are in the
 [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md#selection-and-source-only-preparation).
-Exit 0 returns JSON `planned` or `prepared`; exit 2 returns a distinct failure
-status. A prepared target names exact source and binding paths, native tuple,
+Exit 0 returns JSON `planned`, `prepared` or Design `podway-inapplicable`. That status skips source selection/rendering and native imports for explicit `--podway-opt-out` or non-Git `new-project`; no binary or runtime dependency is needed. The Design-only flag rejects unsupported or absent entrypoints as `invalid-arguments` JSON with exit 2 before native/source work. The API uses `opt_out=True` with the same boundary. Other failures exit 2 with a distinct status. A prepared target names exact source and binding paths, native tuple,
 source SHA, coverage plan and outstanding qualification. This interface performs
 no session operation or generated-source adoption and changes no handler default.
 
 The [adaptive launcher](../../plugins/aquarium/shared/manage_adaptive_procedure.py)
-accepts `inspect`, `retain` or `resume` with the owning repository, every approved
-root, invoking entrypoint and selected review route. Inspect/retain take a source;
+accepts `inspect`, `retain`, `resume` or `context` with the owning repository and invoking entrypoint. The native path requires every approved root and applicable selected review route. Design `--podway-opt-out` and non-Git `new-project` return `podway-inapplicable` before native imports or discovery, without roots, source, qualification, binary or session. Inspect/retain take a source;
 retention also takes an approved write root. It emits JSON with source/binding,
 retention disposition and actual session context, or a distinct failure status.
 An optional bootstrap reference is a cross-check. It uses native check/preview for
 the actual canonical digest, separately verifies source-file SHA-256, and requires
 the supported frozen known-source/reference contract. Changed/new qualification
-uses the separate ordinary-context helper; the legacy launcher is not activated
-for generated family execution. The CLI does no session mutation or installation; YAML and `jsonschema` must be available
-in its reported interpreter. Missing dependencies return `missing-prerequisite`.
+uses exact binding and ordinary suitability context. Task, Goal, Validation and Design use the activated mapped consumer; diagnosis remains planned. The CLI does no session mutation or installation. On the native path, YAML and `jsonschema` must be available in its reported interpreter. Missing dependencies return `missing-prerequisite`.
 The setup inspector's explicit selected mode lazily imports these helpers,
 preserves full managed-library diagnostics and exposes selected/runtime readiness
 separately. Selected-provider readiness stays with its existing review-route owner.
@@ -211,15 +207,13 @@ and `error.message` shape and their declared exit status (2 for invalid argument
 or repository selection, 1 for failed Git-status inspection). These results never
 authorize repair, replacement or session mutation.
 
-The adaptive launcher takes positional `inspect`, `retain` or `resume`, required
-`--repository`, repeated `--root` and `--entrypoint`, plus applicable
-`--review-route`. Inspect/retain require `--source`; retain also requires
+The adaptive launcher takes positional `inspect`, `retain`, `resume` or `context`, required `--repository` and `--entrypoint`, plus applicable `--review-route`. Repeated `--root` is required only on the native path. Optional `--podway-opt-out` is Design-only; an unsupported or absent entrypoint with this flag returns `invalid-arguments` JSON and exit 2 before native imports, discovery or source work. Valid Design opt-out and non-Git `new-project` return `podway-inapplicable` and exit 0 without native dependencies or session requirements. Inspect/retain require `--source`; retain also requires
 `--write-root`. Optional `--bootstrap` and `--customization-basis` have the meanings
 above. `--podway <executable>` overrides PATH discovery. Repository paths resolve
-to their owning Git root. The launcher emits source/binding, byte size/hash for
+through `expanduser().resolve()` before applicability checks; native repository paths then resolve to their owning Git root. The launcher emits source/binding, byte size/hash for
 source bytes, lookup diagnostics and actual session context. `retain` returns
 `retained` and may prepare material while disclosing an existing session conflict;
-it does not resolve that conflict. Other success returns `ready`. Conflicts and
+it does not resolve that conflict. Native inspection and resume success return `ready`; `context` returns the mapped statuses below, and the non-native Design branch returns `podway-inapplicable`. Conflicts and
 failures return status/message/interpreter/details JSON and exit 2; success exits
 0. Native runtime diagnostics appear in `details.probes`, and conflicting tuple
 and lifecycle in `details.session`. Argument-parser usage errors exit 2 with
@@ -293,12 +287,10 @@ inspector forwards corresponding `--podway-binding` and
 binding path from the retained native tuple before qualification; it does not
 require a bootstrap item to be selected.
 
-`context` needs an existing native session and the exact ordinary invocation
-context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`,
-`attachment-required`, `stop-before-work` or `terminal-resolved`, with native
+On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, or Design `approval-required` / `reapproval-required`, with native
 status/templates, active items, selected evidence, current role/capabilities,
 due phase skills, original authority and an ordinary v2 dispatch when applicable.
-Successful read-only resolution exits 0, including a requested handoff stop;
+The Design approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
 errors retain status/message/details and exit 2. Terminal state does not imply
 achievement. Missing topology preserves the running session; replacement is not
 implemented here. This adapter launches no agent and performs no native mutation.

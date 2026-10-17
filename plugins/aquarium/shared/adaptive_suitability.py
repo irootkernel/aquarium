@@ -499,6 +499,10 @@ def qualify_prepared(
     mapping = {key: value for key, value in binding.items() if key != "procedure"}
     coverage = prepared["coverage_plan"]["coverage"]
     fit(assignment, basis["criteria"], document, mapping, coverage)
+    design_review = (
+        binding["family"] == "design"
+        and assignment["authority"]["review"].get("route") != "not-applicable"
+    )
     try:
         known_source(source)
     except BundleError as error:
@@ -536,6 +540,22 @@ def qualify_prepared(
         )
         reuse = True
     if unchanged or reuse:
+        if design_review:
+            reviewed = qualify(
+                document,
+                binding,
+                context={
+                    **assignment["target"].get("qualification_context", {}),
+                    "review": assignment["authority"]["review"],
+                    "review_required": True,
+                },
+            )
+            if reviewed["status"] != "compatible":
+                raise BundleError(
+                    reviewed["status"],
+                    "The selected Design technical review lacks established source continuity",
+                    reviewed,
+                )
         retained = None
         if retain:
             grant = assignment["authority"]["preparation"]
@@ -590,6 +610,8 @@ def qualify_prepared(
         )
     context = copy.deepcopy(assignment["target"].get("qualification_context", {}))
     context["review"] = copy.deepcopy(assignment["authority"].get("review", {}))
+    if design_review:
+        context["review_required"] = True
     context["required_obligations"] = sorted({row["obligation"] for row in coverage})
     for invocation, retained in [
         ("operation_contracts", "semantic_contracts"),
@@ -711,7 +733,7 @@ def qualify_prepared(
         "bootstrap": bootstrap,
         "retention": retained,
         "activation": "activated-family-consumer-available"
-        if binding["family"] in {"task", "goal", "validation"}
+        if binding["family"] in {"task", "goal", "validation", "design"}
         else "family-activation-remains-required",
     }
 

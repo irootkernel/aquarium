@@ -411,3 +411,11 @@ distinct from synthetic native control fixtures and product/reviewer execution.
 These checks do not establish installed handler decisions or Master acceptance.
 Task-plan/Worker/orchestration functional behavior and installed upgrade/startup
 remain separately unverified until actual dedicated-VM observations.
+
+Adaptive Design consumer controls in `tests/unit/test_adaptive_design_unit.py`
+cover all three entrypoints, exact known reuse, mapped ordinary roles and upstream
+leaves, prepared/running/terminal recovery, raw QA owner routing, exact document
+approval and changed-target stops. Public non-Git/opt-out controls run without
+runtime dependencies and assert no created files or native calls. Synthetic ordinary
+reports and native fixtures do not prove actual provider, independent-agent or
+installed behavior; those observations remain separate VM/manual checks.

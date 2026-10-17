@@ -9,7 +9,7 @@ Read [commit-attribution.md](../../references/commit-attribution.md) for message
 
 Create or revise exactly one refactor epic in the canonical roadmap. Do not implement or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
-Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md), and use the default `aquarium-design-v2` Podway path.
+Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md), and follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints).
 
 Resolve the target roadmap's recorded identity contract before allocating an epic or task ID. Trace current contracts, consumers, data and runtime seams, compatibility guarantees, migration ordering, rollback, observability, failure containment, and proof of behavior preservation or intentional change.
 
@@ -22,3 +22,7 @@ Apply the shared QA outcome mapping and [delivery-input commit boundary](../../r
 ## Ordinary native orchestration
 
 Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v2 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
+
+## Adaptive Design execution
+
+Before Podway discovery or source preparation, branch on explicit Podway opt-out and, for `new-project`, non-Git scope. Continue the original ordinary Worker/Judge and document approval workflow with Podway inapplicable; do not initialize Git or Podway. On the native path, follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints) for actual fit, exact admission and same-session recovery. Prefer adequate unchanged Design sources and preserve their first due grouped assessment. Keep this entrypoint's artifacts, upstream leaves, selected reviews and effect authority.

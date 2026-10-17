@@ -13,11 +13,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("inspect", "retain", "resume", "context"))
     parser.add_argument("--repository", required=True)
-    parser.add_argument("--root", action="append", required=True)
+    parser.add_argument("--root", action="append", default=[])
     parser.add_argument("--source")
     parser.add_argument("--write-root")
-    parser.add_argument("--entrypoint", required=True)
+    parser.add_argument("--entrypoint")
     parser.add_argument("--review-route")
+    parser.add_argument(
+        "--podway-opt-out",
+        action="store_true",
+        help="Use the approved ordinary Design path without Podway discovery or rendering",
+    )
     parser.add_argument("--bootstrap")
     parser.add_argument("--session", help="Exact continuation session ID")
     parser.add_argument("--binding", help="Exact adaptive binding JSON path")
@@ -25,8 +30,33 @@ def main():
         "--qualification", help="Ordinary assignment/assessment context JSON file"
     )
     parser.add_argument("--customization-basis")
-    parser.add_argument("--podway", default=shutil.which("podway"))
+    parser.add_argument("--podway")
     arguments = parser.parse_args()
+    from adaptive_entrypoint import EntryPointError, branch
+
+    try:
+        skipped = branch(
+            arguments.repository, arguments.entrypoint, opt_out=arguments.podway_opt_out
+        )
+    except EntryPointError as error:
+        print(
+            json.dumps(
+                {
+                    "status": error.code,
+                    "message": str(error),
+                    "interpreter": sys.executable,
+                    "details": {},
+                }
+            )
+        )
+        return 2
+    if skipped is not None:
+        print(json.dumps(skipped, sort_keys=True))
+        return 0
+    if arguments.entrypoint is None:
+        parser.error("Native admission requires --entrypoint")
+    if not arguments.root:
+        parser.error("Native admission requires at least one approved --root")
     try:
         from adaptive_admission import (
             NativeClient,
@@ -48,6 +78,7 @@ def main():
         )
         return 2
     try:
+        arguments.podway = arguments.podway or shutil.which("podway")
         if not arguments.podway:
             raise BundleError(
                 "missing-prerequisite", "Podway executable is unavailable"

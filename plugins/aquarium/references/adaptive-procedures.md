@@ -9,7 +9,7 @@ recovery. TASK-139 implements fit selection and approved source-only preparation
 through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
 composition through that preparation path. TASK-141 implements guarded structural
 qualification and exact ordinary pre-start suitability with bootstrap import.
-Task, Goal and Validation now use [adaptive execution](adaptive-execution.md). Design and diagnosis activation, cross-family closeout and promotion remain reserved for their owning tasks. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
+Task, Goal, Validation and Design now use [adaptive execution](adaptive-execution.md). Diagnosis activation, cross-family closeout and promotion remain reserved for their owning tasks. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
 
 The repository's `docs/todo/TODO-ADAPTIVE-PROCEDURES.md` owns remaining
 implementation acceptance. The roadmap owns Task identity and lifecycle. This
@@ -167,7 +167,7 @@ establish no suitability or activation.
 
 The public source-preparation CLI is
 `shared/prepare_adaptive_procedure.py --repository <path> --assignment <json-file-or->`.
-A dash reads the ordinary assignment from stdin. Approved `prepare` also takes
+A dash reads the ordinary assignment from stdin. Design `--podway-opt-out` (API `opt_out=True`) and non-Git `new-project` return exit 0 with `podway-inapplicable` before source selection/rendering or native imports. Repository inputs use `expanduser().resolve()` before the Git-ancestor check. An explicit flag with a missing or non-Design entrypoint fails with `invalid-arguments` JSON and exit 2 before native/source work; other-family skill-level opt-out remains its existing separate contract. Approved native `prepare` also takes
 `--podway <exact-binary>`; plan-only needs no binary. JSON success is `planned`
 with selection/reasons/coverage and `writes: []`, or `prepared` with the original
 assignment plus `target.prepared_definition`: exact source/binding paths, binding
@@ -598,14 +598,14 @@ success never transfers to them.
 
 [manage_adaptive_procedure.py](../shared/manage_adaptive_procedure.py) exposes
 `inspect`, `retain`, `resume` and mapped `context`. Supply the owning `--repository`, every approved
-searched `--root`, the invoking `--entrypoint` and applicable `--review-route`.
+searched `--root` on the native path, the invoking `--entrypoint` and applicable `--review-route`. Design `--podway-opt-out` and non-Git `new-project` instead return exit 0 / `podway-inapplicable` before native imports, discovery or source work, without roots, source, qualification, binary or session. Missing or unsupported entrypoints with the Design-only flag fail as `invalid-arguments` JSON / exit 2. Native arguments remain required after that early branch.
 `inspect` and `retain` also need `--source`; retention needs an approved
 `--write-root`. `--podway` selects an available executable explicitly. The CLI
 performs native identity, workspace health, source checks and selected-route
 checks. It never starts, begins, replaces or advances a session. Current native
 state and a different-definition conflict remain visible; even the same
 definition requires the Orchestrator to reconcile actual work and authority.
-Retention can prepare a successor while preserving that conflict.
+Retention can prepare a successor while preserving that conflict. Native inspection/resume success returns `ready`; retention returns `retained`. Mapped `context` exits 0 for `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, and Design `approval-required` / `reapproval-required`. The two Design approval statuses return no dispatch and preserve actual exact-diff/target currency. Native context requires its existing session and exact ordinary qualification; the inapplicable branch does not. Other failures retain distinct status/message/details and exit 2; argparse usage errors use exit 2 and stderr usage text.
 Aquarium's source-repository interface catalog, `docs/specs/local-interfaces.md`,
 defines both CLIs' flags, result fields, failure details and exit statuses. Target
 repositories do not need that development catalog for admission.
@@ -617,7 +617,7 @@ role/capability mappings within mapping version 1. Existing entries remain stabl
 when unrelated templates or signatures change; necessary mapping changes require
 a distinct native revision. It is separate from the existing canonical,
 same-ID custom and formal-session contracts. Changed/new sources use the exact
-qualification and independent suitability path below. Missing proof remains `not-established`. Task, Goal and Validation activation is defined in [adaptive execution](adaptive-execution.md); design and diagnosis activation remain planned.
+qualification and independent suitability path below. Missing proof remains `not-established`. Task, Goal, Validation and Design activation is defined in [adaptive execution](adaptive-execution.md); diagnosis activation remains planned.
 
 The selected setup inspector retains full managed-library diagnostics and
 same-family adopted-customization visibility. An alternative needs the existing
@@ -669,7 +669,7 @@ installed handler behavior.
 | TASK-140 | Implemented: shared composition through existing preparation, namespaces, typed ports, self-contained flattening and reusable review/whole-control assets; preserve semantic operation IDs/digests and fragment/session control distinction |
 | TASK-141 | Implemented: guarded shared structural qualification, exact ordinary suitability/bootstrap and retained-bundle admission/reassessment; preserve canonical/custom/formal defaults until family activation |
 | TASK-142 | Implemented: Task/Goal/Validation selection, public adaptive admission/context forwarding, mapped due phase and handoff consumers, self-contained prepared/running recovery and original acceptance/finalization boundaries |
-| TASK-143 | new-feature/new-project/refactor and design-diagnosis orchestration adaptive selection, QA, exact application and non-Git recovery |
+| TASK-143 | Implemented: new-feature/new-project/refactor Design consumers, mapped upstream leaves, QA owner routing, exact application currency and prepared/running/non-Git/opt-out recovery |
 | TASK-144 | war-room and design-diagnosis adaptive diagnosis; podway-integration and epic-handler successful-terminal-only replacement wording; task-orchestration, epic-orchestration, validation-orchestration and design-diagnosis-orchestration continuation rules for shared consented atomic supersede; preserve task-handler's prohibition on replacing a session merely to recover reports |
 | TASK-145 | task-commit promotion handoff; dev-setup and global-setup dependency guidance; agents-guidance and AGENTS managed/local source distinction; cross-family recovery; committed VM driver/fixtures |
 | TASK-146 | committed-candidate observations and canonical document settlement; preserve original correction owners and actual Master acceptance |
@@ -774,4 +774,4 @@ current fit with `established-reuse` timing, preserving normal first-due
 assessments. Its ordinary selection checkpoint distinguishes those claims from
 a new Judge result. Session replacement remains TASK-144's separately consented transition.
 The legacy launcher/setup selected-known path remains available under its
-original contract. Task, Goal and Validation use the mapped execution consumer; design and diagnosis integration remains with TASK-143 and TASK-144.
+original contract. Task, Goal, Validation and Design use the mapped execution consumer; diagnosis integration remains with TASK-144.

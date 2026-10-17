@@ -24,7 +24,39 @@ def main():
         action="store_true",
         help="Prepare initial suitability recording for a changed/new definition; unchanged reuse keeps its source.",
     )
+    parser.add_argument(
+        "--podway-opt-out",
+        action="store_true",
+        help="Continue ordinary Design without native or source preparation",
+    )
     args = parser.parse_args()
+    try:
+        text = (
+            sys.stdin.read()
+            if args.assignment == "-"
+            else Path(args.assignment).read_text()
+        )
+        assignment = json.loads(text)
+    except (ValueError, OSError, RecursionError) as error:
+        print(
+            json.dumps(
+                {"status": "invalid-input", "message": str(error), "details": {}}
+            )
+        )
+        return 2
+    from adaptive_entrypoint import EntryPointError, branch
+
+    target = assignment.get("target", {}) if isinstance(assignment, dict) else {}
+    plan = target.get("procedure_plan", {}) if isinstance(target, dict) else {}
+    entrypoint = plan.get("entrypoint") if isinstance(plan, dict) else None
+    try:
+        skipped = branch(args.repository, entrypoint, opt_out=args.podway_opt_out)
+    except EntryPointError as error:
+        print(json.dumps({"status": error.code, "message": str(error), "details": {}}))
+        return 2
+    if skipped is not None:
+        print(json.dumps(skipped, sort_keys=True))
+        return 0
     try:
         from adaptive_admission import NativeClient
         from adaptive_bundles import BundleError
@@ -42,12 +74,7 @@ def main():
         )
         return 2
     try:
-        text = (
-            sys.stdin.read()
-            if args.assignment == "-"
-            else Path(args.assignment).read_text()
-        )
-        assignment = json.loads(text)
+        args.repository = str(Path(args.repository).expanduser().resolve())
         mode = assignment["target"]["procedure_plan"]["mode"]
         if mode == "prepare" and not args.podway:
             raise BundleError(
@@ -60,7 +87,11 @@ def main():
         print(
             json.dumps(
                 prepare(
-                    args.repository, assignment, client=client, bootstrap=args.bootstrap
+                    args.repository,
+                    assignment,
+                    client=client,
+                    bootstrap=args.bootstrap,
+                    opt_out=args.podway_opt_out,
                 ),
                 sort_keys=True,
             )

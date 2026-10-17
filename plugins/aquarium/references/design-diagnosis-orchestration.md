@@ -9,7 +9,7 @@ qualification. Admitted formal snapshots keep their original
 ## Original evidence and phase checkpoints
 
 Supply original requirements, current artifacts, checks, actual authority and
-available public handles. Design groups context/discovery, draft/challenge/quality
+available public handles. Design uses the [mapped adaptive consumer](adaptive-execution.md#design-entrypoints) for all three entrypoints and exact prepared/running recovery. Design groups context/discovery, draft/challenge/quality
 and approved application. War-room groups baseline/investigation,
 proposal/quality and approved documentation or no-change delivery. The Primary
 records simple operations and Decisions; the report-only Judge independently

@@ -9,7 +9,7 @@ Read [commit-attribution.md](../../references/commit-attribution.md) for message
 
 Create a PRD and initial roadmap for one new project. Do not implement code, initialize Git, or publish. Staging and committing approved documents require the separate delivery-input boundary in the shared integration contract.
 
-Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). For a Git-backed project, use the default `aquarium-design-v2` Podway path. For a non-Git project, skip Podway completely without skipping the evidence-residency contract.
+Always read [evidence-residency.md](../../references/evidence-residency.md), then read [ouroboros-integration.md](../../references/ouroboros-integration.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). For a Git-backed project, follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints). For a non-Git project, skip Podway completely without skipping the evidence-residency contract.
 
 Establish the project identity, users, problem, outcomes, exclusions, constraints, risks, dependencies, delivery slices, acceptance evidence, and implementation ownership. Use installed upstream `$interview` and `$pm` only after the approved execution envelope. Before `$pm`, apply the shared [PM file and clipboard boundary](../../references/ouroboros-integration.md#pm-files-and-clipboard): disclose draft writes and obtain authority to replace the clipboard.
 
@@ -32,3 +32,7 @@ Follow [Design and diagnosis orchestration](../../references/design-diagnosis-or
 For an authorized non-Git invocation, use the same Worker/Judge evidence and
 exact document approval with Podway explicitly inapplicable. Preserve the
 existing prohibition on implicit Git or Podway initialization.
+
+## Adaptive Design execution
+
+Before Podway discovery or source preparation, branch on explicit Podway opt-out and, for `new-project`, non-Git scope. Continue the original ordinary Worker/Judge and document approval workflow with Podway inapplicable; do not initialize Git or Podway. On the native path, follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints) for actual fit, exact admission and same-session recovery. Prefer adequate unchanged Design sources and preserve their first due grouped assessment. Keep this entrypoint's artifacts, upstream leaves, selected reviews and effect authority.
