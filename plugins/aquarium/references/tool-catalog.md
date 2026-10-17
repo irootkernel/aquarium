@@ -595,6 +595,8 @@ podway --json procedure check --warnings-as-errors <procedure-file>
 podway --json procedure preview <procedure-file>
 ```
 
+Task/Goal/Validation handlers use [adaptive selected admission](adaptive-execution.md) for the actual source and route, independently of aggregate library completeness. The following filename/ID inventory remains the ordinary managed-library diagnostic and legacy/setup contract.
+
 Match each filename to preview's `procedure_id`. The required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, `aquarium-validation-v2`, `aquarium-design-v2` and `aquarium-war-room-v2`. Their presence establishes readiness, not workflow activation. Native validity and handler compatibility remain separate checks. The setup inspector needs PyYAML to qualify declared review routes even when a prior-canonical digest establishes general handler compatibility.
 
 For a customization, show the exact current-to-canonical diff and handler-contract result, then preserve it or apply only its approved replacement. Preservation writes nothing; an incompatible customization remains degraded. Replacement follows the chosen backup policy and rechecks the exact target bytes. A broader setup approval never authorizes merging, normalizing or overwriting customized files, and an active session keeps its immutable snapshot.

@@ -1431,6 +1431,167 @@ class ManagedRuntime:
             "installed_behavior": "not-observed",
         }
 
+    def exercise_adaptive_admitted_slice(self, qualification, *, roots, entrypoint):
+        """Observe a genuinely assessed exact candidate without inventing product work."""
+        assert self.sandbox is not None
+        assert self.snapshot_binary is not None
+        shared = Path(__file__).resolve().parents[1] / "plugins/aquarium/shared"
+        sys.path.insert(0, str(shared))
+        try:
+            from adaptive_admission import NativeClient
+            from adaptive_execution import execution_context
+            from adaptive_suitability import qualify_prepared
+        finally:
+            sys.path.remove(str(shared))
+        client = NativeClient(
+            self.sandbox, self.snapshot_binary, environment=self.environment
+        )
+        qualified = qualify_prepared(
+            self.sandbox,
+            qualification["assignment"],
+            client=client,
+            assessment=qualification.get("assessment"),
+            retain=True,
+        )
+        if qualified["status"] not in {"qualified", "qualified-known"}:
+            raise RuntimeQualificationError("Actual definition assessment remains due")
+        retained = qualified["retention"]
+        source = Path(retained["path"]) / "procedure.yaml"
+        self.raw(
+            [
+                "--json",
+                "start",
+                "--procedure",
+                str(source.relative_to(self.sandbox)),
+                "--expect-procedure-digest",
+                qualified["binding"]["procedure"]["digest"],
+                "--task",
+                "Disposable admitted adaptive runtime observation; product criteria remain unverified",
+                "--idempotency-key",
+                self.next_key("adaptive-admitted-start"),
+            ]
+        )
+        context = lambda: execution_context(
+            self.sandbox,
+            roots=roots,
+            entrypoint=entrypoint,
+            qualification=qualification,
+            client=client,
+        )
+        prepared = context()
+        if prepared["status"] != "prepared-resolved":
+            raise RuntimeQualificationError(
+                "Admitted prepared tuple did not resolve before begin"
+            )
+        self.begin_goal(self.observe(), qualified["binding"]["procedure"]["id"])
+        boot = qualified.get("bootstrap")
+        if boot is not None:
+            observation = self.observe()
+            if observation["guidance"]["node"]["graph_node_id"] != boot["node"]:
+                raise RuntimeQualificationError("Actual bootstrap is not current")
+            for item, report in boot["artifact_evidence"].items():
+                report_path = self.sandbox / "actual-suitability-report.json"
+                report_path.write_text(json.dumps(report, sort_keys=True))
+                templates = [
+                    template
+                    for template in observation["mutation_templates"]
+                    if template["command"] == "item.attach" and item in template["argv"]
+                ]
+                if len(templates) != 1:
+                    raise RuntimeQualificationError(
+                        "Actual report attachment is unavailable"
+                    )
+                argv = [
+                    {
+                        "<path>": report_path.name,
+                        "<idempotency-key>": self.next_key("attach-actual-suitability"),
+                    }.get(arg, arg)
+                    for arg in templates[0]["argv"][1:]
+                ]
+                self.raw(["--json", *argv, "--media-type", "application/json"])
+                observation = self.observe()
+            records = {}
+            for item, value in boot["items"].items():
+                declaration = next(
+                    row for row in observation["active_items"] if row["item_id"] == item
+                )
+                if declaration["type"] == "check_result":
+                    records[item] = {
+                        "type": "check_result",
+                        **value,
+                        "input_basis": {
+                            "descriptor": "Actual exact pre-start suitability scope; product criteria remain unverified",
+                            "digest": "sha256:"
+                            + hashlib.sha256(
+                                json.dumps(boot["items"], sort_keys=True).encode()
+                            ).hexdigest(),
+                        },
+                        "executor": {
+                            "name": "adaptive_suitability.qualify_prepared",
+                            "version": "aquarium.adaptive/v1",
+                        },
+                        "summary": "Current exact source/binding and actual ordinary suitability scope verified before start",
+                        "output_digest": "sha256:"
+                        + hashlib.sha256(
+                            json.dumps(
+                                boot["artifact_evidence"], sort_keys=True
+                            ).encode()
+                        ).hexdigest(),
+                    }
+                else:
+                    records[item] = {"type": declaration["type"], "value": value}
+            self.record(observation, records)
+            self.invoke_template(self.observe(), "session.complete")
+            self.decide(self.observe(), "current")
+        running = context()
+        if running["status"] not in {"dispatch-ready", "primary-owned"}:
+            raise RuntimeQualificationError(
+                "Running non-bootstrap tuple did not resolve"
+            )
+        public_path = self.sandbox / "ordinary-qualification-context.json"
+        public_path.write_text(json.dumps(qualification, sort_keys=True))
+        script = shared / "manage_adaptive_procedure.py"
+        public = bounded_process(
+            [
+                sys.executable,
+                str(script),
+                "context",
+                "--repository",
+                str(self.sandbox),
+                *[arg for root in roots for arg in ("--root", root)],
+                "--entrypoint",
+                entrypoint,
+                "--qualification",
+                str(public_path),
+                "--session",
+                self.observe()["status"]["session"]["id"],
+                "--podway",
+                str(self.snapshot_binary),
+            ],
+            cwd=self.sandbox,
+            environment=self.environment,
+        )
+        recovered = json.loads(public.stdout)
+        if (
+            recovered["bundle_id"] != retained["bundle_id"]
+            or recovered["node"] != running["node"]
+        ):
+            raise RuntimeQualificationError(
+                "Public admitted-context recovery changed identity"
+            )
+        return {
+            "procedure": qualified["binding"]["procedure"],
+            "bundle_id": retained["bundle_id"],
+            "prepared": prepared,
+            "running": running,
+            "public": recovered,
+            "actual_suitability_imported": boot is not None,
+            "product_execution": "not-observed",
+            "technical_review_execution": "not-observed",
+            "actual_final_acceptance": "not-observed",
+            "installed_behavior": "not-observed",
+        }
+
     def exercise_outcomes(self) -> dict[str, bool]:
         original = json_payload(self.init_response)
         key = self.init_arguments[-1]

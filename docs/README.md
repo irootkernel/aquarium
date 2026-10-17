@@ -37,7 +37,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Use the [operations runbooks](ops/README.md) for environment setup, deployment, recurring failures, recovery, and other operator-facing first aid.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
-## Planned adaptive Procedure work
+## Adaptive Procedure work
 
 [EPIC-026: ADAPT](roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
 is registered for all seven delivery, design and diagnosis handlers. Its
@@ -50,9 +50,10 @@ recovery. Explicit ordinary-assignment helpers now select by fit and prepare
 exact source/binding candidates within approved scope. Explicit whole/fragment
 composition resolves typed ports and namespaces into self-contained candidates.
 Guarded qualification and exact pre-start suitability/bootstrap assess those
-candidates through ordinary reports. Handler selection and execution remain
-unactivated. Continue using the existing skill and native contracts until the
-corresponding implementation and authorized update. The roadmap owns task order and status.
+candidates through ordinary reports. Task, Goal and Validation selection and
+mapped execution are implemented. Design and diagnosis remain planned. Existing
+installed skill and native contracts apply until the corresponding authorized
+update. The roadmap owns task order and status.
 
 ## Source-of-Truth Precedence
 

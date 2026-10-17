@@ -388,3 +388,26 @@ recording, installed handlers or skill decisions. Task-plan/Worker/orchestration
 functional checks and all seven installed entrypoints remain unverified until
 their authorized family/VM observations. No ordinary Make target invokes an LLM,
 a generated session or candidate installation.
+
+TASK-142 adds `test_adaptive_execution_unit.py` for current-placement ordinary
+dispatch, conditional due Task ownership, mapped exact plan handoff, prepared
+and running recovery, missing topology and terminal-state limits. Existing
+qualification controls retain selected review, independent assessment, effect
+and final acceptance obligations. Runtime controls for original sources distinguish strict
+pre-start pins from non-affecting JSON metadata or out-of-section Markdown
+edits, and reject actual criterion/part, source identity, adopted status,
+authority, plan and review changes. Known, new and established-reuse paths keep
+their original assessment basis. Handoff controls derive selectors from the
+actual definition: a declared missing selection still fails, while a boundary
+without a selector uses its verified checkpoint metadata. Disposable native
+controls cover canonical Validation past baseline and interrupted finalization
+with a requirement-source lifecycle edit in the single fixture commit.
+`ManagedRuntime.exercise_adaptive_admitted_slice`
+observes retained exact source, prepared resolution before begin, actual
+bootstrap artifact import when due, non-bootstrap running resolution and the
+public context CLI in disposable native worktrees. Known Task/Goal/Validation
+reuse preserves original first-due checkpoints. Actual pre-start reports remain
+distinct from synthetic native control fixtures and product/reviewer execution.
+These checks do not establish installed handler decisions or Master acceptance.
+Task-plan/Worker/orchestration functional behavior and installed upgrade/startup
+remain separately unverified until actual dedicated-VM observations.

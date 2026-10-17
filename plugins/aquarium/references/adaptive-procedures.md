@@ -9,9 +9,7 @@ recovery. TASK-139 implements fit selection and approved source-only preparation
 through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
 composition through that preparation path. TASK-141 implements guarded structural
 qualification and exact ordinary pre-start suitability with bootstrap import.
-Handler activation remains reserved for TASK-142 through TASK-145. These interfaces do
-not activate adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
-sources and immutable formal v1 sessions retain their current contracts.
+Task, Goal and Validation now use [adaptive execution](adaptive-execution.md). Design and diagnosis activation, cross-family closeout and promotion remain reserved for their owning tasks. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
 
 The repository's `docs/todo/TODO-ADAPTIVE-PROCEDURES.md` owns remaining
 implementation acceptance. The roadmap owns Task identity and lifecycle. This
@@ -66,6 +64,13 @@ ends the section. Missing, ambiguous or unsupported selectors return
 `not-established`; malformed selector types return `invalid-input`. Paragraphs,
 nested bullets and compound clauses remain in that original basis.
 The helper does not infer their semantic independence from Markdown formatting.
+Pre-start preparation and adoption verify the exact raw source pins. In-session
+re-entry preserves those original provenance values while comparing the complete
+currently extracted criteria and parts with the approved coverage basis. Changes
+outside that basis do not refresh the original report target. Relevant criterion,
+source identity, adopted status, plan, review, authority and execution-definition
+changes still require their affected checks; see
+[adaptive execution](adaptive-execution.md#mapped-handoff-and-recovery).
 
 `target.procedure_plan` holds invocation data:
 
@@ -337,7 +342,7 @@ Selected admission reports its interpreter and missing `jsonschema` or YAML
 dependency before native work. Use an available supported Python environment;
 the launcher performs no installation. The setup inspector imports adaptive
 dependencies only on its explicit selected path, preserving legacy invocations.
-TASK-142 establishes runtime readiness before family activation; TASK-145 owns
+Task/Goal/Validation execution uses selected runtime readiness before work; TASK-145 owns
 global/setup guidance. Each uses a
 supported installed environment and reports missing prerequisites. This contract
 authorizes no dependency installation or host runtime change.
@@ -592,7 +597,7 @@ success never transfers to them.
 ## Selected admission, retention and recovery
 
 [manage_adaptive_procedure.py](../shared/manage_adaptive_procedure.py) exposes
-`inspect`, `retain` and `resume`. Supply the owning `--repository`, every approved
+`inspect`, `retain`, `resume` and mapped `context`. Supply the owning `--repository`, every approved
 searched `--root`, the invoking `--entrypoint` and applicable `--review-route`.
 `inspect` and `retain` also need `--source`; retention needs an approved
 `--write-root`. `--podway` selects an available executable explicitly. The CLI
@@ -612,8 +617,7 @@ role/capability mappings within mapping version 1. Existing entries remain stabl
 when unrelated templates or signatures change; necessary mapping changes require
 a distinct native revision. It is separate from the existing canonical,
 same-ID custom and formal-session contracts. Changed/new sources use the exact
-qualification and independent suitability path below. Missing proof remains
-`not-established`; family handler activation is still required.
+qualification and independent suitability path below. Missing proof remains `not-established`. Task, Goal and Validation activation is defined in [adaptive execution](adaptive-execution.md); design and diagnosis activation remain planned.
 
 The selected setup inspector retains full managed-library diagnostics and
 same-family adopted-customization visibility. An alternative needs the existing
@@ -664,7 +668,7 @@ installed handler behavior.
 | TASK-139 | Implemented: shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
 | TASK-140 | Implemented: shared composition through existing preparation, namespaces, typed ports, self-contained flattening and reusable review/whole-control assets; preserve semantic operation IDs/digests and fragment/session control distinction |
 | TASK-141 | Implemented: guarded shared structural qualification, exact ordinary suitability/bootstrap and retained-bundle admission/reassessment; preserve canonical/custom/formal defaults until family activation |
-| TASK-142 | task-handler/task-orchestration fixed seven-phase loading and unconditional refine discovery; ordinary-agent-orchestration five-bundled-source restriction and goal-judge helper; epic/validation orchestration, worker-guidance, plan-handoff, task-close/task-commit adaptive mappings/recovery; runtime readiness before activation |
+| TASK-142 | Implemented: Task/Goal/Validation selection, public adaptive admission/context forwarding, mapped due phase and handoff consumers, self-contained prepared/running recovery and original acceptance/finalization boundaries |
 | TASK-143 | new-feature/new-project/refactor and design-diagnosis orchestration adaptive selection, QA, exact application and non-Git recovery |
 | TASK-144 | war-room and design-diagnosis adaptive diagnosis; podway-integration and epic-handler successful-terminal-only replacement wording; task-orchestration, epic-orchestration, validation-orchestration and design-diagnosis-orchestration continuation rules for shared consented atomic supersede; preserve task-handler's prohibition on replacing a session merely to recover reports |
 | TASK-145 | task-commit promotion handoff; dev-setup and global-setup dependency guidance; agents-guidance and AGENTS managed/local source distinction; cross-family recovery; committed VM driver/fixtures |
@@ -770,4 +774,4 @@ current fit with `established-reuse` timing, preserving normal first-due
 assessments. Its ordinary selection checkpoint distinguishes those claims from
 a new Judge result. Session replacement remains TASK-144's separately consented transition.
 The legacy launcher/setup selected-known path remains available under its
-original contract; handler integration is still TASK-142 through TASK-144.
+original contract. Task, Goal and Validation use the mapped execution consumer; design and diagnosis integration remains with TASK-143 and TASK-144.

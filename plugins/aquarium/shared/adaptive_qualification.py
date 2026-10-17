@@ -2059,6 +2059,54 @@ class Qualification:
                         self.conditions[work], passed, "suitability-before-work", work
                     )
 
+    def execution_frontier(self):
+        """Find first product work, or assessment work for Validation."""
+        before = dict.fromkeys(self.nodes, 0)
+        before[self.document["graph"]["entry"]] = 1
+        frontier, unknown = [], []
+        for node in self.order:
+            self.current_property = ("first-work-frontier", node)
+            active = self.logic.all(before[node], self.conditions[node])
+            contract = self.operation_cache[node]
+            plan = "task-plan" in contract.get("output_scopes", {}).values()
+            effect = self.effect(node)
+            product = (effect == "work" and not plan) or (
+                self.binding["family"] == "validation" and effect == "assessment"
+            )
+            if active and product:
+                frontier.append(node)
+            if active and effect == "unknown":
+                unknown.append(node)
+            remaining = (
+                self.logic.all(before[node], self.logic.negate(self.conditions[node]))
+                if product
+                else before[node]
+            )
+            placement = self.nodes[node]
+            if placement.get("next"):
+                target = placement["next"]
+                before[target] = self.logic.any(before[target], remaining)
+            for option, edge in placement.get("routes", {}).items():
+                if edge["effect"] == "advance":
+                    before[edge["to"]] = self.logic.any(
+                        before[edge["to"]],
+                        self.logic.all(remaining, self.routes.get((node, option), 0)),
+                    )
+        after = []
+        for node in self.nodes:
+            self.current_property = ("after-first-work", node)
+            if any(
+                (first == node or self.forward_reaches(first, node))
+                and self.logic.all(self.conditions[first], self.conditions[node])
+                for first in frontier
+            ):
+                after.append(node)
+        return {
+            "first_work": frontier,
+            "unknown_before_work": unknown,
+            "after_first_work": after,
+        }
+
     def result(self):
         status = (
             "incompatible"
@@ -2090,6 +2138,7 @@ def qualify(
     signatures=None,
     operation_contracts=None,
     node_budget=200000,
+    execution_info=False,
 ):
     """Qualify a natively checked exact source; no providers, files or sessions."""
     context = {} if context is None else context
@@ -2149,7 +2198,11 @@ def qualify(
         analysis = Qualification.__new__(Qualification)
         analysis.__init__(document, binding, context, registry, contracts, node_budget)
         analysis.inspect_goals()
-        return analysis.result()
+        result = analysis.result()
+        if execution_info and result["status"] == "compatible":
+            result["execution"] = analysis.execution_frontier()
+            result["analysis"]["symbolic_nodes"] = len(analysis.logic.nodes)
+        return result
     except AnalysisLimit as error:
         issues = list(getattr(analysis, "issues", []))
         property_name, location = getattr(

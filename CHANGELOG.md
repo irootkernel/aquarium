@@ -6,6 +6,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
+- Select and compose work-specific Procedures for Task, Epic Goal and Validation with exact qualification, mapped work and self-contained recovery while preserving review and acceptance authority; existing installed workflows require an authorized compatible update.
+
 - Add a separate guest-side `make test-vm` gate with reusable manual upgrade and Task/Epic startup scenarios, preserving existing state and requiring actual native Worker/Judge results for the exact candidate.
 
 ### Changed

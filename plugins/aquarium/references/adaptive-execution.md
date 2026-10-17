@@ -1,0 +1,168 @@
+# Adaptive Task, Goal and Validation execution
+
+Task, Epic Goal and Validation use the shared [adaptive selection, qualification
+and recovery contract](adaptive-procedures.md). Design and diagnosis retain their
+current entrypoint contracts until their activation tasks. An opted-out workflow
+and non-Git new-project perform no Podway discovery. Direct Task phase invocations
+retain their leaf contracts.
+
+## Select and admit the actual work
+
+Before approval, use the ordinary assignment's `procedure_plan` and original
+sources for read-only fit selection through `prepare_adaptive_procedure.py` in
+`plan-only` mode. Prefer an adequate existing definition. Reconcile adopted
+repository customizations before selecting an alternative; optional templates
+and historical bundles impose no new policy. Disclose execution-definition
+preparation and locally ignored retention in the existing execution envelope.
+Do not perform product work during that preparation interval.
+
+After approval, `prepare_adaptive_procedure.py` produces exact source, binding
+and coverage targets. `qualify_adaptive_procedure.py` requests an ordinary
+report-only suitability assignment for a new or changed definition. Dispatch
+that assignment through the existing native harness and supply its actual
+complete report. A compatible due Task plan Judge can cover both scopes in one
+call. Adequate known reuse preserves the original first due checkpoint, including
+Goal without a plan Judge. Prior definition evidence for unchanged adopted reuse
+is not a fresh current report.
+
+Use `manage_adaptive_procedure.py inspect|retain` with every approved `--root`,
+`--entrypoint`, selected `--review-route`, exact `--source`, `--binding` and
+`--qualification`. The qualification file contains the ordinary `assignment`
+and actual `assessment` when due, plus `combined_task_plan` when applicable.
+`retain` also needs its approved `--write-root`. The selected setup inspector
+accepts the same exact inputs through `--podway-binding` and
+`--podway-qualification`. Neither entrypoint starts or advances a session.
+Unrelated missing templates and unselected provider readiness cannot block an
+intact selected definition. Existing canonical/custom/formal diagnostics and
+admitted legacy continuation remain available under their original contracts.
+
+Retain a complete qualified self-contained bundle before starting. Use the
+current paired Podway skill and released native start template for that retained
+source and expected native digest. Re-observe, resolve the prepared session,
+and only then execute its separately authorized fenced `begin`. A matching
+definition does not establish matching work identity: reconcile actual roadmap
+identity, current goal, plan, approval, pending effects and remaining grants.
+
+## Consume mapped current work
+
+After start and on every recovery boundary, run:
+
+```bash
+python3 <installed-shared>/manage_adaptive_procedure.py context \
+  --repository <worktree> --root <approved-root> \
+  --entrypoint <task-handler|epic-handler|epic-validator> \
+  --qualification <ordinary-context.json> --session <native-session-id> \
+  --podway <supported-executable>
+```
+
+Use an available supported interpreter with YAML and `jsonschema`. An arbitrary
+target repository's Python or an Aquarium development checkout is not a runtime
+prerequisite. `context` resolves native ID/version/digest across all approved
+roots and revalidates current fit/suitability before returning the current native
+status, selected evidence, typed active items and mutation templates. It performs
+no progression, provider dispatch, item recording or commit.
+
+`prepared-resolved` permits the Primary's already authorized native begin after
+work reconciliation. Keep the actual adopted session ID, native tuple, bundle reference and original invocation/authority in the existing local ordinary orchestration checkpoint before work. This recovery binding introduces no central state file or mandatory receipt. `dispatch-ready` supplies an ordinary v2 assignment for
+its mapped Worker or Judge. Dispatch through the existing harness, bind the
+actual returned public handle and receive the complete result. `primary-owned`
+keeps Decisions, technical review operations, report assembly, acceptance and
+Git boundaries with the Primary. Read full selected native evidence through its
+supported pagination before work; bounded previews do not substitute for it.
+For each native item, use its actual declaration, operation ID/digest and typed
+recording contract. Re-observe after recording and use only currently available
+native transitions. A negative assessment still completes its Action and follows
+the actual negative router; it grants no effects or authority.
+
+For Tasks, the approved ordinary `procedure_plan.phase_skills` maps placements
+to due leaf skills. Load those complete installed skills when their placement is
+current. The known canonical contract supplies its original phase owners; a
+custom operation follows its qualified approved ownership and actual operation
+instructions. A documentation delivery can own documentation and verification
+without an unused implementation or refinement step. Code/test changes retain
+due refinement and Deslop under original repository requirements. Determine
+applicability from the actual work before constructing the candidate; graph
+omission cannot waive an obligation. Goal and Validation never inherit the Task
+phase sequence. Cold Validation uses a fresh independent Judge; internal
+Validation keeps its logical Epic Judge when supported.
+
+## Mapped handoff and recovery
+
+For an explicitly requested plan handoff, record the approved attachment endpoint
+and first-work placements in `procedure_plan.plan_handoff`:
+
+```json
+{"attachment":{"node":"approved-input","item":"plan-link"},"first_work":["write-doc"]}
+```
+
+These are approved invocation mappings into the exact qualified source and binding. They
+are not reusable runtime values. Keep the initial native session UUID and current
+`plan-handoff` or `resume` mode in `target.plan_handoff_runtime`. Follow [Plan Handoff](plan-handoff.md) for its session-bound path, atomic exact bytes, permissions
+and retention. Attach at the mapped Action. At a mapped first-work placement with a
+declared artifact selector, verify its current native selection. If the source declares
+no such selector, restore the actual verified attachment metadata from the existing
+ordinary checkpoint and verify its native session, source attempt and exact local bytes.
+A missing declared selection never falls back to checkpoint metadata. `context` returns
+`attachment-required` before an absent attachment and `stop-before-work` for the
+requested handoff after verifying the complete native metadata and exact local bytes. It
+returns no dispatch at either boundary.
+
+Retain the actual verified artifact metadata in
+the existing ordinary checkpoint and `target.plan_handoff_runtime.artifact`, together
+with its returned native `artifact_reference`. Later Worker or Judge resume verifies
+those same bytes even when its current native selector no longer directly carries the
+original artifact. Native selected metadata remains primary at the attachment and
+first-work placements. Missing retained metadata or a native source-attempt change stops
+before later work; native rework remains the invalidation authority. Resume verifies the
+same artifact before work. Retain the returned `artifact` and `artifact_reference` in
+the existing ordinary checkpoint and restore them in `target.plan_handoff_runtime`
+before later Worker or Judge recovery. The attachment reference binds its native session
+and source attempt; current native counters must still match. Missing metadata, changed
+plan bytes or an invalidated source attempt stop further work and preserve the session.
+Successor sessions attach the same initial plan path and identity under the existing
+handoff contract.
+
+For internal Validation carrying the Epic handoff, map its baseline
+attachment and every feasible first audit or remediation placement as a work boundary.
+Validation assessment work verifies the inherited plan before dispatch; Task and Goal
+keep their product-work boundaries. These session bindings stay outside reusable
+definitions.
+
+Prepared and non-bootstrap running recovery use the retained tuple, never a mutable
+origin path. Missing/corrupt/ambiguous adopted bundles stop without generation or
+fallback. Original admitted canonical/custom/formal sessions continue under their
+supported released contract without fabricated adaptive metadata. Reconcile that
+provenance from actual native and ordinary records; an unresolved adoption identity is a
+proof gap, not permission to assume a legacy fallback.
+
+On in-session re-entry, compare
+the complete extracted original criterion and part set with the approved coverage basis.
+Keep its original source identities, adopted status and report provenance. Changes
+outside selected Markdown sections or JSON criteria, including lifecycle bookkeeping, do
+not refresh the report target or force another Judge. A change inside that extracted
+basis still requires its affected checks; lifecycle-looking text inside a criterion
+receives no automatic exemption. Strict raw source pins remain due before start. Current
+plan, authority, review, adopted source and exact execution-definition checks remain
+due. A changed basis returns the affected in-session planning/Judge route; it cannot
+manufacture a post-start pre-start assessment. Retrieve missing ordinary/provider
+delivery from the same pending operation before a new call; keep expected reports,
+original findings, route, ordinal and remaining authority. Eligible whole-set local
+settlement remains within its original effect grant, including confirmation-only mode. A
+review switch or waiver needs its existing explicit direction and native continuity
+gates, not a new routine question.
+
+`terminal-resolved` reports native state without claiming achievement. Native
+session-goal mappings, current final Judge and actual eligible acceptance own
+success. Task acceptance stays user-owned unless its existing parent workflow
+explicitly owns the delegated boundary. Goal member/correction and internal
+Validation grants cannot accept final Epic or cold Validation. Final overall
+Master acceptance remains separate.
+
+After a successful commit with interrupted completion/disposition, restore the
+exact accepted target and actual commit evidence, resolve the same session and
+finish only the pending native terminal work. Never repeat the commit. Normal
+declared rework and approved disposed-terminal successors use existing native
+operations without another question. Unexpected missing topology in a running
+session stops with its exact gap until the shared consented atomic supersede
+path is implemented; no cancel/start, reset, deletion or false achieved outcome
+is available here.

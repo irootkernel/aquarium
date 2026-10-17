@@ -25,8 +25,7 @@ Adaptive fit planning may read approved source locations under the
 [shared preparation contract](../../references/adaptive-procedures.md#selection-and-source-only-preparation).
 Preserve complete original requirement sources and unresolved semantic coverage.
 Use only its `plan-only` mode here; source rendering and native authoring belong
-to the owning handler's approved preparation interval. This does not activate
-adaptive handler selection or change this phase's mutation boundary.
+to the owning handler's approved preparation interval. The handler owns adaptive selection and approval; this phase retains its read-only mutation boundary.
 
 ## Produce and Approve the Plan
 

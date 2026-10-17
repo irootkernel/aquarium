@@ -153,9 +153,18 @@ def add_bootstrap(document, mapping):
     return document, mapping
 
 
-def current_basis(repository, assignment):
+def current_basis(repository, assignment, *, in_session=False):
     """Original sources and current ordinary plan remain the requirements authority."""
-    criteria = requirements(repository, assignment)
+    criteria = requirements(repository, assignment, verify_sources=not in_session)
+    if in_session:
+        approved = assignment["target"]["prepared_definition"]["coverage_plan"][
+            "criteria"
+        ]
+        if criteria != approved:
+            raise BundleError(
+                "reassessment-required",
+                "Current extracted original requirements differ from the approved basis",
+            )
     source_authority(repository, assignment)
     plan = assignment["target"]["procedure_plan"]
     qualification = object_value(
@@ -479,7 +488,14 @@ def qualify_prepared(
             "source-drift", "Native prepared tuple differs from exact target"
         )
     document = yaml.safe_load(source)
-    basis = current_basis(repository, assignment)
+    try:
+        basis = current_basis(repository, assignment, in_session=in_session)
+    except BundleError as error:
+        if in_session and error.code == "reassessment-required":
+            raise BundleError(
+                error.code, str(error), reassessment_route(document, binding)
+            ) from error
+        raise
     mapping = {key: value for key, value in binding.items() if key != "procedure"}
     coverage = prepared["coverage_plan"]["coverage"]
     fit(assignment, basis["criteria"], document, mapping, coverage)
@@ -655,7 +671,7 @@ def qualify_prepared(
     bootstrap = bootstrap_import(document, binding, target, report)
     # Reconcile sources and target again before any retention effect.
     if (
-        current_basis(repository, assignment) != basis
+        current_basis(repository, assignment, in_session=in_session) != basis
         or read_regular(repository, source_path) != source
         or read_regular(repository, binding_path) != binding_bytes
     ):
@@ -670,7 +686,7 @@ def qualify_prepared(
             if (
                 raw != source
                 or actual != binding
-                or current_basis(repository, assignment) != basis
+                or current_basis(repository, assignment, in_session=in_session) != basis
             ):
                 raise BundleError(
                     "reassessment-required",
@@ -694,7 +710,9 @@ def qualify_prepared(
         "target": target,
         "bootstrap": bootstrap,
         "retention": retained,
-        "activation": "family-activation-remains-required",
+        "activation": "activated-family-consumer-available"
+        if binding["family"] in {"task", "goal", "validation"}
+        else "family-activation-remains-required",
     }
 
 

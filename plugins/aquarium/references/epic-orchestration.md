@@ -1,5 +1,7 @@
 # Epic orchestration
 
+The [adaptive execution contract](adaptive-execution.md) now selects adequate definitions and resolves current mapped placements for this family. The canonical node tables below retain their original meanings; adaptive dispatch uses actual role, capability, evidence and approved due ownership rather than node spelling. Original review, independent assessment, effect and acceptance boundaries remain due.
+
 ## Ordinary execution and Judge continuity
 
 Goal version `35` uses ordinary Actions under the [v2 contract](ordinary-agent-orchestration.md).

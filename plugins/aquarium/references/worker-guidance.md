@@ -31,6 +31,8 @@ and exclusive local self-ignore file when needed. Preserve selected review,
 source access and all original grants. Return exact source/binding paths and coverage limits;
 preparation performs no product work, session progression or candidate adoption.
 
+For admitted adaptive Task/Goal/Validation work, consume the exact current ordinary assignment from [mapped execution](adaptive-execution.md#consume-mapped-current-work). The selected native placement, complete original evidence and approved due leaf contracts own the work; node spelling does not impose canonical phases. The Primary binds actual dispatch handles and keeps native progression and acceptance.
+
 ## Deliver the bounded work
 
 Research and reading may run in parallel. Only the assigned implementing Worker

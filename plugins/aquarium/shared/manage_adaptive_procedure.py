@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect, retain or recover an exact known Procedure; never start a session."""
+"""Inspect, retain or recover an exact admitted Procedure; never start a session."""
 
 import argparse
 import importlib.util
@@ -11,7 +11,7 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("inspect", "retain", "resume"))
+    parser.add_argument("action", choices=("inspect", "retain", "resume", "context"))
     parser.add_argument("--repository", required=True)
     parser.add_argument("--root", action="append", required=True)
     parser.add_argument("--source")
@@ -19,6 +19,11 @@ def main():
     parser.add_argument("--entrypoint", required=True)
     parser.add_argument("--review-route")
     parser.add_argument("--bootstrap")
+    parser.add_argument("--session", help="Exact continuation session ID")
+    parser.add_argument("--binding", help="Exact adaptive binding JSON path")
+    parser.add_argument(
+        "--qualification", help="Ordinary assignment/assessment context JSON file"
+    )
     parser.add_argument("--customization-basis")
     parser.add_argument("--podway", default=shutil.which("podway"))
     arguments = parser.parse_args()
@@ -47,10 +52,19 @@ def main():
             raise BundleError(
                 "missing-prerequisite", "Podway executable is unavailable"
             )
-        if arguments.action != "resume" and not arguments.source:
+        if arguments.action not in {"resume", "context"} and not arguments.source:
             raise BundleError(
                 "invalid-arguments", "Source is required for inspect or retain"
             )
+        qualification = (
+            json.loads(Path(arguments.qualification).read_text())
+            if arguments.qualification
+            else None
+        )
+        if qualification is not None:
+            from adaptive_execution import invocation_assignment
+
+            invocation_assignment(qualification)
         inspector_path = (
             Path(__file__).resolve().parents[1]
             / "skills/dev-setup/scripts/inspect_tools.py"
@@ -64,6 +78,21 @@ def main():
             arguments.repository = str(
                 inspector.resolve_repository(arguments.repository, 30)
             )
+            if arguments.action == "context":
+                from adaptive_execution import execution_context
+
+                result = execution_context(
+                    arguments.repository,
+                    roots=arguments.root,
+                    entrypoint=arguments.entrypoint,
+                    qualification=qualification,
+                    client=NativeClient(arguments.repository, arguments.podway),
+                    session=arguments.session,
+                    bootstrap=arguments.bootstrap,
+                    route=arguments.review_route,
+                )
+                print(json.dumps(result, sort_keys=True))
+                return 0
             diagnostic = inspector.inspect_selected_podway(
                 Path(arguments.repository),
                 30,
@@ -75,6 +104,8 @@ def main():
                 bootstrap=arguments.bootstrap,
                 customization_basis=arguments.customization_basis,
                 executable=arguments.podway,
+                binding_path=arguments.binding,
+                qualification=qualification,
             )
         except inspector.InspectionError as error:
             raise BundleError(
@@ -102,8 +133,10 @@ def main():
                 observation["status"]["procedure"],
                 client=client,
                 bootstrap=arguments.bootstrap,
+                qualification=qualification,
             )
             arguments.source = str(Path(bundle["path"]) / "procedure.yaml")
+            arguments.binding = str(Path(bundle["path"]) / "binding.json")
         if not arguments.source:
             raise BundleError(
                 "invalid-arguments", "Source is required for inspect or retain"
@@ -114,6 +147,8 @@ def main():
             "route": arguments.review_route,
             "runtime_ready": True,
             "client": client,
+            "binding_path": arguments.binding,
+            "qualification": qualification,
         }
         if arguments.action == "retain":
             if not arguments.write_root:
@@ -147,7 +182,7 @@ def main():
 
         print(json.dumps(public(result), sort_keys=True))
         return 2 if result["status"] == "session-conflict" else 0
-    except (BundleError, ValueError, KeyError, OSError) as error:
+    except (BundleError, ValueError, KeyError, TypeError, OSError) as error:
         print(
             json.dumps(
                 {

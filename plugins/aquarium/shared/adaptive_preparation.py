@@ -208,7 +208,7 @@ def read_basis(repository, reference):
     return raw
 
 
-def requirements(repository, assignment):
+def requirements(repository, assignment, *, verify_sources=True):
     result = {}
     sources = object_rows(
         assignment["work"]["requirement_sources"], "requirement_sources"
@@ -232,7 +232,11 @@ def requirements(repository, assignment):
             assignment["target"]["procedure_plan"]["family"],
         }:
             continue
-        raw = read_basis(repository, source)
+        raw = (
+            read_basis(repository, source)
+            if verify_sources
+            else read_regular(repository, Path(source["path"]))
+        )
         text = raw.decode("utf-8")
         # Structured original sources retain their own criterion and part identity.
         if source.get("format") == "json":

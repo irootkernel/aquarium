@@ -4836,6 +4836,8 @@ def inspect_selected_podway(
     bootstrap=None,
     customization_basis=None,
     executable=None,
+    binding_path=None,
+    qualification=None,
 ):
     """Inspect only selected Podway capabilities; keep broad library diagnostics."""
     shared = Path(__file__).resolve().parents[3] / "shared"
@@ -4843,6 +4845,19 @@ def inspect_selected_podway(
     try:
         from adaptive_admission import NativeClient, resume_selected, selected_source
         from adaptive_bundles import BundleError
+
+        if qualification is not None:
+            __import__("adaptive_suitability")
+            from adaptive_execution import invocation_assignment
+
+            try:
+                invocation_assignment(qualification)
+            except BundleError as error:
+                return {
+                    "schema_version": SCHEMA_VERSION,
+                    "selected_procedure": {"status": error.code, "message": str(error)},
+                    "tools": {},
+                }
     except ModuleNotFoundError as error:
         return {
             "schema_version": SCHEMA_VERSION,
@@ -4896,8 +4911,10 @@ def inspect_selected_podway(
                 runtime["session_procedure"],
                 client=client,
                 bootstrap=bootstrap,
+                qualification=qualification,
             )
             source = str(Path(bundle["path"]) / "procedure.yaml")
+            binding_path = str(Path(bundle["path"]) / "binding.json")
         admission = selected_source(
             repository,
             Path(source),
@@ -4906,6 +4923,8 @@ def inspect_selected_podway(
             route=route,
             runtime_ready=True,
             client=client,
+            binding_path=binding_path,
+            qualification=qualification,
         )
         family = admission["binding"]["family"]
         adopted = [
@@ -5117,6 +5136,13 @@ def parse_arguments() -> argparse.Namespace:
         "--podway-customization-basis",
         help="Existing approved envelope's adopted-customization obligation disposition",
     )
+    parser.add_argument(
+        "--podway-binding", help="Exact selected adaptive binding JSON path"
+    )
+    parser.add_argument(
+        "--podway-qualification",
+        help="Ordinary assignment/assessment context JSON path",
+    )
     arguments = parser.parse_args()
     if arguments.selected_podway_source or arguments.resume_selected_podway:
         if not arguments.podway_root or not arguments.podway_entrypoint:
@@ -5130,6 +5156,8 @@ def parse_arguments() -> argparse.Namespace:
         or arguments.podway_review_route
         or arguments.podway_bootstrap
         or arguments.podway_customization_basis
+        or arguments.podway_binding
+        or arguments.podway_qualification
     ):
         raise InspectionError(
             "invalid_arguments",
@@ -5171,6 +5199,12 @@ def main() -> int:
                 resume=arguments.resume_selected_podway,
                 bootstrap=arguments.podway_bootstrap,
                 customization_basis=arguments.podway_customization_basis,
+                binding_path=arguments.podway_binding,
+                qualification=json.loads(
+                    Path(arguments.podway_qualification).read_text()
+                )
+                if arguments.podway_qualification
+                else None,
             )
             emit(result)
             return 0 if result["selected_procedure"]["status"] == "ready" else 2

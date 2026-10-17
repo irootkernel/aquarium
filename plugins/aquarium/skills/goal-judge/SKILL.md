@@ -95,3 +95,5 @@ The Primary accepts the complete report under its report checks without another
 Judge assessment, then uses the verdict at the semantic Decision.
 
 For a final candidate with an admitted local-settlement composition, retain source reviewer rows and counts as historical evidence. Assess current affected criteria from the exact permitted delta and current authorized checks, preserving unaffected coverage only with its applicability basis. A locally corrected source `unmet` row can become `met`; do not require another provider review merely because the original priority was Medium or the review predates the correction. Missing original coverage, failed checks or an unrelated delta still prevent achievement.
+
+Task/Goal/Validation assignments may come from the [mapped adaptive consumer](../../references/adaptive-execution.md). Assess the actual due operation and full original source basis, including compound and omitted obligations. Keep future global gaps honest and use the scoped checkpoint result; a new/changed definition assessment does not establish product achievement, actual technical review or acceptance.

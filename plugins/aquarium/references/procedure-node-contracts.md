@@ -237,4 +237,4 @@ retains unknown proof separately from established incompatibility. It does not
 replace the managed canonical/custom/formal inventory above. Known reference
 bindings retain their original contracts; changed/new static semantic definitions
 stay self-contained and receive exact independent suitability before adoption.
-Family handler defaults remain unchanged until their activation tasks.
+Task, Goal and Validation use the [adaptive execution consumer](adaptive-execution.md); the canonical tables above describe their original reference contracts. Design and diagnosis activation remains planned.

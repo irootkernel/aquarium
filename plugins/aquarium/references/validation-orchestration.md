@@ -1,5 +1,7 @@
 # Validation orchestration
 
+The [adaptive execution contract](adaptive-execution.md) now selects adequate definitions and resolves current mapped placements for this family. The canonical node tables below retain their original meanings; adaptive dispatch uses actual role, capability, evidence and approved due ownership rather than node spelling. Original review, independent assessment, effect and acceptance boundaries remain due.
+
 Validation version `34` uses ordinary Actions and the [v2 contract](ordinary-agent-orchestration.md).
 An independent cold Judge reads original Epic criteria and current artifacts;
 internal validation retains its logical Epic Judge when supported. Use available

@@ -146,3 +146,5 @@ For a delegated commit, return to the current Aquarium caller after verifying th
 Report the commit ID, verified workflow, Epic and Task attribution, task relationship, final roadmap state, release-note target and decision, committed paths, checks and evidence inherited from the owner, evidence trailer state when applicable, remaining worktree state, and publication gap.
 
 The bundled hook is a local guardrail, not complete enforcement: it detects direct shell `git commit` invocations in roadmap repositories, while indirect commits performed by other tools may not pass through that boundary.
+
+An adaptive caller includes its exact retained source/binding identity and mapped session-relative continuation from [adaptive execution](../../references/adaptive-execution.md). Preserve its distinct grants and return actual post-hook commit evidence. A recovered successful commit is evidence to verify, not authority to repeat it. Native finalization remains with the caller.

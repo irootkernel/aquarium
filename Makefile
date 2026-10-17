@@ -19,6 +19,8 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	plugins/aquarium/shared/adaptive_execution.py \
+	tests/unit/test_adaptive_execution_unit.py \
 	plugins/aquarium/shared/adaptive_predicates.py \
 	plugins/aquarium/shared/adaptive_qualification.py \
 	plugins/aquarium/shared/adaptive_suitability.py \

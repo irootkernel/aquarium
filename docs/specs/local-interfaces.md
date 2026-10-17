@@ -136,8 +136,8 @@ adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
 typed ports through that same preparation CLI. It retains operation identities,
 resolves native references and dependencies, and rejects unresolved/private
 rework or unavailable required evidence. The explicit helpers below implement
-guarded whole-graph qualification and exact suitability/bootstrap. Family
-activation remains planned.
+guarded whole-graph qualification and exact suitability/bootstrap. Task, Goal and
+Validation activation is implemented; design and diagnosis remain planned.
 
 The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
 takes `--repository`, `--assignment <file-or->` and, for approved preparation,
@@ -282,3 +282,37 @@ Plan-only cannot run the retained native proof and reports not-established
 without writing or generating an alternative. A material in-session basis change
 uses the existing reassessment route. Live review ordinals, remaining grants and
 native retrieval handles alone do not invalidate an unchanged definition.
+
+## Activated adaptive execution consumer
+
+`manage_adaptive_procedure.py` also accepts positional `context`, `--qualification`
+(ordinary assignment plus actual due assessment JSON), `--binding` for selected
+inspection/retention, and optional exact `--session` for continuation. The setup
+inspector forwards corresponding `--podway-binding` and
+`--podway-qualification` values only in selected mode. Resume resolves its
+binding path from the retained native tuple before qualification; it does not
+require a bootstrap item to be selected.
+
+`context` needs an existing native session and the exact ordinary invocation
+context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`,
+`attachment-required`, `stop-before-work` or `terminal-resolved`, with native
+status/templates, active items, selected evidence, current role/capabilities,
+due phase skills, original authority and an ordinary v2 dispatch when applicable.
+Successful read-only resolution exits 0, including a requested handoff stop;
+errors retain status/message/details and exit 2. Terminal state does not imply
+achievement. Missing topology preserves the running session; replacement is not
+implemented here. This adapter launches no agent and performs no native mutation.
+Before start, qualification keeps exact raw requirement-source pins. On
+in-session re-entry, it compares the complete extracted criterion/part basis
+with the approved coverage basis while retaining original provenance and report
+targets. Non-affecting edits outside that basis do not force another assessment;
+real requirement, authority, plan, review or execution-definition changes retain
+their stop or reassessment route. A handoff boundary uses native selected
+artifact evidence when declared, and otherwise the previously verified ordinary
+checkpoint metadata with current session/attempt and exact-byte checks.
+
+The [execution contract](../../plugins/aquarium/references/adaptive-execution.md)
+owns invocation mappings, actual independent assessment/bootstrap import, due
+Task leaf loading, plan artifact verification, same-operation retrieval and
+commit-success/finalization recovery. Original source coverage and applicable
+review/acceptance/grants remain ordinary workflow responsibilities.

@@ -15,11 +15,15 @@ Always read [evidence-residency.md](../../references/evidence-residency.md), [fi
 
 Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
-Otherwise read the Podway contract and use one `aquarium-validation-v2` session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority. A session created from an earlier managed Procedure version keeps its immutable snapshot and is not migrated in place.
+Otherwise read the Podway contract and use one adequately selected Validation-family session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority. A session created from an earlier managed Procedure version keeps its immutable snapshot and is not migrated in place.
 
 Create a Codex goal only on explicit user request under its tool contract, whether Podway is active or opted out. Continue an existing authorized Codex goal through audit, remediation, and confirmation within its own scope. Remediation groups organize the work; they do not create separate Codex goals or Podway sessions.
 
 Read [validation-orchestration.md](../../references/validation-orchestration.md) for ordinary v2 roles. A fresh cold Judge audits original criteria and artifacts directly; internal validation retains its logical Epic Judge when supported. Audit and re-audit are direct report-only Judge work. Before dispatch, the Primary or an authorized Worker executes due repository checks and supplies actual results; the Judge does not run checks. The Primary records the aggregate audit and check result. Workers deliver correction groups with checks; the Primary accepts and verifies their authorized commits before re-audit. Current sources require no native qualification; admitted formal sessions retain their original v1 contracts.
+
+## Adaptive Procedure selection and execution
+
+On the Podway path, read [adaptive-execution.md](../../references/adaptive-execution.md) and use its fit selection, exact qualification/retention and mapped current-node consumer for Task, Goal and Validation. Known canonical/custom/formal and previously admitted sessions retain their original supported contracts. Read-only planning performs no native or filesystem mutation. The shared adaptive path governs source selection and mapped handoff boundaries below; literal canonical node names describe the canonical reference contract.
 
 ## Settle corrections before requesting another review
 

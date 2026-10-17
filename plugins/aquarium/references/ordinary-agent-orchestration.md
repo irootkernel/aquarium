@@ -71,8 +71,7 @@ and selection, coverage and exact prepared-definition data in `target`, under th
 [shared adaptive preparation contract](adaptive-procedures.md#selection-and-source-only-preparation).
 These remain ordinary assignment/plan data. Reconcile full original sources and
 compound criteria independently; a generated coverage plan supplies no second
-requirements authority or Judge passage. Handler activation remains with its
-own implementation task. Exact changed/new suitability can use the same due Task
+requirements authority or Judge passage. Task, Goal and Validation now use [mapped adaptive execution](adaptive-execution.md); design and diagnosis activation remain with their own implementation tasks. Exact changed/new suitability can use the same due Task
 plan Judge when its target covers both scopes. Preserve full global future gaps
 and a separate passing phase result; a pre-start definition assessment does not
 claim product delivery. The shared helper returns a truthful pre-session ordinary
@@ -148,7 +147,7 @@ reset grants, review ordinals or stopped-work boundaries. If native subagents
 are unavailable, report the actual capability gap and obtain a supported
 alternative without silently switching harnesses or inventing independence.
 
-Keep the five stable Procedure IDs; the current source versions are Task
+Preserve the five stable canonical Procedure IDs alongside distinct qualified adaptive identities; the current source versions are Task
 `32`, Goal `35`, Validation `34`, Design `11` and War-room `11`. Preserve exact
 prior sources, customized bytes, immutable sessions and historical reports,
 including role/configuration/task/result/Podway digest domains. Recognized prior
