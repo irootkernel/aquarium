@@ -50,7 +50,12 @@ recovery. Explicit ordinary-assignment helpers now select by fit and prepare
 exact source/binding candidates within approved scope. Explicit whole/fragment
 composition resolves typed ports and namespaces into self-contained candidates.
 Guarded qualification and exact pre-start suitability/bootstrap assess those
-candidates through ordinary reports. Task, Goal, Validation, Design and Diagnosis selection and mapped execution are implemented. Shared unexpected running-session replacement uses explicit consent and native atomic preserve-start; promotion and installed integration remain planned. Existing
+candidates through ordinary reports. Task, Goal, Validation, Design and Diagnosis
+selection and mapped execution are implemented. Shared unexpected running-session
+replacement uses explicit consent and native atomic preserve-start. Whole or
+fragment preservation needs specific content consent after original finalization
+and a separate grant for its commit. Cross-family recovery and seven-entrypoint
+VM tools are prepared; exact installed integration remains TASK-146. Existing
 installed skill and native contracts apply until the corresponding authorized
 update. The roadmap owns task order and status.
 

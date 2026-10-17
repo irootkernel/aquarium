@@ -127,8 +127,9 @@ Complete development functional verification before release preparation.
 Release acceptance checks whether an existing installed system accepts the exact
 candidate and starts real work. [VM preparation and results](tests/vm/README.md)
 and [release scenarios](tests/vm/release-acceptance.md) define the reusable manual
-methods. `make test-vm` executes the guest driver and fixed scenarios. Helper
-tests exercise guards, actual byte/source identity, native-result correlation,
+methods. `make test-vm` runs only release upgrade/startup scenarios; adaptive
+development uses the explicit compatible-Python `development` operation and its
+separate adaptive result. Helper tests exercise guards, actual byte/source identity, native-result correlation,
 failure propagation and recovery without providers; they do not verify skills.
 
 Invoke that gate only through release-handler or Master's explicit VM-test
@@ -262,8 +263,8 @@ known reuse without extra assessment cycles. These skill behaviors remain
 unverified by the unit and source-only native checks. Candidate installation and
 installed observations stay with the authorized VM integration work.
 
-Each family implements its own minimum resume path. TASK-145 completes and commits
-VM driver/fixture extensions, including
+Each family implements its own minimum resume path. TASK-145 prepares cross-family recovery and consent-based promotion controls and
+the VM driver/fixture extensions for their accepted commit before TASK-146, including
 explicit canonical-source selection, adaptive semantic checkpoints and the
 actual Ouroboros/clipboard prerequisites for applicable cases. TASK-146 observes
 the exact committed candidate, rather than its own uncommitted driver changes.
@@ -433,3 +434,26 @@ superseded lineage and same-request outcome recovery without begin or authority
 reset. Disposable released-native observations establish only their recorded
 source/lifecycle layer; actual diagnosis, upstream QA, installed handler decisions
 and Master functional verification remain separate and unverified unless observed.
+
+## Preservation and adaptive guest cases
+
+Focused objective tests cover grouped exact whole/fragment offers, decline and
+partial consent, finalization before tracked application, separate promotion
+commit grants, local recovery preservation, exact binding/representative native
+checks and unsafe/concurrent target rejection. They use synthetic ordinary use,
+consent and finalization records; they cannot establish actual usefulness or user
+acceptance. Cross-family tests exercise prepared/running aliases, origin loss,
+conflicting keys and shared superseded lineage through existing adapters.
+
+`tests/vm/run_acceptance.py seed-development|development` extends the existing
+manually authorized guest driver with all seven entrypoints. The committed
+`adaptive_cases.py`, case inventory and intermittent diagnosis fixture add
+source/binding/native evidence checks, actual public role/result correlation,
+exact target and user decision checks, selected upstream readiness and leaf
+results, conditional PM clipboard authority, no-initialization and unchanged
+product oracles. Fixed Task/Epic canonical regressions retain their source-pinned
+checkpoints. No ordinary Make stage runs a provider or a VM. TASK-146 must run
+these tools from the matching clean committed candidate; missing prerequisite,
+role, approval or installed evidence stays incomplete. Actual manual handler
+functional checks, including preservation recommendations and decisions, remain
+unverified until observed under that separate authority.

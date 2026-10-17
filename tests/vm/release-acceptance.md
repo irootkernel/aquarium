@@ -124,3 +124,21 @@ development-verification obligations, not required repetitions in this release
 case. A startup gate that prevents the approved work fails. Missing required
 public native observations, uncertain mutator settlement or unresolved cleanup
 leaves the case incomplete.
+
+## Adaptive development cases
+
+The source-pinned canonical release regressions above remain required for their
+release scope. EPIC-026's separate development suite is selected with
+`suite: adaptive-development` in the external request and uses the same guest,
+clean-candidate, installed-byte and public-native guards. Prepare it with
+`seed-development`; run all seven committed case descriptors before claiming
+integrated adaptive coverage. See [the executable usage and capture contract](README.md#adaptive-development-verification).
+
+These cases check actual original-source audit, work/evidence/Decision mapping,
+returned role reports, exact approved documents and functional oracles. They
+include a non-Git project with no initialization and an isolated intermittent
+sample-loss diagnosis with unchanged product bytes. Missing selected upstream
+readiness, PM clipboard authority, actual user approval, complete native evidence
+or settled descendants is incomplete. Tool preparation and unit passes are not
+installed results; preserve each actual scenario's candidate, combination,
+failures, corrections and unperformed outcomes separately.

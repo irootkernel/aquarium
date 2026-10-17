@@ -131,6 +131,14 @@ With Podway active, follow [Finalize Before Reporting Completion](../../referenc
 
 Declare validator completion only after the closeout readiness above, actual user acceptance, and the verified required commit or explicit no-change result with no validation-owned residue. Verify that every member task and the Epic have roadmap-defined successful states. With Podway active, finalization must also be verified.
 
+At the final Validation presentation, check actual successful Procedure use for
+distinct future reuse value and follow
+[Procedure preservation](../../references/procedure-promotion.md#closeout-callers)
+for eligible grouped whole/fragment offers. Preserve actual cold acceptance;
+preservation consent and any promotion commit grant are separate. An enclosing
+Epic Primary may group these candidates with its final presentation. Apply only
+after original accepted closeout and required native finalization.
+
 ## Hand Off Commits and Report Safely
 
 Every actual remediation, lifecycle, or actionable-handoff commit goes through `$aquarium:task-commit`. Include repository, roadmap, task or epic ID, lifecycle and record decisions, release-note decision, isolated scope, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, the consumed `assessment-ordinal` and `assessment-kind` or their explicit inapplicability, the waiver summary or explicit inapplicability, the complete local-settlement composition defined by the shared finding-disposition contract or its explicit inapplicability, zero or more promoted manifest path and digest pairs or their explicit absence, and one-commit authority.

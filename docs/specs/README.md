@@ -30,8 +30,8 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 
 [EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
 plans goal-specific Procedure selection and composition across seven handlers.
-Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns the remaining
-family activation and preservation-consent requirements.
+Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns remaining integrated
+installed verification and actual Epic acceptance.
 Selected exact-known-source admission, atomic ignored retention and native-tuple
 recovery are implemented. Ordinary assignments support fit selection and
 source-only preparation, including self-contained whole/fragment composition.
@@ -39,7 +39,12 @@ These interfaces join the closed definition formats and necessary declaration
 signatures in the
 [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
 Explicit shared helpers implement guarded structural qualification and exact
-pre-start suitability/bootstrap. Task, Goal, Validation, Design and Diagnosis activation and shared consented atomic supersede are implemented. Implementing tasks must promote
+pre-start suitability/bootstrap. Task, Goal, Validation, Design and Diagnosis
+activation and shared consented atomic supersede are implemented. Whole/fragment
+preservation now applies after original finalization under specific content
+consent and a separate promotion commit grant. Cross-family recovery tests and
+seven-entrypoint guest tools are implemented; installed integration remains
+unobserved. Implementing tasks must promote
 verified behavior to its exact skill/reference and update
 this catalog without replacing the existing ordinary v2 and review contracts.
 

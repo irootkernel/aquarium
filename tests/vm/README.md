@@ -310,3 +310,104 @@ leaves the run non-passing.
 Reuse these definitions across releases; results apply only to their recorded
 candidate and installed combination under the release policy. Future EPIC-019
 Haepari host submission reuses this guest entrypoint and scenario catalog.
+
+## Adaptive development verification
+
+EPIC-026 extends this driver with committed
+[case descriptors](fixtures/adaptive/cases.json),
+[semantic checks](adaptive_cases.py) and an
+[intermittent diagnosis fixture](fixtures/adaptive/diagnosis/sampler.py).
+TASK-145 prepares these tools; actual installed observations belong to TASK-146.
+The existing release `run` suite still verifies upgrade preservation and explicit
+canonical Task/Epic startup. Its fixed node assertions apply only to those
+source-selected regressions. Development cases exercise different actual
+producer/evidence/Decision structures and their admitted mappings.
+
+Use the same guarded external request, exact clean candidate and tools. Set
+`"suite": "adaptive-development"` to identify development intent and use the
+explicit guest commands below. `run` and `make test-vm` are release-only and
+reject that suite; they never substitute adaptive results for release acceptance:
+
+```sh
+<supported-python> -B tests/vm/run_acceptance.py seed-development --request <request.json>
+<supported-python> -B tests/vm/run_acceptance.py development --request <request.json>
+```
+
+`seed-development` creates seven separate case directories. It refuses existing
+paths. Use installed approved repository setup for Git-backed cases; leave
+`adaptive-project` without `.git` or `.podway`. Do not manufacture released
+upgrade baselines with candidate sources. Development execution still verifies
+clean matching candidate checkout, artifact and installed bytes, native plugin
+registration, fresh installed skill discovery, exact tools and guest identity.
+An existing per-case candidate/combination/authority binding prevents reusing old
+results or handles as a pass for a different candidate. Public native collection
+must complete and every started descendant must settle.
+
+The default development run covers all seven entrypoints. Optional
+`development_cases` selects explicit case names for affected re-verification;
+report that subset as partial evidence. `case_leaves` may select additional
+supported upstream leaves for a case while retaining its declared due leaves.
+The selected current-home Ouroboros package/rules/skills/MCP prerequisites must
+be configured; actual leaf results must link to completed public native
+operations. Configuration alone does not prove live provider behavior. When PM
+is selected, include actual `clipboard_authority` with `source: user`,
+`replace: true` and its authority `reference` before invoking it. No clipboard
+permission is required for cases that do not use PM. The driver never installs,
+repairs, reads the previous clipboard or silently waives a missing prerequisite.
+Select an existing compatible interpreter with YAML and `jsonschema`; system
+Python and a repository-local development environment are not assumed. Invoke
+`development` directly with that interpreter; the ordinary Make interpreter
+selection remains unchanged. Development success and failure use
+`aquarium.vm-adaptive-result/v1` at `adaptive-result.json`; release `run` uses
+`aquarium.vm-acceptance-result/v1` at `result.json`.
+
+Each case captures original assignments and actual returned ordinary v2 reports
+inside its own `<case>-capture` directory, the only adaptive `--add-dir` scope.
+Driver-owned original recursive product images and candidate bindings live outside
+that agent capture, under `adaptive-state/<case>/`, including on same-thread
+resume. Product images exclude only `.git`, `.venv`, Python caches,
+`.podway/runtime`, local `.podway/procedures/.local` and `.candidates` bundles,
+and `.gaori/runs`; tracked files remain included even under an excluded directory.
+All other product files, including ignored files, documents and managed sources,
+are included. The entire changed path set and each before/after image must equal
+the actual approved document proposal. These document-only fixtures permit
+approved Markdown (`.md`) targets at custom roots as well as their existing
+paths; consent cannot authorize edits to product code or new implementation.
+This is fixture scope, not a production path policy. Reasoned no-change requires
+an empty string diff, empty targets, unchanged bytes and a nonblank reason;
+every proposal diff must be a string.
+Reports identify assessed files as `target.files`, a relative-path to SHA-256 map. The driver correlates real native
+Worker/Judge children and complete returned results; cold validation can use a
+Judge without an unused corrective Worker. It compares every due original
+criterion, current target bytes and the case oracle while preserving future
+unverified rows. Synthetic unit reports prove only the checks, never installed
+agent behavior.
+
+Git-backed adaptive cases recover the current exact source/binding through the
+installed public context helper. Their family, source bytes, native tuple,
+current role and selected producer/item values must agree. The source must show
+an actual structural difference from its canonical regression, not only renamed
+placements. Fenced native evidence reads must include the real returned Judge
+report or its exact content digest. This instrumentation belongs only to these
+VM cases and adds no ordinary startup receipt or authentication protocol.
+Non-Git project verification checks documents and absence of Git/Podway without
+invoking a native observer on that branch.
+
+Document cases require a real operator reply through the existing `reply`
+operation, using the actual case handle. For the test capture, send one JSON
+object with `schema: aquarium.vm-document-decision/v1`, `decision: approved`,
+an explicit decision `reference`, and the full exact `proposal` object.
+The saved `application_approval` must match that actual public user message.
+Rejected/request-changes decisions, agent messages and quoted proposals cannot
+supply approval. Recheck current postimages after application. This capture
+format is VM instrumentation, not a new product approval exchange.
+
+The diagnosis oracle preserves product bytes and reproduces missing samples at
+sequences 2 and 5. Capture original expected/observed evidence, competing isolated
+experiments, actual raw QA and faithful incomplete/no-work or established
+conclusions. No particular conclusion is forced to make the fixture pass.
+Design cases preserve product code and require specifically approved documents;
+non-Git planning cannot initialize a repository merely to run Podway. Missing
+reports, prerequisites, approvals or selected evidence remain incomplete.
+Failure preserves native handles and original observations for same-operation
+recovery. Run results never grant final Task, Epic or release acceptance.

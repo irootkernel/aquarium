@@ -1,0 +1,115 @@
+{
+  "schema": "aquarium.vm-adaptive-cases/v1",
+  "cases": {
+    "adaptive-task": {
+      "entrypoint": "task-handler",
+      "family": "task",
+      "request": "TASK-001",
+      "fixture": "greeting",
+      "oracle": "uppercase",
+      "leaves": [],
+      "criteria": [
+        "uppercase-default",
+        "uppercase-name",
+        "existing-behavior"
+      ]
+    },
+    "adaptive-epic": {
+      "entrypoint": "epic-handler",
+      "family": "goal",
+      "request": "EPIC-001",
+      "fixture": "greeting",
+      "oracle": "uppercase",
+      "leaves": [],
+      "criteria": [
+        "uppercase-default",
+        "uppercase-name",
+        "existing-behavior"
+      ]
+    },
+    "adaptive-validation": {
+      "entrypoint": "epic-validator",
+      "family": "validation",
+      "request": "EPIC-001",
+      "fixture": "delivered-greeting",
+      "oracle": "unchanged",
+      "leaves": [],
+      "criteria": [
+        "original-source-audit",
+        "complete-result",
+        "no-product-change"
+      ]
+    },
+    "adaptive-feature": {
+      "entrypoint": "new-feature",
+      "family": "design",
+      "request": "Design a JSON-output greeting option; preserve existing output and do not implement product code.",
+      "fixture": "greeting",
+      "oracle": "documents",
+      "leaves": [
+        "interview",
+        "seed",
+        "qa"
+      ],
+      "criteria": [
+        "original-design-requirements",
+        "faithful-qa",
+        "approved-documents",
+        "no-product-change"
+      ]
+    },
+    "adaptive-project": {
+      "entrypoint": "new-project",
+      "family": "design",
+      "request": "Design a small offline greeting CLI in this non-Git directory. Do not initialize Git or Podway, and do not implement product code.",
+      "fixture": "non-git",
+      "oracle": "non-git-documents",
+      "leaves": [
+        "interview",
+        "pm",
+        "qa"
+      ],
+      "criteria": [
+        "original-design-requirements",
+        "faithful-qa",
+        "approved-documents",
+        "no-initialization"
+      ]
+    },
+    "adaptive-refactor": {
+      "entrypoint": "refactor",
+      "family": "design",
+      "request": "Design extraction of greeting formatting from the CLI while preserving all public bytes. Do not implement the refactor.",
+      "fixture": "greeting",
+      "oracle": "documents",
+      "leaves": [
+        "interview",
+        "seed",
+        "qa"
+      ],
+      "criteria": [
+        "original-design-requirements",
+        "faithful-qa",
+        "approved-documents",
+        "no-product-change"
+      ]
+    },
+    "adaptive-diagnosis": {
+      "entrypoint": "war-room",
+      "family": "diagnosis",
+      "request": "Diagnose why sampler.py returns null for some sequential calls (0 through 5). Expected: a sample object for every nonnegative sequence. Preserve sampler.py. Use isolated experiments, competing hypotheses and original intermittent evidence; report incomplete or no-work honestly if appropriate. Apply only specifically approved diagnosis documents or explicit approved no-change.",
+      "fixture": "diagnosis",
+      "oracle": "diagnosis",
+      "leaves": [
+        "qa"
+      ],
+      "criteria": [
+        "original-symptom",
+        "isolated-evidence",
+        "faithful-qa",
+        "approved-documents",
+        "no-product-change"
+      ]
+    }
+  }
+}

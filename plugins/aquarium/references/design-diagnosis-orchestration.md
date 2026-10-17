@@ -79,6 +79,15 @@ Design Gates apply only to an already enrolled registry.
 
 ## Final assessment and retained history
 
+At final Design or Diagnosis delivery, check whether an actually used Procedure
+operated successfully and has distinct future reuse value. If so, follow
+[Procedure preservation](procedure-promotion.md#closeout-callers) for a grouped
+read-only whole/fragment offer and specific content consent, with separate commit
+authority. Original document or no-change approval does not grant preservation.
+Finish original accepted delivery and required native finalization before
+applying consented library content. Skip this path before helper/native discovery
+when no Procedure was used, including non-Git and opted-out paths.
+
 The Primary final evidence index and applicable independent Judge assessment precede the
 original native `assess-goal`. Achievement requires the exact `achieved` outcome,
 pass verdict, zero mandatory unmet/unverified rows and fresh assessments of

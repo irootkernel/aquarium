@@ -56,6 +56,18 @@ A validation-remediation handoff identifies the source assessment separately fro
 
 A design or diagnostic delivery-input handoff uses the same fields, retains its verified `change-origin`, and names its owning workflow and current session when present. If no task or epic applies, record that relationship explicitly instead of inventing an ID; when no roadmap exists, mark its path inapplicable. Preserve the actual design or diagnostic quality evidence and mark Task-review-specific fields inapplicable. Require separate one-commit authority and exact candidate acceptance; this variant carries no member-Task commit grant.
 
+A Procedure-library promotion handoff is separate from the original completed
+work. Follow [Procedure promotion](../../references/procedure-promotion.md):
+require specific accepted whole/fragment content and exact paths/diff, original
+accepted commit or verified no-commit and required native finalization, source
+checks and applicable review/settlement/acceptance, and an explicit unconsumed
+promotion commit grant. Preserve the true originating workflow, Task and Epic;
+record no original lifecycle or status-record edit. Broad editing authority or
+the original member grant does not cover this commit. Content consent without a
+matching commit grant leaves the approved library diff uncommitted. Never amend
+the original closeout or reopen its completed goal because optional promotion
+is declined or delayed. Add no preservation-only mandatory multiagent review.
+
 A release-handler commit handoff must retain its verified `change-origin` and name the repository, intended and previous versions, exact operation (`settlement`, `retarget`, `release`, or `next-cycle`), changelog path and approved hunk, exact commit scope, `intentional no-note`, applicable QA and release-gate evidence or their explicit inapplicability, and the user's one-commit authorization. It grants no push, tag, hosted Release, destructive replacement, or later commit authority.
 
 For a direct commit following a separately completed Aquarium workflow, consume its verified `change-origin` without treating that result as commit authority. Recheck the origin against the intended diff and keep its original skill; do not replace setup or design origins with `task-commit`. An unavailable or stale supplied origin must be resolved before committing. Existing direct-commit relationship and release-note approvals still apply.

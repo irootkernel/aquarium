@@ -149,6 +149,14 @@ At `record-outcome`, prepare the complete final presentation and exact closeout 
 
 - With Podway active, after the final `$aquarium:task-commit` return or verified no-change result, apply the shared finalization procedure before reporting Epic handler completion. Verify the closeout session is `completed`; record and verify `handed_off` only for an authoritative closeout commit, or `not_required` with the verified no-change reason when no final repository result is required, even if earlier remediation commits exist. Leave the final terminal session intact.
 
+At the final Epic presentation, check successfully used member, Goal and
+Validation definitions for distinct future reuse value and follow
+[Procedure preservation](../../references/procedure-promotion.md#closeout-callers)
+for one grouped read-only offer. Ask specific whole/fragment content consent and
+any separate promotion commit grant alongside, but separately from, overall Epic
+acceptance. Keep member delivery moving; apply only consented content after the
+original closeout commit/no-commit result and required native finalization.
+
 ## Hand Off Commits and Report
 
 Each `$aquarium:task-commit` handoff includes repository, roadmap, work-unit ID, lifecycle and record decisions, release-note decision, isolated scope, verification evidence, `review-route`, `review-operation`, `review-evidence-reference`, `backend-check-result`, `assessment-provenance`, the consumed `assessment-ordinal` and `assessment-kind` or their explicit inapplicability, the waiver summary or explicit inapplicability, the complete local-settlement composition defined by the shared finding-disposition contract or its explicit inapplicability, zero or more promoted manifest path and digest pairs or their explicit absence, acceptance source, authority reference, exact accepted candidate, and the applicable unconsumed one-commit grant. A normal planned member Task cites the envelope's member grant; a reopened Task, pre-validation correction, or audit correction cites its correction grant; final closeout cites actual user acceptance and the conditional closeout grant. Uncovered effects require separate direct authority. A hardening handoff also includes its exact Mulgae run and finding IDs, committed publication, successful findings query, exact finding membership, and verified schema-specific native target binding with retained preflight and caller source-consistency observation for v2; other routes state that no hardening evidence applies. That skill owns staging, Lore and Sanho checks, commit execution, hook reconciliation, and snapshot verification. Never commit independently, ask for redundant commit approval, amend, or infer push authority.

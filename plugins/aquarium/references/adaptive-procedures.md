@@ -9,7 +9,7 @@ recovery. TASK-139 implements fit selection and approved source-only preparation
 through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
 composition through that preparation path. TASK-141 implements guarded structural
 qualification and exact ordinary pre-start suitability with bootstrap import.
-Task, Goal, Validation, Design and Diagnosis now use [adaptive execution](adaptive-execution.md), including shared explicitly consented atomic supersede. Cross-family closeout and promotion remain reserved for their owning tasks. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
+Task, Goal, Validation, Design and Diagnosis now use [adaptive execution](adaptive-execution.md), including shared explicitly consented atomic supersede. Cross-family recovery and consent-based preservation are implemented. Exact installed observations remain pending TASK-146. Existing ordinary v2 reports, canonical/custom sources and immutable formal v1 sessions retain their supported contracts.
 
 The repository's `docs/todo/TODO-ADAPTIVE-PROCEDURES.md` owns remaining
 implementation acceptance. The roadmap owns Task identity and lifecycle. This
@@ -342,9 +342,9 @@ Selected admission reports its interpreter and missing `jsonschema` or YAML
 dependency before native work. Use an available supported Python environment;
 the launcher performs no installation. The setup inspector imports adaptive
 dependencies only on its explicit selected path, preserving legacy invocations.
-Task/Goal/Validation execution uses selected runtime readiness before work; TASK-145 owns
-global/setup guidance. Each uses a
-supported installed environment and reports missing prerequisites. This contract
+All five activated families use selected runtime readiness before work. Setup
+selects an available compatible installed environment and reports missing
+prerequisites; target repositories need no development checkout. This contract
 authorizes no dependency installation or host runtime change.
 
 A binding contains:
@@ -592,7 +592,9 @@ uncommitted when that grant is absent. Content and commit consent may be one
 question. Declining keeps local
 recovery and completed original work. Changed/extracted definitions receive fresh
 schema/port checks and representative flattened native validation; source runtime
-success never transfers to them.
+success never transfers to them. The executable grouped offer and exact
+post-finalization application interface is owned by
+[Procedure promotion](procedure-promotion.md).
 
 ## Selected admission, retention and recovery
 
@@ -671,7 +673,7 @@ installed handler behavior.
 | TASK-142 | Implemented: Task/Goal/Validation selection, public adaptive admission/context forwarding, mapped due phase and handoff consumers, self-contained prepared/running recovery and original acceptance/finalization boundaries |
 | TASK-143 | Implemented: new-feature/new-project/refactor Design consumers, mapped upstream leaves, QA owner routing, exact application currency and prepared/running/non-Git/opt-out recovery |
 | TASK-144 | Implemented: war-room and design-diagnosis adaptive diagnosis; podway-integration and epic-handler successful-terminal-only replacement wording; task-orchestration, epic-orchestration, validation-orchestration and design-diagnosis-orchestration continuation rules for shared consented atomic supersede; preserve task-handler's prohibition on replacing a session merely to recover reports |
-| TASK-145 | task-commit promotion handoff; dev-setup and global-setup dependency guidance; agents-guidance and AGENTS managed/local source distinction; cross-family recovery; committed VM driver/fixtures |
+| TASK-145 | Implemented: exact whole/fragment preservation offer and post-finalization consented application, separate task-commit handoff, setup/source-role guidance, cross-family recovery controls and seven-entrypoint guest driver/fixtures; installed observations remain TASK-146 |
 | TASK-146 | committed-candidate observations and canonical document settlement; preserve original correction owners and actual Master acceptance |
 
 Positive fixtures must include all five canonical declarations, valid namespaced

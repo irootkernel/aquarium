@@ -558,7 +558,7 @@ For global diagnosis, use the compact `podway version --json` and `podway --json
 
 For routine managed-session admission, use `podway --json observe` in the owning worktree. Require Output v4 with observation-result v5, or Error v2 `SESSION_NOT_FOUND` for no current session. Check version identity, tracked configuration, native Procedure checks, handler compatibility and workspace health separately under [Podway Integration Contract](podway-integration.md#check-readiness-on-the-default-path). Status and compact status use v5 for both direct and delegated Procedures. A prepared, running or undisposed terminal session is a lifecycle matter, not setup repair authority.
 
-Preserve all five same-ID custom Procedures. Report source provenance as `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe` or `unverifiable`, and handler compatibility independently as `compatible`, `unqualified`, `incompatible` or `not_checked`. All absent means aggregate `readiness_status=not_configured`; complete-library readiness requires tracked regular non-symlink configuration and five native-valid, handler-compatible files plus healthy compatible runtime. Selected route membership is checked from exact source bytes after the selected source checks, independently of provider availability and an admitted immutable snapshot. Recognized prior-canonical bytes explain an offered update but never authorize replacement. Source changes apply to successor sessions.
+Preserve all five same-ID custom Procedures. Report source provenance as `canonical`, `valid_customization`, `invalid`, `missing`, `unsafe` or `unverifiable`, and handler compatibility independently as `compatible`, `unqualified`, `incompatible` or `not_checked`. All absent means aggregate `readiness_status=not_configured`; complete-library readiness requires tracked regular non-symlink configuration and five native-valid, handler-compatible files plus healthy compatible runtime. Selected route membership is checked from exact source bytes after the selected source checks, independently of provider availability and an admitted immutable snapshot. Recognized prior-canonical bytes explain an offered update but never authorize replacement. Source changes apply to successor sessions. Protected released managed copies, adopted repository customization, ignored local adopted bundles and optional reusable sources have distinct roles. Retained history and optional library entries are not adopted workflow policy merely because they exist. Specific post-use preservation consent may authorize new reusable sources; it never authorizes overwriting managed canonical copies or changing a running snapshot.
 
 The explicit selected-admission inspector separates `runtime_readiness` and the
 selected source/binding/route from aggregate `readiness_status`. It accepts a
@@ -577,10 +577,17 @@ This path uses the [adaptive launcher](../shared/manage_adaptive_procedure.py)
 with an available supported Python interpreter, YAML and `jsonschema`. It reports
 missing prerequisites explicitly and does no installation. Ordinary inspector
 invocations do not import adaptive dependencies. Runtime/setup environment
-guidance remains with the later activation and setup owners; target repositories
-must not assume Aquarium's development `.venv` exists. Until TASK-141, new adaptive
-admission is limited to exact supported known-source/reference bindings. No
-family is activated by this setup interface.
+guidance selects an existing compatible installed interpreter explicitly; target
+repositories must not assume Aquarium's development `.venv` exists. Confirm that
+the selected interpreter imports YAML and `jsonschema` before using the launcher.
+An already installed isolated tool environment may supply them. Missing imports
+remain `missing-prerequisite`; repository setup does not install dependencies as
+a side effect. Aquarium currently has no global installer component that
+provisions a combined YAML and `jsonschema` environment. If no compatible
+interpreter can import both, report the diagnosed/manual prerequisite gap;
+any environment provisioning needs its own exact supported proposal and
+authority. All five families now use qualified selected-source admission; setup
+inspection itself neither starts sessions nor grants execution authority.
 
 Tracked or untracked `root-kernel-*-v2.yaml` files retain their separately diagnosed product-rename migration. Preserve existing sessions and custom sources before an approved managed update. Never create an ownership manifest or a second source of Procedure authority.
 
@@ -595,7 +602,7 @@ podway --json procedure check --warnings-as-errors <procedure-file>
 podway --json procedure preview <procedure-file>
 ```
 
-Task/Goal/Validation handlers use [adaptive selected admission](adaptive-execution.md) for the actual source and route, independently of aggregate library completeness. The following filename/ID inventory remains the ordinary managed-library diagnostic and legacy/setup contract.
+Task, Goal, Validation, Design and Diagnosis handlers use [adaptive selected admission](adaptive-execution.md) for the actual source and route, independently of aggregate library completeness. The following filename/ID inventory remains the ordinary managed-library diagnostic and legacy/setup contract.
 
 Match each filename to preview's `procedure_id`. The required IDs are `aquarium-task-v2`, `aquarium-goal-v2`, `aquarium-validation-v2`, `aquarium-design-v2` and `aquarium-war-room-v2`. Their presence establishes readiness, not workflow activation. Native validity and handler compatibility remain separate checks. The setup inspector needs PyYAML to qualify declared review routes even when a prior-canonical digest establishes general handler compatibility.
 

@@ -146,6 +146,10 @@ def load_request(path):
         request.get("schema") == REQUEST_SCHEMA,
         f"request schema must be {REQUEST_SCHEMA}",
     )
+    require(
+        request.get("suite", "release") in {"release", "adaptive-development"},
+        "unknown VM suite",
+    )
     # This guard precedes directory creation, local imports and native dispatch.
     identity = guest_guard(request.get("expected_guest_uuid"))
     authority = request.get("authority", {})
@@ -266,7 +270,9 @@ def installed_plugin(request, marketplace, plugin):
     return row
 
 
-def discover(request, fixture, plugin):
+def discover(
+    request, fixture, plugin, *, skills=("dev-setup", "task-handler", "epic-handler")
+):
     from native_observation import ObservationError
     from native_observation import discover as native_discover
 
@@ -277,7 +283,7 @@ def discover(request, fixture, plugin):
     available = {
         skill["name"]: skill for row in result["data"] for skill in row["skills"]
     }
-    for name in ("dev-setup", "task-handler", "epic-handler"):
+    for name in skills:
         skill = available.get(f"aquarium:{name}", {})
         require(skill.get("enabled") is True, f"installed skill unavailable: {name}")
         path = Path(skill["path"]).resolve()
@@ -737,7 +743,9 @@ def verify_setup(request, root, name, handle, *, plugin, before=None, observatio
     }
 
 
-def invoke(request, root, case, prompt, *, reply=None, resume_thread=None):
+def invoke(
+    request, root, case, prompt, *, reply=None, resume_thread=None, repository=None
+):
     directory = root / "operations" / case
     previous = sorted(directory.glob("*.invocation.json")) if directory.exists() else []
     logs = sorted(directory.glob("*.jsonl")) if directory.exists() else []
@@ -759,7 +767,7 @@ def invoke(request, root, case, prompt, *, reply=None, resume_thread=None):
     require(not (resume_thread and previous), "initial resume already dispatched")
     directory.mkdir(parents=True, exist_ok=True)
     prefix = directory / f"{len(previous):03d}"
-    repository = root / (
+    repository = repository or root / (
         "epic"
         if "epic" in case
         else "preservation"
@@ -772,7 +780,11 @@ def invoke(request, root, case, prompt, *, reply=None, resume_thread=None):
         "--json",
         *request.get("codex_args", []),
         "--add-dir",
-        str(root / case) if case.endswith("-startup") else str(root),
+        str(root / (case + "-capture"))
+        if case.startswith("adaptive-")
+        else str(root / case)
+        if case.endswith("-startup")
+        else str(root),
         "--output-last-message",
         str(prefix) + ".last",
     ]
@@ -1428,6 +1440,7 @@ This release smoke requests actual first-member uppercase delivery, refinement,
 checks, independent Judge assessment and the first semantic progression. Stop
 at a safe partial boundary after that delivery assessment; do not claim full
 Task/Epic completion, execute the repeat member, commit or publish.
+Explicitly select the released canonical {"aquarium-task-v2" if name == "task" else "aquarium-goal-v2"} source for this fixed regression; do not use adaptive generation here.
 Original due smoke criterion IDs and meanings: {json.dumps(CRITERIA)}.
 Preserve every applicable original criterion and future global gap in ordinary
 v2 reports. Save original Worker/Judge assignments and actual JSON role reports
@@ -1573,7 +1586,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "operation",
-        choices=("guard", "seed", "baseline", "setup", "reconcile", "run", "reply"),
+        choices=(
+            "guard",
+            "seed",
+            "seed-development",
+            "development",
+            "baseline",
+            "setup",
+            "reconcile",
+            "run",
+            "reply",
+        ),
     )
     parser.add_argument("--request", default=os.environ.get("AQUARIUM_VM_REQUEST"))
     parser.add_argument(
@@ -1582,6 +1605,13 @@ def main():
             "task-startup",
             "epic-startup",
             *(name + "-setup" for name in FIXTURES),
+            "adaptive-task",
+            "adaptive-epic",
+            "adaptive-validation",
+            "adaptive-feature",
+            "adaptive-project",
+            "adaptive-refactor",
+            "adaptive-diagnosis",
         ),
     )
     parser.add_argument("--fixture", choices=FIXTURES)
@@ -1596,6 +1626,14 @@ def main():
             result = {"outcome": "guest-verified", "identity": identity}
         elif args.operation == "seed":
             result = seed(request, root)
+        elif args.operation in {"seed-development", "development"}:
+            import adaptive_cases
+
+            result = (
+                adaptive_cases.seed(sys.modules[__name__], request, root)
+                if args.operation == "seed-development"
+                else adaptive_cases.run(sys.modules[__name__], request, root)
+            )
         elif args.operation == "baseline":
             result = baseline(request, root)
         elif args.operation == "setup":
@@ -1626,19 +1664,40 @@ def main():
                 )
             else:
                 identifier = invoke(
-                    request, root, args.case, "", reply=args.reply_file.read_text()
+                    request,
+                    root,
+                    args.case,
+                    "",
+                    reply=args.reply_file.read_text(),
+                    repository=root / args.case
+                    if args.case.startswith("adaptive-")
+                    else None,
                 )
                 result = {"outcome": "reply-delivered", "thread_id": identifier}
         else:
+            require(
+                request.get("suite") != "adaptive-development",
+                "run/test-vm requires the release suite; use development explicitly",
+            )
             result = run_gate(request, root)
     except Exception as error:  # noqa: BLE001 - classify malformed report shapes at the CLI boundary
         result = {
-            "schema": "aquarium.vm-acceptance-result/v1",
+            "schema": "aquarium.vm-adaptive-result/v1"
+            if args.operation in {"development", "seed-development"}
+            else "aquarium.vm-acceptance-result/v1",
             "outcome": getattr(error, "outcome", "incomplete"),
             "problem": str(error),
         }
-    if args.operation == "run" and root is not None:
-        write_json(root / "result.json", result)
+    if args.operation in {"run", "development"} and root is not None:
+        write_json(
+            root
+            / (
+                "adaptive-result.json"
+                if args.operation == "development"
+                else "result.json"
+            ),
+            result,
+        )
     print(json.dumps(result, ensure_ascii=False))
     return {"fail": 1, "incomplete": 2}.get(result["outcome"], 0)
 

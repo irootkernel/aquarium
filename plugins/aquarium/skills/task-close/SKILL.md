@@ -42,6 +42,14 @@ Preserve an existing terminal state. For a non-terminal task, show its exact cur
 
 If the user keeps the task non-terminal or cancels, do not commit and return the exact remaining gap. Otherwise show the exact proposed status-only edit before asking for final approval.
 
+For an actually used Procedure with successful operation and distinct future
+reuse value, follow [Procedure preservation](../../references/procedure-promotion.md#closeout-callers)
+to prepare the read-only grouped offer with this closeout presentation. Return
+any exact content consent and separate promotion grant in the ordinary handoff;
+the parent applies it only after original finalization. Under an Epic envelope,
+let its Primary group member candidates at Epic closeout. Skip this when no
+eligible Procedure was used.
+
 ## Ask for Final Approval
 
 Present or identify the exact final task diff, selected status edit, record decision as an exact proposed edit or explicit `no record edit`, and whether a commit is proposed. Include any dossier disposition already settled in that diff. Use structured `request_user_input` when available and ask all three questions together:

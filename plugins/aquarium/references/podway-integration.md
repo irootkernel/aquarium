@@ -146,6 +146,13 @@ If a commit succeeds but session completion or disposition fails or is uncertain
 
 Reuse acceptance after context restoration only when its actual decision, authority and exact candidate binding remain recoverable. A commit SHA or workflow attribution alone does not prove the user's closeout answers or delegated acceptance. If that proof is unavailable, preserve the existing result and session, report the acceptance gap, and obtain the required decision before recording approval or advancing an acceptance-dependent action. This does not authorize another commit.
 
+After these finalization postconditions hold, apply any exact specifically
+consented pending [Procedure preservation](procedure-promotion.md#decision-and-post-finalization-application)
+under its original closeout handoff. Content consent permits only its selected
+library writes; a separate matching promotion grant is required for its commit.
+Without that grant leave content uncommitted. Skip promotion when there is no eligible candidate or consent was declined. A promotion failure does not undo the
+original completed workflow or its retained recovery material.
+
 ## Record Terminal Disposition Conservatively
 
 Treat terminal disposition as a caller assertion about the result outside the session, not as workflow success, evidence publication, or a durable Aquarium record. It does not create a roadmap edit, commit, push, or agent handoff. Record one only after re-observing the exact completed or cancelled revision and verifying the asserted semantics against native authority.

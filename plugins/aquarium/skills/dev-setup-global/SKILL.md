@@ -9,6 +9,15 @@ Read [commit-attribution.md](../../references/commit-attribution.md) for message
 
 Own installation, exact-upstream freshness, upgrades, services, and global Codex integration for the supported components listed below without inspecting or changing repository configuration.
 
+Adaptive launchers need an explicitly selected available Python environment with
+YAML and `jsonschema`. Reuse a compatible installed environment when available;
+end-user repositories need no Aquarium development checkout or `.venv`. Missing
+dependencies remain a diagnosed/manual prerequisite gap: no current Aquarium
+global component provisions both imports. Do not invent an installer or package
+pin. Any separately proposed environment provisioning needs its own supported
+source and authority; plugin update and repository configuration do not grant
+it. See [the Podway catalog](../../references/tool-catalog.md#podway).
+
 ## Check Request Scope Before Loading References
 
 Aquarium plugin installation and updates belong to the host's plugin-management flow. A request to install or update only the Aquarium plugin, including a specific version, does not select this skill. If this skill was selected for that request, return to the host's plugin-management flow before reading the tool catalog or running any diagnostic. Do not infer a global tool setup request from plugin installation.

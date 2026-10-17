@@ -163,6 +163,12 @@ finish only the pending native terminal work. Never repeat the commit. Normal
 declared rework and approved disposed-terminal successors use existing native
 operations without another question. Unexpected missing topology in a running session uses the explicitly consented atomic transition below. Preserve the old snapshot while preparing and qualifying its successor.
 
+At closeout, follow [Procedure preservation](procedure-promotion.md#closeout-callers)
+for eligible definitions with established successful use and distinct future reuse value. Group offers in the
+Task/Epic or final Design/Diagnosis presentation; content consent and any separate
+commit grant do not alter original acceptance. Apply only after the original
+workflow finalizes. Skip the helper when no eligible Procedure was used.
+
 ## Design entrypoints
 
 `new-feature`, `new-project` and `refactor` use the same exact tuple resolver,

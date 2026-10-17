@@ -38,7 +38,11 @@ control/evidence/rework ports before those same fit, storage and native checks.
 Namespace expansion preserves native semantic operation identities and declared
 formal contracts. Guarded source qualification and exact ordinary pre-start
 suitability/bootstrap use the same retained definition boundary. Task, Goal, Validation, Design and Diagnosis consume those definitions through the shared mapped execution adapter. Unexpected topology replacement uses one explicitly consented native preserve-start operation with archived lineage and same-key recovery; it adds no executor or central state.
-Existing sessions and installed source contracts retain their current behavior.
+Grouped post-use preservation offers and specifically consented post-finalization
+library publication use the existing source and authority boundaries. Cross-family
+recovery checks and guest tooling cover all seven entrypoints; actual installed
+observations remain pending. Existing sessions and installed source contracts
+retain their current behavior.
 
 ## Exact Authorities
 

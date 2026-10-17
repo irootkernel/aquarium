@@ -308,3 +308,29 @@ owns invocation mappings, actual independent assessment/bootstrap import, due
 Task leaf loading, plan artifact verification, same-operation retrieval and
 commit-success/finalization recovery. Original source coverage and applicable
 review/acceptance/grants remain ordinary workflow responsibilities.
+
+## Reusable Procedure preservation
+
+`shared/promote_adaptive_procedure.py offer|apply --repository <worktree>
+--input <closeout-json-or-dash> --podway <explicit-binary>` uses the
+[ordinary closeout input and exact content consent](../../plugins/aquarium/references/procedure-promotion.md).
+`offer` is read-only and returns grouped `preservation-offer` source/binding or
+fragment/mapping/representative payloads, proposed diffs and native checks.
+`apply` returns `preservation-declined` for an empty accepted subset, or
+`promotion-applied` for exact consented content after original accepted commit or
+verified no-commit and required native finalization. Optional matching promotion
+commit authority produces a task-commit handoff; the helper never stages or
+commits. Success returns exit 0; typed input, consent, finalization, path,
+prerequisite and native failures return JSON status/message/details and exit 2.
+A supplied mismatching/consumed promotion grant returns exit 2
+`commit-authority-required` with `details.applied`: consented files already exist
+uncommitted, and no commit handoff is produced. Same-proposal recovery preserves
+those files and can accept a matching grant. Local recovery material and original
+lifecycle remain unchanged.
+
+The guest-only driver adds `seed-development` and `development` for the
+[seven-entrypoint case inventory](../../tests/vm/fixtures/adaptive/cases.json).
+Its fixed canonical release regressions remain separate. Exact candidate/tools,
+public native role/result and selected evidence, original criteria, application
+approval and case oracles must pass; helper tests do not establish installed
+behavior. See [VM usage](../../tests/vm/README.md).
