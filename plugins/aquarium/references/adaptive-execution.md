@@ -150,6 +150,71 @@ settlement remains within its original effect grant, including confirmation-only
 review switch or waiver needs its existing explicit direction and native continuity
 gates, not a new routine question.
 
+A caller recovering approved finalization changes to original sources, including
+last-consumer deletion, may supply optional
+`qualification.finalization_recovery` in its existing context input. This is an
+in-session, Primary-only recovery path, not preparation or permission to resume product
+work. Keep the original assignment, suitability report, coverage and static basis.
+The input contains:
+
+- `sources`: original source `path` plus either an already retained worktree-local
+  `capture` path or a full immutable Git `commit`. Recovered bytes must match the
+  original source pin and the approved before-image. Recover each affected source,
+  including a roadmap changed alongside a deleted dossier. Do not substitute a
+  promoted summary or the approved new text for original criteria.
+- `proposal` and actual `approval`: the existing exact diff/targets approval shape,
+  checked against current applied postimages, including the approved source absence.
+  Source-edit reconciliation accepts `source: user` or `source: epic-delegation`;
+  preserve the actual provenance. Primary verifies the existing parent grant, work,
+  exact scope and remaining authority. Delegated source-edit approval establishes
+  no user acceptance, goal achievement or additional effect authority. Design
+  application retains its user-only approval requirement.
+- `assessment`: the current affected ordinary Judge report's existing `path` and
+  `sha256`. The due affected Judge assignment requests `target.files`, mapping
+  approved current paths to postimage SHA-256 values, and `target.deleted_before`,
+  mapping approved deleted paths to their original SHA-256 values. Both maps accept
+  bare or `sha256:`-prefixed identities. A deletion-only report may omit `files` or
+  use an empty map. The due checkpoint must pass; a null or absent
+  `checkpoint_result` uses `verdict`, while an explicit negative or empty checkpoint
+  result cannot fall back to it. A scoped pass can retain honest global future
+  gaps. Keep these maps in the existing ordinary report without a separate report
+  or duplicate Judge cycle.
+- `checkpoint`: the existing orchestration checkpoint with the current session,
+  revision, goal revision and exact Procedure tuple in `checkpoint.procedure`,
+  alongside its ordinary `work` identity. This public context can be the direct
+  status returned by execution context or the existing mapped dispatch shape
+  whose `procedure.native` contains that status. `checkpoint.native` carries the
+  harness and available public agent metadata. Historical local captures that
+  stored public workflow context in `native` remain supported only when
+  `procedure` is absent. A declared direct or wrapped `procedure` must be current;
+  a contradictory or malformed value never falls back to `checkpoint.native`.
+- `selected_evidence`: the existing native evidence-read envelope selecting that
+  exact report artifact from a mapped Judge in the current workspace. The report and
+  checkpoint must identify the same work. Available ordinary session, attempt,
+  source and binding metadata must agree; unavailable optional metadata needs no
+  duplicate snapshot. The original consumer need not remain active after completion.
+
+This optional path reads native `status --verbose` and compares its session, revision,
+goal revision and exact tuple with the initial observation. Native current-trace entries
+must establish that the selected producer and consumer attempts remain valid. An
+unchanged attempt counter alone cannot establish validity after native rework. An
+unavailable verbose status/history container or a non-list history entries contract
+returns `unsupported-runtime`. In supported current history, an absent or invalidated
+selected attempt returns `not-established`. The status and approved postimages are
+rechecked after qualification; a concurrent native change returns
+`reassessment-required`, and a changed postimage requires renewed approval.
+
+All original criteria and compound parts are extracted from the pinned original bytes
+and compared by the existing in-session suitability contract. Other original sources
+and the exact retained definition still receive their ordinary checks. Current report,
+agent, approval and native-chain provenance remain Primary responsibilities; declarations
+and artifact identities do not authenticate execution. This path returns
+`finalization-resolved` with `dispatch: null`, preserving current authority and pending
+operations. It permits only Primary reconciliation of the already authorized pending
+finalization/disposition and makes no achievement or acceptance claim. Missing evidence,
+source drift, changed approved postimages or changed static basis stop recovery. Strict
+pre-start pins and ordinary missing-source failure remain unchanged.
+
 `terminal-resolved` reports native state without claiming achievement. Native
 session-goal mappings, current final Judge and actual eligible acceptance own
 success. Task acceptance stays user-owned unless its existing parent workflow

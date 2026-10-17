@@ -208,7 +208,11 @@ def read_basis(repository, reference):
     return raw
 
 
-def requirements(repository, assignment, *, verify_sources=True):
+def requirements(repository, assignment, *, verify_sources=True, source_reader=None):
+    if source_reader is not None and verify_sources:
+        raise BundleError(
+            "invalid-input", "Original source recovery cannot replace pre-start reads"
+        )
     result = {}
     sources = object_rows(
         assignment["work"]["requirement_sources"], "requirement_sources"
@@ -233,7 +237,9 @@ def requirements(repository, assignment, *, verify_sources=True):
         }:
             continue
         raw = (
-            read_basis(repository, source)
+            source_reader(source)
+            if source_reader is not None
+            else read_basis(repository, source)
             if verify_sources
             else read_regular(repository, Path(source["path"]))
         )

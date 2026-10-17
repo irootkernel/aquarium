@@ -87,7 +87,9 @@ def quality(value):
     }
 
 
-def application(repository, proposal, approval, *, applied=False):
+def application(
+    repository, proposal, approval, *, applied=False, approval_sources=("user",)
+):
     """Re-read the exact approved targets before dispatch; the Worker rechecks before writes."""
     proposal = object_value(proposal, "design.proposal")
     targets = object_value(proposal.get("targets"), "design.proposal.targets")
@@ -97,7 +99,7 @@ def application(repository, proposal, approval, *, applied=False):
         )
     if (
         not isinstance(approval, dict)
-        or approval.get("source") != "user"
+        or approval.get("source") not in approval_sources
         or approval.get("decision") != "approved"
     ):
         return {"status": "approval-required", "next_owner": "Primary"}

@@ -153,9 +153,16 @@ def add_bootstrap(document, mapping):
     return document, mapping
 
 
-def current_basis(repository, assignment, *, in_session=False):
+def current_basis(repository, assignment, *, in_session=False, source_reader=None):
     """Original sources and current ordinary plan remain the requirements authority."""
-    criteria = requirements(repository, assignment, verify_sources=not in_session)
+    if source_reader is not None and not in_session:
+        raise BundleError("invalid-input", "Source recovery is in-session only")
+    criteria = requirements(
+        repository,
+        assignment,
+        verify_sources=not in_session,
+        source_reader=source_reader,
+    )
     if in_session:
         approved = assignment["target"]["prepared_definition"]["coverage_plan"][
             "criteria"
@@ -452,6 +459,7 @@ def qualify_prepared(
     source_path=None,
     binding_path=None,
     in_session=False,
+    source_reader=None,
 ):
     repository = Path(repository).resolve()
     object_value(assignment, "Ordinary assignment")
@@ -489,7 +497,9 @@ def qualify_prepared(
         )
     document = yaml.safe_load(source)
     try:
-        basis = current_basis(repository, assignment, in_session=in_session)
+        basis = current_basis(
+            repository, assignment, in_session=in_session, source_reader=source_reader
+        )
     except BundleError as error:
         if in_session and error.code == "reassessment-required":
             raise BundleError(
@@ -693,7 +703,10 @@ def qualify_prepared(
     bootstrap = bootstrap_import(document, binding, target, report)
     # Reconcile sources and target again before any retention effect.
     if (
-        current_basis(repository, assignment, in_session=in_session) != basis
+        current_basis(
+            repository, assignment, in_session=in_session, source_reader=source_reader
+        )
+        != basis
         or read_regular(repository, source_path) != source
         or read_regular(repository, binding_path) != binding_bytes
     ):
@@ -708,7 +721,13 @@ def qualify_prepared(
             if (
                 raw != source
                 or actual != binding
-                or current_basis(repository, assignment, in_session=in_session) != basis
+                or current_basis(
+                    repository,
+                    assignment,
+                    in_session=in_session,
+                    source_reader=source_reader,
+                )
+                != basis
             ):
                 raise BundleError(
                     "reassessment-required",

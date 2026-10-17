@@ -257,6 +257,15 @@ def execution_context(
             "session-conflict",
             "Observed session differs from the requested continuation",
         )
+    recovery = qualification.get("finalization_recovery")
+    source_reader = None
+    if recovery is not None:
+        from adaptive_finalization import finalization_observation, finalization_sources
+
+        recovery_observation = finalization_observation(client, observation)
+        source_reader, affected_assessment = finalization_sources(
+            repository, assignment, recovery, recovery_observation
+        )
     resolved = resume_selected(
         repository,
         roots,
@@ -264,6 +273,7 @@ def execution_context(
         client=client,
         bootstrap=bootstrap,
         qualification=qualification,
+        source_reader=source_reader,
     )
     binding = resolved["binding"]
     if (
@@ -307,6 +317,20 @@ def execution_context(
             "Native declarations and records do not establish independent execution or actual approval.",
         ],
     }
+    if recovery is not None:
+        from adaptive_finalization import selected_assessment
+
+        recovery_observation = finalization_observation(client, observation)
+        _, affected_assessment = finalization_sources(
+            repository, assignment, recovery, recovery_observation
+        )
+        selected_assessment(binding, recovery, affected_assessment)
+        result["status"] = "finalization-resolved"
+        result["next_owner"] = "Primary finalization/disposition"
+        result["limits"].append(
+            "Approved source retirement recovery permits no product dispatch and establishes no achievement."
+        )
+        return result
     lifecycle = status["session"]["lifecycle"]
     if lifecycle == "prepared":
         result["status"] = "prepared-resolved"

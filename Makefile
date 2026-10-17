@@ -34,6 +34,7 @@ PYTHON_FILES := \
 	plugins/aquarium/shared/adaptive_design.py \
 	tests/unit/test_adaptive_design_unit.py \
 	plugins/aquarium/shared/adaptive_execution.py \
+	plugins/aquarium/shared/adaptive_finalization.py \
 	tests/unit/test_adaptive_execution_unit.py \
 	plugins/aquarium/shared/adaptive_predicates.py \
 	plugins/aquarium/shared/adaptive_qualification.py \

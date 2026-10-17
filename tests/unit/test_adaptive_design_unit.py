@@ -1145,3 +1145,21 @@ def test_preparation_cli_constructs_client_with_expanded_target_before_actual_pr
     assert Path(
         actual["assignment"]["target"]["prepared_definition"]["source_path"]
     ).is_relative_to(repository)
+
+
+@pytest.mark.parametrize("source", ["epic-delegation", None, "unknown"])
+@pytest.mark.parametrize("applied", [False, True])
+def test_design_default_application_preserves_user_only_approval(
+    tmp_path, source, applied
+):
+    value, approval = proposal(tmp_path)
+    if applied:
+        (tmp_path / "README.md").write_text("Approved\n")
+    if source is None:
+        approval.pop("source")
+    else:
+        approval["source"] = source
+    assert (
+        application(tmp_path, value, approval, applied=applied)["status"]
+        == "approval-required"
+    )

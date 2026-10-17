@@ -588,7 +588,14 @@ def retain_selected(
 
 
 def resume_selected(
-    repository, roots, procedure, *, client, bootstrap=None, qualification=None
+    repository,
+    roots,
+    procedure,
+    *,
+    client,
+    bootstrap=None,
+    qualification=None,
+    source_reader=None,
 ):
     key = tuple(procedure.get(field) for field in ("id", "version", "digest"))
     if not all(isinstance(value, str) and value for value in key):
@@ -629,6 +636,7 @@ def resume_selected(
             source_path=Path(resolved["path"]) / "procedure.yaml",
             binding_path=Path(resolved["path"]) / "binding.json",
             in_session=True,
+            source_reader=source_reader,
         )
         if result["status"] not in {"qualified", "qualified-known"}:
             raise BundleError(

@@ -288,7 +288,7 @@ inspector forwards corresponding `--podway-binding` and
 binding path from the retained native tuple before qualification; it does not
 require a bootstrap item to be selected.
 
-On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
+On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
 status/templates, active items, selected evidence, current role/capabilities,
 due phase skills, original authority and an ordinary v2 dispatch when applicable.
 The Design/Diagnosis approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
@@ -302,6 +302,13 @@ real requirement, authority, plan, review or execution-definition changes retain
 their stop or reassessment route. A handoff boundary uses native selected
 artifact evidence when declared, and otherwise the previously verified ordinary
 checkpoint metadata with current session/attempt and exact-byte checks.
+
+Optional `qualification.finalization_recovery` reconciles approved source edits
+or deletion using exact original bytes, the current affected Judge assessment
+and native evidence.
+Its `finalization-resolved` response has no dispatch and preserves current authority
+and pending operations; it establishes no achievement. The execution contract
+defines the exact recovery inputs and checks.
 
 The [execution contract](../../plugins/aquarium/references/adaptive-execution.md)
 owns invocation mappings, actual independent assessment/bootstrap import, due
