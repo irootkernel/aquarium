@@ -369,7 +369,8 @@ Driver-owned original recursive product images and candidate bindings live outsi
 that agent capture, under `adaptive-state/<case>/`, including on same-thread
 resume. Product images exclude only `.git`, `.venv`, Python caches,
 `.podway/runtime`, local `.podway/procedures/.local` and `.candidates` bundles,
-and `.gaori/runs`; tracked files remain included even under an excluded directory.
+`.ouroboros/artifacts`, and `.gaori/runs`; tracked files remain included even
+under an excluded directory.
 All other product files, including ignored files, documents and managed sources,
 are included. The entire changed path set and each before/after image must equal
 the actual approved document proposal. These document-only fixtures permit

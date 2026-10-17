@@ -5,6 +5,7 @@ synthetic observations and never claim installed-agent execution.
 """
 
 import copy
+import hashlib
 import json
 import re
 import shlex
@@ -99,6 +100,7 @@ IMAGE_EXCLUDES = (
     (".podway", "procedures", ".local"),
     (".podway", "procedures", ".candidates"),
     (".gaori", "runs"),
+    (".ouroboros", "artifacts"),
 )
 
 
@@ -193,6 +195,70 @@ def artifact(gate, directory, path):
     return path
 
 
+def criterion_ids(gate, assignment, repository, required, family, mapped):
+    """Resolve source qualification from the actual original assignment only."""
+    identifiers = {key: [key] for key in required}
+    sources = assignment["work"].get("requirement_sources", [])
+    if not isinstance(sources, list):
+        sources = []
+    for source in sources:
+        if not isinstance(source, dict) or not isinstance(source.get("id"), str):
+            continue
+        qualified = {
+            key: source["id"] + ":" + key
+            for key in required
+            if source["id"] + ":" + key in mapped
+        }
+        if not qualified:
+            continue
+        source_path = source.get("path")
+        expected = repository / "VM-REQUIREMENTS.json"
+        gate.require(
+            source["id"]
+            and source.get("role", "requirements") == "requirements"
+            and source.get("format") == "json"
+            and source.get("family") in {None, family}
+            and isinstance(source_path, str)
+            and ".." not in Path(source_path).parts
+            and repository / source_path == expected
+            and expected.is_file()
+            and not expected.is_symlink(),
+            "qualified criterion lacks its exact original VM source",
+        )
+        try:
+            raw = expected.read_bytes()
+            gate.require(
+                source.get("sha256") == "sha256:" + hashlib.sha256(raw).hexdigest(),
+                "qualified original VM source bytes changed",
+            )
+            original = json.loads(raw)
+        except (OSError, ValueError) as error:
+            raise gate.GateError(
+                "original VM criterion source is unavailable"
+            ) from error
+        rows = original.get("criteria") if isinstance(original, dict) else None
+        gate.require(
+            isinstance(rows, list)
+            and all(
+                isinstance(row, dict)
+                and isinstance(row.get("id"), str)
+                and isinstance(row.get("text"), str)
+                and row["text"].strip()
+                for row in rows
+            ),
+            "original VM criterion inventory is malformed",
+        )
+        original_ids = [row["id"] for row in rows]
+        gate.require(
+            len(set(original_ids)) == len(original_ids)
+            and set(qualified) <= set(original_ids),
+            "original VM criterion identity is missing or ambiguous",
+        )
+        for key, identifier in qualified.items():
+            identifiers[key].append(identifier)
+    return identifiers
+
+
 def reports(gate, observation, evidence, directory, repository, case):
     """Bind real role results to exact current bytes and original due criteria."""
     actors, targets, native_nodes, deliveries = {}, {}, {}, {}
@@ -232,21 +298,28 @@ def reports(gate, observation, evidence, directory, repository, case):
             isinstance(image, dict) and image,
             "report lacks exact assessed case target bytes",
         )
+        product = {}
         for path, digest in image.items():
             target = repository / path
+            resolved = target.resolve()
             gate.require(
                 not Path(path).is_absolute()
-                and ".." not in Path(path).parts
+                and (
+                    resolved.is_relative_to(repository.resolve())
+                    or resolved.is_relative_to(directory.resolve())
+                )
                 and target.is_file()
-                and not target.is_symlink()
+                and not any(part.is_symlink() for part in (target, *target.parents))
                 and gate.matches_sha256(target, digest),
-                "assessed target differs from current case bytes",
+                "assessed target differs from current case bytes or authorized capture",
                 "fail",
             )
-        targets[role] = {
-            path: "sha256:" + digest.removeprefix("sha256:")
-            for path, digest in image.items()
-        }
+            if resolved.is_relative_to(repository.resolve()):
+                product[str(resolved.relative_to(repository.resolve()))] = (
+                    "sha256:" + digest.removeprefix("sha256:")
+                )
+        gate.require(product, "report lacks assessed repository target bytes", "fail")
+        targets[role] = product
         deliveries[role] = {
             "path": str(artifact(gate, directory, evidence[filename])),
             "sha256": gate.sha256(artifact(gate, directory, evidence[filename])),
@@ -273,8 +346,20 @@ def reports(gate, observation, evidence, directory, repository, case):
             gate.require(
                 report.get("checkpoint_result") == "pass", "due checkpoint did not pass"
             )
+            identifiers = criterion_ids(
+                gate, assignment, repository, case["criteria"], case["family"], mapped
+            )
             for key in case["criteria"]:
-                row = mapped.get(key, {})
+                matching = [
+                    mapped[identifier]
+                    for identifier in identifiers[key]
+                    if identifier in mapped
+                ]
+                gate.require(
+                    len(matching) == 1,
+                    "original due criterion is missing or ambiguous: " + key,
+                )
+                row = matching[0]
                 gate.require(
                     row.get("state", row.get("status")) == "met"
                     and row.get("source")

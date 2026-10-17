@@ -1416,3 +1416,326 @@ def test_changed_document_proposal_also_requires_string_diff(document_case, diff
         cases.oracle(
             gate, {}, repository, {"oracle": "documents"}, evidence, observation, before
         )
+
+
+def qualify_report_original(report_case, namespace="vm", *, absolute=False):
+    repository, _, observation, evidence, _case = report_case
+    original = repository / "VM-REQUIREMENTS.json"
+    original.write_text(
+        json.dumps(
+            {
+                "criteria": [
+                    {
+                        "id": "required-original",
+                        "text": "Preserve this original fixture obligation",
+                    }
+                ]
+            }
+        )
+    )
+    for role in ("worker", "judge"):
+        path = Path(evidence[role + "_assignment"])
+        value = gate.read_json(path)
+        value["work"]["requirement_sources"] = [
+            {
+                "id": namespace,
+                "path": str(original) if absolute else original.name,
+                "format": "json",
+                "sha256": gate.sha256(original),
+            }
+        ]
+        path.write_text(json.dumps(value))
+    path = Path(evidence["judge_assessment"])
+    report = gate.read_json(path)
+    report["criteria"][0].update(
+        id=namespace + ":required-original",
+        original_id="required-original",
+        source=original.name,
+    )
+    deliver_criterion_report(observation, path, report)
+    return original
+
+
+def deliver_criterion_report(observation, path, report):
+    path.write_text(json.dumps(report))
+    judge = next(
+        actor
+        for actor in observation["descendants"]
+        if actor["metadata"]["id"] == "judge"
+    )
+    judge["items"][-1]["text"] = json.dumps(report)
+
+
+@pytest.mark.parametrize(
+    "namespace,absolute", [("vm", False), ("VM-REQUIREMENTS-json", True)]
+)
+def test_reports_accept_exact_original_assignment_source_qualification_without_rewriting(
+    report_case, namespace, absolute
+):
+    repository, directory, observation, evidence, case = report_case
+    qualify_report_original(report_case, namespace, absolute=absolute)
+    before = {
+        path: Path(path).read_bytes()
+        for key, path in evidence.items()
+        if key.endswith(("_assignment", "_assessment", "_result"))
+    }
+    assert cases.reports(gate, observation, evidence, directory, repository, case)[
+        "actors"
+    ] == {"worker": "worker", "judge": "judge"}
+    assert before == {path: Path(path).read_bytes() for path in before}
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "wrong-namespace",
+        "wrong-source",
+        "wrong-digest",
+        "source-drift",
+        "missing-original",
+        "duplicate-original",
+        "missing-row",
+        "unmet",
+        "unverified",
+        "no-evidence",
+        "no-source",
+        "duplicate-row",
+        "direct-and-qualified",
+        "conflicting-direct",
+        "template",
+        "wrong-family",
+        "wrong-format",
+        "symlink",
+    ],
+)
+def test_qualified_report_requires_unique_current_authoritative_original_source(
+    report_case, damage
+):
+    repository, directory, observation, evidence, case = report_case
+    original = qualify_report_original(report_case)
+    path = Path(evidence["judge_assessment"])
+    report = gate.read_json(path)
+    assignment_path = Path(evidence["judge_assignment"])
+    assignment = gate.read_json(assignment_path)
+    reference = assignment["work"]["requirement_sources"][0]
+    if damage == "wrong-namespace":
+        report["criteria"][0]["id"] = "unassigned:required-original"
+    elif damage == "wrong-source":
+        other = repository / "alternate.json"
+        other.write_bytes(original.read_bytes())
+        reference["path"] = other.name
+    elif damage == "wrong-digest":
+        reference["sha256"] = "sha256:" + "0" * 64
+    elif damage == "source-drift":
+        original.write_text(original.read_text() + "\n")
+    elif damage in {"missing-original", "duplicate-original"}:
+        document = gate.read_json(original)
+        document["criteria"] = (
+            [] if damage == "missing-original" else document["criteria"] * 2
+        )
+        original.write_text(json.dumps(document))
+        reference["sha256"] = gate.sha256(original)
+    elif damage == "missing-row":
+        report["criteria"] = []
+    elif damage in {"unmet", "unverified"}:
+        report["criteria"][0]["state"] = damage
+    elif damage == "no-evidence":
+        report["criteria"][0]["evidence"] = []
+    elif damage == "no-source":
+        report["criteria"][0]["source"] = ""
+    elif damage == "duplicate-row":
+        report["criteria"] *= 2
+    elif damage in {"direct-and-qualified", "conflicting-direct"}:
+        direct = copy.deepcopy(report["criteria"][0])
+        direct["id"] = "required-original"
+        if damage == "conflicting-direct":
+            direct["state"] = "unmet"
+        report["criteria"].append(direct)
+    elif damage == "template":
+        reference["role"] = "template"
+    elif damage == "wrong-family":
+        reference["family"] = "diagnosis"
+    elif damage == "wrong-format":
+        reference["format"] = "markdown"
+    else:
+        alternate = repository / "original-content.json"
+        original.rename(alternate)
+        original.symlink_to(alternate)
+    assignment_path.write_text(json.dumps(assignment))
+    deliver_criterion_report(observation, path, report)
+    with pytest.raises(gate.GateError):
+        cases.reports(gate, observation, evidence, directory, repository, case)
+
+
+def test_source_qualified_validation_uses_its_actual_judge_only_assignment(report_case):
+    repository, directory, observation, evidence, case = report_case
+    qualify_report_original(report_case, "VM-REQUIREMENTS-json")
+    case["family"] = "validation"
+    observation["descendants"] = [
+        actor
+        for actor in observation["descendants"]
+        if actor["metadata"]["id"] == "judge"
+    ]
+    evidence = {
+        key: value for key, value in evidence.items() if not key.startswith("worker")
+    }
+    assert cases.reports(gate, observation, evidence, directory, repository, case)[
+        "actors"
+    ] == {"judge": "judge"}
+
+
+def report_check_inputs(report_case):
+    _, directory, observation, evidence, _ = report_case
+    originals = {}
+    for role in ("worker", "judge"):
+        capture = directory / (role + "-check-input.json")
+        capture.write_text(
+            json.dumps({"role": role, "observed_check": "synthetic fixture"})
+        )
+        path = Path(
+            evidence["worker_result" if role == "worker" else "judge_assessment"]
+        )
+        report = gate.read_json(path)
+        report["target"]["files"]["../capture/" + capture.name] = gate.sha256(capture)
+        path.write_text(json.dumps(report))
+        actor = next(
+            actor
+            for actor in observation["descendants"]
+            if actor["metadata"]["id"] == role
+        )
+        actor["items"][-1]["text"] = json.dumps(report)
+        originals[str(path)] = path.read_bytes()
+    return originals
+
+
+def test_reports_preserve_independent_capture_inputs_and_compare_repository_targets(
+    report_case,
+):
+    repository, directory, observation, evidence, case = report_case
+    originals = report_check_inputs(report_case)
+    result = cases.reports(gate, observation, evidence, directory, repository, case)
+    assert result["files"] == {"product.txt": gate.sha256(repository / "product.txt")}
+    assert result["deliveries"]["judge"]["path"] == evidence["judge_assessment"]
+    assert originals == {path: Path(path).read_bytes() for path in originals}
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "escape",
+        "absolute",
+        "digest",
+        "symlink",
+        "parent-symlink",
+        "outside-only",
+        "product-mismatch",
+    ],
+)
+def test_report_check_inputs_are_confined_current_and_cannot_replace_product_targets(
+    report_case, damage
+):
+    repository, directory, observation, evidence, case = report_case
+    report_check_inputs(report_case)
+    path = Path(evidence["judge_assessment"])
+    report = gate.read_json(path)
+    capture_key = "../capture/judge-check-input.json"
+    if damage == "escape":
+        outside = directory.parent / "sibling-capture.json"
+        outside.write_text("unrelated case input")
+        report["target"]["files"]["../sibling-capture.json"] = gate.sha256(outside)
+    elif damage == "absolute":
+        report["target"]["files"][str(directory / "judge-check-input.json")] = report[
+            "target"
+        ]["files"].pop(capture_key)
+    elif damage == "digest":
+        report["target"]["files"][capture_key] = "sha256:" + "0" * 64
+    elif damage == "symlink":
+        link = directory / "alias.json"
+        link.symlink_to(directory / "judge-check-input.json")
+        report["target"]["files"]["../capture/alias.json"] = gate.sha256(link)
+    elif damage == "parent-symlink":
+        link = directory / "alias"
+        link.symlink_to(directory, target_is_directory=True)
+        report["target"]["files"]["../capture/alias/judge-check-input.json"] = (
+            gate.sha256(directory / "judge-check-input.json")
+        )
+    elif damage == "outside-only":
+        report["target"]["files"].pop("product.txt")
+    else:
+        other = repository / "other-product.txt"
+        other.write_text("different current repository target")
+        report["target"]["files"] = {"other-product.txt": gate.sha256(other)}
+    deliver_criterion_report(observation, path, report)
+    with pytest.raises(gate.GateError) as caught:
+        cases.reports(gate, observation, evidence, directory, repository, case)
+    assert caught.value.outcome == "fail"
+
+
+def test_known_ouroboros_runtime_is_excluded_but_neighbors_and_tracked_bytes_remain(
+    tmp_path,
+):
+    artifacts = tmp_path / ".ouroboros/artifacts"
+    artifacts.mkdir(parents=True)
+    for filename in ("artifacts.db", "artifacts.db-wal", "artifacts.db-shm"):
+        (artifacts / filename).write_text("native runtime journal")
+    neighbor = tmp_path / ".ouroboros/project.md"
+    neighbor.write_text("ordinary neighboring project source")
+    product = tmp_path / "product.txt"
+    product.write_text("preserve product")
+    image = cases.original_image(gate, tmp_path)
+    assert image == {
+        ".ouroboros/project.md": gate.sha256(neighbor),
+        "product.txt": gate.sha256(product),
+    }
+    gate.git(tmp_path, "init", "-q")
+    gate.git(tmp_path, "add", ".ouroboros/artifacts/artifacts.db")
+    image = cases.original_image(gate, tmp_path)
+    assert image[".ouroboros/artifacts/artifacts.db"] == gate.sha256(
+        artifacts / "artifacts.db"
+    )
+    assert ".ouroboros/artifacts/artifacts.db-wal" not in image
+    assert ".ouroboros/artifacts/artifacts.db-shm" not in image
+    before = image.copy()
+    (artifacts / "artifacts.db").write_text("changed tracked source")
+    assert cases.original_image(gate, tmp_path) != before
+
+
+def test_known_native_runtime_does_not_block_exact_approved_non_git_document(tmp_path):
+    before = cases.original_image(gate, tmp_path)
+    path = tmp_path / "custom docs/project.md"
+    path.parent.mkdir()
+    path.write_text("Exact approved planning document")
+    artifacts = tmp_path / ".ouroboros/artifacts"
+    artifacts.mkdir(parents=True)
+    (artifacts / "artifacts.db-wal").write_text("actual native bookkeeping")
+    proposal = {
+        "diff": "approved document addition",
+        "targets": {
+            "custom docs/project.md": {"before": None, "after": gate.sha256(path)}
+        },
+    }
+    observation = {"root": {}}
+    evidence = {"application_approval": approved(observation, proposal)}
+    assert (
+        cases.oracle(
+            gate,
+            {},
+            tmp_path,
+            {"oracle": "non-git-documents"},
+            evidence,
+            observation,
+            before,
+        )["documents"]
+        == proposal["targets"]
+    )
+    (tmp_path / ".ouroboros/other.txt").write_text("unapproved neighboring source")
+    with pytest.raises(gate.GateError):
+        cases.oracle(
+            gate,
+            {},
+            tmp_path,
+            {"oracle": "non-git-documents"},
+            evidence,
+            observation,
+            before,
+        )
