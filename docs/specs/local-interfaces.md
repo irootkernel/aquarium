@@ -135,8 +135,9 @@ Worker assignment/plan data and retain ignored `.candidates` bundles without
 adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
 typed ports through that same preparation CLI. It retains operation identities,
 resolves native references and dependencies, and rejects unresolved/private
-rework or unavailable required evidence. Whole-graph qualification and family
-activation remain reserved for their EPIC-026 implementation tasks.
+rework or unavailable required evidence. The explicit helpers below implement
+guarded whole-graph qualification and exact suitability/bootstrap. Family
+activation remains planned.
 
 The [preparation CLI](../../plugins/aquarium/shared/prepare_adaptive_procedure.py)
 takes `--repository`, `--assignment <file-or->` and, for approved preparation,
@@ -156,8 +157,9 @@ retention also takes an approved write root. It emits JSON with source/binding,
 retention disposition and actual session context, or a distinct failure status.
 An optional bootstrap reference is a cross-check. It uses native check/preview for
 the actual canonical digest, separately verifies source-file SHA-256, and requires
-the supported frozen known-source/reference contract before TASK-141. The CLI
-does no session mutation or installation; YAML and `jsonschema` must be available
+the supported frozen known-source/reference contract. Changed/new qualification
+uses the separate ordinary-context helper; the legacy launcher is not activated
+for generated family execution. The CLI does no session mutation or installation; YAML and `jsonschema` must be available
 in its reported interpreter. Missing dependencies return `missing-prerequisite`.
 The setup inspector's explicit selected mode lazily imports these helpers,
 preserves full managed-library diagnostics and exposes selected/runtime readiness
@@ -256,3 +258,27 @@ The hook is advisory rather than a security boundary. Indirect commits may bypas
 The bundled `.mcp.json` starts the installed `aquarium-dev` stdio server. Its six `aquarium_dev_*` tools map to diagnose, enroll, repair-hook, rebuild, service-plan, and service-apply and return the same JSON envelopes as the CLI, with MCP `isError` set for failures. The bundled `tools/aquarium-dev/install.py` provides read-only runtime diagnosis and an explicitly approved install/update operation; runtime identity and setup failures use `aquarium-dev-runtime/v1`, `aquarium-dev-runtime-inspection/v1`, and `aquarium-dev-runtime-error/v1`.
 
 The v23 repository inspector removes `.mulgaeignore` from the Mulgae configuration inventory. It admits stable Mulgae v0.1.25 or newer and command-result v19 or newer, while retaining the Doctor v5 member name `config_v3` for native Config v5 diagnostics.
+
+The [qualification CLI](../../plugins/aquarium/shared/qualify_adaptive_procedure.py)
+accepts `--repository`, `--assignment <file-or->`, `--podway <exact-binary>`,
+optional `--assessment <ordinary-report-file>`, `--combined-task-plan` and
+`--retain`. The preparation CLI's optional `--bootstrap` adds recording topology
+for changed/new sources without modifying known reuse or plan-only behavior.
+Qualification returns exact target and ordinary Judge assignment when assessment
+is due (exit 3), `qualified` or `qualified-known` on current passage (exit 0), and
+a distinct JSON failure (exit 2). The shared adaptive contract defines scoped
+phase/global criteria, bootstrap artifact representation, current retention
+authority and in-session reassessment. No helper starts a session or activates a
+handler. Closed optional binding semantic/capability maps retain static custom
+operation definitions inside the existing two-file/hash boundary.
+
+Adequate unchanged adaptive reuse uses a candidate's actual `prior_suitability`
+ordinary report together with its exact retained binding/source, current native
+and structural proof and original-source fit. It returns `qualified-known`
+without a new Judge assignment. Bootstrap timing is `established-reuse`; its
+artifact evidence is an ordinary selection checkpoint carrying prior definition
+evidence and current applicability, never an old report relabeled as current.
+Plan-only cannot run the retained native proof and reports not-established
+without writing or generating an alternative. A material in-session basis change
+uses the existing reassessment route. Live review ordinals, remaining grants and
+native retrieval handles alone do not invalidate an unchanged definition.

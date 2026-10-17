@@ -56,7 +56,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "final-assessment"
   },
   "aquarium.task.phase-assessment/v1": {
     "kind": "action",
@@ -117,7 +118,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "phase-assessment"
   },
   "aquarium.task.approval/v1": {
     "kind": "decision",
@@ -129,7 +131,8 @@
       "approval applies to the exact current target",
       "delegated acceptance cannot satisfy user-owned final or cold acceptance",
       "changed proposals or target bytes need renewed exact approval"
-    ]
+    ],
+    "guarantee": "approval"
   },
   "aquarium.task.closeout/v1": {
     "kind": "action",
@@ -143,7 +146,8 @@
       "native session_goal mapping owns achievement",
       "current family acceptance and finalization remain due",
       "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
-    ]
+    ],
+    "guarantee": "closeout"
   },
   "aquarium.task.review-control/v1": {
     "kind": "action",
@@ -183,7 +187,8 @@
       "preserve selected route, expected team, findings and remaining authority",
       "ordinals one through three are work-unit; later ordinals are bounded confirmation",
       "exhausted authority needs actual fresh user direction; supersede cannot reset it"
-    ]
+    ],
+    "guarantee": "review-control"
   },
   "aquarium.goal.final-assessment/v1": {
     "kind": "action",
@@ -242,7 +247,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "final-assessment"
   },
   "aquarium.goal.phase-assessment/v1": {
     "kind": "action",
@@ -303,7 +309,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "phase-assessment"
   },
   "aquarium.goal.approval/v1": {
     "kind": "decision",
@@ -315,7 +322,8 @@
       "approval applies to the exact current target",
       "delegated acceptance cannot satisfy user-owned final or cold acceptance",
       "changed proposals or target bytes need renewed exact approval"
-    ]
+    ],
+    "guarantee": "approval"
   },
   "aquarium.goal.closeout/v1": {
     "kind": "action",
@@ -329,7 +337,8 @@
       "native session_goal mapping owns achievement",
       "current family acceptance and finalization remain due",
       "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
-    ]
+    ],
+    "guarantee": "closeout"
   },
   "aquarium.goal.acceptance/v1": {
     "kind": "action",
@@ -353,7 +362,8 @@
       "delegation is valid only for an eligible goal-kind or continuing epic-handler",
       "stopped outcomes require actual user acceptance, never delegation",
       "TASK-141 proves exact acceptance-source values and guards with actual goal-kind or workflow-owner discriminator evidence; no label establishes provenance"
-    ]
+    ],
+    "guarantee": "acceptance"
   },
   "aquarium.goal.review-control/v1": {
     "kind": "action",
@@ -439,7 +449,8 @@
       "preserve selected route, expected team, findings and remaining authority",
       "ordinals one through three are work-unit; later ordinals are bounded confirmation",
       "exhausted authority needs actual fresh user direction; supersede cannot reset it"
-    ]
+    ],
+    "guarantee": "review-control"
   },
   "aquarium.validation.final-assessment/v1": {
     "kind": "action",
@@ -498,7 +509,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "final-assessment"
   },
   "aquarium.validation.phase-assessment/v1": {
     "kind": "action",
@@ -559,7 +571,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "phase-assessment"
   },
   "aquarium.validation.approval/v1": {
     "kind": "decision",
@@ -571,7 +584,8 @@
       "approval applies to the exact current target",
       "delegated acceptance cannot satisfy user-owned final or cold acceptance",
       "changed proposals or target bytes need renewed exact approval"
-    ]
+    ],
+    "guarantee": "approval"
   },
   "aquarium.validation.closeout/v1": {
     "kind": "action",
@@ -585,7 +599,8 @@
       "native session_goal mapping owns achievement",
       "current family acceptance and finalization remain due",
       "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
-    ]
+    ],
+    "guarantee": "closeout"
   },
   "aquarium.validation.acceptance/v1": {
     "kind": "action",
@@ -609,7 +624,8 @@
       "delegation is valid only for an eligible goal-kind or continuing epic-handler",
       "stopped outcomes require actual user acceptance, never delegation",
       "TASK-141 proves exact acceptance-source values and guards with actual goal-kind or workflow-owner discriminator evidence; no label establishes provenance"
-    ]
+    ],
+    "guarantee": "acceptance"
   },
   "aquarium.validation.review-control/v1": {
     "kind": "action",
@@ -665,7 +681,8 @@
       "preserve selected route, expected team, findings and remaining authority",
       "ordinals one through three are work-unit; later ordinals are bounded confirmation",
       "exhausted authority needs actual fresh user direction; supersede cannot reset it"
-    ]
+    ],
+    "guarantee": "review-control"
   },
   "aquarium.design.final-assessment/v1": {
     "kind": "action",
@@ -724,7 +741,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "final-assessment"
   },
   "aquarium.design.phase-assessment/v1": {
     "kind": "action",
@@ -785,7 +803,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "phase-assessment"
   },
   "aquarium.design.approval/v1": {
     "kind": "decision",
@@ -797,7 +816,8 @@
       "approval applies to the exact current target",
       "delegated acceptance cannot satisfy user-owned final or cold acceptance",
       "changed proposals or target bytes need renewed exact approval"
-    ]
+    ],
+    "guarantee": "approval"
   },
   "aquarium.design.closeout/v1": {
     "kind": "action",
@@ -811,7 +831,8 @@
       "native session_goal mapping owns achievement",
       "current family acceptance and finalization remain due",
       "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
-    ]
+    ],
+    "guarantee": "closeout"
   },
   "aquarium.design.application-approval/v1": {
     "kind": "action",
@@ -832,7 +853,8 @@
       "actual exact approval precedes application",
       "pre-write snapshot comparison and post-application byte verification are due",
       "changed content after approval cannot use the old approval"
-    ]
+    ],
+    "guarantee": "application-approval"
   },
   "aquarium.diagnosis.final-assessment/v1": {
     "kind": "action",
@@ -891,7 +913,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "final-assessment"
   },
   "aquarium.diagnosis.phase-assessment/v1": {
     "kind": "action",
@@ -952,7 +975,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "phase-assessment"
   },
   "aquarium.diagnosis.approval/v1": {
     "kind": "decision",
@@ -964,7 +988,8 @@
       "approval applies to the exact current target",
       "delegated acceptance cannot satisfy user-owned final or cold acceptance",
       "changed proposals or target bytes need renewed exact approval"
-    ]
+    ],
+    "guarantee": "approval"
   },
   "aquarium.diagnosis.closeout/v1": {
     "kind": "action",
@@ -978,7 +1003,8 @@
       "native session_goal mapping owns achievement",
       "current family acceptance and finalization remain due",
       "only explicitly bounded bookkeeping and closeout effects may follow final assessment"
-    ]
+    ],
+    "guarantee": "closeout"
   },
   "aquarium.diagnosis.application-approval/v1": {
     "kind": "action",
@@ -999,7 +1025,8 @@
       "actual exact approval precedes application",
       "pre-write snapshot comparison and post-application byte verification are due",
       "changed content after approval cannot use the old approval"
-    ]
+    ],
+    "guarantee": "application-approval"
   },
   "aquarium.task.review-routing/v1": {
     "kind": "action",
@@ -1064,7 +1091,8 @@
       "authorized switches preserve finding lineage and remaining authority",
       "completed continuation consumes exactly the next ordinal",
       "incomplete operations preserve the pending ordinal"
-    ]
+    ],
+    "guarantee": "review-routing"
   },
   "aquarium.goal.review-routing/v1": {
     "kind": "action",
@@ -1158,7 +1186,8 @@
       "authorized switches preserve finding lineage and remaining authority",
       "completed continuation consumes exactly the next ordinal",
       "incomplete operations preserve the pending ordinal"
-    ]
+    ],
+    "guarantee": "review-routing"
   },
   "aquarium.validation.review-routing/v1": {
     "kind": "action",
@@ -1212,7 +1241,8 @@
       "authorized switches preserve finding lineage and remaining authority",
       "completed continuation consumes exactly the next ordinal",
       "incomplete operations preserve the pending ordinal"
-    ]
+    ],
+    "guarantee": "review-routing"
   },
   "aquarium.validation.audit-assessment/v1": {
     "kind": "action",
@@ -1285,7 +1315,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "audit-assessment"
   },
   "aquarium.validation.confirmation-audit-assessment/v1": {
     "kind": "action",
@@ -1358,7 +1389,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "confirmation-audit-assessment"
   },
   "aquarium.validation.correction-group-assessment/v1": {
     "kind": "action",
@@ -1420,7 +1452,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "correction-group-assessment"
   },
   "aquarium.design.quality-assessment/v1": {
     "kind": "action",
@@ -1482,7 +1515,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "quality-assessment"
   },
   "aquarium.design.application-assessment/v1": {
     "kind": "action",
@@ -1544,7 +1578,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "application-assessment"
   },
   "aquarium.diagnosis.quality-assessment/v1": {
     "kind": "action",
@@ -1606,7 +1641,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "quality-assessment"
   },
   "aquarium.diagnosis.documentation-assessment/v1": {
     "kind": "action",
@@ -1668,7 +1704,8 @@
     "criterion_counts": [
       "judge-unmet-criteria",
       "judge-unverified-criteria"
-    ]
+    ],
+    "guarantee": "documentation-assessment"
   },
   "aquarium.design.upstream-quality/v1": {
     "kind": "action",
@@ -1696,7 +1733,8 @@
       "required current original evidence reaches this assessment or quality operation",
       "faithful negative upstream/audit results retain their original result and correction owner",
       "the consuming Decision checks actual applicability without converting report fidelity into product success"
-    ]
+    ],
+    "guarantee": "upstream-quality"
   },
   "aquarium.diagnosis.upstream-quality/v1": {
     "kind": "action",
@@ -1724,6 +1762,58 @@
       "required current original evidence reaches this assessment or quality operation",
       "faithful negative upstream/audit results retain their original result and correction owner",
       "the consuming Decision checks actual applicability without converting report fidelity into product success"
+    ],
+    "guarantee": "upstream-quality"
+  },
+  "aquarium.shared.suitability-bootstrap/v1": {
+    "kind": "action",
+    "guarantee": "suitability-bootstrap",
+    "fields": {
+      "suitability-assessment": {
+        "type": "artifact",
+        "required": true
+      },
+      "suitability-target": {
+        "type": "text",
+        "required": true
+      },
+      "suitability-timing": {
+        "type": "choice",
+        "required": true,
+        "choices": [
+          "pre-start"
+        ]
+      },
+      "suitability-verdict": {
+        "type": "choice",
+        "required": true
+      },
+      "suitability-unmet": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "suitability-unverified": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "suitability-current": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-adaptive-suitability-applicability",
+        "operation_digest": "sha256:edd36ae1f505df8bf66d22e03909fbbaf09c0e0c5d8eee2ef760089f7a908280",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "New or changed definitions record the actual exact pre-start independent report before work.",
+      "Adequate unchanged established reuse records prior definition evidence and current fit truthfully, preserving normal first-due checkpoints.",
+      "Material in-session basis changes require affected reassessment; recording is not agent execution or authority."
     ]
   }
 }

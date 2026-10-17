@@ -74,6 +74,14 @@ future hardening does not block current acceptance. Reassess a disputed verdict 
 conflicting evidence. Do not replace a supported gap with majority
 agreement or treat a negative verdict as permission for another review or fix.
 
+For an explicit adaptive suitability assignment, assess the exact candidate and
+complete original requirement/plan basis under the [shared adaptive contract](../../references/adaptive-procedures.md#guarded-structural-qualification-and-exact-suitability).
+Preserve global future criterion gaps and report due definition/plan passage
+separately through `checkpoint_result`. One compatible due Task plan assessment
+may cover both exact scopes. Keep actual pre-session timing; a recovered running
+workflow cannot label a new assessment pre-start. The helper records your actual
+ordinary result and does not establish independent execution by itself.
+
 ## Report-only boundary
 
 Read assigned sources and existing evidence. Do not edit source, Git, Podway,

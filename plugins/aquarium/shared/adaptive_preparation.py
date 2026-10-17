@@ -433,7 +433,7 @@ def review_fit(document, mapping, review):
     return {
         "status": "not-established",
         "declarations_checked": checked,
-        "next_owner": "TASK-141",
+        "next_owner": "qualify_adaptive_procedure",
         "reason": "Mapped choices can show contradiction; independent review-control continuity is not established by a selector or its absence.",
     }
 
@@ -539,7 +539,7 @@ def fit(assignment, criteria, document, mapping, coverage):
     }
 
 
-def select(repository, assignment):
+def select(repository, assignment, *, client=None):
     """Use caller-approved locations only; plan-only never calls a native tool."""
     validator_path = (
         Path(__file__).resolve().parents[1]
@@ -620,14 +620,47 @@ def select(repository, assignment):
                 )
             evidence = fit(assignment, criteria, native, mapping, entry["coverage"])
             evidence["source_authority"] = authority_basis
+            known_adaptive = False
             try:
                 known_source(raw)
-            except BundleError:
-                raise BundleError(
-                    "not-established",
-                    "Existing source needs TASK-141 structural qualification",
-                ) from None
-            if "procedure" in mapping:
+            except BundleError as error:
+                if error.code != "not-established":
+                    raise
+                from adaptive_suitability import established_reuse
+
+                if (
+                    not isinstance(entry.get("prior_suitability"), dict)
+                    or "procedure" not in mapping
+                ):
+                    raise BundleError(
+                        "not-established",
+                        "Existing adaptive reuse needs its actual prior ordinary suitability evidence and exact supported binding",
+                    ) from None
+                grant = assignment["authority"].get("preparation", {})
+                native_client = client if plan["mode"] == "prepare" else None
+                if (
+                    native_client is not None
+                    and grant.get("native_authoring") is not True
+                ):
+                    raise BundleError(
+                        "authority-required",
+                        "Current preparation authority does not cover native reuse checks",
+                    )
+                established_reuse(
+                    repository,
+                    raw,
+                    mapping,
+                    client=native_client,
+                    roots=grant.get("roots", plan["discovery_roots"]),
+                    prior=entry["prior_suitability"],
+                    criteria=criteria,
+                    context={
+                        **assignment["target"].get("qualification_context", {}),
+                        "review": assignment["authority"]["review"],
+                    },
+                )
+                known_adaptive = True
+            if "procedure" in mapping and not known_adaptive:
                 qualify_known(
                     raw,
                     mapping,
@@ -656,8 +689,14 @@ def select(repository, assignment):
                 "plan": evidence,
                 "considered": considered,
                 "assessment": "preserve-original-checkpoints",
+                "known_adaptive": known_adaptive,
+                "prior_suitability": entry.get("prior_suitability")
+                if known_adaptive
+                else None,
             }
         except BundleError as error:
+            if error.details.get("candidate_reuse_pending"):
+                raise
             if error.code in {
                 "source-drift",
                 "authority-required",
@@ -902,9 +941,9 @@ def write_new(descriptor, name, content):
     os.fsync(descriptor)
 
 
-def prepare(repository, assignment, *, client=None):
+def prepare(repository, assignment, *, client=None, bootstrap=False):
     repository = Path(repository).resolve()
-    selected = select(repository, assignment)
+    selected = select(repository, assignment, client=client)
     plan = assignment["target"]["procedure_plan"]
     if plan["mode"] == "plan-only":
         return {
@@ -946,6 +985,25 @@ def prepare(repository, assignment, *, client=None):
     with publication_lock(repository):
         native = copy.deepcopy(selected["document"])
         if selected["kind"] != "reuse":
+            qualification = assignment["target"].get("qualification_context", {})
+            for invocation, retained in [
+                ("operation_contracts", "semantic_contracts"),
+                ("signatures", "capability_definitions"),
+            ]:
+                if qualification.get(invocation):
+                    destination = selected["mapping"].setdefault(retained, {})
+                    for key, value in qualification[invocation].items():
+                        if key in destination and destination[key] != value:
+                            raise BundleError(
+                                "incompatible",
+                                "Conflicting retained semantic definition",
+                            )
+                        destination[key] = copy.deepcopy(value)
+        if bootstrap and selected["kind"] != "reuse":
+            from adaptive_suitability import add_bootstrap
+
+            native, selected["mapping"] = add_bootstrap(native, selected["mapping"])
+        if selected["kind"] != "reuse":
             native["id"], native["version"] = allocate_identity(
                 repository, roots, plan["family"], selected["entry"]
             )
@@ -985,6 +1043,28 @@ def prepare(repository, assignment, *, client=None):
                 write_new(stage_descriptor, "procedure.yaml", source)
                 verify_directory(repository, local, parent)
                 verify_directory(repository, stage, stage_descriptor)
+                semantic_before = None
+                if selected["mapping"].get("semantic_contracts"):
+                    validation = client.read(
+                        [
+                            "procedure",
+                            "validate",
+                            "--",
+                            str((stage / "procedure.yaml").relative_to(repository)),
+                        ],
+                        "procedure.validate",
+                        {"podway.procedure-diagnostics-result/v1"},
+                    )
+                    if not isinstance(validation.get("digest"), str):
+                        raise BundleError(
+                            "unsupported-runtime",
+                            "Native validation lacks semantic source identity",
+                        )
+                    semantic_before = (
+                        native["id"],
+                        native["version"],
+                        validation["digest"],
+                    )
                 preview, observations = author_checks(
                     client,
                     stage / "procedure.yaml",
@@ -992,13 +1072,70 @@ def prepare(repository, assignment, *, client=None):
                     stage_descriptor=stage_descriptor,
                 )
                 source = read_regular(repository, stage / "procedure.yaml")
+                if semantic_before is not None:
+                    observations["semantic_contract_validation"] = {
+                        "native": validation,
+                        "pre_format_tuple": semantic_before,
+                        "post_format_tuple": [
+                            preview[key]
+                            for key in (
+                                "procedure_id",
+                                "procedure_version",
+                                "procedure_digest",
+                            )
+                        ],
+                    }
+                    if tuple(semantic_before) != tuple(
+                        preview[key]
+                        for key in (
+                            "procedure_id",
+                            "procedure_version",
+                            "procedure_digest",
+                        )
+                    ):
+                        raise BundleError(
+                            "source-drift",
+                            "Native formatting changed the semantic contract target",
+                        )
+                    actual_definitions = yaml.safe_load(source)["node_definitions"]
+                    contracts = selected["mapping"]["semantic_contracts"]
+                    for key, definition in native["node_definitions"].items():
+                        contract = contracts.get(sha256(canonical_json(definition)))
+                        if contract is not None:
+                            identity = sha256(canonical_json(actual_definitions[key]))
+                            if (
+                                identity in contracts
+                                and contracts[identity] != contract
+                            ):
+                                raise BundleError(
+                                    "incompatible",
+                                    "Formatted semantic contract identity conflicts",
+                                )
+                            contracts[identity] = copy.deepcopy(contract)
                 if selected["kind"] == "reuse":
                     binding = (
                         selected["mapping"]
                         if "procedure" in selected["mapping"]
                         else reference_binding(source, preview)
                     )
-                    qualify_known(source, binding, preview)
+                    if selected.get("known_adaptive"):
+                        from adaptive_suitability import established_reuse
+
+                        established_reuse(
+                            repository,
+                            source,
+                            binding,
+                            client=client,
+                            roots=grant["roots"],
+                            prior=selected["prior_suitability"],
+                            criteria=requirements(repository, assignment),
+                            context={
+                                **assignment["target"].get("qualification_context", {}),
+                                "review": assignment["authority"]["review"],
+                            },
+                        )
+                    else:
+                        qualify_known(source, binding, preview)
                 else:
                     binding = {
                         **selected["mapping"],
@@ -1083,6 +1220,11 @@ def prepare(repository, assignment, *, client=None):
         "coverage_plan": selected["plan"],
         "assessment": selected["assessment"],
         "adoption": "not-performed",
+        **(
+            {"prior_suitability": selected["prior_suitability"]}
+            if selected.get("known_adaptive")
+            else {}
+        ),
         "storage": {
             "directory": str(local),
             "permitted_local_effects": [
@@ -1093,6 +1235,12 @@ def prepare(repository, assignment, *, client=None):
         },
         "native": observations,
     }
+    if selected.get("known_adaptive"):
+        from adaptive_suitability import current_basis
+
+        result["target"]["prepared_definition"]["reuse_basis"] = current_basis(
+            repository, assignment
+        )
     return {
         "status": "prepared",
         "assignment": result,

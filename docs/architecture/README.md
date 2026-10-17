@@ -36,7 +36,9 @@ source-only preparation retain exact ignored candidates separately from adopted
 bundles. Composition now flattens exact whole/fragment imports and explicit
 control/evidence/rework ports before those same fit, storage and native checks.
 Namespace expansion preserves native semantic operation identities and declared
-formal contracts. Full qualification and handler activation remain planned.
+formal contracts. Guarded source qualification and exact ordinary pre-start
+suitability/bootstrap use the same retained definition boundary. Handler
+activation remains planned.
 Existing sessions and installed source contracts retain their current behavior.
 
 ## Exact Authorities

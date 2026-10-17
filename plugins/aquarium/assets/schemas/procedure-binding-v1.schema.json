@@ -302,6 +302,404 @@
         "$ref": "#/$defs/origin"
       },
       "minItems": 0
+    },
+    "semantic_contracts": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "worker",
+                "judge",
+                "orchestrator"
+              ]
+            }
+          },
+          "effect": {
+            "enum": [
+              "work",
+              "evidence",
+              "finalization",
+              "control",
+              "assessment"
+            ]
+          },
+          "relay_outputs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "delivery_items": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "discriminators": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "goal_kind",
+                "workflow_owner"
+              ]
+            }
+          },
+          "basis": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "native_id": {
+                    "$ref": "#/$defs/native_id"
+                  },
+                  "native_version": {
+                    "$ref": "#/$defs/native_version"
+                  },
+                  "definition": {
+                    "$ref": "#/$defs/native_id"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "authority"
+                ]
+              }
+            ]
+          },
+          "user_directions": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "product-correction",
+                "same-operation-recovery",
+                "review-route-change",
+                "new-review-authority"
+              ]
+            }
+          },
+          "owned_correction": {
+            "type": "boolean"
+          },
+          "checkpoint_scopes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "task-plan",
+                "procedure-suitability"
+              ]
+            }
+          },
+          "acceptance_policy": {
+            "enum": [
+              "user-only-boundary"
+            ]
+          },
+          "output_scopes": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "task-plan"
+              ]
+            }
+          },
+          "review_recovery": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "same-operation-recovery",
+                "review-route-change"
+              ]
+            }
+          },
+          "derivation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "definition": {
+                "type": "object"
+              },
+              "nodes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "local_fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "definition",
+              "nodes",
+              "fields",
+              "local_fields"
+            ]
+          }
+        },
+        "required": [
+          "roles",
+          "effect",
+          "basis"
+        ]
+      }
+    },
+    "capability_definitions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "action",
+              "decision"
+            ]
+          },
+          "guarantee": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "enum": [
+                    "text",
+                    "choice",
+                    "confirm",
+                    "integer",
+                    "list",
+                    "artifact",
+                    "check_result"
+                  ]
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "minimum": {
+                  "type": "integer"
+                },
+                "maximum": {
+                  "type": "integer"
+                },
+                "choices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                },
+                "operation_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "operation_digest": {
+                  "$ref": "#/$defs/sha256"
+                },
+                "accepted_outcomes": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "pass",
+                      "fail",
+                      "inconclusive"
+                    ]
+                  },
+                  "uniqueItems": true
+                },
+                "required_when": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "item": {
+                        "$ref": "#/$defs/native_id"
+                      },
+                      "field": {
+                        "const": "outcome"
+                      },
+                      "equals": {
+                        "type": [
+                          "string",
+                          "integer",
+                          "boolean"
+                        ]
+                      },
+                      "not_equals": {
+                        "type": [
+                          "string",
+                          "integer",
+                          "boolean"
+                        ]
+                      },
+                      "at_least": {
+                        "type": "integer"
+                      },
+                      "at_most": {
+                        "type": "integer"
+                      },
+                      "empty": {
+                        "const": true
+                      },
+                      "non_empty": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ],
+                    "oneOf": [
+                      {
+                        "required": [
+                          "equals"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "not_equals"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "at_least"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "at_most"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "empty"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "non_empty"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "allowed_media_types": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "min_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "min_items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "min_item_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_item_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "min_total_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_total_length": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "type",
+                "required"
+              ]
+            }
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "criterion_counts": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "options": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/native_id"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "guarantee",
+          "fields",
+          "relationships"
+        ]
+      }
     }
   },
   "required": [

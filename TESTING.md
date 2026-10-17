@@ -360,3 +360,31 @@ Run the applicable Task, Goal and Validation cases on Independent Review, Herdr 
 The inspector tests exercise the stable v0.1.25 floor, command-result v19 and Doctor v5 admission, Config v5 fixture diagnostics, redaction and private-file safeguards. Promoted-evidence v2 schema tests reject native-impossible scope/operand/Git-base combinations, missing bindings, capture fields, runtime identities and unsafe package-relative names. The stdin digest helper tests use official v0.1.25 example digests and an independently calculated Go encoding case with HTML and Unicode separators, including a non-UTF-8 stdin text configuration. These checks do not establish actual native publication, source consistency or staged payload integrity. Procedure tests exercise explicit fresh-root admission after terminal settlement, rejection of active, completed or wrong-route states for that admission, truthful completed-checkpoint recording, pending-ordinal continuity and retained historical snapshots.
 
 Installed qualification must cover the exact Aquarium candidate in UTM over the host's released baseline: Config v4-to-v5 migration and restoration, release-matched skill discovery, all five native targets, independent project binding errors, expected empty capture/guard capabilities, terminal partial failures and explicit new-review authority, historical reads and v2 hardening/commit handoffs. These skill and upgrade outcomes remain unverified until actual results, including Master's functional assessment, are available. No host candidate installation is permitted by the local test gate.
+
+TASK-141 adds `test_adaptive_qualification_unit.py` and
+`test_adaptive_suitability_unit.py` to the existing unit/Ruff enrollment. The same
+symbolic analyzer checks all five canonical sources and adaptive documentation,
+measured branching, grouped evidence, namespaces and equivalent typed operations.
+Mutations cover missing Judge facts, forged role/type/outcome declarations,
+unselected or absent original evidence, review-route/ordinal/acceptance controls,
+post-assessment and post-approval changes, native suffix re-entry, compound
+renewal scopes, JSON-safe unknown effects and stale suitability.
+Exact retained adaptive reuse preserves first-due assessments with truthful prior
+definition evidence and current fit; plan-only and revoked authority controls
+remain read-only.
+
+A linear 1,024-placement case exercises the released native graph bound. A separate
+cross-producer comparison case retains fourteen paired correlations under the
+default analysis budget; a larger version naturally exhausts that budget. These
+checks measure symbolic work and elapsed time. Exhaustion reports the current
+property and location and preserves any already proven incompatibility. Ordinary phase tests
+preserve future global gaps, current compound coverage, exact target identity,
+self-contained custom contracts, retained recovery and local write authority.
+
+Source-only native checks validate exact generated bootstrap representatives and
+known original sources using released Podway. These prove authoring/structure and
+mechanical target preparation, not an actual independent Judge, runtime bootstrap
+recording, installed handlers or skill decisions. Task-plan/Worker/orchestration
+functional checks and all seven installed entrypoints remain unverified until
+their authorized family/VM observations. No ordinary Make target invokes an LLM,
+a generated session or candidate installation.

@@ -228,3 +228,13 @@ new workflow. Prior canonical identity establishes provenance, not new graph
 support or permission to overwrite customizations.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Judge. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.
+
+The explicit [adaptive qualification path](adaptive-procedures.md#guarded-structural-qualification-and-exact-suitability)
+checks native goal mappings, necessary typed capabilities, selected endpoint
+coverage, guarded Judge passage, review continuity, acceptance provenance and
+relevant forward effects. It accepts equivalent noncanonical structures and
+retains unknown proof separately from established incompatibility. It does not
+replace the managed canonical/custom/formal inventory above. Known reference
+bindings retain their original contracts; changed/new static semantic definitions
+stay self-contained and receive exact independent suitability before adoption.
+Family handler defaults remain unchanged until their activation tasks.

@@ -207,9 +207,13 @@ def check_capability(
     fields = {} if fields is None else fields
     gaps = []
     unknowns = []
+    unknown_properties = set()
     if signature["kind"] == "decision":
         options = {option["id"] for option in definition.get("options", [])}
-        if not set(signature["options"]) <= options:
+        if (
+            not {fields.get(option, option) for option in signature.get("options", [])}
+            <= options
+        ):
             gaps.append("Missing required approval options")
         if not definition.get("reason", {}).get("required"):
             gaps.append("Approval reason must be required")
@@ -234,6 +238,7 @@ def check_capability(
                     unknowns.append(
                         f"{name}: bounded count needs exact criterion capacity"
                     )
+                    unknown_properties.add("criterion-capacity")
                 elif not isinstance(maximum, int) or isinstance(maximum, bool):
                     gaps.append(f"{name}: invalid maximum")
                 elif maximum < criterion_capacity:
@@ -260,10 +265,15 @@ def check_capability(
                     matches = observed == wanted
                     if not matches and observed:
                         unknowns.append(f"{name}: changed conditional requiredness")
+                        unknown_properties.add("conditional-requiredness")
                         continue
                 else:
                     matches = observed == wanted
                 if not matches:
                     gaps.append(f"{name}: incompatible {key}")
     status = "incompatible" if gaps else "not-established" if unknowns else "compatible"
-    return {"status": status, "gaps": gaps + unknowns}
+    return {
+        "status": status,
+        "gaps": gaps + unknowns,
+        "unknown_properties": sorted(unknown_properties),
+    }

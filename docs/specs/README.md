@@ -31,14 +31,15 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 [EPIC-026: ADAPT](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
 plans goal-specific Procedure selection and composition across seven handlers.
 Its [Detailed SOT](../todo/TODO-ADAPTIVE-PROCEDURES.md) owns the remaining
-handler selection activation, qualification and user-approved reuse requirements.
+family activation and preservation-consent requirements.
 Selected exact-known-source admission, atomic ignored retention and native-tuple
 recovery are implemented. Ordinary assignments support fit selection and
 source-only preparation, including self-contained whole/fragment composition.
 These interfaces join the closed definition formats and necessary declaration
 signatures in the
 [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md).
-Handler activation and full structural qualification remain planned. Implementing
+Explicit shared helpers implement guarded structural qualification and exact
+pre-start suitability/bootstrap. Handler activation remains planned. Implementing
 tasks must promote verified behavior to its exact skill/reference and update
 this catalog without replacing the existing ordinary v2 and review contracts.
 

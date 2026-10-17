@@ -72,7 +72,13 @@ and selection, coverage and exact prepared-definition data in `target`, under th
 These remain ordinary assignment/plan data. Reconcile full original sources and
 compound criteria independently; a generated coverage plan supplies no second
 requirements authority or Judge passage. Handler activation remains with its
-own implementation task.
+own implementation task. Exact changed/new suitability can use the same due Task
+plan Judge when its target covers both scopes. Preserve full global future gaps
+and a separate passing phase result; a pre-start definition assessment does not
+claim product delivery. The shared helper returns a truthful pre-session ordinary
+assignment and imports the actual report, without new receipts or private identity
+requirements. Known Goal reuse adds no plan Judge. In-session re-entry uses an
+existing affected planning/Judge route and never relabels a later call pre-start.
 
 ## Ordinary v2 documents
 
@@ -186,3 +192,9 @@ rendering only, without a generic report engine or native-call authentication.
 Repository package validation (`tests/validate.rb`) remains structural. Prose
 matching cannot verify role behavior; actual installed native progression,
 failure, rework and recovery require separate functional observations.
+
+Pre-start suitability dispatch preserves preparing-agent observations separately
+from the assigned Judge's `native` descriptor. Before actual dispatch, the Judge
+handle is explicitly unknown and its lifecycle is not-dispatched. The dispatcher
+may supply the actual available Judge handle; copied Worker handles never identify
+an independently assigned Judge. This is provenance, not native authentication.

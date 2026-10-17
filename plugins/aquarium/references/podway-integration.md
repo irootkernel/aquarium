@@ -35,7 +35,10 @@ and selected route independently of this five-file aggregate. Its CLI needs an
 available supported Python environment with YAML and `jsonschema`; missing
 dependencies return `missing-prerequisite` without native work or installation.
 The setup inspector loads those dependencies only for explicit selected mode.
-Before TASK-141, only exact known source/reference bindings enter this new path.
+The legacy selected launcher accepts exact known source/reference bindings.
+The separate shared qualification API accepts changed/new exact bundles only with
+current structural proof and actual ordinary suitability; family execution stays
+unactivated until its owning integration task.
 Existing handlers retain their defaults until family activation. Preserve
 canonical/custom/formal inspection and complete library diagnostics; unrelated
 missing templates, optional historic bundles or filename differences cannot alone

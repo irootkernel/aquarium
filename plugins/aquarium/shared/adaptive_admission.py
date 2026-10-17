@@ -294,7 +294,7 @@ def known_source(source):
             return record, yaml.safe_load(source)
     raise BundleError(
         "not-established",
-        "New adaptive sources require TASK-141 qualification; existing legacy/custom/formal contracts remain separate",
+        "New adaptive sources require exact structural qualification and suitability; existing legacy/custom/formal contracts remain separate",
     )
 
 
@@ -388,6 +388,7 @@ def selected_source(
     runtime_ready=None,
     client=None,
     binding_path=None,
+    qualification=None,
 ):
     if client is None:
         raise BundleError(
@@ -404,15 +405,61 @@ def selected_source(
         )
     source = read_regular(repository, Path(source_path))
     preview = client.preview(source_path)
-    binding = reference_binding(source, preview)
-    if binding_path is not None:
+    adaptive = qualification is not None
+    if adaptive:
+        if binding_path is None or not isinstance(qualification, dict):
+            raise BundleError(
+                "not-established",
+                "Adaptive admission needs its exact binding and ordinary suitability context",
+            )
+        approved_route = (
+            qualification.get("assignment", {})
+            .get("authority", {})
+            .get("review", {})
+            .get("route")
+        )
+        if approved_route != (route if route is not None else "not-applicable"):
+            raise BundleError(
+                "route-unavailable",
+                "Selected route differs from the exact suitability authority",
+            )
+        from adaptive_suitability import qualify_prepared
+
         binding = parse_definition(read_regular(repository, Path(binding_path)))
-        qualify_known(source, binding, preview)
+        if binding["family"] in {
+            "task",
+            "goal",
+            "validation",
+        } and approved_route not in {"mulgae", "herdr", "independent-review", "waived"}:
+            raise BundleError(
+                "route-unavailable",
+                "Adaptive admission requires its actual supported selected review route",
+            )
+        result = qualify_prepared(
+            repository,
+            qualification["assignment"],
+            client=client,
+            assessment=qualification.get("assessment"),
+            combined_task_plan=qualification.get("combined_task_plan", False),
+            source_path=source_path,
+            binding_path=binding_path,
+        )
+        if result["status"] not in {"qualified", "qualified-known"}:
+            raise BundleError(
+                "not-established",
+                "Actual pre-start independent suitability remains due",
+                result,
+            )
+    else:
+        binding = reference_binding(source, preview)
+        if binding_path is not None:
+            binding = parse_definition(read_regular(repository, Path(binding_path)))
+            qualify_known(source, binding, preview)
     if entrypoint not in binding["entrypoints"]:
         raise BundleError(
             "incompatible", "Selected source does not support this entrypoint"
         )
-    if binding["family"] in {"task", "goal", "validation"}:
+    if binding["family"] in {"task", "goal", "validation"} and not adaptive:
         if route not in {"mulgae", "herdr", "independent-review", "waived"}:
             raise BundleError(
                 "route-unavailable", "A selected review route is required"
@@ -443,7 +490,7 @@ def selected_source(
         raise BundleError(
             resolved["status"], "Existing selected-key bundle needs recovery", resolved
         )
-    if resolved["status"] == "resolved":
+    if resolved["status"] == "resolved" and not adaptive:
         qualify_known(resolved["source"], resolved["binding"], preview)
     return {
         "status": "ready",
@@ -481,6 +528,8 @@ def retain_selected(
     route=None,
     runtime_ready=None,
     client=None,
+    binding_path=None,
+    qualification=None,
 ):
     selected = selected_source(
         repository,
@@ -490,23 +539,57 @@ def retain_selected(
         route=route,
         runtime_ready=runtime_ready,
         client=client,
+        binding_path=binding_path,
+        qualification=qualification,
     )
+
+    def check(source, binding):
+        if qualification is None:
+            return qualify_known(source, binding, selected["preview"])
+        if source != selected["source"] or binding != selected["binding"]:
+            raise BundleError(
+                "source-drift", "Qualified source changed before retention"
+            )
+        from adaptive_suitability import qualify_prepared
+
+        result = qualify_prepared(
+            repository,
+            qualification["assignment"],
+            client=client,
+            assessment=qualification.get("assessment"),
+            combined_task_plan=qualification.get("combined_task_plan", False),
+            source_path=source_path,
+            binding_path=binding_path,
+        )
+        if result["status"] not in {"qualified", "qualified-known"}:
+            raise BundleError("not-established", "Suitability remains due")
+
+    if qualification is not None:
+        from adaptive_suitability import retention_scope
+
+        retention_scope(
+            repository,
+            qualification["assignment"],
+            client,
+            roots=roots,
+            write_root=write_root,
+        )
     result = publish_bundle(
         repository,
         roots,
         write_root,
         selected["source"],
         selected["binding"],
-        qualify=lambda source, binding: qualify_known(
-            source, binding, selected["preview"]
-        ),
+        qualify=check,
         native_identity=client.identity,
     )
     result["session"] = selected["session"]
     return result
 
 
-def resume_selected(repository, roots, procedure, *, client, bootstrap=None):
+def resume_selected(
+    repository, roots, procedure, *, client, bootstrap=None, qualification=None
+):
     key = tuple(procedure.get(field) for field in ("id", "version", "digest"))
     if not all(isinstance(value, str) and value for value in key):
         raise BundleError(
@@ -532,5 +615,24 @@ def resume_selected(repository, roots, procedure, *, client, bootstrap=None):
         raise BundleError(
             "corrupt", "Retained native digest differs from session readback"
         )
-    qualify_known(resolved["source"], resolved["binding"], preview)
+    if qualification is None:
+        qualify_known(resolved["source"], resolved["binding"], preview)
+    else:
+        from adaptive_suitability import qualify_prepared
+
+        result = qualify_prepared(
+            repository,
+            qualification["assignment"],
+            client=client,
+            assessment=qualification.get("assessment"),
+            combined_task_plan=qualification.get("combined_task_plan", False),
+            source_path=Path(resolved["path"]) / "procedure.yaml",
+            binding_path=Path(resolved["path"]) / "binding.json",
+            in_session=True,
+        )
+        if result["status"] not in {"qualified", "qualified-known"}:
+            raise BundleError(
+                "not-established", "Current exact suitability remains due", result
+            )
+        resolved["qualification"] = result
     return resolved

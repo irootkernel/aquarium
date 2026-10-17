@@ -49,9 +49,10 @@ exact-known-source admission, atomic locally ignored retention and native-tuple
 recovery. Explicit ordinary-assignment helpers now select by fit and prepare
 exact source/binding candidates within approved scope. Explicit whole/fragment
 composition resolves typed ports and namespaces into self-contained candidates.
-Handler selection and execution remain unactivated. Continue using the existing skill and native
-contracts until the corresponding implementation
-and authorized update. The roadmap owns task order and status.
+Guarded qualification and exact pre-start suitability/bootstrap assess those
+candidates through ordinary reports. Handler selection and execution remain
+unactivated. Continue using the existing skill and native contracts until the
+corresponding implementation and authorized update. The roadmap owns task order and status.
 
 ## Source-of-Truth Precedence
 

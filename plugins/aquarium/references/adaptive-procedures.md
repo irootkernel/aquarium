@@ -7,8 +7,9 @@ identity helper and necessary declaration signatures described here. TASK-138
 implements selected known-source admission, atomic local retention and exact-key
 recovery. TASK-139 implements fit selection and approved source-only preparation
 through an ordinary Worker assignment. TASK-140 implements explicit whole/fragment
-composition through that preparation path. Structural qualification and handler
-activation remain reserved for TASK-141 through TASK-145. These interfaces do
+composition through that preparation path. TASK-141 implements guarded structural
+qualification and exact ordinary pre-start suitability with bootstrap import.
+Handler activation remains reserved for TASK-142 through TASK-145. These interfaces do
 not activate adaptive execution. Existing handlers, ordinary v2 reports, canonical/custom
 sources and immutable formal v1 sessions retain their current contracts.
 
@@ -111,14 +112,14 @@ entrypoint, effect scope and any explicitly mapped review-route declarations,
 including typed field aliases. Unrelated item names establish no review
 capability. Provider-specialized and new operations may omit a route-choice
 field; preparation preserves the selected review and reports its continuity as
-`not-established` for TASK-141. A contradictory mapped choice is incompatible. Exact known reuse preserves its
+`not-established` until shared qualification. A contradictory mapped choice is incompatible. Exact known reuse preserves its
 established structural review contract and original assessment boundaries;
 actual selected review execution remains due.
 The exact `review` object must agree with `authority.review`, and definition
 work effects must remain within `effects` and `authority.effects` (the abstract
 `covered-work` effect is resolved by the invocation). Full evidence connections,
 review-control continuity, acceptance provenance and post-gate effects remain
-TASK-141 obligations. Coverage results explicitly retain
+shared qualification obligations. Coverage results explicitly retain
 `requires-independent-original-source-assessment`; they are not Judge passage.
 
 `plan-only` reads original sources and approved source locations. It writes no
@@ -248,7 +249,7 @@ eight-row and sixteen-item limits. Required producers must dominate consumers
 for each required selector row.
 Guards require their own item in an explicitly required selector row;
 optional native guard items remain supported. Stronger workflow/suitability
-claims remain due under TASK-141.
+claims remain due through shared qualification and exact suitability.
 
 A fragment's internal rework declarations must match its actual native rework
 routes. Each external declaration's `port` is the unresolved `route.to` token
@@ -327,7 +328,7 @@ schema. Schema success is definition validity only.
 
 Binding checks cover placement references, including closeout prerequisites;
 fragment Action ports also resolve their declared native items. Cross-checking
-binding item references against the separate native source belongs to TASK-141.
+the shared qualifier checks binding item references against the separate native source.
 
 The helper currently requires Python and `jsonschema` from a supported
 environment. This repository supplies them through its development requirements;
@@ -436,25 +437,42 @@ can finish before routing. Unrelated native pass-only checks remain legitimate.
 Finite maxima on mandatory unmet/unverified count fields need a proven capacity
 for the exact assessment's original criterion basis. Without that proof,
 `check_capability` returns not-established. Its optional `criterion_capacity`
-input represents an independently established upper bound; a maximum below it is
-incompatible, while an adequate bound can pass this declaration slice. TASK-141
-owns the exact-basis proof. An operation digest supplies no capacity proof and
-unrelated bounded integers retain their own contracts.
+input is a caller-established exact-basis upper bound. Public suitability uses an
+actual current ordinary Judge report's `applicability.criterion_capacity`, with
+`value`, the complete original `basis` and readable `evidence`; a bare invocation
+number supplies no proof. Established reuse can carry a prior report's capacity
+proof only while its original criterion basis equals the current basis. A bound
+below that capacity is incompatible. A missing
+capacity proof can be included in the same exact suitability assessment. An
+operation digest supplies no capacity proof; unrelated bounded integers retain
+their own contracts.
 
-Each signature also names required relationships. TASK-141 must establish those
-relationships through actual producer/evidence/Decision connections, guards and
-forward effects. Declaration matching alone does not establish them. Actual
+Recognized guarantees have independent minimum declarations. Custom signatures
+retain the required original report, applicable negative assessment/check
+outcomes, mandatory gap-count fields and approval alternatives. Their own
+labels or narrowed field specifications cannot weaken those minima. New
+assessment-like guarantees retain the common report, verdict, gap-count and
+applicability floor. Necessary consumed fields remain in the analysis even when
+a custom signature omits their declarations. Exact
+custom operation identities and typed aliases remain supported; review records
+may stay conditional when the relevant path proves their presence. Unrelated
+pass-only native checks retain their existing contract.
+
+Each signature names its structural guarantee. The shared qualifier checks its
+producer/item/evidence/Decision connections, native guards and relevant forward
+effects. Declaration matching alone does not establish those relationships. Actual
 independent execution comes from the ordinary assignment and native result
 observations; signatures and digests authenticate no agent.
 
-TASK-141 must prove acceptance provenance using the actual `goal-kind` for Goals
+The qualifier checks acceptance provenance using the actual `goal-kind` for Goals
 and `workflow-owner` for Validation, exact `acceptance-source` values and consuming
 guards. Every user-owned path must support and require `user`; delegated Goal
 paths exclude final Epic closeout and stopped outcomes, and delegated Validation
-requires continuing `epic-handler` ownership. Cold validation and stopped
-Validation require actual user acceptance. These exact values/guards are reserved
-qualification work; the current typed declarations alone do not prove provenance
-or require unused delegation branches in a specialized Procedure.
+requires continuing `epic-handler` ownership. Cold validation, stopped Validation and stopped Goals require actual user
+acceptance. Discriminator
+semantics come from an established operation, its executed source and selected
+evidence under current ordinary context. An unrelated same-named choice cannot
+supply delegation. Specialized Procedures need only their applicable branches.
 
 All backed families retain `goal_tracking: true`. Native
 `assessment.target: session_goal` mappings own achievement. Terminal names,
@@ -466,10 +484,21 @@ may follow achieved, not-achieved or superseded outcomes.
 
 Every relevant forward work/content change needs a later covering assessment.
 Exact application approval likewise stays tied to current proposal/target bytes.
-Use native rework invalidation for declared rework. Recognized bookkeeping,
+Static re-entry checks follow native target-and-later invalidation for declared
+and allowed manual rework. A downstream target may preserve an earlier gate;
+product effects made before re-entry therefore require the corresponding renewed
+assessment or approval on successful continuation. Reapplying an exactly approved
+application retains its own approval/result contract. A renewal covers every
+applicable original obligation and selected producer; an unrelated assessor or
+partial replacement cannot clear other changed scopes. Inactive conditional
+alternatives create no additional coverage obligation. Recognized bookkeeping,
 actual acceptance, exact lifecycle-only deltas, independently verified evidence
 projection and authorized commit/no-commit handoffs keep existing exemptions.
-Unknown effects remain work-bearing and cannot gain exemptions through labels.
+Declared product effects take precedence over custom non-work labels. Existing
+reference bindings have coarse effect declarations; established individual
+operation meanings retain their original contracts. Unknown effects receive no
+bookkeeping exemption and remain not-established. A definite violation remains
+incompatible even when other paths contain unknown effects.
 
 Qualification reports native-invalid, incompatible, not-established and runtime
 failure separately. Native validity, graph guarantees, exact suitability and
@@ -478,18 +507,58 @@ must handle infeasible guarded paths and unknowns without exhaustive-path
 assumptions. An unresolved proof reports its property and location; it neither
 proves safety nor declares every noncanonical structure invalid.
 
+Custom static operation contracts remain part of the exact binding and suitability
+target. A non-work Worker claim without established semantics is unknown. Privileged
+correction, user-direction and faithful-relay declarations need their actual
+verifier, user-evidence or typed original-evidence connection; a boolean or map
+alone supplies no exemption. Harmless custom Orchestrator evidence and result
+delivery remain supported. Composition retains a bounded `derivation` for changed
+established operations: the original individual definition plus only its native
+reference and item rewrites. Qualification checks its original definition hash,
+unchanged operation meaning and exact rewritten body without reading origin
+libraries. The checks apply to individual operations and establish no agent authentication.
+
+Task, Goal and Validation preserve their supported selected review route;
+`not-applicable` cannot waive a due review. A review operation may retain
+same-operation recovery and authorized route change internally through its
+self-contained `review_recovery` contract, or compose the existing direction
+operations. A custom internal contract belongs to the actual mapped review-control
+and routing operation with its necessary native evidence/check fields. An unrelated
+note cannot supply recovery by adding that list. Applicable missing capabilities are not-established. Explicit
+exclusions belong to the original approved invocation scope, not an authoring
+shortcut. Custom ordinal checks receive no completion or prior-ordinal implication
+from a capability label; actual guards can establish the necessary relationship.
+Task finalization requires its actual approved user route; an additional delegated
+option alone supplies no acceptance.
+
+Context discriminators use the current family vocabulary and the actual selected
+source domain. The original invocation's `expected_outcome` is `achieved`, `not_achieved` or
+`superseded`. It defaults to `achieved` and remains in the exact original basis. A due achieved result needs a feasible achieved
+continuation. Stopped/non-achieved paths remain available without representing
+success. Integer domains include every consumed `required_when` threshold.
+Native Action completion enforces accepted check outcomes only for items required
+now. Optional recorded nonaccepted outcomes remain possible; absent guard evidence
+remains unevaluable and cannot select a route.
+
 ## Suitability, replacement and preservation
 
-Known reuse requires unchanged bytes, an already established structural contract,
-a supported binding and current fit. Unsupported bindings and materially changed
-definitions are not known reuse. Adequate known reuse keeps current assessment boundaries. Include fit
+Known reuse requires unchanged bytes, an established structural contract, a
+supported binding and current fit. Unsupported bindings and materially changed
+definitions require qualification. Adequate known reuse keeps current assessment
+boundaries. Include fit
 in an existing plan assessment when present; a Goal without a plan Judge gains
 no fictitious report or extra cycle. New/changed/composed definitions require
 exact pre-start independent suitability against complete bundle/native digest
 and original requirement/plan basis. One compatible Task plan assessment may
-cover both scopes. Bootstrap imports the real pre-session report and timing;
-it must never pretend that Judge executed in the active attempt. Changed basis
-on re-entry requires affected current assessment, not replay of an old pass.
+cover both scopes. Bootstrap imports the real pre-session report and timing for new or changed
+sources. An intact already-qualified adaptive bundle can instead use actual prior
+ordinary definition evidence, exact retained bytes and native identity, current
+structural proof and original-source fit. Its bootstrap records
+`established-reuse` timing with an ordinary selection checkpoint, preserving the
+normal first-due Judge. Prior definition evidence is never a current assessment
+or product pass. Material in-session basis changes require affected current
+assessment; consumed ordinals, remaining grants and same-operation handles alone
+do not create a new pre-start cycle.
 
 Declared rework, same-operation retrieval and approved normal successors need no
 repeated question. Missing topology in an in-progress session requires explicit
@@ -536,15 +605,15 @@ Aquarium's source-repository interface catalog, `docs/specs/local-interfaces.md`
 defines both CLIs' flags, result fields, failure details and exit statuses. Target
 repositories do not need that development catalog for admission.
 
-Before TASK-141, adaptive admission accepts only exact sources in
+Unchanged known reuse accepts exact sources in
 [known-sources-v1.json](../assets/adaptive/known-sources-v1.json), with their
 supported reference binding. This bounded contract freezes source hashes and
 role/capability mappings within mapping version 1. Existing entries remain stable
 when unrelated templates or signatures change; necessary mapping changes require
 a distinct native revision. It is separate from the existing canonical,
-same-ID custom and formal-session contracts. Unknown sources return
-`not-established`, never a fabricated qualification. Whole-graph qualification
-and suitability remain planned.
+same-ID custom and formal-session contracts. Changed/new sources use the exact
+qualification and independent suitability path below. Missing proof remains
+`not-established`; family handler activation is still required.
 
 The selected setup inspector retains full managed-library diagnostics and
 same-family adopted-customization visibility. An alternative needs the existing
@@ -594,7 +663,7 @@ installed handler behavior.
 | TASK-138 | Implemented: podway-integration and tool-catalog selected/library readiness distinction; dev-setup inspect_tools selected path; atomic writer/resolver and dependency-reporting launcher with lazy imports |
 | TASK-139 | Implemented: shared adaptive selection/preparation and source authority; existing plan/assignment requirement coverage and plan-only boundaries |
 | TASK-140 | Implemented: shared composition through existing preparation, namespaces, typed ports, self-contained flattening and reusable review/whole-control assets; preserve semantic operation IDs/digests and fragment/session control distinction |
-| TASK-141 | shared structural qualifier and exact suitability/bootstrap lifecycle; procedure-node-contracts adaptive compatibility alongside current canonical inventory |
+| TASK-141 | Implemented: guarded shared structural qualification, exact ordinary suitability/bootstrap and retained-bundle admission/reassessment; preserve canonical/custom/formal defaults until family activation |
 | TASK-142 | task-handler/task-orchestration fixed seven-phase loading and unconditional refine discovery; ordinary-agent-orchestration five-bundled-source restriction and goal-judge helper; epic/validation orchestration, worker-guidance, plan-handoff, task-close/task-commit adaptive mappings/recovery; runtime readiness before activation |
 | TASK-143 | new-feature/new-project/refactor and design-diagnosis orchestration adaptive selection, QA, exact application and non-Git recovery |
 | TASK-144 | war-room and design-diagnosis adaptive diagnosis; podway-integration and epic-handler successful-terminal-only replacement wording; task-orchestration, epic-orchestration, validation-orchestration and design-diagnosis-orchestration continuation rules for shared consented atomic supersede; preserve task-handler's prohibition on replacing a session merely to recover reports |
@@ -606,5 +675,99 @@ typed aliases and genuinely different work/evidence/Decision structures. Negativ
 fixtures target missing required types/operations, parent-goal assessment inside
 ordinary fragments, violated evidence or authority. Unknown contracts produce
 not-established. ADAPT-25/26 are definition/signature controls here; whole-graph
-qualification and runtime claims remain with TASK-141 and activated families.
+qualification is covered by the separate shared analyzer; actual execution and
+installed claims remain with activated families.
 Tests of fabricated records establish rejection behavior only.
+
+## Guarded structural qualification and exact suitability
+
+`adaptive_qualification.qualify` analyzes the exact natively checked source and
+binding. Native session-goal mappings determine achievement. Every feasible
+achieved continuation needs a current final Judge's achieved outcome, pass
+verdict, zero mandatory unmet/unverified counts and applicability. The analyzer
+retains correlations across conditional branches and overlapping selections in a
+shared predicate graph; it does not enumerate execution paths. Resource
+exhaustion preserves already proven incompatibility and reports the current
+property and location as not-established. It uses native rework invalidation rather
+than persisting another freshness history.
+
+The [released evaluator](https://github.com/irootkernel/podway/blob/fa29dba929777b020377bc9803cb0a3954d219b1/crates/podway-core/src/procedure_v2/items.rs)
+makes absent guard evidence unevaluable, so that option
+cannot be selected. A recorded Confirm is true; false is not a recorded Confirm
+value. Text bounds and emptiness use trimmed Unicode character counts. Unsupported
+proof semantics remain unknown. Optional producer rows can supply grouped
+conditional evidence when the producer and selected item actually exist on the
+relevant path. Required original endpoints must reach their assessor and outgoing
+semantic Decision; a generic bookkeeping node cannot relay evidence by label.
+
+The versioned `operation-contracts-v1.json` describes bounded effects and faithful
+projections of individual existing operations. It supplies neither whole-graph
+approval nor agent authentication. Unknown effects get no bookkeeping exemption
+and remain `not-established`; declared unassessed product changes are incompatible.
+Changed approved content needs renewed exact approval and current application
+verification. Confirmation preserves finite whole-set eligible corrections under
+their existing effect grant. General review remediation needs its current scope;
+same-operation retrieval and ordinary declared goal/evidence rework retain their
+existing contracts and consume no invented review ordinal.
+
+A binding may include closed optional `semantic_contracts` and
+`capability_definitions` maps. These contain static operation definitions, never
+invocation requirements, actual results, grants or acceptance. Semantic contracts
+are keyed by the exact canonical native definition-body SHA-256, separate from
+the native Procedure digest. Composition rewrites their physical item references
+and materializes the resulting keys. Structured provenance uses `native_version`
+under the closed binding schema. Established same-operation/signature meaning
+cannot be overwritten. The existing bundle hash binds these maps, so retained
+custom definitions resume without mutable origin libraries. Old known bindings
+and their first due checkpoints remain unchanged.
+
+For changed/new candidates, `prepare_adaptive_procedure.py --bootstrap` inserts
+an initial report-recording Action and applicability Decision before original
+work. Plan-only stays read-only; unchanged known reuse keeps its original bytes.
+The prefix records actual ordinary pre-start Judge evidence, the exact target
+reference and typed phase passage. The target contains the candidate bundle ID,
+native tuple/source hash, complete original requirements and compound parts,
+coverage plan and approved static plan/review/effect basis. Live consumed grants,
+agent handles and ordinary attempt progress are reconciled separately.
+
+`qualify_adaptive_procedure.py` takes `--repository`, `--assignment <file-or->`
+and `--podway <exact-binary>`. `--assessment <file>` supplies the actual ordinary
+`aquarium.judge-assessment/v2`; no new receipt schema or universal report file is
+required by the API. `--combined-task-plan` allows one genuinely compatible due
+Task plan assessment to cover both exact scopes. A nonfinal `checkpoint_result`
+pass can preserve truthful global future unmet/unverified rows and product gaps;
+due scoped gaps still block. All original rows and compound parts remain covered.
+Actual ordinary `state` rows and supported `status` rendering are accepted;
+duplicate or contradictory rows fail. Legitimate not-applicable rows retain
+current reason and evidence. A global pass alone remains an all-met claim.
+
+Without an actual current assessment, the helper returns `assessment-required`
+and an ordinary report-only Judge assignment with truthful pre-session context
+(exit 3). Successful known/changed qualification returns exit 0; typed input,
+native-invalid, incompatible, not-established, stale-target and runtime failures
+return JSON with exit 2. Native codes/details remain available. `--retain` uses the
+current disclosed preparation grant and the existing atomic ignored writer; it
+creates no session or product artifact. Read-only qualification performs no
+provider dispatch, goal/session mutation, setup or installation.
+
+Bootstrap import returns the actual ordinary report as artifact evidence and
+separate typed recording values. Its dictionary is not a native ArtifactValue.
+The activated handler attaches the actual returned delivery or an authorized
+projection through the supported native attachment contract; it does not invent
+a location, require a private transcript or create a mandatory universal report.
+The retained binding contains no runtime report or target values.
+
+Shared selected-source/retention/recovery APIs accept the original prepared
+ordinary assignment and actual assessment as `qualification` context. They bind
+the actual selected route to that authority, verify exact retained bytes/native
+tuple and recheck current original basis before work. A running session with a
+missing delivery first retrieves that same operation. A changed target/basis
+returns `reassessment-required` with an existing affected planning/Judge route or
+precise `missing-topology`; it never dispatches a new call labeled pre-start.
+Initial bootstrap rework can re-import an existing current pre-start report.
+Adequate unchanged adaptive reuse instead records prior definition evidence and
+current fit with `established-reuse` timing, preserving normal first-due
+assessments. Its ordinary selection checkpoint distinguishes those claims from
+a new Judge result. Session replacement remains TASK-144's separately consented transition.
+The legacy launcher/setup selected-known path remains available under its
+original contract; handler integration is still TASK-142 through TASK-144.

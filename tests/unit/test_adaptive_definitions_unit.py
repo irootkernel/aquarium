@@ -208,7 +208,22 @@ def test_reference_registry_matches_current_native_operation_declarations():
     families = {"diagnosis": "war-room"}
     for name in adaptive.capability_signatures():
         family = name.split(".")[1]
-        definitions = source(families.get(family, family))["node_definitions"]
+        if family == "shared":
+            from adaptive_suitability import add_bootstrap
+
+            native = yaml.safe_load(
+                (
+                    PLUGIN / "assets/adaptive/reusable/task-goal-control.yaml"
+                ).read_bytes()
+            )
+            mapping = json.loads(
+                (
+                    PLUGIN / "assets/adaptive/reusable/task-goal-control.binding.json"
+                ).read_bytes()
+            )
+            definitions = add_bootstrap(native, mapping)[0]["node_definitions"]
+        else:
+            definitions = source(families.get(family, family))["node_definitions"]
         assert any(
             adaptive.check_capability(definition, name)["status"] == "compatible"
             for definition in definitions.values()

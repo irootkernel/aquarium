@@ -1,10 +1,11 @@
 """Flatten explicit definition imports; no execution or runtime library imports."""
 
 import copy
+import json
 import re
 
 from adaptive_bundles import BundleError, contained, read_regular, sha256
-from adaptive_definitions import ASSETS, definition_id, parse_definition
+from adaptive_definitions import ASSETS, canonical_json, definition_id, parse_definition
 
 NATIVE_ID = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 
@@ -102,6 +103,7 @@ def expand(document, mapping, namespace, fields):
     """Rewrite only grammar-owned references, never narrative/operation identities."""
     check_shapes(document, mapping)
     document, mapping = copy.deepcopy(document), copy.deepcopy(mapping)
+    original_definitions = copy.deepcopy(document["node_definitions"])
     definitions = obj(document["node_definitions"], "node_definitions")
     placements = rows(obj(document["graph"], "graph")["nodes"], "graph.nodes")
     node_ids = {node["id"]: scoped(namespace, node["id"]) for node in placements}
@@ -168,6 +170,76 @@ def expand(document, mapping, namespace, fields):
                     for item in evidence["items"]
                 ]
             ep(evidence)
+    materialized = {}
+    references = json.loads(
+        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+    )
+    explicit_contracts = mapping.get("semantic_contracts", {})
+    if any(
+        key in references and references[key] != value
+        for key, value in explicit_contracts.items()
+    ):
+        fail("An established operation contract cannot be overwritten")
+    references.update(explicit_contracts)
+    for key, original in original_definitions.items():
+        identity = sha256(canonical_json(original))
+        contract = references.get(identity)
+        if contract is None:
+            continue
+        contract = copy.deepcopy(contract)
+        renamed = definition_aliases.get(key, {})
+        prior = contract.get("derivation")
+        if prior:
+            derivation = copy.deepcopy(prior)
+            derivation["nodes"] = {
+                old: node_ids.get(current, current)
+                for old, current in prior["nodes"].items()
+            }
+            derivation["fields"] = {
+                old: {
+                    field: aliases.get(prior["nodes"].get(old, old), {}).get(
+                        current, current
+                    )
+                    for field, current in values.items()
+                }
+                for old, values in prior["fields"].items()
+            }
+            derivation["local_fields"] = {
+                old: renamed.get(current, current)
+                for old, current in prior["local_fields"].items()
+            }
+        else:
+            references_used = {
+                guard["evidence"]["node"]
+                for option in original.get("options", [])
+                for guard in option.get("guards", [])
+            }
+            derivation = {
+                "definition": copy.deepcopy(original),
+                "nodes": {node: node_ids[node] for node in references_used},
+                "fields": {node: aliases[node] for node in references_used},
+                "local_fields": {
+                    item["id"]: renamed.get(item["id"], item["id"])
+                    for item in original.get("items", [])
+                },
+            }
+        if identity != sha256(canonical_json(definitions[key])):
+            contract["derivation"] = derivation
+        for field in ("relay_outputs", "delivery_items"):
+            if field in contract:
+                contract[field] = [renamed.get(item, item) for item in contract[field]]
+        for field in ("discriminators", "output_scopes"):
+            if field not in contract:
+                continue
+            contract[field] = {
+                renamed.get(item, item): value
+                for item, value in contract[field].items()
+            }
+        expanded_identity = sha256(canonical_json(definitions[key]))
+        if identity != expanded_identity or identity in explicit_contracts:
+            materialized[expanded_identity] = contract
+    if materialized:
+        mapping["semantic_contracts"] = materialized
     document["node_definitions"] = {
         definition_ids[key]: value for key, value in definitions.items()
     }
@@ -471,6 +543,13 @@ def _compose(repository, draft):
         merge(result["node_definitions"], expanded["node_definitions"], "definition")
         result["graph"]["nodes"].extend(expanded["graph"]["nodes"])
         merge(mapping["nodes"], binding["nodes"], "binding placement")
+        for retained in ("semantic_contracts", "capability_definitions"):
+            if binding.get(retained):
+                destination = mapping.setdefault(retained, {})
+                for key, value in binding[retained].items():
+                    if key in destination and destination[key] != value:
+                        fail("Conflicting self-contained semantic definition")
+                    destination[key] = copy.deepcopy(value)
         merge(mapping["obligations"], binding.get("obligations", {}), "obligation")
         merge(mapping["parameters"], binding.get("parameters", {}), "parameter")
         mapping["goal_assessments"].extend(binding.get("goal_assessments", []))

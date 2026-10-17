@@ -19,6 +19,11 @@ def main():
         "--podway",
         help="Exact supported binary; required only for approved preparation",
     )
+    parser.add_argument(
+        "--bootstrap",
+        action="store_true",
+        help="Prepare initial suitability recording for a changed/new definition; unchanged reuse keeps its source.",
+    )
     args = parser.parse_args()
     try:
         from adaptive_admission import NativeClient
@@ -54,7 +59,10 @@ def main():
         )
         print(
             json.dumps(
-                prepare(args.repository, assignment, client=client), sort_keys=True
+                prepare(
+                    args.repository, assignment, client=client, bootstrap=args.bootstrap
+                ),
+                sort_keys=True,
             )
         )
         return 0
