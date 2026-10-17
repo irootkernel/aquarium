@@ -112,6 +112,12 @@ meaningful existing-envelope textual disposition in
 `customization_disposition`; an optional template cannot become policy by being
 listed in discovery.
 
+Before adoption, qualification compares this managed-source authority with the
+prepared coverage plan again, including at publication. A changed managed slot
+requires renewed reconciliation and affected assessment. An intact admitted
+session resumes from its self-contained bundle; later origin-library or managed
+template changes do not replace its adopted obligations.
+
 Mechanical fit checks complete declared original-source coverage, actual
 producer/evidence items and consuming Decision placements. It checks the family,
 entrypoint, effect scope and any explicitly mapped review-route declarations,
@@ -127,6 +133,27 @@ work effects must remain within `effects` and `authority.effects` (the abstract
 review-control continuity, acceptance provenance and post-gate effects remain
 shared qualification obligations. Coverage results explicitly retain
 `requires-independent-original-source-assessment`; they are not Judge passage.
+
+The ordinary assignment may carry `target.qualification_context`. Only the
+following input keys are supported. They describe original work and static
+definitions and grant no effects:
+
+| Key | Value and applicable use |
+| --- | --- |
+| `operation_contracts` | Operation-definition digest to static semantic contract. New or changed definitions retain these exact entries in binding `semantic_contracts`. |
+| `signatures` | Signature ID to capability definition, retained in binding `capability_definitions`. Established meanings cannot be overridden. |
+| `goal_kind` | Actual Goal scope: `member-task`, `pre-validation-remediation` or `epic-closeout`. Supply it when that scope determines delegated versus user acceptance. |
+| `workflow_owner` | Actual Validation owner: `epic-handler` or `epic-validator`. Supply it when continuing Epic validation versus cold validation determines acceptance. |
+| `due_capabilities` | Guarantee-kind names required by the actual approved workflow. Supply every conditionally due capability; omission cannot waive an original obligation. Unused implementation, refinement or Deslop is not required for documentation-only work. |
+| `required_endpoints` | `{node, item}` producer endpoints required by the actual work even when their native items are optional. Supply them when original coverage requires their presence. |
+| `criterion_capacity` | Exact-basis upper bound used by structural checking. Public suitability requires the independent report's `applicability.criterion_capacity` proof (`value`, original `basis`, `evidence`); a caller number alone establishes nothing. |
+| `review_required` | Boolean identifying a due selected technical review. It cannot waive the original selected route or team; Design/Diagnosis qualification enforces a selected review independently. |
+| `expected_outcome` | Original intended `achieved`, `not_achieved` or `superseded` outcome; defaults to `achieved`. Stopped work must not be represented as achieved. |
+
+Handlers carry applicable values into preparation, qualification and recovery
+alongside the unchanged original sources and authority. These inputs establish
+neither actual agent execution nor suitability passage. Live ordinals, grants
+and handles remain ordinary execution records rather than static context.
 
 `plan-only` reads original sources and approved source locations. It writes no
 files, renders no source, invokes no provider or native command, initializes no
@@ -517,12 +544,41 @@ Custom static operation contracts remain part of the exact binding and suitabili
 target. A non-work Worker claim without established semantics is unknown. Privileged
 correction, user-direction and faithful-relay declarations need their actual
 verifier, user-evidence or typed original-evidence connection; a boolean or map
-alone supplies no exemption. Harmless custom Orchestrator evidence and result
+alone supplies no exemption. Discriminator and output-scope maps require an
+established operation, its verified derivation or exact independent semantic
+evidence in the existing ordinary suitability report. An unestablished map is
+removed and reports `not-established`; it cannot grant delegation or exempt
+product work from the plan-handoff frontier. Harmless custom Orchestrator evidence and result
 delivery remain supported. Composition retains a bounded `derivation` for changed
 established operations: the original individual definition plus only its native
 reference and item rewrites. Qualification checks its original definition hash,
 unchanged operation meaning and exact rewritten body without reading origin
 libraries. The checks apply to individual operations and establish no agent authentication.
+
+A genuinely new operation can use the same due report's optional
+`applicability.operation_contracts` map. Each key is the exact canonical
+operation-definition digest; its value contains `contract` (the exact object in
+binding `semantic_contracts`) and readable, nonempty `evidence` supporting that
+meaning. Qualification first validates the report against the full current
+bundle and original basis, then consumes this proof separately from declaration
+maps. Typed choice domains and role/effect obligations still apply; product
+effects remain product effects. The released operations are reference
+implementations, not a complete operation allowlist.
+
+Before that report exists, conditional analysis may establish that only this
+semantic proof or exact criterion-capacity proof remains due. It returns
+`assessment-required` with overall `not-established` and no execution frontier;
+independent structural violations still stop. The same Judge can assess both
+proofs. No extra report or cycle is required. An unchanged retained definition
+can reuse the exact prior report's semantic proof with current fit, without
+claiming a new assessment. Running recovery uses the current applicable report;
+the handoff consumer preserves its proven frontier rather than trusting a raw
+binding or invocation map. The existing affected reassessment route carries
+`assessment_requirements`: exact retained semantic contracts and any bounded
+criterion-count fields. The already due ordinary Judge uses these inputs for
+the current target and includes any necessary proof in that same report. The
+context supplies no proof, additional Judge or new pre-start bootstrap. These
+declarations establish no actual agent execution.
 
 Task, Goal and Validation preserve their supported selected review route;
 `not-applicable` cannot waive a due review. A review operation may retain
@@ -638,6 +694,11 @@ is preserved; a new local policy is exclusive and cannot overwrite a conflict.
 A short worktree Git-directory lock serializes writers across all supplied roots;
 exclusive atomic rename publishes the complete bundle. Interrupted staging is
 not adopted. The lock contains no session or progress data.
+When the current ordinary qualification discloses `authority.preparation.roots`,
+selected admission, publication, resume and supersede preparation/execution must
+include every disclosed root in their exact-key search before replacement. Read-only recovery requires no write grant. Existing
+direct or historical sessions without that disclosure retain their contracts;
+undisclosed roots remain the caller's responsibility.
 
 Resolve by native `(id, version, digest)` readback before `begin` or work. Native
 preview verifies the tuple, independently of the source-file SHA-256. Identical

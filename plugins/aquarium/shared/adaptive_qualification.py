@@ -158,7 +158,14 @@ def guarantee_minima(signature):
 
 class Qualification:
     def __init__(
-        self, document, binding, context, signatures, operation_contracts, node_budget
+        self,
+        document,
+        binding,
+        context,
+        signatures,
+        operation_contracts,
+        node_budget,
+        verified_operation_contracts=None,
     ):
         self.document, self.binding, self.context = document, binding, context
         self.signatures = signatures
@@ -176,6 +183,7 @@ class Qualification:
         self.issues = []
         self.current_property = ("declarations", "nodes")
         self.operations = operation_contracts
+        self.verified_operation_contracts = verified_operation_contracts or {}
         self.established_operations = json.loads(
             (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
         )
@@ -943,6 +951,25 @@ class Qualification:
                 known = False
         self.established_nodes[node] = known
         if not known:
+            for claim in ("discriminators", "output_scopes"):
+                if contract.get(claim):
+                    verified = (
+                        self.verified_operation_contracts.get(
+                            sha256(canonical_json(definition))
+                        )
+                        == contract
+                    )
+                    valid = self.privileged_declaration(definition, contract, claim)
+                    if verified and valid:
+                        continue
+                    self.issues.append(
+                        issue(
+                            "incompatible" if verified else "not-established",
+                            "operation-" + claim.replace("_", "-"),
+                            node,
+                        )
+                    )
+                    contract.pop(claim)
             if contract.get("review_recovery") and not (
                 any(
                     owner == node for owner, _, _ in self.capabilities["review-control"]
@@ -1032,6 +1059,31 @@ class Qualification:
                 reverse.get(field, field) for field in contract.get(key, [])
             ]
         return contract
+
+    @staticmethod
+    def privileged_declaration(definition, contract, claim):
+        if definition["type"] != "action":
+            return False
+        items = {item["id"]: item for item in definition.get("items", [])}
+        if claim == "discriminators":
+            domains = {
+                "goal_kind": {
+                    "member-task",
+                    "pre-validation-remediation",
+                    "epic-closeout",
+                },
+                "workflow_owner": {"epic-handler", "epic-validator"},
+            }
+            return all(
+                items.get(field, {}).get("type") == "choice"
+                and bool(items[field].get("choices"))
+                and set(items[field]["choices"]) <= domains[meaning]
+                for field, meaning in contract[claim].items()
+            )
+        return all(
+            items.get(field, {}).get("type") in {"text", "artifact"}
+            for field in contract[claim]
+        )
 
     def effect(self, node):
         declaration, definition = self.binding["nodes"][node], self.definitions[node]
@@ -2137,6 +2189,7 @@ def qualify(
     context=None,
     signatures=None,
     operation_contracts=None,
+    verified_operation_contracts=None,
     node_budget=200000,
     execution_info=False,
 ):
@@ -2196,7 +2249,15 @@ def qualify(
                 ],
             }
         analysis = Qualification.__new__(Qualification)
-        analysis.__init__(document, binding, context, registry, contracts, node_budget)
+        analysis.__init__(
+            document,
+            binding,
+            context,
+            registry,
+            contracts,
+            node_budget,
+            verified_operation_contracts=verified_operation_contracts,
+        )
         analysis.inspect_goals()
         result = analysis.result()
         if execution_info and result["status"] == "compatible":

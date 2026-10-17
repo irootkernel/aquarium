@@ -1057,7 +1057,7 @@ def test_runtime_currency_does_not_mask_relevant_changes(admitted, change):
 
 
 def test_runtime_markdown_currency_uses_actual_extraction_boundaries(tmp_path):
-    from adaptive_preparation import requirements
+    from adaptive_preparation import requirements, source_authority
     from adaptive_suitability import current_basis
     from test_adaptive_suitability_unit import assignment
 
@@ -1076,7 +1076,10 @@ def test_runtime_markdown_currency_uses_actual_extraction_boundaries(tmp_path):
     ]
     value["success_criteria"] = ["original:whole"]
     value["target"]["prepared_definition"] = {
-        "coverage_plan": {"criteria": requirements(tmp_path, value)}
+        "coverage_plan": {
+            "criteria": requirements(tmp_path, value),
+            "source_authority": source_authority(tmp_path, value),
+        }
     }
     original = current_basis(tmp_path, value)
     path.write_text(path.read_text().replace("Planned", "In Review"))
@@ -2115,3 +2118,155 @@ def test_finalization_preserves_source_edit_approval_provenance(admitted, source
         with pytest.raises(BundleError) as error:
             consume(admitted)
         assert error.value.code == "approval-required"
+
+
+@pytest.mark.parametrize("action", ["resume", "inspect", "retain"])
+@pytest.mark.parametrize("change", ["modified", "deleted"])
+def test_public_resume_separates_managed_origin_currency_from_new_adoption(
+    tmp_path, monkeypatch, capsys, action, change
+):
+    import json
+
+    import adaptive_admission
+    import manage_adaptive_procedure
+    from test_adaptive_bundles_unit import inspector
+    from test_adaptive_preparation_unit import managed_custom
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    managed = managed_custom(tmp_path)
+    value = prepared(
+        tmp_path,
+        customization_disposition="Preserve the declared original API guarantee in the work.",
+    )
+    client = Oracle(tmp_path)
+    request = qualify_prepared(tmp_path, value, client=client)
+    report = report_for(request["target"])
+    retained = qualify_prepared(
+        tmp_path, value, client=client, assessment=report, retain=True
+    )
+    qualification = {"assignment": value, "assessment": report}
+    observation = {
+        "status": {
+            "procedure": retained["binding"]["procedure"],
+            "session": {"id": str(uuid.uuid4()), "lifecycle": "running", "revision": 5},
+            "current": None,
+        },
+        "guidance": None,
+        "active_items": [],
+        "mutation_templates": [],
+    }
+    client.health = lambda: copy.deepcopy(observation)
+    if change == "modified":
+        managed.write_bytes(
+            managed.read_bytes() + b"\n# New managed source obligation\n"
+        )
+    else:
+        managed.unlink()
+    tool = {
+        "executable": "synthetic-oracle",
+        "runtime_readiness": {
+            "state": "ready",
+            "session_procedure": observation["status"]["procedure"],
+            "session_lifecycle": "running",
+        },
+        "managed_procedures": [
+            {
+                "path": ".podway/procedures/aquarium-task-v2.yaml",
+                "update_explanation": "local_customization"
+                if change == "modified"
+                else "missing",
+            }
+        ],
+    }
+    monkeypatch.setattr(inspector, "inspect_podway", lambda *args, **kwargs: tool)
+    monkeypatch.setattr(
+        adaptive_admission, "NativeClient", lambda *args, **kwargs: client
+    )
+    path = Path(retained["retention"]["path"])
+    result = inspector.inspect_selected_podway(
+        tmp_path,
+        30,
+        source=path / "procedure.yaml",
+        binding_path=path / "binding.json",
+        roots=["definitions"],
+        entrypoint="task-handler",
+        route="herdr",
+        qualification=qualification,
+        resume=action == "resume",
+    )
+    expected = "ready" if action == "resume" else "reassessment-required"
+    assert result["selected_procedure"]["status"] == expected
+    qualification_path = tmp_path / "resume-context.json"
+    qualification_path.write_text(json.dumps(qualification))
+    original_context = qualification_path.read_bytes()
+    argv = [
+        "manage_adaptive_procedure.py",
+        action,
+        "--repository",
+        str(tmp_path),
+        "--root",
+        "definitions",
+        "--entrypoint",
+        "task-handler",
+        "--review-route",
+        "herdr",
+        "--qualification",
+        str(qualification_path),
+        "--podway",
+        "synthetic-oracle",
+    ]
+    if action != "resume":
+        argv += [
+            "--source",
+            str(path / "procedure.yaml"),
+            "--binding",
+            str(path / "binding.json"),
+        ]
+    if action == "retain":
+        argv += ["--write-root", "definitions"]
+    # Share the fixture runtime producer with the launcher's dynamically loaded
+    # inspector; execute the actual inspector, admission and resume consumers.
+    from types import SimpleNamespace
+
+    spec_from_file = manage_adaptive_procedure.importlib.util.spec_from_file_location
+    module_from_spec = manage_adaptive_procedure.importlib.util.module_from_spec
+
+    def inspector_spec(name, path):
+        if Path(path).resolve() == Path(inspector.__file__).resolve():
+            return SimpleNamespace(
+                fixture_inspector=True,
+                loader=SimpleNamespace(exec_module=lambda value: None),
+            )
+        return spec_from_file(name, path)
+
+    monkeypatch.setattr(
+        manage_adaptive_procedure.importlib.util,
+        "spec_from_file_location",
+        inspector_spec,
+    )
+    monkeypatch.setattr(
+        manage_adaptive_procedure.importlib.util,
+        "module_from_spec",
+        lambda spec: (
+            inspector
+            if getattr(spec, "fixture_inspector", False)
+            else module_from_spec(spec)
+        ),
+    )
+    monkeypatch.setattr(sys, "argv", argv)
+    before = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    exit_code = manage_adaptive_procedure.main()
+    output = capsys.readouterr()
+    public = json.loads(output.out)
+    assert not output.err
+    assert exit_code == (0 if action == "resume" else 2)
+    assert public["status"] == expected
+    if action == "resume":
+        assert public["binding"] == retained["binding"]
+        assert public["retention"]["qualification"]["status"] == "qualified"
+        assert public["session"]["procedure"] == {
+            key: observation["status"]["procedure"][key]
+            for key in ("id", "version", "digest")
+        }
+    assert qualification_path.read_bytes() == original_context
+    assert {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before

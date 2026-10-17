@@ -1045,8 +1045,11 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
     if placement == "record-plan":
         assert contract["output_scopes"]["current-plan"] == "task-plan"
         assert "current-handoff" in contract["relay_outputs"]
-    result = qualify(document, current)
+    result = qualify(document, current, execution_info=True)
     assert result["status"] == "compatible", result
+    if placement == "record-plan":
+        assert "n-record-plan" not in result["execution"]["first_work"]
+        assert result["execution"]["first_work"]
 
 
 @pytest.mark.parametrize(
@@ -1193,6 +1196,194 @@ def test_privileged_custom_labels_need_actual_operation_evidence(claim):
             "user-direction-operation",
             "faithful-relay-operation",
         }
+        for row in result["issues"]
+    )
+
+
+@pytest.mark.parametrize("claim", ["discriminators", "output_scopes"])
+def test_unestablished_contract_cannot_supply_context_or_hide_product_work(claim):
+    document, binding, context = adaptive()
+    definition = document["node_definitions"]["deliver"]
+    contract = context["operation_contracts"].setdefault(
+        sha256(canonical_json(definition)),
+        {"roles": ["worker"], "effect": "work", "basis": "Actual product producer"},
+    )
+    contract[claim] = {
+        "documentation": "task-plan" if claim == "output_scopes" else "goal_kind"
+    }
+    result = qualify(document, binding, context=context, execution_info=True)
+    assert result["status"] == "not-established", result["issues"]
+    assert any(
+        row["property"] == "operation-" + claim.replace("_", "-")
+        and row["location"] == "deliver"
+        for row in result["issues"]
+    )
+    assert "execution" not in result
+
+
+@pytest.mark.parametrize("kind", ["text", "list", "artifact"])
+@pytest.mark.parametrize("operator", ["equals", "not_equals"])
+def test_native_non_scalar_comparisons_cannot_select_a_route(kind, operator):
+    predicate = {operator: "pass"}
+    key = ("source", "result")
+    logic = Decisions(
+        {key: item_domain({"type": kind, "required": True}, [predicate])},
+        kinds={key: kind},
+    )
+    assert logic.predicate(key, predicate) == 0
+
+
+@pytest.mark.parametrize(
+    "family,placement,field,meaning",
+    [
+        ("goal", "record-evidence", "goal-kind", "goal_kind"),
+        ("validation", "capture-baseline", "workflow-owner", "workflow_owner"),
+    ],
+)
+def test_custom_discriminator_cannot_establish_delegated_acceptance(
+    family, placement, field, meaning
+):
+    document, binding = known(family)
+    use = next(
+        node["use"] for node in document["graph"]["nodes"] if node["id"] == placement
+    )
+    definition = document["node_definitions"][use]
+    definition["intent"] += " Collect a different source-specific context."
+    binding.setdefault("semantic_contracts", {})[sha256(canonical_json(definition))] = {
+        "roles": ["orchestrator"],
+        "effect": "evidence",
+        "basis": "Unproved source-specific context declaration",
+        "discriminators": {field: meaning},
+    }
+    result = qualify(document, binding)
+    assert result["status"] != "compatible"
+    assert any(
+        row["property"] == "operation-discriminators" and row["location"] == placement
+        for row in result["issues"]
+    )
+    assert any(row["property"] == "acceptance-provenance" for row in result["issues"])
+
+
+def compact_goal(*, worker=False):
+    document, binding = known("goal")
+    definition = {
+        "type": "action",
+        "title": "Capture the current original work scope",
+        "intent": "Bind the actual approved invocation scope before original work.",
+        "items": [
+            {
+                "id": "current-kind",
+                "type": "choice",
+                "prompt": "Record the actual member scope",
+                "required": True,
+                "choices": ["member-task"],
+            }
+        ],
+    }
+    document["node_definitions"]["scope"] = definition
+    document["graph"]["nodes"].insert(
+        0, {"id": "scope", "use": "scope", "next": document["graph"]["entry"]}
+    )
+    document["graph"]["entry"] = "scope"
+    role = "worker" if worker else "orchestrator"
+    binding["nodes"]["scope"] = {
+        "kind": "action",
+        "role": role,
+        "effects": ["work"] if worker else [],
+        "capabilities": [],
+    }
+    digest = sha256(canonical_json(definition))
+    contract = {
+        "roles": [role],
+        "effect": "work" if worker else "evidence",
+        "basis": "Explicit independently verified current invocation semantics.",
+        "discriminators": {"current-kind": "goal_kind"},
+    }
+    binding.setdefault("semantic_contracts", {})[digest] = contract
+    judge = next(
+        node
+        for node in document["graph"]["nodes"]
+        if node["id"] == "judge-goal-evidence"
+    )
+    judge.setdefault("evidence_from", []).append(
+        {"node": "scope", "required": True, "items": ["current-kind"]}
+    )
+    binding["obligations"]["current-work-scope"] = copy.deepcopy(
+        binding["obligations"]["judge-goal-evidence"]
+    )
+    binding["obligations"]["current-work-scope"]["producers"] = [
+        {"node": "scope", "item": "current-kind"}
+    ]
+    binding["obligations"]["current-work-scope"]["effects"] = []
+    return document, binding, digest, contract
+
+
+def test_verified_compact_context_operation_needs_no_canonical_action_body():
+    document, binding, digest, contract = compact_goal()
+    context = {"goal_kind": "member-task"}
+    assert qualify(document, binding, context=context)["status"] == "not-established"
+    result = qualify(
+        document,
+        binding,
+        context=context,
+        verified_operation_contracts={digest: contract},
+    )
+    assert result["status"] == "compatible", result["issues"]
+    wrong_scope = qualify(
+        document,
+        binding,
+        context={"goal_kind": "epic-closeout"},
+        verified_operation_contracts={digest: contract},
+    )
+    assert wrong_scope["status"] == "incompatible"
+    assert any(
+        row["property"] == "context-discriminator" for row in wrong_scope["issues"]
+    )
+
+
+def test_verified_semantics_need_actual_native_output_fields():
+    document, binding, context = adaptive()
+    definition = document["node_definitions"]["deliver"]
+    contract = {
+        "roles": ["worker"],
+        "effect": "work",
+        "basis": "Synthetic exact verified planning operation",
+        "output_scopes": {"documentation": "task-plan"},
+    }
+    contract["output_scopes"] = {"absent": "task-plan"}
+    digest = sha256(canonical_json(definition))
+    binding.setdefault("semantic_contracts", {})[digest] = contract
+    result = qualify(
+        document,
+        binding,
+        context=context,
+        verified_operation_contracts={digest: contract},
+    )
+    assert result["status"] == "incompatible"
+    assert any(row["property"] == "operation-output-scopes" for row in result["issues"])
+
+
+def test_verified_planning_claim_cannot_hide_declared_post_gate_work():
+    document, binding, context = adaptive()
+    insert_action(document, binding, "goal-route", "late-plan")
+    definition = document["node_definitions"]["late-plan"]
+    digest = sha256(canonical_json(definition))
+    contract = {
+        "roles": ["worker"],
+        "effect": "evidence",
+        "basis": "Synthetic semantic proof; actual declared work remains work.",
+        "output_scopes": {"changed-target": "task-plan"},
+    }
+    binding.setdefault("semantic_contracts", {})[digest] = contract
+    result = qualify(
+        document,
+        binding,
+        context=context,
+        verified_operation_contracts={digest: contract},
+    )
+    assert result["status"] == "incompatible"
+    assert any(
+        row["property"] == "current-final-assessment-and-forward-effects"
         for row in result["issues"]
     )
 

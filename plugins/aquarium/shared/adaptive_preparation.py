@@ -1260,7 +1260,7 @@ def prepare(repository, assignment, *, client=None, bootstrap=False, opt_out=Fal
         from adaptive_suitability import current_basis
 
         result["target"]["prepared_definition"]["reuse_basis"] = current_basis(
-            repository, assignment
+            repository, result
         )
     return {
         "status": "prepared",

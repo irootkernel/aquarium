@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "plugins/aquarium/shared"))
-from adaptive_admission import resume_selected, selected_source
+from adaptive_admission import resume_selected, retain_selected, selected_source
 from adaptive_bundles import BundleError
 from adaptive_preparation import prepare
 from adaptive_qualification import qualify
@@ -50,9 +50,101 @@ def repository(tmp_path):
     return tmp_path
 
 
-def prepared(repository, performance=False):
+def prepared(
+    repository,
+    performance=False,
+    *,
+    customization_disposition=None,
+    privileged=False,
+    criterion_maximum=None,
+):
     value = assignment(repository, mode="prepare", performance=performance)
+    if customization_disposition is not None:
+        value["target"]["procedure_plan"]["customization_disposition"] = (
+            customization_disposition
+        )
     document, binding, context = adaptive(performance=performance)
+    if criterion_maximum is not None:
+        for item in document["node_definitions"]["assess"]["items"]:
+            if item["id"] in {"judge-unmet-criteria", "judge-unverified-criteria"}:
+                item["maximum"] = criterion_maximum
+    if privileged:
+        document["node_definitions"]["sketch-plan"] = {
+            "type": "action",
+            "title": "Sketch the actual document plan",
+            "intent": "Produce planning material only, before approved product work.",
+            "items": [
+                {
+                    "id": "plan-summary",
+                    "type": "text",
+                    "prompt": "Explain the proposed document plan",
+                    "required": True,
+                    "min_length": 1,
+                    "max_length": 2000,
+                },
+                {
+                    "id": "plan-artifact",
+                    "type": "artifact",
+                    "prompt": "Attach the approved plan",
+                    "required": True,
+                    "allowed_media_types": ["text/markdown"],
+                },
+            ],
+        }
+        document["graph"]["nodes"].insert(
+            0,
+            {
+                "id": "sketch-plan",
+                "use": "sketch-plan",
+                "next": document["graph"]["entry"],
+            },
+        )
+        document["graph"]["entry"] = "sketch-plan"
+        next(node for node in document["graph"]["nodes"] if node["id"] == "deliver")[
+            "evidence_from"
+        ] = [
+            {
+                "node": "sketch-plan",
+                "required": True,
+                "items": ["plan-summary", "plan-artifact"],
+            }
+        ]
+        next(node for node in document["graph"]["nodes"] if node["id"] == "assess")[
+            "evidence_from"
+        ].append(
+            {
+                "node": "sketch-plan",
+                "required": True,
+                "items": ["plan-summary", "plan-artifact"],
+            }
+        )
+        binding["obligations"]["preparation-plan"] = copy.deepcopy(
+            binding["obligations"]["original-goal"]
+        )
+        binding["obligations"]["preparation-plan"]["producers"] = [
+            {"node": "sketch-plan", "item": "plan-summary"}
+        ]
+        binding["nodes"]["sketch-plan"] = {
+            "kind": "action",
+            "role": "worker",
+            "effects": ["work"],
+            "capabilities": [],
+        }
+        from adaptive_bundles import sha256
+        from adaptive_definitions import canonical_json
+
+        binding.setdefault("semantic_contracts", {})[
+            sha256(canonical_json(document["node_definitions"]["sketch-plan"]))
+        ] = {
+            "roles": ["worker"],
+            "effect": "work",
+            "basis": "Work-specific planning-only output, independently assessed with exact original scope.",
+            "output_scopes": {"plan-summary": "task-plan"},
+        }
+        value["target"]["procedure_plan"]["plan_handoff"] = {
+            "attachment": {"node": "sketch-plan", "item": "plan-artifact"},
+            "first_work": ["deliver"],
+        }
     for owner in (value["authority"], value["target"]["procedure_plan"]):
         owner["review"]["route"] = "herdr"
     mapping = {key: val for key, val in binding.items() if key != "procedure"}
@@ -99,6 +191,238 @@ def report_for(target):
         ],
         "verdict": "pass",
     }
+
+
+def prove_operations(report, binding):
+    report["applicability"]["operation_contracts"] = {
+        digest: {
+            "contract": copy.deepcopy(contract),
+            "evidence": [
+                "Synthetic exact-operation semantic assessment; no actual agent execution claim."
+            ],
+        }
+        for digest, contract in binding.get("semantic_contracts", {}).items()
+        if contract.get("discriminators") or contract.get("output_scopes")
+    }
+    return report
+
+
+@pytest.mark.parametrize("worker", [False, True])
+def test_new_goal_discriminator_uses_exact_ordinary_report_and_original_scope(
+    repository,
+    worker,
+):
+    from adaptive_bundles import sha256
+    from test_adaptive_qualification_unit import compact_goal
+
+    value = assignment(repository, mode="prepare")
+    path = repository / "requirements.json"
+    original = json.loads(path.read_text())
+    original["criteria"][1]["text"] = (
+        "Capture the actual approved member-task scope as selected original evidence."
+    )
+    path.write_text(json.dumps(original))
+    value["work"]["requirement_sources"][0]["sha256"] = sha256(path.read_bytes())
+    document, binding, digest, contract = compact_goal(worker=worker)
+    plan = value["target"]["procedure_plan"]
+    plan.update(
+        family="goal",
+        entrypoint="epic-handler",
+        source_dispositions={
+            "aquarium-goal-v2.yaml": "The actual original scope requires a separate compact context producer and selected independent evidence."
+        },
+    )
+    draft = plan["drafts"][0]
+    draft.update(
+        document=document,
+        mapping={key: val for key, val in binding.items() if key != "procedure"},
+    )
+    for row in draft["coverage"]:
+        row["obligation"] = (
+            "current-work-scope"
+            if row["criterion"] == "original:omitted"
+            else "judge-work"
+        )
+    value["target"]["qualification_context"] = {"goal_kind": "member-task"}
+    client = Oracle(repository)
+    current = prepare(repository, value, client=client, bootstrap=True)["assignment"]
+    requested = qualify_prepared(repository, current, client=client)
+    assert requested["status"] == "assessment-required"
+    assert requested["structural"]["status"] == "not-established"
+    report = prove_operations(report_for(requested["target"]), binding)
+    retained = qualify_prepared(
+        repository, current, client=client, assessment=report, retain=True
+    )
+    assert retained["status"] == "qualified"
+    assert (
+        report["applicability"]["operation_contracts"][digest]["contract"] == contract
+    )
+    resumed = resume_selected(
+        repository,
+        ["definitions"],
+        retained["binding"]["procedure"],
+        client=client,
+        qualification={"assignment": current, "assessment": report},
+    )
+    assert resumed["qualification"]["status"] == "qualified"
+
+
+@pytest.mark.parametrize("change", ["gate", "unknown-effect"])
+def test_pending_semantics_do_not_relax_an_independent_structural_violation(
+    repository, change
+):
+    from adaptive_bundles import sha256
+    from adaptive_definitions import canonical_json, definition_id
+
+    value = prepared(repository, privileged=True)
+    exact = value["target"]["prepared_definition"]
+    source = Path(exact["source_path"])
+    binding_path = Path(exact["binding_path"])
+    document = yaml.safe_load(source.read_bytes())
+    binding = json.loads(binding_path.read_text())
+    if change == "gate":
+        document["node_definitions"]["goal-route"]["options"][0]["guards"] = []
+        document["node_definitions"]["outcome"]["options"][0]["guards"] = [
+            row
+            for row in document["node_definitions"]["outcome"]["options"][0]["guards"]
+            if row["evidence"]["item"] != "judge-goal-outcome"
+        ]
+    else:
+        from test_adaptive_qualification_unit import insert_action
+
+        insert_action(
+            document, binding, "goal-route", "unresolved-change", declared=False
+        )
+    source.write_text(yaml.safe_dump(document, sort_keys=False, width=float("inf")))
+    preview = Oracle(repository).preview(source)
+    binding["procedure"]["digest"] = preview["procedure_digest"]
+    binding["procedure"]["source_sha256"] = sha256(source.read_bytes())
+    binding_path.write_bytes(canonical_json(binding))
+    exact.update(bundle_id=definition_id(binding), procedure=binding["procedure"])
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(repository, value, client=Oracle(repository))
+    assert error.value.code == (
+        "incompatible" if change == "gate" else "not-established"
+    )
+    assert any(
+        row["property"] == "current-final-assessment-and-forward-effects"
+        for row in error.value.details["issues"]
+    )
+
+
+def test_one_assessment_covers_pending_semantics_and_exact_capacity(repository):
+    value = prepared(repository, privileged=True, criterion_maximum=3)
+    client = Oracle(repository)
+    requested = qualify_prepared(repository, value, client=client)
+    assert requested["status"] == "assessment-required"
+    assert requested["capacity_proof_due"] is True
+    assert requested["structural"]["operation_proof_pending"] is True
+    binding = json.loads(
+        Path(value["target"]["prepared_definition"]["binding_path"]).read_text()
+    )
+    report = prove_operations(report_for(requested["target"]), binding)
+    report["applicability"]["criterion_capacity"] = {
+        "value": 3,
+        "basis": requested["target"]["basis"]["criteria"],
+        "evidence": [
+            "Synthetic independent capacity observation for every original compound part."
+        ],
+    }
+    result = qualify_prepared(repository, value, client=client, assessment=report)
+    assert result["status"] == "qualified"
+
+
+def test_new_compact_plan_operation_uses_same_exact_suitability_and_handoff(repository):
+    import uuid
+
+    from adaptive_execution import execution_context
+
+    value = prepared(repository, privileged=True)
+    client = Oracle(repository)
+    requested = qualify_prepared(repository, value, client=client)
+    assert requested["status"] == "assessment-required"
+    assert requested["structural"]["status"] == "not-established"
+    assert "execution" not in requested["structural"]
+    binding = json.loads(
+        Path(value["target"]["prepared_definition"]["binding_path"]).read_text()
+    )
+    report = prove_operations(report_for(requested["target"]), binding)
+    retained = qualify_prepared(
+        repository, value, client=client, assessment=report, retain=True
+    )
+    assert retained["status"] == "qualified"
+    assert retained["structural"]["execution"]["first_work"] == ["deliver"]
+    session = str(uuid.uuid4())
+    value["target"]["plan_handoff_runtime"] = {
+        "mode": "plan-handoff",
+        "initial_session_id": session,
+    }
+    client.health = lambda: {
+        "status": {
+            "procedure": binding["procedure"],
+            "session": {"id": session, "lifecycle": "running", "revision": 5},
+            "current": {
+                "node": {"graph_node_id": "sketch-plan"},
+                "attempt": {"attempt_id": "a"},
+            },
+            "goal_revision": 1,
+        },
+        "guidance": {"node": {"graph_node_id": "sketch-plan"}, "readback": []},
+        "active_items": [],
+        "mutation_templates": [],
+    }
+    context = execution_context(
+        repository,
+        roots=["definitions"],
+        entrypoint="task-handler",
+        qualification={"assignment": value, "assessment": report},
+        client=client,
+    )
+    assert context["status"] == "attachment-required"
+    assert context["dispatch"] is None
+    assert context["handoff"]["first_work"] == ["deliver"]
+
+
+@pytest.mark.parametrize(
+    "damage",
+    ["missing", "digest", "contract", "evidence", "target", "independent-violation"],
+)
+def test_operation_labels_and_noncurrent_proofs_cannot_authorize_adoption(
+    repository, damage
+):
+    value = prepared(repository, privileged=True)
+    client = Oracle(repository)
+    requested = qualify_prepared(repository, value, client=client)
+    binding = json.loads(
+        Path(value["target"]["prepared_definition"]["binding_path"]).read_text()
+    )
+    report = prove_operations(report_for(requested["target"]), binding)
+    proofs = report["applicability"]["operation_contracts"]
+    digest = next(iter(proofs))
+    if damage == "missing":
+        proofs.clear()
+    elif damage == "digest":
+        proofs["sha256:" + "0" * 64] = proofs.pop(digest)
+    elif damage == "contract":
+        proofs[digest]["contract"]["basis"] = "A different operation"
+    elif damage == "evidence":
+        proofs[digest]["evidence"] = [" ", {}]
+    elif damage == "target":
+        report["target"]["procedure_suitability"]["candidate"]["bundle_id"] = "0" * 64
+    else:
+        value["authority"]["review"]["route"] = "waived"
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(
+            repository, value, client=client, assessment=report, retain=True
+        )
+    assert error.value.code == (
+        "reassessment-required"
+        if damage == "target"
+        else "authority-required"
+        if damage == "independent-violation"
+        else "not-established"
+    )
+    assert not (repository / "definitions/.local").exists()
 
 
 @pytest.mark.parametrize("performance", [False, True])
@@ -295,6 +619,179 @@ def test_known_unchanged_reuse_preserves_original_bytes_and_checkpoint(repositor
     )
     assert qualified["status"] == "qualified-known"
     assert qualified["bootstrap"] is None
+
+
+@pytest.mark.parametrize("known_reuse", [False, True])
+@pytest.mark.parametrize("during_publication", [False, True])
+def test_managed_authority_changes_require_reassessment_before_adoption(
+    repository, monkeypatch, known_reuse, during_publication
+):
+    import adaptive_suitability
+    from test_adaptive_preparation_unit import managed_custom
+
+    managed = managed_custom(repository)
+    disposition = "Preserve the actual managed API guarantee in the original work."
+    if known_reuse:
+        value = assignment(repository, mode="prepare")
+        value["target"]["procedure_plan"]["customization_disposition"] = disposition
+        known_candidate(repository, value)
+        value = prepare(repository, value, client=Oracle(repository))["assignment"]
+        assessment = None
+    else:
+        value = prepared(repository, customization_disposition=disposition)
+        request = qualify_prepared(repository, value, client=Oracle(repository))
+        assessment = report_for(request["target"])
+
+    def change_authority():
+        managed.write_bytes(managed.read_bytes() + b"\n# New adopted requirement\n")
+
+    if during_publication:
+        publisher = adaptive_suitability.publish_bundle
+
+        def publish(*args, **kwargs):
+            change_authority()
+            return publisher(*args, **kwargs)
+
+        monkeypatch.setattr(adaptive_suitability, "publish_bundle", publish)
+    else:
+        change_authority()
+    before = {path.relative_to(repository) for path in repository.rglob("*")}
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(
+            repository,
+            value,
+            client=Oracle(repository),
+            assessment=assessment,
+            retain=True,
+        )
+    assert error.value.code == "reassessment-required"
+    assert {path.relative_to(repository) for path in repository.rglob("*")} == before
+
+
+def test_intact_admitted_definition_does_not_depend_on_changed_managed_origin(
+    repository,
+):
+    from test_adaptive_preparation_unit import managed_custom
+
+    managed = managed_custom(repository)
+    value = prepared(
+        repository,
+        customization_disposition="Preserve the adopted API guarantee in original work.",
+    )
+    client = Oracle(repository)
+    request = qualify_prepared(repository, value, client=client)
+    report = report_for(request["target"])
+    result = qualify_prepared(
+        repository, value, client=client, assessment=report, retain=True
+    )
+    managed.unlink()
+    resumed = resume_selected(
+        repository,
+        ["definitions"],
+        result["binding"]["procedure"],
+        client=client,
+        qualification={"assignment": value, "assessment": report},
+    )
+    assert resumed["status"] == "resolved"
+    assert resumed["qualification"]["status"] == "qualified"
+
+
+@pytest.mark.parametrize("action", ["inspect", "retain", "resume"])
+def test_qualification_cannot_hide_conflicting_bundle_by_narrowing_disclosed_roots(
+    repository, action
+):
+    from adaptive_definitions import canonical_json, definition_id
+
+    value = prepared(repository)
+    value["authority"]["preparation"]["roots"].append("other flows 한글")
+    client = Oracle(repository)
+    request = qualify_prepared(repository, value, client=client)
+    report = report_for(request["target"])
+    admitted = qualify_prepared(
+        repository, value, client=client, assessment=report, retain=True
+    )
+    changed = copy.deepcopy(admitted["binding"])
+    changed["parameters"]["extra"] = {
+        "type": "text",
+        "required": False,
+        "description": "Conflicting exact-key mapping",
+    }
+    other = repository / "other flows 한글/.local" / definition_id(changed)
+    other.mkdir(parents=True)
+    (other.parent / ".gitignore").write_text("*\n")
+    (other / "procedure.yaml").write_bytes(admitted["retention"]["source"])
+    (other / "binding.json").write_bytes(canonical_json(changed))
+    qualification = {"assignment": value, "assessment": report}
+    retained = Path(admitted["retention"]["path"])
+    before = {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    }
+    with pytest.raises(BundleError) as omitted:
+        if action == "resume":
+            resume_selected(
+                repository,
+                ["definitions"],
+                admitted["binding"]["procedure"],
+                client=client,
+                qualification=qualification,
+            )
+        else:
+            options = {"write_root": "definitions"} if action == "retain" else {}
+            (retain_selected if action == "retain" else selected_source)(
+                repository,
+                retained / "procedure.yaml",
+                roots=["definitions"],
+                entrypoint="task-handler",
+                route="herdr",
+                client=client,
+                runtime_ready=True,
+                binding_path=retained / "binding.json",
+                qualification=qualification,
+                **options,
+            )
+    assert omitted.value.code == "not-established"
+    with pytest.raises(BundleError) as conflict:
+        resume_selected(
+            repository,
+            value["authority"]["preparation"]["roots"],
+            admitted["binding"]["procedure"],
+            client=client,
+            qualification=qualification,
+        )
+    assert conflict.value.code == "ambiguous"
+    assert {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    } == before
+
+
+def test_full_disclosed_custom_domain_resumes_without_write_authority(repository):
+    value = prepared(repository)
+    roots = ["definitions", "-custom flows 한글"]
+    value["authority"]["preparation"]["roots"] = roots
+    client = Oracle(repository)
+    request = qualify_prepared(repository, value, client=client)
+    report = report_for(request["target"])
+    admitted = qualify_prepared(
+        repository, value, client=client, assessment=report, retain=True
+    )
+    retained = Path(admitted["retention"]["path"])
+    alias = repository / roots[1] / ".local" / retained.name
+    alias.mkdir(parents=True)
+    (alias.parent / ".gitignore").write_text("*\n")
+    for name in ("procedure.yaml", "binding.json"):
+        (alias / name).write_bytes((retained / name).read_bytes())
+    value["authority"]["preparation"]["native_authoring"] = False
+    value["authority"]["preparation"].pop("write_root")
+    resumed = resume_selected(
+        repository,
+        [*roots, "-custom flows 한글/./"],
+        admitted["binding"]["procedure"],
+        client=client,
+        qualification={"assignment": value, "assessment": report},
+    )
+    assert resumed["status"] == "resolved"
+    assert len(resumed["aliases"]) == 2
+    assert resumed["qualification"]["status"] == "qualified"
 
 
 def test_bootstrap_requires_actual_current_pass_and_dominates_work():
@@ -731,11 +1228,16 @@ def test_formatter_contract_materialization_requires_native_semantic_identity(
         )
 
 
-def existing_adaptive(repository):
-    original = prepared(repository)
+def existing_adaptive(repository, *, privileged=False):
+    original = prepared(repository, privileged=privileged)
     client = Oracle(repository)
     request = qualify_prepared(repository, original, client=client)
     prior = report_for(request["target"])
+    if privileged:
+        original_binding = json.loads(
+            Path(original["target"]["prepared_definition"]["binding_path"]).read_text()
+        )
+        prove_operations(prior, original_binding)
     qualified = qualify_prepared(
         repository, original, client=client, assessment=prior, retain=True
     )
@@ -744,6 +1246,10 @@ def existing_adaptive(repository):
         "qualification_context"
     ]
     plan = value["target"]["procedure_plan"]
+    if privileged:
+        plan["plan_handoff"] = copy.deepcopy(
+            original["target"]["procedure_plan"]["plan_handoff"]
+        )
     coverage = [
         {**row, "obligation": "original-goal"} for row in plan["drafts"][0]["coverage"]
     ]
@@ -768,6 +1274,35 @@ def existing_adaptive(repository):
 
     shutil.rmtree(Path(original["target"]["prepared_definition"]["source_path"]).parent)
     return value, prior, qualified
+
+
+def test_equivalent_privileged_operation_reuse_keeps_prior_proof_and_first_due_boundary(
+    repository,
+):
+    value, prior, original = existing_adaptive(repository, privileged=True)
+    client = Oracle(repository)
+    result = prepare(repository, value, client=client, bootstrap=True)
+    assert result["assignment"]["target"]["prepared_definition"]["kind"] == "reuse"
+    qualified = qualify_prepared(
+        repository, result["assignment"], client=client, retain=True
+    )
+    assert qualified["status"] == "qualified-known"
+    assert "assignment" not in qualified
+    assert qualified["structural"]["execution"]["first_work"] == ["deliver"]
+    imported = qualified["bootstrap"]["artifact_evidence"]["suitability-assessment"]
+    assert imported["prior_definition_assessment"] == prior
+    assert qualified["binding"] == original["binding"]
+    resumed = resume_selected(
+        repository,
+        ["definitions"],
+        qualified["binding"]["procedure"],
+        client=client,
+        qualification={"assignment": result["assignment"]},
+    )
+    assert resumed["qualification"]["status"] == "qualified-known"
+    assert resumed["qualification"]["structural"]["execution"]["first_work"] == [
+        "deliver"
+    ]
 
 
 def test_exact_retained_adaptive_reuse_preserves_first_due_assessment(repository):
@@ -870,3 +1405,215 @@ def test_pre_start_judge_assignment_does_not_impersonate_preparing_worker(reposi
     )
     assert actual["native"] == judged["native"]
     assert actual["target"]["preparation_native_context"] == value["native"]
+
+
+def test_valid_exact_semantic_proof_does_not_waive_assessed_structural_violation(
+    repository, monkeypatch
+):
+    import adaptive_suitability
+    from adaptive_bundles import sha256
+    from adaptive_definitions import canonical_json, definition_id
+
+    value = prepared(repository, privileged=True)
+    exact = value["target"]["prepared_definition"]
+    source = Path(exact["source_path"])
+    binding_path = Path(exact["binding_path"])
+    document = yaml.safe_load(source.read_bytes())
+    binding = json.loads(binding_path.read_text())
+    document["node_definitions"]["goal-route"]["options"][0]["guards"] = []
+    document["node_definitions"]["outcome"]["options"][0]["guards"] = [
+        row
+        for row in document["node_definitions"]["outcome"]["options"][0]["guards"]
+        if row["evidence"]["item"] != "judge-goal-outcome"
+    ]
+    source.write_text(yaml.safe_dump(document, sort_keys=False, width=float("inf")))
+    client = Oracle(repository)
+    binding["procedure"].update(
+        digest=client.preview(source)["procedure_digest"],
+        source_sha256=sha256(source.read_bytes()),
+    )
+    binding_path.write_bytes(canonical_json(binding))
+    exact.update(bundle_id=definition_id(binding), procedure=binding["procedure"])
+    target = adaptive_suitability.suitability_target(
+        binding,
+        adaptive_suitability.current_basis(repository, value),
+        combined_task_plan=False,
+        coverage_plan=exact["coverage_plan"],
+    )
+    report = prove_operations(report_for(target), binding)
+    accepted = []
+    prove = adaptive_suitability.operation_proofs
+
+    def observed_proofs(*args):
+        result = prove(*args)
+        accepted.append(result)
+        return result
+
+    monkeypatch.setattr(adaptive_suitability, "operation_proofs", observed_proofs)
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(
+            repository, value, client=client, assessment=report, retain=True
+        )
+    assert accepted == [
+        {
+            digest: row["contract"]
+            for digest, row in report["applicability"]["operation_contracts"].items()
+        }
+    ]
+    assert error.value.code == "incompatible"
+    assert any(
+        row["property"] == "current-final-assessment-and-forward-effects"
+        for row in error.value.details["issues"]
+    )
+    assert not (repository / "definitions/.local").exists()
+
+
+def test_same_due_in_session_assessment_receives_exact_semantic_and_capacity_inputs(
+    repository,
+):
+    value = prepared(repository, privileged=True, criterion_maximum=3)
+    client = Oracle(repository)
+    request = qualify_prepared(repository, value, client=client)
+    binding = json.loads(
+        Path(value["target"]["prepared_definition"]["binding_path"]).read_text()
+    )
+    demands = request["assignment"]["target"]["assessment_requirements"]
+    assert demands["operation_contracts"] == {
+        key: contract
+        for key, contract in binding["semantic_contracts"].items()
+        if contract.get("discriminators") or contract.get("output_scopes")
+    }
+    assert {row["item"] for row in demands["criterion_capacity"]["bounded_fields"]} == {
+        "judge-unmet-criteria",
+        "judge-unverified-criteria",
+    }
+    assert {
+        row["maximum"] for row in demands["criterion_capacity"]["bounded_fields"]
+    } == {3}
+    report = prove_operations(report_for(request["target"]), binding)
+    value["target"]["procedure_plan"]["source_dispositions"][
+        "aquarium-task-v2.yaml"
+    ] += " Preserve the approved revised plan."
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(
+            repository, value, client=client, assessment=report, in_session=True
+        )
+    assert error.value.code == "reassessment-required"
+    assert error.value.details["assessment_requirements"] == demands
+    assert error.value.details["next_owner"] == "Orchestrator"
+    assert "assignment" not in error.value.details
+    assert "bootstrap" not in error.value.details
+
+
+def test_existing_mapped_planning_judge_gets_current_equivalent_operation_inputs():
+    from adaptive_bundles import sha256
+    from adaptive_definitions import ASSETS, canonical_json
+    from adaptive_suitability import reassessment_route
+    from test_adaptive_qualification_unit import known
+
+    document, binding = known("task")
+    definition = document["node_definitions"]["plan-record"]
+    operations = json.loads(
+        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+    )
+    contract = operations[sha256(canonical_json(definition))]
+    definition["title"] = "Record the actual revised documentation plan"
+    digest = sha256(canonical_json(definition))
+    binding.setdefault("semantic_contracts", {})[digest] = contract
+    judge = next(row for row in document["graph"]["nodes"] if row["id"] == "judge-plan")
+    judge_definition = document["node_definitions"][judge["use"]]
+    judge_contract = operations[sha256(canonical_json(judge_definition))]
+    for item in document["node_definitions"][judge["use"]]["items"]:
+        if item["id"] in {"judge-unmet-criteria", "judge-unverified-criteria"}:
+            item["maximum"] = 3
+    binding["semantic_contracts"][sha256(canonical_json(judge_definition))] = (
+        judge_contract
+    )
+    route = reassessment_route(document, binding)
+    assert route["status"] == "existing-planning-judge"
+    assert route["nodes"] == ["judge-plan"]
+    requirements = route["assessment_requirements"]
+    assert requirements["operation_contracts"][digest] == contract
+    planning_counts = [
+        row
+        for row in requirements["criterion_capacity"]["bounded_fields"]
+        if row["node"] == "judge-plan"
+    ]
+    assert {row["item"] for row in planning_counts} == {
+        "judge-unmet-criteria",
+        "judge-unverified-criteria",
+    }
+    assert {row["maximum"] for row in planning_counts} == {3}
+    assert "assignment" not in route
+    assert "bootstrap" not in route
+
+
+def test_current_in_session_report_covers_semantics_and_capacity_without_new_cycle(
+    repository,
+):
+    from adaptive_suitability import current_basis, suitability_target
+
+    value = prepared(repository, privileged=True, criterion_maximum=3)
+    client = Oracle(repository)
+    request = qualify_prepared(repository, value, client=client)
+    exact = value["target"]["prepared_definition"]
+    binding = json.loads(Path(exact["binding_path"]).read_text())
+
+    def current_report(target):
+        report = prove_operations(report_for(target), binding)
+        report["applicability"]["criterion_capacity"] = {
+            "value": 3,
+            "basis": target["basis"]["criteria"],
+            "evidence": ["Synthetic current compound-criterion capacity evidence."],
+        }
+        return report
+
+    initial_report = current_report(request["target"])
+    retained = qualify_prepared(
+        repository, value, client=client, assessment=initial_report, retain=True
+    )
+    path = Path(retained["retention"]["path"])
+    value["target"]["procedure_plan"]["source_dispositions"][
+        "aquarium-task-v2.yaml"
+    ] += " Preserve the approved revised plan."
+    target = suitability_target(
+        binding,
+        current_basis(repository, value, in_session=True),
+        combined_task_plan=False,
+        coverage_plan=exact["coverage_plan"],
+    )
+    report = current_report(target)
+    options = {
+        "client": client,
+        "in_session": True,
+        "source_path": path / "procedure.yaml",
+        "binding_path": path / "binding.json",
+    }
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    client.read.reset_mock()
+    with pytest.raises(BundleError) as stale:
+        qualify_prepared(repository, value, assessment=initial_report, **options)
+    assert stale.value.code == "reassessment-required"
+    for missing in ("operation_contracts", "criterion_capacity"):
+        incomplete = copy.deepcopy(report)
+        incomplete["applicability"].pop(missing)
+        with pytest.raises(BundleError) as error:
+            qualify_prepared(repository, value, assessment=incomplete, **options)
+        assert error.value.code == "not-established"
+    result = qualify_prepared(repository, value, assessment=report, **options)
+    assert result["status"] == "qualified"
+    assert result["binding"] == binding
+    assert result["target"] == target
+    assert result["bootstrap"]["node"] == retained["bootstrap"]["node"]
+    assert result["retention"] is None
+    assert "assignment" not in result and "dispatch" not in result
+    assert not {call.args[1] for call in client.read.call_args_list}.intersection(
+        {
+            "session.start",
+            "session.start_replace",
+            "session.begin",
+            "session.work",
+            "session.decide",
+        }
+    )
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before

@@ -94,8 +94,8 @@ def main():
     try:
         from adaptive_admission import (
             NativeClient,
-            resume_selected,
             retain_selected,
+            selected_session,
             selected_source,
             session_context,
         )
@@ -261,49 +261,45 @@ def main():
             )
         client = NativeClient(arguments.repository, arguments.podway)
         observation = client.health()
+        kwargs = {
+            "roots": arguments.root,
+            "entrypoint": arguments.entrypoint,
+            "route": arguments.review_route,
+            "client": client,
+            "qualification": qualification,
+        }
         if arguments.action == "resume":
             if observation is None:
                 raise BundleError(
                     "missing-session", "There is no native session to resume"
                 )
-            bundle = resume_selected(
+            result = selected_session(
                 arguments.repository,
-                arguments.root,
                 observation["status"]["procedure"],
-                client=client,
                 bootstrap=arguments.bootstrap,
-                qualification=qualification,
-            )
-            arguments.source = str(Path(bundle["path"]) / "procedure.yaml")
-            arguments.binding = str(Path(bundle["path"]) / "binding.json")
-        if not arguments.source:
-            raise BundleError(
-                "invalid-arguments", "Source is required for inspect or retain"
-            )
-        kwargs = {
-            "roots": arguments.root,
-            "entrypoint": arguments.entrypoint,
-            "route": arguments.review_route,
-            "runtime_ready": True,
-            "client": client,
-            "binding_path": arguments.binding,
-            "qualification": qualification,
-        }
-        if arguments.action == "retain":
-            if not arguments.write_root:
-                raise BundleError(
-                    "invalid-arguments", "Retention needs an approved write root"
-                )
-            result = retain_selected(
-                arguments.repository,
-                Path(arguments.source),
-                write_root=arguments.write_root,
                 **kwargs,
             )
         else:
-            result = selected_source(
-                arguments.repository, Path(arguments.source), **kwargs
-            )
+            if not arguments.source:
+                raise BundleError(
+                    "invalid-arguments", "Source is required for inspect or retain"
+                )
+            kwargs.update(runtime_ready=True, binding_path=arguments.binding)
+            if arguments.action == "retain":
+                if not arguments.write_root:
+                    raise BundleError(
+                        "invalid-arguments", "Retention needs an approved write root"
+                    )
+                result = retain_selected(
+                    arguments.repository,
+                    Path(arguments.source),
+                    write_root=arguments.write_root,
+                    **kwargs,
+                )
+            else:
+                result = selected_source(
+                    arguments.repository, Path(arguments.source), **kwargs
+                )
         result["session"] = session_context(observation, result["binding"])
         if arguments.action == "retain":
             result["status"] = "retained"

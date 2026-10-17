@@ -386,7 +386,13 @@ def execution_context(
             result["status"] = application["status"]
             return result
     handoff = handoff_context(
-        repository, document, binding, assignment, observation, client
+        repository,
+        document,
+        binding,
+        assignment,
+        observation,
+        client,
+        structural=resolved["qualification"].get("structural"),
     )
     result["handoff"] = handoff
     if handoff and handoff["status"] in {"attachment-required", "stop-before-work"}:
@@ -470,7 +476,9 @@ def execution_context(
     return result
 
 
-def handoff_context(repository, document, binding, assignment, observation, client):
+def handoff_context(
+    repository, document, binding, assignment, observation, client, *, structural=None
+):
     """Verify the approved mapped handoff before its first actual work boundary."""
     plan = assignment["target"]["procedure_plan"]
     mapping = plan.get("plan_handoff")
@@ -526,7 +534,11 @@ def handoff_context(repository, document, binding, assignment, observation, clie
         **assignment["target"].get("qualification_context", {}),
         "review": assignment["authority"]["review"],
     }
-    proof = qualify(document, binding, context=context, execution_info=True)
+    proof = (
+        structural
+        if structural is not None and "execution" in structural
+        else qualify(document, binding, context=context, execution_info=True)
+    )
     if proof["status"] != "compatible":
         raise BundleError(
             proof["status"], "Exact handoff work frontier is not established", proof

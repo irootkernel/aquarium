@@ -557,3 +557,73 @@ def test_public_transition_input_classification_before_effects(
         "replacement-consent-required" if case == "bookkeeping" else "invalid-input"
     )
     assert all(call.args[1] == "version" for call in client.read.call_args_list)
+
+
+@pytest.mark.parametrize("phase", ["prepare", "execute"])
+@pytest.mark.parametrize("full_domain", [False, True])
+def test_supersede_resolves_full_disclosed_domain_before_native_effect(
+    transition, phase, full_domain
+):
+    from adaptive_definitions import canonical_json, definition_id
+
+    fixture, request, checkpoint, consent = transition
+    repository, qualification, client, _, retained = fixture
+    other_root = "-other flows 한글"
+    qualification["assignment"]["authority"]["preparation"]["roots"].append(other_root)
+    changed = copy.deepcopy(retained["binding"])
+    changed["parameters"]["alternative"] = {
+        "type": "text",
+        "required": False,
+        "description": "Conflicting native-key mapping",
+    }
+    other = repository / other_root / ".local" / definition_id(changed)
+    other.mkdir(parents=True)
+    (other.parent / ".gitignore").write_text("*\n")
+    (other / "procedure.yaml").write_bytes(retained["retention"]["source"])
+    (other / "binding.json").write_bytes(canonical_json(changed))
+    roots = ["definitions", other_root] if full_domain else ["definitions"]
+    request["roots"] = roots
+    checkpoint["roots"] = roots
+    calls, _, _ = native_success(transition)
+    before = {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    }
+    with pytest.raises(BundleError) as error:
+        if phase == "prepare":
+            prepare_transition(repository, **request)
+        else:
+            execute_transition(
+                repository,
+                checkpoint=checkpoint,
+                consent=consent,
+                qualification=qualification,
+                client=client,
+            )
+    assert error.value.code == ("ambiguous" if full_domain else "not-established")
+    assert calls == []
+    assert {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    } == before
+
+
+def test_supersede_accepts_identical_aliases_in_full_disclosed_custom_domain(
+    transition,
+):
+    fixture, request, _, _ = transition
+    repository, qualification, _, _, retained = fixture
+    custom = "-other flows 한글"
+    roots = ["definitions", custom]
+    qualification["assignment"]["authority"]["preparation"]["roots"] = roots
+    source = Path(retained["retention"]["path"])
+    alias = repository / custom / ".local" / source.name
+    alias.mkdir(parents=True)
+    (alias.parent / ".gitignore").write_text("*\n")
+    for name in ("procedure.yaml", "binding.json"):
+        (alias / name).write_bytes((source / name).read_bytes())
+    request["roots"] = roots
+    result = prepare_transition(repository, **request)
+    assert result["checkpoint"]["roots"] == roots
+    assert (
+        result["checkpoint"]["disclosure"]["successor"]["bundle_id"]
+        == retained["retention"]["bundle_id"]
+    )

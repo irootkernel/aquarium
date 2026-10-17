@@ -4843,7 +4843,7 @@ def inspect_selected_podway(
     shared = Path(__file__).resolve().parents[3] / "shared"
     sys.path.insert(0, str(shared))
     try:
-        from adaptive_admission import NativeClient, resume_selected, selected_source
+        from adaptive_admission import NativeClient, selected_session, selected_source
         from adaptive_bundles import BundleError
 
         if qualification is not None:
@@ -4905,27 +4905,29 @@ def inspect_selected_podway(
                 raise BundleError(
                     "missing-session", "There is no selected native session to resume"
                 )
-            bundle = resume_selected(
+            admission = selected_session(
                 repository,
-                roots,
                 runtime["session_procedure"],
+                roots=roots,
+                entrypoint=entrypoint,
+                route=route,
                 client=client,
                 bootstrap=bootstrap,
                 qualification=qualification,
             )
-            source = str(Path(bundle["path"]) / "procedure.yaml")
-            binding_path = str(Path(bundle["path"]) / "binding.json")
-        admission = selected_source(
-            repository,
-            Path(source),
-            roots=roots,
-            entrypoint=entrypoint,
-            route=route,
-            runtime_ready=True,
-            client=client,
-            binding_path=binding_path,
-            qualification=qualification,
-        )
+            source = str(Path(admission["retention"]["path"]) / "procedure.yaml")
+        else:
+            admission = selected_source(
+                repository,
+                Path(source),
+                roots=roots,
+                entrypoint=entrypoint,
+                route=route,
+                runtime_ready=True,
+                client=client,
+                binding_path=binding_path,
+                qualification=qualification,
+            )
         family = admission["binding"]["family"]
         adopted = [
             entry
@@ -4938,7 +4940,7 @@ def inspect_selected_podway(
                 + "-v2"
             )
         ]
-        if adopted and not customization_basis:
+        if adopted and not customization_basis and not resume:
             raise BundleError(
                 "not-established",
                 "Selected alternative needs the existing envelope's adopted-customization obligation disposition",

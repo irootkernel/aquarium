@@ -16,12 +16,13 @@ from adaptive_bundles import (
 )
 from adaptive_definitions import (
     canonical_json,
+    capability_signatures,
     definition_id,
     native_key,
     parse_definition,
 )
 from adaptive_preparation import fit, object_value, requirements, source_authority
-from adaptive_qualification import qualify
+from adaptive_qualification import guarantee_minima, qualify
 
 BOOTSTRAP_SIGNATURE = "aquarium.shared.suitability-bootstrap/v1"
 BOOTSTRAP_OPERATION = "aquarium-adaptive-suitability-applicability"
@@ -172,7 +173,16 @@ def current_basis(repository, assignment, *, in_session=False, source_reader=Non
                 "reassessment-required",
                 "Current extracted original requirements differ from the approved basis",
             )
-    source_authority(repository, assignment)
+    if not in_session:
+        prepared = assignment["target"]["prepared_definition"]
+        if (
+            source_authority(repository, assignment)
+            != prepared["coverage_plan"]["source_authority"]
+        ):
+            raise BundleError(
+                "reassessment-required",
+                "Managed source authority changed after preparation",
+            )
     plan = assignment["target"]["procedure_plan"]
     qualification = object_value(
         assignment["target"].get("qualification_context", {}), "qualification_context"
@@ -240,13 +250,13 @@ def suitability_target(binding, basis, *, combined_task_plan=False, coverage_pla
     }
 
 
-def judge_assignment(assignment, target):
+def judge_assignment(assignment, target, assessment_requirements=None):
     result = copy.deepcopy(assignment)
     result.update(
         role="judge",
         purpose="Assess exact Procedure suitability before native start",
         checkpoint="pre-start-procedure-suitability",
-        instructions="Report only. Reconcile complete original sources and compound criteria with the exact candidate and selected reviews/effects. Assess the execution definition, not future product completion. Preserve independent role and authority. Return aquarium.judge-assessment/v2 with this exact target; unknown evidence cannot pass.",
+        instructions="Report only. Reconcile complete original sources and compound criteria with the exact candidate and selected reviews/effects. Assess the execution definition, not future product completion. Preserve independent role and authority. Return aquarium.judge-assessment/v2 with this exact target; unknown evidence cannot pass. If a new discriminator or planning-output semantic contract needs establishment, include applicability.operation_contracts keyed by its exact operation-definition digest, with the exact retained contract and readable supporting evidence. This is part of the same due assessment, never proof that an agent executed.",
         deliverables=["Exact current independent suitability assessment"],
     )
     result["target"]["preparation_native_context"] = copy.deepcopy(result["native"])
@@ -256,6 +266,9 @@ def judge_assignment(assignment, target):
         "lifecycle": "not-dispatched",
     }
     result["target"]["procedure_suitability"] = target
+    result["target"]["assessment_requirements"] = copy.deepcopy(
+        assessment_requirements or {}
+    )
     result["authority"]["allowed"] = [
         "Read approved original sources and exact execution-definition bytes",
         "Return independent report-only suitability assessment",
@@ -448,6 +461,49 @@ def bootstrap_import(document, binding, target, report):
     }
 
 
+def operation_proofs(report, document, binding):
+    """Consume optional semantic evidence only after exact ordinary assessment."""
+    applicability = report.get("applicability", {})
+    proofs = (
+        applicability.get("operation_contracts", {})
+        if isinstance(applicability, dict)
+        else {}
+    )
+    proofs = object_value(proofs, "Assessment operation contracts")
+    definitions = {
+        sha256(canonical_json(value)) for value in document["node_definitions"].values()
+    }
+    verified = {}
+    for digest, row in proofs.items():
+        contract = binding.get("semantic_contracts", {}).get(digest)
+        evidence = row.get("evidence") if isinstance(row, dict) else None
+        pending = [evidence]
+        readable = False
+        while pending:
+            value = pending.pop()
+            if isinstance(value, str) and value.strip():
+                readable = True
+                break
+            if isinstance(value, list):
+                pending.extend(value)
+            elif isinstance(value, dict):
+                pending.extend(value.values())
+        if (
+            digest not in definitions
+            or contract is None
+            or not isinstance(row, dict)
+            or row.get("contract") != contract
+            or not readable
+        ):
+            raise BundleError(
+                "not-established",
+                "Operation semantics lack exact retained contract and supporting evidence",
+                {"operation": digest},
+            )
+        verified[digest] = copy.deepcopy(contract)
+    return verified
+
+
 def qualify_prepared(
     repository,
     assignment,
@@ -509,6 +565,24 @@ def qualify_prepared(
     mapping = {key: value for key, value in binding.items() if key != "procedure"}
     coverage = prepared["coverage_plan"]["coverage"]
     fit(assignment, basis["criteria"], document, mapping, coverage)
+
+    def recheck_target(raw, actual):
+        if (
+            raw != source
+            or actual != binding
+            or current_basis(
+                repository,
+                assignment,
+                in_session=in_session,
+                source_reader=source_reader,
+            )
+            != basis
+        ):
+            raise BundleError(
+                "reassessment-required",
+                "Exact suitability target changed before adoption",
+            )
+
     design_review = (
         binding["family"] in {"design", "diagnosis"}
         and assignment["authority"]["review"].get("route") != "not-applicable"
@@ -532,7 +606,7 @@ def qualify_prepared(
                 reassessment_route(document, binding),
             )
         grant = assignment["authority"].get("preparation", {})
-        established_reuse(
+        reused = established_reuse(
             repository,
             source,
             binding,
@@ -547,6 +621,9 @@ def qualify_prepared(
                 "review": assignment["authority"]["review"],
                 "required_obligations": sorted({row["obligation"] for row in coverage}),
             },
+            execution_info=bool(
+                assignment["target"]["procedure_plan"].get("plan_handoff")
+            ),
         )
         reuse = True
     if unchanged or reuse:
@@ -559,6 +636,9 @@ def qualify_prepared(
                     "review": assignment["authority"]["review"],
                     "review_required": True,
                 },
+                verified_operation_contracts=reused["verified_operation_contracts"]
+                if reuse
+                else None,
             )
             if reviewed["status"] != "compatible":
                 raise BundleError(
@@ -569,38 +649,42 @@ def qualify_prepared(
         retained = None
         if retain:
             grant = assignment["authority"]["preparation"]
+
+            def recheck_reuse(raw, actual):
+                recheck_target(raw, actual)
+                if not reuse:
+                    return qualify_known(raw, actual, preview)
+                return established_reuse(
+                    repository,
+                    raw,
+                    actual,
+                    client=client,
+                    roots=grant["roots"],
+                    prior=prior,
+                    criteria=basis["criteria"],
+                    context={
+                        **assignment["target"].get("qualification_context", {}),
+                        "review": assignment["authority"]["review"],
+                        "required_obligations": sorted(
+                            {row["obligation"] for row in coverage}
+                        ),
+                    },
+                )
+
             retained = publish_bundle(
                 repository,
                 grant["roots"],
                 grant["write_root"],
                 source,
                 binding,
-                qualify=(
-                    lambda raw, actual: established_reuse(
-                        repository,
-                        raw,
-                        actual,
-                        client=client,
-                        roots=grant["roots"],
-                        prior=prior,
-                        criteria=basis["criteria"],
-                        context={
-                            **assignment["target"].get("qualification_context", {}),
-                            "review": assignment["authority"]["review"],
-                            "required_obligations": sorted(
-                                {row["obligation"] for row in coverage}
-                            ),
-                        },
-                    )
-                )
-                if reuse
-                else (lambda raw, actual: qualify_known(raw, actual, preview)),
+                qualify=recheck_reuse,
                 native_identity=client.identity,
             )
         return {
             "status": "qualified-known",
             "retention": retained,
             "binding": binding,
+            "structural": reused["structural"] if reuse else None,
             "assessment": "existing-first-due-checkpoint-preserved",
             "bootstrap": reuse_import(document, binding, assignment, basis, prior)
             if reuse
@@ -643,6 +727,7 @@ def qualify_prepared(
         coverage_plan=prepared["coverage_plan"],
     )
     report = None
+    verified = {}
     if assessment is not None:
         try:
             report = assess_current(assessment, target)
@@ -652,6 +737,7 @@ def qualify_prepared(
                     error.code, str(error), reassessment_route(document, binding)
                 ) from error
             raise
+        verified = operation_proofs(report, document, binding)
     # A bare caller number is not exact-basis capacity evidence. A bounded
     # assessment can use its independent ordinary report's explicit proof.
     context.pop("criterion_capacity", None)
@@ -673,15 +759,70 @@ def qualify_prepared(
             )
         context["criterion_capacity"] = capacity["value"]
     structural = qualify(
-        document, binding, context=context, signatures=context.get("signatures")
+        document,
+        binding,
+        context=context,
+        signatures=context.get("signatures"),
+        verified_operation_contracts=verified,
+        execution_info=bool(assignment["target"]["procedure_plan"].get("plan_handoff")),
     )
-    capacity_pending = structural["status"] == "not-established" and all(
-        row["property"] in {"capability", "guarantee-minimum"}
-        and row.get("unknown_properties") == ["criterion-capacity"]
+    semantic_pending = any(
+        row["property"] in {"operation-discriminators", "operation-output-scopes"}
+        and row["status"] == "not-established"
         for row in structural["issues"]
     )
+    conditional_capacity = False
+    if semantic_pending:
+        semantic_issues = [
+            row
+            for row in structural["issues"]
+            if row["property"]
+            in {"operation-discriminators", "operation-output-scopes"}
+            and row["status"] == "not-established"
+        ]
+        proposed = {
+            digest: contract
+            for digest, contract in binding.get("semantic_contracts", {}).items()
+            if contract.get("discriminators") or contract.get("output_scopes")
+        }
+        conditional = qualify(
+            document,
+            binding,
+            context=context,
+            signatures=context.get("signatures"),
+            verified_operation_contracts={**proposed, **verified},
+        )
+        unresolved_capacity = conditional["status"] == "not-established" and all(
+            row["property"] in {"capability", "guarantee-minimum"}
+            and row.get("unknown_properties") == ["criterion-capacity"]
+            for row in conditional["issues"]
+        )
+        structural = {
+            **conditional,
+            "status": "incompatible"
+            if conditional["status"] == "incompatible"
+            else "not-established",
+            "issues": semantic_issues + conditional["issues"],
+        }
+        if conditional["status"] == "compatible" or unresolved_capacity:
+            conditional_capacity = unresolved_capacity
+            structural["operation_proof_pending"] = True
+        else:
+            semantic_pending = False
+    capacity_pending = conditional_capacity or (
+        structural["status"] == "not-established"
+        and all(
+            row["property"] in {"capability", "guarantee-minimum"}
+            and row.get("unknown_properties") == ["criterion-capacity"]
+            for row in structural["issues"]
+        )
+    )
     if structural["status"] != "compatible" and not (
-        assessment is None and capacity_pending
+        assessment is None
+        and (
+            capacity_pending
+            or (semantic_pending and structural.get("operation_proof_pending"))
+        )
     ):
         raise BundleError(
             structural["status"], "Execution obligations are not qualified", structural
@@ -696,7 +837,9 @@ def qualify_prepared(
         return {
             "status": "assessment-required",
             "structural": structural,
-            "assignment": judge_assignment(assignment, target),
+            "assignment": judge_assignment(
+                assignment, target, assessment_requirements(document, binding)
+            ),
             "target": target,
             "capacity_proof_due": capacity_pending,
         }
@@ -718,21 +861,7 @@ def qualify_prepared(
         grant = assignment["authority"].get("preparation", {})
 
         def recheck(raw, actual):
-            if (
-                raw != source
-                or actual != binding
-                or current_basis(
-                    repository,
-                    assignment,
-                    in_session=in_session,
-                    source_reader=source_reader,
-                )
-                != basis
-            ):
-                raise BundleError(
-                    "reassessment-required",
-                    "Exact suitability target changed before adoption",
-                )
+            recheck_target(raw, actual)
             assess_current(report, target)
 
         retained = publish_bundle(
@@ -754,6 +883,55 @@ def qualify_prepared(
         "activation": "activated-family-consumer-available"
         if binding["family"] in {"task", "goal", "validation", "design", "diagnosis"}
         else "family-activation-remains-required",
+    }
+
+
+def assessment_requirements(document, binding):
+    """Describe exact proof inputs for the already due ordinary assessment."""
+    contracts = binding.get("semantic_contracts", {})
+    definitions = document["node_definitions"]
+    operations = {
+        sha256(canonical_json(definition)) for definition in definitions.values()
+    }
+    claims = {
+        digest: copy.deepcopy(contract)
+        for digest, contract in contracts.items()
+        if digest in operations
+        and (contract.get("discriminators") or contract.get("output_scopes"))
+    }
+    signatures = {
+        **capability_signatures(),
+        **binding.get("capability_definitions", {}),
+    }
+    bounded = []
+    for placement in document["graph"]["nodes"]:
+        node = placement["id"]
+        items = {
+            item["id"]: item for item in definitions[placement["use"]].get("items", [])
+        }
+        fields = set()
+        for capability in binding["nodes"][node]["capabilities"]:
+            signature = signatures.get(capability["signature"], {})
+            for candidate in [signature, *guarantee_minima(signature)]:
+                fields.update(
+                    capability["fields"].get(item, item)
+                    for item in candidate.get("criterion_counts", [])
+                )
+        for field in sorted(fields):
+            if field in items and "maximum" in items[field]:
+                bounded.append(
+                    {"node": node, "item": field, "maximum": items[field]["maximum"]}
+                )
+    return {
+        "operation_contracts": claims,
+        "operation_contracts_report_field": "applicability.operation_contracts",
+        "operation_contracts_scope": "Establish any unestablished claims using these exact retained contracts and current readable evidence; established native contracts and supported derivations need no new proof.",
+        "criterion_capacity": {
+            "bounded_fields": bounded,
+            "report_field": "applicability.criterion_capacity",
+            "basis": "Exact current original criteria, including all compound parts",
+        },
+        "evidence_scope": "Include any due proof in this same current affected ordinary report; this description supplies no proof or authority and requests no additional Judge or bootstrap.",
     }
 
 
@@ -799,9 +977,23 @@ def reassessment_route(document, binding):
         "nodes": available,
         "next_owner": "Orchestrator",
         "required_scope": ["affected-planning", "procedure-suitability"],
+        "assessment_requirements": assessment_requirements(document, binding),
         "same_operation_retrieval": "Recover a pending actual result before assigning replacement assessment",
         "replacement": "Not authorized by reassessment; use the shared consented atomic path only for missing topology.",
     }
+
+
+def resolver_scope(repository, assignment, roots):
+    """Keep a disclosed resolver domain complete without requiring write authority."""
+    preparation = assignment.get("authority", {}).get("preparation", {})
+    if not isinstance(preparation, dict) or "roots" not in preparation:
+        return
+    declared = roots_for(repository, preparation["roots"])
+    searched = roots_for(repository, roots)
+    if any(root not in searched for root in declared):
+        raise BundleError(
+            "not-established", "Resolver search omits a disclosed definition root"
+        )
 
 
 def retention_scope(repository, assignment, client, *, roots=None, write_root=None):
@@ -815,6 +1007,7 @@ def retention_scope(repository, assignment, client, *, roots=None, write_root=No
         raise BundleError("unsafe", "Retention native proof uses another worktree")
     approved = roots_for(repository, grant["roots"])
     selected = roots_for(repository, roots if roots is not None else grant["roots"])
+    resolver_scope(repository, assignment, selected)
     target = contained(
         repository, Path(write_root if write_root is not None else grant["write_root"])
     )
@@ -830,7 +1023,16 @@ def retention_scope(repository, assignment, client, *, roots=None, write_root=No
 
 
 def established_reuse(
-    repository, source, binding, *, client, roots, prior, context=None, criteria=None
+    repository,
+    source,
+    binding,
+    *,
+    client,
+    roots,
+    prior,
+    context=None,
+    criteria=None,
+    execution_info=False,
 ):
     """Establish retained definition reuse, not current product/assessment success."""
     from adaptive_bundles import resolve_bundle
@@ -875,6 +1077,7 @@ def established_reuse(
         )
     assess_current(prior, target)
     document = yaml.safe_load(source)
+    verified = operation_proofs(prior, document, binding)
     context = {} if context is None else copy.deepcopy(context)
     context.pop("criterion_capacity", None)
     capacity = (
@@ -902,7 +1105,13 @@ def established_reuse(
             raise BundleError(
                 "not-established", "Reuse semantic definitions are not retained"
             )
-    result = qualify(document, binding, context=context)
+    result = qualify(
+        document,
+        binding,
+        context=context,
+        verified_operation_contracts=verified,
+        execution_info=execution_info,
+    )
     if result["status"] != "compatible":
         raise BundleError(
             result["status"], "Current reused structure is unqualified", result
@@ -937,7 +1146,7 @@ def established_reuse(
             "not-established",
             "This bootstrap cannot record truthful established-reuse timing",
         )
-    return resolved
+    return {**resolved, "structural": result, "verified_operation_contracts": verified}
 
 
 def reuse_import(document, binding, assignment, basis, prior):

@@ -6,7 +6,7 @@ from pathlib import Path
 from adaptive_admission import resume_selected
 from adaptive_bundles import BundleError, resolve_bundle
 from adaptive_definitions import native_key
-from adaptive_suitability import qualify_prepared
+from adaptive_suitability import qualify_prepared, resolver_scope
 
 
 def required_text(value, name):
@@ -43,6 +43,7 @@ def successor_bundle(repository, roots, qualification, client):
         raise BundleError(
             "invalid-input", "Successor needs its exact ordinary qualification context"
         )
+    resolver_scope(repository, qualification["assignment"], roots)
     result = qualify_prepared(
         repository,
         qualification["assignment"],

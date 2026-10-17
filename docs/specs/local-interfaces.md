@@ -278,6 +278,37 @@ without writing or generating an alternative. A material in-session basis change
 uses the existing reassessment route. Live review ordinals, remaining grants and
 native retrieval handles alone do not invalidate an unchanged definition.
 
+`assignment.target.qualification_context` supports only `operation_contracts`,
+`signatures`, `goal_kind`, `workflow_owner`, `due_capabilities`,
+`required_endpoints`, `criterion_capacity`, `review_required` and
+`expected_outcome`. The [selection contract](../../plugins/aquarium/references/adaptive-procedures.md#selection-and-source-only-preparation)
+defines their values and conditional use. Handlers supply actual acceptance
+scope, conditionally due capabilities and required optional producer endpoints
+when original obligations depend on them; absent context supplies no waiver.
+Static custom definitions stay in the exact binding, while independent capacity
+proof and actual assessment remain ordinary report evidence.
+For a new discriminator or planning-output operation, the same exact ordinary
+report can supply `applicability.operation_contracts`: operation-definition
+digest to `{contract, evidence}`, with the exact retained semantic contract and
+readable supporting evidence. This is distinct from the declaration input
+`qualification_context.operation_contracts`. The helper verifies the current
+report target before consuming semantic proof. Unresolved semantic/capacity
+proof alone can return `assessment-required` / exit 3, with no execution claim;
+real independent violations still stop. Prior exact proof supports unchanged
+reuse, and current proof survives context/handoff recovery. No universal report
+format, extra assessment cycle or agent authentication is introduced. The
+existing affected reassessment route includes `assessment_requirements` with
+exact retained semantic contracts and bounded criterion-count fields for that
+same current ordinary assessment. This descriptive context supplies neither
+proof nor authority and does not request another pre-start bootstrap.
+
+When qualification discloses `authority.preparation.roots`, selected admission,
+retention, resume and supersede search that complete domain before replacement. A caller cannot hide an
+exact-key conflict by omitting a disclosed root. Read-only recovery requires no
+write or native-authoring grant; sessions without this disclosure retain their
+existing contract. Managed-source currency is rechecked before adoption, not by
+re-reading mutable origin templates to resume an intact bundle.
+
 ## Activated adaptive execution consumer
 
 `manage_adaptive_procedure.py` also accepts positional `context`, `--qualification`
