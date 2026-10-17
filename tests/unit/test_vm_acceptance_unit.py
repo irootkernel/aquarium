@@ -406,6 +406,33 @@ def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_ca
     }
 
 
+@pytest.mark.parametrize("role", ["worker", "judge"])
+@pytest.mark.parametrize("digest", ["bare", "wrong-bytes", "wrong-algorithm"])
+def test_report_digest_representation_preserves_exact_source_check(
+    native_case, role, digest
+):
+    observation, evidence, repository = native_case
+    path = Path(evidence["worker_result" if role == "worker" else "judge_assessment"])
+    report = gate.read_json(path)
+    value = report["target"]["greet_sha256"].removeprefix("sha256:")
+    if digest == "wrong-bytes":
+        value = "0" * 64
+    elif digest == "wrong-algorithm":
+        value = "sha512:" + value
+    report["target"]["greet_sha256"] = value
+    write_json(path, report)
+    child = next(
+        actor for actor in observation["descendants"] if actor["metadata"]["id"] == role
+    )
+    child["items"][-1]["text"] = json.dumps(report)
+    if digest == "bare":
+        assert gate.validate_native_case(observation, evidence, repository)
+    else:
+        with pytest.raises(gate.GateError) as caught:
+            gate.validate_native_case(observation, evidence, repository)
+        assert caught.value.outcome == "fail"
+
+
 def test_final_success_assertion_without_native_children_is_incomplete(native_case):
     observation, evidence, repository = native_case
     observation["root"]["items"] = [

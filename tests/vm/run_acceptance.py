@@ -80,6 +80,11 @@ def sha256(path):
     return "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def matches_sha256(path, digest):
+    expected = sha256(path)
+    return digest in (expected, expected.removeprefix("sha256:"))
+
+
 def files(root):
     root = Path(root)
     require(
@@ -1370,8 +1375,9 @@ def validate_native_case(observation, evidence, repository):
     )
     for report in (handoff, assessment):
         require(
-            report.get("target", {}).get("greet_sha256")
-            == sha256(repository / "greet.py"),
+            matches_sha256(
+                repository / "greet.py", report.get("target", {}).get("greet_sha256")
+            ),
             "role report does not identify the current greeting source",
             "fail",
         )

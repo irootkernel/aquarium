@@ -410,6 +410,10 @@ def test_leaf_results_need_the_actual_completed_operation_and_conditional_pm_aut
     assert cases.leaf_delivery(gate, observation, evidence, tmp_path, ["qa"], {})[
         "used"
     ] == ["qa"]
+    evidence["leaf_results"]["qa"]["sha256"] = gate.sha256(path).removeprefix("sha256:")
+    assert cases.leaf_delivery(gate, observation, evidence, tmp_path, ["qa"], {})[
+        "used"
+    ] == ["qa"]
     item["status"] = "failed"
     with pytest.raises(gate.GateError):
         cases.leaf_delivery(gate, observation, evidence, tmp_path, ["qa"], {})
@@ -990,6 +994,9 @@ def report_case(tmp_path):
     "damage",
     [
         None,
+        "bare-digest",
+        "bare-worker-digest",
+        "bare-judge-digest",
         "self-assessment",
         "target-drift",
         "missing-criterion",
@@ -1001,7 +1008,28 @@ def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
     report_case, damage
 ):
     repository, directory, observation, evidence, case = report_case
-    if damage == "self-assessment":
+    bare_digests = {
+        "bare-digest": ["worker", "judge"],
+        "bare-worker-digest": ["worker"],
+        "bare-judge-digest": ["judge"],
+    }
+    if damage in bare_digests:
+        for role in bare_digests[damage]:
+            path = Path(
+                evidence["worker_result" if role == "worker" else "judge_assessment"]
+            )
+            report = gate.read_json(path)
+            report["target"]["files"]["product.txt"] = gate.sha256(
+                repository / "product.txt"
+            ).removeprefix("sha256:")
+            path.write_text(json.dumps(report))
+            child = next(
+                actor
+                for actor in observation["descendants"]
+                if actor["metadata"]["id"] == role
+            )
+            child["items"][-1]["text"] = json.dumps(report)
+    elif damage == "self-assessment":
         evidence["judge_agent"] = evidence["worker_agent"]
     elif damage == "target-drift":
         (repository / "product.txt").write_text("changed after assessment")
@@ -1016,13 +1044,16 @@ def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
         observation["descendants"][1]["items"][-1]["text"] = json.dumps(report)
     elif damage == "no-worker-work":
         observation["descendants"][0]["items"].pop(0)
-    if damage:
+    if damage and damage not in bare_digests:
         with pytest.raises(gate.GateError):
             cases.reports(gate, observation, evidence, directory, repository, case)
     else:
         result = cases.reports(gate, observation, evidence, directory, repository, case)
         assert result["actors"] == {"worker": "worker", "judge": "judge"}
         assert result["nodes"] == {"worker": "worker-node", "judge": "judge-node"}
+        assert result["files"] == {
+            "product.txt": gate.sha256(repository / "product.txt")
+        }
 
 
 @pytest.mark.parametrize("damage", [None, "symptom", "experiments"])

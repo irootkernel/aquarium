@@ -268,7 +268,9 @@ required. This collection protocol belongs to VM acceptance, not ordinary startu
 Use a cumulative delivery handoff that lists the Worker's actual implementation
 changes and subsequent refinement and check results. Preserve a verification
 phase's no-op result without dropping the earlier changes from that handoff.
-Both reports use `sha256:<64 lowercase hex>` for `target.greet_sha256`.
+Both reports use a 64-character lowercase SHA-256 hex digest for
+`target.greet_sha256`, with an optional `sha256:` prefix. Both forms must match
+the current source bytes exactly.
 Return the complete report JSON in the native final result, or its original
 absolute path and `sha256:<64 lowercase hex>` digest. Point `startup-evidence.json`
 to that original report path. Preserve previous captures when reconciling a
@@ -382,6 +384,8 @@ Judge without an unused corrective Worker. It compares every due original
 criterion, current target bytes and the case oracle while preserving future
 unverified rows. Synthetic unit reports prove only the checks, never installed
 agent behavior.
+Assessed-file and upstream-result digests accept the same optional `sha256:`
+prefix; candidate and native binding identities retain their specified formats.
 
 Git-backed adaptive cases recover the current exact source/binding through the
 installed public context helper. Their family, source bytes, native tuple,

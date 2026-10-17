@@ -239,11 +239,14 @@ def reports(gate, observation, evidence, directory, repository, case):
                 and ".." not in Path(path).parts
                 and target.is_file()
                 and not target.is_symlink()
-                and gate.sha256(target) == digest,
+                and gate.matches_sha256(target, digest),
                 "assessed target differs from current case bytes",
                 "fail",
             )
-        targets[role] = image
+        targets[role] = {
+            path: "sha256:" + digest.removeprefix("sha256:")
+            for path, digest in image.items()
+        }
         deliveries[role] = {
             "path": str(artifact(gate, directory, evidence[filename])),
             "sha256": gate.sha256(artifact(gate, directory, evidence[filename])),
@@ -466,7 +469,7 @@ def leaf_delivery(gate, observation, evidence, directory, leaves, request):
         row = deliveries.get(leaf, {})
         path = artifact(gate, directory, row.get("path", ""))
         gate.require(
-            row.get("sha256") == gate.sha256(path),
+            gate.matches_sha256(path, row.get("sha256")),
             "actual upstream result bytes changed",
             "fail",
         )
