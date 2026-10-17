@@ -443,6 +443,53 @@ def test_final_success_assertion_without_native_children_is_incomplete(native_ca
     assert caught.value.outcome == "incomplete"
 
 
+@pytest.mark.parametrize("role", ["worker", "judge"])
+@pytest.mark.parametrize(
+    "representation",
+    [
+        "bare",
+        "prefixed",
+        "wrong-bytes",
+        "wrong-algorithm",
+        "prefix",
+        "suffix",
+        "missing-path",
+    ],
+)
+def test_native_report_path_delivery_checks_exact_digest(
+    native_case, role, representation
+):
+    observation, evidence, repository = native_case
+    path = Path(evidence["worker_result" if role == "worker" else "judge_assessment"])
+    digest = gate.sha256(path).removeprefix("sha256:")
+    if representation == "prefixed":
+        digest = "sha256:" + digest
+    elif representation == "wrong-bytes":
+        digest = "0" * 64
+    elif representation == "wrong-algorithm":
+        digest = "sha512:" + digest
+    elif representation == "prefix":
+        digest = "a" + digest
+    elif representation == "suffix":
+        digest += "a"
+    delivered_path = (
+        str(path) if representation != "missing-path" else "other-report.json"
+    )
+    child = next(
+        actor for actor in observation["descendants"] if actor["metadata"]["id"] == role
+    )
+    child["items"][-1]["text"] = (
+        f"Complete report: `{delivered_path}`\nSHA-256: `{digest}`"
+    )
+    if representation in {"bare", "prefixed"}:
+        assert gate.validate_native_case(observation, evidence, repository)
+    else:
+        with pytest.raises(
+            gate.GateError, match="actual child output does not bind report bytes"
+        ):
+            gate.validate_native_case(observation, evidence, repository)
+
+
 def test_worker_cannot_be_its_own_judge(native_case):
     observation, evidence, repository = native_case
     evidence["judge_agent"] = evidence["worker_agent"]

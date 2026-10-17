@@ -1299,8 +1299,10 @@ def returned_report(child, path, schema):
             continue
         if candidate == document:
             return document
+    digest = sha256(path).removeprefix("sha256:")
     require(
-        str(path) in text and sha256(path) in text,
+        str(path) in text
+        and re.search(r"(?<![\w:])(?:sha256:)?" + digest + r"(?![\w:])", text),
         f"actual child output does not bind report bytes: {path}",
     )
     return document
