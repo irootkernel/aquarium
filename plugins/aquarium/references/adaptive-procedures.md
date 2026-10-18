@@ -768,10 +768,12 @@ than persisting another freshness history.
 The [released evaluator](https://github.com/irootkernel/podway/blob/fa29dba929777b020377bc9803cb0a3954d219b1/crates/podway-core/src/procedure_v2/items.rs)
 makes absent guard evidence unevaluable, so that option
 cannot be selected. A recorded Confirm is true; false is not a recorded Confirm
-value. Text bounds and emptiness use trimmed Unicode character counts. Unsupported
-proof semantics remain unknown. Optional producer rows can supply grouped
-conditional evidence when the producer and selected item actually exist on the
-relevant path. Required original endpoints must reach their assessor and outgoing
+value. Text bounds and emptiness use trimmed Unicode character counts. The analyzer
+treats the released evaluator's unevaluable operator/kind pairs as infeasible, including
+`equals`/`not_equals` on Text, List or Artifact, and `empty`/`non_empty` on Artifact.
+Unestablished proof semantics remain unknown. Optional producer rows can supply
+grouped conditional evidence when the producer and selected item actually exist on
+the relevant path. Required original endpoints must reach their assessor and outgoing
 semantic Decision; a generic bookkeeping node cannot relay evidence by label.
 
 The versioned `operation-contracts-v1.json` describes bounded effects and faithful

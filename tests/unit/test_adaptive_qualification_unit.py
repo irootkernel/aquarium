@@ -1234,6 +1234,41 @@ def test_native_non_scalar_comparisons_cannot_select_a_route(kind, operator):
 
 
 @pytest.mark.parametrize(
+    "kind,selectable,unknown",
+    [
+        ("artifact", False, False),
+        ("text", True, False),
+        ("list", True, False),
+        ("unsupported", True, True),
+    ],
+)
+@pytest.mark.parametrize("operator", ["empty", "non_empty"])
+def test_native_collection_guards_preserve_typed_feasibility(
+    kind, selectable, unknown, operator
+):
+    predicate = {operator: True}
+    key = ("source", "result")
+    logic = Decisions(
+        {key: item_domain({"type": kind, "required": True}, [predicate])},
+        kinds={key: kind},
+    )
+    selected = logic.predicate(key, predicate)
+    assert (selected != 0) is selectable
+    assert logic.has_unknown(selected) is unknown
+    if kind in {"text", "list"}:
+        values = (
+            [(" \t\n", True), ("evidence", False)]
+            if kind == "text"
+            else [([], True), (["evidence"], False)]
+        )
+        for value, empty in values:
+            recorded = Decisions({key: [value]}, kinds={key: kind})
+            assert recorded.predicate(key, predicate) == int(
+                empty if operator == "empty" else not empty
+            )
+
+
+@pytest.mark.parametrize(
     "family,placement,field,meaning",
     [
         ("goal", "record-evidence", "goal-kind", "goal_kind"),
