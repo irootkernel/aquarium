@@ -680,6 +680,7 @@ def test_standalone_missing_dependencies_reports_interpreter_without_native_work
         ("new-project", "herdr", "incompatible"),
         ("task-handler", None, "route-unavailable"),
         ("task-handler", "absent-route", "route-unavailable"),
+        ("task-handler", "independent-review", "route-unavailable"),
     ],
 )
 def test_selected_entrypoint_and_route_are_required(
@@ -791,6 +792,186 @@ def test_known_contract_covers_current_sources_and_stays_stable_when_extended(
     (assets / "adaptive/known-sources-v1.json").write_text(json.dumps(contract))
     monkeypatch.setattr(admission, "ASSETS", assets)
     assert admission.reference_binding(known[0], known[2].preview(known[1])) == before
+
+
+@pytest.mark.parametrize(
+    "family,version,entrypoint",
+    [
+        ("task", "32", "task-handler"),
+        ("goal", "35", "epic-handler"),
+        ("validation", "34", "epic-validator"),
+    ],
+)
+def test_subagent_route_preserves_prior_sources_without_reinterpreting_them(
+    family,
+    version,
+    entrypoint,
+):
+    current = (
+        admission.ASSETS / f"podway/procedures/aquarium-{family}-v2.yaml"
+    ).read_bytes()
+    prior = (ROOT / f"tests/fixtures/aquarium-{family}-v{version}.yaml").read_bytes()
+    admission.selection_contract(
+        current,
+        admission.reference_mapping(current),
+        entrypoint,
+        "subagent-review",
+        None,
+    )
+    binding = admission.reference_mapping(prior)
+    assert admission.known_source(prior)[0]["version"] == version
+    for adaptive in (False, True):
+        for route in ("independent-review", "subagent-review"):
+            qualification = (
+                {"assignment": {"authority": {"review": {"route": route}}}}
+                if adaptive
+                else None
+            )
+            with pytest.raises(bundles.BundleError) as error:
+                admission.selection_contract(
+                    prior, binding, entrypoint, route, qualification
+                )
+            assert error.value.code == "route-unavailable"
+        qualification = (
+            {"assignment": {"authority": {"review": {"route": "herdr"}}}}
+            if adaptive
+            else None
+        )
+        admission.selection_contract(prior, binding, entrypoint, "herdr", qualification)
+
+
+@pytest.mark.parametrize(
+    "logical,signature",
+    [
+        ("review-route", "aquarium.goal.review-routing/v1"),
+        ("effective-review-route", "aquarium.task.review-routing/v1"),
+    ],
+)
+@pytest.mark.parametrize("aliases", ["default", "current", "history"])
+def test_adaptive_route_checks_actual_choices_without_reinterpreting_history(
+    logical, signature, aliases
+):
+    alias = logical if aliases == "default" else "selected-provider"
+    prior = logical if aliases == "history" else "prior-review-route"
+    document = {
+        "node_definitions": {
+            "review": {
+                "items": [
+                    {"id": alias, "type": "choice", "choices": ["independent-review"]},
+                    {
+                        "id": prior,
+                        "type": "choice",
+                        "choices": ["independent-review"],
+                    },
+                ]
+            }
+        },
+        "graph": {"nodes": [{"id": "custom-review", "use": "review"}]},
+    }
+    binding = {
+        "family": "task",
+        "entrypoints": ["task-handler"],
+        "nodes": {
+            "custom-review": {
+                "capabilities": [
+                    {
+                        "signature": signature,
+                        "fields": {}
+                        if aliases == "default"
+                        else {logical: alias, "prior-review-route": prior},
+                    }
+                ]
+            },
+        },
+    }
+    qualification = {
+        "assignment": {"authority": {"review": {"route": "subagent-review"}}}
+    }
+
+    def select():
+        admission.selection_contract(
+            yaml.safe_dump(document).encode(),
+            binding,
+            "task-handler",
+            "subagent-review",
+            qualification,
+        )
+
+    with pytest.raises(bundles.BundleError) as error:
+        select()
+    assert error.value.code == "route-unavailable"
+    document["node_definitions"]["review"]["items"][0]["choices"] = ["subagent-review"]
+    select()
+
+
+@pytest.mark.parametrize("name", ["review-route", "effective-review-route", "example"])
+@pytest.mark.parametrize("signature", [None, "aquarium.task.approval/v1"])
+def test_adaptive_route_ignores_bookkeeping_names_and_unrelated_capability_aliases(
+    name, signature
+):
+    document = {
+        "node_definitions": {
+            "example": {
+                "items": [
+                    {
+                        "id": name,
+                        "type": "choice",
+                        "choices": ["example-a", "example-b"],
+                    }
+                ]
+            }
+        },
+        "graph": {"nodes": [{"id": "example", "use": "example"}]},
+    }
+    binding = {
+        "family": "task",
+        "entrypoints": ["task-handler"],
+        "nodes": {
+            "example": {
+                "capabilities": []
+                if signature is None
+                else [{"signature": signature, "fields": {"review-route": name}}]
+            }
+        },
+    }
+    admission.selection_contract(
+        yaml.safe_dump(document).encode(),
+        binding,
+        "task-handler",
+        "subagent-review",
+        {"assignment": {"authority": {"review": {"route": "subagent-review"}}}},
+    )
+
+
+def test_renamed_operations_keep_established_effects_and_prior_contracts():
+    registry = json.loads(
+        (admission.ASSETS / "adaptive/operation-contracts-v1.json").read_bytes()
+    )
+    for family, version in (("task", 32), ("goal", 35), ("validation", 34)):
+        before = yaml.safe_load(
+            (ROOT / f"tests/fixtures/aquarium-{family}-v{version}.yaml").read_bytes()
+        )
+        after = yaml.safe_load(
+            (
+                admission.ASSETS / f"podway/procedures/aquarium-{family}-v2.yaml"
+            ).read_bytes()
+        )
+        changed = []
+        for name, definition in before["node_definitions"].items():
+            old = bundles.sha256(definitions.canonical_json(definition))
+            new = bundles.sha256(
+                definitions.canonical_json(after["node_definitions"][name])
+            )
+            if old == new or old not in registry:
+                continue
+            assert registry[new]["basis"]["native_version"] == after["version"]
+            for field in ("native_id", "definition"):
+                assert registry[new]["basis"][field] == registry[old]["basis"][field]
+            assert {k: v for k, v in registry[new].items() if k != "basis"} == {
+                k: v for k, v in registry[old].items() if k != "basis"
+            }
+            changed.append(name)
+        assert changed
 
 
 def test_renamed_forged_tuple_blocks_actual_key_even_beside_intact_alias(

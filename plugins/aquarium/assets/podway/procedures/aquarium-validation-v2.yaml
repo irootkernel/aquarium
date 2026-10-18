@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-validation-v2
-version: "34"
+version: "35"
 name: Aquarium Validation
 purpose: Audit one completed epic through bounded remediation, confirmation, and explicit finding disposition.
 description: A bounded Podway procedure for three whole-Epic work-unit assessments, one remediation confirmation, user-directed follow-up, and validation closeout.
@@ -36,7 +36,7 @@ node_definitions:
         choices:
           - mulgae
           - herdr
-          - independent-review
+          - subagent-review
           - waived
       - id: review-target-scope
         type: text
@@ -578,7 +578,7 @@ node_definitions:
         choices:
           - mulgae
           - herdr
-          - independent-review
+          - subagent-review
           - waived
       - id: review-operation
         type: choice
@@ -641,7 +641,7 @@ node_definitions:
         multiline: true
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all expected Independent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record bounded native lifecycle, all expected Subagent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: true
         min_length: 1
         max_length: 2000
@@ -716,6 +716,7 @@ node_definitions:
           - mulgae
           - orca
           - herdr
+          - subagent-review
           - independent-review
           - waived
       - id: prior-review-operation
@@ -1148,7 +1149,7 @@ node_definitions:
             equals: mulgae
       - id: not-required
         label: Backend not required
-        criteria: The admitted Herdr, Independent Review, or waiver assessment legitimately has no backend result.
+        criteria: The admitted Herdr, Subagent Review, or waiver assessment legitimately has no backend result.
         guards:
           - evidence:
               node: final-review

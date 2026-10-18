@@ -35,6 +35,14 @@ Unrelated missing templates and unselected provider readiness cannot block an
 intact selected definition. Existing canonical/custom/formal diagnostics and
 admitted legacy continuation remain available under their original contracts.
 
+Current technical reviews select `subagent-review`, not the retired
+`independent-review` route. Admission, suitability and current-node recovery
+check the actual selected route against any explicit current-route choice,
+including mapped fields. A route-neutral qualified operation keeps its existing
+contract. Never reinterpret a retained old route as the new route; follow the
+[retirement contract](review-routing-contract.md#retire-the-independent-review-name)
+while preserving exact bundles, findings and remaining authority.
+
 Retain a complete qualified self-contained bundle before starting. Use the
 current paired Podway skill and released native start template for that retained
 source and expected native digest. Re-observe, resolve the prepared session,

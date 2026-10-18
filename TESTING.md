@@ -310,7 +310,7 @@ The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process en
 
 ## E2E Environment
 
-The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py`, `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py`, and `plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and independent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables. Master verifies actual reviewer-team dispatch, UI coverage and result handling separately; static tests cannot establish the requested model, effort, target, or Brief delivered to host agents.
+The E2E production-equivalent artifacts are the shipped `plugins/aquarium/tools/aquarium-status/aquarium_status.py`, `plugins/aquarium/skills/test-setup/scripts/inspect_testing.py`, and `plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py` CLIs. E2E invokes only their documented public interfaces in child processes and treats output streams and exit status as black-box results. The shipped docs-setup inspector is exercised through the same public CLI boundary in `test-int`; the release-notes, publication-state, and subagent-review target helpers' bounded structural states are covered in `test-unit` with isolated temporary repositories and fake local executables. Master verifies actual reviewer-team dispatch, UI coverage and result handling separately; static tests cannot establish the requested model, effort, target, or Brief delivered to host agents.
 
 Scenarios use test-owned temporary repositories and input files under `tmp_path`, which pytest cleans up. Release-QA scenarios also create private `release-qa.*` evidence and confirmation roots under `/tmp`; their fixture teardown and `finally` blocks remove those additional roots. Tests never delete a path they did not create or use a production environment, credential, account, network, port, database, container, volume, or provider. A missing Python runtime, pytest dependency, script, or subprocess capability fails the gate rather than producing a successful skip.
 
@@ -341,6 +341,20 @@ behavior; they do not qualify downloaded distribution artifacts.
 
 ## Local review settlement qualification
 
+Aquarium v0.1.20 calls the host-native route `subagent-review`. Focused tests
+cover current selection and target-inspector schemas, rejected retired-route
+requests, historical source identity, mapped choice fields and route-neutral
+adaptive operations. Exact source and operation registrations preserve older
+contracts while admitting the renamed sources and their leaf ownership.
+
+Before release, verify fresh installed discovery of `subagent-review` and absence
+of the old entrypoint in UTM. Observe a standalone review and canonical/adaptive
+workflow checkpoints, including all three base reports, conditional UI coverage,
+same-handle result recovery and one assessment ordinal for the complete team.
+Check retired-route refusal, preserved snapshots and findings, and explicitly
+authorized compatible continuation. These installed outcomes remain unverified
+until Master supplies the actual candidate-bound results.
+
 Procedure guard and graph tests cover local-correction eligibility, retained source gaps, serial pending-correction admission, failed checks, ordinary rework for nonlocal or mixed issues, native backend admission and required final Judge dominance. Existing native fixtures default to zero local candidates and retain their original rework scenarios. C-17 adds six native qualification scenarios: Task, Goal and Validation each record one eligible Medium correction with an original unmet criterion, then settle immediately or retry a failed local check. Each scenario requires final judgment and preserves the original review count and source obligations. Helper unit tests verify the generated values; native execution of these new scenarios is unverified until an exact-artifact qualification receipt records it. These checks do not prove skill decisions.
 
 Before release, exercise these cases against the exact candidate installed in the dedicated UTM VM, over the host's installed release combination:
@@ -354,7 +368,7 @@ Before release, exercise these cases against the exact candidate installed in th
 | LOCAL-05 | A mixed set containing a design or safety issue takes ordinary authorized rework and necessary review; a failed local check or unresolved final criterion cannot advance. |
 | LOCAL-06 | A confirmation-only review can settle an eligible correction within existing effect authority; a genuine further provider assessment with no remaining grant asks for its exact bounded authority. |
 
-Run the applicable Task, Goal and Validation cases on Independent Review, Herdr and Mulgae, retaining native CI, publication and coverage admission for Mulgae. A waiver uses coordinator provenance. Verify resumption, exact staged or committed composition, commit handoff, prior snapshot preservation and fresh-session discovery after an authorized managed-file update. Master's functional results and exact-candidate upgrade evidence remain required; a source gate does not report those outcomes.
+Run the applicable Task, Goal and Validation cases on Subagent Review, Herdr and Mulgae, retaining native CI, publication and coverage admission for Mulgae. A waiver uses coordinator provenance. Verify resumption, exact staged or committed composition, commit handoff, prior snapshot preservation and fresh-session discovery after an authorized managed-file update. Master's functional results and exact-candidate upgrade evidence remain required; a source gate does not report those outcomes.
 
 ## Mulgae v0.1.25 adoption
 

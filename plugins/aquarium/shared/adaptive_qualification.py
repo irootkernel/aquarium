@@ -1619,7 +1619,7 @@ class Qualification:
         if route is not None and route not in {
             "herdr",
             "mulgae",
-            "independent-review",
+            "subagent-review",
             "waived",
         }:
             self.issues.append(

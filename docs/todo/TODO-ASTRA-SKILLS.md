@@ -105,7 +105,7 @@ verification.
 - Carry existing authorization forward when it covers the same decision and unchanged
   scope. Preserve distinct approvals required for materially different effects.
 - Preserve repository test authorities, release gates, exact-candidate requirements,
-  independent-review contracts, and Master's manual skill verification.
+  subagent-review contracts, and Master's manual skill verification.
 - Change executable helpers only when a changed resource layout or another explicitly
   scoped integration contract requires it. Do not add prose-matching tests or automated
   LLM evaluations.

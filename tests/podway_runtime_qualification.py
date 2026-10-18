@@ -39,7 +39,7 @@ CONTRACT_MANIFEST_DIGEST = (
 TASK_REVIEW_ENTRY_NODES = {
     "mulgae": "enter-mulgae-review-route",
     "herdr": "enter-herdr-review-route",
-    "independent-review": "enter-independent-review-route",
+    "subagent-review": "enter-subagent-review-route",
     "waived": "enter-waived-review-route",
 }
 
@@ -134,7 +134,7 @@ SUCCESS_OPTIONS = {
     "authorize-planned-review-route": "planned-mulgae",
     "enter-mulgae-review-route": "start",
     "enter-herdr-review-route": "start",
-    "enter-independent-review-route": "start",
+    "enter-subagent-review-route": "start",
     "enter-waived-review-route": "start",
     "confirm-goal-assessment-core": "ready",
     "confirm-stopped-goal-assessment-core": "ready",
@@ -142,7 +142,7 @@ SUCCESS_OPTIONS = {
     "confirm-review-route-binding": "mulgae",
     "decide-mulgae-review-operation": "assessed",
     "decide-herdr-review-operation": "assessed",
-    "decide-independent-review-operation": "assessed",
+    "decide-subagent-review-operation": "assessed",
     "confirm-assessment-ordinal": "work-unit",
     "confirm-first-review-evidence": "mulgae",
     "confirm-extra-review-evidence": "mulgae",
@@ -153,11 +153,11 @@ SUCCESS_OPTIONS = {
     "confirm-incomplete-static-delegated-provenance": "delegated",
     "decide-planned-mulgae-review-operation": "completed",
     "decide-planned-herdr-review-operation": "completed",
-    "decide-planned-independent-review-operation": "completed",
+    "decide-planned-subagent-review-operation": "completed",
     "decide-planned-waiver-review-operation": "waived",
     "decide-changed-mulgae-review-operation": "completed",
     "decide-changed-herdr-review-operation": "completed",
-    "decide-changed-independent-review-operation": "completed",
+    "decide-changed-subagent-review-operation": "completed",
     "decide-changed-waiver-review-operation": "waived",
     "confirm-completed-assessment-ordinal": "first",
     "confirm-waived-assessment-ordinal": "first",
@@ -179,7 +179,7 @@ SUCCESS_OPTIONS = {
     "confirm-mulgae-pass-finding-validity": "resolved",
     "confirm-mulgae-fail-finding-validity": "resolved",
     "confirm-herdr-finding-validity": "resolved",
-    "confirm-independent-review-finding-validity": "resolved",
+    "confirm-subagent-review-finding-validity": "resolved",
     "confirm-waived-finding-validity": "resolved",
     "assess-goal": "achieved",
     "assess-stopped-goal": "not-achieved",
@@ -352,7 +352,7 @@ ROUTE_QUALIFICATION_SCENARIOS = {
         "aquarium-goal-v2",
         "aquarium-validation-v2",
     )
-    for route in ("mulgae", "herdr", "independent-review", "waived")
+    for route in ("mulgae", "herdr", "subagent-review", "waived")
 }
 
 GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS = {
@@ -550,9 +550,9 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "continued_checkpoint": True,
     },
-    "task-completed-continue-independent-review": {
-        "route": "independent-review",
-        "effective_route": "independent-review",
+    "task-completed-continue-subagent-review": {
+        "route": "subagent-review",
+        "effective_route": "subagent-review",
         "operation": "complete",
         "prior_operation": "complete",
         "prior_state": "terminal-complete",
@@ -562,9 +562,9 @@ TASK_RESUME_SCENARIOS = {
         "completed_transition": True,
         "continued_checkpoint": True,
     },
-    "task-completed-waiver-switch-independent-review": {
+    "task-completed-waiver-switch-subagent-review": {
         "route": "waived",
-        "effective_route": "independent-review",
+        "effective_route": "subagent-review",
         "operation": "waived",
         "prior_operation": "waived",
         "prior_state": "terminal-complete",
@@ -625,7 +625,7 @@ def route_qualification_provenance(route: str) -> str:
     return {
         "mulgae": "mulgae-reviewer:official-runtime",
         "herdr": "herdr-reviewer:official-runtime",
-        "independent-review": "host-delegation:official-runtime",
+        "subagent-review": "host-delegation:official-runtime",
         "waived": "coordinator-waiver",
     }[route]
 
@@ -634,7 +634,7 @@ def route_qualification_evidence_reference(route: str, scenario: str) -> str:
     kind = {
         "mulgae": "mulgae-root",
         "herdr": "herdr-lifecycle",
-        "independent-review": "host-delegation",
+        "subagent-review": "host-delegation",
         "waived": "coordinator-waiver",
     }[route]
     return f"{kind}:official-runtime:{scenario}"
@@ -3317,7 +3317,7 @@ class ManagedRuntime:
                 "review-route": (
                     "mulgae"
                     if goal_recovery and node == "complete-work"
-                    else "independent-review"
+                    else "subagent-review"
                     if goal_recovery
                     and node == "record-evidence"
                     and self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
@@ -3333,7 +3333,7 @@ class ManagedRuntime:
                         self.scenario in VALIDATION_RESUME_PROVIDER_MISMATCH_SCENARIOS
                         and self.validation_review_round > 0
                     )
-                    else "independent-review"
+                    else "subagent-review"
                     if validation_recovery and node == "final-review"
                     else "waived"
                     if validation_waiver_followup and node == "final-review"
@@ -4654,7 +4654,7 @@ class ManagedRuntime:
                 expected_entry = TASK_REVIEW_ENTRY_NODES[route]
                 wrong_entries = {
                     TASK_REVIEW_ENTRY_NODES[provider]
-                    for provider in {"mulgae", "herdr", "independent-review"} - {route}
+                    for provider in {"mulgae", "herdr", "subagent-review"} - {route}
                     if self.node_visits.get(TASK_REVIEW_ENTRY_NODES[provider], 0)
                 }
                 if self.node_visits.get(expected_entry) != 2 or wrong_entries:
@@ -5903,13 +5903,13 @@ class ManagedRuntime:
                 and node == "confirm-review-route-binding"
                 and self.goal_evidence_round == 2
             ):
-                self.reject_guarded_decision(observation, "changed-independent-review")
+                self.reject_guarded_decision(observation, "changed-subagent-review")
                 return {
                     "scenario": scenario,
                     "procedure_id": procedure_id,
                     "node": node,
                     "lifecycle": status["session"]["lifecycle"],
-                    "guard_rejected": "changed-independent-review",
+                    "guard_rejected": "changed-subagent-review",
                     "state_unchanged": True,
                 }
             if (
@@ -6177,14 +6177,14 @@ class ManagedRuntime:
                 task_operation_nodes = {
                     "mulgae": "decide-mulgae-review-operation",
                     "herdr": "decide-herdr-review-operation",
-                    "independent-review": "decide-independent-review-operation",
+                    "subagent-review": "decide-subagent-review-operation",
                 }
                 if node == task_operation_nodes.get(qualified_route):
                     special_option = "assessed"
                 task_provenance_nodes = {
                     "mulgae": "confirm-mulgae-provenance",
                     "herdr": "confirm-static-delegated-provenance",
-                    "independent-review": "confirm-static-delegated-provenance",
+                    "subagent-review": "confirm-static-delegated-provenance",
                     "waived": "confirm-waived-provenance",
                 }
                 if node == task_provenance_nodes.get(qualified_route):

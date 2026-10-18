@@ -1,9 +1,9 @@
 ---
-name: independent-review
+name: subagent-review
 description: "Run one report-only static review with three fresh host-native reviewers, adding a UI/UX specialist for UI-related work. Use standalone or as the selected Task, Epic, or validation route; accept supported model and effort choices."
 ---
 
-# Independent Review
+# Subagent Review
 
 Read [commit-attribution.md](../../references/commit-attribution.md) within this
 report-only boundary, [review intent](../../references/review-intent-contract.md),
@@ -13,7 +13,7 @@ report-only boundary, [review intent](../../references/review-intent-contract.md
 [result handoff](../../references/review-result-handoff.md). Embedded callers
 also read [routing](../../references/review-routing-contract.md).
 
-Run one independent review through fresh, similar-capability reviewers in the
+Run one Subagent Review through fresh, similar-capability reviewers in the
 current Primary's native harness, such as Codex or Claude. It uses no Mulgae,
 Herdr or Dolgorae operation and is never an automatic fallback.
 
@@ -96,6 +96,6 @@ judgments. This operation performs no cleanup, remediation or replacement.
 Return purpose, target and exclusions, every expected role and native reference,
 operation status, findings and reasoned decisions, technical verdict,
 verification limits and completion criteria when applicable. Embedded handoff
-uses `review-route=independent-review`, reviewer provenance and
+uses `review-route=subagent-review`, reviewer provenance and
 `backend-check-result=not-provided`. Forward results under the handoff contract;
 standalone review grants no remediation, staging, commit or further round.

@@ -297,6 +297,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "79a1430528934d2941551432703a68be28047bc3e8095bc52acf24c7a057466f",
         "90c8e7df6a20f8b27134be4a3507db49af4de23b5506cd7a2bfe9ae2a2836731",
         "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
         "9a4aae4994333dea3b719bb8439bd453c2665146b16cae495e26b858136658f3",
@@ -328,6 +329,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "99ae1a42372ec91c8de98cfc61e99c1defc4c99615610bd598c57418c01ea9b5",
         "8ae119c01a94dae12b02ff17ddee6aab90f377aadd0bc3bb08e701861e87f0cc",
         "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
         "21a988ceb6c741f97711624323732143a1a1f13bb43010ec0289dc0341898e95",
@@ -359,6 +361,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "23ce1dff7afe24fc3e2aa0438db6e9c3b7a162f1e131061181018d5ec80a769a",
         "aa9bc9da3445c795af71bcc9f558977ec9e53fa48391335dbc3a493159eabba6",
         "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
         "0a5713f79a0dae3a5c39a44956ba112bda21ffe02ee0e55af55286d67b87a106",
@@ -741,7 +744,7 @@ def inspect_podway_review_routes(
     content: bytes | None, *, qualified: bool = False
 ) -> dict[str, str]:
     """Qualify current routes from every review-route declaration in the snapshot."""
-    routes = ("mulgae", "herdr", "independent-review", "waived")
+    routes = ("mulgae", "herdr", "subagent-review", "waived")
     unverified = dict.fromkeys(routes, "unverified")
     if content is None or yaml is None or not qualified:
         return unverified
@@ -5128,7 +5131,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--podway-review-route",
-        choices=("mulgae", "herdr", "independent-review", "waived"),
+        choices=("mulgae", "herdr", "subagent-review", "waived"),
     )
     parser.add_argument(
         "--podway-bootstrap",

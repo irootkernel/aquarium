@@ -23,7 +23,7 @@ supported stop and separately authorized lifecycle path.
 
 Completion review and review execution are separate concerns. A workflow may
 require review evidence without requiring one particular backend. Aquarium will
-recommend Mulgae for small bounded work, Independent Review for medium work,
+recommend Mulgae for small bounded work, Subagent Review for medium work,
 and Herdr for large or consequential work, adjusted for difficulty, impact and
 uncertainty. The user selects through existing plan or envelope approval;
 explicit choices and waivers retain their authority.
@@ -44,14 +44,20 @@ preferred route.
 | --- | --- |
 | `mulgae` | Economical specialist review, the starting recommendation for small bounded work. It owns live-source admission, selected-role execution, provider-free publication reconciliation, findings, CI and retention under the Mulgae contract. A new root after terminal failure requires explicit authority; historical composites remain readable. |
 | `herdr` | Requires an explicitly selected reviewer and a Herdr-supported target. Herdr supervises one fresh main reviewer in the current local session. The main uses multiple native subagents and adds UI expertise when applicable; admission requires actual team reports, submission/activity correlation and the complete synthesis. |
-| `independent-review` | Requires explicit selection and three fresh base host reviewers, plus one UI/UX specialist for UI-related work. The expected team reviews one target and Brief; Aquarium aggregates their reports. |
+| `subagent-review` | Requires explicit selection and three fresh base host reviewers, plus one UI/UX specialist for UI-related work. The expected team reviews one target and Brief; Aquarium aggregates their reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
-Independent Review uses similar-capability reviewers in the Primary's native
+Subagent Review uses similar-capability reviewers in the Primary's native
 Codex or Claude harness. A future Dolgorae review would have a separate route
 and admission contract.
 
 ## Selection and authorization
+
+Aquarium v0.1.20 replaces `independent-review` with `subagent-review` without an
+alias. The [retirement contract](../../plugins/aquarium/references/review-routing-contract.md#retire-the-independent-review-name)
+preserves historical evidence and exact snapshots while refusing retired-route
+dispatch and automatic reinterpretation. The same boundary applies to canonical
+and qualified adaptive definitions.
 
 One route is selected for the workflow during plan or validation-envelope
 approval. That choice remains the default for every later assessment checkpoint.
@@ -95,7 +101,7 @@ Task delivery may use Herdr's `staged` target only when the complete task candid
 can be isolated from unrelated index entries. Epic completion and cold validation
 may use an exact `HEAD`, commit, or range target when the candidate is committed.
 An unsupported `workspace` or `dirty` target makes Herdr unavailable for that
-checkpoint. Independent Review receives the exact bounded candidate that the host can
+checkpoint. Subagent Review receives the exact bounded candidate that the host can
 present without inventing backend guarantees. Mulgae retains its current target
 rules.
 
@@ -110,7 +116,7 @@ The Procedures and handlers record these route-neutral facts:
 
 | Field | Meaning |
 | --- | --- |
-| `review-route` | `mulgae`, `herdr`, `independent-review`, or `waived` |
+| `review-route` | `mulgae`, `herdr`, `subagent-review`, or `waived` |
 | `assessment-ordinal` | Positive ordinal of each completed delegated review or completed waiver assessment for the current goal revision |
 | `assessment-kind` | `work-unit` for ordinals one through three; `remediation-confirmation` for ordinal four and any explicitly authorized later checkpoint |
 | `review-operation` | `complete`, `incomplete`, `failed`, or `waived` |
@@ -127,7 +133,7 @@ The following combinations are valid for a completed checkpoint:
 | --- | --- |
 | `mulgae` and `complete` | An exact live-source root or verified historical composite reference, reviewer provenance, and `backend-check-result` set to `pass` or `fail`. Mulgae CI cannot be omitted as `not-provided`. |
 | `herdr` and `complete` | Fresh requested identity, submission/activity correlation, applicable target and Brief, every expected child report and the main synthesis, native operation references including child roles, statuses and available report references, reviewer provenance, and `backend-check-result=not-provided`. Include UI coverage when applicable; a missing required child report leaves the operation incomplete. Idle or done alone is insufficient. |
-| `independent-review` and `complete` | Completed delegations from all three base reviewers and the UI specialist when applicable for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
+| `subagent-review` and `complete` | Completed delegations from all three base reviewers and the UI specialist when applicable for one target and Brief, required criterion coverage, reviewer provenance, and `backend-check-result=not-provided`. The group consumes one ordinal. |
 | `waived` and `waived` | Waiver authority, `assessment-provenance=coordinator-waiver`, a waiver summary, and `backend-check-result=not-provided`. |
 
 An `incomplete` or `failed` operation preserves every available native reference
@@ -159,7 +165,7 @@ new goal revision.
 
 Backend readiness is conditional. A Mulgae installation, skill, CLI, or project
 MCP gap blocks only the Mulgae route. Herdr readiness blocks only Herdr. Missing
-host delegation blocks only `independent-review`. The workflow must still report the
+host delegation blocks only `subagent-review`. The workflow must still report the
 selected route's exact prerequisite failure.
 
 Podway readiness also depends on the selected route in the exact Procedure
@@ -170,9 +176,9 @@ route absent from a prior-canonical snapshot. Active sessions retain their own
 declarations and evidence. A retired `native-codex` checkpoint takes an explicit
 failed-prerequisite disposition,
 supported route change or waiver, or stop and successor; it never dispatches the
-retired reviewer or relabels Independent Review evidence.
+retired reviewer or relabels Subagent Review evidence.
 
-Host wait timeouts leave Independent Review delegations pending. Resume the
+Host wait timeouts leave Subagent Review delegations pending. Resume the
 same references until every agent has an authoritative terminal state. Explicit
 `resume-current` after a settled incomplete operation may start a fresh group
 with the same target, Brief, model and effort, preserving earlier reports and
@@ -196,7 +202,7 @@ whose recomputed metadata digest matches the completed run, with scope-derived
 consistency and the caller source-consistency observation. Only Mulgae supplies
 that contract in this epic.
 
-Herdr, Independent Review, and `waived` must not invent a Mulgae run, finding ID,
+Herdr, Subagent Review, and `waived` must not invent a Mulgae run, finding ID,
 capture, or target digest. Their Low findings use the ordinary dispositions. If
 a downstream requirement specifically needs promoted native evidence and no
 selected route can provide it, the workflow reports an evidence gap and stops.
@@ -275,7 +281,7 @@ supported terminal and successor-session path.
 Current routing does not add automatic fallback, create a persistent route
 preference, make route guarantees equivalent, or weaken required verification.
 Historical `native-codex` Procedure snapshots retain their original meaning;
-new checkpoints select `independent-review` only in a snapshot that supports it.
+new checkpoints select `subagent-review` only in a snapshot that supports it.
 
 ## Local corrections and compatibility
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect one exact Git target for Aquarium independent review."""
+"""Inspect one exact Git target for Aquarium subagent review."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "aquarium-independent-review-target/v1"
-ERROR_SCHEMA_VERSION = "aquarium-independent-review-target-error/v1"
+SCHEMA_VERSION = "aquarium-subagent-review-target/v1"
+ERROR_SCHEMA_VERSION = "aquarium-subagent-review-target-error/v1"
 RANGE = re.compile(r"^(.+?)(\.\.\.?)(.+)$")
 CONFLICT_CODES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 

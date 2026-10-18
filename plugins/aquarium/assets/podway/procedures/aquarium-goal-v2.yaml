@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-goal-v2
-version: "35"
+version: "36"
 name: Aquarium Goal
 purpose: Deliver one epic member, remediation, or closeout goal with current evidence.
 description: A flexible goal-centered Podway procedure for epic-handler work.
@@ -38,7 +38,7 @@ node_definitions:
         choices:
           - mulgae
           - herdr
-          - independent-review
+          - subagent-review
           - waived
       - id: review-target-scope
         type: text
@@ -120,7 +120,7 @@ node_definitions:
         choices:
           - mulgae
           - herdr
-          - independent-review
+          - subagent-review
           - waived
       - id: review-operation
         type: choice
@@ -181,7 +181,7 @@ node_definitions:
         multiline: true
       - id: review-evidence-reference
         type: text
-        prompt: Record bounded native lifecycle, all expected Independent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
+        prompt: Record bounded native lifecycle, all expected Subagent base and UI reviewer references or Herdr main and child references, production, submission and actual recipient readback when selected, preflight-failure, or waiver evidence for this checkpoint.
         required: false
         required_when:
           - item: review-evidence-kind
@@ -254,6 +254,7 @@ node_definitions:
           - mulgae
           - orca
           - herdr
+          - subagent-review
           - independent-review
           - waived
       - id: prior-review-operation
@@ -497,18 +498,18 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: planned-independent-review
-        label: Planned Independent Review route
-        criteria: Independent Review matches the approved envelope.
+      - id: planned-subagent-review
+        label: Planned Subagent Review route
+        criteria: Subagent Review matches the approved envelope.
         guards:
           - evidence:
               node: complete-work
               item: review-route
-            equals: independent-review
+            equals: subagent-review
           - evidence:
               node: record-evidence
               item: review-route
-            equals: independent-review
+            equals: subagent-review
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -581,14 +582,14 @@ node_definitions:
               item: route-binding-result
             field: outcome
             equals: pass
-      - id: changed-independent-review
-        label: Authorized Independent Review change
-        criteria: Independent Review has explicit safe route-change authority.
+      - id: changed-subagent-review
+        label: Authorized Subagent Review change
+        criteria: Subagent Review has explicit safe route-change authority.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: independent-review
+            equals: subagent-review
           - evidence:
               node: record-evidence
               item: route-authorization-basis
@@ -945,14 +946,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             not_equals: coordinator-waiver
-      - id: independent-review
-        label: Independent Review completed
-        criteria: All expected Independent base reviewers and the UI specialist when applicable completed for one exact target and Brief, with host provenance and no backend check.
+      - id: subagent-review
+        label: Subagent Review completed
+        criteria: All expected Subagent base reviewers and the UI specialist when applicable completed for one exact target and Brief, with host provenance and no backend check.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: independent-review
+            equals: subagent-review
           - evidence:
               node: record-evidence
               item: review-operation
@@ -1022,14 +1023,14 @@ node_definitions:
               node: record-evidence
               item: assessment-provenance-kind
             equals: delegated-reviewer
-      - id: independent-review
-        label: Independent Review incomplete evidence
-        criteria: Independent Review retains delegation or preflight evidence and no backend check.
+      - id: subagent-review
+        label: Subagent Review incomplete evidence
+        criteria: Subagent Review retains delegation or preflight evidence and no backend check.
         guards:
           - evidence:
               node: record-evidence
               item: review-route
-            equals: independent-review
+            equals: subagent-review
           - evidence:
               node: record-evidence
               item: backend-check-result
@@ -3105,8 +3106,8 @@ graph:
         planned-herdr:
           to: decide-planned-herdr-review-operation
           effect: advance
-        planned-independent-review:
-          to: decide-planned-independent-review-operation
+        planned-subagent-review:
+          to: decide-planned-subagent-review-operation
           effect: advance
         planned-waiver:
           to: decide-planned-waiver-review-operation
@@ -3117,8 +3118,8 @@ graph:
         changed-herdr:
           to: decide-changed-herdr-review-operation
           effect: advance
-        changed-independent-review:
-          to: decide-changed-independent-review-operation
+        changed-subagent-review:
+          to: decide-changed-subagent-review-operation
           effect: advance
         changed-waiver:
           to: decide-changed-waiver-review-operation
@@ -3173,7 +3174,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-planned-independent-review-operation
+    - id: decide-planned-subagent-review-operation
       use: review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -3275,7 +3276,7 @@ graph:
         unsuccessful:
           to: confirm-incomplete-route-evidence
           effect: advance
-    - id: decide-changed-independent-review-operation
+    - id: decide-changed-subagent-review-operation
       use: changed-review-operation-decision
       evidence_from:
         - node: record-evidence
@@ -3423,8 +3424,8 @@ graph:
         herdr:
           to: confirm-herdr-finding-validity
           effect: advance
-        independent-review:
-          to: confirm-independent-review-finding-validity
+        subagent-review:
+          to: confirm-subagent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -3455,8 +3456,8 @@ graph:
         herdr:
           to: confirm-herdr-finding-validity
           effect: advance
-        independent-review:
-          to: confirm-independent-review-finding-validity
+        subagent-review:
+          to: confirm-subagent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -3487,8 +3488,8 @@ graph:
         herdr:
           to: confirm-herdr-finding-validity
           effect: advance
-        independent-review:
-          to: confirm-independent-review-finding-validity
+        subagent-review:
+          to: confirm-subagent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -3519,8 +3520,8 @@ graph:
         herdr:
           to: confirm-herdr-finding-validity
           effect: advance
-        independent-review:
-          to: confirm-independent-review-finding-validity
+        subagent-review:
+          to: confirm-subagent-review-finding-validity
           effect: advance
         waived:
           to: confirm-waived-finding-validity
@@ -3547,8 +3548,8 @@ graph:
         herdr:
           to: confirm-herdr-review-route-settlement
           effect: advance
-        independent-review:
-          to: confirm-independent-review-route-settlement
+        subagent-review:
+          to: confirm-subagent-review-route-settlement
           effect: advance
     - id: confirm-mulgae-review-route-settlement
       use: review-route-settlement-decision
@@ -3588,7 +3589,7 @@ graph:
         terminal-safe:
           to: choose-terminal-review-route-direction
           effect: advance
-    - id: confirm-independent-review-route-settlement
+    - id: confirm-subagent-review-route-settlement
       use: review-route-settlement-decision
       evidence_from:
         - node: record-evidence
@@ -3751,7 +3752,7 @@ graph:
         unresolved:
           to: record-evidence
           effect: rework
-    - id: confirm-independent-review-finding-validity
+    - id: confirm-subagent-review-finding-validity
       use: finding-validity-decision
       evidence_from:
         - node: record-evidence

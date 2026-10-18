@@ -12,7 +12,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).parents[2]
-    / "plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py"
+    / "plugins/aquarium/skills/subagent-review/scripts/inspect_review_target.py"
 )
 SPEC = importlib.util.spec_from_file_location("inspect_review_target", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
@@ -64,7 +64,7 @@ def test_staged_target_records_digest_and_dirty_remainder(tmp_path: Path) -> Non
 
     result = inspect_review_target.inspect(root, arguments(staged=True))
 
-    assert result["schema_version"] == "aquarium-independent-review-target/v1"
+    assert result["schema_version"] == "aquarium-subagent-review-target/v1"
     assert result["semantic_scope"] == "not_evaluated"
     assert result["target"]["kind"] == "staged"
     assert len(result["target"]["diff_sha256"]) == 64
@@ -283,7 +283,9 @@ def test_symlink_loop_returns_structured_error(
 
     assert result.returncode == 2
     assert result.stderr == ""
-    assert json.loads(result.stdout)["error"]["code"] == "unsafe_symlink"
+    payload = json.loads(result.stdout)
+    assert payload["schema_version"] == "aquarium-subagent-review-target-error/v1"
+    assert payload["error"]["code"] == "unsafe_symlink"
 
 
 def test_workspace_and_dirty_bind_checked_out_gitlink(tmp_path: Path) -> None:

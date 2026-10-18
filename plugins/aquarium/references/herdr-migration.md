@@ -8,7 +8,7 @@ approved effects.
 ## Diagnose the selected route
 
 Require Herdr only when the user selects Herdr or requests its migration
-readiness. Mulgae, Independent Review and waiver checkpoints keep their own
+readiness. Mulgae, Subagent Review and waiver checkpoints keep their own
 prerequisites. Use the [Herdr catalog entry](tool-catalog.md#herdr) and
 [supervision contract](herdr-supervision.md) to check CLI, server, upstream skill,
 requested reviewer and caller context independently. CLI presence or version

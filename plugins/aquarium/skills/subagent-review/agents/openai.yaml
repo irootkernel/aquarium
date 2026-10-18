@@ -1,0 +1,6 @@
+interface:
+  display_name: "Subagent Review"
+  short_description: "Subagent review with optional UI expertise"
+  default_prompt: "Use $aquarium:subagent-review for one static, report-only review by three fresh host-native reviewers of an exact target, adding one UI/UX specialist when relevant. Preserve the selected model, reasoning effort, Review Brief, and review purpose."
+policy:
+  allow_implicit_invocation: false

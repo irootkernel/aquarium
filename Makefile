@@ -91,7 +91,7 @@ PYTHON_FILES := \
 	plugins/aquarium/tools/aquarium-dev/dev_manager.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
-	plugins/aquarium/skills/independent-review/scripts/inspect_review_target.py \
+	plugins/aquarium/skills/subagent-review/scripts/inspect_review_target.py \
 	plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py \
 	plugins/aquarium/skills/goal-judge/scripts/ordinary_assignment.py \
 	tests/unit/test_ordinary_assignment_unit.py \

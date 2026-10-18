@@ -24,7 +24,7 @@ The outcome has two entry paths:
   rules.
 
 Both paths use the same target, execution, result, privacy, and adjudication
-contract. Web Pro Review is not Herdr, Mulgae, Dolgorae, Independent Review, or a
+contract. Web Pro Review is not Herdr, Mulgae, Dolgorae, Subagent Review, or a
 native Codex subagent. It creates none of their native objects and inherits none
 of their guarantees.
 
@@ -382,7 +382,7 @@ installation, authentication, or cleanup of unrelated native browser state.
 
 ## EPIC-016 adapter
 
-`web-pro` joins `mulgae`, `herdr`, `independent-review`, and `waived` as an explicit
+`web-pro` joins `mulgae`, `herdr`, `subagent-review`, and `waived` as an explicit
 peer route. Mulgae remains the default when the user selects no alternative.
 Only the selected route's prerequisites are checked.
 
@@ -510,7 +510,7 @@ Acceptance scenarios:
 
 This epic does not:
 
-- re-enable or modify Independent Review;
+- re-enable or modify Subagent Review;
 - change Mulgae, Herdr, native Codex, waiver, or Dolgorae ownership;
 - add automatic fallback, retry, persistent route preference, or route priority;
 - copy browser credentials or install Web models into another Codex home;

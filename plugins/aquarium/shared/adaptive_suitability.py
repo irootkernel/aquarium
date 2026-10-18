@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import yaml
-from adaptive_admission import known_source, qualify_known
+from adaptive_admission import known_source, qualify_known, selection_contract
 from adaptive_bundles import (
     BundleError,
     contained,
@@ -552,6 +552,14 @@ def qualify_prepared(
             "source-drift", "Native prepared tuple differs from exact target"
         )
     document = yaml.safe_load(source)
+    selection_contract(
+        source,
+        binding,
+        assignment["target"]["procedure_plan"]["entrypoint"],
+        assignment["authority"]["review"].get("route"),
+        {"assignment": assignment},
+        document=document,
+    )
     try:
         basis = current_basis(
             repository, assignment, in_session=in_session, source_reader=source_reader

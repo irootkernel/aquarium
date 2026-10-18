@@ -115,6 +115,164 @@ def test_native_decisions_review_and_finalization_remain_primary_owned(admitted,
     assert result["authority"]["review"]["route"] == "herdr"
 
 
+@pytest.mark.parametrize("entrypoint", sorted(execution.ACTIVATED))
+def test_retired_review_route_stops_before_native_observation(admitted, entrypoint):
+    repository, qualification, client, _, _ = admitted
+    qualification["assignment"]["authority"]["review"]["route"] = "independent-review"
+
+    def unexpected():
+        raise AssertionError("A retired route must stop before native observation")
+
+    client.health = unexpected
+    with pytest.raises(BundleError) as error:
+        execution.execution_context(
+            repository,
+            roots=["definitions"],
+            entrypoint=entrypoint,
+            qualification=qualification,
+            client=client,
+        )
+    assert error.value.code == "route-unavailable"
+
+
+def test_subagent_runtime_preserves_primary_review_ownership(admitted):
+    repository, qualification, client, observation, _ = admitted
+    value = qualification["assignment"]
+    for owner in (value["authority"], value["target"]["procedure_plan"]):
+        owner["review"]["route"] = "subagent-review"
+    requested = qualify_prepared(repository, value, client=client)
+    qualification["assessment"] = report_for(requested["target"])
+    observation["guidance"]["node"]["graph_node_id"] = "collect-review"
+    result = consume(admitted)
+    assert result["status"] == "primary-owned"
+    assert result["dispatch"] is None
+    assert result["authority"]["review"]["route"] == "subagent-review"
+
+
+@pytest.mark.parametrize("scenario", ["bookkeeping", "mapped-history"])
+def test_custom_review_fields_survive_suitability_admission_and_worker_resume(
+    tmp_path, scenario
+):
+    from adaptive_admission import selected_source
+    from adaptive_definitions import canonical_json
+    from adaptive_preparation import prepare
+    from test_adaptive_qualification_unit import adaptive
+    from test_adaptive_suitability_unit import assignment
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    value = assignment(tmp_path, mode="prepare")
+    document, binding, context = adaptive()
+    for owner in (value["authority"], value["target"]["procedure_plan"]):
+        owner["review"]["route"] = "subagent-review"
+    context["review"]["route"] = "subagent-review"
+    if scenario == "bookkeeping":
+        document["node_definitions"]["deliver"]["items"].append(
+            {
+                "id": "review-route",
+                "type": "choice",
+                "required": True,
+                "prompt": "Classify a historical example in the delivered document",
+                "choices": ["example-a", "example-b"],
+            }
+        )
+    else:
+        record = document["node_definitions"]["collect-review"]
+        contract = context["operation_contracts"].pop(sha256(canonical_json(record)))
+        fields = {
+            "review-route": "selected-provider",
+            "prior-review-route": "review-route",
+        }
+        for logical, physical in fields.items():
+            record["items"].append(
+                {
+                    "id": physical,
+                    "type": "choice",
+                    "required": True,
+                    "prompt": "Record the " + logical,
+                    "choices": [
+                        "subagent-review"
+                        if logical == "review-route"
+                        else "independent-review"
+                    ],
+                }
+            )
+        binding["capability_definitions"]["fixture.review-routing/v1"]["fields"].update(
+            {logical: {"type": "choice", "required": True} for logical in fields}
+        )
+        binding["nodes"]["collect-review"]["capabilities"][1]["fields"] = fields
+        context["operation_contracts"][sha256(canonical_json(record))] = contract
+    draft = value["target"]["procedure_plan"]["drafts"][0]
+    draft.update(
+        document=document,
+        mapping={key: val for key, val in binding.items() if key != "procedure"},
+    )
+    for row in draft["coverage"]:
+        row["obligation"] = "original-goal"
+    value["target"]["qualification_context"] = context
+    client = Oracle(tmp_path)
+    value = prepare(tmp_path, value, client=client, bootstrap=True)["assignment"]
+    requested = qualify_prepared(tmp_path, value, client=client)
+    report = report_for(requested["target"])
+    retained = qualify_prepared(
+        tmp_path, value, client=client, assessment=report, retain=True
+    )
+    assert retained["status"] == "qualified"
+    qualification = {"assignment": value, "assessment": report}
+    target = value["target"]["prepared_definition"]
+    selected = selected_source(
+        tmp_path,
+        target["source_path"],
+        roots=["definitions"],
+        entrypoint="task-handler",
+        route="subagent-review",
+        qualification=qualification,
+        binding_path=target["binding_path"],
+        client=client,
+        runtime_ready=True,
+    )
+    assert selected["status"] == "ready"
+    observation = {
+        "status": {
+            "procedure": retained["binding"]["procedure"],
+            "session": {"id": str(uuid.uuid4()), "lifecycle": "running", "revision": 5},
+            "current": {
+                "node": {"graph_node_id": "deliver"},
+                "attempt": {"attempt_id": "a"},
+            },
+            "goal_revision": 1,
+        },
+        "guidance": {"node": {"graph_node_id": "deliver"}, "readback": []},
+        "active_items": [],
+        "mutation_templates": [],
+    }
+    client.health = lambda: copy.deepcopy(observation)
+    result = consume((tmp_path, qualification, client, observation, retained))
+    assert result["status"] == "dispatch-ready"
+    assert result["dispatch"]["procedure"]["node"] == "deliver"
+    assert result["authority"]["review"]["route"] == "subagent-review"
+
+
+def test_current_reference_plan_and_review_keep_their_leaf_owners(admitted):
+    import yaml
+    from adaptive_admission import reference_mapping
+
+    source = (
+        ROOT / "plugins/aquarium/assets/podway/procedures/aquarium-task-v2.yaml"
+    ).read_bytes()
+    document = yaml.safe_load(source)
+    binding = reference_mapping(source)
+    for definition, expected in (
+        ("plan-record", "task-plan"),
+        ("review-record", "task-review"),
+    ):
+        node = next(
+            row["id"] for row in document["graph"]["nodes"] if row["use"] == definition
+        )
+        assert execution.phase_skills(
+            document, binding, admitted[1]["assignment"], node
+        ) == [expected]
+
+
 @pytest.mark.parametrize("lifecycle", ["running", "completed"])
 def test_verified_commit_survives_finalization_recovery_without_new_dispatch(
     admitted, lifecycle

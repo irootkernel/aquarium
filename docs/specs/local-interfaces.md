@@ -50,7 +50,7 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `docs-setup/scripts/inspect_docs.py` | Exact absolute Git root | `aquarium-docs-inspection/v2` | Minimal read-only discovery of documentation roles, explicit roadmap units and lifecycle links, exclusions, and unambiguous structural conflicts |
 | `test-setup/scripts/inspect_testing.py` | Exact absolute Git root | `aquarium-test-setup-inspection.v1` | Static Make/Bun test-contract discovery without executing project code |
 | `dev-setup-bundle/scripts/normalize_manifest.py` | External `aquarium.dev-setup-bundle/v2` YAML manifest | `aquarium-dev-setup-bundle-plan.v2` | Validates target MCP scopes, Sorage slug and Mulgae artist intent, then emits ordered targets and the needed global MCP union |
-| `independent-review/scripts/inspect_review_target.py` | Repository and one workspace, staged, dirty, HEAD, commit, or range selector | `aquarium-independent-review-target/v1` | Read-only target identity and state inspector used before and after all expected host reviewer reports; its fingerprint is not an immutable capture |
+| `subagent-review/scripts/inspect_review_target.py` | Repository and one workspace, staged, dirty, HEAD, commit, or range selector | `aquarium-subagent-review-target/v1` | Read-only target identity and state inspector used before and after all expected host reviewer reports; its fingerprint is not an immutable capture |
 | `release-handler/scripts/inspect_release_notes.py` | Repository, expected version, and release baseline | `aquarium-release-notes-inspection/v1` | Inventories cumulative release-note enrollment and candidate delta |
 | `release-qa/scripts/manage_release_qa.py` | Versioned full-pass, preparation, admission, or finish JSON | `aquarium-release-qa-confirmation-record/v3`, `aquarium-release-qa-confirmation-manifest/v3`, `aquarium-release-qa-confirmation-claim/v2`, `aquarium-release-qa-confirmation-settlement-admission/v1`, or `aquarium-release-qa-confirmation-result/v2` | Creates immutable QA matrices, binds exact remediation and finding-to-scenario coverage, admits one digest-bound settlement per claim, and persists one immutable terminal result |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v5` JSON on standard input | `aquarium-release-publication-state/v5` | Checks the repository-resolved expected title, local main, both remote ancestry relations, tag, stable hosted Release, and exact or approved QA-neutral binding; a proven remote descendant can finish publication at the original release SHA |
@@ -170,7 +170,7 @@ The repository inspector enters selected mode only with one of
 approved searched root, and `--podway-entrypoint <handler>`. The seven entrypoint
 values are `task-handler`, `epic-handler`, `epic-validator`, `new-feature`,
 `new-project`, `refactor` and `war-room`. Task, Goal and Validation also require
-`--podway-review-route` with `mulgae`, `herdr`, `independent-review` or `waived`.
+`--podway-review-route` with `mulgae`, `herdr`, `subagent-review` or `waived`.
 `--podway-bootstrap <binding-path>` optionally cross-checks native-tuple recovery;
 `--podway-customization-basis <existing-envelope-disposition>` carries the current
 adopted-customization decision. `--timeout-seconds` retains the inspector's

@@ -1715,5 +1715,200 @@
       "authority": "Shared exact suitability and established-reuse bootstrap contract",
       "definition": "suitability-bootstrap"
     }
+  },
+  "sha256:d43fd605b6f031c14ba26c43122aa1c96c05e03deec33f4746bcd342c8bfe9e3": {
+    "roles": [
+      "worker"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "33",
+      "definition": "record-plan",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "worker-handoff"
+    ],
+    "delivery_items": [
+      "plan-summary",
+      "review-selection-summary",
+      "worker-handoff"
+    ],
+    "output_scopes": {
+      "plan-summary": "task-plan"
+    }
+  },
+  "sha256:7b392c572a1b6468f35932cba1db4d3ede2526ca90824402a984284e742e661e": {
+    "roles": [
+      "orchestrator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "33",
+      "definition": "review-checkpoint-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary"
+    ],
+    "delivery_items": [
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary"
+    ]
+  },
+  "sha256:21646cf39875e15c523250a1b4952f8ddb51a3bef5ae4707c36b6498c2b1dbe6": {
+    "roles": [
+      "orchestrator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "33",
+      "definition": "review-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "worker-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "worker-handoff"
+    ],
+    "review_recovery": [
+      "same-operation-recovery"
+    ]
+  },
+  "sha256:2bf67cef93e0261c7260ed3ebb96c36dd3db03eaecaf8707076a307105bfcc7a": {
+    "roles": [
+      "worker"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "36",
+      "definition": "complete-work",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "worker-handoff"
+    ],
+    "delivery_items": [
+      "work-summary",
+      "review-selection-summary",
+      "worker-handoff"
+    ]
+  },
+  "sha256:3a6907268ebcdc2fd4bfc834795f77cb9e3b097ad30f507d4b732bd321be9548": {
+    "roles": [
+      "orchestrator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "36",
+      "definition": "evidence-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "evidence-summary",
+      "completion-assessment-summary",
+      "finding-disposition-summary",
+      "worker-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "evidence-summary",
+      "completion-assessment-summary",
+      "finding-disposition-summary",
+      "worker-handoff"
+    ],
+    "discriminators": {
+      "goal-kind": "goal_kind"
+    },
+    "review_recovery": [
+      "same-operation-recovery"
+    ]
+  },
+  "sha256:eee43b7c51a1586b2ec80505642531be30992fbddf169aca43b5855cac8c46c0": {
+    "roles": [
+      "orchestrator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "35",
+      "definition": "baseline-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "baseline-summary",
+      "review-selection-summary"
+    ],
+    "delivery_items": [
+      "baseline-summary",
+      "review-selection-summary"
+    ],
+    "discriminators": {
+      "workflow-owner": "workflow_owner"
+    }
+  },
+  "sha256:ecd54bc60bdb9d5f95c77c01db578e3129256c696cd5f5cc12d7e6427593e5f7": {
+    "roles": [
+      "orchestrator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "35",
+      "definition": "final-review-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "final-review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "finding-disposition-summary",
+      "applicable-obligation-summary",
+      "worker-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "final-review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "finding-disposition-summary",
+      "applicable-obligation-summary",
+      "worker-handoff"
+    ],
+    "review_recovery": [
+      "same-operation-recovery",
+      "review-route-change"
+    ]
   }
 }

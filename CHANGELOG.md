@@ -14,6 +14,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Replace `independent-review` with `subagent-review` for standalone and workflow reviews without a compatibility alias; existing definitions need an authorized compatible update, and historical review evidence retains its original identity.
 - Recommend review routes by work size and complexity, add UI/UX specialists and native Herdr review teams, and preserve goals and complete result handoffs; existing managed workflows need authorized Procedure updates.
 - Require Mulgae v0.1.25 and its matching skill, adopt Config v5 and native workspace/index/Git review, retire capture guards and child/replay/compose execution, and stop treating `.mulgaeignore` as an exclusion policy. Existing users need deliberate configuration migration and separately authorized managed-Procedure updates; admitted snapshots and historical reads remain intact.
 - Add promoted-evidence v2 for Mulgae live results, preserving source metadata identity and consistency without claiming a content snapshot; retain v1 packages and bind hardening and commit handoffs to the appropriate native evidence.

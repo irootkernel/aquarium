@@ -3812,11 +3812,11 @@ else:
             for item in definition.get("items", [])
             if item["id"] == "review-route"
         ]
-        declarations[0]["choices"].remove("independent-review")
+        declarations[0]["choices"].remove("subagent-review")
         content = yaml.safe_dump(document).encode()
         self.assertEqual(
             inspect_tools.inspect_podway_review_routes(content, qualified=True)[
-                "independent-review"
+                "subagent-review"
             ],
             "unavailable",
         )
@@ -3834,6 +3834,7 @@ else:
                     ),
                     {"unverified"},
                 )
+
         self.assertEqual(
             set(inspect_tools.inspect_podway_review_routes(canonical).values()),
             {"unverified"},
@@ -3847,6 +3848,45 @@ else:
             ),
             {"unverified"},
         )
+
+    def test_retired_review_cli_choice_is_not_an_alias(self) -> None:
+        for route, expected in (("subagent-review", 0), ("independent-review", 2)):
+            with self.subTest(route=route):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-S",
+                        str(SCRIPT),
+                        "--podway-review-route",
+                        route,
+                        "--help",
+                    ],
+                    env=self.environment,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, expected)
+
+    def test_prior_review_sources_keep_identity_without_current_route_readiness(
+        self,
+    ) -> None:
+        for family, version in (("task", 32), ("goal", 35), ("validation", 34)):
+            with self.subTest(family=family):
+                source = (
+                    ROOT / f"tests/fixtures/aquarium-{family}-v{version}.yaml"
+                ).read_bytes()
+                name = f"aquarium-{family}-v2.yaml"
+                self.assertIn(
+                    hashlib.sha256(source).hexdigest(),
+                    inspect_tools.PODWAY_PRIOR_CANONICAL_SHA256[name],
+                )
+                readiness = inspect_tools.inspect_podway_review_routes(
+                    source, qualified=True
+                )
+                self.assertEqual(readiness["subagent-review"], "unavailable")
+                self.assertEqual(readiness["herdr"], "ready")
+                self.assertNotIn("independent-review", readiness)
 
     def test_retired_orca_snapshots_do_not_admit_herdr(self) -> None:
         for kind, version in (("task", 22), ("goal", 25), ("validation", 24)):
@@ -3871,7 +3911,7 @@ else:
                     {
                         "mulgae": "ready",
                         "herdr": "unavailable",
-                        "independent-review": "ready",
+                        "subagent-review": "unavailable",
                         "waived": "ready",
                     },
                 )
@@ -3940,7 +3980,7 @@ else:
                     self.assertEqual(
                         entry["review_route_readiness"],
                         dict.fromkeys(
-                            ("mulgae", "herdr", "independent-review", "waived"),
+                            ("mulgae", "herdr", "subagent-review", "waived"),
                             "ready",
                         ),
                     )
@@ -5289,7 +5329,7 @@ else:
             {
                 "mulgae": "unverified",
                 "herdr": "unverified",
-                "independent-review": "unverified",
+                "subagent-review": "unverified",
                 "waived": "unverified",
             },
         )
@@ -5545,7 +5585,7 @@ else:
                     {}
                     if name in {"aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"}
                     else dict.fromkeys(
-                        ("mulgae", "herdr", "independent-review", "waived"),
+                        ("mulgae", "herdr", "subagent-review", "waived"),
                         "unverified",
                     ),
                 )
@@ -5575,7 +5615,7 @@ else:
                     {}
                     if name in {"aquarium-design-v2.yaml", "aquarium-war-room-v2.yaml"}
                     else dict.fromkeys(
-                        ("mulgae", "herdr", "independent-review", "waived"),
+                        ("mulgae", "herdr", "subagent-review", "waived"),
                         "unverified",
                     ),
                 )
@@ -5922,6 +5962,9 @@ else:
             {
                 "aquarium-task-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-task-v32.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-task-v31.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -5963,6 +6006,9 @@ else:
                 },
                 "aquarium-goal-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-goal-v35.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-goal-v34.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -6003,6 +6049,11 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-validation-v34.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (
                             ROOT / "tests/fixtures/aquarium-validation-v33.yaml"

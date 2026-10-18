@@ -15,7 +15,7 @@ fail with a nonzero exit status. Combine `--uppercase` and `--repeat`. Preserve
 TASK-001 and original behavior; add tests and user guidance.
 
 Use the installed handlers, native Codex Workers, an independent Codex Judge and
-the explicitly selected three-agent Codex Independent Review route. Run the
+the explicitly selected three-agent Codex Subagent Review route. Run the
 complete fixture Make gate. The operator accepts each ready plan or exact
 candidate through the normal handler boundary; no document grants acceptance.
 

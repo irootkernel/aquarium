@@ -15,10 +15,10 @@ Every review has one purpose:
 
 Purpose does not change the selected source scope, native review mode, remediation budget, or authorization. It grants no additional permission to run checks, edit files, stage, commit, publish, install, change providers, or launch another review.
 
-## Route Independent Review
+## Route Subagent Review
 
-An explicit standalone `$aquarium:independent-review` request or an approved
-embedded `independent-review` selection authorizes one static review with three
+An explicit standalone `$aquarium:subagent-review` request or an approved
+embedded `subagent-review` selection authorizes one static review with three
 base subagents and one UI/UX specialist when applicable. Its model and effort values
 apply to every reviewer; omitted values use host defaults. It never invokes
 Mulgae, Herdr, or Dolgorae as a fallback. Read the skill's target, dispatch,
@@ -45,7 +45,7 @@ Before an authorized dispatch through an enabled route, build one concise Review
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
 
-## Use Independent Review subagents
+## Use Subagent Review subagents
 
 Give each expected fresh host subagent the same exact target, complete
 Review Brief, and approved context. Their separate focus instructions do not

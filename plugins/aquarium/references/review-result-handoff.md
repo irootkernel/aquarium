@@ -10,7 +10,7 @@ tool and paired skill own transport syntax and recovery.
 | Route or transport | Producer and consumer responsibility |
 | --- | --- |
 | Mulgae | Mulgae owns generation, storage, publication and retention. Aquarium preserves returned invocation/run references and reads complete reports through supported receipt-bound API or CLI reads. Native publication state and receipts establish available production facts; no extra file, export or private runtime inspection is required. |
-| Independent Review | Each subagent returns its report through its native delegation. Collect from that exact handle, including every expected base and UI reviewer. A separate Markdown file is not implied. |
+| Subagent Review | Each subagent returns its report through its native delegation. Collect from that exact handle, including every expected base and UI reviewer. A separate Markdown file is not implied. |
 | Herdr | The main reviewer collects children's reports and synthesizes the result. The caller reads that same main agent through native output. Expand an incomplete read; use the same-reviewer file fallback only to recover an existing result. |
 | OS pipe or captured output | Use an advertised CLI/wrapper interface. Identify writer, reader and payload channel; distinguish result content from diagnostics according to that interface. Successful exit or write does not establish that the receiving consumer read a complete result. |
 | Temporary file | Where native delivery permits it, the producer finishes and reads back its own output, returns the actual absolute path, and the consumer opens and reads it in its own filesystem view. A printed path is neither creation nor receipt. |

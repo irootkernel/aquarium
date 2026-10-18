@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 
 import yaml
-from adaptive_admission import resume_selected
+from adaptive_admission import resume_selected, selection_contract
 from adaptive_bundles import BundleError, read_regular, sha256
 from adaptive_definitions import (
     canonical_json,
@@ -33,8 +33,14 @@ TASK_SKILLS = {
     "task-review",
     "task-close",
 }
-# Released Task32 leaf ownership, independent of mutable origin source files.
+# Exact reference leaf ownership, independent of mutable origin source files.
 REFERENCE_OPERATION_PHASES = {
+    "sha256:21646cf39875e15c523250a1b4952f8ddb51a3bef5ae4707c36b6498c2b1dbe6": [
+        "task-review"
+    ],
+    "sha256:d43fd605b6f031c14ba26c43122aa1c96c05e03deec33f4746bcd342c8bfe9e3": [
+        "task-plan"
+    ],
     "sha256:652053b65846fea7e59961be6eefaee7f283edc98f83d7f26c66a62ad6b9dbb2": [
         "task-plan"
     ],
@@ -261,7 +267,7 @@ def execution_context(
     assignment = invocation_assignment(qualification)
     review = assignment["authority"]["review"]
     approved_route = review.get("route")
-    routes = {"herdr", "mulgae", "independent-review", "waived"}
+    routes = {"herdr", "mulgae", "subagent-review", "waived"}
     if entrypoint in {"new-feature", "new-project", "refactor", "war-room"}:
         routes.add("not-applicable")
     if approved_route not in routes or (route is not None and route != approved_route):
@@ -336,6 +342,14 @@ def execution_context(
     ):
         raise BundleError("corrupt", "Native readback differs from retained definition")
     document = yaml.safe_load(resolved["source"])
+    selection_contract(
+        resolved["source"],
+        binding,
+        entrypoint,
+        approved_route,
+        qualification,
+        document=document,
+    )
     result = {
         "status": "resolved",
         "bundle_id": resolved["bundle_id"],

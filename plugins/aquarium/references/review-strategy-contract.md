@@ -13,7 +13,7 @@ reason in the existing plan or validation envelope:
 | Route | Starting point and purpose |
 | --- | --- |
 | `mulgae` | Small, bounded work. Narrow specialist scopes let economical models focus; aggregate assigned coverage against the whole goal. |
-| `independent-review` | Medium work needing independent judgment from fresh reviewers of similar capability in the Primary's current harness. |
+| `subagent-review` | Medium work needing independent judgment from fresh reviewers of similar capability in the Primary's current harness. |
 | `herdr` | Large work, difficult integration or consequential uncertainty where another AI family's judgment justifies coordination cost. Prefer Codex to Claude or Claude to Codex. |
 
 Adjust for difficulty, consequences, uncertainty and purpose. A small critical
@@ -58,7 +58,7 @@ those flows. File extensions alone do not decide.
 - Mulgae keeps configured specialist roles and native `artist` when applicable.
   Preserve provider/model choices; Aquarium does not rewrite producer
   configuration or require every role to repeat the full audit.
-- Independent Review keeps three base reviewers and adds one UI/UX specialist.
+- Subagent Review keeps three base reviewers and adds one UI/UX specialist.
 - Herdr's main reviewer uses multiple native subagents and includes a UI/UX
   specialist in addition to its code-review team when relevant.
 

@@ -19,6 +19,7 @@ from adaptive_definitions import (
     ASSETS,
     FAMILY_ENTRYPOINTS,
     canonical_json,
+    capability_signatures,
     definition_id,
     native_key,
     parse_definition,
@@ -378,7 +379,9 @@ def qualify_known(source, binding, preview):
     return expected
 
 
-def selection_contract(source, binding, entrypoint, route, qualification):
+def selection_contract(
+    source, binding, entrypoint, route, qualification, *, document=None
+):
     """Validate the selected invocation without changing suitability timing."""
     adaptive = qualification is not None
     if adaptive:
@@ -393,11 +396,10 @@ def selection_contract(source, binding, entrypoint, route, qualification):
                 "route-unavailable",
                 "Selected route differs from the exact suitability authority",
             )
-        if binding["family"] in {
-            "task",
-            "goal",
-            "validation",
-        } and approved_route not in {"mulgae", "herdr", "independent-review", "waived"}:
+        supported = {"mulgae", "herdr", "subagent-review", "waived"}
+        if binding["family"] in {"design", "diagnosis"}:
+            supported.add("not-applicable")
+        if approved_route not in supported:
             raise BundleError(
                 "route-unavailable",
                 "Adaptive admission requires its actual supported selected review route",
@@ -406,20 +408,41 @@ def selection_contract(source, binding, entrypoint, route, qualification):
         raise BundleError(
             "incompatible", "Selected source does not support this entrypoint"
         )
-    if binding["family"] in {"task", "goal", "validation"} and not adaptive:
-        if route not in {"mulgae", "herdr", "independent-review", "waived"}:
+    if (
+        binding["family"] in {"task", "goal", "validation"}
+        and not adaptive
+        and route not in {"mulgae", "herdr", "subagent-review", "waived"}
+    ):
+        raise BundleError("route-unavailable", "A selected review route is required")
+    if route is not None and route != "not-applicable":
+        if route not in {"mulgae", "herdr", "subagent-review", "waived"}:
             raise BundleError(
-                "route-unavailable", "A selected review route is required"
+                "route-unavailable", "Selected review route is unsupported"
             )
-        document = known_source(source)[1]
-        declarations = [
-            item
-            for definition in document["node_definitions"].values()
-            for item in definition.get("items", [])
-            if item["id"] == "review-route"
-        ]
-        if not declarations or any(
-            route not in item.get("choices", []) for item in declarations
+        if document is None:
+            document = yaml.safe_load(source)
+        signatures = {
+            **capability_signatures(),
+            **binding.get("capability_definitions", {}),
+        }
+        declarations = []
+        for node in document["graph"]["nodes"]:
+            names = set()
+            for capability in binding["nodes"][node["id"]]["capabilities"]:
+                declared = signatures.get(capability["signature"], {}).get("fields", {})
+                names.update(
+                    capability["fields"].get(logical, logical)
+                    for logical in {"review-route", "effective-review-route"}
+                    & declared.keys()
+                )
+            declarations.extend(
+                item
+                for item in document["node_definitions"][node["use"]].get("items", [])
+                if item["id"] in names and item["type"] == "choice"
+            )
+        required = not adaptive and binding["family"] in {"task", "goal", "validation"}
+        if (required and not declarations) or any(
+            route not in item["choices"] for item in declarations
         ):
             raise BundleError(
                 "route-unavailable", "Selected route is absent from the exact source"

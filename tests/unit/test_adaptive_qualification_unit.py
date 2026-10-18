@@ -687,6 +687,20 @@ def test_route_result_cannot_be_replaced_by_signature_presence(family, item):
     )
 
 
+@pytest.mark.parametrize(
+    "route,expected",
+    [("subagent-review", "compatible"), ("independent-review", "incompatible")],
+)
+def test_selected_review_route_uses_current_execution_identity(route, expected):
+    document, binding, context = adaptive()
+    context["review"]["route"] = route
+    result = qualify(document, binding, context=context)
+    assert result["status"] == expected, result["issues"]
+    assert any(
+        row["property"] == "selected-review-route" for row in result["issues"]
+    ) == (expected == "incompatible")
+
+
 def test_extra_confirmation_ordinal_does_not_reset_authority():
     document, binding = known("goal")
     for definition in document["node_definitions"].values():
@@ -1019,6 +1033,12 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
     use = next(
         node["use"] for node in document["graph"]["nodes"] if node["id"] == placement
     )
+    registry = json.loads(
+        (ASSETS / "adaptive/operation-contracts-v1.json").read_bytes()
+    )
+    original_contract = registry[
+        sha256(canonical_json(document["node_definitions"][use]))
+    ]
     aliases = {
         node["id"]: renames for node in document["graph"]["nodes"] if node["use"] == use
     }
@@ -1038,7 +1058,8 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
     contract = current["semantic_contracts"][
         sha256(canonical_json(document["node_definitions"][node["use"]]))
     ]
-    assert contract["basis"]["native_version"] == binding["procedure"]["version"]
+    # Provenance follows the exact operation, not its containing Procedure version.
+    assert contract["basis"] == original_contract["basis"]
     for key in ("relay_outputs", "delivery_items", "output_scopes", "discriminators"):
         if key in contract:
             assert not set(renames) & set(contract[key])

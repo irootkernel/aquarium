@@ -1,6 +1,6 @@
 # Review Finding Disposition
 
-Use this contract whenever Aquarium consumes findings from Mulgae Review, Herdr Review, Independent Review, or a workflow review waiver. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent and [review-routing-contract.md](review-routing-contract.md) when an embedded workflow selects or changes routes. A reviewer or coordinator finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
+Use this contract whenever Aquarium consumes findings from Mulgae Review, Herdr Review, Subagent Review, or a workflow review waiver. Read [review-intent-contract.md](review-intent-contract.md) when the review carries change or completion intent and [review-routing-contract.md](review-routing-contract.md) when an embedded workflow selects or changes routes. A reviewer or coordinator finding is an advisory hypothesis. The coordinator checks it against the exact reviewed target, repository authority, production callers, persistence and concurrency boundaries, and existing tests before deciding what it means or what happens next.
 
 ## Adjudicate before acting
 
@@ -25,7 +25,7 @@ Effective priority records impact; it does not by itself require another review.
 
 ## Apply the authority envelope
 
-An explicitly selected `$aquarium:independent-review` route uses three fresh base reviewers and, for UI-related work, one UI/UX specialist for one report-only operation. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, standalone `$aquarium:herdr-review`, or standalone `$aquarium:independent-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
+An explicitly selected `$aquarium:subagent-review` route uses three fresh base reviewers and, for UI-related work, one UI/UX specialist for one report-only operation. A direct `$aquarium:task-review`, standalone `$aquarium:mulgae-review`, standalone `$aquarium:herdr-review`, or standalone `$aquarium:subagent-review` is report-only. It does not edit source files, run checks, stage changes, commit, or start another provider review. Reviewer-owned output follows the selected backend's contract. Report adjudicated findings and the exact bounded continuation that would authorize remediation.
 
 An approved `$aquarium:task-handler`, `$aquarium:epic-handler`, or `$aquarium:epic-validator` execution envelope covers in-scope local corrections, affected checks and authorized staging without another user prompt. Report the correction afterward. A necessary provider reassessment uses the same selected route and remaining approved review budget automatically. Changing routes never erases findings or resets that budget. Stop only for effects outside the envelope, a new product or authority choice, unsafe isolation, or a necessary provider reassessment with no remaining grant. Name the uncovered effect or exhausted grant instead of asking for a generic re-review approval.
 
