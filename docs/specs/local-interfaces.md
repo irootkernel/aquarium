@@ -354,13 +354,22 @@ existing approval evidence; the helper supplies no new effect or acceptance.
 Design and Diagnosis remain user-only. Other families retain their applicable
 source-edit delegation, separate from final user acceptance.
 
+For successive separately approved edits, the same recovery input accepts ordered
+`changes` entries, each with its actual `proposal` and `approval`, in place of the
+single pair. Each recovered original starts at its original pin. Successive
+approved images of every target must connect to its current last postimage or
+absence. Targets omitted from later changes remain checked. Each step retains
+the family's approval authority. Dispatched source context
+preserves the ordered approvals and a derived last-image target map; original
+requirements and grants do not change.
+
 Optional `qualification.finalization_recovery` remains the separate settled path:
 it reconciles approved source edits or deletion using exact original bytes, the
 current affected Judge assessment and selected native evidence. Both inputs
 cannot be supplied together.
 Its `finalization-resolved` response has no dispatch and preserves current authority
 and pending operations; it establishes no achievement. The execution contract
-defines the exact recovery inputs and checks.
+defines the exact recovery inputs, chain-wide current assessment coverage and checks.
 
 The [execution contract](../../plugins/aquarium/references/adaptive-execution.md)
 owns invocation mappings, actual independent assessment/bootstrap import, due

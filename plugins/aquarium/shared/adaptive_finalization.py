@@ -6,7 +6,7 @@ from pathlib import Path
 
 from adaptive_bundles import BundleError, contained, git, read_regular, sha256
 from adaptive_definitions import definition_id
-from adaptive_design import application
+from adaptive_design import approved_targets, current_targets
 from adaptive_preparation import object_rows, object_value, read_basis
 
 
@@ -150,14 +150,39 @@ def approved_sources(
     approval_sources = (
         ("user",) if family in {"design", "diagnosis"} else ("user", "epic-delegation")
     )
-    proposal = object_value(recovery.get("proposal"), "Finalization proposal")
-    applied = application(
-        repository,
-        proposal,
-        recovery.get("approval"),
-        applied=True,
-        approval_sources=approval_sources,
-    )
+    if "changes" in recovery:
+        if "proposal" in recovery or "approval" in recovery:
+            raise BundleError(
+                "invalid-input", "Use one approval or its ordered change history"
+            )
+        changes = object_rows(recovery["changes"], "Approved source changes")
+        if not changes:
+            raise BundleError("invalid-input", "Approved source changes are empty")
+    else:
+        changes = [
+            {"proposal": recovery.get("proposal"), "approval": recovery.get("approval")}
+        ]
+    first_targets, targets = {}, {}
+    for change in changes:
+        approved = approved_targets(
+            change.get("proposal"),
+            change.get("approval"),
+            approval_sources=approval_sources,
+        )
+        if approved["status"] != "approved":
+            raise BundleError(
+                approved["status"],
+                "Source change lacks its exact actual approval",
+                approved,
+            )
+        for path, images in approved["targets"].items():
+            if path in targets and images["before"] != targets[path]["after"]:
+                raise BundleError(
+                    "not-established", "Approved source changes are not continuous"
+                )
+            first_targets.setdefault(path, images)
+            targets[path] = images
+    applied = current_targets(repository, targets, applied=True)
     if applied["status"] != "verified-applied":
         raise BundleError(
             applied["status"],
@@ -173,12 +198,12 @@ def approved_sources(
         if not isinstance(path, str):
             raise BundleError("invalid-input", "Retired source path must be a string")
         original = references.get(path)
-        images = proposal["targets"].get(path)
+        images = targets.get(path)
         if (
             original is None
             or path in recovered
             or images is None
-            or images["before"] != original["sha256"]
+            or first_targets[path]["before"] != original["sha256"]
         ):
             raise BundleError(
                 "not-established",
@@ -265,19 +290,27 @@ def approved_sources(
             return recovered[reference["path"]]
         return read_regular(repository, Path(reference["path"]))
 
-    return source_reader, {
-        "sources": readable,
-        "proposal": copy.deepcopy(proposal),
-        "approval_source": recovery["approval"]["source"],
-        "approval": copy.deepcopy(recovery["approval"]),
-    }
+    context = {"sources": readable}
+    if "changes" in recovery:
+        context.update(changes=copy.deepcopy(changes), targets=copy.deepcopy(targets))
+    else:
+        context.update(
+            proposal=copy.deepcopy(recovery["proposal"]),
+            approval_source=recovery["approval"]["source"],
+            approval=copy.deepcopy(recovery["approval"]),
+        )
+    return source_reader, context
 
 
 def finalization_sources(repository, assignment, recovery, observation):
     """Settled finalization additionally needs the actual current affected assessment."""
-    source_reader, _ = approved_sources(repository, assignment, recovery, observation)
+    source_reader, context = approved_sources(
+        repository, assignment, recovery, observation
+    )
     status = observation["status"]
-    proposal = recovery["proposal"]
+    targets = (
+        context["targets"] if "changes" in recovery else recovery["proposal"]["targets"]
+    )
     reference = object_value(
         recovery.get("assessment"), "Affected assessment reference"
     )
@@ -313,7 +346,7 @@ def finalization_sources(repository, assignment, recovery, observation):
     deleted = object_value(
         target.get("deleted_before", {}), "Assessment deleted targets"
     )
-    for path, images in proposal["targets"].items():
+    for path, images in targets.items():
         expected = images["after"]
         if expected is None:
             if identity(deleted.get(path)) != images["before"]:

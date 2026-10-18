@@ -2764,13 +2764,16 @@ def test_applied_source_view_rejects_unapproved_drift_and_invalid_current_native
         ("definition", "source-drift"),
     ],
 )
+@pytest.mark.parametrize("chained", [False, True])
 def test_applied_source_continuation_rechecks_after_qualification(
-    tmp_path, change, code
+    tmp_path, change, code, chained
 ):
     import json
     from unittest.mock import Mock
 
     case = applied_source_case(tmp_path)
+    if chained:
+        chain_source_changes(case)
     repository, _, client, observation, retained = case
     pending_source_node(case, "document")
     original = client.read
@@ -2991,8 +2994,9 @@ def test_applied_source_view_reads_immutable_git_originals(tmp_path):
         ("assess-goal", "orchestrator"),
     ],
 )
+@pytest.mark.parametrize("chained", [False, True])
 def test_public_context_continues_pending_applied_sources_through_real_native_transport(
-    tmp_path, monkeypatch, capsys, node, role
+    tmp_path, monkeypatch, capsys, node, role, chained
 ):
     import json
     from types import SimpleNamespace
@@ -3001,6 +3005,8 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
     import manage_adaptive_procedure
 
     case = applied_source_case(tmp_path, "design")
+    if chained:
+        chain_source_changes(case)
     repository, qualification, oracle, observation, retained = case
     pending_source_node(case, node)
     context_path = repository / "applied-context.json"
@@ -3113,3 +3119,277 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
     )
     assert context_path.read_bytes() == original_context
     assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+def chain_source_changes(case, *, deleted=False):
+    repository, qualification = case[:2]
+    key = (
+        "applied_source_recovery"
+        if "applied_source_recovery" in qualification
+        else "finalization_recovery"
+    )
+    recovery = qualification[key]
+    first = {name: recovery.pop(name) for name in ("proposal", "approval")}
+    path = repository / "roadmap.md"
+    before = sha256(path.read_bytes())
+    if deleted:
+        path.unlink()
+        after = None
+    else:
+        path.write_text(
+            "# Current approved roadmap\nSecond separately approved output.\n"
+        )
+        after = sha256(path.read_bytes())
+    proposal = {
+        "diff": "Apply the second separately approved roadmap change.",
+        "targets": {path.name: {"before": before, "after": after}},
+    }
+    recovery["changes"] = [
+        first,
+        {
+            "proposal": proposal,
+            "approval": {
+                "source": "user",
+                "decision": "approved",
+                "proposal": copy.deepcopy(proposal),
+                "reference": "Synthetic second actual fixture approval",
+            },
+        },
+    ]
+    family = qualification["assignment"]["target"]["procedure_plan"]["family"]
+    if family in {"design", "diagnosis"}:
+        qualification["assignment"]["target"][family] = {
+            "proposal": copy.deepcopy(proposal),
+            "applied": True,
+        }
+        qualification["assignment"]["authority"]["document_approval"] = copy.deepcopy(
+            recovery["changes"][-1]["approval"]
+        )
+    return recovery
+
+
+@pytest.mark.parametrize(
+    "family,kind,nodes",
+    [
+        (
+            "task",
+            "known",
+            ["document", "judge-documentation", "decide-documentation-assessment"],
+        ),
+        ("task", "adaptive", ["deliver", "assess", "outcome"]),
+        ("goal", "known", ["complete-work", "judge-goal", "assess-goal"]),
+        ("design", "known", ["apply-documents", "judge-application", "assess-goal"]),
+        ("diagnosis", "known", ["document", "judge-documentation", "assess-goal"]),
+    ],
+)
+def test_approved_source_chain_preserves_originals_and_pending_roles(
+    tmp_path, family, kind, nodes
+):
+    case = applied_source_case(tmp_path, family, kind)
+    repository, qualification, _, observation, retained = case
+    recovery = chain_source_changes(case)
+    original = copy.deepcopy(qualification["assignment"])
+    expected = copy.deepcopy(recovery["changes"])
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    for node, role in zip(nodes, ["worker", "judge", "orchestrator"]):
+        pending_source_node(case, node)
+        result = continue_applied(case)
+        assert result["role"] == role and result["node"] == node
+        assert result["status"] == (
+            "primary-owned" if role == "orchestrator" else "dispatch-ready"
+        )
+        assert result["work"] == original["work"]
+        assert result["authority"] == original["authority"]
+        assert result["pending_operations"] == qualification["pending_operations"]
+        assert result["bundle_id"] == retained["retention"]["bundle_id"]
+        assert result["procedure"]["session"] == observation["status"]["session"]
+        context = result["applied_sources"]
+        assert context["changes"] == expected
+        assert set(context["targets"]) == {"roadmap.md", "dossier.md"}
+        assert context["targets"]["dossier.md"]["after"] is None
+        assert not (repository / "dossier.md").exists()
+        for row in context["sources"]:
+            pin = next(
+                source["sha256"]
+                for source in original["work"]["requirement_sources"]
+                if source["path"] == row["path"]
+            )
+            assert row["sha256"] == pin
+            assert sha256((repository / row["capture"]).read_bytes()) == pin
+        if role != "orchestrator":
+            assert result["dispatch"]["target"]["applied_source_context"] == context
+        else:
+            assert result["dispatch"] is None
+        if kind == "known":
+            assert result["qualification"]["status"] == "qualified-known"
+            assert result["qualification"]["bootstrap"] is None
+        assert qualification["assignment"] == original
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize(
+    "change,code",
+    [
+        ("missing-first", "not-established"),
+        ("reversed", "not-established"),
+        ("first-before", "not-established"),
+        ("later-before", "not-established"),
+        ("missing-approval", "approval-required"),
+        ("rejected-first", "approval-required"),
+        ("mismatched-approval", "reapproval-required"),
+        ("postimage", "reapproval-required"),
+        ("earlier-only-postimage", "reapproval-required"),
+        ("capture", "source-drift"),
+        ("empty", "invalid-input"),
+        ("malformed", "invalid-input"),
+        ("mixed", "invalid-input"),
+        ("unsafe-path", "invalid-input"),
+    ],
+)
+def test_approved_source_chain_rejects_unproved_steps_or_current_images(
+    tmp_path, change, code
+):
+    case = applied_source_case(tmp_path)
+    repository = case[0]
+    recovery = chain_source_changes(case)
+    pending_source_node(case, "document")
+    changes = recovery["changes"]
+    if change == "missing-first":
+        changes.pop(0)
+    elif change == "reversed":
+        changes.reverse()
+    elif change in {"first-before", "later-before"}:
+        step = changes[0 if change == "first-before" else 1]
+        step["proposal"]["targets"]["roadmap.md"]["before"] = "sha256:" + "0" * 64
+        step["approval"]["proposal"] = copy.deepcopy(step["proposal"])
+    elif change == "missing-approval":
+        changes[1].pop("approval")
+    elif change == "rejected-first":
+        changes[0]["approval"]["decision"] = "rejected"
+    elif change == "mismatched-approval":
+        changes[1]["proposal"]["diff"] += " Unapproved change"
+    elif change == "postimage":
+        (repository / "roadmap.md").write_text("Not approved")
+    elif change == "earlier-only-postimage":
+        (repository / "dossier.md").write_text("Unapproved recreation")
+    elif change == "capture":
+        (repository / ".captures/roadmap.md").write_text("Not the original")
+    elif change == "empty":
+        recovery["changes"] = []
+    elif change == "malformed":
+        recovery["changes"] = [5]
+    elif change == "mixed":
+        recovery["proposal"] = changes[1]["proposal"]
+    else:
+        changes[0]["proposal"]["targets"]["../outside.md"] = {
+            "before": None,
+            "after": None,
+        }
+        changes[0]["approval"]["proposal"] = copy.deepcopy(changes[0]["proposal"])
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code == code
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("family", ["design", "diagnosis", "task", "goal"])
+@pytest.mark.parametrize("step", [0, 1])
+def test_each_source_change_keeps_its_family_approval_authority(tmp_path, family, step):
+    case = applied_source_case(tmp_path, family)
+    recovery = chain_source_changes(case)
+    recovery["changes"][step]["approval"]["source"] = "epic-delegation"
+    node = {
+        "design": "apply-documents",
+        "diagnosis": "document",
+        "task": "document",
+        "goal": "complete-work",
+    }[family]
+    pending_source_node(case, node)
+    if family in {"design", "diagnosis"}:
+        with pytest.raises(BundleError) as error:
+            continue_applied(case)
+        assert error.value.code == "approval-required"
+    else:
+        result = continue_applied(case)
+        assert result["status"] == "dispatch-ready"
+        assert result["authority"] == case[1]["assignment"]["authority"]
+        assert (
+            result["applied_sources"]["changes"][step]["approval"]["source"]
+            == "epic-delegation"
+        )
+        assert "acceptance" not in result and "achieved" not in result
+
+
+@pytest.mark.parametrize("deleted", [False, True])
+@pytest.mark.parametrize(
+    "coverage", ["complete", "earlier-only-missing", "latest-wrong"]
+)
+def test_settled_source_chain_requires_all_current_target_images(
+    tmp_path, deleted, coverage
+):
+    import json
+
+    case = applied_source_case(tmp_path)
+    recovery = settle_applied_sources(case)
+    chain_source_changes(case, deleted=deleted)
+    targets = {
+        path: image
+        for step in recovery["changes"]
+        for path, image in step["proposal"]["targets"].items()
+    }
+    report = json.loads((tmp_path / recovery["assessment"]["path"]).read_text())
+    report["target"] = {
+        "files": {
+            p: image["after"]
+            for p, image in targets.items()
+            if image["after"] is not None
+        },
+        "deleted_before": {
+            p: image["before"] for p, image in targets.items() if image["after"] is None
+        },
+    }
+    if deleted:
+        assert (
+            report["target"]["deleted_before"]["roadmap.md"]
+            != (recovery["changes"][0]["proposal"]["targets"]["roadmap.md"]["before"])
+        )
+    if coverage == "earlier-only-missing":
+        report["target"]["deleted_before"].pop("dossier.md")
+    elif coverage == "latest-wrong":
+        key = "deleted_before" if deleted else "files"
+        report["target"][key]["roadmap.md"] = "0" * 64
+    renew_finalization_report(case, recovery, report)
+    if coverage == "complete":
+        result = continue_applied(case)
+        assert result["status"] == "finalization-resolved"
+        assert result["dispatch"] is None
+        assert result["work"] == case[1]["assignment"]["work"]
+        assert "achieved" not in result
+    else:
+        with pytest.raises(BundleError) as error:
+            continue_applied(case)
+        assert error.value.code == "not-established"
+
+
+def test_approved_source_chain_can_recreate_an_approved_absence(tmp_path):
+    case = applied_source_case(tmp_path)
+    recovery = chain_source_changes(case, deleted=True)
+    path = tmp_path / "roadmap.md"
+    path.write_text("# Approved recreated roadmap\nOriginal criteria remain pinned.\n")
+    proposal = {
+        "diff": "Recreate the specifically approved absent document.",
+        "targets": {path.name: {"before": None, "after": sha256(path.read_bytes())}},
+    }
+    recovery["changes"].append(
+        {
+            "proposal": proposal,
+            "approval": {
+                "source": "user",
+                "decision": "approved",
+                "proposal": copy.deepcopy(proposal),
+            },
+        }
+    )
+    pending_source_node(case, "judge-documentation")
+    assert continue_applied(case)["status"] == "dispatch-ready"

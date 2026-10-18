@@ -87,10 +87,8 @@ def quality(value):
     }
 
 
-def application(
-    repository, proposal, approval, *, applied=False, approval_sources=("user",)
-):
-    """Re-read the exact approved targets before dispatch; the Worker rechecks before writes."""
+def approved_targets(proposal, approval, *, approval_sources=("user",)):
+    """Validate an actual approval and its exact target identities."""
     proposal = object_value(proposal, "design.proposal")
     targets = object_value(proposal.get("targets"), "design.proposal.targets")
     if not targets or not isinstance(proposal.get("diff"), str):
@@ -135,6 +133,12 @@ def application(
                 "invalid-input",
                 "Approved document targets must stay within the requested scope",
             )
+    return {"status": "approved", "targets": copy.deepcopy(targets)}
+
+
+def current_targets(repository, targets, *, applied=False):
+    """Compare validated targets with the current safe file images."""
+    for name, snapshot in targets.items():
         path = contained(Path(repository), Path(repository) / name)
         if path.exists() or path.is_symlink():
             actual = sha256(read_regular(Path(repository), path))
@@ -153,6 +157,16 @@ def application(
         "status": "verified-applied" if applied else "approved-current",
         "targets": copy.deepcopy(targets),
     }
+
+
+def application(
+    repository, proposal, approval, *, applied=False, approval_sources=("user",)
+):
+    """Re-read the exact approved targets before dispatch; the Worker rechecks before writes."""
+    approved = approved_targets(proposal, approval, approval_sources=approval_sources)
+    if approved["status"] != "approved":
+        return approved
+    return current_targets(repository, approved["targets"], applied=applied)
 
 
 def context(repository, assignment, phase):

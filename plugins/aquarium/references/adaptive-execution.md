@@ -181,14 +181,14 @@ Prepared, completed and cancelled sessions cannot gain work through this input.
 
 Dispatched assignments retain their original `work.requirement_sources` and
 coverage. `target.applied_source_context` supplies readable capture/Git references,
-original pins, approved current images and the existing approval object, including
-its reference when present. Recipients read those pinned originals to assess the
+original pins, approved current images and the existing approval objects, including
+their references when present. Recipients read those pinned originals to assess the
 current deliverables; the new text and generated coverage do not replace the
 original authority. Other source reads, genuine plan/review/effect changes and
 current suitability checks remain in force. Unchanged known reuse preserves its
 first due checkpoint. This input and `finalization_recovery` are mutually exclusive.
 Neither creates effect, acceptance or commit authority, and unproved chains of
-source edits still stop at the original approved before-image check.
+source edits still stop.
 
 A caller recovering approved finalization changes to original sources, including
 last-consumer deletion, may supply optional
@@ -199,7 +199,7 @@ The input contains:
 
 - `sources`: original source `path` plus either an already retained worktree-local
   `capture` path or a full immutable Git `commit`. Recovered bytes must match the
-  original source pin and the approved before-image. Recover each affected source,
+  original source pin and the first approved before-image. Recover each affected source,
   including a roadmap changed alongside a deleted dossier. Do not substitute a
   promoted summary or the approved new text for original criteria.
 - `proposal` and actual `approval`: the existing exact diff/targets approval shape,
@@ -210,10 +210,23 @@ The input contains:
   parent grant, work, exact scope and remaining authority. Delegated source-edit
   approval establishes no user acceptance, goal achievement or additional effect
   authority; final Epic and cold Validation acceptance remain user-owned.
+- For successive separately approved changes, replace `proposal` and `approval`
+  with ordered `changes`, each containing its actual `proposal` and `approval`.
+  Supply one representation. Each recovered original starts at its original pin.
+  Every later target before-image must equal that path's preceding approved
+  after-image, including absence. Each step retains its exact approval and
+  applicable family authority. The helper checks the last postimage of every path,
+  including paths omitted from its final step. Original criteria remain pinned to
+  the original bytes. Dispatched source context retains the complete `changes`
+  and a derived `targets` map of the last images; that map is not a cumulative
+  approval. The existing single-change input and context remain supported.
 - `assessment`: the current affected ordinary Judge report's existing `path` and
   `sha256`. The due affected Judge assignment requests `target.files`, mapping
   approved current paths to postimage SHA-256 values, and `target.deleted_before`,
-  mapping approved deleted paths to their original SHA-256 values. Both maps accept
+  mapping approved deleted paths to their deletion before-image SHA-256 values.
+  For a chain, cover every path's last approved state, including earlier-only
+  paths. A final deletion after an earlier edit uses that deletion's before-image;
+  the original requirement-source pin remains unchanged. Both maps accept
   bare or `sha256:`-prefixed identities. A deletion-only report may omit `files` or
   use an empty map. The due checkpoint must pass; a null or absent
   `checkpoint_result` uses `verdict`, while an explicit negative or empty checkpoint
