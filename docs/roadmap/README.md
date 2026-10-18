@@ -743,7 +743,7 @@ mutate sessions, stage, commit or publish.
 | TASK-143 | Integrate adaptive design workflows | Adapt new-feature, new-project and refactor with upstream QA, exact-diff approval, non-implementation and non-Git/opt-out boundaries. | Completed | TASK-142 |
 | TASK-144 | Integrate adaptive diagnosis | Activate diagnosis with safe reproduction and truthful incomplete/no-work delivery; implement shared consented atomic supersede and amend conflicting lifecycle rules without resetting authority. | Completed | TASK-143 |
 | TASK-145 | Complete promotion, recovery and installed-test preparation | Finish cross-family recovery, post-finalization consent-based promotion and guidance compatibility; complete and commit VM driver/fixtures, source-pinned regressions and adaptive checkpoints for TASK-146. | Completed | TASK-144 |
-| TASK-146 | Verify adaptive orchestration and promote outcomes | Observe integrated functionality across seven handlers on committed predecessor implementation/test artifacts; verify failure, recovery and promotion, route defects to their owners, and prepare actual Epic acceptance. | In Progress | TASK-145 |
+| TASK-146 | Verify adaptive orchestration and promote outcomes | Observe integrated functionality across seven handlers on committed predecessor implementation/test artifacts; verify failure, recovery and promotion, route defects to their owners, and prepare actual Epic acceptance. | Completed | TASK-145 |
 
 Each Task includes focused verification and affected documentation. TASK-146
 checks integration rather than postponing all testing until the end. The dossier
