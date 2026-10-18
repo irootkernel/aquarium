@@ -43,7 +43,7 @@ Consent may be obtained at closeout; committing needs a separate matching grant.
 [VM contract](../../tests/vm/README.md#adaptive-development-verification) owns
 installed verification methods. The
 [roadmap](../roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-records remaining delivery and actual acceptance; source implementation alone
+records delivery status and actual acceptance; source implementation alone
 does not establish installed behavior.
 
 ## Exact Authorities

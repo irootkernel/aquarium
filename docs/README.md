@@ -54,8 +54,7 @@ grant.
 [TESTING](../TESTING.md#adaptive-acceptance-scenarios) owns the durable acceptance
 scenarios and separates source checks from installed observations. The
 [roadmap](roadmap/README.md#epic-026-adapt-goal-adaptive-procedure-orchestration)
-tracks delivery status, integrated verification and actual acceptance. The linked
-dossier owns remaining task-level acceptance requirements until Epic closeout.
+tracks delivery status, integrated verification and actual acceptance.
 Installed skills and managed sources change only through their authorized update.
 
 ## Source-of-Truth Precedence

@@ -13,9 +13,8 @@ Task, Goal, Validation, Design and Diagnosis now use [adaptive execution](adapti
 
 The source repository's `TESTING.md#adaptive-acceptance-scenarios` owns durable
 acceptance scenarios. Its roadmap owns Task identity and lifecycle, and tracks
-integrated verification and actual acceptance. The linked dossier owns remaining
-task-level acceptance requirements until Epic closeout. This reference owns the
-shared adaptive definition contract. Its signatures are reference implementations; a new operation can establish the same guarantee
+integrated verification and actual acceptance. This reference owns the shared
+adaptive definition contract. Its signatures are reference implementations; a new operation can establish the same guarantee
 through its own explicit verified contract.
 
 ## Requirement and source basis

@@ -56,7 +56,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-023 | Adopt Mulgae v0.1.25 | Completed |
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
-| EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | In Progress |
+| EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -695,9 +695,9 @@ source closeout and subject to the existing pre-release policy.
 
 ## EPIC-026: ADAPT: Goal-adaptive Procedure orchestration
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
-**Detailed SOT:** [Adaptive Procedure design and acceptance](../todo/TODO-ADAPTIVE-PROCEDURES.md).
+**Canonical Outcomes:** [Adaptive contracts](../../plugins/aquarium/references/adaptive-procedures.md), [mapped execution and recovery](../../plugins/aquarium/references/adaptive-execution.md), [consented preservation](../../plugins/aquarium/references/procedure-promotion.md), [local interfaces](../specs/local-interfaces.md#activated-adaptive-execution-consumer), [architecture](../architecture/README.md), [acceptance scenarios](../../TESTING.md#adaptive-acceptance-scenarios), and [installed verification](../../tests/vm/README.md#adaptive-development-verification).
 
 Let `task-handler`, `epic-handler`, `epic-validator`, `new-feature`,
 `new-project`, `refactor` and `war-room` select, author and compose Procedures
@@ -729,8 +729,6 @@ Preserve legacy/custom/formal sources and immutable sessions. Keep candidate
 installation and observed handler verification in the dedicated UTM VM under
 separately applicable authority. Reuse the existing VM driver and keep complete
 development functionality separate from release upgrade/startup smoke.
-Registration does not activate the feature, start implementation, install tools,
-mutate sessions, stage, commit or publish.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -745,17 +743,20 @@ mutate sessions, stage, commit or publish.
 | TASK-145 | Complete promotion, recovery and installed-test preparation | Finish cross-family recovery, post-finalization consent-based promotion and guidance compatibility; complete and commit VM driver/fixtures, source-pinned regressions and adaptive checkpoints for TASK-146. | Completed | TASK-144 |
 | TASK-146 | Verify adaptive orchestration and promote outcomes | Observe integrated functionality across seven handlers on committed predecessor implementation/test artifacts; verify failure, recovery and promotion, route defects to their owners, and prepare actual Epic acceptance. | Completed | TASK-145 |
 
-Each Task includes focused verification and affected documentation. TASK-146
-checks integration rather than postponing all testing until the end. The dossier
-owns remaining task-level acceptance; [TESTING](../../TESTING.md#adaptive-acceptance-scenarios)
-owns durable scenario IDs and requirements. This table alone owns ordering,
-dependencies and lifecycle. Implementation starts with TASK-137 under a newly
-approved execution envelope, without requiring the unfinished ADAPT path to
-implement itself. Authoring helpers do not activate handlers early; each family
-switches only in its integration task with working storage and recovery.
-Task-local helper/native checks remain distinct from clean-commit official and
-installed checks. TASK-145 prepares the committed test artifacts, and TASK-146
-uses them rather than testing its own uncommitted driver.
+Each Task includes focused verification and affected documentation.
+[TESTING](../../TESTING.md#adaptive-acceptance-scenarios) owns durable scenario IDs
+and requirements; this table alone owns ordering, dependencies and lifecycle.
+Task-local helper/native checks remain distinct from official compatibility and
+installed checks. Installed observations use committed candidate and verification
+artifacts. Master accepted completion using the full local checks on `1d82d7b`,
+focused correction checks and bounded installed native and manual observations
+for Task, Goal, Validation, Design and Diagnosis. The installed runtime and
+VM-driver sources match the current candidate. Supplemental manual observations
+do not constitute whole-collector passes. Earlier Project and Refactor
+observations apply only to unchanged behavior; their full paths were not rerun
+for the later candidate. Codex was the observed harness. Other harnesses,
+official distribution compatibility and release QA remain unverified. Git
+history retains the settled implementation dossier.
 
 The revised acceptance covers native goal outcomes instead of terminal labels,
 minimal semantic capability signatures, forward changes after assessment,

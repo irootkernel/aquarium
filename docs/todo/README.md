@@ -22,13 +22,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
   the 2026-09-25 review findings, Aquarium-owned corrections, producer requests,
   and acceptance for `EPIC-018` and `TASK-077` through `TASK-085`.
 
-- [Adaptive Procedure dossier](TODO-ADAPTIVE-PROCEDURES.md) defines ADAPT's
-  seven-handler selection, authoring, composition, admission, local recovery and
-  user-approved post-use Git promotion for `EPIC-026` and `TASK-137` through
-  `TASK-146`. It preserves EPIC-024/025 behavior and requires no Podway producer
-  change. The dossier contains implementation contracts and acceptance scenarios,
-  not an installed adaptive runtime.
-
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.
