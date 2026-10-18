@@ -212,6 +212,25 @@ def diagnosis_phase(document, binding, assignment, node):
     return OPERATIONS.get(sha256(canonical_json(original)))
 
 
+def validate_phase_mappings(document, binding, assignment):
+    """Check every configured placement before admission, including future work."""
+    family = binding["family"]
+    if family not in {"task", "design", "diagnosis"}:
+        return
+    checks = [("phase_skills", phase_skills)]
+    if family == "design":
+        checks.append(("design_phases", design_phase))
+    elif family == "diagnosis":
+        checks.append(("diagnosis_phases", diagnosis_phase))
+    plan = assignment["target"]["procedure_plan"]
+    for field, check in checks:
+        configured = plan.get(field, {})
+        if not isinstance(configured, dict):
+            check(document, binding, assignment, None)
+        for node in configured:
+            check(document, binding, assignment, node)
+
+
 def execution_context(
     repository,
     *,

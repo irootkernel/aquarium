@@ -538,6 +538,9 @@ def fit(assignment, criteria, document, mapping, coverage):
             "not-established",
             "Adopted obligations need the existing envelope disposition",
         )
+    from adaptive_execution import validate_phase_mappings
+
+    validate_phase_mappings(document, mapping, assignment)
     return {
         "criteria": criteria,
         "coverage": coverage,

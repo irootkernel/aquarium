@@ -311,6 +311,15 @@ re-reading mutable origin templates to resume an intact bundle.
 
 ## Activated adaptive execution consumer
 
+Selection and qualification check applicable `procedure_plan.phase_skills`,
+`design_phases` and `diagnosis_phases` mappings before authoring or adoption,
+including configured future placements and application-boundary relabeling.
+`phase_skills` values are lists of supported family leaf-name strings, such as
+`quality: ["qa"]`; `design_phases` and `diagnosis_phases` values are single
+supported phase-name strings.
+Runtime dispatch rechecks them. Defaults and inert other-family maps remain
+supported.
+
 `manage_adaptive_procedure.py` also accepts positional `context`, `--qualification`
 (ordinary assignment plus actual due assessment JSON), `--binding` for selected
 inspection/retention, and optional exact `--session` for continuation. The setup

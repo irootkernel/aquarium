@@ -1617,3 +1617,171 @@ def test_current_in_session_report_covers_semantics_and_capacity_without_new_cyc
         }
     )
     assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+def prepared_phase_mapping(repository, family):
+    from adaptive_admission import reference_mapping
+    from adaptive_bundles import sha256
+    from adaptive_definitions import ASSETS
+
+    value = assignment(repository, mode="prepare")
+    stem = "war-room" if family == "diagnosis" else family
+    source = repository / "definitions/phase-source.yaml"
+    source.parent.mkdir()
+    source.write_bytes(
+        (ASSETS / "podway/procedures" / ("aquarium-" + stem + "-v2.yaml")).read_bytes()
+    )
+    mapping = reference_mapping(source.read_bytes())
+    plan = value["target"]["procedure_plan"]
+    plan.update(
+        family=family,
+        entrypoint={
+            "task": "task-handler",
+            "goal": "epic-handler",
+            "design": "new-feature",
+            "diagnosis": "war-room",
+        }[family],
+        effects=sorted(
+            {effect for row in mapping["nodes"].values() for effect in row["effects"]}
+        ),
+    )
+    if family in {"design", "diagnosis"}:
+        plan["review"]["route"] = value["authority"]["review"]["route"] = (
+            "not-applicable"
+        )
+    value["authority"]["effects"] = plan["effects"][:]
+    plan["candidates"] = [
+        {
+            "path": str(source.relative_to(repository)),
+            "sha256": sha256(source.read_bytes()),
+            "coverage": [
+                {**row, "obligation": next(iter(mapping["obligations"]))}
+                for row in plan["drafts"][0]["coverage"]
+            ],
+            "reason": "The exact known source covers this fixture's original work.",
+        }
+    ]
+    return prepare(repository, value, client=Oracle(repository))["assignment"]
+
+
+@pytest.mark.parametrize(
+    "family,changes,code",
+    [
+        ("diagnosis", {"phase_skills": 5}, "invalid-input"),
+        ("diagnosis", {"phase_skills": {"missing-placement": ["qa"]}}, "incompatible"),
+        ("diagnosis", {"phase_skills": {"investigate": ["auto"]}}, "invalid-input"),
+        ("design", {"design_phases": 5}, "invalid-input"),
+        ("design", {"design_phases": {"missing-placement": "draft"}}, "invalid-input"),
+        (
+            "design",
+            {
+                "design_phases": {"apply-documents": "discovery"},
+                "phase_skills": {"apply-documents": ["qa"]},
+            },
+            "incompatible",
+        ),
+        ("diagnosis", {"diagnosis_phases": False}, "invalid-input"),
+        ("diagnosis", {"diagnosis_phases": {"document": "baseline"}}, "incompatible"),
+        ("diagnosis", {"diagnosis_phases": {"document": []}}, "invalid-input"),
+        ("task", {"phase_skills": {"document": ["qa"]}}, "invalid-input"),
+    ],
+)
+def test_invalid_applicable_phase_maps_stop_before_retention(
+    repository, monkeypatch, family, changes, code
+):
+    import adaptive_suitability
+
+    value = prepared_phase_mapping(repository, family)
+    value["target"]["procedure_plan"].update(changes)
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    publications = []
+
+    def publish(*args, **kwargs):
+        publications.append(True)
+        raise AssertionError("Invalid phase ownership reached adoption")
+
+    monkeypatch.setattr(adaptive_suitability, "publish_bundle", publish)
+    with pytest.raises(BundleError) as error:
+        qualify_prepared(repository, value, client=Oracle(repository), retain=True)
+    assert error.value.code == code
+    assert publications == []
+    assert not (repository / "definitions/.local").exists()
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("family", ["task", "goal", "design", "diagnosis"])
+def test_prestart_phase_maps_preserve_family_defaults_and_inert_other_maps(
+    repository, family
+):
+    value = prepared_phase_mapping(repository, family)
+    plan = value["target"]["procedure_plan"]
+    if family == "task":
+        plan.update(phase_skills={"document": ["task-document"]}, design_phases=5)
+    elif family == "goal":
+        plan.update(phase_skills=5, design_phases=5, diagnosis_phases=5)
+    elif family == "design":
+        plan.update(
+            phase_skills={"discover": ["interview", "pm"], "draft": ["seed"]},
+            design_phases={"discover": "discovery", "apply-documents": "application"},
+            diagnosis_phases=5,
+        )
+    else:
+        plan.update(
+            phase_skills={"capture-baseline": ["interview"], "quality": ["qa"]},
+            diagnosis_phases={
+                "investigate": "investigation",
+                "document": "documentation",
+            },
+            design_phases=5,
+        )
+    result = qualify_prepared(repository, value, client=Oracle(repository), retain=True)
+    assert result["status"] == "qualified-known"
+    assert result["bootstrap"] is None
+    assert result["retention"]["binding"]["family"] == family
+
+
+def test_prestart_accepts_noncanonical_grouped_task_phase_owners(repository):
+    value = prepared(repository)
+    value["target"]["procedure_plan"]["phase_skills"] = {
+        "deliver": ["task-document", "task-verify"]
+    }
+    client = Oracle(repository)
+    requested = qualify_prepared(repository, value, client=client)
+    assert requested["status"] == "assessment-required"
+    result = qualify_prepared(
+        repository,
+        value,
+        client=client,
+        assessment=report_for(requested["target"]),
+        retain=True,
+    )
+    assert result["status"] == "qualified"
+    assert result["retention"]["binding"]["nodes"]["deliver"]["role"] == "worker"
+
+
+@pytest.mark.parametrize(
+    "family,changes",
+    [
+        ("diagnosis", {"phase_skills": 5}),
+        ("diagnosis", {"diagnosis_phases": {"document": "baseline"}}),
+        ("design", {"design_phases": {"apply-documents": "discovery"}}),
+    ],
+)
+def test_preparation_rejects_invalid_phase_ownership_before_authoring(
+    repository, family, changes
+):
+    from unittest.mock import Mock
+
+    value = prepared_phase_mapping(repository, family)
+    value["target"]["procedure_plan"].update(changes, drafts=[])
+    client = Mock()
+    before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
+    with pytest.raises(BundleError) as error:
+        prepare(repository, value, client=client)
+    assert error.value.code == "not-established"
+    assert error.value.details["considered"][-1]["status"] in {
+        "invalid-input",
+        "incompatible",
+    }
+    assert client.mock_calls == []
+    assert {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()} == before

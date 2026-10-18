@@ -85,6 +85,16 @@ omission cannot waive an obligation. Goal and Validation never inherit the Task
 phase sequence. Cold Validation uses a fresh independent Judge; internal
 Validation keeps its logical Epic Judge when supported.
 
+Selection and pre-start qualification validate every configured placement in the
+selected family's `phase_skills`, `design_phases` or `diagnosis_phases` map,
+including later work. `phase_skills` maps each actual placement to a list of
+supported family leaf names, such as `quality: ["qa"]`. `design_phases` and
+`diagnosis_phases` map each placement to one supported phase-name string.
+They use the same leaf and application-boundary checks as
+runtime dispatch. Defaults, valid grouped ownership and inert maps for other
+families keep their existing behavior. Invalid applicable maps stop before
+source authoring or adoption.
+
 ## Mapped handoff and recovery
 
 For an explicitly requested plan handoff, record the approved attachment endpoint
