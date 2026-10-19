@@ -998,13 +998,13 @@ def test_lifecycle_job_renews_each_scenario_deadline(
             "task-switch-with-waiver-basis-rejected",
             "switch-route",
             "explicit-waiver",
-            "validate-review-route-entry",
+            "confirm-changed-review-continuity",
         ),
         (
             "task-waive-with-route-change-basis-rejected",
             "waive",
             "explicit-route-change",
-            "validate-review-route-entry",
+            "confirm-changed-review-continuity",
         ),
         (
             "task-resume-with-explicit-change-rejected",
@@ -1022,13 +1022,13 @@ def test_lifecycle_job_renews_each_scenario_deadline(
             "task-completed-switch-with-waiver-basis-rejected",
             "switch-route",
             "explicit-waiver",
-            "validate-review-route-entry",
+            "confirm-changed-review-continuity",
         ),
         (
             "task-completed-waive-with-route-change-basis-rejected",
             "waive",
             "explicit-route-change",
-            "validate-review-route-entry",
+            "confirm-changed-review-continuity",
         ),
     ),
 )

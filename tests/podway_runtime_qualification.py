@@ -421,8 +421,8 @@ TASK_RESUME_SCENARIOS = {
         "readiness": "safe-to-change",
         "direction": "switch-route",
         "checkpoint_basis": "explicit-waiver",
-        "rejection_node": "validate-review-route-entry",
-        "rejection_option": "changed",
+        "rejection_node": "confirm-changed-review-continuity",
+        "rejection_option": "pass",
     },
     "task-waive-with-route-change-basis-rejected": {
         "route": "mulgae",
@@ -432,8 +432,8 @@ TASK_RESUME_SCENARIOS = {
         "readiness": "safe-to-change",
         "direction": "waive",
         "checkpoint_basis": "explicit-route-change",
-        "rejection_node": "validate-review-route-entry",
-        "rejection_option": "changed",
+        "rejection_node": "confirm-changed-review-continuity",
+        "rejection_option": "pass",
     },
     "task-resume-with-explicit-change-rejected": {
         "route": "mulgae",
@@ -499,8 +499,8 @@ TASK_RESUME_SCENARIOS = {
         "direction": "switch-route",
         "checkpoint_basis": "explicit-waiver",
         "completed_transition": True,
-        "rejection_node": "validate-review-route-entry",
-        "rejection_option": "changed",
+        "rejection_node": "confirm-changed-review-continuity",
+        "rejection_option": "pass",
     },
     "task-completed-waive-with-route-change-basis-rejected": {
         "route": "mulgae",
@@ -512,8 +512,8 @@ TASK_RESUME_SCENARIOS = {
         "direction": "waive",
         "checkpoint_basis": "explicit-route-change",
         "completed_transition": True,
-        "rejection_node": "validate-review-route-entry",
-        "rejection_option": "changed",
+        "rejection_node": "confirm-changed-review-continuity",
+        "rejection_option": "pass",
     },
     "task-completed-continue-mulgae": {
         "route": "mulgae",
