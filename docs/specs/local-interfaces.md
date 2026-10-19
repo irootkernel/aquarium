@@ -32,11 +32,11 @@ locking, runtime installation, and retention rules are owned by the
 
 | Procedure ID | Version | Owner | Recorded lifecycle |
 | --- | --- | --- | --- |
-| `aquarium-task-v2` | `31` | `task-handler` | Selected plan input, implementation, refinement, typed verification, route-specific entry, operation, evidence, provenance, backend, recovery, completion, finding, owner, Low-settlement, goal-assessment, approval, and closeout decisions |
-| `aquarium-goal-v2` | `34` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with route-specific operation and evidence decisions, separate delegated and waived finding confirmation, lifecycle-safe recovery, completion, hardening deferral, Low settlement, and path-bound assessment and closeout |
-| `aquarium-validation-v2` | `33` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced obligation composition, and serial route binding, assessment, provenance, backend applicability, recovery, finding confirmation, completion, required-evidence, blocker, Low-settlement, and path-bound assessment decisions |
-| `aquarium-design-v2` | `11` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout with action guidance |
-| `aquarium-war-room-v2` | `11` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions including evidence-backed no-work, guarded proposal quality, approval, documentation, assessment, and closeout with action guidance |
+| `aquarium-task-v2` | `34` | `task-handler` | Selected plan input, implementation, refinement, typed verification, route-specific entry, operation, evidence, provenance, backend, recovery, completion, finding, owner, Low-settlement, goal-assessment, approval, and closeout decisions |
+| `aquarium-goal-v2` | `37` | `epic-handler` | One member task, pre-validation remediation, or final closeout goal with route-specific operation and evidence decisions, separate delegated and waived finding confirmation, lifecycle-safe recovery, completion, hardening deferral, Low settlement, and path-bound assessment and closeout |
+| `aquarium-validation-v2` | `36` | `epic-handler` and `epic-validator` | Baseline, severity-aware audit, namespaced obligation composition, and serial route binding, assessment, provenance, backend applicability, recovery, finding confirmation, completion, required-evidence, blocker, Low-settlement, and path-bound assessment decisions |
+| `aquarium-design-v2` | `12` | `new-project`, `new-feature`, and `refactor` | Context, discovery, draft, challenge, guarded phase-owner quality, approval, application, assessment, and closeout with action guidance |
+| `aquarium-war-room-v2` | `12` | `war-room` | Baseline or reproduction, investigation, semantic cause and scope decisions including evidence-backed no-work, guarded proposal quality, approval, documentation, assessment, and closeout with action guidance |
 
 Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`](../../plugins/aquarium/assets/podway/procedures/). The version belongs to the Procedure document, not the Aquarium plugin version, and an active session retains the immutable snapshot with which it started.
 
@@ -228,8 +228,8 @@ Admission statuses distinguish `missing-prerequisite`, `missing-session`,
 Storage failures include `corrupt`, `ambiguous`, `unsupported`, `unsafe`,
 `tracked-conflict`, `ignore-conflict`, `publication-conflict` and `git-error`.
 Direct native failures retain their Error v2 code. No status establishes actual
-agent execution or installed behavior. These explicit selected interfaces do not
-change ordinary handlers' all-five managed-library readiness rule.
+agent execution or installed behavior. Ordinary handlers admit their selected
+source independently of whether all five managed files are present.
 
 ## Commit attribution trailers
 
